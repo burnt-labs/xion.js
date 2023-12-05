@@ -1,0 +1,31 @@
+{
+  "name": "demo-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^14.0.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@burnt-labs/ui": "workspace:*",
+    "@burnt-labs/signers": "workspace:*"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^13.4.19",
+    "@types/node": "^18.11.17",
+    "@types/react": "^18.2.5",
+    "@types/react-dom": "^18.2.4",
+    "autoprefixer": "^10.4.13",
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "postcss": "^8.4.20",
+    "@burnt-labs/tailwind-config": "workspace:*",
+    "tailwindcss": "^3.2.4",
+    "@burnt-labs/tsconfig": "workspace:*",
+    "typescript": "^5.2.2"
+  }
+}

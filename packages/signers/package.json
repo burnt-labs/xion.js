@@ -1,0 +1,42 @@
+{
+  "name": "@burnt-labs/signers",
+  "version": "0.0.0",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/",
+    "dev": "tsup --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.8.6",
+    "@cosmjs/amino": "^0.31.3",
+    "@cosmjs/cosmwasm-stargate": "^0.31.3",
+    "@cosmjs/crypto": "^0.31.3",
+    "@cosmjs/math": "^0.31.3",
+    "@cosmjs/proto-signing": "^0.31.3",
+    "@cosmjs/stargate": "^0.31.3",
+    "@cosmjs/tendermint-rpc": "^0.31.3",
+    "@cosmjs/utils": "^0.31.3",
+    "bech32": "^2.0.0",
+    "cosmjs-types": "^0.8.0",
+    "graphql": "^16.8.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "stytch": "^9.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "18.11.9",
+    "eslint": "8.28.0",
+    "eslint-config-next": "13.0.5",
+    "long": "^5.2.3",
+    "prettier": "^3.0.2",
+    "protobufjs": "^7.2.5",
+    "tsup": "^6.0.1",
+    "typescript": "4.9.3"
+  }
+}
