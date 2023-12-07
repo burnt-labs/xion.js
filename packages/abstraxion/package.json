@@ -1,10 +1,10 @@
 {
-  "name": "@burnt-labs/ui",
+  "name": "@burnt-labs/abstraxion",
   "version": "0.0.0",
+  "types": "./dist/index.d.ts",
   "sideEffects": [
     "**/*.css"
   ],
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist",
     "./styles.css": "./dist/index.css"
@@ -17,23 +17,29 @@
     "check-types": "tsc --noEmit"
   },
   "peerDependencies": {
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
     "@types/react": "^18.2.5",
     "autoprefixer": "^10.4.13",
-    "clsx": "^2.0.0",
     "postcss": "^8.4.20",
     "react": "^18.2.0",
-    "tailwind-merge": "^2.1.0",
     "tailwindcss": "^3.2.4",
     "tsup": "^6.0.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.0.5"
+    "@apollo/client": "^3.8.7",
+    "@burnt-labs/signers": "workspace:*",
+    "@burnt-labs/ui": "workspace:*",
+    "@stytch/nextjs": "^14.0.0",
+    "@stytch/vanilla-js": "^3.2.1",
+    "graz": "^0.0.51",
+    "jose": "^5.1.3"
   }
 }

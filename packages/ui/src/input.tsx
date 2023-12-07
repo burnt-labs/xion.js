@@ -15,7 +15,7 @@ export const Input: React.FC<InputProps> = ({
       className={`ui-flex ui-flex-col ui-gap-1 ${fullWidth ? "ui-w-full" : ""}`}
     >
       <input
-        className={`ui-bg-zinc-100 ui-text-black ui-p-3 ui-rounded ui-border-none ui-outline-none ${
+        className={`ui-bg-transparent ui-text-black dark:ui-text-white ui-p-3 ui-rounded ui-border ui-border-zinc-300 ui-outline-none ui-placeholder-zinc-400 dark:ui-placeholder-zinc-600 ${
           fullWidth ? "ui-w-full" : ""
         }`}
         {...props}

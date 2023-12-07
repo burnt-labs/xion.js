@@ -13,7 +13,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "@burnt-labs/ui": "workspace:*",
-    "@burnt-labs/signers": "workspace:*"
+    "@burnt-labs/signers": "workspace:*",
+    "@burnt-labs/abstraxion": "workspace:*"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^13.4.19",
