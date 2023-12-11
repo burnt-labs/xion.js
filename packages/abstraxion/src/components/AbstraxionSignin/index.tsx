@@ -2,18 +2,12 @@
 import { useContext, useEffect, useState } from "react";
 import { WalletType, useSuggestChainAndConnect } from "graz";
 import { useStytch } from "@stytch/nextjs";
+import { testnetChainInfo } from "@burnt-labs/constants/chain";
+import { Button, Input, ModalSection, ChevronDown } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { testnetChainInfo } from "@burnt-labs/constants/chain";
-import {
-  Button,
-  Input,
-  ModalSection,
-  ChevronDown,
-  PinInput,
-} from "@burnt-labs/ui";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
@@ -45,6 +39,11 @@ export const AbstraxionSignin = () => {
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmailError("");
     setEmail(e.target.value.toLowerCase());
+  };
+
+  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOtpError("");
+    setOtp(e.target.value);
   };
 
   const EMAIL_REGEX = /\S+@\S+\.\S+/;
@@ -128,26 +127,18 @@ export const AbstraxionSignin = () => {
               Please check your email for the verification code.
             </h2>
           </div>
-          <PinInput
-            length={6}
-            onComplete={(value) => {
-              setOtp(value);
-            }}
+          <Input
+            placeholder="Verification Code"
+            value={otp}
+            onChange={handleOtpChange}
             error={otpError}
-            setError={setOtpError}
           />
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            <Button
-              structure="base"
-              theme="primary"
-              fullWidth={true}
-              onClick={handleOtp}
-            >
+            <Button fullWidth={true} onClick={handleOtp} disabled={!!otpError}>
               Confirm
             </Button>
             <Button
               structure="outlined"
-              theme="primary"
               fullWidth={true}
               onClick={handleEmail}
               disabled={!!timeLeft}
@@ -163,15 +154,12 @@ export const AbstraxionSignin = () => {
           </h1>
           <Input
             placeholder="Email address"
-            fullWidth={true}
             value={email}
             onChange={handleEmailChange}
             error={emailError}
             onBlur={validateEmail}
           />
           <Button
-            structure="base"
-            theme="primary"
             fullWidth={true}
             onClick={handleEmail}
             disabled={!!emailError}
@@ -188,7 +176,6 @@ export const AbstraxionSignin = () => {
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
             <Button
               structure="outlined"
-              theme="primary"
               fullWidth={true}
               onClick={handleWebauthnAuthenticate}
             >
@@ -205,7 +192,6 @@ export const AbstraxionSignin = () => {
               <div className="ui-flex ui-w-full ui-items-center ui-gap-4">
                 <Button
                   structure="outlined"
-                  theme="primary"
                   fullWidth={true}
                   onClick={() => {
                     handleConnect(WalletType.METAMASK_SNAP_LEAP);
@@ -215,7 +201,6 @@ export const AbstraxionSignin = () => {
                 </Button>
                 <Button
                   structure="outlined"
-                  theme="primary"
                   fullWidth={true}
                   onClick={() => {
                     handleConnect(WalletType.KEPLR);

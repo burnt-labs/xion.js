@@ -1,9 +1,9 @@
 import { useContext } from "react";
+import { Button } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { Button } from "@burnt-labs/ui";
 
 export const ErrorDisplay = ({
   message,
@@ -31,7 +31,6 @@ export const ErrorDisplay = ({
       )}
       <Button
         structure="outlined"
-        theme="primary"
         fullWidth={true}
         onClick={() => {
           onClose();

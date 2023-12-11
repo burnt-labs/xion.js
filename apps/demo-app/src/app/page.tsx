@@ -78,12 +78,7 @@ export default function Page(): JSX.Element {
       <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white">
         ABSTRAXION
       </h1>
-      <Button
-        theme="secondary"
-        structure="base"
-        fullWidth
-        onClick={() => setIsOpen(true)}
-      >
+      <Button fullWidth onClick={() => setIsOpen(true)}>
         {account ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
         ) : (
@@ -91,13 +86,7 @@ export default function Page(): JSX.Element {
         )}
       </Button>
       {client && (
-        <Button
-          theme="secondary"
-          structure="base"
-          fullWidth
-          disabled={loading}
-          onClick={instantiateTestContract}
-        >
+        <Button fullWidth disabled={loading} onClick={instantiateTestContract}>
           {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
         </Button>
       )}

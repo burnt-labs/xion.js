@@ -1,26 +1,55 @@
-import React from "react";
+import { InputHTMLAttributes, useState } from "react";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  fullWidth?: boolean;
+type BaseInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "prefix">;
+
+export interface ITextFieldProps extends BaseInputProps {
+  className?: string;
   error?: string;
 }
-
-export const Input: React.FC<InputProps> = ({
-  fullWidth = false,
+export function Input({
+  className,
+  placeholder,
+  value,
   error,
+  onBlur,
   ...props
-}) => {
+}: ITextFieldProps) {
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  const handleFocus = () => {
+    setIsInputFocused(true);
+  };
+
+  const handleBlur = (event: any) => {
+    if (event.target.value === "") {
+      setIsInputFocused(false);
+    }
+    onBlur?.(event);
+  };
+
   return (
-    <div
-      className={`ui-flex ui-flex-col ui-gap-1 ${fullWidth ? "ui-w-full" : ""}`}
-    >
+    <div className={`ui-relative ui-w-full ui-text-left ${className || ""}`}>
+      {error ? (
+        <p className="ui-right-0 ui-top-2 ui-text-xs ui-absolute ui-text-red-400">
+          {error}
+        </p>
+      ) : null}
+      <label
+        className={`ui-relative ui-z-0 ui-w-auto ${
+          isInputFocused || value ? "ui-top-2 ui-text-xs" : "ui-top-7"
+        } ui-text-zinc-600`}
+      >
+        {placeholder}
+      </label>
       <input
-        className={`ui-bg-transparent ui-text-black dark:ui-text-white ui-p-3 ui-rounded ui-border ui-border-zinc-300 ui-outline-none ui-placeholder-zinc-400 dark:ui-placeholder-zinc-600 ${
-          fullWidth ? "ui-w-full" : ""
-        }`}
         {...props}
+        value={value}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        className={`ui-z-10 ui-block ui-h-8 ui-w-full ui-border-b ui-relative ${
+          error ? "ui-border-red-400" : ""
+        } ui-bg-transparent ui-text-sm ui-text-white ui-outline-none`}
       />
-      <span className="ui-text-red-500 ui-text-xs">{error}</span>
     </div>
   );
-};
+}
