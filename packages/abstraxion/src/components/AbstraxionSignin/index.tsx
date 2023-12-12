@@ -119,12 +119,12 @@ export const AbstraxionSignin = () => {
     <ModalSection>
       {isOnOtpStep ? (
         <>
-          <div className="ui-text-black dark:ui-text-white">
-            <h1 className="ui-mb-3 ui-text-2xl ui-font-bold ui-tracking-tighter">
-              Input 6 Digit Code
+          <div className="ui-flex ui-flex-col ui-w-full ui-text-center">
+            <h1 className="ui-w-full ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
+              Input 6 digit code
             </h1>
-            <h2 className="ui-mb-3">
-              Please check your email for the verification code.
+            <h2 className="ui-w-full ui-tracking-tighter ui-text-sm ui-mb-4 ui-text-neutral-500">
+              Please check your email for the verification code
             </h2>
           </div>
           <Input
