@@ -37,7 +37,7 @@ export function Input({
       <label
         className={`ui-relative ui-z-0 ui-w-auto ${
           isInputFocused || value ? "ui-top-2 ui-text-xs" : "ui-top-7"
-        } ui-text-zinc-600`}
+        } ui-text-neutral-500`}
       >
         {placeholder}
       </label>

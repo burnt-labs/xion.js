@@ -149,9 +149,14 @@ export const AbstraxionSignin = () => {
         </>
       ) : (
         <>
-          <h1 className="ui-w-full ui-tracking-tighter ui-text-2xl ui-font-bold ui-mb-4 ui-text-black dark:ui-text-white">
-            Welcome to XION
-          </h1>
+          <div className="ui-flex ui-flex-col ui-w-full ui-text-center">
+            <h1 className="ui-w-full ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
+              Welcome
+            </h1>
+            <h2 className="ui-w-full ui-tracking-tighter ui-text-sm ui-mb-4 ui-text-neutral-500">
+              Log in or sign up with your email
+            </h2>
+          </div>
           <Input
             placeholder="Email address"
             value={email}
@@ -159,33 +164,45 @@ export const AbstraxionSignin = () => {
             error={emailError}
             onBlur={validateEmail}
           />
-          <Button
-            fullWidth={true}
-            onClick={handleEmail}
-            disabled={!!emailError}
-          >
-            Log in / Sign up
-          </Button>
-          <div className="ui-flex ui-items-center ui-w-full">
-            <div className="ui-border-b ui-border-zinc-300 ui-grow" />
-            <span className="ui-text-black ui-font-semibold dark:ui-text-white ui-shrink ui-px-3">
-              OR
-            </span>
-            <div className="ui-border-b ui-border-zinc-300 ui-grow" />
+          <div className="ui-flex ui-w-full ui-gap-1">
+            <Button
+              fullWidth={true}
+              onClick={handleEmail}
+              disabled={!!emailError}
+            >
+              Log in / Sign up
+            </Button>
+            <Button structure="outlined" onClick={handleWebauthnAuthenticate}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="ui-w-4 ui-h-4"
+              >
+                <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4" />
+                <path d="M5 19.5C5.5 18 6 15 6 12c0-.7.12-1.37.34-2" />
+                <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+                <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+                <path d="M8.65 22c.21-.66.45-1.32.57-2" />
+                <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+                <path d="M2 16h.01" />
+                <path d="M21.8 16c.2-2 .131-5.354 0-6" />
+                <path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2" />
+              </svg>
+            </Button>
           </div>
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            <Button
-              structure="outlined"
-              fullWidth={true}
-              onClick={handleWebauthnAuthenticate}
-            >
-              Passkey/Biometrics
-            </Button>
             <div
               className="ui-flex ui-w-full ui-cursor-pointer ui-items-center ui-text-sm ui-text-black dark:ui-text-white"
               onClick={() => setShowAdvanced(!showAdvanced)}
             >
-              Advanced <ChevronDown isUp={showAdvanced} />{" "}
+              Advanced Users <ChevronDown isUp={showAdvanced} />{" "}
               {showAdvanced ? "Login with an existing EOA" : ""}
             </div>
             {showAdvanced && (
@@ -211,7 +228,7 @@ export const AbstraxionSignin = () => {
               </div>
             )}
           </div>
-          <p className="ui-text-xs ui-text-zinc-400 dark:ui-text-zinc-600">
+          <p className="ui-text-xs ui-text-neutral-500">
             By continuing, you agree to Burnt's{" "}
             <a
               className="ui-text-black dark:ui-text-white ui-no-underline hover:ui-underline"

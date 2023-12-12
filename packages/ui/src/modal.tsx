@@ -16,11 +16,12 @@ export const ModalAnchor = forwardRef<HTMLDivElement, WithChildrenProps>(
       <div
         ref={ref}
         className={cn(
-          "ui-flex ui-p-4 ui-justify-center ui-items-center ui-fixed ui-inset-0 ui-h-screen ui-w-screen ui-z-[999] dark:ui-bg-white/20 ui-bg-black/50 ui-backdrop-blur-sm",
+          "ui-flex ui-p-4 ui-justify-center ui-items-center ui-fixed ui-inset-0 ui-h-screen ui-w-screen ui-z-[999]",
           className,
         )}
         {...props}
       >
+        <div className="ui-absolute ui-z-[999] ui-inset-0 ui-bg-[url('../public/xion-bg.png')] ui-blur-md ui-bg-no-repeat ui-bg-cover ui-bg-center ui-bg-fixed ui-opacity-70" />
         {children}
       </div>
     );
@@ -31,7 +32,7 @@ export const Modal = ({ className, children, ...props }: WithChildrenProps) => {
   return (
     <div
       className={cn(
-        "ui-relative ui-w-full ui-max-w-[465px] ui-text-black ui-rounded ui-z-[1000] ui-bg-white dark:ui-bg-zinc-900",
+        "ui-relative ui-w-full ui-max-w-[465px] ui-text-black ui-rounded ui-z-[1000] ui-bg-black/25 backdrop-blur-xl",
         className,
       )}
       {...props}
@@ -71,7 +72,7 @@ export const ModalSection = ({
   return (
     <div
       className={cn(
-        "ui-inline-flex ui-w-full ui-h-full ui-p-10 ui-flex-col ui-items-start ui-justify-between ui-gap-4",
+        "ui-inline-flex ui-w-full ui-h-full ui-p-10 ui-flex-col ui-items-start ui-justify-between ui-gap-8",
         className,
       )}
       {...props}

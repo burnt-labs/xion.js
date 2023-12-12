@@ -17,7 +17,7 @@ export const Button: React.FC<ButtonProps> = ({
     if (disabled) {
       switch (structure) {
         case "outlined":
-          return "ui-bg-transparent ui-border ui-border-zinc-600 ui-text-zinc-600 ui-pointer-events-none";
+          return "ui-bg-transparent ui-border ui-border-neutral-600 ui-text-neutral-600 ui-pointer-events-none";
         case "naked":
           return "ui-border-none ui-bg-transparent ui-text-white/60 ui-underline ui-font-normal ui-pointer-events-none";
         case "destructive":
@@ -29,19 +29,19 @@ export const Button: React.FC<ButtonProps> = ({
 
     switch (structure) {
       case "outlined":
-        return "ui-border ui-bg-transparent ui-border-zinc-300 ui-text-white hover:ui-bg-white/5";
+        return "ui-border ui-bg-transparent ui-border-neutral-300 ui-text-white hover:ui-bg-white/5";
       case "naked":
         return "ui-border-none ui-bg-transparent ui-text-white ui-underline ui-font-normal";
       case "destructive":
         return "ui-bg-red-500 ui-text-white hover:ui-bg-red-400";
       default:
-        return "ui-bg-white ui-text-black hover:ui-bg-zinc-100";
+        return "ui-bg-white ui-text-black hover:ui-bg-neutral-100";
     }
   };
 
   return (
     <button
-      className={`ui-rounded ui-px-5 ui-py-3.5 ui-text-sm ui-font-bold ui-outline-none ui-hover:opacity-70 ${
+      className={`ui-rounded-md ui-px-5 ui-py-3.5 ui-text-sm ui-font-bold ui-outline-none ui-hover:opacity-70 ${
         fullWidth ? "ui-w-full" : ""
       } ${getButtonClasses()}`}
       {...props}

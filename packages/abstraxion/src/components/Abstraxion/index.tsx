@@ -14,6 +14,12 @@ import { useAbstraxionAccount } from "../../hooks";
 import { Loading } from "../Loading";
 import { AbstraxionWallets } from "../AbstraxionWallets";
 import { ErrorDisplay } from "../ErrorDisplay";
+import { Dialog } from "@burnt-labs/ui";
+import { DialogTrigger } from "@burnt-labs/ui";
+import { DialogContent } from "@burnt-labs/ui";
+import { DialogHeader } from "@burnt-labs/ui";
+import { DialogTitle } from "@burnt-labs/ui";
+import { DialogDescription } from "@burnt-labs/ui";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -21,8 +27,6 @@ export interface ModalProps {
 }
 
 export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-
   const { abstraxionError } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
@@ -40,12 +44,8 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <ModalAnchor ref={modalRef} onClick={onClose}>
-      <Modal
-        onClick={(e: any) => {
-          e.stopPropagation();
-        }}
-      >
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
         {abstraxionError ? (
           <ErrorDisplay message={abstraxionError} onClose={onClose} />
         ) : isConnecting || isReconnecting ? (
@@ -55,8 +55,8 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
         ) : (
           <AbstraxionSignin />
         )}
-      </Modal>
-    </ModalAnchor>
+      </DialogContent>
+    </Dialog>
   );
 };
 

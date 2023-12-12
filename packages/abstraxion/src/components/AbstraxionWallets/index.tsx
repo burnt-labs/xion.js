@@ -121,11 +121,16 @@ export const AbstraxionWallets = () => {
         <Loading />
       ) : (
         <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-start ui-justify-between ui-gap-8 ui-p-10 ui-text-black dark:ui-text-white">
-          <h1 className="ui-mb-3 ui-text-2xl ui-font-bold ui-tracking-tighter">
-            Welcome Back
-          </h1>
+          <div className="ui-flex ui-flex-col ui-w-full ui-text-center">
+            <h1 className="ui-w-full ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
+              Welcome
+            </h1>
+            <h2 className="ui-w-full ui-tracking-tighter ui-text-sm ui-mb-4 ui-text-neutral-500">
+              Select an account to continue
+            </h2>
+          </div>
           {connectionType === "graz" ? (
-            <div className="ui-flex ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-4 ui-bg-zinc-100 dark:ui-bg-zinc-800 ui-border-2 ui-border-black dark:ui-border-white">
+            <div className="ui-flex ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-4 ui-bg-transparent ui-border-2 ui-border-white hover:ui-cursor-pointer">
               <AccountWalletLogo />
               <div className="ui-flex ui-flex-col ui-gap-1">
                 <h1 className="ui-text-sm ui-font-bold">{account?.name}</h1>
@@ -143,7 +148,7 @@ export const AbstraxionWallets = () => {
                 ) : data?.smartAccounts.nodes.length >= 1 ? (
                   data?.smartAccounts?.nodes?.map((node: any, i: number) => (
                     <div
-                      className={`ui-w-full ui-items-center ui-gap-4 ui-rounded ui-p-4 ui-flex ui-bg-zinc-100 dark:ui-bg-zinc-800 ${
+                      className={`ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-4 ui-flex ui-bg-transparent hover:ui-cursor-pointer ${
                         node.id === abstractAccount?.id
                           ? "ui-border-2 ui-border-black dark:ui-border-white"
                           : ""
@@ -168,15 +173,16 @@ export const AbstraxionWallets = () => {
                   <p>No Accounts Found.</p>
                 )}
               </div>
-              <Button
-                structure="naked"
-                fullWidth={true}
-                onClick={async () => {
-                  await handleJwtAALoginOrCreate(session_jwt, session_token);
-                }}
-              >
-                Create a new account
-              </Button>
+              <div className="ui-w-full ui-flex ui-justify-center">
+                <Button
+                  structure="naked"
+                  onClick={async () => {
+                    await handleJwtAALoginOrCreate(session_jwt, session_token);
+                  }}
+                >
+                  Create a new account
+                </Button>
+              </div>
             </div>
           )}
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">

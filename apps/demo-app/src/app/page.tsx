@@ -14,6 +14,12 @@ export default function Page(): JSX.Element {
   const { data: account } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
 
+  async function getBalance() {
+    if (!account) return;
+    const foo = await client?.getBalance(account.bech32Address, "uxion");
+    console.log(account.bech32Address, foo);
+  }
+
   // General state hooks
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -86,7 +92,7 @@ export default function Page(): JSX.Element {
         )}
       </Button>
       {client && (
-        <Button fullWidth disabled={loading} onClick={instantiateTestContract}>
+        <Button fullWidth disabled={loading} onClick={getBalance}>
           {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
         </Button>
       )}
