@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/abstraxion",
-  "version": "0.0.0",
+  "version": "0.0.1-alpha.15",
   "types": "./dist/index.d.ts",
   "sideEffects": [
     "**/*.css"
