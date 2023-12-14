@@ -1,5 +1,13 @@
 # @burnt-labs/abstraxion
 
+## 0.0.1-alpha.16
+
+### Patch Changes
+
+- Updated designs
+- Updated dependencies
+  - @burnt-labs/ui@0.0.1-alpha.1
+
 ## 0.0.1-alpha.15
 
 ### Patch Changes

@@ -12,6 +12,7 @@
     "@burnt-labs/ui": "0.0.0"
   },
   "changesets": [
+    "blue-spoons-train",
     "bright-carpets-rhyme"
   ]
 }
