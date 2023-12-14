@@ -120,7 +120,7 @@ export const AbstraxionWallets = () => {
       {isGeneratingNewWallet ? (
         <Loading />
       ) : (
-        <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-start ui-justify-between ui-gap-8 ui-p-10 ui-text-black dark:ui-text-white">
+        <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-start ui-justify-between ui-gap-8 ui-p-10 ui-text-white">
           <div className="ui-flex ui-flex-col ui-w-full ui-text-center">
             <h1 className="ui-w-full ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
               Welcome
@@ -150,7 +150,7 @@ export const AbstraxionWallets = () => {
                     <div
                       className={`ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-4 ui-flex ui-bg-transparent hover:ui-cursor-pointer ${
                         node.id === abstractAccount?.id
-                          ? "ui-border-2 ui-border-black dark:ui-border-white"
+                          ? "ui-border-2 ui-border-white"
                           : ""
                       }`}
                       key={i}

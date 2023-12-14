@@ -199,7 +199,7 @@ export const AbstraxionSignin = () => {
           </div>
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
             <div
-              className="ui-flex ui-w-full ui-cursor-pointer ui-items-center ui-text-sm ui-text-black dark:ui-text-white"
+              className="ui-flex ui-w-full ui-cursor-pointer ui-items-center ui-text-sm ui-text-white"
               onClick={() => setShowAdvanced(!showAdvanced)}
             >
               Advanced Users <ChevronDown isUp={showAdvanced} />{" "}
@@ -231,14 +231,14 @@ export const AbstraxionSignin = () => {
           <p className="ui-text-xs ui-text-neutral-500">
             By continuing, you agree to Burnt's{" "}
             <a
-              className="ui-text-black dark:ui-text-white ui-no-underline hover:ui-underline"
+              className="ui-text-white ui-no-underline hover:ui-underline"
               href="https://burnt.com"
             >
               Terms of Service
             </a>{" "}
             and acknowledge that you have read and understand the XION{" "}
             <a
-              className="ui-text-black dark:ui-text-white ui-no-underline hover:ui-underline"
+              className="ui-text-white ui-no-underline hover:ui-underline"
               href="https://burnt.com"
             >
               Disclaimer

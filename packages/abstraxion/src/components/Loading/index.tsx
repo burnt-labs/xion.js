@@ -11,7 +11,7 @@ export const Loading = () => {
           Starting your journey
         </h2>
       </div>
-      <div className="ui-flex ui-h-full ui-w-full ui-items-center ui-justify-center ui-text-black dark:ui-text-white">
+      <div className="ui-flex ui-h-full ui-w-full ui-items-center ui-justify-center ui-text-white">
         <Spinner />
       </div>
     </ModalSection>
