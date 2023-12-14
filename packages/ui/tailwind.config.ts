@@ -8,7 +8,7 @@ const config: Pick<Config, "prefix" | "presets" | "theme"> = {
   theme: {
     extend: {
       backgroundImage: {
-        "modal-overlay": "url('../public/xion-bg-blur.png')",
+        "modal-overlay": "url('./assets/xion-bg-blur.png')",
       },
     },
   },

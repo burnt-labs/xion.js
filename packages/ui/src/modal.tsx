@@ -21,7 +21,7 @@ export const ModalAnchor = forwardRef<HTMLDivElement, WithChildrenProps>(
         )}
         {...props}
       >
-        <div className="ui-absolute ui-z-[999] ui-inset-0 ui-bg-[url('../public/xion-bg.png')] ui-blur-md ui-bg-no-repeat ui-bg-cover ui-bg-center ui-bg-fixed ui-opacity-70" />
+        <div className="ui-absolute ui-z-[999] ui-inset-0 ui-bg-modal-overlay ui-blur-md ui-bg-no-repeat ui-bg-cover ui-bg-center ui-bg-fixed ui-opacity-70" />
         {children}
       </div>
     );
