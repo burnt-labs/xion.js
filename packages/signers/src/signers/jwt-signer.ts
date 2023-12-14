@@ -9,10 +9,15 @@ export class AbstractAccountJWTSigner extends AASigner {
   // requires a session token already created
   sessionToken: string | undefined;
   indexerUrl: string;
-  constructor(abstractAccount: string, sessionToken?: string, indexerUrl?: string) {
+  constructor(
+    abstractAccount: string,
+    sessionToken?: string,
+    indexerUrl?: string,
+  ) {
     super(abstractAccount);
     this.sessionToken = sessionToken;
-    this.indexerUrl = indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer"
+    this.indexerUrl =
+      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
   }
 
   async getAccounts(): Promise<readonly AAccountData[]> {
@@ -29,7 +34,10 @@ export class AbstractAccountJWTSigner extends AASigner {
         address: this.abstractAccount,
         algo: "secp256k1", // we don't really care about this
         pubkey: new Uint8Array(),
-        authenticatorId: await getAALastAuthenticatorId(this.abstractAccount, this.indexerUrl),
+        authenticatorId: await getAALastAuthenticatorId(
+          this.abstractAccount,
+          this.indexerUrl,
+        ),
         accountAddress: this.abstractAccount,
         aaalgo: AAAlgo.JWT,
       },
@@ -47,22 +55,25 @@ export class AbstractAccountJWTSigner extends AASigner {
     const hashSignBytes = sha256(signBytes);
     const message = Buffer.from(hashSignBytes).toString("base64");
 
-    const authResponse = await fetch("https://aa.xion-testnet-1.burnt.com/api/v1/sessions/authenticate", {
-      method: "POST",
-      headers: {
-        "content-type" : "application/json"
-      },
-      body: JSON.stringify({
-        session_token: this.sessionToken,
-        session_duration_minutes: 60 * 24 * 30,
-        session_custom_claims: {
-          transaction_hash: message,
+    const authResponse = await fetch(
+      "https://burnt-abstraxion-api.onrender.com/api/v1/sessions/authenticate",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
         },
-      })
-    })
+        body: JSON.stringify({
+          session_token: this.sessionToken,
+          session_duration_minutes: 60 * 24 * 30,
+          session_custom_claims: {
+            transaction_hash: message,
+          },
+        }),
+      },
+    );
 
-    if(!authResponse.ok){
-      throw new Error("Failed to authenticate with stytch")
+    if (!authResponse.ok) {
+      throw new Error("Failed to authenticate with stytch");
     }
 
     const authResponseData = await authResponse.json();
@@ -74,9 +85,10 @@ export class AbstractAccountJWTSigner extends AASigner {
           type: "",
           value: new Uint8Array(),
         },
-        signature: Buffer.from(authResponseData.data.session_jwt, "utf-8").toString(
-          "base64"
-        ),
+        signature: Buffer.from(
+          authResponseData.data.session_jwt,
+          "utf-8",
+        ).toString("base64"),
       },
     };
   }
@@ -96,28 +108,34 @@ export class AbstractAccountJWTSigner extends AASigner {
     const hashSignBytes = sha256(Buffer.from(message, "utf-8"));
     const hashedMessage = Buffer.from(hashSignBytes).toString("base64");
 
-    const authResponse = await fetch("https://aa.xion-testnet-1.burnt.com/api/v1/sessions/authenticate", {
-      method: "POST",
-      headers: {
-        "content-type" : "application/json"
-      },
-      body: JSON.stringify({
-        session_token: this.sessionToken,
-        session_duration_minutes: 60 * 24 * 30,
-        session_custom_claims: {
-          transaction_hash: hashedMessage,
+    const authResponse = await fetch(
+      "https://burnt-abstraxion-api.onrender.com/api/v1/sessions/authenticate",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
         },
-      })
-    })
+        body: JSON.stringify({
+          session_token: this.sessionToken,
+          session_duration_minutes: 60 * 24 * 30,
+          session_custom_claims: {
+            transaction_hash: hashedMessage,
+          },
+        }),
+      },
+    );
 
-    if(!authResponse.ok){
-      throw new Error("Failed to authenticate with stytch")
+    if (!authResponse.ok) {
+      throw new Error("Failed to authenticate with stytch");
     }
 
     const authResponseData = await authResponse.json();
 
     return {
-      signature: Buffer.from(authResponseData.data.session_jwt, "utf-8").toString("base64"),
+      signature: Buffer.from(
+        authResponseData.data.session_jwt,
+        "utf-8",
+      ).toString("base64"),
     };
   }
 }
