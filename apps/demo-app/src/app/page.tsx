@@ -14,12 +14,6 @@ export default function Page(): JSX.Element {
   const { data: account } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
 
-  async function getBalance() {
-    if (!account) return;
-    const foo = await client?.getBalance(account.bech32Address, "uxion");
-    console.log(account.bech32Address, foo);
-  }
-
   // General state hooks
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -81,7 +75,7 @@ export default function Page(): JSX.Element {
 
   return (
     <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
-      <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white">
+      <h1 className="text-2xl font-bold tracking-tighter text-white">
         ABSTRAXION
       </h1>
       <Button fullWidth onClick={() => setIsOpen(true)}>
@@ -92,13 +86,13 @@ export default function Page(): JSX.Element {
         )}
       </Button>
       {client && (
-        <Button fullWidth disabled={loading} onClick={getBalance}>
+        <Button fullWidth disabled={loading} onClick={instantiateTestContract}>
           {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
         </Button>
       )}
       <Abstraxion onClose={() => setIsOpen(false)} isOpen={isOpen} />
       {initiateResult && (
-        <div className="flex flex-col rounded border-2 border-black p-2 dark:border-white">
+        <div className="flex flex-col rounded border-2 border-white p-2">
           <div className="mt-2">
             <p className="text-zinc-500">
               <span className="font-bold">Contract Address:</span>
@@ -115,7 +109,7 @@ export default function Page(): JSX.Element {
             <Link
               href={blockExplorerUrl}
               target="_blank"
-              className="text-black underline visited:text-purple-600 dark:text-white"
+              className="text-white underline visited:text-purple-600"
             >
               View in Block Explorer
             </Link>
