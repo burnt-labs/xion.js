@@ -12,6 +12,7 @@
     "@burnt-labs/ui": "0.0.0"
   },
   "changesets": [
-    "bright-carpets-rhyme"
+    "bright-carpets-rhyme",
+    "honest-apples-admire"
   ]
 }
