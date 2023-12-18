@@ -1,3 +1,4 @@
 module.exports = {
-  extends: ["custom/next"],
+  root: true,
+  extends: ["@burnt-labs/eslint-config-custom/next"],
 };
