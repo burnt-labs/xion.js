@@ -8,7 +8,9 @@ import {
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/styles.css";
+import type { InstantiateResult } from "@cosmjs/cosmwasm-stargate";
 
+type InitiateResultOrUndefined = InstantiateResult | undefined;
 export default function Page(): JSX.Element {
   // Abstraxion hooks
   const { data: account } = useAbstraxionAccount();
@@ -17,14 +19,12 @@ export default function Page(): JSX.Element {
   // General state hooks
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [initiateResult, setInitiateResult] = useState<any | undefined>(
-    undefined,
-  );
-  const blockExplorerUrl =
-    "https://explorer.burnt.com/xion-testnet-1/tx/" +
-    initiateResult?.transactionHash;
+  const [initiateResult, setInitiateResult] =
+    useState<InitiateResultOrUndefined>(undefined);
 
-  const instantiateTestContract = async () => {
+  const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${initiateResult?.transactionHash}`;
+
+  const instantiateTestContract = async (): Promise<void> => {
     setLoading(true);
     try {
       if (!client) {
@@ -61,6 +61,7 @@ export default function Page(): JSX.Element {
       );
       setInitiateResult(hubResult);
     } catch (error) {
+      // eslint-disable-next-line no-console -- No UI exists yet to display errors
       console.log(error);
     } finally {
       setLoading(false);
@@ -79,10 +80,12 @@ export default function Page(): JSX.Element {
         ABSTRAXION
       </h1>
       <Button
-        theme="secondary"
-        structure="base"
         fullWidth
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+        }}
+        structure="base"
+        theme="secondary"
       >
         {account ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
@@ -90,19 +93,26 @@ export default function Page(): JSX.Element {
           "CONNECT"
         )}
       </Button>
-      {client && (
+      {client ? (
         <Button
-          theme="secondary"
-          structure="base"
-          fullWidth
           disabled={loading}
-          onClick={instantiateTestContract}
+          fullWidth
+          onClick={() => {
+            void instantiateTestContract();
+          }}
+          structure="base"
+          theme="secondary"
         >
           {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
         </Button>
-      )}
-      <Abstraxion onClose={() => setIsOpen(false)} isOpen={isOpen} />
-      {initiateResult && (
+      ) : null}
+      <Abstraxion
+        isOpen={isOpen}
+        onClose={() => {
+          setIsOpen(false);
+        }}
+      />
+      {initiateResult ? (
         <div className="flex flex-col rounded border-2 border-black p-2 dark:border-white">
           <div className="mt-2">
             <p className="text-zinc-500">
@@ -118,15 +128,15 @@ export default function Page(): JSX.Element {
           </div>
           <div className="mt-2">
             <Link
+              className="text-black underline visited:text-purple-600 dark:text-white"
               href={blockExplorerUrl}
               target="_blank"
-              className="text-black underline visited:text-purple-600 dark:text-white"
             >
               View in Block Explorer
             </Link>
           </div>
         </div>
-      )}
+      ) : null}
     </main>
   );
 }
