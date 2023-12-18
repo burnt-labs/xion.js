@@ -1,8 +1,26 @@
 {
   "name": "@burnt-labs/constants",
   "version": "0.0.1-alpha.0",
-  "private": true,
+  "module": "./dist/index.mjs",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist",
+  "./styles.css": "./dist/index.css"
+  },
   "license": "MIT",
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/",
+    "dev": "tsup --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
+    "tsup": "^6.0.1",
+    "typescript": "^5.2.2"
+  },
   "publishConfig": {
     "access": "public"
   }

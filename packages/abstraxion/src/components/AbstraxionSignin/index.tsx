@@ -6,7 +6,7 @@ import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { testnetChainInfo } from "@burnt-labs/constants/chain";
+import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   Button,
   Input,

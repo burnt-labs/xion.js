@@ -3,7 +3,7 @@ import { GasPrice } from "graz/dist/cosmjs";
 import { useStytch } from "@stytch/nextjs";
 import { useCosmWasmSigningClient } from "graz";
 import { AAClient, AbstractAccountJWTSigner } from "@burnt-labs/signers";
-import { testnetChainInfo } from "@burnt-labs/constants/chain";
+import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
