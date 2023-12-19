@@ -7,7 +7,6 @@ import {
   useAbstraxionSigningClient,
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
-import "@burnt-labs/ui/styles.css";
 
 export default function Page(): JSX.Element {
   // Abstraxion hooks
@@ -75,15 +74,10 @@ export default function Page(): JSX.Element {
 
   return (
     <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
-      <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white">
+      <h1 className="text-2xl font-bold tracking-tighter text-white">
         ABSTRAXION
       </h1>
-      <Button
-        theme="secondary"
-        structure="base"
-        fullWidth
-        onClick={() => setIsOpen(true)}
-      >
+      <Button fullWidth onClick={() => setIsOpen(true)}>
         {account ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
         ) : (
@@ -91,19 +85,13 @@ export default function Page(): JSX.Element {
         )}
       </Button>
       {client && (
-        <Button
-          theme="secondary"
-          structure="base"
-          fullWidth
-          disabled={loading}
-          onClick={instantiateTestContract}
-        >
+        <Button fullWidth disabled={loading} onClick={instantiateTestContract}>
           {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
         </Button>
       )}
       <Abstraxion onClose={() => setIsOpen(false)} isOpen={isOpen} />
       {initiateResult && (
-        <div className="flex flex-col rounded border-2 border-black p-2 dark:border-white">
+        <div className="flex flex-col rounded border-2 border-white p-2">
           <div className="mt-2">
             <p className="text-zinc-500">
               <span className="font-bold">Contract Address:</span>
@@ -120,7 +108,7 @@ export default function Page(): JSX.Element {
             <Link
               href={blockExplorerUrl}
               target="_blank"
-              className="text-black underline visited:text-purple-600 dark:text-white"
+              className="text-white underline visited:text-purple-600"
             >
               View in Block Explorer
             </Link>

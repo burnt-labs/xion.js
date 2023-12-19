@@ -89,10 +89,8 @@ export const PinInput: React.FC<PinInputProps> = ({
             }
           }}
           onPaste={handlePaste}
-          className={`ui-block ui-bg-transparent ui-text-black dark:ui-text-white ui-rounded-md ui-border-2 ui-text-center ui-text-sm ui-outline-none focus:ui-border-black focus:ui-ring-black dark:focus:ui-border-white dark:focus:ui-ring-white disabled:ui-pointer-events-none disabled:ui-opacity-50 ui-w-[50px] ui-h-[50px] ${
-            error
-              ? "ui-border-red-500"
-              : "ui-border-zinc-300 dark:ui-border-zinc-600"
+          className={`ui-block ui-bg-transparent ui-text-white ui-rounded-md ui-border-2 ui-text-center ui-text-sm ui-outline-none focus:ui-border-black focus:ui-ring-white disabled:ui-pointer-events-none disabled:ui-opacity-50 ui-w-[50px] ui-h-[50px] ${
+            error ? "ui-border-red-500" : "ui-border-zinc-600"
           }`}
           autoFocus={index === 0}
           ref={(ref) => (inputRefs.current[index] = ref)}

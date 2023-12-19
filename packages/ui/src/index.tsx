@@ -10,3 +10,4 @@ export * from "./icons/chevronDown";
 export * from "./icons/close";
 export * from "./icons/accountWalletLogo";
 export * from "./icons/spinner";
+export * from "./dialog";
