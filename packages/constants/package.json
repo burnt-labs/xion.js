@@ -1,12 +1,12 @@
 {
   "name": "@burnt-labs/constants",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.1-alpha.1",
   "module": "./dist/index.mjs",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist",
-  "./styles.css": "./dist/index.css"
+    "./styles.css": "./dist/index.css"
   },
   "license": "MIT",
   "scripts": {
