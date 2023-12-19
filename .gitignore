@@ -34,3 +34,6 @@ yarn-error.log*
 
 # ui
 dist/
+
+# pnpm CI cache
+.pnpm-store

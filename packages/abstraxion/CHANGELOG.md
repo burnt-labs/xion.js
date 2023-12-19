@@ -1,12 +1,10 @@
 # @burnt-labs/abstraxion
 
-## 0.0.1-alpha.16
+## 0.1.0-alpha.16
 
-### Patch Changes
+### Minor Changes
 
-- Updated designs
-- Updated dependencies
-  - @burnt-labs/ui@0.0.1-alpha.1
+- 8c57207: Remove the advanced login options (Metamask and Keplr) from the AbstraxionSignin component. The showAdvanced state variable and related code have been deleted, simplifying the sign-in process for users.
 
 ## 0.0.1-alpha.15
 

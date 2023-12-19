@@ -19,7 +19,6 @@ export const AbstraxionSignin = () => {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { setConnectionType } = useContext(
     AbstraxionContext,
@@ -198,35 +197,14 @@ export const AbstraxionSignin = () => {
             </Button>
           </div>
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            <div
-              className="ui-flex ui-w-full ui-cursor-pointer ui-items-center ui-text-sm ui-text-white"
-              onClick={() => setShowAdvanced(!showAdvanced)}
+            <Button
+              structure="outlined"
+              theme="primary"
+              fullWidth={true}
+              onClick={handleWebauthnAuthenticate}
             >
-              Advanced Users <ChevronDown isUp={showAdvanced} />{" "}
-              {showAdvanced ? "Login with an existing EOA" : ""}
-            </div>
-            {showAdvanced && (
-              <div className="ui-flex ui-w-full ui-items-center ui-gap-4">
-                <Button
-                  structure="outlined"
-                  fullWidth={true}
-                  onClick={() => {
-                    handleConnect(WalletType.METAMASK_SNAP_LEAP);
-                  }}
-                >
-                  Metamask
-                </Button>
-                <Button
-                  structure="outlined"
-                  fullWidth={true}
-                  onClick={() => {
-                    handleConnect(WalletType.KEPLR);
-                  }}
-                >
-                  Keplr
-                </Button>
-              </div>
-            )}
+              Passkey/Biometrics
+            </Button>
           </div>
           <p className="ui-text-xs ui-text-neutral-500">
             By continuing, you agree to Burnt's{" "}
