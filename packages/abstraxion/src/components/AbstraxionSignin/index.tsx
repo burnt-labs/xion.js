@@ -196,16 +196,6 @@ export const AbstraxionSignin = () => {
               </svg>
             </Button>
           </div>
-          <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            <Button
-              structure="outlined"
-              theme="primary"
-              fullWidth={true}
-              onClick={handleWebauthnAuthenticate}
-            >
-              Passkey/Biometrics
-            </Button>
-          </div>
           <p className="ui-text-xs ui-text-neutral-500">
             By continuing, you agree to Burnt's{" "}
             <a

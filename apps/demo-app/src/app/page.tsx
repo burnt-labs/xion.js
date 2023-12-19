@@ -7,7 +7,6 @@ import {
   useAbstraxionSigningClient,
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
-import "@burnt-labs/ui/styles.css";
 
 export default function Page(): JSX.Element {
   // Abstraxion hooks
