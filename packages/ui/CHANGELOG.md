@@ -1,5 +1,11 @@
 # @burnt-labs/ui
 
+## 0.0.1-alpha.2
+
+### Patch Changes
+
+- [#26](https://github.com/burnt-labs/xion.js/pull/26) [`4f0fe61`](https://github.com/burnt-labs/xion.js/commit/4f0fe6140299a2a0aa242c3f1b22c26b327ea926) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix package.json `main` path
+
 ## 0.0.1-alpha.1
 
 ### Patch Changes
