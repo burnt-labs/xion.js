@@ -22,9 +22,9 @@ export function Sidebar() {
           href={option.path}
           className={`${
             pathname === option.path
-              ? "text-white font-bold"
-              : "text-slate-400 font-regular"
-          } font-akkuratLL block pl-8 mt-8 first:mt-0 text-xs leading-3 uppercase tracking-widest`}
+              ? "ui-text-white ui-font-bold"
+              : "ui-text-slate-400 ui-font-regular"
+          } ui-font-akkuratLL ui-block ui-pl-8 ui-mt-8 first:ui-mt-0 ui-text-xs ui-leading-3 ui-uppercase ui-tracking-widest`}
         >
           {option.text}
         </Link>
@@ -33,17 +33,17 @@ export function Sidebar() {
   };
 
   return (
-    <div className="h-screen bg-primary text-white flex flex-col w-64">
-      <div className="flex items-center justify-start pl-8 pt-8">
+    <div className="ui-h-screen ui-bg-primary ui-text-white ui-flex ui-flex-col ui-w-64">
+      <div className="ui-flex ui-items-center ui-justify-start ui-pl-8 ui-pt-8">
         <Image src="/logo.png" alt="Xion Logo" width="90" height="32" />
       </div>
 
-      <div className="flex-grow mt-14">
+      <div className="ui-flex-grow ui-mt-14">
         {renderNavOptions()}
         <a
           href={"https://explorer.burnt.com/xion-testnet-1/"}
           target="_blank"
-          className={`${"text-slate-400 font-regular"} font-akkuratLL block pl-8 mt-8 first:mt-0 text-xs leading-3 uppercase tracking-widest`}
+          className={`${"ui-text-slate-400 ui-font-regular"} ui-font-akkuratLL ui-block ui-pl-8 ui-mt-8 first:ui-mt-0 ui-text-xs ui-leading-3 ui-uppercase ui-tracking-widest`}
         >
           History
         </a>

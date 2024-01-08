@@ -10,19 +10,19 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
   );
 
   return (
-    <div className="w-full bg-gradient-to-l from-slate-300 via-slate-400 to-slate-400 rounded-2xl p-6">
-      <div className="flex mb-6 items-center">
-        <h1 className="font-akkuratLL text-white text-2xl font-bold leading-7 mr-6">
+    <div className="ui-w-full ui-bg-gradient-to-l ui-from-slate-300 ui-via-slate-400 ui-to-slate-400 ui-rounded-2xl ui-p-6">
+      <div className="ui-mb-6 ui-flex ui-items-center">
+        <h1 className="ui-font-akkuratLL ui-mr-6 ui-text-2xl ui-font-bold ui-leading-7 ui-text-white">
           Personal Account
         </h1>
         {/* <ScanIcon color="white" /> */}
       </div>
-      <h3 className="font-akkuratLL text-white text-opacity-50 text-sm font-bold">
+      <h3 className="ui-font-akkuratLL ui-text-sm ui-font-bold ui-text-white ui-text-opacity-50">
         Current Balance
       </h3>
-      <div className="flex justify-between items-center">
+      <div className="ui-flex ui-items-center ui-justify-between">
         {balanceInfo && (
-          <h1 className="font-akkuratLL text-4xl font-bold leading-wide text-white">
+          <h1 className="ui-font-akkuratLL ui-leading-wide ui-text-4xl ui-font-bold ui-text-white">
             ${balanceInfo?.total}
           </h1>
         )}
@@ -37,7 +37,7 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
         </div> */}
       </div>
       {/* Divider */}
-      <div className="my-6 w-full h-[1px] bg-white bg-opacity-20"></div>
+      <div className="ui-my-6 ui-h-[1px] ui-w-full ui-bg-white ui-bg-opacity-20"></div>
       {/* Wait for USDC */}
       {/* <div className="flex justify-between items-center mb-3">
         <p className="text-white text-base font-normal font-akkuratLL leading-normal">
@@ -53,15 +53,15 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
         </div>
       </div> */}
       {xionBalance && (
-        <div className="flex justify-between items-center">
-          <p className="text-white text-base font-normal font-akkuratLL leading-normal">
+        <div className="ui-flex ui-items-center ui-justify-between">
+          <p className="ui-font-akkuratLL ui-text-base ui-font-normal ui-leading-normal ui-text-white">
             XION
           </p>
-          <div className="flex">
-            <p className="text-white text-base font-normal font-akkuratLL leading-normal">
+          <div className="ui-flex">
+            <p className="ui-font-akkuratLL ui-text-base ui-font-normal ui-leading-normal ui-text-white">
               {xionBalance.amount} XION
             </p>
-            <p className="ml-6 text-right text-white text-opacity-70 text-base font-normal font-akkuratLL leading-normal">
+            <p className="ui-font-akkuratLL ui-ml-6 ui-text-right ui-text-base ui-font-normal ui-leading-normal ui-text-white ui-text-opacity-70">
               ${Number(xionBalance.amount) * XION_TO_USDC_CONVERSION} USDC
             </p>
           </div>

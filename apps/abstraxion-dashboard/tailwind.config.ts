@@ -1,11 +1,8 @@
 import type { Config } from 'tailwindcss'
+import sharedConfig from "@burnt-labs/tailwind-config/tailwind.config.ts";
 
 const config: Config = {
-  content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+  content: ["./components/**/*.{js,ts,jsx,tsx,mdx}", "./app/page.tsx"],
   theme: {
     extend: {
       backgroundImage: {
@@ -15,6 +12,9 @@ const config: Config = {
       },
       colors: {
         primary: "#000",
+      },
+      flexGrow: {
+        "2": "2",
       },
       fontFamily: {
         akkuratLL: ["var(--font-akkuratLL)"],
@@ -34,5 +34,7 @@ const config: Config = {
     },
   },
   plugins: [],
+  prefix: "ui-",
+  presets: [sharedConfig],
 };
 export default config

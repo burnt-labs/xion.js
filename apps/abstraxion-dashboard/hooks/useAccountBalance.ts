@@ -1,4 +1,4 @@
-import { AbstraxionAccount } from "@burnt-labs/abstraxion";
+import { AbstraxionAccount } from "@/hooks";
 import { useEffect, useState } from "react";
 
 const XION_FRACTIONAL = 1000000;
@@ -16,7 +16,7 @@ export function useAccountBalance(account?: AbstraxionAccount, client?: any) {
       let newBalances: Coin[] = [];
       const uxionBalance = await client?.getBalance(
         account.bech32Address,
-        "uxion"
+        "uxion",
       );
 
       if (uxionBalance?.amount) {
@@ -29,7 +29,7 @@ export function useAccountBalance(account?: AbstraxionAccount, client?: any) {
 
       const newTotal = newBalances.reduce(
         (acc, curr) => acc + Number(curr.amount),
-        0
+        0,
       );
 
       const newBalanceInfo = {

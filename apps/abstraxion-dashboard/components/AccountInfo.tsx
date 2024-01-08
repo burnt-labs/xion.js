@@ -18,13 +18,13 @@ export const AccountInfo = ({
       return (
         <div
           key={authenticator.id}
-          className="flex items-center px-4 mb-3 h-16 bg-neutral-50 rounded-lg"
+          className="ui-flex ui-items-center ui-px-4 ui-mb-3 ui-h-16 ui-bg-neutral-50 ui-rounded-lg"
         >
-          <div className="flex w-10 h-10 bg-black items-center justify-center rounded-full">
+          <div className="ui-flex ui-w-10 ui-h-10 ui-bg-black ui-items-center ui-justify-center ui-rounded-full">
             <ScanIcon color="white" />
           </div>
-          <div className="ml-4 flex flex-1 items-center justify-between">
-            <p className="text-black text-base font-normal font-akkuratLL leading-normal">
+          <div className="ui-ml-4 ui-flex ui-flex-1 ui-items-center ui-justify-between">
+            <p className="ui-text-black ui-text-base ui-font-normal ui-font-akkuratLL ui-leading-normal">
               {String(authenticator.type).toUpperCase()}
             </p>
           </div>
@@ -33,23 +33,23 @@ export const AccountInfo = ({
     });
   };
   return (
-    <div className="border border-black/20 p-6">
-      <h3 className="text-black text-sm font-bold font-akkuratLL leading-none mb-6">
+    <div className="ui-border ui-border-black/20 ui-p-6">
+      <h3 className="ui-text-black ui-text-sm ui-font-bold ui-font-akkuratLL ui-leading-none ui-mb-6">
         XION Address
       </h3>
       <div
         onClick={copyXionAddress}
-        className="flex cursor-pointer items-center justify-between mb-10 px-4 w-full h-16 bg-neutral-50 rounded-lg"
+        className="ui-flex ui-cursor-pointer ui-items-center ui-justify-between ui-mb-10 ui-px-4 ui-w-full ui-h-16 ui-bg-neutral-50 ui-rounded-lg"
       >
-        <p className="text-stone-500 text-base font-normal font-akkuratLL leading-normal">
+        <p className="ui-text-stone-500 ui-text-base ui-font-normal ui-font-akkuratLL ui-leading-normal">
           {truncateAddress(account?.bech32Address)}
         </p>
         <CopyIcon color="black" />
       </div>
-      <div className="flex">
-        <div className="flex flex-1 flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-black text-sm font-bold font-akkuratLL leading-none">
+      <div className="ui-flex">
+        <div className="ui-flex ui-flex-1 ui-flex-col">
+          <div className="ui-flex ui-items-center ui-justify-between ui-mb-6">
+            <h3 className="ui-text-black ui-text-sm ui-font-bold ui-font-akkuratLL ui-leading-none">
               Your Logins
             </h3>
             {/* TODO: Add ability to add authenticator */}

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Providers } from "./providers";
 
+import "@burnt-labs/ui/styles.css";
+
 import "./globals.css";
 
 const akkuratLL = localFont({
@@ -35,12 +37,16 @@ export const metadata: Metadata = {
   description: "A dashboard for managing Xion accounts.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body className={akkuratLL.variable}>
         <Providers>
-          <div className="flex">{children}</div>
+          <div className="ui-flex">{children}</div>
         </Providers>
       </body>
     </html>
