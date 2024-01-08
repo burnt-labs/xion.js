@@ -13,13 +13,15 @@
     "build": "tsup",
     "lint": "eslint src/",
     "dev": "tsup --watch",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "clean": "rimraf ./dist"
   },
   "devDependencies": {
     "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
     "tsup": "^6.0.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "rimraf": "^5.0.5"
   },
   "publishConfig": {
     "access": "public"
