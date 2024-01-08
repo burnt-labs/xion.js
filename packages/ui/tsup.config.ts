@@ -3,6 +3,7 @@ import copy from "rollup-plugin-copy";
 
 const copyPlugin = copy({
   targets: [{ src: "src/assets", dest: "dist" }],
+  copyOnce: true,
 });
 
 export default defineConfig((options: Options) => ({
