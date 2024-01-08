@@ -7,11 +7,8 @@ import {
   useAbstraxionSigningClient,
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
-<<<<<<< HEAD
-=======
 import "@burnt-labs/ui/styles.css";
 import type { InstantiateResult } from "@cosmjs/cosmwasm-stargate";
->>>>>>> f6e5618f36ff15e6f642efad209f88151b395b7a
 
 type InitiateResultOrUndefined = InstantiateResult | undefined;
 export default function Page(): JSX.Element {
@@ -82,34 +79,19 @@ export default function Page(): JSX.Element {
       <h1 className="text-2xl font-bold tracking-tighter text-white">
         ABSTRAXION
       </h1>
-<<<<<<< HEAD
-      <Button fullWidth onClick={() => setIsOpen(true)}>
-=======
       <Button
         fullWidth
         onClick={() => {
           setIsOpen(true);
         }}
         structure="base"
-        theme="secondary"
       >
->>>>>>> f6e5618f36ff15e6f642efad209f88151b395b7a
         {account ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
         ) : (
           "CONNECT"
         )}
       </Button>
-<<<<<<< HEAD
-      {client && (
-        <Button fullWidth disabled={loading} onClick={instantiateTestContract}>
-          {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
-        </Button>
-      )}
-      <Abstraxion onClose={() => setIsOpen(false)} isOpen={isOpen} />
-      {initiateResult && (
-        <div className="flex flex-col rounded border-2 border-white p-2">
-=======
       {client ? (
         <Button
           disabled={loading}
@@ -118,7 +100,6 @@ export default function Page(): JSX.Element {
             void instantiateTestContract();
           }}
           structure="base"
-          theme="secondary"
         >
           {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
         </Button>
@@ -131,7 +112,6 @@ export default function Page(): JSX.Element {
       />
       {initiateResult ? (
         <div className="flex flex-col rounded border-2 border-black p-2 dark:border-white">
->>>>>>> f6e5618f36ff15e6f642efad209f88151b395b7a
           <div className="mt-2">
             <p className="text-zinc-500">
               <span className="font-bold">Contract Address:</span>
@@ -149,10 +129,6 @@ export default function Page(): JSX.Element {
               className="text-black underline visited:text-purple-600 dark:text-white"
               href={blockExplorerUrl}
               target="_blank"
-<<<<<<< HEAD
-              className="text-white underline visited:text-purple-600"
-=======
->>>>>>> f6e5618f36ff15e6f642efad209f88151b395b7a
             >
               View in Block Explorer
             </Link>
