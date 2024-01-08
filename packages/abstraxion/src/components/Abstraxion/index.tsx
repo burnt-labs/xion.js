@@ -1,4 +1,5 @@
-import { useContext, useEffect, useRef } from "react";
+"use client";
+import { useContext, useEffect } from "react";
 import { GrazProvider } from "graz";
 import { StytchProvider } from "@stytch/nextjs";
 import { ApolloProvider } from "@apollo/client";
@@ -10,10 +11,9 @@ import {
 } from "../AbstraxionContext";
 import { apolloClient, stytchClient } from "../../lib";
 import { AbstraxionSignin } from "../AbstraxionSignin";
-import { useAbstraxionAccount } from "../../hooks";
 import { Loading } from "../Loading";
-import { AbstraxionWallets } from "../AbstraxionWallets";
 import { ErrorDisplay } from "../ErrorDisplay";
+import { Connected } from "../Connected/Connected";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -21,11 +21,9 @@ export interface ModalProps {
 }
 
 export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
-  const { abstraxionError } = useContext(
+  const { abstraxionError, isConnecting, isConnected } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
-
-  const { isConnected, isConnecting, isReconnecting } = useAbstraxionAccount();
 
   useEffect(() => {
     const closeOnEscKey = (e: any) => (e.key === "Escape" ? onClose() : null);
@@ -42,10 +40,10 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
       <DialogContent>
         {abstraxionError ? (
           <ErrorDisplay message={abstraxionError} onClose={onClose} />
-        ) : isConnecting || isReconnecting ? (
+        ) : isConnecting ? (
           <Loading />
         ) : isConnected ? (
-          <AbstraxionWallets />
+          <Connected />
         ) : (
           <AbstraxionSignin />
         )}

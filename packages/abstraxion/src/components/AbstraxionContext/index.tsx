@@ -1,6 +1,10 @@
 import { ReactNode, createContext, useState } from "react";
 
 export interface AbstraxionContextProps {
+  isConnected: boolean;
+  isConnecting: boolean;
+  setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
   connectionType: "stytch" | "graz" | "none";
   setConnectionType: React.Dispatch<
     React.SetStateAction<"stytch" | "graz" | "none">
@@ -27,10 +31,16 @@ export const AbstraxionContextProvider = ({
     undefined,
   );
   const [abstraxionError, setAbstraxionError] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   return (
     <AbstraxionContext.Provider
       value={{
+        isConnected,
+        setIsConnected,
+        isConnecting,
+        setIsConnecting,
         connectionType,
         setConnectionType,
         abstractAccount,
