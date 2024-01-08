@@ -1,14 +1,14 @@
+import type { MouseEvent } from "react";
 import { useContext, useEffect, useRef } from "react";
 import { GrazProvider } from "graz";
 import { StytchProvider } from "@stytch/nextjs";
 import { ApolloProvider } from "@apollo/client";
+import { ModalAnchor, Modal } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
-  AbstraxionContextProps,
   AbstraxionContextProvider,
 } from "../AbstraxionContext";
 import { apolloClient, stytchClient } from "../../lib";
-import { ModalAnchor, Modal } from "@burnt-labs/ui";
 import { AbstraxionSignin } from "../AbstraxionSignin";
 import { useAbstraxionAccount } from "../../hooks";
 import { Loading } from "../Loading";
@@ -20,17 +20,20 @@ export interface ModalProps {
   isOpen: boolean;
 }
 
-export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
+export function Abstraxion({
+  isOpen,
+  onClose,
+}: ModalProps): JSX.Element | null {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  const { abstraxionError } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+  const { abstraxionError } = useContext(AbstraxionContext);
 
   const { isConnected, isConnecting, isReconnecting } = useAbstraxionAccount();
 
   useEffect(() => {
-    const closeOnEscKey = (e: any) => (e.key === "Escape" ? onClose() : null);
+    const closeOnEscKey = (e: KeyboardEventInit): void => {
+      e.key === "Escape" ? onClose() : null;
+    };
     document.addEventListener("keydown", closeOnEscKey);
     return () => {
       document.removeEventListener("keydown", closeOnEscKey);
@@ -40,9 +43,9 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <ModalAnchor ref={modalRef} onClick={onClose}>
+    <ModalAnchor onClick={onClose} ref={modalRef}>
       <Modal
-        onClick={(e: any) => {
+        onClick={(e: MouseEvent) => {
           e.stopPropagation();
         }}
       >
@@ -58,13 +61,13 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
       </Modal>
     </ModalAnchor>
   );
-};
+}
 
-export const AbstraxionProvider = ({
+export function AbstraxionProvider({
   children,
 }: {
   children: React.ReactNode;
-}) => {
+}): JSX.Element {
   return (
     <AbstraxionContextProvider>
       <StytchProvider stytch={stytchClient}>
@@ -74,4 +77,4 @@ export const AbstraxionProvider = ({
       </StytchProvider>
     </AbstraxionContextProvider>
   );
-};
+}
