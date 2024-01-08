@@ -24,23 +24,24 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
-    "@burnt-labs/tailwind-config": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
+    "@burnt-labs/eslint-config-custom": "0.0.1-alpha.0",
+    "@burnt-labs/tailwind-config": "0.0.1-alpha.1",
+    "@burnt-labs/tsconfig": "0.0.1-alpha.0",
     "@types/react": "^18.2.5",
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.20",
     "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rimraf": "^5.0.5",
     "tailwindcss": "^3.2.4",
     "tsup": "^6.0.1",
-    "typescript": "^5.2.2",
-    "rimraf": "^5.0.5"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@apollo/client": "^3.8.7",
-    "@burnt-labs/constants": "workspace:*",
-    "@burnt-labs/signers": "workspace:*",
-    "@burnt-labs/ui": "workspace:*",
+    "@apollo/client": "^3.8.8",
+    "@burnt-labs/constants": "0.0.1-alpha.2",
+    "@burnt-labs/signers": "0.0.1-alpha.2",
+    "@burnt-labs/ui": "0.0.1-alpha.2",
     "@stytch/nextjs": "^14.0.0",
     "@stytch/vanilla-js": "^3.2.1",
     "graz": "^0.0.51",
