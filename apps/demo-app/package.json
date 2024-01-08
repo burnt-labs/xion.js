@@ -1,6 +1,6 @@
 {
   "name": "demo-app",
-  "version": "1.0.1-alpha.1",
+  "version": "1.0.1-alpha.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,24 +9,26 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@burnt-labs/abstraxion": "workspace:*",
+    "@burnt-labs/signers": "workspace:*",
+    "@burnt-labs/ui": "workspace:*",
+    "@cosmjs/cosmwasm-stargate": "^0.31.3",
     "next": "^14.0.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@burnt-labs/ui": "workspace:*",
-    "@burnt-labs/signers": "workspace:*",
-    "@burnt-labs/abstraxion": "workspace:*"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/tailwind-config": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
     "@next/eslint-plugin-next": "^13.4.19",
     "@types/node": "^18.11.17",
     "@types/react": "^18.2.5",
     "@types/react-dom": "^18.2.4",
     "autoprefixer": "^10.4.13",
-    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "eslint-config-next": "14.0.4",
     "postcss": "^8.4.20",
-    "@burnt-labs/tailwind-config": "workspace:*",
     "tailwindcss": "^3.2.4",
-    "@burnt-labs/tsconfig": "workspace:*",
     "typescript": "^5.2.2"
   }
 }

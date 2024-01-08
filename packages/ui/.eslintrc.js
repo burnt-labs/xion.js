@@ -1,3 +1,3 @@
 module.exports = {
-  extends: ["custom/react"],
+  extends: ["@burnt-labs/eslint-config-custom/react"],
 };

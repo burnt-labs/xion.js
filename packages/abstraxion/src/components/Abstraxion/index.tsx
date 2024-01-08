@@ -1,4 +1,5 @@
 "use client";
+import type { MouseEvent } from "react";
 import { useContext, useEffect } from "react";
 import { GrazProvider } from "graz";
 import { StytchProvider } from "@stytch/nextjs";
@@ -6,7 +7,6 @@ import { ApolloProvider } from "@apollo/client";
 import { Dialog, DialogContent } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
-  AbstraxionContextProps,
   AbstraxionContextProvider,
 } from "../AbstraxionContext";
 import { apolloClient, stytchClient } from "../../lib";
@@ -20,13 +20,17 @@ export interface ModalProps {
   isOpen: boolean;
 }
 
-export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
-  const { abstraxionError, isConnecting, isConnected } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+export function Abstraxion({
+  isOpen,
+  onClose,
+}: ModalProps): JSX.Element | null {
+  const { abstraxionError, isConnecting, isConnected } =
+    useContext(AbstraxionContext);
 
   useEffect(() => {
-    const closeOnEscKey = (e: any) => (e.key === "Escape" ? onClose() : null);
+    const closeOnEscKey = (e: KeyboardEventInit): void => {
+      e.key === "Escape" ? onClose() : null;
+    };
     document.addEventListener("keydown", closeOnEscKey);
     return () => {
       document.removeEventListener("keydown", closeOnEscKey);
@@ -50,13 +54,13 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
       </DialogContent>
     </Dialog>
   );
-};
+}
 
-export const AbstraxionProvider = ({
+export function AbstraxionProvider({
   children,
 }: {
   children: React.ReactNode;
-}) => {
+}): JSX.Element {
   return (
     <AbstraxionContextProvider>
       <StytchProvider stytch={stytchClient}>
@@ -66,4 +70,4 @@ export const AbstraxionProvider = ({
       </StytchProvider>
     </AbstraxionContextProvider>
   );
-};
+}

@@ -8,13 +8,12 @@
     "clean": "turbo clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "changeset": "changeset",
-    "ci:publish": "pnpm publish -r",
-    "ci:version": "changeset version",
     "publish:packages": "changeset publish",
     "version:packages": "changeset version"
   },
   "devDependencies": {
     "@burnt-labs/tsconfig": "workspace:*",
+    "@changesets/changelog-github": "^0.5.0",
     "eslint": "^8.48.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.3",

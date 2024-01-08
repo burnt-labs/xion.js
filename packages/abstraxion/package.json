@@ -1,10 +1,12 @@
 {
   "name": "@burnt-labs/abstraxion",
-  "version": "0.1.0-alpha.16",
-  "types": "./dist/index.d.ts",
+  "version": "0.1.0-alpha.18",
   "sideEffects": [
     "**/*.css"
   ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist",
     "./styles.css": "./dist/index.css"
@@ -21,7 +23,6 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
@@ -35,6 +36,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.7",
+    "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
     "@stytch/nextjs": "^14.0.0",
