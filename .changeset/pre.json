@@ -9,16 +9,20 @@
     "@burnt-labs/signers": "0.0.0",
     "@burnt-labs/tailwind-config": "0.0.0",
     "@burnt-labs/tsconfig": "0.0.0",
-    "@burnt-labs/ui": "0.0.0"
+    "@burnt-labs/ui": "0.0.0",
+    "abstraxion-dashboard": "0.1.0"
   },
   "changesets": [
     "bright-carpets-rhyme",
     "chilly-lamps-float",
+    "flat-trees-confess",
     "four-forks-occur",
     "honest-apples-admire",
     "khaki-mails-listen",
     "long-icons-kiss",
     "rich-wolves-whisper",
-    "sour-wasps-film"
+    "sour-wasps-film",
+    "three-oranges-retire",
+    "twenty-carrots-occur"
   ]
 }
