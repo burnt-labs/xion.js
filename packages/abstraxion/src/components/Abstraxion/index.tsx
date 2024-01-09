@@ -43,7 +43,7 @@ export function Abstraxion({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         {abstraxionError ? (
-          <ErrorDisplay message={abstraxionError} onClose={onClose} />
+          <ErrorDisplay />
         ) : isConnecting ? (
           <Loading />
         ) : isConnected ? (
