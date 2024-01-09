@@ -167,21 +167,8 @@ export const AbstraxionSignin = () => {
             Log in / Sign up
           </Button>
           <p className="ui-text-xs ui-text-zinc-400 dark:ui-text-zinc-600">
-            By continuing, you agree to Burnt's{" "}
-            <a
-              className="ui-text-black dark:ui-text-white ui-no-underline hover:ui-underline"
-              href="https://burnt.com"
-            >
-              Terms of Service
-            </a>{" "}
-            and acknowledge that you have read and understand the XION{" "}
-            <a
-              className="ui-text-black dark:ui-text-white ui-no-underline hover:ui-underline"
-              href="https://burnt.com"
-            >
-              Disclaimer
-            </a>
-            .
+            By continuing, you agree to the terms & conditions and acknowledge
+            that you have read and understood the disclaimers.
           </p>
         </>
       )}
