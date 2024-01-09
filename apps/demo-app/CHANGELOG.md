@@ -1,5 +1,12 @@
 # demo-app
 
+## 1.0.1-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [[`7f498ee`](https://github.com/burnt-labs/xion.js/commit/7f498ee6c58a897f0a6cda76ecb60b52dd495846), [`5a17b99`](https://github.com/burnt-labs/xion.js/commit/5a17b99b56e62535297bd2b5a1086df68ee82ee1)]:
+  - @burnt-labs/abstraxion@0.1.0-alpha.19
+
 ## 1.0.1-alpha.3
 
 ### Patch Changes
