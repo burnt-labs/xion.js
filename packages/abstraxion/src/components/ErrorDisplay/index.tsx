@@ -1,40 +1,24 @@
-import { useContext } from "react";
 import { Button } from "@burnt-labs/ui";
-import {
-  AbstraxionContext,
-  AbstraxionContextProps,
-} from "../AbstraxionContext";
 
-export const ErrorDisplay = ({
-  message,
-  onClose,
-}: {
-  message?: string;
-  onClose: VoidFunction;
-}) => {
-  const { setAbstraxionError } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
-
+export function ErrorDisplay() {
   return (
-    <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-start ui-justify-center ui-gap-4 ui-p-8">
+    <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-start ui-justify-center ui-gap-4 ui-p-8 ui-text-center">
       <h1 className="ui-text-3xl ui-font-bold ui-uppercase ui-tracking-tighter ui-text-white">
-        Uh oh.
+        Oops! Something went wrong...
       </h1>
-      <h2 className="ui-tracking-tight ui-text-white">Something went wrong.</h2>
-      {message && (
-        <p className="ui-tracking-tight ui-text-zinc-700">{message}</p>
-      )}
+      <h2 className="ui-tracking-tight ui-text-neutral-500">
+        Please try refreshing the page. If the problem continues, check your
+        internet connection or try again later.
+      </h2>
       <Button
-        structure="outlined"
+        structure="naked"
         fullWidth={true}
         onClick={() => {
-          onClose();
-          setAbstraxionError("");
+          window.location.reload();
         }}
       >
-        Dismiss
+        Refresh the page
       </Button>
     </div>
   );
-};
+}
