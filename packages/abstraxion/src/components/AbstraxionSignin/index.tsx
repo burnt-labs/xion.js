@@ -92,17 +92,6 @@ export const AbstraxionSignin = () => {
     suggestAndConnect({ chainInfo: testnetChainInfo, walletType: wallet });
   };
 
-  async function handleWebauthnAuthenticate() {
-    try {
-      await stytchClient.webauthn.authenticate({
-        domain: window.location.hostname,
-        session_duration_minutes: 60,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   // For the "resend otp" countdown
   useEffect(() => {
     if (timeLeft === 0) {
@@ -177,23 +166,6 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
-          <div className="ui-flex ui-items-center ui-w-full">
-            <div className="ui-border-b ui-border-zinc-300 ui-grow" />
-            <span className="ui-text-black ui-font-semibold dark:ui-text-white ui-shrink ui-px-3">
-              OR
-            </span>
-            <div className="ui-border-b ui-border-zinc-300 ui-grow" />
-          </div>
-          <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            <Button
-              structure="outlined"
-              theme="primary"
-              fullWidth={true}
-              onClick={handleWebauthnAuthenticate}
-            >
-              Passkey/Biometrics
-            </Button>
-          </div>
           <p className="ui-text-xs ui-text-zinc-400 dark:ui-text-zinc-600">
             By continuing, you agree to Burnt's{" "}
             <a
