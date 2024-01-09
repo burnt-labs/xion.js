@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useDisconnect } from "graz";
 import { useStytch, useStytchUser } from "@stytch/nextjs";
 import { useQuery } from "@apollo/client";
@@ -170,7 +170,6 @@ export const AbstraxionWallets = () => {
               </div>
               <Button
                 structure="naked"
-                theme="primary"
                 fullWidth={true}
                 onClick={async () => {
                   await handleJwtAALoginOrCreate(session_jwt, session_token);
@@ -186,7 +185,6 @@ export const AbstraxionWallets = () => {
               user?.webauthn_registrations.length < 1 && (
                 <Button
                   structure="outlined"
-                  theme="primary"
                   fullWidth={true}
                   onClick={registerWebAuthn}
                 >
@@ -195,7 +193,6 @@ export const AbstraxionWallets = () => {
               )}
             <Button
               structure="outlined"
-              theme="primary"
               fullWidth={true}
               onClick={handleDisconnect}
             >

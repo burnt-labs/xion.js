@@ -31,7 +31,6 @@ export const ErrorDisplay = ({
       )}
       <Button
         structure="outlined"
-        theme="primary"
         fullWidth={true}
         onClick={() => {
           onClose();

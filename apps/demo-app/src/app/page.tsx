@@ -76,7 +76,7 @@ export default function Page(): JSX.Element {
 
   return (
     <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
-      <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white">
+      <h1 className="text-2xl font-bold tracking-tighter text-white">
         ABSTRAXION
       </h1>
       <Button
@@ -85,7 +85,6 @@ export default function Page(): JSX.Element {
           setIsOpen(true);
         }}
         structure="base"
-        theme="secondary"
       >
         {account ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
@@ -101,7 +100,6 @@ export default function Page(): JSX.Element {
             void instantiateTestContract();
           }}
           structure="base"
-          theme="secondary"
         >
           {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
         </Button>
