@@ -27,7 +27,7 @@
     "@burnt-labs/eslint-config-custom": "0.0.1-alpha.0",
     "@burnt-labs/tailwind-config": "0.0.1-alpha.1",
     "@burnt-labs/tsconfig": "0.0.1-alpha.0",
-    "@types/react": "^18.2.5",
+    "@types/react": "^18.2.47",
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.20",
     "react": "^18.2.0",
@@ -44,6 +44,7 @@
     "@burnt-labs/ui": "0.0.1-alpha.2",
     "@stytch/nextjs": "^14.0.0",
     "@stytch/vanilla-js": "^3.2.1",
+    "@types/react-dom": "^18.2.18",
     "graz": "^0.0.51",
     "jose": "^5.1.3"
   }

@@ -26,7 +26,7 @@
     "@burnt-labs/eslint-config-custom": "0.0.1-alpha.0",
     "@burnt-labs/tailwind-config": "0.0.1-alpha.1",
     "@burnt-labs/tsconfig": "0.0.1-alpha.0",
-    "@types/react": "^18.2.5",
+    "@types/react": "^18.2.47",
     "autoprefixer": "^10.4.13",
     "clsx": "^2.0.0",
     "postcss": "^8.4.20",
@@ -39,6 +39,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.0.5"
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@types/react-dom": "^18.2.18"
   }
 }
