@@ -22,7 +22,11 @@ import {
   SingleSmartWalletQuery,
 } from "../../interfaces/queries";
 import { OTPsAuthenticateResponse } from "stytch";
-import { ApolloClient, InMemoryCache, NormalizedCacheObject } from "@apollo/client";
+import {
+  ApolloClient,
+  InMemoryCache,
+  NormalizedCacheObject,
+} from "@apollo/client";
 
 let apolloClientInstance: ApolloClient<NormalizedCacheObject>;
 
@@ -36,7 +40,6 @@ export const getApolloClient = (url?: string) => {
   }
   return apolloClientInstance;
 };
-
 
 export type INodes<T> = {
   nodes: Array<T>;
@@ -86,7 +89,7 @@ export function customAccountFromAny(input: Any): Account {
 export function makeAAuthInfo(
   account: Account,
   pubKey: Uint8Array,
-  fee: StdFee
+  fee: StdFee,
 ): AuthInfo {
   return AuthInfo.fromPartial({
     signerInfos: [
@@ -123,7 +126,7 @@ export function makeAAuthInfo(
 export async function getAAccounts(
   accounts: readonly AccountData[],
   abstractAccount: string,
-  indexerUrl: string
+  indexerUrl: string,
 ): Promise<AAccountData[]> {
   const defaultData: AAccountData = {
     address: "",
@@ -172,7 +175,7 @@ export async function getAAccounts(
             algo: authenticator.type.toLowerCase() as Algo,
             pubkey: new Uint8Array(), // to signify an AA account
             authenticatorId: Number(
-              authenticator.authenticatorId.split("xion")[2]
+              authenticator.authenticatorId.split("xion")[2],
             ),
           });
         }
@@ -189,7 +192,7 @@ export async function getAAccounts(
  */
 export async function getAALastAuthenticatorId(
   abstractAccount: string,
-  indexerUrl: string
+  indexerUrl: string,
 ): Promise<number> {
   const apolloClient = getApolloClient(indexerUrl);
   const { data } = await apolloClient.query<{
@@ -216,16 +219,19 @@ export async function getAALastAuthenticatorId(
 export async function buildAddJWTAuthenticatorMsg(
   abstractAccount: string,
   session: OTPsAuthenticateResponse, // this is the extra data required for the authenticator,
-  indexerUrl: string
+  indexerUrl: string,
 ): Promise<AddAuthenticator | undefined> {
   // get the AA lastAuthenticatorId
-  const lastAuthenticatorId = await getAALastAuthenticatorId(abstractAccount, indexerUrl);
+  const lastAuthenticatorId = await getAALastAuthenticatorId(
+    abstractAccount,
+    indexerUrl,
+  );
   let addAuthMsg: AddAuthenticator = {
     add_auth_method: {
       add_authenticator: {
         Jwt: {
           id: lastAuthenticatorId + 1,
-          aud: "project-test-e97208b8-8b04-4810-a0ad-10932d5a1d12",
+          aud: "project-live-7e4a3221-79cd-4f34-ac1d-fedac4bde13e",
           sub: session.user.user_id,
           token: session.session_token,
         },

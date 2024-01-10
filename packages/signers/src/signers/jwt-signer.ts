@@ -56,7 +56,7 @@ export class AbstractAccountJWTSigner extends AASigner {
     const message = Buffer.from(hashSignBytes).toString("base64");
 
     const authResponse = await fetch(
-      "https://burnt-abstraxion-api.onrender.com/api/v1/sessions/authenticate",
+      "https://aa.xion-testnet-1.burnt.com/api/v1/sessions/authenticate",
       {
         method: "POST",
         headers: {
@@ -109,7 +109,7 @@ export class AbstractAccountJWTSigner extends AASigner {
     const hashedMessage = Buffer.from(hashSignBytes).toString("base64");
 
     const authResponse = await fetch(
-      "https://burnt-abstraxion-api.onrender.com/api/v1/sessions/authenticate",
+      "https://aa.xion-testnet-1.burnt.com/api/v1/sessions/authenticate",
       {
         method: "POST",
         headers: {
