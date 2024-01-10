@@ -1,5 +1,16 @@
 # @burnt-labs/abstraxion
 
+## 0.1.0-alpha.20
+
+### Minor Changes
+
+- [#37](https://github.com/burnt-labs/xion.js/pull/37) [`30b8913`](https://github.com/burnt-labs/xion.js/commit/30b891389890bb85486d2e5d1d49ca2c9a16f8b8) Thanks [@justinbarry](https://github.com/justinbarry)! - Change API endpoints to the 'live' infrastructure and the live stytch project id
+
+### Patch Changes
+
+- Updated dependencies [[`30b8913`](https://github.com/burnt-labs/xion.js/commit/30b891389890bb85486d2e5d1d49ca2c9a16f8b8)]:
+  - @burnt-labs/signers@0.1.0-alpha.3
+
 ## 0.1.0-alpha.19
 
 ### Minor Changes
