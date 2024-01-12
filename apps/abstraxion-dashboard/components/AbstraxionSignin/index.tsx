@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { MouseEvent, useContext, useEffect, useState } from "react";
 import { WalletType, useSuggestChainAndConnect } from "graz";
 import { useStytch } from "@stytch/nextjs";
 import {
@@ -136,17 +136,11 @@ export const AbstraxionSignin = () => {
             setError={setOtpError}
           />
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            <Button
-              structure="base"
-              theme="primary"
-              fullWidth={true}
-              onClick={handleOtp}
-            >
+            <Button structure="base" fullWidth={true} onClick={handleOtp}>
               Confirm
             </Button>
             <Button
               structure="outlined"
-              theme="primary"
               fullWidth={true}
               onClick={handleEmail}
               disabled={!!timeLeft}
@@ -162,7 +156,6 @@ export const AbstraxionSignin = () => {
           </h1>
           <Input
             placeholder="Email address"
-            fullWidth={true}
             value={email}
             onChange={handleEmailChange}
             error={emailError}
@@ -170,7 +163,6 @@ export const AbstraxionSignin = () => {
           />
           <Button
             structure="base"
-            theme="primary"
             fullWidth={true}
             onClick={handleEmail}
             disabled={!!emailError}
@@ -187,7 +179,6 @@ export const AbstraxionSignin = () => {
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
             <Button
               structure="outlined"
-              theme="primary"
               fullWidth={true}
               onClick={handleWebauthnAuthenticate}
             >

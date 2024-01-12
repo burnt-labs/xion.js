@@ -14,6 +14,8 @@ import { useAbstraxionAccount } from "@/hooks";
 import { Loading } from "@/components/Loading";
 import { AbstraxionWallets } from "@/components/AbstraxionWallets";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
+import { useSearchParams } from "next/navigation";
+import { AbstraxionGrant } from "../AbstraxionGrant";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -21,14 +23,22 @@ export interface ModalProps {
 }
 
 export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
+  const searchParams = useSearchParams();
   const modalRef = useRef<HTMLDivElement>(null);
 
   const { abstraxionError } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
-  const { isConnected, isConnecting, isReconnecting } = useAbstraxionAccount();
+  const {
+    isConnected,
+    isConnecting,
+    isReconnecting,
+    data: account,
+  } = useAbstraxionAccount();
 
+  const permissions = searchParams.get("permissions");
+  const grantee = searchParams.get("grantee");
   useEffect(() => {
     const closeOnEscKey = (e: any) => (e.key === "Escape" ? onClose() : null);
     document.addEventListener("keydown", closeOnEscKey);
@@ -50,6 +60,8 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
           <ErrorDisplay message={abstraxionError} onClose={onClose} />
         ) : isConnecting || isReconnecting ? (
           <Loading />
+        ) : account?.bech32Address && permissions && grantee ? (
+          <AbstraxionGrant permissions={permissions} grantee={grantee} />
         ) : isConnected ? (
           <AbstraxionWallets />
         ) : (

@@ -51,6 +51,9 @@ importers:
       '@burnt-labs/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@cosmjs/proto-signing':
+        specifier: ^0.31.3
+        version: 0.31.3
       '@stytch/nextjs':
         specifier: ^14.0.0
         version: 14.0.0(@stytch/vanilla-js@3.2.1)(react-dom@18.2.0)(react@18.2.0)
@@ -60,6 +63,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^4.36.1
         version: 4.36.1(react-dom@18.2.0)(react@18.2.0)
+      cosmjs-types:
+        specifier: ^0.8.0
+        version: 0.8.0
       graz:
         specifier: ^0.0.51
         version: 0.0.51(@types/react@18.2.21)(react-dom@18.2.0)(react@18.2.0)
