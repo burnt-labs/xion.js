@@ -18,9 +18,9 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "0.0.1-alpha.0",
-    "@burnt-labs/tailwind-config": "0.0.1-alpha.1",
-    "@burnt-labs/tsconfig": "0.0.1-alpha.0",
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/tailwind-config": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
     "@next/eslint-plugin-next": "^13.4.19",
     "@types/node": "^20",
     "@types/react": "^18.2.47",
