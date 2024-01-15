@@ -1,5 +1,4 @@
 "use client";
-import type { MouseEvent } from "react";
 import { useContext, useEffect } from "react";
 import { GrazProvider } from "graz";
 import { StytchProvider } from "@stytch/nextjs";

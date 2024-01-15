@@ -11,7 +11,10 @@
     "outDir": "./dist",
     "sourceMap": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]

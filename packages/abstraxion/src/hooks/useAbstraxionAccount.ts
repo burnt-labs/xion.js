@@ -1,67 +1,42 @@
-import { useContext, useEffect } from "react";
-import { useAccount } from "graz";
-import { useStytchSession } from "@stytch/nextjs";
+import { useContext, useEffect, useState } from "react";
+import { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
-} from "../components/AbstraxionContext";
+} from "@/src/components/AbstraxionContext";
+import { getAccountAddress } from "@/utils/get-account-address";
 
 export interface AbstraxionAccount {
-  name?: string;
-  algo?: string;
-  pubKey?: Uint8Array;
-  address?: Uint8Array;
+  wallet?: DirectSecp256k1HdWallet;
   bech32Address: string;
-  isNanoLedger?: boolean;
-  isKeystone?: boolean;
 }
 
 export interface useAbstraxionAccountProps {
-  data?: AbstraxionAccount;
+  data: AbstraxionAccount;
   isConnected: boolean;
-  isConnecting?: boolean;
-  isReconnecting?: boolean;
 }
 
-export const useAbstraxionAccount = () => {
-  const { session } = useStytchSession();
-  const { data, isConnected, isConnecting, isReconnecting } = useAccount();
-
-  const { connectionType, setConnectionType, abstractAccount } = useContext(
+export const useAbstraxionAccount = (): useAbstraxionAccountProps => {
+  const { abstraxionAccount, isConnected } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
+  const [bech32Address, setBech32Address] = useState("");
+
   useEffect(() => {
-    const refreshConnectionType = () => {
-      if (session) {
-        setConnectionType("stytch");
-      } else if (data) {
-        setConnectionType("graz");
-      }
-    };
-
-    if (connectionType === "none") {
-      refreshConnectionType();
+    async function updateAddress() {
+      const address = await getAccountAddress();
+      setBech32Address(address);
     }
-  }, [session, data]);
 
-  switch (connectionType) {
-    case "stytch":
-      return {
-        data: {
-          ...abstractAccount,
-          bech32Address: abstractAccount?.id,
-        } as AbstraxionAccount,
-        isConnected: !!session,
-      };
-    case "graz":
-      return {
-        data: data as AbstraxionAccount,
-        isConnected: isConnected,
-        isConnecting: isConnecting,
-        isReconnecting: isReconnecting,
-      };
-    default:
-      return { data: undefined, isConnected: false };
-  }
+    updateAddress();
+  }, [abstraxionAccount]);
+
+  return {
+    data: {
+      wallet: abstraxionAccount,
+      bech32Address: bech32Address,
+    },
+    isConnected: isConnected,
+  };
 };

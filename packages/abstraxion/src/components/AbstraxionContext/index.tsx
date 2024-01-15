@@ -1,18 +1,15 @@
 import { ReactNode, createContext, useState } from "react";
+import type { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
 
 export interface AbstraxionContextProps {
   isConnected: boolean;
+  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
   isConnecting: boolean;
   setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
-  connectionType: "stytch" | "graz" | "none";
-  setConnectionType: React.Dispatch<
-    React.SetStateAction<"stytch" | "graz" | "none">
-  >;
-  abstractAccount: any; // TODO: Properly define interface here
-  setAbstractAccount: React.Dispatch<any>;
   abstraxionError: string;
   setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
+  abstraxionAccount: DirectSecp256k1HdWallet | undefined;
+  setAbstraxionAccount: React.Dispatch<DirectSecp256k1HdWallet | undefined>;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -24,15 +21,12 @@ export const AbstraxionContextProvider = ({
 }: {
   children: ReactNode;
 }) => {
-  const [connectionType, setConnectionType] = useState<
-    "stytch" | "graz" | "none"
-  >("none");
-  const [abstractAccount, setAbstractAccount] = useState<any | undefined>(
-    undefined,
-  );
   const [abstraxionError, setAbstraxionError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [abstraxionAccount, setAbstraxionAccount] = useState<
+    DirectSecp256k1HdWallet | undefined
+  >(undefined);
 
   return (
     <AbstraxionContext.Provider
@@ -41,12 +35,10 @@ export const AbstraxionContextProvider = ({
         setIsConnected,
         isConnecting,
         setIsConnecting,
-        connectionType,
-        setConnectionType,
-        abstractAccount,
-        setAbstractAccount,
         abstraxionError,
         setAbstraxionError,
+        abstraxionAccount,
+        setAbstraxionAccount,
       }}
     >
       {children}

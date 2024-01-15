@@ -1,21 +1,16 @@
 "use client";
 import { useContext, useEffect, useRef } from "react";
+import { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
 import { Button, ModalSection } from "@burnt-labs/ui";
+import { BrowserIcon } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { BrowserIcon } from "@burnt-labs/ui";
-import { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
-
-function wait(ms = 1000) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
+import { wait } from "@/utils/wait";
 
 export const AbstraxionSignin = () => {
-  const { setIsConnecting, setIsConnected } = useContext(
+  const { setIsConnecting, setIsConnected, setAbstraxionAccount } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -63,6 +58,7 @@ export const AbstraxionSignin = () => {
 
     setIsConnecting(false);
     setIsConnected(true);
+    setAbstraxionAccount(keypair);
   }
 
   useEffect(() => {
