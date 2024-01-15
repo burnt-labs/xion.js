@@ -12,10 +12,11 @@
     "build": "tsup",
     "lint": "eslint src/",
     "dev": "tsup --watch",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "clean": "rimraf ./dist"
   },
   "dependencies": {
-    "@apollo/client": "^3.8.6",
+    "@apollo/client": "^3.8.8",
     "@cosmjs/amino": "^0.31.3",
     "@cosmjs/cosmwasm-stargate": "^0.31.3",
     "@cosmjs/crypto": "^0.31.3",
@@ -27,17 +28,18 @@
     "bech32": "^2.0.0",
     "cosmjs-types": "^0.8.0",
     "graphql": "^16.8.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "stytch": "^9.0.6"
   },
   "devDependencies": {
-    "@types/node": "18.11.9",
-    "@burnt-labs/eslint-config-custom": "workspace:*",
-    "eslint": "8.28.0",
+    "@burnt-labs/eslint-config-custom": "0.0.1-alpha.0",
+    "@types/node": "^20",
+    "eslint": "^8.48.0",
     "long": "^5.2.3",
-    "prettier": "^3.0.2",
+    "prettier": "^3.0.3",
     "protobufjs": "^7.2.5",
+    "rimraf": "^5.0.5",
     "tsup": "^6.0.1",
     "typescript": "^5.2.2"
   }

@@ -7,7 +7,10 @@ This is the official xion.js repo.
 ### Apps and Packages
 
 - `demo-app`: a [Next.js](https://nextjs.org/) app with [Tailwind CSS](https://tailwindcss.com/)
-- `ui`: a stub React component library with [Tailwind CSS](https://tailwindcss.com/)
+- `abstraxion`: account abstraction react package built for XION
+- `constants`: utility package for shared constants
+- `signers`: utility package for account abstraction classes built on top of cosmjs
+- `ui`: a React component library with [Tailwind CSS](https://tailwindcss.com/)
 - `eslint-config-custom`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
 - `tsconfig`: `tsconfig.json`s used throughout the monorepo
 

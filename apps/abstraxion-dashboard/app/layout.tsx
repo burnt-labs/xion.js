@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Providers } from "./providers";
-
-import "@burnt-labs/ui/styles.css";
-
 import "./globals.css";
+import "@burnt-labs/ui/styles.css";
 
 const akkuratLL = localFont({
   src: [
