@@ -39,18 +39,18 @@ export default function Page(): JSX.Element {
             description: "Generalized Abstraction",
             tags: [],
             social_links: [],
-            creator: account.bech32Address,
+            creator: account?.bech32Address,
             thumbnail_image_url: "https://fakeimg.pl/200/",
             banner_image_url: "https://fakeimg.pl/500/",
           },
         },
         ownable: {
-          owner: account.bech32Address,
+          owner: account?.bech32Address,
         },
       };
 
       const hubResult = await client.instantiate(
-        account.bech32Address || "",
+        account?.bech32Address || "",
         1,
         initMsg,
         "my-hub",
@@ -69,7 +69,7 @@ export default function Page(): JSX.Element {
   };
 
   useEffect(() => {
-    if (!account.wallet) {
+    if (!account?.wallet) {
       setInitiateResult(undefined);
     }
   }, [account]);
@@ -86,7 +86,7 @@ export default function Page(): JSX.Element {
         }}
         structure="base"
       >
-        {account.wallet ? (
+        {account?.wallet ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
         ) : (
           "CONNECT"
