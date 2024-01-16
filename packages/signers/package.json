@@ -33,7 +33,7 @@
     "stytch": "^9.0.6"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "0.0.1-alpha.0",
+    "@burnt-labs/eslint-config-custom": "workspace:*",
     "@types/node": "^20",
     "eslint": "^8.48.0",
     "long": "^5.2.3",
