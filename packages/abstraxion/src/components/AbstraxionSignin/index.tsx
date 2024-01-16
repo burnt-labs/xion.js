@@ -6,23 +6,23 @@ import { wait } from "@/utils/wait";
 import { AbstraxionContext } from "../AbstraxionContext";
 
 export function AbstraxionSignin(): JSX.Element {
-  const { setIsConnecting, setIsConnected, setAbstraxionAccount, contracts } =
-    useContext(AbstraxionContext);
+  const {
+    setIsConnecting,
+    setIsConnected,
+    setAbstraxionAccount,
+    contracts,
+    dashboardUrl,
+  } = useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
 
   function openDashboardTab(userAddress: string, contracts?: string[]): void {
-    const url =
-      process.env.NODE_ENV === "prod"
-        ? "https://dashboard.burnt.com"
-        : "http://localhost:3000";
-
     const urlParams = new URLSearchParams();
     urlParams.set("grantee", userAddress);
     // @ts-ignore - url encoding array
     urlParams.set("contracts", contracts);
     urlParams.toString();
-    window.open(`${url}?${urlParams}`, "_blank");
+    window.open(`${dashboardUrl}?${urlParams}`, "_blank");
   }
 
   async function generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {

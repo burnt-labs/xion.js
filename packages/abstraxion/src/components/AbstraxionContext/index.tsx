@@ -11,6 +11,7 @@ export interface AbstraxionContextProps {
   abstraxionAccount: DirectSecp256k1HdWallet | undefined;
   setAbstraxionAccount: React.Dispatch<DirectSecp256k1HdWallet | undefined>;
   contracts?: string[];
+  dashboardUrl?: string;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -20,9 +21,11 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 export const AbstraxionContextProvider = ({
   children,
   contracts,
+  dashboardUrl,
 }: {
   children: ReactNode;
   contracts?: string[];
+  dashboardUrl?: string;
 }) => {
   const [abstraxionError, setAbstraxionError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -43,6 +46,7 @@ export const AbstraxionContextProvider = ({
         abstraxionAccount,
         setAbstraxionAccount,
         contracts,
+        dashboardUrl,
       }}
     >
       {children}

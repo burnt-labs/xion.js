@@ -55,15 +55,23 @@ export function Abstraxion({
   );
 }
 
+export interface AbstraxionConfig {
+  contracts?: string[];
+  dashboardUrl?: string;
+}
+
 export function AbstraxionProvider({
   children,
-  contracts,
+  config,
 }: {
   children: React.ReactNode;
-  contracts?: string[];
+  config: AbstraxionConfig;
 }): JSX.Element {
   return (
-    <AbstraxionContextProvider contracts={contracts}>
+    <AbstraxionContextProvider
+      contracts={config.contracts}
+      dashboardUrl={config.dashboardUrl}
+    >
       {children}
     </AbstraxionContextProvider>
   );
