@@ -17,7 +17,7 @@ export function AbstraxionSignin(): JSX. Element {
   const isMounted = useRef(false);
 
   function openDashboardTab(): void {
-    window.open("http://localhost:5000", "_blank");
+    window.open("https://dashboard.burnt.com", "_blank");
   }
 
   async function generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {
