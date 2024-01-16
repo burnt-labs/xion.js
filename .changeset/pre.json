@@ -1,0 +1,29 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "demo-app": "1.0.0",
+    "@burnt-labs/abstraxion": "0.0.1-alpha.14",
+    "@burnt-labs/constants": "0.0.0",
+    "@burnt-labs/eslint-config-custom": "0.0.0",
+    "@burnt-labs/signers": "0.0.0",
+    "@burnt-labs/tailwind-config": "0.0.0",
+    "@burnt-labs/tsconfig": "0.0.0",
+    "@burnt-labs/ui": "0.0.0",
+    "abstraxion-dashboard": "0.1.0"
+  },
+  "changesets": [
+    "bright-carpets-rhyme",
+    "chilly-lamps-float",
+    "flat-trees-confess",
+    "four-forks-occur",
+    "honest-apples-admire",
+    "khaki-mails-listen",
+    "long-icons-kiss",
+    "rich-wolves-whisper",
+    "sour-wasps-film",
+    "tame-cows-add",
+    "three-oranges-retire",
+    "twenty-carrots-occur"
+  ]
+}

@@ -71,7 +71,7 @@ export const AbstraxionWallets = () => {
       }
       setIsGeneratingNewWallet(true);
       const res = await fetch(
-        "https://burnt-abstraxion-api.onrender.com/api/v1/jwt-accounts/create",
+        "https://aa.xion-testnet-1.burnt.com/api/v1/jwt-accounts/create",
         {
           method: "POST",
           headers: {

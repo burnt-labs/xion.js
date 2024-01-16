@@ -3,5 +3,6 @@ module.exports = {
   extends: ["@burnt-labs/eslint-config-custom/react"],
   rules: {
     "no-nested-ternary": "off",
+    "no-unnecessary-condition": "off",
   },
 };

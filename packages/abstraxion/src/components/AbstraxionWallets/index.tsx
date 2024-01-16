@@ -2,25 +2,26 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useDisconnect } from "graz";
 import { useStytch, useStytchUser } from "@stytch/nextjs";
 import { useQuery } from "@apollo/client";
+import { AccountWalletLogo, Button, Spinner } from "@burnt-labs/ui";
+import { decodeJwt } from "jose";
+import type {
+  AbstraxionContextProps} from "../AbstraxionContext";
 import {
-  AbstraxionContext,
-  AbstraxionContextProps,
+  AbstraxionContext
 } from "../AbstraxionContext";
 import { useAbstraxionAccount } from "../../hooks";
 import { Loading } from "../Loading";
-import { AccountWalletLogo, Button, Spinner } from "@burnt-labs/ui";
 import { truncateAddress } from "../../../utils/truncateAddress";
 import { AllSmartWalletQuery } from "../../../utils/queries";
-import { decodeJwt } from "jose";
 
-export const AbstraxionWallets = () => {
+export function AbstraxionWallets() {
   const {
     connectionType,
     setConnectionType,
     abstractAccount,
     setAbstractAccount,
     setAbstraxionError,
-  } = useContext(AbstraxionContext) as AbstraxionContextProps;
+  } = useContext(AbstraxionContext) ;
 
   const { user } = useStytchUser();
   const stytchClient = useStytch();
@@ -76,7 +77,7 @@ export const AbstraxionWallets = () => {
       }
       setIsGeneratingNewWallet(true);
       const res = await fetch(
-        "https://burnt-abstraxion-api.onrender.com/api/v1/jwt-accounts/create",
+        "https://aa.xion-testnet-1.burnt.com/api/v1/jwt-accounts/create",
         {
           method: "POST",
           headers: {
@@ -95,7 +96,7 @@ export const AbstraxionWallets = () => {
       }
       startPolling(500);
       setFetchingNewWallets(true);
-      return;
+      
     } catch (error) {
       console.log(error);
       setAbstraxionError("Error creating abstract account.");
@@ -103,17 +104,6 @@ export const AbstraxionWallets = () => {
       setIsGeneratingNewWallet(false);
     }
   };
-
-  const registerWebAuthn = useCallback(async () => {
-    try {
-      await stytchClient.webauthn.register({
-        domain: window.location.hostname,
-        session_duration_minutes: 60,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }, [stytchClient]);
 
   return (
     <>
@@ -133,9 +123,9 @@ export const AbstraxionWallets = () => {
             <div className="ui-flex ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-4 ui-bg-transparent ui-border-2 ui-border-white hover:ui-cursor-pointer">
               <AccountWalletLogo />
               <div className="ui-flex ui-flex-col ui-gap-1">
-                <h1 className="ui-text-sm ui-font-bold">{account?.name}</h1>
+                <h1 className="ui-text-sm ui-font-bold">{account.name}</h1>
                 <h2 className="ui-text-xs text-zinc-300">
-                  {truncateAddress(account?.bech32Address)}
+                  {truncateAddress(account.bech32Address)}
                 </h2>
               </div>
             </div>
@@ -175,10 +165,10 @@ export const AbstraxionWallets = () => {
               </div>
               <div className="ui-w-full ui-flex ui-justify-center">
                 <Button
-                  structure="naked"
                   onClick={async () => {
                     await handleJwtAALoginOrCreate(session_jwt, session_token);
                   }}
+                  structure="naked"
                 >
                   Create a new account
                 </Button>
@@ -188,19 +178,17 @@ export const AbstraxionWallets = () => {
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
             {connectionType === "stytch" &&
               user &&
-              user?.webauthn_registrations.length < 1 && (
-                <Button
-                  structure="outlined"
-                  fullWidth={true}
+              user.webauthn_registrations.length < 1 ? <Button
+                  fullWidth
                   onClick={registerWebAuthn}
+                  structure="outlined"
                 >
                   Add Passkey/Biometrics
-                </Button>
-              )}
+                </Button> : null}
             <Button
-              structure="outlined"
-              fullWidth={true}
+              fullWidth
               onClick={handleDisconnect}
+              structure="outlined"
             >
               Disconnect
             </Button>
@@ -209,4 +197,4 @@ export const AbstraxionWallets = () => {
       )}
     </>
   );
-};
+}

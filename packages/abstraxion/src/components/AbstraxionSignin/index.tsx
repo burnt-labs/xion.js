@@ -1,26 +1,26 @@
 "use client";
 import { useContext, useEffect, useRef } from "react";
 import { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
-import { Button, ModalSection } from "@burnt-labs/ui";
-import { BrowserIcon } from "@burnt-labs/ui";
+import { Button, ModalSection , BrowserIcon } from "@burnt-labs/ui";
+import { wait } from "@/utils/wait";
 import {
   AbstraxionContext,
-  AbstraxionContextProps,
+  type AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { wait } from "@/utils/wait";
 
-export const AbstraxionSignin = () => {
+
+export function AbstraxionSignin(): JSX. Element {
   const { setIsConnecting, setIsConnected, setAbstraxionAccount } = useContext(
     AbstraxionContext,
-  ) as AbstraxionContextProps;
+  ) ;
 
   const isMounted = useRef(false);
 
-  function openDashboardTab() {
+  function openDashboardTab(): void {
     window.open("http://localhost:5000", "_blank");
   }
 
-  async function generateAndStoreTempAccount() {
+  async function generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {
     const keypair = await DirectSecp256k1HdWallet.generate(12, {
       prefix: "xion",
     });
@@ -30,14 +30,14 @@ export const AbstraxionSignin = () => {
     return keypair;
   }
 
-  async function pollForGrants(keypair: DirectSecp256k1HdWallet) {
+  async function pollForGrants(keypair: DirectSecp256k1HdWallet): Promise<void> {
     if (!keypair) {
       throw new Error("No keypair");
     }
     setIsConnecting(true);
     const accounts = await keypair.getAccounts();
     const address = accounts[0].address;
-    console.log(address);
+    // console.log(address);
 
     const shouldContinue = true;
     while (shouldContinue) {
@@ -53,7 +53,9 @@ export const AbstraxionSignin = () => {
         if (data.grants?.length > 0) {
           break;
         }
-      } catch (error) {}
+      } catch (error) {
+        // Handle error.
+      }
     }
 
     setIsConnecting(false);
@@ -96,9 +98,9 @@ export const AbstraxionSignin = () => {
         </h2>
       </div>
       <BrowserIcon />
-      <Button structure="naked" onClick={openDashboardTab}>
+      <Button onClick={openDashboardTab} structure="naked">
         Have a Problem? Try Again
       </Button>
     </ModalSection>
   );
-};
+}

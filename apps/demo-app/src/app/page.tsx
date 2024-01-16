@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Abstraxion,
   useAbstraxionAccount,
@@ -67,12 +67,6 @@ export default function Page(): JSX.Element {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (!account.wallet) {
-      setInitiateResult(undefined);
-    }
-  }, [account]);
 
   return (
     <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">

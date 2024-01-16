@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { MouseEvent, useContext, useEffect, useState } from "react";
 import { WalletType, useSuggestChainAndConnect } from "graz";
 import { useStytch } from "@stytch/nextjs";
 import { Button, Input, ModalSection } from "@burnt-labs/ui";
