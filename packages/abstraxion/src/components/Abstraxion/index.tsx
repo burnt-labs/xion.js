@@ -57,16 +57,14 @@ export function Abstraxion({
 
 export function AbstraxionProvider({
   children,
+  contracts,
 }: {
   children: React.ReactNode;
+  contracts?: string[];
 }): JSX.Element {
   return (
-    <AbstraxionContextProvider>
-      <StytchProvider stytch={stytchClient}>
-        <ApolloProvider client={apolloClient}>
-          <GrazProvider>{children}</GrazProvider>
-        </ApolloProvider>
-      </StytchProvider>
+    <AbstraxionContextProvider contracts={contracts}>
+      {children}
     </AbstraxionContextProvider>
   );
 }

@@ -9,7 +9,7 @@ export const ChevronDownIcon = ({ color = "black" }: { color?: string }) => (
     <path
       d="M16.2426 10.2426L12 14.4853L7.75736 10.2426"
       stroke={color}
-      stroke-width="1.5"
+      strokeWidth="1.5"
     />
   </svg>
 );

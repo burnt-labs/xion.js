@@ -1,23 +1,28 @@
 "use client";
 import { useContext, useEffect, useRef } from "react";
 import { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
-import { Button, ModalSection , BrowserIcon } from "@burnt-labs/ui";
+import { Button, ModalSection, BrowserIcon } from "@burnt-labs/ui";
 import { wait } from "@/utils/wait";
-import {
-  AbstraxionContext,
-  type AbstraxionContextProps,
-} from "../AbstraxionContext";
+import { AbstraxionContext } from "../AbstraxionContext";
 
-
-export function AbstraxionSignin(): JSX. Element {
-  const { setIsConnecting, setIsConnected, setAbstraxionAccount } = useContext(
-    AbstraxionContext,
-  ) ;
+export function AbstraxionSignin(): JSX.Element {
+  const { setIsConnecting, setIsConnected, setAbstraxionAccount, contracts } =
+    useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
 
-  function openDashboardTab(): void {
-    window.open("https://dashboard.burnt.com", "_blank");
+  function openDashboardTab(userAddress: string, contracts?: string[]): void {
+    const url =
+      process.env.NODE_ENV === "prod"
+        ? "https://dashboard.burnt.com"
+        : "http://localhost:3000";
+
+    const urlParams = new URLSearchParams();
+    urlParams.set("grantee", userAddress);
+    // @ts-ignore - url encoding array
+    urlParams.set("contracts", contracts);
+    urlParams.toString();
+    window.open(`${url}?${urlParams}`, "_blank");
   }
 
   async function generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {
@@ -30,15 +35,16 @@ export function AbstraxionSignin(): JSX. Element {
     return keypair;
   }
 
-  async function pollForGrants(keypair: DirectSecp256k1HdWallet): Promise<void> {
+  async function pollForGrants(
+    keypair: DirectSecp256k1HdWallet,
+  ): Promise<void> {
     if (!keypair) {
       throw new Error("No keypair");
     }
     setIsConnecting(true);
+
     const accounts = await keypair.getAccounts();
     const address = accounts[0].address;
-    // console.log(address);
-
     const shouldContinue = true;
     while (shouldContinue) {
       try {
@@ -54,7 +60,7 @@ export function AbstraxionSignin(): JSX. Element {
           break;
         }
       } catch (error) {
-        // Handle error.
+        console.log("There was an error polling for grants: ", error);
       }
     }
 
@@ -75,7 +81,9 @@ export function AbstraxionSignin(): JSX. Element {
       } else {
         keypair = await generateAndStoreTempAccount();
       }
-      openDashboardTab();
+      const accounts = await keypair.getAccounts();
+      const address = accounts[0].address;
+      openDashboardTab(address, contracts);
       pollForGrants(keypair);
     }
 
@@ -98,9 +106,7 @@ export function AbstraxionSignin(): JSX. Element {
         </h2>
       </div>
       <BrowserIcon />
-      <Button onClick={openDashboardTab} structure="naked">
-        Have a Problem? Try Again
-      </Button>
+      <Button structure="naked">Have a Problem? Try Again</Button>
     </ModalSection>
   );
 }
