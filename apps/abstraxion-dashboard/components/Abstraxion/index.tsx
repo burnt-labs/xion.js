@@ -8,12 +8,14 @@ import {
   AbstraxionContextProvider,
 } from "@/components/AbstraxionContext";
 import { apolloClient, stytchClient } from "@/lib";
-import { ModalAnchor, Modal } from "@burnt-labs/ui";
+import { Dialog, DialogContent } from "@burnt-labs/ui";
 import { AbstraxionSignin } from "@/components/AbstraxionSignin";
 import { useAbstraxionAccount } from "@/hooks";
 import { Loading } from "@/components/Loading";
 import { AbstraxionWallets } from "@/components/AbstraxionWallets";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
+import { useSearchParams } from "next/navigation";
+import { AbstraxionGrant } from "../AbstraxionGrant";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -21,14 +23,22 @@ export interface ModalProps {
 }
 
 export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
+  const searchParams = useSearchParams();
   const modalRef = useRef<HTMLDivElement>(null);
 
   const { abstraxionError } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
-  const { isConnected, isConnecting, isReconnecting } = useAbstraxionAccount();
+  const {
+    isConnected,
+    isConnecting,
+    isReconnecting,
+    data: account,
+  } = useAbstraxionAccount();
 
+  const permissions = searchParams.get("permissions");
+  const grantee = searchParams.get("grantee");
   useEffect(() => {
     const closeOnEscKey = (e: any) => (e.key === "Escape" ? onClose() : null);
     document.addEventListener("keydown", closeOnEscKey);
@@ -40,23 +50,21 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <ModalAnchor ref={modalRef} onClick={onClose}>
-      <Modal
-        onClick={(e: any) => {
-          e.stopPropagation();
-        }}
-      >
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
         {abstraxionError ? (
           <ErrorDisplay message={abstraxionError} onClose={onClose} />
         ) : isConnecting || isReconnecting ? (
           <Loading />
+        ) : account?.bech32Address && permissions && grantee ? (
+          <AbstraxionGrant permissions={permissions} grantee={grantee} />
         ) : isConnected ? (
           <AbstraxionWallets />
         ) : (
           <AbstraxionSignin />
         )}
-      </Modal>
-    </ModalAnchor>
+      </DialogContent>
+    </Dialog>
   );
 };
 

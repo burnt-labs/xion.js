@@ -1,56 +1,44 @@
 import { useContext, useEffect, useState } from "react";
-import { GasPrice } from "graz/dist/cosmjs";
-import { useStytch } from "@stytch/nextjs";
-import { useCosmWasmSigningClient } from "graz";
-import { AAClient, AbstractAccountJWTSigner } from "@burnt-labs/signers";
+import { GasPrice, SigningCosmWasmClient } from "graz/dist/cosmjs";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
-} from "../components/AbstraxionContext";
+} from "@/src/components/AbstraxionContext";
 
 export const useAbstraxionSigningClient = () => {
-  const { connectionType, abstractAccount } = useContext(
+  const { isConnected, abstraxionAccount } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
-  const stytch = useStytch();
-  const sessionToken = stytch.session.getTokens()?.session_token;
-  const { data: grazClient } = useCosmWasmSigningClient();
-
-  const [abstractClient, setAbstractClient] = useState<AAClient | undefined>(
-    undefined,
-  );
+  const [abstractClient, setAbstractClient] = useState<
+    SigningCosmWasmClient | undefined
+  >(undefined);
 
   useEffect(() => {
-    async function getStytchSigner() {
-      const jwtSigner = new AbstractAccountJWTSigner(
-        abstractAccount.bech32Address,
-        sessionToken,
-      );
+    async function getSigner() {
+      try {
+        if (!abstraxionAccount) {
+          throw new Error("No account found.");
+        }
+        const directClient = await SigningCosmWasmClient.connectWithSigner(
+          testnetChainInfo.rpc,
+          abstraxionAccount,
+          {
+            gasPrice: GasPrice.fromString("0uxion"),
+          },
+        );
 
-      const jwtClient = await AAClient.connectWithSigner(
-        testnetChainInfo.rpc,
-        jwtSigner,
-        {
-          gasPrice: GasPrice.fromString("0uxion"),
-        },
-      );
-
-      setAbstractClient(jwtClient);
+        setAbstractClient(directClient);
+      } catch (error) {
+        console.log("Something went wrong: ", error);
+      }
     }
 
-    if (connectionType === "stytch" && abstractAccount) {
-      getStytchSigner();
+    if (isConnected && abstraxionAccount) {
+      getSigner();
     }
-  }, [sessionToken, abstractAccount, connectionType]);
+  }, [abstraxionAccount, isConnected]);
 
-  switch (connectionType) {
-    case "stytch":
-      return { client: abstractClient };
-    case "graz":
-      return { client: grazClient };
-    default:
-      return { client: undefined };
-  }
+  return { client: abstractClient };
 };

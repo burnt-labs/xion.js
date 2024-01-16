@@ -5,6 +5,10 @@
   "private": true,
   "devDependencies": {
     "@vercel/style-guide": "^5.1.0",
-    "eslint-config-turbo": "^1.10.12"
+    "eslint-config-turbo": "^1.10.12",
+    "rimraf": "^5.0.5"
+  },
+  "scripts": {
+    "clean": "rimraf ./dist"
   }
 }

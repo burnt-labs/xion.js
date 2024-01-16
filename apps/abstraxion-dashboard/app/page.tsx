@@ -13,20 +13,25 @@ import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
 } from "../hooks";
+import { useSearchParams } from "next/navigation";
 
 export interface AccountWithAuthenticator extends AbstraxionAccount {
   authenticators: Authenticators;
 }
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const { data: account } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
   const accountBalance = useAccountBalance(account, client);
 
+  const permissions = searchParams.get("permissions");
+  const grantee = searchParams.get("grantee");
+
   return (
     <>
-      {!account?.bech32Address ? (
+      {!account?.bech32Address || (permissions && grantee) ? (
         <div className="ui-flex ui-h-screen ui-flex-1 ui-items-center ui-justify-center ui-overflow-y-auto ui-p-6">
           <Abstraxion onClose={() => null} isOpen={true} />
         </div>

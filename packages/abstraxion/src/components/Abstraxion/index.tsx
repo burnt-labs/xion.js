@@ -1,19 +1,18 @@
-import type { MouseEvent } from "react";
-import { useContext, useEffect, useRef } from "react";
+"use client";
+import { useContext, useEffect } from "react";
 import { GrazProvider } from "graz";
 import { StytchProvider } from "@stytch/nextjs";
 import { ApolloProvider } from "@apollo/client";
-import { ModalAnchor, Modal } from "@burnt-labs/ui";
+import { Dialog, DialogContent } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProvider,
 } from "../AbstraxionContext";
 import { apolloClient, stytchClient } from "../../lib";
 import { AbstraxionSignin } from "../AbstraxionSignin";
-import { useAbstraxionAccount } from "../../hooks";
 import { Loading } from "../Loading";
-import { AbstraxionWallets } from "../AbstraxionWallets";
 import { ErrorDisplay } from "../ErrorDisplay";
+import { Connected } from "../Connected/Connected";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -24,11 +23,8 @@ export function Abstraxion({
   isOpen,
   onClose,
 }: ModalProps): JSX.Element | null {
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  const { abstraxionError } = useContext(AbstraxionContext);
-
-  const { isConnected, isConnecting, isReconnecting } = useAbstraxionAccount();
+  const { abstraxionError, isConnecting, isConnected } =
+    useContext(AbstraxionContext);
 
   useEffect(() => {
     const closeOnEscKey = (e: KeyboardEventInit): void => {
@@ -43,23 +39,19 @@ export function Abstraxion({
   if (!isOpen) return null;
 
   return (
-    <ModalAnchor onClick={onClose} ref={modalRef}>
-      <Modal
-        onClick={(e: MouseEvent) => {
-          e.stopPropagation();
-        }}
-      >
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
         {abstraxionError ? (
-          <ErrorDisplay message={abstraxionError} onClose={onClose} />
-        ) : isConnecting || isReconnecting ? (
+          <ErrorDisplay />
+        ) : isConnecting ? (
           <Loading />
         ) : isConnected ? (
-          <AbstraxionWallets />
+          <Connected />
         ) : (
           <AbstraxionSignin />
         )}
-      </Modal>
-    </ModalAnchor>
+      </DialogContent>
+    </Dialog>
   );
 }
 

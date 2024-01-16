@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Abstraxion,
   useAbstraxionAccount,
@@ -39,18 +39,18 @@ export default function Page(): JSX.Element {
             description: "Generalized Abstraction",
             tags: [],
             social_links: [],
-            creator: account?.bech32Address,
+            creator: account.bech32Address,
             thumbnail_image_url: "https://fakeimg.pl/200/",
             banner_image_url: "https://fakeimg.pl/500/",
           },
         },
         ownable: {
-          owner: account?.bech32Address,
+          owner: account.bech32Address,
         },
       };
 
       const hubResult = await client.instantiate(
-        account?.bech32Address || "",
+        account.bech32Address || "",
         1,
         initMsg,
         "my-hub",
@@ -68,15 +68,9 @@ export default function Page(): JSX.Element {
     }
   };
 
-  useEffect(() => {
-    if (!account) {
-      setInitiateResult(undefined);
-    }
-  }, [account]);
-
   return (
     <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
-      <h1 className="text-2xl font-bold tracking-tighter text-black dark:text-white">
+      <h1 className="text-2xl font-bold tracking-tighter text-white">
         ABSTRAXION
       </h1>
       <Button
@@ -85,9 +79,8 @@ export default function Page(): JSX.Element {
           setIsOpen(true);
         }}
         structure="base"
-        theme="secondary"
       >
-        {account ? (
+        {account.wallet ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
         ) : (
           "CONNECT"
@@ -101,7 +94,6 @@ export default function Page(): JSX.Element {
             void instantiateTestContract();
           }}
           structure="base"
-          theme="secondary"
         >
           {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
         </Button>
