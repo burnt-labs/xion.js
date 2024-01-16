@@ -17,8 +17,8 @@
     "clean": "rimraf ./dist"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "0.0.1-alpha.0",
-    "@burnt-labs/tsconfig": "0.0.1-alpha.0",
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
     "rimraf": "^5.0.5",
     "tsup": "^6.0.1",
     "typescript": "^5.2.2"
