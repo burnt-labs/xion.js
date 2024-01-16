@@ -14,7 +14,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AbstraxionProvider>{children}</AbstraxionProvider>
+        <AbstraxionProvider
+          contracts={[
+            "xion1ly5vunf97qzevm6cu8jq3c5ltj2mlwf4s7g6x5du4atd206m2w0qf2hxsz",
+            "xion1ug4wpsjpn9k0r9rcdx5dq39h6hhe9uvwn3z0gfqnpz6xxvw3cd3sygy3x6",
+          ]}
+        >
+          {children}
+        </AbstraxionProvider>
       </body>
     </html>
   );

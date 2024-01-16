@@ -1,26 +1,24 @@
 "use client";
-
+import { useState } from "react";
 import Image from "next/image";
-
-import burntAvatar from "@/public/burntAvatarCircle.png";
-import { CheckIcon } from "../Icons";
 import { Button, Spinner } from "@burnt-labs/ui";
-import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { MsgGrant } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import {
   ContractExecutionAuthorization,
   MaxCallsLimit,
 } from "cosmjs-types/cosmwasm/wasm/v1/authz";
+import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
+import burntAvatar from "@/public/burntAvatarCircle.png";
+import { CheckIcon } from "../Icons";
 import { EncodeObject } from "@cosmjs/proto-signing";
-import { useState } from "react";
 
 interface AbstraxionGrantProps {
-  permissions: string;
+  contracts: string[];
   grantee: string;
 }
 
 export const AbstraxionGrant = ({
-  permissions,
+  contracts,
   grantee,
 }: AbstraxionGrantProps) => {
   const { client } = useAbstraxionSigningClient();
@@ -29,60 +27,52 @@ export const AbstraxionGrant = ({
   const [inProgress, setInProgress] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const generateContractGrant = async () => {
+  const generateContractGrant = (granter: string) => {
     const timestampThreeMonthsFromNow = Math.floor(
       new Date(new Date().setMonth(new Date().getMonth() + 3)).getTime() / 1000,
     );
-    const granter = account?.bech32Address;
 
-    if (client && granter) {
-      const contractExecutionAuthorizationValue =
-        ContractExecutionAuthorization.encode(
-          ContractExecutionAuthorization.fromPartial({
-            grants: [
-              {
-                contract: permissions,
-                limit: {
-                  typeUrl: "/cosmwasm.wasm.v1.MaxCallsLimit",
-                  value: MaxCallsLimit.encode(
-                    MaxCallsLimit.fromPartial({
-                      // Picking a giant number here since something like `UnlimitedCallsLimit` doesn't appear to be available
-                      remaining: "4096",
-                    }),
-                  ).finish(),
-                },
-                filter: {
-                  typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
-                },
-              },
-            ],
-          }),
-        ).finish();
-
-      const grantValue = MsgGrant.fromPartial({
-        grant: {
-          authorization: {
-            typeUrl: "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
-            value: contractExecutionAuthorizationValue,
-          },
-          expiration: {
-            seconds: timestampThreeMonthsFromNow,
-          },
+    const contractExecutionAuthorizationValue =
+      ContractExecutionAuthorization.encode(
+        ContractExecutionAuthorization.fromPartial({
+          grants: contracts.map((contractAddress) => ({
+            contract: contractAddress,
+            limit: {
+              typeUrl: "/cosmwasm.wasm.v1.MaxCallsLimit",
+              value: MaxCallsLimit.encode(
+                MaxCallsLimit.fromPartial({
+                  remaining: "255",
+                }),
+              ).finish(),
+            },
+            filter: {
+              typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+            },
+          })),
+        }),
+      ).finish();
+    const grantValue = MsgGrant.fromPartial({
+      grant: {
+        authorization: {
+          typeUrl: "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+          value: contractExecutionAuthorizationValue,
         },
-        grantee,
-        granter,
-      });
+        expiration: {
+          seconds: timestampThreeMonthsFromNow,
+        },
+      },
+      grantee,
+      granter,
+    });
 
-      return {
-        typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-        value: grantValue,
-      };
-    }
+    return {
+      typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
+      value: grantValue,
+    };
   };
 
   const grant = async () => {
     setInProgress(true);
-    console.log({ client, account });
     if (!client) {
       throw new Error("no client");
     }
@@ -91,7 +81,8 @@ export const AbstraxionGrant = ({
       throw new Error("no account");
     }
 
-    const msg = await generateContractGrant();
+    const granter = account.bech32Address;
+    const msg = generateContractGrant(granter);
 
     try {
       const foo = await client?.signAndBroadcast(
@@ -102,7 +93,6 @@ export const AbstraxionGrant = ({
           gas: "500000",
         },
       );
-      console.log(foo);
       setShowSuccess(true);
       setInProgress(false);
     } catch (error) {

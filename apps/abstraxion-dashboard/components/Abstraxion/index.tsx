@@ -37,7 +37,9 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
     data: account,
   } = useAbstraxionAccount();
 
-  const permissions = searchParams.get("permissions");
+  const contracts = searchParams.get("contracts");
+  const contractsArray = contracts?.split(",") || [];
+
   const grantee = searchParams.get("grantee");
   useEffect(() => {
     const closeOnEscKey = (e: any) => (e.key === "Escape" ? onClose() : null);
@@ -56,8 +58,8 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
           <ErrorDisplay message={abstraxionError} onClose={onClose} />
         ) : isConnecting || isReconnecting ? (
           <Loading />
-        ) : account?.bech32Address && permissions && grantee ? (
-          <AbstraxionGrant permissions={permissions} grantee={grantee} />
+        ) : account?.bech32Address && contracts && grantee ? (
+          <AbstraxionGrant contracts={contractsArray} grantee={grantee} />
         ) : isConnected ? (
           <AbstraxionWallets />
         ) : (

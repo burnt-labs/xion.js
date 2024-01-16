@@ -10,7 +10,7 @@ export const CheckIcon = ({ color = "black" }: { color?: string }) => (
       id="Checkmark"
       d="M1 5.55556L5.28571 10L14 1"
       stroke={color}
-      stroke-width="1.5"
+      strokeWidth="1.5"
     />
   </svg>
 );

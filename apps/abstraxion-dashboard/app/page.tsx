@@ -26,12 +26,12 @@ export default function Home() {
   const { client } = useAbstraxionSigningClient();
   const accountBalance = useAccountBalance(account, client);
 
-  const permissions = searchParams.get("permissions");
+  const contracts = searchParams.get("contracts");
   const grantee = searchParams.get("grantee");
 
   return (
     <>
-      {!account?.bech32Address || (permissions && grantee) ? (
+      {!account?.bech32Address || (contracts && grantee) ? (
         <div className="ui-flex ui-h-screen ui-flex-1 ui-items-center ui-justify-center ui-overflow-y-auto ui-p-6">
           <Abstraxion onClose={() => null} isOpen={true} />
         </div>
