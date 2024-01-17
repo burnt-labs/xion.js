@@ -5,9 +5,10 @@ import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/src/components/AbstraxionContext";
+import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 
 export const useAbstraxionSigningClient = () => {
-  const { isConnected, abstraxionAccount } = useContext(
+  const { isConnected, abstraxionAccount, grantorAddress } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -21,11 +22,22 @@ export const useAbstraxionSigningClient = () => {
         if (!abstraxionAccount) {
           throw new Error("No account found.");
         }
-        const directClient = await SigningCosmWasmClient.connectWithSigner(
+        const granteeAddress = await abstraxionAccount
+          .getAccounts()
+          .then((accounts) => {
+            if (accounts.length === 0) {
+              throw new Error("No account found.");
+            }
+            return accounts[0].address;
+          });
+
+        const directClient = await GranteeSignerClient.connectWithSigner(
           testnetChainInfo.rpc,
           abstraxionAccount,
           {
             gasPrice: GasPrice.fromString("0uxion"),
+            grantorAddress,
+            granteeAddress,
           },
         );
 
