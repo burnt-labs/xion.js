@@ -187,9 +187,24 @@ importers:
       '@burnt-labs/ui':
         specifier: workspace:*
         version: link:../ui
+      '@cosmjs/cosmwasm-stargate':
+        specifier: ^0.31.3
+        version: 0.31.3
+      '@cosmjs/proto-signing':
+        specifier: ^0.31.3
+        version: 0.31.3
+      '@cosmjs/stargate':
+        specifier: ^0.31.3
+        version: 0.31.3
+      '@cosmjs/tendermint-rpc':
+        specifier: ^0.31.1
+        version: 0.31.3
       '@types/react-dom':
         specifier: ^18.2.18
         version: 18.2.18
+      cosmjs-types:
+        specifier: ^0.8.0
+        version: 0.8.0
       graz:
         specifier: ^0.0.51
         version: 0.0.51(@types/react@18.2.47)(react-dom@18.2.0)(react@18.2.0)

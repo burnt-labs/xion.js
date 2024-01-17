@@ -8,9 +8,10 @@ import {
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/styles.css";
-import type { InstantiateResult } from "@cosmjs/cosmwasm-stargate";
+import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
+import { seatContractAddress } from "./layout";
 
-type InitiateResultOrUndefined = InstantiateResult | undefined;
+type ExecuteResultOrUndefined = ExecuteResult | undefined;
 export default function Page(): JSX.Element {
   // Abstraxion hooks
   const { data: account } = useAbstraxionAccount();
@@ -19,54 +20,56 @@ export default function Page(): JSX.Element {
   // General state hooks
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [initiateResult, setInitiateResult] =
-    useState<InitiateResultOrUndefined>(undefined);
+  const [executeResult, setExecuteResult] =
+    useState<ExecuteResultOrUndefined>(undefined);
 
-  const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${initiateResult?.transactionHash}`;
+  const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${executeResult?.transactionHash}`;
 
-  const instantiateTestContract = async (): Promise<void> => {
+  function getTimestampInSeconds(date: Date | null) {
+    if (!date) return 0;
+    const d = new Date(date);
+    return Math.floor(d.getTime() / 1000);
+  }
+
+  const now = new Date();
+  now.setSeconds(now.getSeconds() + 15);
+  const oneYearFromNow = new Date();
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+  async function claimSeat() {
     setLoading(true);
-    try {
-      if (!client) {
-        setIsOpen(true);
-        return;
-      }
-      const initMsg = {
-        metadata: {
-          metadata: {
-            name: "Abstraxion House",
-            hub_url: "abstraxion_house",
-            description: "Generalized Abstraction",
-            tags: [],
-            social_links: [],
-            creator: account.bech32Address,
-            thumbnail_image_url: "https://fakeimg.pl/200/",
-            banner_image_url: "https://fakeimg.pl/500/",
-          },
-        },
-        ownable: {
+    const msg = {
+      sales: {
+        claim_item: {
+          token_id: String(getTimestampInSeconds(now)),
           owner: account.bech32Address,
+          token_uri: "",
+          extension: {},
         },
-      };
+      },
+    };
 
-      const hubResult = await client.instantiate(
-        account.bech32Address || "",
-        1,
-        initMsg,
-        "my-hub",
+    try {
+      const claimRes = await client?.execute(
+        account.bech32Address,
+        seatContractAddress,
+        msg,
         {
           amount: [{ amount: "0", denom: "uxion" }],
           gas: "500000",
         },
+        "",
+        [],
       );
-      setInitiateResult(hubResult);
+
+      setExecuteResult(claimRes);
     } catch (error) {
       // eslint-disable-next-line no-console -- No UI exists yet to display errors
       console.log(error);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
@@ -80,7 +83,7 @@ export default function Page(): JSX.Element {
         }}
         structure="base"
       >
-        {account.wallet ? (
+        {account.bech32Address ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
         ) : (
           "CONNECT"
@@ -91,11 +94,11 @@ export default function Page(): JSX.Element {
           disabled={loading}
           fullWidth
           onClick={() => {
-            void instantiateTestContract();
+            void claimSeat();
           }}
           structure="base"
         >
-          {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
+          {loading ? "LOADING..." : "CLAIM SEAT"}
         </Button>
       ) : null}
       <Abstraxion
@@ -104,19 +107,19 @@ export default function Page(): JSX.Element {
           setIsOpen(false);
         }}
       />
-      {initiateResult ? (
+      {executeResult ? (
         <div className="flex flex-col rounded border-2 border-black p-2 dark:border-white">
           <div className="mt-2">
             <p className="text-zinc-500">
-              <span className="font-bold">Contract Address:</span>
+              <span className="font-bold">Transaction Hash</span>
             </p>
-            <p className="text-sm">{initiateResult.contractAddress}</p>
+            <p className="text-sm">{executeResult.transactionHash}</p>
           </div>
           <div className="mt-2">
             <p className=" text-zinc-500">
               <span className="font-bold">Block Height:</span>
             </p>
-            <p className="text-sm">{initiateResult.height}</p>
+            <p className="text-sm">{executeResult.height}</p>
           </div>
           <div className="mt-2">
             <Link
