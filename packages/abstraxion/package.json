@@ -39,6 +39,11 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",
+    "@cosmjs/cosmwasm-stargate": "^0.31.3",
+    "@cosmjs/proto-signing": "^0.31.3",
+    "@cosmjs/stargate": "^0.31.3",
+    "cosmjs-types": "^0.8.0",
+    "@cosmjs/tendermint-rpc": "^0.31.1",
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/ui": "workspace:*",

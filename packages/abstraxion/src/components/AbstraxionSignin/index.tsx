@@ -5,11 +5,49 @@ import { Button, ModalSection, BrowserIcon } from "@burnt-labs/ui";
 import { wait } from "@/utils/wait";
 import { AbstraxionContext } from "../AbstraxionContext";
 
+type GrantsResponse = {
+  grants: Grant[];
+  pagination: Pagination;
+};
+
+type Grant = {
+  granter: string;
+  grantee: string;
+  authorization: Authorization;
+  expiration: string;
+};
+
+type Authorization = {
+  "@type": string;
+  grants: GrantAuthorization[];
+};
+
+type GrantAuthorization = {
+  contract: string;
+  limit: Limit;
+  filter: Filter;
+};
+
+type Limit = {
+  "@type": string;
+  remaining: string;
+};
+
+type Filter = {
+  "@type": string;
+};
+
+type Pagination = {
+  next_key: null | string;
+  total: string;
+};
+
 export function AbstraxionSignin(): JSX.Element {
   const {
     setIsConnecting,
     setIsConnected,
     setAbstraxionAccount,
+    setGrantorAddress,
     contracts,
     dashboardUrl,
   } = useContext(AbstraxionContext);
@@ -55,8 +93,15 @@ export function AbstraxionSignin(): JSX.Element {
             cache: "no-store",
           },
         );
-        const data = await res.json();
+        const data = (await res.json()) as GrantsResponse;
         if (data.grants?.length > 0) {
+          const granterAddresses = data.grants.map((grant) => grant.granter);
+          const uniqueGranters = [...new Set(granterAddresses)];
+          if (uniqueGranters.length > 1) {
+            console.error("More than one granter found. Taking first.");
+          }
+
+          setGrantorAddress(uniqueGranters[0]);
           break;
         }
       } catch (error) {
