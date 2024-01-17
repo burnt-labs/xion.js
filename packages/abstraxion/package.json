@@ -38,7 +38,6 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@apollo/client": "^3.8.8",
     "@cosmjs/cosmwasm-stargate": "^0.31.3",
     "@cosmjs/proto-signing": "^0.31.3",
     "@cosmjs/stargate": "^0.31.3",
@@ -47,8 +46,6 @@
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
-    "@stytch/nextjs": "^14.0.0",
-    "@stytch/vanilla-js": "^3.2.1",
     "@types/react-dom": "^18.2.18",
     "graz": "^0.0.51",
     "jose": "^5.1.3"

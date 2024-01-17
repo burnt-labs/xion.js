@@ -1,14 +1,10 @@
 "use client";
 import { useContext, useEffect } from "react";
-import { GrazProvider } from "graz";
-import { StytchProvider } from "@stytch/nextjs";
-import { ApolloProvider } from "@apollo/client";
 import { Dialog, DialogContent } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProvider,
 } from "../AbstraxionContext";
-import { apolloClient, stytchClient } from "../../lib";
 import { AbstraxionSignin } from "../AbstraxionSignin";
 import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
