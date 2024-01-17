@@ -23,7 +23,7 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 export const AbstraxionContextProvider = ({
   children,
   contracts,
-  dashboardUrl,
+  dashboardUrl = "https://dashboard.burnt.com",
 }: {
   children: ReactNode;
   contracts?: string[];

@@ -20,54 +20,10 @@ export default function Page(): JSX.Element {
   // General state hooks
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [initiateResult, setInitiateResult] =
+  const [executeResult, setExecuteResult] =
     useState<ExecuteResultOrUndefined>(undefined);
 
-  const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${initiateResult?.transactionHash}`;
-
-  // const instantiateTestContract = async (): Promise<void> => {
-  //   setLoading(true);
-  //   try {
-  //     if (!client) {
-  //       setIsOpen(true);
-  //       return;
-  //     }
-  //     const initMsg = {
-  //       metadata: {
-  //         metadata: {
-  //           name: "Abstraxion House",
-  //           hub_url: "abstraxion_house",
-  //           description: "Generalized Abstraction",
-  //           tags: [],
-  //           social_links: [],
-  //           creator: account.bech32Address,
-  //           thumbnail_image_url: "https://fakeimg.pl/200/",
-  //           banner_image_url: "https://fakeimg.pl/500/",
-  //         },
-  //       },
-  //       ownable: {
-  //         owner: account.bech32Address,
-  //       },
-  //     };
-
-  //     const hubResult = await client.instantiate(
-  //       account.bech32Address || "",
-  //       1,
-  //       initMsg,
-  //       "my-hub",
-  //       {
-  //         amount: [{ amount: "0", denom: "uxion" }],
-  //         gas: "500000",
-  //       },
-  //     );
-  //     setInitiateResult(hubResult);
-  //   } catch (error) {
-  //     // eslint-disable-next-line no-console -- No UI exists yet to display errors
-  //     console.log(error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${executeResult?.transactionHash}`;
 
   function getTimestampInSeconds(date: Date | null) {
     if (!date) return 0;
@@ -106,10 +62,12 @@ export default function Page(): JSX.Element {
         [],
       );
 
-      setInitiateResult(claimRes);
+      setExecuteResult(claimRes);
     } catch (error) {
       // eslint-disable-next-line no-console -- No UI exists yet to display errors
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -140,7 +98,7 @@ export default function Page(): JSX.Element {
           }}
           structure="base"
         >
-          {loading ? "LOADING..." : "INSTANTIATE TEST CONTRACT"}
+          {loading ? "LOADING..." : "CLAIM SEAT"}
         </Button>
       ) : null}
       <Abstraxion
@@ -149,19 +107,19 @@ export default function Page(): JSX.Element {
           setIsOpen(false);
         }}
       />
-      {initiateResult ? (
+      {executeResult ? (
         <div className="flex flex-col rounded border-2 border-black p-2 dark:border-white">
           <div className="mt-2">
             <p className="text-zinc-500">
-              <span className="font-bold">Contract Address:</span>
+              <span className="font-bold">Transaction Hash</span>
             </p>
-            <p className="text-sm">{initiateResult.transactionHash}</p>
+            <p className="text-sm">{executeResult.transactionHash}</p>
           </div>
           <div className="mt-2">
             <p className=" text-zinc-500">
               <span className="font-bold">Block Height:</span>
             </p>
-            <p className="text-sm">{initiateResult.height}</p>
+            <p className="text-sm">{executeResult.height}</p>
           </div>
           <div className="mt-2">
             <Link

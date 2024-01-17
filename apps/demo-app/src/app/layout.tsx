@@ -6,6 +6,7 @@ import "@burnt-labs/abstraxion/styles.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// Example XION seat contract
 export const seatContractAddress =
   "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
 
@@ -20,7 +21,6 @@ export default function RootLayout({
         <AbstraxionProvider
           config={{
             contracts: [seatContractAddress],
-            dashboardUrl: "https://dashboard.burnt.com",
           }}
         >
           {children}

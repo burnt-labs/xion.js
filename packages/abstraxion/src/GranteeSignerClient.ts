@@ -74,8 +74,8 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
         {
           typeUrl: "/cosmos.authz.v1beta1.MsgExec",
           value: MsgExec.fromPartial({
-            grantee: signerAddress,
-            msgs: messages.slice(0),
+            grantee: this.granteeAddress,
+            msgs: messages.map((msg) => this.registry.encodeAsAny(msg)),
           }),
         },
       ];
@@ -100,7 +100,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
           typeUrl: "/cosmos.authz.v1beta1.MsgExec",
           value: MsgExec.fromPartial({
             grantee: signerAddress,
-            msgs: messages.slice(0),
+            msgs: messages.map((msg) => this.registry.encodeAsAny(msg)),
           }),
         },
       ];
