@@ -6,6 +6,9 @@ import "@burnt-labs/abstraxion/styles.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const seatContractAddress =
+  "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
+
 export default function RootLayout({
   children,
 }: {
@@ -16,10 +19,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AbstraxionProvider
           config={{
-            contracts: [
-              "xion1ly5vunf97qzevm6cu8jq3c5ltj2mlwf4s7g6x5du4atd206m2w0qf2hxsz",
-              "xion1ug4wpsjpn9k0r9rcdx5dq39h6hhe9uvwn3z0gfqnpz6xxvw3cd3sygy3x6",
-            ],
+            contracts: [seatContractAddress],
             dashboardUrl: "https://dashboard.burnt.com",
           }}
         >

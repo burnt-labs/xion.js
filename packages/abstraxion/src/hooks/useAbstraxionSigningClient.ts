@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { GasPrice, SigningCosmWasmClient } from "graz/dist/cosmjs";
+import { GasPrice } from "graz/dist/cosmjs";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   AbstraxionContext,
@@ -13,7 +13,7 @@ export const useAbstraxionSigningClient = () => {
   ) as AbstraxionContextProps;
 
   const [abstractClient, setAbstractClient] = useState<
-    SigningCosmWasmClient | undefined
+    GranteeSignerClient | undefined
   >(undefined);
 
   useEffect(() => {

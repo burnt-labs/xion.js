@@ -26,9 +26,9 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     endpoint: string | HttpEndpoint,
     signer: OfflineSigner,
     options: SigningCosmWasmClientOptions & GranteeSignerOptions,
-  ): Promise<SigningCosmWasmClient> {
+  ): Promise<GranteeSignerClient> {
     const tmClient = await Tendermint37Client.connect(endpoint);
-    return SigningCosmWasmClient.createWithSigner(tmClient, signer, options);
+    return GranteeSignerClient.createWithSigner(tmClient, signer, options);
   }
 
   public static async createWithSigner(
