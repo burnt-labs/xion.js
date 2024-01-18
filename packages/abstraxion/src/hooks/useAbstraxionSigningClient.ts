@@ -22,6 +22,10 @@ export const useAbstraxionSigningClient = () => {
         if (!abstraxionAccount) {
           throw new Error("No account found.");
         }
+
+        if (!grantorAddress) {
+          throw new Error("No grantor found.");
+        }
         const granteeAddress = await abstraxionAccount
           .getAccounts()
           .then((accounts) => {
@@ -43,14 +47,12 @@ export const useAbstraxionSigningClient = () => {
 
         setAbstractClient(directClient);
       } catch (error) {
-        console.log("Something went wrong: ", error);
+        setAbstractClient(undefined);
       }
     }
 
-    if (isConnected && abstraxionAccount) {
-      getSigner();
-    }
-  }, [abstraxionAccount, isConnected]);
+    getSigner();
+  }, [isConnected, abstraxionAccount, grantorAddress]);
 
   return { client: abstractClient };
 };

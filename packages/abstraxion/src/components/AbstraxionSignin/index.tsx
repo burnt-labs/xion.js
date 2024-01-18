@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
 import { Button, ModalSection, BrowserIcon } from "@burnt-labs/ui";
 import { wait } from "@/utils/wait";
@@ -53,6 +53,12 @@ export function AbstraxionSignin(): JSX.Element {
   } = useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
+  const [tempAccountAddress, setTempAccountAddress] = useState("");
+
+  function configureGrantor(address: string) {
+    setGrantorAddress(address);
+    localStorage.setItem("xion-authz-grantor-account", address);
+  }
 
   function openDashboardTab(userAddress: string, contracts?: string[]): void {
     const urlParams = new URLSearchParams();
@@ -73,16 +79,11 @@ export function AbstraxionSignin(): JSX.Element {
     return keypair;
   }
 
-  async function pollForGrants(
-    keypair: DirectSecp256k1HdWallet,
-  ): Promise<void> {
-    if (!keypair) {
-      throw new Error("No keypair");
+  async function pollForGrants(address: string): Promise<void> {
+    if (!address) {
+      throw new Error("No keypair address");
     }
-    setIsConnecting(true);
 
-    const accounts = await keypair.getAccounts();
-    const address = accounts[0].address;
     const shouldContinue = true;
     while (shouldContinue) {
       try {
@@ -95,41 +96,46 @@ export function AbstraxionSignin(): JSX.Element {
         );
         const data = (await res.json()) as GrantsResponse;
         if (data.grants?.length > 0) {
+          setIsConnecting(true);
           const granterAddresses = data.grants.map((grant) => grant.granter);
           const uniqueGranters = [...new Set(granterAddresses)];
           if (uniqueGranters.length > 1) {
             console.error("More than one granter found. Taking first.");
           }
 
-          setGrantorAddress(uniqueGranters[0]);
+          configureGrantor(uniqueGranters[0]);
           break;
         }
       } catch (error) {
-        console.log("There was an error polling for grants: ", error);
+        throw error;
       }
     }
-
-    setIsConnecting(false);
-    setIsConnected(true);
-    setAbstraxionAccount(keypair);
   }
 
   useEffect(() => {
     async function onStartup() {
-      const existingKeypair = localStorage.getItem("xion-authz-temp-account");
-      let keypair;
-      if (existingKeypair) {
-        keypair = await DirectSecp256k1HdWallet.deserialize(
-          existingKeypair,
-          "abstraxion",
-        );
-      } else {
-        keypair = await generateAndStoreTempAccount();
+      try {
+        const existingKeypair = localStorage.getItem("xion-authz-temp-account");
+        let keypair;
+        if (existingKeypair) {
+          keypair = await DirectSecp256k1HdWallet.deserialize(
+            existingKeypair,
+            "abstraxion",
+          );
+        } else {
+          keypair = await generateAndStoreTempAccount();
+        }
+        const accounts = await keypair.getAccounts();
+        const address = accounts[0].address;
+        setTempAccountAddress(address);
+        openDashboardTab(address, contracts);
+        await pollForGrants(address);
+        setIsConnecting(false);
+        setIsConnected(true);
+        setAbstraxionAccount(keypair);
+      } catch (error) {
+        console.log("Something went wrong: ", error);
       }
-      const accounts = await keypair.getAccounts();
-      const address = accounts[0].address;
-      openDashboardTab(address, contracts);
-      pollForGrants(keypair);
     }
 
     if (!isMounted.current) {
@@ -151,7 +157,12 @@ export function AbstraxionSignin(): JSX.Element {
         </h2>
       </div>
       <BrowserIcon />
-      <Button structure="naked">Have a Problem? Try Again</Button>
+      <Button
+        onClick={() => openDashboardTab(tempAccountAddress, contracts)}
+        structure="naked"
+      >
+        Have a Problem? Try Again
+      </Button>
     </ModalSection>
   );
 }

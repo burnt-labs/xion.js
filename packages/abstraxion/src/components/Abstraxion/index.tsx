@@ -42,7 +42,7 @@ export function Abstraxion({
         ) : isConnecting ? (
           <Loading />
         ) : isConnected ? (
-          <Connected />
+          <Connected onClose={onClose} />
         ) : (
           <AbstraxionSignin />
         )}
