@@ -5,14 +5,17 @@ import {
   AbstraxionContextProps,
 } from "../AbstraxionContext";
 
-export function Connected() {
-  const { setIsConnected } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+export function Connected({ onClose }: { onClose: VoidFunction }) {
+  const { setIsConnected, setAbstraxionAccount, setgranterAddress } =
+    useContext(AbstraxionContext) as AbstraxionContextProps;
 
   function handleLogout() {
-    localStorage.removeItem("xion-authz-temp-account");
     setIsConnected(false);
+    localStorage.removeItem("xion-authz-temp-account");
+    localStorage.removeItem("xion-authz-granter-account");
+    setAbstraxionAccount(undefined);
+    setgranterAddress("");
+    onClose();
   }
 
   return (

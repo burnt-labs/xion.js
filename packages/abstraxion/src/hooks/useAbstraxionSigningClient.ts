@@ -8,7 +8,7 @@ import {
 import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 
 export const useAbstraxionSigningClient = () => {
-  const { isConnected, abstraxionAccount, grantorAddress } = useContext(
+  const { isConnected, abstraxionAccount, granterAddress } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -21,6 +21,10 @@ export const useAbstraxionSigningClient = () => {
       try {
         if (!abstraxionAccount) {
           throw new Error("No account found.");
+        }
+
+        if (!granterAddress) {
+          throw new Error("No granter found.");
         }
         const granteeAddress = await abstraxionAccount
           .getAccounts()
@@ -36,7 +40,7 @@ export const useAbstraxionSigningClient = () => {
           abstraxionAccount,
           {
             gasPrice: GasPrice.fromString("0uxion"),
-            grantorAddress,
+            granterAddress,
             granteeAddress,
           },
         );
@@ -44,13 +48,12 @@ export const useAbstraxionSigningClient = () => {
         setAbstractClient(directClient);
       } catch (error) {
         console.log("Something went wrong: ", error);
+        setAbstractClient(undefined);
       }
     }
 
-    if (isConnected && abstraxionAccount) {
-      getSigner();
-    }
-  }, [abstraxionAccount, isConnected]);
+    getSigner();
+  }, [isConnected, abstraxionAccount, granterAddress]);
 
   return { client: abstractClient };
 };

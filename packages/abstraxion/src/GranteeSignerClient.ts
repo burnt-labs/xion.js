@@ -14,12 +14,12 @@ import {
 } from "@cosmjs/tendermint-rpc";
 
 interface GranteeSignerOptions {
-  readonly grantorAddress: string;
+  readonly granterAddress: string;
   readonly granteeAddress: string;
 }
 
 export class GranteeSignerClient extends SigningCosmWasmClient {
-  protected readonly grantorAddress: string;
+  protected readonly granterAddress: string;
   protected readonly granteeAddress: string;
 
   public static async connectWithSigner(
@@ -43,16 +43,16 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     cometClient: TendermintClient | undefined,
     signer: OfflineSigner,
     {
-      grantorAddress,
+      granterAddress,
       granteeAddress,
       ...options
     }: SigningCosmWasmClientOptions & GranteeSignerOptions,
   ) {
     super(cometClient, signer, options);
-    if (grantorAddress === undefined) {
-      throw new Error("grantorAddress is required");
+    if (granterAddress === undefined) {
+      throw new Error("granterAddress is required");
     }
-    this.grantorAddress = grantorAddress;
+    this.granterAddress = granterAddress;
 
     if (granteeAddress === undefined) {
       throw new Error("granteeAddress is required");
@@ -66,8 +66,8 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     fee: StdFee | "auto" | number,
     memo = "",
   ): Promise<DeliverTxResponse> {
-    // Figure out if the signerAddress is a grantor
-    if (signerAddress === this.grantorAddress) {
+    // Figure out if the signerAddress is a granter
+    if (signerAddress === this.granterAddress) {
       signerAddress = this.granteeAddress;
       // Wrap the signerAddress in a MsgExec
       messages = [
@@ -91,8 +91,8 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     memo: string,
     explicitSignerData?: SignerData,
   ): Promise<TxRaw> {
-    // Figure out if the signerAddress is a grantor
-    if (signerAddress === this.grantorAddress) {
+    // Figure out if the signerAddress is a granter
+    if (signerAddress === this.granterAddress) {
       signerAddress = this.granteeAddress;
       // Wrap the signerAddress in a MsgExec
       messages = [

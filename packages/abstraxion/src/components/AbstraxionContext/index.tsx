@@ -10,8 +10,8 @@ export interface AbstraxionContextProps {
   setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
   abstraxionAccount: DirectSecp256k1HdWallet | undefined;
   setAbstraxionAccount: React.Dispatch<DirectSecp256k1HdWallet | undefined>;
-  grantorAddress: string;
-  setGrantorAddress: React.Dispatch<React.SetStateAction<string>>;
+  granterAddress: string;
+  setgranterAddress: React.Dispatch<React.SetStateAction<string>>;
   contracts?: string[];
   dashboardUrl?: string;
 }
@@ -35,7 +35,7 @@ export const AbstraxionContextProvider = ({
   const [abstraxionAccount, setAbstraxionAccount] = useState<
     DirectSecp256k1HdWallet | undefined
   >(undefined);
-  const [grantorAddress, setGrantorAddress] = useState("");
+  const [granterAddress, setgranterAddress] = useState("");
 
   return (
     <AbstraxionContext.Provider
@@ -48,8 +48,8 @@ export const AbstraxionContextProvider = ({
         setAbstraxionError,
         abstraxionAccount,
         setAbstraxionAccount,
-        grantorAddress,
-        setGrantorAddress,
+        granterAddress,
+        setgranterAddress,
         contracts,
         dashboardUrl,
       }}
