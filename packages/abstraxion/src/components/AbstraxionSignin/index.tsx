@@ -47,7 +47,7 @@ export function AbstraxionSignin(): JSX.Element {
     setIsConnecting,
     setIsConnected,
     setAbstraxionAccount,
-    setGrantorAddress,
+    setgranterAddress,
     contracts,
     dashboardUrl,
   } = useContext(AbstraxionContext);
@@ -55,9 +55,9 @@ export function AbstraxionSignin(): JSX.Element {
   const isMounted = useRef(false);
   const [tempAccountAddress, setTempAccountAddress] = useState("");
 
-  function configureGrantor(address: string) {
-    setGrantorAddress(address);
-    localStorage.setItem("xion-authz-grantor-account", address);
+  function configuregranter(address: string) {
+    setgranterAddress(address);
+    localStorage.setItem("xion-authz-granter-account", address);
   }
 
   function openDashboardTab(userAddress: string, contracts?: string[]): void {
@@ -103,7 +103,7 @@ export function AbstraxionSignin(): JSX.Element {
             console.error("More than one granter found. Taking first.");
           }
 
-          configureGrantor(uniqueGranters[0]);
+          configuregranter(uniqueGranters[0]);
           break;
         }
       } catch (error) {

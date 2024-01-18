@@ -17,10 +17,10 @@ export interface useAbstraxionAccountProps {
 export const useAbstraxionAccount = (): useAbstraxionAccountProps => {
   const {
     isConnected,
-    grantorAddress,
+    granterAddress,
     abstraxionAccount,
     isConnecting,
-    setGrantorAddress,
+    setgranterAddress,
     setAbstraxionAccount,
     setIsConnected,
     setIsConnecting,
@@ -36,30 +36,30 @@ export const useAbstraxionAccount = (): useAbstraxionAccountProps => {
           "abstraxion",
         );
         setAbstraxionAccount(deserializedKeypair);
-        const grantorAccount = localStorage.getItem(
-          "xion-authz-grantor-account",
+        const granterAccount = localStorage.getItem(
+          "xion-authz-granter-account",
         );
-        if (grantorAccount) {
-          setGrantorAddress(grantorAccount);
+        if (granterAccount) {
+          setgranterAddress(granterAccount);
           setIsConnected(true);
         }
       } else {
-        // Wipe grantor even if it exists, clean context
-        localStorage.removeItem("xion-authz-grantor-account");
+        // Wipe granter even if it exists, clean context
+        localStorage.removeItem("xion-authz-granter-account");
         setAbstraxionAccount(undefined);
-        setGrantorAddress("");
+        setgranterAddress("");
       }
       setIsConnecting(false);
     }
 
-    if (!isConnecting && !abstraxionAccount && !grantorAddress) {
+    if (!isConnecting && !abstraxionAccount && !granterAddress) {
       configureAccount();
     }
-  }, [isConnected, abstraxionAccount, grantorAddress]);
+  }, [isConnected, abstraxionAccount, granterAddress]);
 
   return {
     data: {
-      bech32Address: grantorAddress,
+      bech32Address: granterAddress,
     },
     isConnected: isConnected,
   };
