@@ -8,3 +8,4 @@ export {
   type AAccountData,
 } from "./interfaces";
 export { AbstractAccountJWTSigner } from "./signers/jwt-signer";
+export { customAccountFromAny } from "./signers/utils";
