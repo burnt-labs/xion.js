@@ -4,7 +4,7 @@ import {
   SigningCosmWasmClientOptions,
 } from "@cosmjs/cosmwasm-stargate";
 import { EncodeObject, OfflineSigner } from "@cosmjs/proto-signing";
-import { SignerData, StdFee } from "@cosmjs/stargate";
+import type { Account, SignerData, StdFee } from "@cosmjs/stargate";
 import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import {
@@ -12,6 +12,7 @@ import {
   Tendermint37Client,
   TendermintClient,
 } from "@cosmjs/tendermint-rpc";
+import { customAccountFromAny } from "@burnt-labs/signers";
 
 interface GranteeSignerOptions {
   readonly granterAddress: string;
@@ -58,6 +59,15 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       throw new Error("granteeAddress is required");
     }
     this.granteeAddress = granteeAddress;
+  }
+
+  public async getAccount(searchAddress: string): Promise<Account | null> {
+    const account =
+      await this.forceGetQueryClient().auth.account(searchAddress);
+    if (!account) {
+      return null;
+    }
+    return customAccountFromAny(account);
   }
 
   public async signAndBroadcast(
