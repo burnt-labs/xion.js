@@ -1,4 +1,5 @@
-import { InputHTMLAttributes, useState } from "react";
+import type { InputHTMLAttributes } from "react";
+import { useState } from "react";
 
 type BaseInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "prefix">;
 
@@ -35,20 +36,22 @@ export function Input({
         </p>
       ) : null}
       <label
-        className={`ui-relative ui-z-0 ui-w-auto ${
-          isInputFocused || value ? "ui-top-2 ui-text-xs" : "ui-top-7"
-        } ui-text-neutral-500`}
+        className={`ui-relative ui-z-0 ui-w-auto ui-font-akkuratLL ${
+          isInputFocused || value
+            ? "ui-top-2 ui-text-xs ui-leading-tight"
+            : "ui-top-7"
+        } ui-text-neutral-400`}
       >
         {placeholder}
       </label>
       <input
         {...props}
-        value={value}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
         className={`ui-z-10 ui-block ui-h-8 ui-w-full ui-border-b ui-relative ${
           error ? "ui-border-red-400" : ""
-        } ui-bg-transparent ui-text-sm ui-text-white ui-outline-none`}
+        } ui-bg-transparent ui-font-akkuratLL ui-text-sm ui-text-zinc-100 ui-font-normal ui-leading-tight ui-outline-none`}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
+        value={value}
       />
     </div>
   );

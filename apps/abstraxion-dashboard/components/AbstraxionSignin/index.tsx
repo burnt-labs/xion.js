@@ -90,10 +90,10 @@ export const AbstraxionSignin = () => {
       {isOnOtpStep ? (
         <>
           <div className="ui-flex ui-flex-col ui-w-full ui-text-center">
-            <h1 className="ui-w-full ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
+            <h1 className="ui-w-full ui-leading-[38.40px] ui-tracking-tighter ui-text-3xl ui-font-light ui-text-white ui-uppercase ui-mb-3">
               Input 6 digit code
             </h1>
-            <h2 className="ui-w-full ui-tracking-tighter ui-text-sm ui-mb-4 ui-text-neutral-500">
+            <h2 className="ui-w-full ui-mb-4 ui-text-center ui-text-sm ui-font-normal ui-leading-tight ui-text-white/50">
               Please check your email for the verification code
             </h2>
           </div>
@@ -119,11 +119,11 @@ export const AbstraxionSignin = () => {
         </>
       ) : (
         <>
-          <div className="ui-flex ui-flex-col ui-w-full ui-text-center">
-            <h1 className="ui-w-full ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
+          <div className="ui-flex ui-flex-col ui-w-full ui-text-center ui-font-akkuratLL">
+            <h1 className="ui-w-full ui-leading-[38.40px] ui-tracking-tighter ui-text-3xl ui-font-light ui-text-white ui-uppercase ui-mb-3">
               Welcome
             </h1>
-            <h2 className="ui-w-full ui-tracking-tighter ui-text-sm ui-mb-4 ui-text-neutral-500">
+            <h2 className="ui-w-full ui-mb-4 ui-text-center ui-text-sm ui-font-normal ui-leading-tight ui-text-white/50">
               Log in or sign up with your email
             </h2>
           </div>
@@ -141,23 +141,6 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
-          <p className="ui-text-xs ui-text-neutral-500">
-            By continuing, you agree to Burnt&apos;s{" "}
-            <a
-              className="ui-text-white ui-no-underline hover:ui-underline"
-              href="https://burnt.com"
-            >
-              Terms of Service
-            </a>{" "}
-            and acknowledge that you have read and understand the XION{" "}
-            <a
-              className="ui-text-white ui-no-underline hover:ui-underline"
-              href="https://burnt.com"
-            >
-              Disclaimer
-            </a>
-            .
-          </p>
         </>
       )}
     </ModalSection>
