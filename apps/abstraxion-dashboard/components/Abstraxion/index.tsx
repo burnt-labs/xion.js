@@ -16,6 +16,7 @@ import { AbstraxionWallets } from "@/components/AbstraxionWallets";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useSearchParams } from "next/navigation";
 import { AbstraxionGrant } from "../AbstraxionGrant";
+import Image from "next/image";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -52,21 +53,46 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        {abstraxionError ? (
-          <ErrorDisplay message={abstraxionError} onClose={onClose} />
-        ) : isConnecting || isReconnecting ? (
-          <Loading />
-        ) : account?.bech32Address && contracts && grantee ? (
-          <AbstraxionGrant contracts={contractsArray} grantee={grantee} />
-        ) : isConnected ? (
-          <AbstraxionWallets />
-        ) : (
-          <AbstraxionSignin />
-        )}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          {abstraxionError ? (
+            <ErrorDisplay message={abstraxionError} onClose={onClose} />
+          ) : isConnecting || isReconnecting ? (
+            <Loading />
+          ) : account?.bech32Address && contracts && grantee ? (
+            <AbstraxionGrant contracts={contractsArray} grantee={grantee} />
+          ) : isConnected ? (
+            <AbstraxionWallets />
+          ) : (
+            <AbstraxionSignin />
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* TOS Footer */}
+      {!isConnected && (
+        <div className="ui-absolute ui-pointer-events-auto ui-w-full ui-z-[1000] ui-py-6 ui-px-10 ui-bottom-0 ui-flex ui-justify-between ui-items-center">
+          <div className="ui-font-akkuratLL ui-text-sm ui-font-normal ui-leading-none">
+            <span className="ui-text-neutral-400">
+              By continuing, you agree to and acknowledge that you have read and
+              understand the
+            </span>
+            <a href="https://burnt.com" className="ui-pl-1 ui-text-white">
+              Disclaimer
+            </a>
+            <span className="ui-text-neutral-400">.</span>
+          </div>
+          <div className="ui-flex ui-gap-2 ui-items-center">
+            <p className="ui-font-akkuratLL ui-text-sm ui-text-zinc-100 ui-opacity-50 leading-tight">
+              Powered by
+            </p>
+            <a href="https://xion.burnt.com/">
+              <Image src="/logo.png" alt="Xion Logo" width="108" height="48" />
+            </a>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
