@@ -1,9 +1,9 @@
 "use client";
 import { useContext, useEffect, useRef, useState } from "react";
-import { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
 import { Button, ModalSection, BrowserIcon } from "@burnt-labs/ui";
 import { wait } from "@/utils/wait";
 import { AbstraxionContext } from "../AbstraxionContext";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 type GrantsResponse = {
   grants: Grant[];

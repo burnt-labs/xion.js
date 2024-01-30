@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from "react";
-import { GasPrice } from "graz/dist/cosmjs";
 import { useStytch } from "@stytch/nextjs";
 import { useCosmWasmSigningClient } from "graz";
 import { AAClient, AbstractAccountJWTSigner } from "@burnt-labs/signers";
@@ -8,6 +7,7 @@ import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
+import { GasPrice } from "@cosmjs/stargate";
 
 export const useAbstraxionSigningClient = () => {
   const { connectionType, abstractAccount } = useContext(

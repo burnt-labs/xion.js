@@ -1,4 +1,4 @@
-import { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 export async function getAccountAddress() {
   const existingKeypair = localStorage.getItem("xion-authz-temp-account");

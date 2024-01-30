@@ -16,6 +16,7 @@
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
     "@cosmjs/proto-signing": "^0.31.3",
+    "@cosmjs/stargate": "^0.31.3",
     "@stytch/nextjs": "^14.0.0",
     "@stytch/vanilla-js": "^3.2.1",
     "@tanstack/react-query": "^4.36.1",

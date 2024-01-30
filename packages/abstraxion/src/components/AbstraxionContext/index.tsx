@@ -1,5 +1,5 @@
 import { ReactNode, createContext, useState } from "react";
-import type { DirectSecp256k1HdWallet } from "graz/dist/cosmjs";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 export interface AbstraxionContextProps {
   isConnected: boolean;

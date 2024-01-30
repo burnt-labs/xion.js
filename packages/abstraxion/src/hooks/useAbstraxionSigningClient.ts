@@ -1,11 +1,11 @@
 import { useContext, useEffect, useState } from "react";
-import { GasPrice } from "graz/dist/cosmjs";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/src/components/AbstraxionContext";
 import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
+import { GasPrice } from "@cosmjs/stargate";
 
 export const useAbstraxionSigningClient = () => {
   const { isConnected, abstraxionAccount, granterAddress } = useContext(
