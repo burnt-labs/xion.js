@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion
 
+## 0.1.0-alpha.24
+
+### Minor Changes
+
+- [#61](https://github.com/burnt-labs/xion.js/pull/61) [`105279a`](https://github.com/burnt-labs/xion.js/commit/105279afb824940e744a4366be25b83fb8fb74e0) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix vite issue with graz package deep imports
+
 ## 0.1.0-alpha.23
 
 ### Minor Changes
