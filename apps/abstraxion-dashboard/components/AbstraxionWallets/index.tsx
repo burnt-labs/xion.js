@@ -10,7 +10,7 @@ import { useStytch, useStytchUser } from "@stytch/nextjs";
 import { useQuery } from "@apollo/client";
 import { decodeJwt } from "jose";
 import { Button, Spinner } from "@burnt-labs/ui";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { testChainInfo, testnetChainInfo } from "@burnt-labs/constants";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
@@ -62,6 +62,7 @@ export const AbstraxionWallets = () => {
       fetchPolicy: "network-only",
       notifyOnNetworkStatusChange: true,
     });
+  console.log(data);
 
   // const { data: singleQuery } = useQuery(SingleSmartWalletQuery, {
   //   variables: {
@@ -104,7 +105,7 @@ export const AbstraxionWallets = () => {
       const signArbMessage = Buffer.from(encoder.encode(abstractAccount?.id));
       // @ts-ignore - function exists in keplr extension
       const signArbRes = await keplr.signArbitrary(
-        testnetChainInfo.chainId,
+        testChainInfo.chainId,
         grazAccount?.bech32Address,
         signArbMessage,
       );
@@ -248,7 +249,7 @@ export const AbstraxionWallets = () => {
               fullWidth={true}
               onClick={() => {
                 connect({
-                  chain: testnetChainInfo,
+                  chain: testChainInfo,
                   walletType: WalletType.KEPLR,
                 });
               }}

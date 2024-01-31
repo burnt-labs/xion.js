@@ -12,6 +12,7 @@ import {
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
 import { useOfflineSigners } from "graz";
+import { testChainInfo } from "@burnt-labs/constants";
 
 export const useAbstraxionSigningClient = (): {
   client: AAClient | undefined;
@@ -63,7 +64,7 @@ export const useAbstraxionSigningClient = (): {
       }
 
       const abstractClient = await AAClient.connectWithSigner(
-        testnetChainInfo.rpc,
+        testChainInfo.rpc,
         signer,
         {
           gasPrice: GasPrice.fromString("0uxion"),
