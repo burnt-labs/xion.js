@@ -1,16 +1,23 @@
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useDisconnect } from "graz";
+import { useContext, useEffect, useState } from "react";
+import {
+  WalletType,
+  getKeplr,
+  useAccount,
+  useConnect,
+  useDisconnect,
+} from "graz";
 import { useStytch, useStytchUser } from "@stytch/nextjs";
 import { useQuery } from "@apollo/client";
 import { decodeJwt } from "jose";
-import { AccountWalletLogo, Button, Spinner } from "@burnt-labs/ui";
+import { Button, Spinner } from "@burnt-labs/ui";
+import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { AllSmartWalletQuery } from "@/utils/queries";
-import { truncateAddress } from "@/utils";
-import { useAbstraxionAccount } from "@/hooks";
+import { AllSmartWalletQuery, SingleSmartWalletQuery } from "@/utils/queries";
+import { getHumanReadablePubkey, truncateAddress } from "@/utils";
+import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { Loading } from "../Loading";
 import { WalletIcon } from "../Icons";
 
@@ -28,18 +35,43 @@ export const AbstraxionWallets = () => {
   const session_jwt = stytchClient.session.getTokens()?.session_jwt;
   const session_token = stytchClient.session.getTokens()?.session_token;
 
-  const { aud, sub } = decodeJwt(session_jwt || "");
+  const keplr = getKeplr();
+  const { data: grazAccount } = useAccount();
+  const { client } = useAbstraxionSigningClient();
 
+  const { connect } = useConnect({
+    onSuccess: async () => await addKeplrAuthenticator(),
+  });
   const { disconnect } = useDisconnect();
-  const { data: account } = useAbstraxionAccount();
+
+  const { aud, sub } = session_jwt
+    ? decodeJwt(session_jwt)
+    : { aud: undefined, sub: undefined };
+
+  // TODO: More robust
+  const authenticator =
+    connectionType === "graz"
+      ? getHumanReadablePubkey(grazAccount?.pubKey)
+      : `${Array.isArray(aud) ? aud[0] : aud}.${sub}`;
+
   const { loading, error, data, startPolling, stopPolling, previousData } =
     useQuery(AllSmartWalletQuery, {
       variables: {
-        authenticator: `${Array.isArray(aud) ? aud[0] : aud}.${sub}`,
+        authenticator,
       },
       fetchPolicy: "network-only",
       notifyOnNetworkStatusChange: true,
     });
+
+  // const { data: singleQuery } = useQuery(SingleSmartWalletQuery, {
+  //   variables: {
+  //     id: abstractAccount.id,
+  //   },
+  //   fetchPolicy: "network-only",
+  //   notifyOnNetworkStatusChange: true,
+  // });
+
+  // console.log({ singleQuery });
 
   const [isGeneratingNewWallet, setIsGeneratingNewWallet] = useState(false);
   const [fetchingNewWallets, setFetchingNewWallets] = useState(false);
@@ -54,18 +86,64 @@ export const AbstraxionWallets = () => {
   const handleDisconnect = async () => {
     if (connectionType === "stytch") {
       await stytchClient.session.revoke();
-    } else if (connectionType === "graz") {
-      disconnect();
     }
-
+    disconnect();
     setConnectionType("none");
     setAbstractAccount(undefined);
   };
 
-  const handleJwtAALoginOrCreate = async (
-    session_jwt?: string,
-    session_token?: string,
-  ) => {
+  const addKeplrAuthenticator = async () => {
+    try {
+      if (!client) {
+        throw new Error("No client found.");
+      }
+
+      console.log(abstractAccount);
+
+      const encoder = new TextEncoder();
+      const signArbMessage = Buffer.from(encoder.encode(abstractAccount?.id));
+      // @ts-ignore - function exists in keplr extension
+      const signArbRes = await keplr.signArbitrary(
+        testnetChainInfo.chainId,
+        grazAccount?.bech32Address,
+        signArbMessage,
+      );
+
+      console.log({ abstractAccount });
+      console.log({ signArbMessage });
+      console.log({ signArbRes });
+
+      // const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite/screw up accounts
+
+      const msg = {
+        add_auth_method: {
+          add_authenticator: {
+            Secp256K1: {
+              id: 2, // needs to be dynamic
+              pubkey: signArbRes.pub_key.value,
+              signature: signArbRes.signature,
+            },
+          },
+        },
+      };
+      const res = await client.addAbstractAccountAuthenticator(msg, "", {
+        amount: [{ amount: "0", denom: "uxion" }],
+        gas: "500000",
+      });
+
+      console.log(res);
+      return res;
+    } catch (error) {
+      console.log(
+        "Something went wrong trying to add Keplr wallet as authenticator: ",
+      );
+      console.log(error);
+    }
+  };
+
+  console.log({ abstractAccount });
+
+  const handleJwtAALoginOrCreate = async () => {
     try {
       if (!session_jwt || !session_token) {
         throw new Error("Missing token/jwt");
@@ -89,7 +167,7 @@ export const AbstraxionWallets = () => {
       if (!res.ok) {
         throw new Error(body.error);
       }
-      startPolling(500);
+      startPolling(3000);
       setFetchingNewWallets(true);
       return;
     } catch (error) {
@@ -99,17 +177,6 @@ export const AbstraxionWallets = () => {
       setIsGeneratingNewWallet(false);
     }
   };
-
-  const registerWebAuthn = useCallback(async () => {
-    try {
-      await stytchClient.webauthn.register({
-        domain: window.location.hostname,
-        session_duration_minutes: 60,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }, [stytchClient]);
 
   if (error) {
     setAbstraxionError((error as Error).message);
@@ -130,76 +197,64 @@ export const AbstraxionWallets = () => {
               Select an account to continue
             </h2>
           </div>
-          {connectionType === "graz" ? (
-            <div className="ui-flex ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-4 ui-bg-transparent ui-border-2 ui-border-white hover:ui-cursor-pointer">
-              <AccountWalletLogo />
-              <div className="ui-flex ui-flex-col ui-gap-1">
-                <h1 className="ui-text-sm ui-font-bold">{account?.name}</h1>
-                <h2 className="ui-text-xs text-zinc-300">
-                  {truncateAddress(account?.bech32Address)}
-                </h2>
-              </div>
+          <div className="ui-flex ui-w-full ui-flex-col ui-items-start ui-justify-center ui-gap-4">
+            <div className="ui-text-white ui-text-base ui-font-bold ui-font-akkuratLL ui-leading-tight">
+              Accounts
             </div>
-          ) : (
-            <div className="ui-flex ui-w-full ui-flex-col ui-items-start ui-justify-center ui-gap-4">
-              <div className="ui-text-white ui-text-base ui-font-bold ui-font-akkuratLL ui-leading-tight">
-                Accounts
-              </div>
-              <div className="ui-flex ui-max-h-64 ui-w-full ui-flex-col ui-items-center ui-gap-4 ui-overflow-auto">
-                {loading || fetchingNewWallets ? (
-                  <Spinner />
-                ) : data?.smartAccounts.nodes.length >= 1 ? (
-                  data?.smartAccounts?.nodes?.map((node: any, i: number) => (
-                    <div
-                      className={`ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-6 ui-flex ui-bg-transparent hover:ui-cursor-pointer ui-border-[1px] ui-border-white hover:ui-bg-white/5 ${
-                        node.id === abstractAccount?.id
-                          ? ""
-                          : "ui-border-opacity-50"
-                      }`}
-                      key={i}
-                      onClick={() =>
-                        setAbstractAccount({ ...node, userId: user?.user_id })
-                      }
-                    >
-                      <WalletIcon color="white" backgroundColor="#363635" />
-                      <div className="ui-flex ui-flex-col ui-gap-1">
-                        <h1 className="ui-text-sm ui-font-bold ui-font-akkuratLL ui-leading-none">
-                          Personal Account {i + 1}
-                        </h1>
-                        <h2 className="ui-text-xs ui-text-neutral-400 ui-font-akkuratLL ui-leading-tight">
-                          {truncateAddress(node.id)}
-                        </h2>
-                      </div>
+            <div className="ui-flex ui-max-h-64 ui-w-full ui-flex-col ui-items-center ui-gap-4 ui-overflow-auto">
+              {loading || fetchingNewWallets ? (
+                <Spinner />
+              ) : data?.smartAccounts.nodes.length >= 1 ? (
+                data?.smartAccounts?.nodes?.map((node: any, i: number) => (
+                  <div
+                    className={`ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-6 ui-flex ui-bg-transparent hover:ui-cursor-pointer ui-border-[1px] ui-border-white hover:ui-bg-white/5 ${
+                      node.id === abstractAccount?.bech32Address
+                        ? ""
+                        : "ui-border-opacity-50"
+                    }`}
+                    key={i}
+                    onClick={() =>
+                      setAbstractAccount({ ...node, userId: user?.user_id })
+                    }
+                  >
+                    <WalletIcon color="white" backgroundColor="#363635" />
+                    <div className="ui-flex ui-flex-col ui-gap-1">
+                      <h1 className="ui-text-sm ui-font-bold ui-font-akkuratLL ui-leading-none">
+                        Personal Account {i + 1}
+                      </h1>
+                      <h2 className="ui-text-xs ui-text-neutral-400 ui-font-akkuratLL ui-leading-tight">
+                        {truncateAddress(node.id)}
+                      </h2>
                     </div>
-                  ))
-                ) : (
+                  </div>
+                ))
+              ) : (
+                <>
                   <p>No Accounts Found.</p>
-                )}
-              </div>
-              <div className="ui-w-full ui-flex ui-justify-center">
-                <Button
-                  structure="naked"
-                  onClick={async () => {
-                    await handleJwtAALoginOrCreate(session_jwt, session_token);
-                  }}
-                >
-                  Create a new account
-                </Button>
-              </div>
-            </div>
-          )}
-          <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            {connectionType === "stytch" &&
-              user &&
-              user?.webauthn_registrations.length < 1 && (
-                <Button
-                  structure="outlined"
-                  fullWidth={true}
-                  onClick={registerWebAuthn}
-                >
-                  Add Passkey/Biometrics
-                </Button>
+                </>
               )}
+            </div>
+          </div>
+          <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
+            <Button
+              structure="naked"
+              fullWidth={true}
+              onClick={handleJwtAALoginOrCreate}
+            >
+              Create
+            </Button>
+            <Button
+              structure="outlined"
+              fullWidth={true}
+              onClick={() => {
+                connect({
+                  chain: testnetChainInfo,
+                  walletType: WalletType.KEPLR,
+                });
+              }}
+            >
+              Add Keplr
+            </Button>
             <Button
               structure="outlined"
               fullWidth={true}

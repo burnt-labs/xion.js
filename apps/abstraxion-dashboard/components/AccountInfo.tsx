@@ -1,20 +1,16 @@
-import { AccountWithAuthenticator } from "@/app/page";
+import type { AbstraxionAccount } from "@/hooks";
 import { CopyIcon, ScanIcon } from "./Icons";
 import { truncateAddress } from "@/utils";
 
-export const AccountInfo = ({
-  account,
-}: {
-  account?: AccountWithAuthenticator;
-}) => {
+export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
   const copyXionAddress = () => {
-    if (account?.bech32Address) {
-      navigator.clipboard.writeText(account?.bech32Address);
+    if (account?.id) {
+      navigator.clipboard.writeText(account?.id);
     }
   };
 
   const renderAuthenticators = () => {
-    return account?.authenticators.nodes.map((authenticator) => {
+    return account?.authenticators?.nodes.map((authenticator) => {
       return (
         <div
           key={authenticator.id}
@@ -42,7 +38,7 @@ export const AccountInfo = ({
         className="ui-flex ui-cursor-pointer ui-items-center ui-justify-between ui-mb-10 ui-px-4 ui-w-full ui-h-16 ui-bg-neutral-50 ui-rounded-lg"
       >
         <p className="ui-text-stone-500 ui-text-base ui-font-normal ui-font-akkuratLL ui-leading-normal">
-          {truncateAddress(account?.bech32Address)}
+          {truncateAddress(account?.id)}
         </p>
         <CopyIcon color="black" />
       </div>

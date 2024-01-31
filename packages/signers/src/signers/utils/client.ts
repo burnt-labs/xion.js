@@ -46,7 +46,7 @@ export class AAClient extends SigningCosmWasmClient {
   public static async connectWithSigner(
     endpoint: string,
     signer: AASigner,
-    options: SigningStargateClientOptions = {}
+    options: SigningStargateClientOptions = {},
   ): Promise<AAClient> {
     const tmClient = await Tendermint37Client.connect(endpoint);
     return new AAClient(tmClient, signer, {
@@ -59,7 +59,7 @@ export class AAClient extends SigningCosmWasmClient {
   protected constructor(
     tmClient: Tendermint37Client | undefined,
     signer: AASigner,
-    options: SigningStargateClientOptions
+    options: SigningStargateClientOptions,
   ) {
     super(tmClient, signer, options);
     this.abstractSigner = signer;
@@ -71,7 +71,7 @@ export class AAClient extends SigningCosmWasmClient {
    * @returns
    */
   public async registerAbstractAccount(
-    msg: MsgRegisterAccount
+    msg: MsgRegisterAccount,
   ): Promise<DeliverTxResponse> {
     const { sender } = msg;
     const createMsg: MsgRegisterAccountEncodeObject = {
@@ -89,12 +89,13 @@ export class AAClient extends SigningCosmWasmClient {
   public async addAbstractAccountAuthenticator(
     msg: AddAuthenticator,
     memo = "",
-    fee: StdFee
+    fee: StdFee,
   ): Promise<DeliverTxResponse> {
     if (!this.abstractSigner.abstractAccount) {
       throw new Error("Abstract account address not set in signer");
     }
     const sender = this.abstractSigner.abstractAccount;
+    console.log({ sender });
     const addMsg: MsgExecuteContractEncodeObject = {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
       value: MsgExecuteContract.fromPartial({
@@ -135,7 +136,7 @@ export class AAClient extends SigningCosmWasmClient {
     messages: readonly EncodeObject[],
     fee: StdFee,
     memo: string,
-    explicitSignerData?: SignerData
+    explicitSignerData?: SignerData,
   ): Promise<TxRaw> {
     const aaAcount = await this.getAccount(signerAddress);
     // we want to use the normal signingstargate client sign method if the signer is not an AASigner
@@ -151,7 +152,7 @@ export class AAClient extends SigningCosmWasmClient {
     }
     /// This check simply makes sure the signer is an AASigner and not a regular signer
     const accountFromSigner = (await this.abstractSigner.getAccounts()).find(
-      (account) => account.address === signerAddress
+      (account) => account.address === signerAddress,
     );
 
     if (!accountFromSigner) {
@@ -175,7 +176,7 @@ export class AAClient extends SigningCosmWasmClient {
     }
 
     const pubKeyBytes = bech32.fromWords(
-      bech32.decode(accountFromSigner.address).words
+      bech32.decode(accountFromSigner.address).words,
     );
 
     const txBodyEncodeObject = {
@@ -199,13 +200,15 @@ export class AAClient extends SigningCosmWasmClient {
       .signDirect(accountFromSigner.accountAddress, signDoc)
       .then((sig: DirectSignResponse) => {
         // Append the authenticator ID
+        console.log("accountFromSigner: ", accountFromSigner);
         return Buffer.from(
           new Uint8Array([
             accountFromSigner.authenticatorId,
             ...Buffer.from(sig.signature.signature, "base64"),
-          ])
+          ]),
         ).toString("base64");
       });
+    console.log("SIGNATURE: ", signature);
     return TxRaw.fromPartial({
       bodyBytes,
       authInfoBytes,

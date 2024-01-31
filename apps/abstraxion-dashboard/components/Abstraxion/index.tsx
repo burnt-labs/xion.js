@@ -11,7 +11,6 @@ import { apolloClient, stytchClient } from "@/lib";
 import { Dialog, DialogContent } from "@burnt-labs/ui";
 import { AbstraxionSignin } from "@/components/AbstraxionSignin";
 import { useAbstraxionAccount } from "@/hooks";
-import { Loading } from "@/components/Loading";
 import { AbstraxionWallets } from "@/components/AbstraxionWallets";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useSearchParams } from "next/navigation";
@@ -31,12 +30,7 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
-  const {
-    isConnected,
-    isConnecting,
-    isReconnecting,
-    data: account,
-  } = useAbstraxionAccount();
+  const { isConnected, data: account } = useAbstraxionAccount();
 
   const contracts = searchParams.get("contracts");
   const contractsArray = contracts?.split(",") || [];
@@ -58,9 +52,7 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
         <DialogContent>
           {abstraxionError ? (
             <ErrorDisplay message={abstraxionError} onClose={onClose} />
-          ) : isConnecting || isReconnecting ? (
-            <Loading />
-          ) : account?.bech32Address && contracts && grantee ? (
+          ) : account?.id && contracts && grantee ? (
             <AbstraxionGrant contracts={contractsArray} grantee={grantee} />
           ) : isConnected ? (
             <AbstraxionWallets />

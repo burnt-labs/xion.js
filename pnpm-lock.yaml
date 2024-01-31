@@ -50,6 +50,9 @@ importers:
       '@burnt-labs/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@cosmjs/crypto':
+        specifier: ^0.31.3
+        version: 0.31.3
       '@cosmjs/proto-signing':
         specifier: ^0.31.3
         version: 0.31.3

@@ -1,9 +1,8 @@
 "use client";
-
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AccountInfo } from "@/components/AccountInfo";
 import { Overview } from "@/components/Overview";
-
-import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { useAccountBalance } from "@/hooks/useAccountBalance";
 import { ChevronDownIcon, WalletIcon } from "@/components/Icons";
@@ -13,11 +12,6 @@ import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
 } from "../hooks";
-import { useSearchParams } from "next/navigation";
-
-export interface AccountWithAuthenticator extends AbstraxionAccount {
-  authenticators: Authenticators;
-}
 
 export default function Home() {
   const searchParams = useSearchParams();
@@ -29,9 +23,55 @@ export default function Home() {
   const contracts = searchParams.get("contracts");
   const grantee = searchParams.get("grantee");
 
+  function getTimestampInSeconds(date: Date | null) {
+    if (!date) return 0;
+    const d = new Date(date);
+    return Math.floor(d.getTime() / 1000);
+  }
+
+  const now = new Date();
+  now.setSeconds(now.getSeconds() + 15);
+  const oneYearFromNow = new Date();
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+  const seatContractAddress =
+    "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
+
+  async function claimSeat() {
+    const msg = {
+      sales: {
+        claim_item: {
+          token_id: String(getTimestampInSeconds(now)),
+          owner: account.id,
+          token_uri: "",
+          extension: {},
+        },
+      },
+    };
+
+    try {
+      const claimRes = await client?.execute(
+        account.id,
+        seatContractAddress,
+        msg,
+        {
+          amount: [{ amount: "0", denom: "uxion" }],
+          gas: "500000",
+        },
+        "",
+        [],
+      );
+
+      console.log(claimRes);
+    } catch (error) {
+      // eslint-disable-next-line no-console -- No UI exists yet to display errors
+      console.log(error);
+    }
+  }
+
   return (
     <>
-      {!account?.bech32Address || (contracts && grantee) ? (
+      {!account?.id || (contracts && grantee) ? (
         <div className="ui-flex ui-h-screen ui-flex-1 ui-items-center ui-justify-center ui-overflow-y-auto ui-p-6">
           <Abstraxion onClose={() => null} isOpen={true} />
         </div>
@@ -58,6 +98,7 @@ export default function Home() {
                   </p>
                   <ChevronDownIcon />
                 </button>
+                <button onClick={claimSeat}>CLICK</button>
               </div>
               {/* Tiles */}
               <div className="ui-mx-auto ui-flex ui-max-w-7xl">
@@ -70,7 +111,7 @@ export default function Home() {
                   <h3 className="ui-font-akkuratLL ui-mb-4 ui-mt-8 ui-text-base ui-font-bold ui-text-black">
                     Account Info
                   </h3>
-                  <AccountInfo account={account as AccountWithAuthenticator} />
+                  <AccountInfo account={account as AbstraxionAccount} />
                 </div>
                 {/* Right Tiles */}
                 <div className="ui-flex ui-flex-1 ui-flex-col"></div>
