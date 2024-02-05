@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button, Spinner } from "@burnt-labs/ui";
 import { MsgGrant } from "cosmjs-types/cosmos/authz/v1beta1/tx";
@@ -11,6 +11,7 @@ import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import burntAvatar from "@/public/burntAvatarCircle.png";
 import { CheckIcon } from "../Icons";
 import { EncodeObject } from "@cosmjs/proto-signing";
+import { redirect, useSearchParams } from "next/navigation";
 
 interface AbstraxionGrantProps {
   contracts: string[];
@@ -23,9 +24,28 @@ export const AbstraxionGrant = ({
 }: AbstraxionGrantProps) => {
   const { client } = useAbstraxionSigningClient();
   const { data: account } = useAbstraxionAccount();
+  const searchParams = useSearchParams();
 
   const [inProgress, setInProgress] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(function redirectToDapp() {
+    if (showSuccess && searchParams.get("redirect_uri")) {
+      let redirectUri = new URLSearchParams(window.location.search).get(
+        "redirect_uri",
+      );
+      let url: URL | null = null;
+      if (redirectUri) {
+        url = new URL(redirectUri);
+        let params = new URLSearchParams(url.search);
+
+        params.append("granted", "true");
+        url.search = params.toString();
+        redirectUri = url.toString();
+        window.location.href = redirectUri;
+      }
+    }
+  });
 
   const generateContractGrant = (granter: string) => {
     const timestampThreeMonthsFromNow = Math.floor(
