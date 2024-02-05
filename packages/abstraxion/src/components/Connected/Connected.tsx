@@ -1,20 +1,17 @@
 import { useContext } from "react";
 import { Button, ModalSection } from "@burnt-labs/ui";
-import {
-  AbstraxionContext,
-  AbstraxionContextProps,
-} from "../AbstraxionContext";
+import { AbstraxionContext } from "../AbstraxionContext";
 
-export function Connected({ onClose }: { onClose: VoidFunction }) {
-  const { setIsConnected, setAbstraxionAccount, setgranterAddress } =
-    useContext(AbstraxionContext) as AbstraxionContextProps;
+export function Connected({ onClose }: { onClose: VoidFunction }): JSX.Element {
+  const { setIsConnected, setAbstraxionAccount, setGranterAddress } =
+    useContext(AbstraxionContext);
 
-  function handleLogout() {
+  function handleLogout(): void {
     setIsConnected(false);
     localStorage.removeItem("xion-authz-temp-account");
     localStorage.removeItem("xion-authz-granter-account");
     setAbstraxionAccount(undefined);
-    setgranterAddress("");
+    setGranterAddress("");
     onClose();
   }
 
@@ -24,7 +21,13 @@ export function Connected({ onClose }: { onClose: VoidFunction }) {
         <h1 className="ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
           Connected
         </h1>
-        <Button fullWidth onClick={handleLogout}>
+        <div className="ui-my-4 ui-w-full">
+          <Button fullWidth onClick={onClose}>
+            Close
+          </Button>
+        </div>
+
+        <Button fullWidth onClick={handleLogout} structure="destructive">
           Logout
         </Button>
       </div>

@@ -1,30 +1,27 @@
 import { useContext, useEffect } from "react";
-import {
-  AbstraxionContext,
-  AbstraxionContextProps,
-} from "@/src/components/AbstraxionContext";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { AbstraxionContext } from "@/src/components/AbstraxionContext";
 
 export interface AbstraxionAccount {
   bech32Address: string;
 }
 
-export interface useAbstraxionAccountProps {
+export interface UseAbstraxionAccountProps {
   data: AbstraxionAccount;
   isConnected: boolean;
 }
 
-export const useAbstraxionAccount = (): useAbstraxionAccountProps => {
+export const useAbstraxionAccount = (): UseAbstraxionAccountProps => {
   const {
     isConnected,
     granterAddress,
     abstraxionAccount,
     isConnecting,
-    setgranterAddress,
+    setGranterAddress,
     setAbstraxionAccount,
     setIsConnected,
     setIsConnecting,
-  } = useContext(AbstraxionContext) as AbstraxionContextProps;
+  } = useContext(AbstraxionContext);
 
   useEffect(() => {
     async function configureAccount() {
@@ -40,14 +37,14 @@ export const useAbstraxionAccount = (): useAbstraxionAccountProps => {
           "xion-authz-granter-account",
         );
         if (granterAccount) {
-          setgranterAddress(granterAccount);
+          setGranterAddress(granterAccount);
           setIsConnected(true);
         }
       } else {
         // Wipe granter even if it exists, clean context
         localStorage.removeItem("xion-authz-granter-account");
         setAbstraxionAccount(undefined);
-        setgranterAddress("");
+        setGranterAddress("");
       }
       setIsConnecting(false);
     }
@@ -61,6 +58,6 @@ export const useAbstraxionAccount = (): useAbstraxionAccountProps => {
     data: {
       bech32Address: granterAddress,
     },
-    isConnected: isConnected,
+    isConnected,
   };
 };

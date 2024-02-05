@@ -1,53 +1,55 @@
 "use client";
 import { useContext, useEffect, useRef, useState } from "react";
 import { Button, ModalSection, BrowserIcon } from "@burnt-labs/ui";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { wait } from "@/utils/wait";
 import { AbstraxionContext } from "../AbstraxionContext";
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
-type GrantsResponse = {
+interface GrantsResponse {
   grants: Grant[];
   pagination: Pagination;
-};
+}
 
-type Grant = {
+interface Grant {
   granter: string;
   grantee: string;
   authorization: Authorization;
   expiration: string;
-};
+}
 
-type Authorization = {
+interface Authorization {
   "@type": string;
   grants: GrantAuthorization[];
-};
+}
 
-type GrantAuthorization = {
+interface GrantAuthorization {
   contract: string;
   limit: Limit;
   filter: Filter;
-};
+}
 
-type Limit = {
+interface Limit {
   "@type": string;
   remaining: string;
-};
+}
 
-type Filter = {
+interface Filter {
   "@type": string;
-};
+}
 
-type Pagination = {
+interface Pagination {
   next_key: null | string;
   total: string;
-};
+}
 
 export function AbstraxionSignin(): JSX.Element {
   const {
     setIsConnecting,
     setIsConnected,
     setAbstraxionAccount,
-    setgranterAddress,
+    abstraxionAccount,
+    setGranterAddress,
+    granterAddress,
     contracts,
     dashboardUrl,
   } = useContext(AbstraxionContext);
@@ -56,17 +58,22 @@ export function AbstraxionSignin(): JSX.Element {
   const [tempAccountAddress, setTempAccountAddress] = useState("");
 
   function configuregranter(address: string) {
-    setgranterAddress(address);
+    setGranterAddress(address);
     localStorage.setItem("xion-authz-granter-account", address);
   }
 
-  function openDashboardTab(userAddress: string, contracts?: string[]): void {
+  function openDashboardTab(
+    userAddress: string,
+    grantContracts?: string[],
+  ): void {
+    const currentUrl = window.location.href;
     const urlParams = new URLSearchParams();
     urlParams.set("grantee", userAddress);
-    // @ts-ignore - url encoding array
-    urlParams.set("contracts", contracts);
-    urlParams.toString();
-    window.open(`${dashboardUrl}?${urlParams}`, "_blank");
+    // @ts-expect-error - url encoding array
+    urlParams.set("contracts", grantContracts);
+    urlParams.set("redirect_uri", currentUrl);
+    const queryString = urlParams.toString(); // Convert URLSearchParams to string
+    window.location.href = `${dashboardUrl}?${queryString}`;
   }
 
   async function generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {
@@ -83,6 +90,7 @@ export function AbstraxionSignin(): JSX.Element {
     if (!address) {
       throw new Error("No keypair address");
     }
+    setIsConnecting(true);
 
     const shouldContinue = true;
     while (shouldContinue) {
@@ -95,8 +103,7 @@ export function AbstraxionSignin(): JSX.Element {
           },
         );
         const data = (await res.json()) as GrantsResponse;
-        if (data.grants?.length > 0) {
-          setIsConnecting(true);
+        if (data.grants.length > 0) {
           const granterAddresses = data.grants.map((grant) => grant.granter);
           const uniqueGranters = [...new Set(granterAddresses)];
           if (uniqueGranters.length > 1) {
@@ -104,6 +111,11 @@ export function AbstraxionSignin(): JSX.Element {
           }
 
           configuregranter(uniqueGranters[0]);
+          // Remove query parameter "granted"
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.delete("granted");
+          history.pushState({}, "", currentUrl.href);
+
           break;
         }
       } catch (error) {
@@ -125,14 +137,22 @@ export function AbstraxionSignin(): JSX.Element {
         } else {
           keypair = await generateAndStoreTempAccount();
         }
+        const searchParams = new URLSearchParams(window.location.search);
+        const isGranted = searchParams.get("granted");
         const accounts = await keypair.getAccounts();
         const address = accounts[0].address;
         setTempAccountAddress(address);
-        openDashboardTab(address, contracts);
-        await pollForGrants(address);
-        setIsConnecting(false);
-        setIsConnected(true);
-        setAbstraxionAccount(keypair);
+
+        if (!isGranted && !granterAddress) {
+          openDashboardTab(address, contracts);
+        } else if (isGranted && !granterAddress) {
+          await pollForGrants(address);
+          setIsConnecting(false);
+          setIsConnected(true);
+          setAbstraxionAccount(keypair);
+        } else {
+          setIsConnected(true);
+        }
       } catch (error) {
         console.log("Something went wrong: ", error);
       }
@@ -158,7 +178,9 @@ export function AbstraxionSignin(): JSX.Element {
       </div>
       <BrowserIcon />
       <Button
-        onClick={() => openDashboardTab(tempAccountAddress, contracts)}
+        onClick={() => {
+          openDashboardTab(tempAccountAddress, contracts);
+        }}
         structure="naked"
       >
         Have a Problem? Try Again
