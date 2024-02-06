@@ -18,16 +18,25 @@ import { getAAccounts } from "./utils";
  */
 export class AADirectSigner extends AASigner {
   signer: OfflineDirectSigner;
+  accountAuthenticator: string;
   indexerUrl: string;
 
-  constructor(initializedSigner: OfflineDirectSigner, abstractAccount: string, indexerUrl?: string) {
+  constructor(
+    initializedSigner: OfflineDirectSigner,
+    abstractAccount: string,
+    accountAuthenticator: string,
+    indexerUrl?: string,
+  ) {
     super(abstractAccount);
     this.signer = initializedSigner;
-    this.indexerUrl = indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer"
+    this.accountAuthenticator = accountAuthenticator;
+    this.indexerUrl =
+      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
   }
+
   async signDirect(
     signerAddress: string,
-    signDoc: SignDoc
+    signDoc: SignDoc,
   ): Promise<DirectSignResponse> {
     return this.signer.signDirect(signerAddress, signDoc);
   }

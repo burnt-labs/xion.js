@@ -140,6 +140,7 @@ export class AAClient extends SigningCosmWasmClient {
   ): Promise<TxRaw> {
     const aaAcount = await this.getAccount(signerAddress);
     // we want to use the normal signingstargate client sign method if the signer is not an AASigner
+    console.log("aaAcount:", aaAcount);
     if (aaAcount && aaAcount.pubkey) {
       // this is a regular signer
       this.abstractSigner.abstractAccount = undefined;
@@ -151,9 +152,13 @@ export class AAClient extends SigningCosmWasmClient {
       this.abstractSigner.abstractAccount = signerAddress;
     }
     /// This check simply makes sure the signer is an AASigner and not a regular signer
-    const accountFromSigner = (await this.abstractSigner.getAccounts()).find(
-      (account) => account.address === signerAddress,
-    );
+    const foo = await this.abstractSigner.getAccounts();
+    // This isn't right. We need to assign to the proper account, this will just return the JWT authenticator
+    const accountFromSigner = foo[1]; // TEMP: just to get the secp256k1 account correctly
+    console.log("accountFromSigner: ", accountFromSigner);
+    // foo.find(
+    //   (account) => account.address === signerAddress,
+    // );
 
     if (!accountFromSigner) {
       throw new Error("Failed to retrieve account from signer");
@@ -200,7 +205,7 @@ export class AAClient extends SigningCosmWasmClient {
       .signDirect(accountFromSigner.accountAddress, signDoc)
       .then((sig: DirectSignResponse) => {
         // Append the authenticator ID
-        console.log("accountFromSigner: ", accountFromSigner);
+        console.log("Sig: ", sig);
         return Buffer.from(
           new Uint8Array([
             accountFromSigner.authenticatorId,

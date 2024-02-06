@@ -81,12 +81,12 @@ export const AbstraxionGrant = ({
       throw new Error("no account");
     }
 
-    const granter = account.bech32Address;
+    const granter = account.id;
     const msg = generateContractGrant(granter);
 
     try {
       const foo = await client?.signAndBroadcast(
-        account.bech32Address,
+        account.id,
         [msg as EncodeObject],
         {
           amount: [{ amount: "0", denom: "uxion" }],

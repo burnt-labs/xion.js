@@ -6,13 +6,12 @@ import {
   AADirectSigner,
   AbstractAccountJWTSigner,
 } from "@burnt-labs/signers";
-import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
 import { useOfflineSigners } from "graz";
-import { testChainInfo } from "@burnt-labs/constants";
+import { testnetChainInfo } from "@burnt-labs/constants";
 
 export const useAbstraxionSigningClient = (): {
   client: AAClient | undefined;
@@ -35,20 +34,23 @@ export const useAbstraxionSigningClient = (): {
       let signer: AbstractAccountJWTSigner | AADirectSigner | undefined =
         undefined;
 
+      // TODO: authenticator vs index. which one is better long term
+      // How do you get authenticator index if there are duplicates...?
+      // Client-side disable ability to add duplicate authenticators
       switch (connectionType) {
         case "stytch":
           signer = new AbstractAccountJWTSigner(
             abstractAccount.id,
+            abstractAccount.currentAuthenticator,
             sessionToken,
           );
           break;
         case "graz":
           if (data && data.offlineSigner) {
-            // This wont work. Was thinking this was 'abstraxion' package and abstractAccount is a DirectHDWallet.
-            // Will need to gen an offline signer
             signer = new AADirectSigner(
               data?.offlineSigner,
               abstractAccount.id,
+              abstractAccount.currentAuthenticator,
             );
             break;
           }
@@ -64,7 +66,7 @@ export const useAbstraxionSigningClient = (): {
       }
 
       const abstractClient = await AAClient.connectWithSigner(
-        testChainInfo.rpc,
+        testnetChainInfo.rpc,
         signer,
         {
           gasPrice: GasPrice.fromString("0uxion"),

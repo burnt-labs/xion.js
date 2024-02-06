@@ -10,14 +10,11 @@ export function useAccountBalance(account?: AbstraxionAccount, client?: any) {
   });
 
   useEffect(() => {
-    if (!account?.bech32Address) return;
+    if (!account?.id) return;
 
     const fetchBalances = async () => {
       let newBalances: Coin[] = [];
-      const uxionBalance = await client?.getBalance(
-        account.bech32Address,
-        "uxion",
-      );
+      const uxionBalance = await client?.getBalance(account.id, "uxion");
 
       if (uxionBalance?.amount) {
         const xionBalance: Coin = {

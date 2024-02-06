@@ -18,6 +18,7 @@ import {
   ISmartAccounts,
 } from "../../interfaces/smartAccount";
 import {
+  AllSmartWalletQuery,
   AllSmartWalletQueryByIdAndTypeAndAuthenticator,
   SingleSmartWalletQuery,
 } from "../../interfaces/queries";
@@ -46,10 +47,10 @@ export type INodes<T> = {
 };
 
 function accountFromBaseAccount(input: BaseAccount) {
-  const { address, pubKey, accountNumber, sequence } = input;
+  const { address, pubKey: inputPubkey, accountNumber, sequence } = input;
   let pubkey: Pubkey | null = null;
-  if (pubKey) {
-    pubkey = decodePubkey(pubKey);
+  if (inputPubkey) {
+    pubkey = decodePubkey(inputPubkey);
   }
   return {
     address: address,
@@ -166,17 +167,18 @@ export async function getAAccounts(
           continue;
         }
         for (const authenticator of smartAccountAuthenticators.nodes) {
+          const splitAuthenticatorId = authenticator.id.split("-");
+          const address = splitAuthenticatorId[0];
+          const authenticatorId = Number(splitAuthenticatorId[1]);
           allAAAcounts.push({
-            /** The authenticator id was encoded as the contract address + xion + <id>
-             * e.g. xion3214141231312323 + xion + 1
+            /** The authenticator id was encoded as the contract address + "-" + <id>
+             * e.g. xion3214141231312323-1
              */
-            address: "xion" + authenticator.authenticatorId.split("xion")[1],
+            address,
             accountAddress: account.address,
             algo: authenticator.type.toLowerCase() as Algo,
-            pubkey: new Uint8Array(), // to signify an AA account
-            authenticatorId: Number(
-              authenticator.authenticatorId.split("xion")[2],
-            ),
+            pubkey: account.pubkey || new Uint8Array(), // to signify an AA account
+            authenticatorId,
           });
         }
       }
@@ -207,6 +209,52 @@ export async function getAALastAuthenticatorId(
     return 0;
   }
   return data.smartAccount.latestAuthenticatorId;
+}
+
+/**
+ * Get the last authenticator id of the abstract account
+ * @param abstractAccount
+ * @returns
+ */
+export async function getAuthenticatorIdByAuthenticator(
+  abstractAccount: string,
+  authenticator: string,
+  indexerUrl: string,
+): Promise<number> {
+  const apolloClient = getApolloClient(indexerUrl);
+  const { data } = await apolloClient.query<{
+    smartAccounts: {
+      nodes: {
+        authenticators: {
+          nodes: {
+            authenticator: string;
+            authenticatorIndex: number;
+            id: string;
+            type: string;
+            version: string;
+          }[];
+        };
+        id: string;
+      }[];
+    };
+  }>({
+    query: AllSmartWalletQuery,
+    variables: {
+      authenticator,
+    },
+  });
+  if (!data || !data.smartAccounts) {
+    return 0;
+  }
+  // This is fetching the first authenticator that matches the conditions
+  // With current tech, we can technically have n authenticators that match but we won't allow duplicates on client, thus the "find" usage
+  const currentAccount = data.smartAccounts.nodes.find(
+    (account) => account.id === abstractAccount,
+  );
+  const result = currentAccount?.authenticators.nodes.find(
+    (node) => node.authenticator === authenticator,
+  );
+  return result?.authenticatorIndex || 0;
 }
 
 /**

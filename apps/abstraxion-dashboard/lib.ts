@@ -9,8 +9,7 @@ export const stytchClient: StytchHeadlessClient = createStytchHeadlessClient(
 
 // TODO: Refactor to be dynamic. Local dev uri must be device IP.
 export const apolloClient = new ApolloClient({
-  // uri: "https://api.subquery.network/sq/burnt-labs/xion-indexer",
-  uri: "http://192.168.1.178:3001",
+  uri: "https://api.subquery.network/sq/burnt-labs/xion-indexer",
   cache: new InMemoryCache(),
   assumeImmutableResults: true,
 });

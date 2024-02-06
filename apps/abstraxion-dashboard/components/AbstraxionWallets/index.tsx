@@ -3,21 +3,21 @@ import {
   WalletType,
   getKeplr,
   useAccount,
-  useConnect,
   useDisconnect,
+  useSuggestChainAndConnect,
 } from "graz";
 import { useStytch, useStytchUser } from "@stytch/nextjs";
 import { useQuery } from "@apollo/client";
 import { decodeJwt } from "jose";
 import { Button, Spinner } from "@burnt-labs/ui";
-import { testChainInfo, testnetChainInfo } from "@burnt-labs/constants";
+import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { AllSmartWalletQuery, SingleSmartWalletQuery } from "@/utils/queries";
+import { AllSmartWalletQuery } from "@/utils/queries";
 import { getHumanReadablePubkey, truncateAddress } from "@/utils";
-import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
+import { useAbstraxionSigningClient } from "@/hooks";
 import { Loading } from "../Loading";
 import { WalletIcon } from "../Icons";
 
@@ -39,7 +39,7 @@ export const AbstraxionWallets = () => {
   const { data: grazAccount } = useAccount();
   const { client } = useAbstraxionSigningClient();
 
-  const { connect } = useConnect({
+  const { suggestAndConnect } = useSuggestChainAndConnect({
     onSuccess: async () => await addKeplrAuthenticator(),
   });
   const { disconnect } = useDisconnect();
@@ -62,17 +62,6 @@ export const AbstraxionWallets = () => {
       fetchPolicy: "network-only",
       notifyOnNetworkStatusChange: true,
     });
-  console.log(data);
-
-  // const { data: singleQuery } = useQuery(SingleSmartWalletQuery, {
-  //   variables: {
-  //     id: abstractAccount.id,
-  //   },
-  //   fetchPolicy: "network-only",
-  //   notifyOnNetworkStatusChange: true,
-  // });
-
-  // console.log({ singleQuery });
 
   const [isGeneratingNewWallet, setIsGeneratingNewWallet] = useState(false);
   const [fetchingNewWallets, setFetchingNewWallets] = useState(false);
@@ -99,28 +88,22 @@ export const AbstraxionWallets = () => {
         throw new Error("No client found.");
       }
 
-      console.log(abstractAccount);
-
       const encoder = new TextEncoder();
       const signArbMessage = Buffer.from(encoder.encode(abstractAccount?.id));
       // @ts-ignore - function exists in keplr extension
       const signArbRes = await keplr.signArbitrary(
-        testChainInfo.chainId,
+        testnetChainInfo.chainId,
         grazAccount?.bech32Address,
         signArbMessage,
       );
 
-      console.log({ abstractAccount });
-      console.log({ signArbMessage });
-      console.log({ signArbRes });
-
-      // const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite/screw up accounts
+      const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
 
       const msg = {
         add_auth_method: {
           add_authenticator: {
             Secp256K1: {
-              id: 2, // needs to be dynamic
+              id: accountIndex,
               pubkey: signArbRes.pub_key.value,
               signature: signArbRes.signature,
             },
@@ -132,7 +115,6 @@ export const AbstraxionWallets = () => {
         gas: "500000",
       });
 
-      console.log(res);
       return res;
     } catch (error) {
       console.log(
@@ -141,8 +123,6 @@ export const AbstraxionWallets = () => {
       console.log(error);
     }
   };
-
-  console.log({ abstractAccount });
 
   const handleJwtAALoginOrCreate = async () => {
     try {
@@ -205,7 +185,7 @@ export const AbstraxionWallets = () => {
             <div className="ui-flex ui-max-h-64 ui-w-full ui-flex-col ui-items-center ui-gap-4 ui-overflow-auto">
               {loading || fetchingNewWallets ? (
                 <Spinner />
-              ) : data?.smartAccounts.nodes.length >= 1 ? (
+              ) : data?.smartAccounts?.nodes.length >= 1 ? (
                 data?.smartAccounts?.nodes?.map((node: any, i: number) => (
                   <div
                     className={`ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-6 ui-flex ui-bg-transparent hover:ui-cursor-pointer ui-border-[1px] ui-border-white hover:ui-bg-white/5 ${
@@ -215,7 +195,11 @@ export const AbstraxionWallets = () => {
                     }`}
                     key={i}
                     onClick={() =>
-                      setAbstractAccount({ ...node, userId: user?.user_id })
+                      setAbstractAccount({
+                        ...node,
+                        userId: user?.user_id,
+                        currentAuthenticator: authenticator,
+                      })
                     }
                   >
                     <WalletIcon color="white" backgroundColor="#363635" />
@@ -237,19 +221,21 @@ export const AbstraxionWallets = () => {
             </div>
           </div>
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            <Button
-              structure="naked"
-              fullWidth={true}
-              onClick={handleJwtAALoginOrCreate}
-            >
-              Create
-            </Button>
+            {data?.smartAccounts?.nodes.length < 1 ? (
+              <Button
+                structure="naked"
+                fullWidth={true}
+                onClick={handleJwtAALoginOrCreate}
+              >
+                Create
+              </Button>
+            ) : null}
             <Button
               structure="outlined"
               fullWidth={true}
               onClick={() => {
-                connect({
-                  chain: testChainInfo,
+                suggestAndConnect({
+                  chainInfo: testnetChainInfo,
                   walletType: WalletType.KEPLR,
                 });
               }}
