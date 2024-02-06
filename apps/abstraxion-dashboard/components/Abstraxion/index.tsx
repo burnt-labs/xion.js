@@ -25,7 +25,6 @@ export interface ModalProps {
 
 export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   const searchParams = useSearchParams();
-  const modalRef = useRef<HTMLDivElement>(null);
 
   const { abstraxionError } = useContext(
     AbstraxionContext,
