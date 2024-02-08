@@ -146,9 +146,6 @@ export const AbstraxionGrant = ({
         <>
           <div className="ui-mb-10 ui-flex ui-items-center ui-justify-center">
             <Image src={burntAvatar} alt="Burnt Avatar" />
-            <div className="ui-mx-6 ui-h-[1px] ui-w-10 ui-bg-white ui-opacity-20"></div>{" "}
-            {/* This is the divider */}
-            <div className="ui-h-16 ui-w-16 ui-bg-gray-300 ui-rounded-full"></div>
           </div>
           <div className="mb-4">
             <h1 className="ui-text-base ui-font-bold ui-leading-tight">
@@ -166,7 +163,7 @@ export const AbstraxionGrant = ({
                 <span className="ui-mr-2">
                   <CheckIcon color="white" />
                 </span>
-                View your basic profile info
+                Log you in to their app
               </li>
             </ul>
             <div className="ui-w-full ui-bg-white ui-opacity-20 ui-h-[1px] ui-mb-8" />
