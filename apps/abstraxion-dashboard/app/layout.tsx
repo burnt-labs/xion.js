@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Providers } from "./providers";
 import "./globals.css";
 import "@burnt-labs/ui/dist/index.css";
+import { Analytics } from "@vercel/analytics/react";
 
 const akkuratLL = localFont({
   src: [
@@ -46,6 +47,7 @@ export default function RootLayout({
         <Providers>
           <div className="ui-flex">{children}</div>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
