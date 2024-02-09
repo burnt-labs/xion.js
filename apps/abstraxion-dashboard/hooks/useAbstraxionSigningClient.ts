@@ -4,6 +4,7 @@ import {
   AAClient,
   AADirectSigner,
   AbstractAccountJWTSigner,
+  GasPrice,
 } from "@burnt-labs/signers";
 import {
   AbstraxionContext,
@@ -11,7 +12,6 @@ import {
 } from "@/components/AbstraxionContext";
 import { getKeplr, useOfflineSigners } from "graz";
 import { testnetChainInfo } from "@burnt-labs/constants";
-import { GasPrice } from "@cosmjs/stargate";
 
 export const useAbstraxionSigningClient = (): {
   client: AAClient | undefined;
