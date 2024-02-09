@@ -3,6 +3,7 @@ import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { sha256 } from "@cosmjs/crypto";
 import { AAccountData, AASigner } from "../interfaces/AASigner";
 import { AAAlgo } from "../interfaces/smartAccount";
+import { getAuthenticatorIdByAuthenticatorIndex } from "./utils";
 
 export class AbstractAccountJWTSigner extends AASigner {
   // requires a session token already created
@@ -36,7 +37,11 @@ export class AbstractAccountJWTSigner extends AASigner {
         address: this.abstractAccount,
         algo: "secp256k1", // we don't really care about this
         pubkey: new Uint8Array(),
-        authenticatorId: this.accountAuthenticatorIndex,
+        authenticatorId: await getAuthenticatorIdByAuthenticatorIndex(
+          this.abstractAccount,
+          this.accountAuthenticatorIndex,
+          this.indexerUrl,
+        ),
         accountAddress: this.abstractAccount,
         aaalgo: AAAlgo.JWT,
       },
