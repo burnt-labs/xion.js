@@ -1,12 +1,9 @@
 {
   "name": "@burnt-labs/signers",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": "./dist"
-  },
   "license": "MIT",
   "scripts": {
     "build": "tsup",

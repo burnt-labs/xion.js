@@ -1,5 +1,11 @@
 # @burnt-labs/signers
 
+## 0.1.0-alpha.5
+
+### Patch Changes
+
+- [#67](https://github.com/burnt-labs/xion.js/pull/67) [`4a281fc`](https://github.com/burnt-labs/xion.js/commit/4a281fcfa7ead6cb91f935e853b0a1bf7b98dcc9) Thanks [@justinbarry](https://github.com/justinbarry)! - Remove exports from package.json in signers and constants package. Additionally, adjust build setting to output more predicable build output.
+
 ## 0.1.0-alpha.4
 
 ### Minor Changes

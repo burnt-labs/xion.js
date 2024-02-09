@@ -5,26 +5,32 @@ import {
   AbstraxionContext,
   AbstraxionContextProvider,
 } from "../AbstraxionContext";
-import { AbstraxionSignin } from "../AbstraxionSignin";
 import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
 import { Connected } from "../Connected/Connected";
+import { AbstraxionSignin } from "../AbstraxionSignin";
 
 export interface ModalProps {
   onClose: VoidFunction;
-  isOpen: boolean;
 }
 
-export function Abstraxion({
-  isOpen,
-  onClose,
-}: ModalProps): JSX.Element | null {
-  const { abstraxionError, isConnecting, isConnected } =
-    useContext(AbstraxionContext);
+export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
+  const {
+    abstraxionError,
+    isConnecting,
+    isConnected,
+    showModal,
+    setShowModal,
+  } = useContext(AbstraxionContext);
 
   useEffect(() => {
     const closeOnEscKey = (e: KeyboardEventInit): void => {
-      e.key === "Escape" ? onClose() : null;
+      e.key === "Escape"
+        ? () => {
+            onClose();
+            setShowModal(false);
+          }
+        : null;
     };
     document.addEventListener("keydown", closeOnEscKey);
     return () => {
@@ -32,10 +38,10 @@ export function Abstraxion({
     };
   }, [onClose]);
 
-  if (!isOpen) return null;
+  if (!showModal) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog onOpenChange={onClose} open={showModal}>
       <DialogContent>
         {abstraxionError ? (
           <ErrorDisplay />

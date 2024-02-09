@@ -5,27 +5,32 @@ import {
   Abstraxion,
   useAbstraxionAccount,
   useAbstraxionSigningClient,
+  useModal,
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
-import "@burnt-labs/ui/styles.css";
+import "@burnt-labs/ui/dist/index.css";
 import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { seatContractAddress } from "./layout";
 
 type ExecuteResultOrUndefined = ExecuteResult | undefined;
 export default function Page(): JSX.Element {
+  // console.log("hello");
   // Abstraxion hooks
   const { data: account } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
 
   // General state hooks
-  const [isOpen, setIsOpen] = useState(false);
+  const [, setShowModal]: [
+    boolean,
+    React.Dispatch<React.SetStateAction<boolean>>,
+  ] = useModal();
   const [loading, setLoading] = useState(false);
   const [executeResult, setExecuteResult] =
     useState<ExecuteResultOrUndefined>(undefined);
 
   const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${executeResult?.transactionHash}`;
 
-  function getTimestampInSeconds(date: Date | null) {
+  function getTimestampInSeconds(date: Date | null): number {
     if (!date) return 0;
     const d = new Date(date);
     return Math.floor(d.getTime() / 1000);
@@ -36,7 +41,7 @@ export default function Page(): JSX.Element {
   const oneYearFromNow = new Date();
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
-  async function claimSeat() {
+  async function claimSeat(): Promise<void> {
     setLoading(true);
     const msg = {
       sales: {
@@ -79,7 +84,7 @@ export default function Page(): JSX.Element {
       <Button
         fullWidth
         onClick={() => {
-          setIsOpen(true);
+          setShowModal(true);
         }}
         structure="base"
       >
@@ -102,9 +107,8 @@ export default function Page(): JSX.Element {
         </Button>
       ) : null}
       <Abstraxion
-        isOpen={isOpen}
         onClose={() => {
-          setIsOpen(false);
+          setShowModal(false);
         }}
       />
       {executeResult ? (
