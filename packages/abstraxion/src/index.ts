@@ -6,3 +6,4 @@ export {
   useAbstraxionSigningClient,
   useModal,
 } from "./hooks";
+export { signArb } from "../utils/sign-arb";

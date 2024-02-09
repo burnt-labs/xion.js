@@ -1,17 +1,14 @@
-import {
+import type {
   DeliverTxResponse,
-  SigningCosmWasmClient,
   SigningCosmWasmClientOptions,
 } from "@cosmjs/cosmwasm-stargate";
-import { EncodeObject, OfflineSigner } from "@cosmjs/proto-signing";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import type { EncodeObject, OfflineSigner } from "@cosmjs/proto-signing";
 import type { Account, SignerData, StdFee } from "@cosmjs/stargate";
 import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
-import {
-  HttpEndpoint,
-  Tendermint37Client,
-  TendermintClient,
-} from "@cosmjs/tendermint-rpc";
+import type { HttpEndpoint, TendermintClient } from "@cosmjs/tendermint-rpc";
+import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { customAccountFromAny } from "@burnt-labs/signers";
 
 interface GranteeSignerOptions {
@@ -21,24 +18,7 @@ interface GranteeSignerOptions {
 
 export class GranteeSignerClient extends SigningCosmWasmClient {
   protected readonly granterAddress: string;
-  protected readonly granteeAddress: string;
-
-  public static async connectWithSigner(
-    endpoint: string | HttpEndpoint,
-    signer: OfflineSigner,
-    options: SigningCosmWasmClientOptions & GranteeSignerOptions,
-  ): Promise<GranteeSignerClient> {
-    const tmClient = await Tendermint37Client.connect(endpoint);
-    return GranteeSignerClient.createWithSigner(tmClient, signer, options);
-  }
-
-  public static async createWithSigner(
-    cometClient: TendermintClient,
-    signer: OfflineSigner,
-    options: SigningCosmWasmClientOptions & GranteeSignerOptions,
-  ): Promise<GranteeSignerClient> {
-    return new GranteeSignerClient(cometClient, signer, options);
-  }
+  private _granteeAddress: string;
 
   protected constructor(
     cometClient: TendermintClient | undefined,
@@ -58,7 +38,28 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     if (granteeAddress === undefined) {
       throw new Error("granteeAddress is required");
     }
-    this.granteeAddress = granteeAddress;
+    this._granteeAddress = granteeAddress;
+  }
+
+  get granteeAddress(): string {
+    return this._granteeAddress;
+  }
+
+  public static async connectWithSigner(
+    endpoint: string | HttpEndpoint,
+    signer: OfflineSigner,
+    options: SigningCosmWasmClientOptions & GranteeSignerOptions,
+  ): Promise<GranteeSignerClient> {
+    const tmClient = await Tendermint37Client.connect(endpoint);
+    return GranteeSignerClient.createWithSigner(tmClient, signer, options);
+  }
+
+  public static async createWithSigner(
+    cometClient: TendermintClient,
+    signer: OfflineSigner,
+    options: SigningCosmWasmClientOptions & GranteeSignerOptions,
+  ): Promise<GranteeSignerClient> {
+    return new GranteeSignerClient(cometClient, signer, options);
   }
 
   public async getAccount(searchAddress: string): Promise<Account | null> {
