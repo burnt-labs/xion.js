@@ -4,5 +4,6 @@ module.exports = {
   rules: {
     "no-nested-ternary": "off",
     "no-unnecessary-condition": "off",
+    "@typescript-eslint/no-floating-promises": "off",
   },
 };

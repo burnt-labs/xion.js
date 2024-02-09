@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from "react";
-import { GasPrice } from "graz/dist/cosmjs";
 import { useStytch } from "@stytch/nextjs";
 import {
   AAClient,
@@ -12,6 +11,7 @@ import {
 } from "@/components/AbstraxionContext";
 import { getKeplr, useOfflineSigners } from "graz";
 import { testnetChainInfo } from "@burnt-labs/constants";
+import { GasPrice } from "@cosmjs/stargate";
 
 export const useAbstraxionSigningClient = (): {
   client: AAClient | undefined;
