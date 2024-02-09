@@ -296,6 +296,9 @@ importers:
       '@cosmjs/crypto':
         specifier: ^0.31.3
         version: 0.31.3
+      '@cosmjs/encoding':
+        specifier: ^0.32.2
+        version: 0.32.2
       '@cosmjs/math':
         specifier: ^0.31.3
         version: 0.31.3
@@ -2102,6 +2105,14 @@ packages:
 
   /@cosmjs/encoding@0.31.3:
     resolution: {integrity: sha512-6IRtG0fiVYwyP7n+8e54uTx2pLYijO48V3t9TLiROERm5aUAIzIlz6Wp0NYaI5he9nh1lcEGJ1lkquVKFw3sUg==}
+    dependencies:
+      base64-js: 1.5.1
+      bech32: 1.1.4
+      readonly-date: 1.0.0
+    dev: false
+
+  /@cosmjs/encoding@0.32.2:
+    resolution: {integrity: sha512-WX7m1wLpA9V/zH0zRcz4EmgZdAv1F44g4dbXOgNj1eXZw1PIGR12p58OEkLN51Ha3S4DKRtCv5CkhK1KHEvQtg==}
     dependencies:
       base64-js: 1.5.1
       bech32: 1.1.4

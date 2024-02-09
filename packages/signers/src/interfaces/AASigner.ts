@@ -17,6 +17,7 @@ export abstract class AASigner {
   /// The abstract account address of the signer
   /// must be set by implementing class
   abstractAccount: string | undefined;
+  accountAuthenticatorIndex: number | undefined;
 
   constructor(abstractAccount: string) {
     this.abstractAccount = abstractAccount;
@@ -33,7 +34,7 @@ export abstract class AASigner {
    */
   signDirect(
     _signerAddress: string,
-    signDoc: SignDoc
+    signDoc: SignDoc,
   ): Promise<DirectSignResponse> {
     // default
     return Promise.resolve({

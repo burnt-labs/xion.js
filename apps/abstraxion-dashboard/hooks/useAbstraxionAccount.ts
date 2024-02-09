@@ -24,6 +24,7 @@ export interface AbstraxionAccount {
   __typename: string;
   id: string; // bech32Address
   authenticators: AccountAuthenticators;
+  currentAuthenticatorIndex: number;
 }
 
 export interface useAbstraxionAccountProps {

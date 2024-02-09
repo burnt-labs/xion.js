@@ -5,6 +5,7 @@ import {
   Registry,
   EncodeObject,
   DirectSignResponse,
+  makeSignBytes,
 } from "@cosmjs/proto-signing";
 import {
   Account,
@@ -95,7 +96,6 @@ export class AAClient extends SigningCosmWasmClient {
       throw new Error("Abstract account address not set in signer");
     }
     const sender = this.abstractSigner.abstractAccount;
-    console.log({ sender });
     const addMsg: MsgExecuteContractEncodeObject = {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
       value: MsgExecuteContract.fromPartial({
@@ -140,7 +140,6 @@ export class AAClient extends SigningCosmWasmClient {
   ): Promise<TxRaw> {
     const aaAcount = await this.getAccount(signerAddress);
     // we want to use the normal signingstargate client sign method if the signer is not an AASigner
-    console.log("aaAcount:", aaAcount);
     if (aaAcount && aaAcount.pubkey) {
       // this is a regular signer
       this.abstractSigner.abstractAccount = undefined;
@@ -153,12 +152,11 @@ export class AAClient extends SigningCosmWasmClient {
     }
     /// This check simply makes sure the signer is an AASigner and not a regular signer
     const foo = await this.abstractSigner.getAccounts();
-    // This isn't right. We need to assign to the proper account, this will just return the JWT authenticator
-    const accountFromSigner = foo[1]; // TEMP: just to get the secp256k1 account correctly
-    console.log("accountFromSigner: ", accountFromSigner);
-    // foo.find(
-    //   (account) => account.address === signerAddress,
-    // );
+    const accountFromSigner = foo.find(
+      (account) =>
+        account.authenticatorId ===
+        this.abstractSigner.accountAuthenticatorIndex,
+    );
 
     if (!accountFromSigner) {
       throw new Error("Failed to retrieve account from signer");
@@ -205,7 +203,6 @@ export class AAClient extends SigningCosmWasmClient {
       .signDirect(accountFromSigner.accountAddress, signDoc)
       .then((sig: DirectSignResponse) => {
         // Append the authenticator ID
-        console.log("Sig: ", sig);
         return Buffer.from(
           new Uint8Array([
             accountFromSigner.authenticatorId,
@@ -213,7 +210,7 @@ export class AAClient extends SigningCosmWasmClient {
           ]),
         ).toString("base64");
       });
-    console.log("SIGNATURE: ", signature);
+
     return TxRaw.fromPartial({
       bodyBytes,
       authInfoBytes,

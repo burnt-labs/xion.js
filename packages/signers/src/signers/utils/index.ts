@@ -21,6 +21,7 @@ import {
   AllSmartWalletQuery,
   AllSmartWalletQueryByIdAndTypeAndAuthenticator,
   SingleSmartWalletQuery,
+  SmartWalletIndexQueryByAccountId,
 } from "../../interfaces/queries";
 import { OTPsAuthenticateResponse } from "stytch";
 import {
@@ -145,6 +146,7 @@ export async function getAAccounts(
     return [defaultData];
   }
   for (const account of accounts) {
+    // TODO: More specific
     const { data } = await apolloClient.query<IQueryAAResponse>({
       query: AllSmartWalletQueryByIdAndTypeAndAuthenticator,
       variables: {
@@ -216,9 +218,9 @@ export async function getAALastAuthenticatorId(
  * @param abstractAccount
  * @returns
  */
-export async function getAuthenticatorIdByAuthenticator(
+export async function getAuthenticatorIdByAuthenticatorIndex(
   abstractAccount: string,
-  authenticator: string,
+  authenticatorIndex: number,
   indexerUrl: string,
 ): Promise<number> {
   const apolloClient = getApolloClient(indexerUrl);
@@ -238,23 +240,20 @@ export async function getAuthenticatorIdByAuthenticator(
       }[];
     };
   }>({
-    query: AllSmartWalletQuery,
+    query: SmartWalletIndexQueryByAccountId,
     variables: {
-      authenticator,
+      id: abstractAccount,
+      index: authenticatorIndex,
     },
   });
   if (!data || !data.smartAccounts) {
     return 0;
   }
-  // This is fetching the first authenticator that matches the conditions
-  // With current tech, we can technically have n authenticators that match but we won't allow duplicates on client, thus the "find" usage
-  const currentAccount = data.smartAccounts.nodes.find(
-    (account) => account.id === abstractAccount,
+
+  // Always returning the first one found because this query should only return an array of 1
+  return (
+    data.smartAccounts.nodes[0].authenticators.nodes[0].authenticatorIndex || 0
   );
-  const result = currentAccount?.authenticators.nodes.find(
-    (node) => node.authenticator === authenticator,
-  );
-  return result?.authenticatorIndex || 0;
 }
 
 /**

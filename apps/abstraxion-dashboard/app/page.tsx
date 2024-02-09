@@ -23,52 +23,6 @@ export default function Home() {
   const contracts = searchParams.get("contracts");
   const grantee = searchParams.get("grantee");
 
-  function getTimestampInSeconds(date: Date | null) {
-    if (!date) return 0;
-    const d = new Date(date);
-    return Math.floor(d.getTime() / 1000);
-  }
-
-  const now = new Date();
-  now.setSeconds(now.getSeconds() + 15);
-  const oneYearFromNow = new Date();
-  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-
-  const seatContractAddress =
-    "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
-
-  async function claimSeat() {
-    const msg = {
-      sales: {
-        claim_item: {
-          token_id: String(getTimestampInSeconds(now)),
-          owner: account.id,
-          token_uri: "",
-          extension: {},
-        },
-      },
-    };
-
-    try {
-      const claimRes = await client?.execute(
-        account.id,
-        seatContractAddress,
-        msg,
-        {
-          amount: [{ amount: "0", denom: "uxion" }],
-          gas: "500000",
-        },
-        "",
-        [],
-      );
-
-      console.log(claimRes);
-    } catch (error) {
-      // eslint-disable-next-line no-console -- No UI exists yet to display errors
-      console.log(error);
-    }
-  }
-
   return (
     <>
       {!account?.id || (contracts && grantee) ? (
@@ -98,7 +52,6 @@ export default function Home() {
                   </p>
                   <ChevronDownIcon />
                 </button>
-                <button onClick={claimSeat}>CLICK</button>
               </div>
               {/* Tiles */}
               <div className="ui-mx-auto ui-flex ui-max-w-7xl">

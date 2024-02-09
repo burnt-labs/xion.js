@@ -49,7 +49,7 @@ export const AbstraxionWallets = () => {
     : { aud: undefined, sub: undefined };
 
   // TODO: More robust
-  const authenticator =
+  const queryAuthenticator =
     connectionType === "graz"
       ? getHumanReadablePubkey(grazAccount?.pubKey)
       : `${Array.isArray(aud) ? aud[0] : aud}.${sub}`;
@@ -57,7 +57,7 @@ export const AbstraxionWallets = () => {
   const { loading, error, data, startPolling, stopPolling, previousData } =
     useQuery(AllSmartWalletQuery, {
       variables: {
-        authenticator,
+        authenticator: queryAuthenticator,
       },
       fetchPolicy: "network-only",
       notifyOnNetworkStatusChange: true,
@@ -70,6 +70,17 @@ export const AbstraxionWallets = () => {
     if (previousData && data !== previousData) {
       stopPolling();
       setFetchingNewWallets(false);
+    }
+  }, [data, previousData]);
+
+  useEffect(() => {
+    if (abstractAccount && previousData && data !== previousData) {
+      // Updating abstract account in context on poll
+      setAbstractAccount(
+        data?.smartAccounts?.nodes.find(
+          (smartAccount) => smartAccount.id === abstractAccount.id,
+        ),
+      );
     }
   }, [data, previousData]);
 
@@ -87,6 +98,8 @@ export const AbstraxionWallets = () => {
       if (!client) {
         throw new Error("No client found.");
       }
+
+      setFetchingNewWallets(true);
 
       const encoder = new TextEncoder();
       const signArbMessage = Buffer.from(encoder.encode(abstractAccount?.id));
@@ -115,18 +128,21 @@ export const AbstraxionWallets = () => {
         gas: "500000",
       });
 
+      startPolling(3000);
       return res;
     } catch (error) {
       console.log(
         "Something went wrong trying to add Keplr wallet as authenticator: ",
+        error,
       );
-      console.log(error);
+      setFetchingNewWallets(false);
     }
   };
 
   const handleJwtAALoginOrCreate = async () => {
     try {
       if (!session_jwt || !session_token) {
+        alert("Please log in with email to create an account");
         throw new Error("Missing token/jwt");
       }
       setIsGeneratingNewWallet(true);
@@ -194,13 +210,18 @@ export const AbstraxionWallets = () => {
                         : "ui-border-opacity-50"
                     }`}
                     key={i}
-                    onClick={() =>
+                    onClick={() => {
                       setAbstractAccount({
                         ...node,
                         userId: user?.user_id,
-                        currentAuthenticator: authenticator,
-                      })
-                    }
+                        currentAuthenticatorIndex:
+                          node.authenticators.nodes.find(
+                            (authenticator) =>
+                              authenticator.authenticator ===
+                              queryAuthenticator,
+                          ).authenticatorIndex,
+                      });
+                    }}
                   >
                     <WalletIcon color="white" backgroundColor="#363635" />
                     <div className="ui-flex ui-flex-col ui-gap-1">
@@ -221,7 +242,7 @@ export const AbstraxionWallets = () => {
             </div>
           </div>
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            {data?.smartAccounts?.nodes.length < 1 ? (
+            {!fetchingNewWallets && data?.smartAccounts?.nodes.length < 1 ? (
               <Button
                 structure="naked"
                 fullWidth={true}
@@ -230,18 +251,22 @@ export const AbstraxionWallets = () => {
                 Create
               </Button>
             ) : null}
-            <Button
-              structure="outlined"
-              fullWidth={true}
-              onClick={() => {
-                suggestAndConnect({
-                  chainInfo: testnetChainInfo,
-                  walletType: WalletType.KEPLR,
-                });
-              }}
-            >
-              Add Keplr
-            </Button>
+            {!fetchingNewWallets &&
+            abstractAccount &&
+            abstractAccount.authenticators.nodes.length < 2 ? (
+              <Button
+                structure="outlined"
+                fullWidth={true}
+                onClick={() => {
+                  suggestAndConnect({
+                    chainInfo: testnetChainInfo,
+                    walletType: WalletType.KEPLR,
+                  });
+                }}
+              >
+                Add Keplr Authenticator
+              </Button>
+            ) : null}
             <Button
               structure="outlined"
               fullWidth={true}

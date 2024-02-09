@@ -10,7 +10,7 @@ import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
-import { useOfflineSigners } from "graz";
+import { getKeplr, useOfflineSigners } from "graz";
 import { testnetChainInfo } from "@burnt-labs/constants";
 
 export const useAbstraxionSigningClient = (): {
@@ -24,6 +24,7 @@ export const useAbstraxionSigningClient = (): {
   const sessionToken = stytch.session.getTokens()?.session_token;
 
   const { data } = useOfflineSigners();
+  const keplr = getKeplr();
 
   const [abstractClient, setAbstractClient] = useState<AAClient | undefined>(
     undefined,
@@ -41,7 +42,7 @@ export const useAbstraxionSigningClient = (): {
         case "stytch":
           signer = new AbstractAccountJWTSigner(
             abstractAccount.id,
-            abstractAccount.currentAuthenticator,
+            abstractAccount.currentAuthenticatorIndex,
             sessionToken,
           );
           break;
@@ -50,7 +51,9 @@ export const useAbstraxionSigningClient = (): {
             signer = new AADirectSigner(
               data?.offlineSigner,
               abstractAccount.id,
-              abstractAccount.currentAuthenticator,
+              abstractAccount.currentAuthenticatorIndex,
+              // @ts-ignore - signArbitrary function exists on Keplr although it doesn't show
+              keplr.signArbitrary,
             );
             break;
           }

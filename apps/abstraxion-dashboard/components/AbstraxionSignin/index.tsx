@@ -8,14 +8,14 @@ import {
   AbstraxionContextProps,
 } from "../AbstraxionContext";
 import { testnetChainInfo } from "@burnt-labs/constants";
+import { KeplrLogo } from "@burnt-labs/ui";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
 
   const { suggestAndConnect } = useSuggestChainAndConnect({
     onError: (error) => console.log("connection error: ", error),
-    onSuccess: (data) => {
-      console.log("connect success: ", data);
+    onSuccess: () => {
       setConnectionType("graz");
     },
   });
@@ -158,7 +158,14 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
-          <Button onClick={handleKeplr}>Keplr</Button>
+          <Button
+            className="ui-rounded-md ui-font-akkuratLL ui-uppercase ui-px-5 ui-py-3.5 ui-text-sm ui-outline-none ui-hover:opacity-70 ui-border ui-bg-transparent ui-border-neutral-300 ui-text-white hover:ui-bg-white/5 ui-flex ui-items-center ui-justify-center ui-gap-2 ui-w-full"
+            onClick={handleKeplr}
+            structure="outlined"
+          >
+            <KeplrLogo />
+            Keplr
+          </Button>
         </>
       )}
     </ModalSection>
