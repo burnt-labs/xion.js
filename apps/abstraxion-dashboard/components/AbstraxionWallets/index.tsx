@@ -100,17 +100,6 @@ export const AbstraxionWallets = () => {
     }
   };
 
-  const registerWebAuthn = useCallback(async () => {
-    try {
-      await stytchClient.webauthn.register({
-        domain: window.location.hostname,
-        session_duration_minutes: 60,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }, [stytchClient]);
-
   if (error) {
     setAbstraxionError((error as Error).message);
     return null;
@@ -189,17 +178,6 @@ export const AbstraxionWallets = () => {
             </div>
           )}
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            {connectionType === "stytch" &&
-              user &&
-              user?.webauthn_registrations.length < 1 && (
-                <Button
-                  structure="outlined"
-                  fullWidth={true}
-                  onClick={registerWebAuthn}
-                >
-                  Add Passkey/Biometrics
-                </Button>
-              )}
             <Button
               structure="outlined"
               fullWidth={true}
