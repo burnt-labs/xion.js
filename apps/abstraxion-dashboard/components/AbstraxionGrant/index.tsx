@@ -12,6 +12,7 @@ import burntAvatar from "@/public/burntAvatarCircle.png";
 import { CheckIcon } from "../Icons";
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { redirect, useSearchParams } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 
 interface AbstraxionGrantProps {
   contracts: string[];
@@ -118,6 +119,7 @@ export const AbstraxionGrant = ({
     } catch (error) {
       setInProgress(false);
       console.log("something went wrong: ", error);
+      Sentry.captureException(error);
     }
   };
 
