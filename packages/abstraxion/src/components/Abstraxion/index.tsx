@@ -36,7 +36,7 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
     return () => {
       document.removeEventListener("keydown", closeOnEscKey);
     };
-  }, [onClose]);
+  }, [onClose, setShowModal]);
 
   if (!showModal) return null;
 

@@ -1,14 +1,11 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useDisconnect } from "graz";
 import { useStytch, useStytchUser } from "@stytch/nextjs";
 import { useQuery } from "@apollo/client";
 import { AccountWalletLogo, Button, Spinner } from "@burnt-labs/ui";
 import { decodeJwt } from "jose";
-import type {
-  AbstraxionContextProps} from "../AbstraxionContext";
-import {
-  AbstraxionContext
-} from "../AbstraxionContext";
+import type { AbstraxionContextProps } from "../AbstraxionContext";
+import { AbstraxionContext } from "../AbstraxionContext";
 import { useAbstraxionAccount } from "../../hooks";
 import { Loading } from "../Loading";
 import { truncateAddress } from "../../../utils/truncateAddress";
@@ -21,7 +18,7 @@ export function AbstraxionWallets() {
     abstractAccount,
     setAbstractAccount,
     setAbstraxionError,
-  } = useContext(AbstraxionContext) ;
+  } = useContext(AbstraxionContext);
 
   const { user } = useStytchUser();
   const stytchClient = useStytch();
@@ -96,7 +93,6 @@ export function AbstraxionWallets() {
       }
       startPolling(500);
       setFetchingNewWallets(true);
-      
     } catch (error) {
       console.log(error);
       setAbstraxionError("Error creating abstract account.");
@@ -177,19 +173,13 @@ export function AbstraxionWallets() {
           )}
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
             {connectionType === "stytch" &&
-              user &&
-              user.webauthn_registrations.length < 1 ? <Button
-                  fullWidth
-                  onClick={registerWebAuthn}
-                  structure="outlined"
-                >
-                  Add Passkey/Biometrics
-                </Button> : null}
-            <Button
-              fullWidth
-              onClick={handleDisconnect}
-              structure="outlined"
-            >
+            user &&
+            user.webauthn_registrations.length < 1 ? (
+              <Button fullWidth onClick={registerWebAuthn} structure="outlined">
+                Add Passkey/Biometrics
+              </Button>
+            ) : null}
+            <Button fullWidth onClick={handleDisconnect} structure="outlined">
               Disconnect
             </Button>
           </div>

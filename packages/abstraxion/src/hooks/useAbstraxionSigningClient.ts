@@ -1,16 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import { testnetChainInfo } from "@burnt-labs/constants";
-import {
-  AbstraxionContext,
-  AbstraxionContextProps,
-} from "@/src/components/AbstraxionContext";
-import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 import { GasPrice } from "@cosmjs/stargate";
+import type { AbstraxionContextProps } from "@/src/components/AbstraxionContext";
+import { AbstraxionContext } from "@/src/components/AbstraxionContext";
+import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 
 export const useAbstraxionSigningClient = () => {
-  const { isConnected, abstraxionAccount, granterAddress } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+  const { isConnected, abstraxionAccount, granterAddress } =
+    useContext(AbstraxionContext);
 
   const [abstractClient, setAbstractClient] = useState<
     GranteeSignerClient | undefined
@@ -47,7 +44,7 @@ export const useAbstraxionSigningClient = () => {
 
         setAbstractClient(directClient);
       } catch (error) {
-        console.log("Something went wrong: ", error);
+        console.error("Something went wrong: ", error);
         setAbstractClient(undefined);
       }
     }
