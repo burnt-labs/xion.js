@@ -1,7 +1,10 @@
-import { DirectSignResponse, OfflineDirectSigner } from "@cosmjs/proto-signing";
-import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { AAccountData, AASigner } from "../interfaces/AASigner";
-
+import type {
+  DirectSignResponse,
+  OfflineDirectSigner,
+} from "@cosmjs/proto-signing";
+import type { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import type { AAccountData } from "../interfaces/AASigner";
+import { AASigner } from "../interfaces/AASigner";
 import { getAAccounts } from "./utils";
 
 /**
@@ -20,14 +23,19 @@ export class AADirectSigner extends AASigner {
   signer: OfflineDirectSigner;
   indexerUrl: string;
 
-  constructor(initializedSigner: OfflineDirectSigner, abstractAccount: string, indexerUrl?: string) {
+  constructor(
+    initializedSigner: OfflineDirectSigner,
+    abstractAccount: string,
+    indexerUrl?: string,
+  ) {
     super(abstractAccount);
     this.signer = initializedSigner;
-    this.indexerUrl = indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer"
+    this.indexerUrl =
+      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
   }
   async signDirect(
     signerAddress: string,
-    signDoc: SignDoc
+    signDoc: SignDoc,
   ): Promise<DirectSignResponse> {
     return this.signer.signDirect(signerAddress, signDoc);
   }
@@ -47,6 +55,6 @@ export class AADirectSigner extends AASigner {
         };
       });
     }
-    return await getAAccounts(accounts, this.abstractAccount, this.indexerUrl);
+    return getAAccounts(accounts, this.abstractAccount, this.indexerUrl);
   }
 }

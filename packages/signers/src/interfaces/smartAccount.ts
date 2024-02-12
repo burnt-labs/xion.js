@@ -1,26 +1,26 @@
-export type ISmartAccounts = {
+export interface ISmartAccounts {
   id?: string;
   latestAuthenticatorId?: number;
-  nodes: Array<ISmartAccountAuthenticators>;
-};
+  nodes: ISmartAccountAuthenticators[];
+}
 
-export type ISmartAccountAuthenticators = {
+export interface ISmartAccountAuthenticators {
   authenticators: {
-    nodes: Array<ISmartAccountAuthenticator>;
+    nodes: ISmartAccountAuthenticator[];
   };
-};
+}
 
-export type ISmartAccountAuthenticator = {
+export interface ISmartAccountAuthenticator {
   id: string;
   type: string;
   authenticator: string;
   authenticatorId: string;
   version: string;
-};
+}
 
-export type IQueryAAResponse = {
+export interface IQueryAAResponse {
   smartAccounts: ISmartAccounts;
-};
+}
 
 // mapping of index algo type to wallet algo type
 export enum AAAlgo {

@@ -15,5 +15,6 @@ module.exports = {
         message: "Unexpected property on console object was called",
       },
     ],
+    "unicorn/filename-case": "off",
   },
 };

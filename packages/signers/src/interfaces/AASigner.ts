@@ -1,10 +1,7 @@
-import { AccountData, DirectSignResponse } from "@cosmjs/proto-signing";
-import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { AAAlgo } from "./smartAccount";
+import type { AccountData, DirectSignResponse } from "@cosmjs/proto-signing";
+import type { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import type { AAAlgo } from "./smartAccount";
 
-/**
- * @extends AccountData
- */
 export interface AAccountData extends AccountData {
   readonly authenticatorId: number;
   // This is the signer account address. Not the AA address. This
@@ -27,13 +24,13 @@ export abstract class AASigner {
    * required to verify the transaction on the chain
    * This method should return a DirectSignResponse object but only the signature field is required
    * to be set
-   * @param _signerAddress the abstract account address to be used as the signer
-   * @param signDoc the sign doc to be signed
+   * @param _signerAddress - the abstract account address to be used as the signer
+   * @param signDoc - the sign doc to be signed
    * @returns
    */
   signDirect(
     _signerAddress: string,
-    signDoc: SignDoc
+    signDoc: SignDoc,
   ): Promise<DirectSignResponse> {
     // default
     return Promise.resolve({
@@ -53,17 +50,13 @@ export abstract class AASigner {
    * it will be used by the client to get the account data of the current abstract account
    * the pubKey of the account data should be set to an empty Uint8Array since it's not required
    * and to declare it an AA
-   * @returns {AAccountData} of length 1
+   * @returns the account data of the current abstract account
    */
   abstract getAccounts(): Promise<readonly AAccountData[]>;
 }
 
 // Default implementation for a signer class
 export class AADefaultSigner extends AASigner {
-  constructor(abstractAccount: string) {
-    super(abstractAccount);
-  }
-
   getAccounts(): Promise<readonly AAccountData[]> {
     throw new Error("Cannot get accounts from default signer");
   }

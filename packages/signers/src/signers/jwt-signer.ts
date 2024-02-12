@@ -1,9 +1,16 @@
-import { DirectSignResponse } from "@cosmjs/proto-signing";
+import type { DirectSignResponse } from "@cosmjs/proto-signing";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { sha256 } from "@cosmjs/crypto";
-import { AAccountData, AASigner } from "../interfaces/AASigner";
+import { AASigner } from "../interfaces/AASigner";
+import type { AAccountData } from "../interfaces/AASigner";
 import { AAAlgo } from "../interfaces/smartAccount";
 import { getAALastAuthenticatorId } from "./utils";
+
+interface AuthResponse {
+  data: {
+    session_jwt: string;
+  };
+}
 
 export class AbstractAccountJWTSigner extends AASigner {
   // requires a session token already created
@@ -76,7 +83,7 @@ export class AbstractAccountJWTSigner extends AASigner {
       throw new Error("Failed to authenticate with stytch");
     }
 
-    const authResponseData = await authResponse.json();
+    const authResponseData = (await authResponse.json()) as AuthResponse;
 
     return {
       signed: signDoc,
@@ -97,8 +104,8 @@ export class AbstractAccountJWTSigner extends AASigner {
    * This method allows for signing arbitrary messages
    * It does not compose a SignDoc but simply sets the transaction_hash
    * property of the session claims property to the hash of the passed msg
-   * @param signerAddress
-   * @param message Arbitrary message to be signed
+   * @param signerAddress -
+   * @param message - Arbitrary message to be signed
    * @returns
    */
   async signDirectArb(message: string): Promise<{ signature: string }> {
@@ -129,7 +136,7 @@ export class AbstractAccountJWTSigner extends AASigner {
       throw new Error("Failed to authenticate with stytch");
     }
 
-    const authResponseData = await authResponse.json();
+    const authResponseData = (await authResponse.json()) as AuthResponse;
 
     return {
       signature: Buffer.from(

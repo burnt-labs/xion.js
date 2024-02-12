@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import { GasPrice } from "@cosmjs/stargate";
-import type { AbstraxionContextProps } from "@/src/components/AbstraxionContext";
 import { AbstraxionContext } from "@/src/components/AbstraxionContext";
 import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 
@@ -14,7 +13,7 @@ export const useAbstraxionSigningClient = () => {
   >(undefined);
 
   useEffect(() => {
-    async function getSigner() {
+    async function getSigner(): Promise<void> {
       try {
         if (!abstraxionAccount) {
           throw new Error("No account found.");

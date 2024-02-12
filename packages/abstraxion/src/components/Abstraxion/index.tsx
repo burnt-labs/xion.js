@@ -7,7 +7,7 @@ import {
 } from "../AbstraxionContext";
 import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
-import { Connected } from "../Connected/Connected";
+import { Connected } from "../Connected";
 import { AbstraxionSignin } from "../AbstraxionSignin";
 
 export interface ModalProps {
