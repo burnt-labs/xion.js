@@ -21,8 +21,6 @@ export default function RootLayout({
         <AbstraxionProvider
           config={{
             contracts: [seatContractAddress],
-            // Only for testing, remove before pushing.
-            dashboardUrl: "http://localhost:3000",
           }}
         >
           {children}
