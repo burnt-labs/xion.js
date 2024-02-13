@@ -6,3 +6,5 @@ export {
   useAbstraxionSigningClient,
   useModal,
 } from "./hooks";
+
+export { ContractGrantDescription } from "./components/AbstraxionContext";

@@ -3,7 +3,10 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { Button, ModalSection, BrowserIcon } from "@burnt-labs/ui";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { wait } from "@/utils/wait";
-import { AbstraxionContext } from "../AbstraxionContext";
+import {
+  AbstraxionContext,
+  ContractGrantDescription,
+} from "../AbstraxionContext";
 
 interface GrantsResponse {
   grants: Grant[];
@@ -64,13 +67,13 @@ export function AbstraxionSignin(): JSX.Element {
 
   function openDashboardTab(
     userAddress: string,
-    grantContracts?: string[],
+    grantContracts?: ContractGrantDescription[],
   ): void {
     const currentUrl = window.location.href;
     const urlParams = new URLSearchParams();
     urlParams.set("grantee", userAddress);
     // @ts-expect-error - url encoding array
-    urlParams.set("contracts", grantContracts);
+    urlParams.set("contracts", JSON.stringify(grantContracts));
     urlParams.set("redirect_uri", currentUrl);
     const queryString = urlParams.toString(); // Convert URLSearchParams to string
     window.location.href = `${dashboardUrl}?${queryString}`;

@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProvider,
+  ContractGrantDescription,
 } from "../AbstraxionContext";
 import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
@@ -58,7 +59,7 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
 }
 
 export interface AbstraxionConfig {
-  contracts?: string[];
+  contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
 }
 
