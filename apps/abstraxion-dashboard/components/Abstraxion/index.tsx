@@ -17,6 +17,7 @@ import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useSearchParams } from "next/navigation";
 import { AbstraxionGrant } from "../AbstraxionGrant";
 import Image from "next/image";
+import { calculateJwkThumbprint } from "jose";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -39,7 +40,13 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   } = useAbstraxionAccount();
 
   const contracts = searchParams.get("contracts");
-  const contractsArray = contracts?.split(",") || [];
+  let contractsArray;
+  try {
+    contractsArray = JSON.parse(contracts || "");
+  } catch (e) {
+    // If the contracts are not a valid JSON, we split them by comma. Dapp using old version of the library.
+    contractsArray = contracts?.split(",") || [];
+  }
 
   const grantee = searchParams.get("grantee");
   useEffect(() => {

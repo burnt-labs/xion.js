@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Button, Spinner } from "@burnt-labs/ui";
 import { MsgGrant } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import {
+  CombinedLimit,
   ContractExecutionAuthorization,
   MaxCallsLimit,
 } from "cosmjs-types/cosmwasm/wasm/v1/authz";
@@ -13,9 +14,10 @@ import { CheckIcon } from "../Icons";
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { redirect, useSearchParams } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
+import type { ContractGrantDescription } from "@burnt-labs/abstraxion";
 
 interface AbstraxionGrantProps {
-  contracts: string[];
+  contracts: ContractGrantDescription[];
   grantee: string;
 }
 
@@ -56,20 +58,42 @@ export const AbstraxionGrant = ({
     const contractExecutionAuthorizationValue =
       ContractExecutionAuthorization.encode(
         ContractExecutionAuthorization.fromPartial({
-          grants: contracts.map((contractAddress) => ({
-            contract: contractAddress,
-            limit: {
-              typeUrl: "/cosmwasm.wasm.v1.MaxCallsLimit",
-              value: MaxCallsLimit.encode(
-                MaxCallsLimit.fromPartial({
-                  remaining: "255",
-                }),
-              ).finish(),
-            },
-            filter: {
-              typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
-            },
-          })),
+          grants: contracts.map((contractGrantDescription) => {
+            if (typeof contractGrantDescription === "string") {
+              const contract = contractGrantDescription;
+              return {
+                contract,
+                limit: {
+                  typeUrl: "/cosmwasm.wasm.v1.MaxCallsLimit",
+                  value: MaxCallsLimit.encode(
+                    MaxCallsLimit.fromPartial({
+                      remaining: "255",
+                    }),
+                  ).finish(),
+                },
+                filter: {
+                  typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+                },
+              };
+            }
+
+            const { address, amounts } = contractGrantDescription;
+            return {
+              contract: address,
+              limit: {
+                typeUrl: "/cosmwasm.wasm.v1.CombinedLimit",
+                value: CombinedLimit.encode(
+                  CombinedLimit.fromPartial({
+                    callsRemaining: "255",
+                    amounts,
+                  }),
+                ).finish(),
+              },
+              filter: {
+                typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+              },
+            };
+          }),
         }),
       ).finish();
     const grantValue = MsgGrant.fromPartial({

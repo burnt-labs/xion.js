@@ -2,6 +2,13 @@ import type { ReactNode } from "react";
 import { useEffect, createContext, useState } from "react";
 import type { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
+export type ContractGrantDescription =
+  | string
+  | {
+      address: string;
+      amounts: { denom: string; amount: string }[];
+    };
+
 export interface AbstraxionContextProps {
   isConnected: boolean;
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
@@ -15,7 +22,7 @@ export interface AbstraxionContextProps {
   showModal: boolean;
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
   setGranterAddress: React.Dispatch<React.SetStateAction<string>>;
-  contracts?: string[];
+  contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
 }
 
@@ -29,7 +36,7 @@ export function AbstraxionContextProvider({
   dashboardUrl = "https://dashboard.burnt.com",
 }: {
   children: ReactNode;
-  contracts?: string[];
+  contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
 }): JSX.Element {
   const [abstraxionError, setAbstraxionError] = useState("");
