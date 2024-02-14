@@ -128,6 +128,10 @@ export const AbstraxionWallets = () => {
         gas: "500000",
       });
 
+      if (res.rawLog?.includes("failed")) {
+        throw new Error(res.rawLog);
+      }
+
       startPolling(3000);
       return res;
     } catch (error) {
