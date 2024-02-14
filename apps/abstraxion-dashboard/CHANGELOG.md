@@ -1,5 +1,24 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.8
+
+### Minor Changes
+
+- [#80](https://github.com/burnt-labs/xion.js/pull/80) [`00dbb89`](https://github.com/burnt-labs/xion.js/commit/00dbb89f13028ec5251c744b1130e82b86afb8d6) Thanks [@justinbarry](https://github.com/justinbarry)! - Add sentry.io error tracking
+
+- [#83](https://github.com/burnt-labs/xion.js/pull/83) [`7dd82fe`](https://github.com/burnt-labs/xion.js/commit/7dd82fe902ca1d0f64f91a1dd185be965beb6331) Thanks [@justinbarry](https://github.com/justinbarry)! - Add ability for a DAPP to request a token budget alongside contract exec privileges
+
+### Patch Changes
+
+- [#77](https://github.com/burnt-labs/xion.js/pull/77) [`cc24142`](https://github.com/burnt-labs/xion.js/commit/cc24142ce8ea3f62c83f35b528c5739427208d25) Thanks [@justinbarry](https://github.com/justinbarry)! - Enable vercel analytics on dashboard
+
+- [#81](https://github.com/burnt-labs/xion.js/pull/81) [`6afb4dd`](https://github.com/burnt-labs/xion.js/commit/6afb4dd96af14bae2bd0a06632b37613e69faafb) Thanks [@justinbarry](https://github.com/justinbarry)! - Add error tracking for chain errors
+
+- [#75](https://github.com/burnt-labs/xion.js/pull/75) [`2da222b`](https://github.com/burnt-labs/xion.js/commit/2da222bd97540a0eb5aefb3efd2c93e1fafe3ce7) Thanks [@justinbarry](https://github.com/justinbarry)! - Remove passkey biometrics button, remove white avatar and update copy
+
+- Updated dependencies [[`7dd82fe`](https://github.com/burnt-labs/xion.js/commit/7dd82fe902ca1d0f64f91a1dd185be965beb6331)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.27
+
 ## 0.2.0-alpha.7
 
 ### Patch Changes
