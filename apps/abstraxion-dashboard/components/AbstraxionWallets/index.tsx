@@ -140,6 +140,7 @@ export const AbstraxionWallets = () => {
         error,
       );
       setFetchingNewWallets(false);
+      stopPolling();
     }
   };
 
