@@ -1,5 +1,16 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.28
+
+### Minor Changes
+
+- [#87](https://github.com/burnt-labs/xion.js/pull/87) [`f46fa86`](https://github.com/burnt-labs/xion.js/commit/f46fa8672ccf38d66b9bde244eecef573ee86ded) Thanks [@justinbarry](https://github.com/justinbarry)! - Allow for dapp to pass in custom rpc url
+
+### Patch Changes
+
+- Updated dependencies [[`e60fb47`](https://github.com/burnt-labs/xion.js/commit/e60fb4714b8cdf90ad2cfbba5c77b8b78a11542b)]:
+  - @burnt-labs/constants@0.1.0-alpha.4
+
 ## 1.0.0-alpha.27
 
 ### Minor Changes

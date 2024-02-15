@@ -1,5 +1,11 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.4
+
+### Minor Changes
+
+- [#85](https://github.com/burnt-labs/xion.js/pull/85) [`e60fb47`](https://github.com/burnt-labs/xion.js/commit/e60fb4714b8cdf90ad2cfbba5c77b8b78a11542b) Thanks [@justinbarry](https://github.com/justinbarry)! - Update to use a round robin rpc endpoint
+
 ## 0.0.1-alpha.3
 
 ### Patch Changes
