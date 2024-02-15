@@ -1,5 +1,13 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.9
+
+### Patch Changes
+
+- Updated dependencies [[`e60fb47`](https://github.com/burnt-labs/xion.js/commit/e60fb4714b8cdf90ad2cfbba5c77b8b78a11542b), [`f46fa86`](https://github.com/burnt-labs/xion.js/commit/f46fa8672ccf38d66b9bde244eecef573ee86ded)]:
+  - @burnt-labs/constants@0.1.0-alpha.4
+  - @burnt-labs/abstraxion@1.0.0-alpha.28
+
 ## 0.2.0-alpha.8
 
 ### Minor Changes
