@@ -34,15 +34,20 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@cosmjs/cosmwasm-stargate": "^0.31.3",
-    "@cosmjs/proto-signing": "^0.31.3",
-    "@cosmjs/stargate": "^0.31.3",
-    "cosmjs-types": "^0.8.0",
-    "@cosmjs/tendermint-rpc": "^0.31.1",
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
+    "@cosmjs/amino": "^0.31.3",
+    "@cosmjs/cosmwasm-stargate": "^0.31.3",
+    "@cosmjs/crypto": "^0.31.3",
+    "@cosmjs/encoding": "^0.32.2",
+    "@cosmjs/proto-signing": "^0.31.3",
+    "@cosmjs/stargate": "^0.31.3",
+    "@cosmjs/tendermint-rpc": "^0.31.1",
+    "@cosmjs/utils": "^0.31.3",
+    "@keplr-wallet/cosmos": "^0.12.67",
     "@types/react-dom": "^18.2.18",
+    "cosmjs-types": "^0.8.0",
     "graz": "^0.0.51",
     "jose": "^5.1.3"
   }
