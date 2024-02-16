@@ -1,10 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import { testnetChainInfo } from "@burnt-labs/constants";
+import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/src/components/AbstraxionContext";
-import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 import { GasPrice } from "@cosmjs/stargate";
 
 export const useAbstraxionSigningClient = () => {

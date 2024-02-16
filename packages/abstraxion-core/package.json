@@ -1,5 +1,5 @@
 {
-  "name": "@burnt-labs/abstraxion",
+  "name": "@burnt-labs/abstraxion-core",
   "version": "1.0.0-alpha.29",
   "sideEffects": [
     "**/*.css"
@@ -15,21 +15,13 @@
     "check-types": "tsc --noEmit",
     "clean": "rimraf ./dist"
   },
-  "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "18.2.0"
-  },
   "devDependencies": {
     "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
-    "@types/react": "^18.2.47",
+    "@burnt-labs/signers": "workspace:*",
     "autoprefixer": "^10.4.13",
-    "postcss": "^8.4.20",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "rimraf": "^5.0.5",
-    "tailwindcss": "^3.2.4",
     "tsup": "^6.0.1",
     "typescript": "^5.2.2"
   },
@@ -41,9 +33,6 @@
     "@cosmjs/tendermint-rpc": "^0.31.1",
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
-    "@burnt-labs/abstraxion-core": "workspace:*",
-    "@burnt-labs/ui": "workspace:*",
-    "@types/react-dom": "^18.2.18",
     "graz": "^0.0.51",
     "jose": "^5.1.3"
   }
