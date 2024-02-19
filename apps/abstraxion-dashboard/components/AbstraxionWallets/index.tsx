@@ -30,6 +30,8 @@ export const AbstraxionWallets = () => {
     setAbstraxionError,
   } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
+  const [errorMessage, setErrorMessage] = useState("");
+
   const { user } = useStytchUser();
   const stytchClient = useStytch();
   const session_jwt = stytchClient.session.getTokens()?.session_jwt;
@@ -94,6 +96,7 @@ export const AbstraxionWallets = () => {
   };
 
   const addKeplrAuthenticator = async () => {
+    setErrorMessage("");
     try {
       if (!client) {
         throw new Error("No client found.");
@@ -138,6 +141,9 @@ export const AbstraxionWallets = () => {
       console.log(
         "Something went wrong trying to add Keplr wallet as authenticator: ",
         error,
+      );
+      setErrorMessage(
+        "Something went wrong trying to add Keplr wallet as authenticator",
       );
       setFetchingNewWallets(false);
       stopPolling();
@@ -195,9 +201,15 @@ export const AbstraxionWallets = () => {
             <h1 className="ui-w-full ui-leading-[38.40px] ui-tracking-tighter ui-text-3xl ui-font-light ui-text-white ui-uppercase ui-mb-3">
               Welcome
             </h1>
-            <h2 className="ui-w-full ui-mb-4 ui-text-center ui-text-sm ui-font-normal ui-leading-tight ui-text-white/50">
-              Select an account to continue
-            </h2>
+            {errorMessage ? (
+              <h2 className="ui-w-full ui-mb-4 ui-text-center ui-text-sm ui-font-normal ui-leading-tight ui-text-red-500">
+                {errorMessage}
+              </h2>
+            ) : (
+              <h2 className="ui-w-full ui-mb-4 ui-text-center ui-text-sm ui-font-normal ui-leading-tight ui-text-white/50">
+                Select an account to continue
+              </h2>
+            )}
           </div>
           <div className="ui-flex ui-w-full ui-flex-col ui-items-start ui-justify-center ui-gap-4">
             <div className="ui-text-white ui-text-base ui-font-bold ui-font-akkuratLL ui-leading-tight">
