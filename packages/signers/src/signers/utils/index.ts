@@ -54,8 +54,8 @@ function accountFromBaseAccount(input: BaseAccount) {
   return {
     address: address,
     pubkey: pubkey,
-    accountNumber: Uint64.fromString(accountNumber.toString()).toNumber(),
-    sequence: Uint64.fromString(sequence.toString()).toNumber(),
+    accountNumber: Uint64.fromString(accountNumber.toString()).toBigInt(),
+    sequence: Uint64.fromString(sequence.toString()).toBigInt(),
   };
 }
 
@@ -103,14 +103,14 @@ export function makeAAuthInfo(
             mode: SignMode.SIGN_MODE_DIRECT,
           },
         },
-        sequence: account.sequence,
+        sequence: BigInt(account.sequence),
       }),
     ],
     fee: {
       amount: fee.amount
         ? coins(fee.amount[0].amount, fee.amount[0].denom)
         : coins(1, "uxion"),
-      gasLimit: fee.gas,
+      gasLimit: BigInt(fee.gas),
       granter: fee.granter || "",
       payer: fee.payer || "",
     },

@@ -17,22 +17,22 @@
   },
   "devDependencies": {
     "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
-    "@burnt-labs/signers": "workspace:*",
     "autoprefixer": "^10.4.13",
     "rimraf": "^5.0.5",
     "tsup": "^6.0.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@cosmjs/cosmwasm-stargate": "^0.31.3",
-    "@cosmjs/proto-signing": "^0.31.3",
-    "@cosmjs/stargate": "^0.31.3",
-    "cosmjs-types": "^0.8.0",
-    "@cosmjs/tendermint-rpc": "^0.31.1",
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
+    "@cosmjs/cosmwasm-stargate": "^0.32.2",
+    "@cosmjs/proto-signing": "^0.32.2",
+    "@cosmjs/stargate": "^0.32.2",
+    "@cosmjs/tendermint-rpc": "^0.32.2",
+    "cosmjs-types": "^0.9.0",
     "graz": "^0.0.51",
     "jose": "^5.1.3"
   }
