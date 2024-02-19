@@ -242,12 +242,20 @@ export const AbstraxionWallets = () => {
               ) : (
                 <>
                   <p>No Accounts Found.</p>
+                  {connectionType !== "stytch" ? (
+                    <p className="ui-text-center ui-text-neutral-400">
+                      This authenticator can only be used as a backup right now.
+                      Please log in with email to create an account.
+                    </p>
+                  ) : null}
                 </>
               )}
             </div>
           </div>
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
-            {!fetchingNewWallets && data?.smartAccounts?.nodes.length < 1 ? (
+            {!fetchingNewWallets &&
+            data?.smartAccounts?.nodes.length < 1 &&
+            connectionType === "stytch" ? (
               <Button
                 structure="naked"
                 fullWidth={true}
