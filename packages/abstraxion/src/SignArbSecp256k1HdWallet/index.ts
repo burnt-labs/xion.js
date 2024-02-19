@@ -1,5 +1,5 @@
+import { TextEncoder, TextDecoder } from "node:util";
 import type { AccountData } from "@cosmjs/proto-signing";
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import type { KdfConfiguration } from "@cosmjs/amino";
 import {
   encodeSecp256k1Signature,
@@ -7,18 +7,26 @@ import {
   rawSecp256k1PubkeyToRawAddress,
 } from "@cosmjs/amino";
 import { assert, isNonNullObject } from "@cosmjs/utils";
-import type { EnglishMnemonic, HdPath, Secp256k1Keypair } from "@cosmjs/crypto";
+import type { HdPath, Secp256k1Keypair } from "@cosmjs/crypto";
 import {
   Secp256k1,
   sha256,
   Slip10,
   Slip10Curve,
   stringToPath,
+  EnglishMnemonic,
+  Bip39,
 } from "@cosmjs/crypto";
 import { fromBase64, fromUtf8, toBech32 } from "@cosmjs/encoding";
 import { makeADR36AminoSignDoc, serializeSignDoc } from "@keplr-wallet/cosmos";
 import type { EncryptionConfiguration } from "@cosmjs/proto-signing/build/wallet";
 import { decrypt, executeKdf } from "@cosmjs/proto-signing/build/wallet";
+
+global.TextEncoder = TextEncoder;
+// @ts-expect-error: TextDecoder is not available in testing environment by default.
+global.TextDecoder = TextDecoder;
+
+const serializationTypeV1 = "directsecp256k1hdwallet-v1";
 
 export interface DirectSecp256k1HdWalletOptions {
   /** The password to use when deriving a BIP39 seed from a mnemonic. */
@@ -89,6 +97,20 @@ export class SignArbSecp256k1HdWallet {
       prefix,
     }));
   }
+  public static async fromMnemonic(
+    mnemonic: string,
+    options: Partial<DirectSecp256k1HdWalletOptions> = {},
+  ): Promise<SignArbSecp256k1HdWallet> {
+    const mnemonicChecked = new EnglishMnemonic(mnemonic);
+    const seed = await Bip39.mnemonicToSeed(
+      mnemonicChecked,
+      options.bip39Password,
+    );
+    return new SignArbSecp256k1HdWallet(mnemonicChecked, {
+      ...options,
+      seed,
+    });
+  }
   /**
    * Restores a wallet from an encrypted serialization.
    *
@@ -98,16 +120,14 @@ export class SignArbSecp256k1HdWallet {
   public static async deserialize(
     serialization: string,
     password: string,
-  ): Promise<DirectSecp256k1HdWallet> {
+  ): Promise<SignArbSecp256k1HdWallet> {
     const root = JSON.parse(serialization) as { readonly type: string };
     if (!isNonNullObject(root))
       throw new Error("Root document is not an object.");
-    switch (root.type) {
-      case "serializationTypeV1":
-        return this.deserializeTypeV1(serialization, password);
-      default:
-        throw new Error("Unsupported serialization type");
+    if (root.type === serializationTypeV1) {
+      return this.deserializeTypeV1(serialization, password);
     }
+    throw new Error("Unsupported serialization type");
   }
   /**
    * Restores a wallet from an encrypted serialization.
@@ -121,7 +141,7 @@ export class SignArbSecp256k1HdWallet {
   public static async deserializeWithEncryptionKey(
     serialization: string,
     encryptionKey: Uint8Array,
-  ): Promise<DirectSecp256k1HdWallet> {
+  ): Promise<SignArbSecp256k1HdWallet> {
     const root = JSON.parse(serialization) as {
       readonly type: string;
       readonly data: string;
@@ -131,7 +151,7 @@ export class SignArbSecp256k1HdWallet {
       throw new Error("Root document is not an object.");
     const untypedRoot = root;
     switch (untypedRoot.type) {
-      case "serializationTypeV1": {
+      case serializationTypeV1: {
         const decryptedBytes = await decrypt(
           fromBase64(untypedRoot.data),
           encryptionKey,
@@ -155,7 +175,7 @@ export class SignArbSecp256k1HdWallet {
         const hdPaths = accounts.map(({ hdPath }: { hdPath: string }) =>
           stringToPath(hdPath),
         );
-        return DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+        return this.fromMnemonic(mnemonic, {
           hdPaths,
           prefix: firstPrefix,
         });
@@ -168,17 +188,14 @@ export class SignArbSecp256k1HdWallet {
   private static async deserializeTypeV1(
     serialization: string,
     password: string,
-  ): Promise<DirectSecp256k1HdWallet> {
+  ): Promise<SignArbSecp256k1HdWallet> {
     const root = JSON.parse(serialization) as {
       readonly kdf: KdfConfiguration;
     };
     if (!isNonNullObject(root))
       throw new Error("Root document is not an object.");
     const encryptionKey = await executeKdf(password, root.kdf);
-    return DirectSecp256k1HdWallet.deserializeWithEncryptionKey(
-      serialization,
-      encryptionKey,
-    );
+    return this.deserializeWithEncryptionKey(serialization, encryptionKey);
   }
 
   private async getKeyPair(hdPath: HdPath): Promise<Secp256k1Keypair> {
@@ -210,14 +227,14 @@ export class SignArbSecp256k1HdWallet {
           pubkey,
           address,
         };
-      }),
+      }) as readonly Promise<AccountDataWithPrivkey>[],
     );
   }
 
-  async signArbFn(
+  signArb = async (
     signerAddress: string,
     message: string | Uint8Array,
-  ): Promise<string> {
+  ): Promise<string> => {
     const accounts = await this.getAccountsWithPrivkeys();
     const account = accounts.find(({ address }) => address === signerAddress);
     if (account === undefined) {
@@ -236,5 +253,5 @@ export class SignArbSecp256k1HdWallet {
     ]);
     const stdSignature = encodeSecp256k1Signature(pubkey, signatureBytes);
     return stdSignature.signature;
-  }
+  };
 }
