@@ -227,6 +227,9 @@ importers:
       '@keplr-wallet/cosmos':
         specifier: ^0.12.67
         version: 0.12.67
+      '@keplr-wallet/crypto':
+        specifier: ^0.12.69
+        version: 0.12.69
       '@types/react-dom':
         specifier: ^18.2.18
         version: 18.2.18
@@ -3125,6 +3128,19 @@ packages:
 
   /@keplr-wallet/crypto@0.12.67:
     resolution: {integrity: sha512-ETLeRay4fUyJhN+emGz1wjA4OICct55wDTeKR4qfyYMn7WNbIKK+CSM71gaApZZAWZmXimglEYq5xAF8KSpPsg==}
+    dependencies:
+      '@ethersproject/keccak256': 5.7.0
+      bip32: 2.0.6
+      bip39: 3.1.0
+      bs58check: 2.1.2
+      buffer: 6.0.3
+      crypto-js: 4.2.0
+      elliptic: 6.5.4
+      sha.js: 2.4.11
+    dev: false
+
+  /@keplr-wallet/crypto@0.12.69:
+    resolution: {integrity: sha512-88KdC7B3JJbuew1ork7O9JUIPRD84J1AKbwHWwhR9YspYZ4+qtGZcT544oiLXhCFBNabghAgH6mmg+dR/XwxVQ==}
     dependencies:
       '@ethersproject/keccak256': 5.7.0
       bip32: 2.0.6

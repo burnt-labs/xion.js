@@ -1,9 +1,15 @@
+import { TextEncoder, TextDecoder } from "node:util";
 import { SignArbSecp256k1HdWallet } from "./index";
+
+global.TextEncoder = TextEncoder;
+// @ts-expect-error: TextDecoder is not available in testing environment by default.
+global.TextDecoder = TextDecoder;
 
 describe("SignArbSecp256k1HdWallet", () => {
   let wallet: SignArbSecp256k1HdWallet;
 
   beforeEach(async () => {
+    // DO NOT USE WALLET IN PRODUCTION
     const serialization = JSON.stringify({
       type: "directsecp256k1hdwallet-v1",
       kdf: {
@@ -25,9 +31,9 @@ describe("SignArbSecp256k1HdWallet", () => {
     );
   });
 
-  test("signArbFn returns a signature for a valid signer address and message", async () => {
+  test("signArb returns a signature for a valid signer address and message", async () => {
     const signerAddress = "xion1cgvua2mkvux6xaw20w4ltjcrs9u3kagfpqd3al"; // Empty test account
-    const message = "Test message";
+    const message = "test";
     const signature = await wallet.signArb(signerAddress, message);
     expect(signature).toBeDefined();
     expect(typeof signature).toBe("string");

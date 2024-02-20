@@ -53,6 +53,7 @@
     "@cosmjs/tendermint-rpc": "^0.31.1",
     "@cosmjs/utils": "^0.31.3",
     "@keplr-wallet/cosmos": "^0.12.67",
+    "@keplr-wallet/crypto": "^0.12.69",
     "@types/react-dom": "^18.2.18",
     "cosmjs-types": "^0.8.0",
     "graz": "^0.0.51",

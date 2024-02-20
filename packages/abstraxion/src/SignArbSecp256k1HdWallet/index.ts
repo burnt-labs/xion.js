@@ -2,15 +2,14 @@ import { TextEncoder, TextDecoder } from "node:util";
 import type { AccountData } from "@cosmjs/proto-signing";
 import type { KdfConfiguration } from "@cosmjs/amino";
 import {
-  encodeSecp256k1Signature,
   makeCosmoshubPath,
   rawSecp256k1PubkeyToRawAddress,
 } from "@cosmjs/amino";
 import { assert, isNonNullObject } from "@cosmjs/utils";
+import { Hash, PrivKeySecp256k1 } from "@keplr-wallet/crypto";
 import type { HdPath, Secp256k1Keypair } from "@cosmjs/crypto";
 import {
   Secp256k1,
-  sha256,
   Slip10,
   Slip10Curve,
   stringToPath,
@@ -21,10 +20,6 @@ import { fromBase64, fromUtf8, toBech32 } from "@cosmjs/encoding";
 import { makeADR36AminoSignDoc, serializeSignDoc } from "@keplr-wallet/cosmos";
 import type { EncryptionConfiguration } from "@cosmjs/proto-signing/build/wallet";
 import { decrypt, executeKdf } from "@cosmjs/proto-signing/build/wallet";
-
-global.TextEncoder = TextEncoder;
-// @ts-expect-error: TextDecoder is not available in testing environment by default.
-global.TextDecoder = TextDecoder;
 
 const serializationTypeV1 = "directsecp256k1hdwallet-v1";
 
@@ -240,18 +235,14 @@ export class SignArbSecp256k1HdWallet {
     if (account === undefined) {
       throw new Error(`Address ${signerAddress} not found in wallet`);
     }
-    const { privkey, pubkey } = account;
-
+    const { privkey } = account;
     const signDoc = makeADR36AminoSignDoc(signerAddress, message);
-    const signBytes = serializeSignDoc(signDoc);
-    const hashedMessage = sha256(signBytes);
-
-    const signature = await Secp256k1.createSignature(hashedMessage, privkey);
-    const signatureBytes = new Uint8Array([
-      ...signature.r(32),
-      ...signature.s(32),
-    ]);
-    const stdSignature = encodeSecp256k1Signature(pubkey, signatureBytes);
-    return stdSignature.signature;
+    const serializedSignDoc = serializeSignDoc(signDoc);
+    const digest = Hash.sha256(serializedSignDoc);
+    const cryptoPrivKey = new PrivKeySecp256k1(privkey);
+    const signature = cryptoPrivKey.signDigest32(digest);
+    return Buffer.from(
+      new Uint8Array([...signature.r, ...signature.s]),
+    ).toString("base64");
   };
 }
