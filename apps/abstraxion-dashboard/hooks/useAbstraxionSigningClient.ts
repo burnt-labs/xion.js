@@ -10,9 +10,11 @@ import {
 import { GasPrice } from "@cosmjs/stargate";
 
 export const useAbstraxionSigningClient = () => {
-  const { connectionType, abstractAccount } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+  const {
+    connectionType,
+    abstractAccount,
+    rpcUrl = testnetChainInfo.rpc,
+  } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const stytch = useStytch();
   const sessionToken = stytch.session.getTokens()?.session_token;
@@ -29,13 +31,9 @@ export const useAbstraxionSigningClient = () => {
         sessionToken,
       );
 
-      const jwtClient = await AAClient.connectWithSigner(
-        testnetChainInfo.rpc,
-        jwtSigner,
-        {
-          gasPrice: GasPrice.fromString("0uxion"),
-        },
-      );
+      const jwtClient = await AAClient.connectWithSigner(rpcUrl, jwtSigner, {
+        gasPrice: GasPrice.fromString("0uxion"),
+      });
 
       setAbstractClient(jwtClient);
     }
