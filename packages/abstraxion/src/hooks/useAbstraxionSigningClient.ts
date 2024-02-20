@@ -5,7 +5,12 @@ import { AbstraxionContext } from "@/src/components/AbstraxionContext";
 import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 import { SignArbSecp256k1HdWallet } from "../SignArbSecp256k1HdWallet";
 
-export const useAbstraxionSigningClient = async () => {
+export const useAbstraxionSigningClient = (): {
+  readonly client: GranteeSignerClient | undefined;
+  readonly signArb:
+    | ((signerAddress: string, message: string | Uint8Array) => Promise<string>)
+    | undefined;
+} => {
   const [signArbWallet, setSignArbWallet] = useState<
     SignArbSecp256k1HdWallet | undefined
   >(undefined);
