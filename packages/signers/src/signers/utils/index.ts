@@ -45,6 +45,10 @@ export type INodes<T> = {
   nodes: Array<T>;
 };
 
+function uint64FromProto(input: number | bigint): Uint64 {
+  return Uint64.fromString(input.toString());
+}
+
 function accountFromBaseAccount(input: BaseAccount) {
   const { address, pubKey, accountNumber, sequence } = input;
   let pubkey: Pubkey | null = null;
@@ -52,10 +56,10 @@ function accountFromBaseAccount(input: BaseAccount) {
     pubkey = decodePubkey(pubKey);
   }
   return {
-    address: address,
-    pubkey: pubkey,
-    accountNumber: Uint64.fromString(accountNumber.toString()).toBigInt(),
-    sequence: Uint64.fromString(sequence.toString()).toBigInt(),
+    address,
+    pubkey,
+    accountNumber: uint64FromProto(accountNumber).toNumber(),
+    sequence: uint64FromProto(sequence).toNumber(),
   };
 }
 
@@ -69,7 +73,7 @@ export function customAccountFromAny(input: Any): Account {
   const { typeUrl, value } = input;
   switch (typeUrl) {
     case "/abstractaccount.v1.AbstractAccount": {
-      const abstractAccount = AbstractAccount.decode(value);
+      const abstractAccount = AbstractAccount.fromBinary(value);
       assert(abstractAccount);
       return accountFromBaseAccount(abstractAccount);
     }

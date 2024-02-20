@@ -411,6 +411,9 @@ importers:
       '@cosmjs/utils':
         specifier: ^0.32.2
         version: 0.32.2
+      '@protobuf-ts/runtime':
+        specifier: ^2.9.3
+        version: 2.9.3
       bech32:
         specifier: ^2.0.0
         version: 2.0.0
@@ -3947,6 +3950,10 @@ packages:
       picocolors: 1.0.0
       tslib: 2.6.2
     dev: true
+
+  /@protobuf-ts/runtime@2.9.3:
+    resolution: {integrity: sha512-nivzCpg/qYD0RX2OmHOahJALb8ndjGmUhNBcTJ0BbXoqKwCSM6vYA+vegzS3rhuaPgbyC7Ec8idlnizzUfIRuw==}
+    dev: false
 
   /@protobufjs/aspromise@1.1.2:
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
