@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/abstraxion",
-  "version": "1.0.0-alpha.26",
+  "version": "1.0.0-alpha.30",
   "sideEffects": [
     "**/*.css"
   ],
@@ -44,6 +44,7 @@
   "dependencies": {
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
+    "@burnt-labs/abstraxion-core": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
     "@cosmjs/amino": "^0.31.3",
     "@cosmjs/cosmwasm-stargate": "^0.31.3",
