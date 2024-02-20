@@ -6,21 +6,34 @@ import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 import { SignArbSecp256k1HdWallet } from "../SignArbSecp256k1HdWallet";
 
 export const useAbstraxionSigningClient = async () => {
+  const [signArbWallet, setSignArbWallet] = useState<
+    SignArbSecp256k1HdWallet | undefined
+  >(undefined);
+  const getTempAccount = async () => {
+    const tempKeypair = localStorage.getItem("xion-authz-temp-account");
+    let wallet;
+    if (tempKeypair) {
+      wallet = await SignArbSecp256k1HdWallet.deserialize(
+        tempKeypair,
+        "abstraxion",
+      );
+    }
+    return wallet;
+  };
+  useEffect(() => {
+    (async () => {
+      const wallet = await getTempAccount();
+      if (wallet) {
+        setSignArbWallet(wallet);
+      }
+    })();
+  });
   const { isConnected, abstraxionAccount, granterAddress } =
     useContext(AbstraxionContext);
 
   const [abstractClient, setAbstractClient] = useState<
     GranteeSignerClient | undefined
   >(undefined);
-
-  const tempKeypair = localStorage.getItem("xion-authz-temp-account");
-  let wallet;
-  if (tempKeypair) {
-    wallet = await SignArbSecp256k1HdWallet.deserialize(
-      tempKeypair,
-      "abstraxion",
-    );
-  }
 
   useEffect(() => {
     async function getSigner() {
@@ -61,5 +74,5 @@ export const useAbstraxionSigningClient = async () => {
     getSigner();
   }, [isConnected, abstraxionAccount, granterAddress]);
 
-  return { client: abstractClient, signArb: wallet?.signArb };
+  return { client: abstractClient, signArb: signArbWallet?.signArb } as const;
 };

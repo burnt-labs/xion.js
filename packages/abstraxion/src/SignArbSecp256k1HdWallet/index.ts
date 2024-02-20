@@ -1,4 +1,3 @@
-import { TextEncoder, TextDecoder } from "node:util";
 import type { AccountData } from "@cosmjs/proto-signing";
 import type { KdfConfiguration } from "@cosmjs/amino";
 import {
