@@ -17,7 +17,7 @@ import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useSearchParams } from "next/navigation";
 import { AbstraxionGrant } from "../AbstraxionGrant";
 import Image from "next/image";
-import { calculateJwkThumbprint } from "jose";
+import { testnetChainInfo } from "@burnt-labs/constants";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -109,7 +109,9 @@ export const AbstraxionProvider = ({
   children: React.ReactNode;
 }) => {
   return (
-    <AbstraxionContextProvider>
+    <AbstraxionContextProvider
+      rpcUrl={process.env.NEXT_PUBLIC_RPC_URL || testnetChainInfo.rpc}
+    >
       <StytchProvider stytch={stytchClient}>
         <ApolloProvider client={apolloClient}>
           <GrazProvider>{children}</GrazProvider>
