@@ -1,14 +1,14 @@
 import { useContext, useEffect, useState } from "react";
 import { testnetChainInfo } from "@burnt-labs/constants";
+import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/src/components/AbstraxionContext";
-import { GranteeSignerClient } from "@/src/GranteeSignerClient.ts";
 import { GasPrice } from "@cosmjs/stargate";
 
 export const useAbstraxionSigningClient = () => {
-  const { isConnected, abstraxionAccount, granterAddress } = useContext(
+  const { isConnected, abstraxionAccount, granterAddress, rpcUrl } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -36,7 +36,8 @@ export const useAbstraxionSigningClient = () => {
           });
 
         const directClient = await GranteeSignerClient.connectWithSigner(
-          testnetChainInfo.rpc,
+          // Should be set in the context but defaulting here just in aca
+          rpcUrl || testnetChainInfo.rpc,
           abstraxionAccount,
           {
             gasPrice: GasPrice.fromString("0uxion"),

@@ -1,5 +1,37 @@
 # demo-app
 
+## 1.1.0-alpha.15
+
+### Patch Changes
+
+- Updated dependencies [[`a9a882a`](https://github.com/burnt-labs/xion.js/commit/a9a882a23ff3227591287e7dc28438f7644a7bfa)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.30
+
+## 1.1.0-alpha.14
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion@1.0.0-alpha.29
+
+## 1.1.0-alpha.13
+
+### Patch Changes
+
+- Updated dependencies [[`f46fa86`](https://github.com/burnt-labs/xion.js/commit/f46fa8672ccf38d66b9bde244eecef573ee86ded)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.28
+
+## 1.1.0-alpha.12
+
+### Minor Changes
+
+- [#83](https://github.com/burnt-labs/xion.js/pull/83) [`7dd82fe`](https://github.com/burnt-labs/xion.js/commit/7dd82fe902ca1d0f64f91a1dd185be965beb6331) Thanks [@justinbarry](https://github.com/justinbarry)! - Add ability for a DAPP to request a token budget alongside contract exec privileges
+
+### Patch Changes
+
+- Updated dependencies [[`7dd82fe`](https://github.com/burnt-labs/xion.js/commit/7dd82fe902ca1d0f64f91a1dd185be965beb6331)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.27
+
 ## 1.1.0-alpha.11
 
 ### Patch Changes

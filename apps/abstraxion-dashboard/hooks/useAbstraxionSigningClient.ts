@@ -13,12 +13,12 @@ import {
 import { getKeplr, useOfflineSigners } from "graz";
 import { testnetChainInfo } from "@burnt-labs/constants";
 
-export const useAbstraxionSigningClient = (): {
-  client: AAClient | undefined;
-} => {
-  const { connectionType, abstractAccount } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+export const useAbstraxionSigningClient = () => {
+  const {
+    connectionType,
+    abstractAccount,
+    rpcUrl = testnetChainInfo.rpc,
+  } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const stytch = useStytch();
   const sessionToken = stytch.session.getTokens()?.session_token;
@@ -69,7 +69,7 @@ export const useAbstraxionSigningClient = (): {
       }
 
       const abstractClient = await AAClient.connectWithSigner(
-        testnetChainInfo.rpc,
+        rpcUrl,
         signer,
         {
           gasPrice: GasPrice.fromString("0uxion"),

@@ -16,6 +16,7 @@ import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useSearchParams } from "next/navigation";
 import { AbstraxionGrant } from "../AbstraxionGrant";
 import Image from "next/image";
+import { testnetChainInfo } from "@burnt-labs/constants";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -33,7 +34,13 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   const { isConnected, data: account } = useAbstraxionAccount();
 
   const contracts = searchParams.get("contracts");
-  const contractsArray = contracts?.split(",") || [];
+  let contractsArray;
+  try {
+    contractsArray = JSON.parse(contracts || "");
+  } catch (e) {
+    // If the contracts are not a valid JSON, we split them by comma. Dapp using old version of the library.
+    contractsArray = contracts?.split(",") || [];
+  }
 
   const grantee = searchParams.get("grantee");
   useEffect(() => {
@@ -94,7 +101,9 @@ export const AbstraxionProvider = ({
   children: React.ReactNode;
 }) => {
   return (
-    <AbstraxionContextProvider>
+    <AbstraxionContextProvider
+      rpcUrl={process.env.NEXT_PUBLIC_RPC_URL || testnetChainInfo.rpc}
+    >
       <StytchProvider stytch={stytchClient}>
         <ApolloProvider client={apolloClient}>
           <GrazProvider>{children}</GrazProvider>

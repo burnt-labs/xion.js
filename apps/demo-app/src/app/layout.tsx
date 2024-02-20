@@ -20,7 +20,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <AbstraxionProvider
           config={{
-            contracts: [seatContractAddress],
+            contracts: [
+              // Usually, you would have a list of different contracts here
+              seatContractAddress,
+              {
+                address: seatContractAddress,
+                amounts: [{ denom: "uxion", amount: "1000000" }],
+              },
+            ],
           }}
         >
           {children}

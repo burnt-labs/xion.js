@@ -1,6 +1,6 @@
 {
   "name": "abstraxion-dashboard",
-  "version": "0.2.0-alpha.7",
+  "version": "0.2.0-alpha.11",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,6 +18,7 @@
     "@cosmjs/crypto": "^0.31.3",
     "@cosmjs/proto-signing": "^0.31.3",
     "@cosmjs/stargate": "^0.31.3",
+    "@sentry/nextjs": "^7.100.1",
     "@stytch/nextjs": "^14.0.0",
     "@stytch/vanilla-js": "^3.2.1",
     "@tanstack/react-query": "^4.36.1",
