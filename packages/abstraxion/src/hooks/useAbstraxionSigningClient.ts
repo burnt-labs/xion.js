@@ -1,9 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import { GasPrice } from "@cosmjs/stargate";
-import {
-  AbstraxionContext
-} from "@/src/components/AbstraxionContext";
+import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import { AbstraxionContext } from "@/src/components/AbstraxionContext";
 import { SignArbSecp256k1HdWallet } from "../SignArbSecp256k1HdWallet";
 
 export const useAbstraxionSigningClient = (): {
@@ -12,9 +11,8 @@ export const useAbstraxionSigningClient = (): {
     | ((signerAddress: string, message: string | Uint8Array) => Promise<string>)
     | undefined;
 } => {
-  const { isConnected, abstraxionAccount, granterAddress, rpcUrl } = useContext(
-    AbstraxionContext,
-  ) ;
+  const { isConnected, abstraxionAccount, granterAddress, rpcUrl } =
+    useContext(AbstraxionContext);
   const [signArbWallet, setSignArbWallet] = useState<
     SignArbSecp256k1HdWallet | undefined
   >(undefined);
@@ -37,8 +35,6 @@ export const useAbstraxionSigningClient = (): {
       }
     })();
   });
-  const { isConnected, abstraxionAccount, granterAddress } =
-    useContext(AbstraxionContext);
 
   const [abstractClient, setAbstractClient] = useState<
     GranteeSignerClient | undefined
