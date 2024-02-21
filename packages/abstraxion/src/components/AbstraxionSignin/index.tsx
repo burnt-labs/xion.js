@@ -55,6 +55,7 @@ export function AbstraxionSignin(): JSX.Element {
     granterAddress,
     contracts,
     dashboardUrl,
+    restUrl,
   } = useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
@@ -100,7 +101,7 @@ export function AbstraxionSignin(): JSX.Element {
       try {
         await wait(3000);
         const res = await fetch(
-          `https://api.xion-testnet-1.burnt.com/cosmos/authz/v1beta1/grants/grantee/${address}`,
+          `${restUrl}/cosmos/authz/v1beta1/grants/grantee/${address}`,
           {
             cache: "no-store",
           },

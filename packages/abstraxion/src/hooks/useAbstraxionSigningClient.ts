@@ -1,16 +1,40 @@
 import { useContext, useEffect, useState } from "react";
 import { testnetChainInfo } from "@burnt-labs/constants";
-import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
-import {
-  AbstraxionContext,
-  AbstraxionContextProps,
-} from "@/src/components/AbstraxionContext";
 import { GasPrice } from "@cosmjs/stargate";
+import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import { AbstraxionContext } from "@/src/components/AbstraxionContext";
+import { SignArbSecp256k1HdWallet } from "../SignArbSecp256k1HdWallet";
 
-export const useAbstraxionSigningClient = () => {
-  const { isConnected, abstraxionAccount, granterAddress, rpcUrl } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+export const useAbstraxionSigningClient = (): {
+  readonly client: GranteeSignerClient | undefined;
+  readonly signArb:
+    | ((signerAddress: string, message: string | Uint8Array) => Promise<string>)
+    | undefined;
+} => {
+  const { isConnected, abstraxionAccount, granterAddress, rpcUrl } =
+    useContext(AbstraxionContext);
+  const [signArbWallet, setSignArbWallet] = useState<
+    SignArbSecp256k1HdWallet | undefined
+  >(undefined);
+  const getTempAccount = async () => {
+    const tempKeypair = localStorage.getItem("xion-authz-temp-account");
+    let wallet;
+    if (tempKeypair) {
+      wallet = await SignArbSecp256k1HdWallet.deserialize(
+        tempKeypair,
+        "abstraxion",
+      );
+    }
+    return wallet;
+  };
+  useEffect(() => {
+    (async () => {
+      const wallet = await getTempAccount();
+      if (wallet) {
+        setSignArbWallet(wallet);
+      }
+    })();
+  });
 
   const [abstractClient, setAbstractClient] = useState<
     GranteeSignerClient | undefined
@@ -56,5 +80,5 @@ export const useAbstraxionSigningClient = () => {
     getSigner();
   }, [isConnected, abstraxionAccount, granterAddress]);
 
-  return { client: abstractClient };
+  return { client: abstractClient, signArb: signArbWallet?.signArb } as const;
 };

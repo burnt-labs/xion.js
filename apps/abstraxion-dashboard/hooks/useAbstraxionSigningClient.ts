@@ -69,7 +69,8 @@ export const useAbstraxionSigningClient = () => {
       }
 
       const abstractClient = await AAClient.connectWithSigner(
-        rpcUrl,
+        // Should be set in the context but defaulting here just in case.
+        rpcUrl || testnetChainInfo.rpc,
         signer,
         {
           gasPrice: GasPrice.fromString("0uxion"),

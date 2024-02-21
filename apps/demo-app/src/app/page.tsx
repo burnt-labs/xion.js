@@ -10,7 +10,9 @@ import {
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
-import { seatContractAddress } from "./layout";
+
+const seatContractAddress =
+  "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
 
 type ExecuteResultOrUndefined = ExecuteResult | undefined;
 export default function Page(): JSX.Element {
