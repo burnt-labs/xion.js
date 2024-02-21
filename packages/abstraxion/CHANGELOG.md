@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.31
+
+### Minor Changes
+
+- [#88](https://github.com/burnt-labs/xion.js/pull/88) [`415f15a`](https://github.com/burnt-labs/xion.js/commit/415f15a50a85b55271e8ecf220801f67c4b3f7d1) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added new class for signArb functionality
+
 ## 1.0.0-alpha.30
 
 ### Minor Changes
