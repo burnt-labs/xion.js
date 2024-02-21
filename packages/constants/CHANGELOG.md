@@ -1,5 +1,22 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.6
+
+### Minor Changes
+
+- [#97](https://github.com/burnt-labs/xion.js/pull/97) [`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8) Thanks [@justinbarry](https://github.com/justinbarry)! - Update default RPC/Rest Urls and allow for dapps to pass in rest url via the AbstraxionProvider.
+
+  ```typescript
+          <AbstraxionProvider
+            config={{
+              restUrl: "https://api.example.com",
+            }}
+          >
+            {children}
+          </AbstraxionProvider>
+
+  ```
+
 ## 0.1.0-alpha.5
 
 ### Minor Changes

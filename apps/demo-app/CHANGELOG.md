@@ -1,5 +1,14 @@
 # demo-app
 
+## 1.1.0-alpha.17
+
+### Patch Changes
+
+- [#97](https://github.com/burnt-labs/xion.js/pull/97) [`7bf0fa8`](https://github.com/burnt-labs/xion.js/commit/7bf0fa87726b9f5a695fd96a1b6b81361d420d0d) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix Next.js build issue with layout exporting constants
+
+- Updated dependencies [[`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.32
+
 ## 1.1.0-alpha.16
 
 ### Patch Changes
