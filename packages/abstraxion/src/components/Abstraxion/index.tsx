@@ -62,6 +62,7 @@ export interface AbstraxionConfig {
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
   rpcUrl?: string;
+  restUrl?: string;
 }
 
 export function AbstraxionProvider({
@@ -76,6 +77,7 @@ export function AbstraxionProvider({
       contracts={config.contracts}
       dashboardUrl={config.dashboardUrl}
       rpcUrl={config.rpcUrl}
+      restUrl={config.restUrl}
     >
       {children}
     </AbstraxionContextProvider>

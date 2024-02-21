@@ -31,7 +31,11 @@ export const useAbstraxionSigningClient = () => {
         sessionToken,
       );
 
-      const jwtClient = await AAClient.connectWithSigner(rpcUrl, jwtSigner, {
+      const jwtClient = await AAClient.connectWithSigner(
+        // Should be set in the context but defaulting here just in case.
+        rpcUrl || testnetChainInfo.rpc,
+        jwtSigner,
+        {
         gasPrice: GasPrice.fromString("0uxion"),
       });
 

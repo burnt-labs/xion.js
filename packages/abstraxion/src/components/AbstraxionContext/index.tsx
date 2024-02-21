@@ -26,6 +26,7 @@ export interface AbstraxionContextProps {
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
   rpcUrl?: string;
+  restUrl?: string;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -37,11 +38,13 @@ export function AbstraxionContextProvider({
   contracts,
   dashboardUrl = "https://dashboard.burnt.com",
   rpcUrl = testnetChainInfo.rpc,
+  restUrl = testnetChainInfo.rest,
 }: {
   children: ReactNode;
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
   rpcUrl?: string;
+  restUrl?: string;
 }): JSX.Element {
   const [abstraxionError, setAbstraxionError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -77,6 +80,7 @@ export function AbstraxionContextProvider({
         contracts,
         dashboardUrl,
         rpcUrl,
+        restUrl,
       }}
     >
       {children}
