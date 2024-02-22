@@ -34,7 +34,7 @@ export const useAbstraxionSigningClient = (): {
         setSignArbWallet(wallet);
       }
     })();
-  });
+  }, []);
 
   const [abstractClient, setAbstractClient] = useState<
     GranteeSignerClient | undefined
