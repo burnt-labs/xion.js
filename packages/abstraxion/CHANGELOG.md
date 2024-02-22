@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.34
+
+### Minor Changes
+
+- [#101](https://github.com/burnt-labs/xion.js/pull/101) [`0236eea`](https://github.com/burnt-labs/xion.js/commit/0236eea22a4c5a9b0b9b413cac4a8b62038a4456) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Refactored useAbstraxionSigningClient for better performance.
+
 ## 1.0.0-alpha.33
 
 ### Minor Changes
