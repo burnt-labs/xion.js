@@ -18,7 +18,6 @@ import {
   ISmartAccounts,
 } from "../../interfaces/smartAccount";
 import {
-  AllSmartWalletQuery,
   AllSmartWalletQueryByIdAndTypeAndAuthenticator,
   SingleSmartWalletQuery,
   SmartWalletIndexQueryByAccountId,
@@ -47,17 +46,21 @@ export type INodes<T> = {
   nodes: Array<T>;
 };
 
+function uint64FromProto(input: number | bigint): Uint64 {
+  return Uint64.fromString(input.toString());
+}
+
 function accountFromBaseAccount(input: BaseAccount) {
-  const { address, pubKey: inputPubkey, accountNumber, sequence } = input;
+  const { address, pubKey, accountNumber, sequence } = input;
   let pubkey: Pubkey | null = null;
-  if (inputPubkey) {
-    pubkey = decodePubkey(inputPubkey);
+  if (pubKey) {
+    pubkey = decodePubkey(pubKey);
   }
   return {
-    address: address,
-    pubkey: pubkey,
-    accountNumber: Uint64.fromString(accountNumber.toString()).toNumber(),
-    sequence: Uint64.fromString(sequence.toString()).toNumber(),
+    address,
+    pubkey,
+    accountNumber: uint64FromProto(accountNumber).toNumber(),
+    sequence: uint64FromProto(sequence).toNumber(),
   };
 }
 
@@ -71,7 +74,7 @@ export function customAccountFromAny(input: Any): Account {
   const { typeUrl, value } = input;
   switch (typeUrl) {
     case "/abstractaccount.v1.AbstractAccount": {
-      const abstractAccount = AbstractAccount.decode(value);
+      const abstractAccount = AbstractAccount.fromBinary(value);
       assert(abstractAccount);
       return accountFromBaseAccount(abstractAccount);
     }
@@ -105,14 +108,14 @@ export function makeAAuthInfo(
             mode: SignMode.SIGN_MODE_DIRECT,
           },
         },
-        sequence: account.sequence,
+        sequence: BigInt(account.sequence),
       }),
     ],
     fee: {
       amount: fee.amount
         ? coins(fee.amount[0].amount, fee.amount[0].denom)
         : coins(1, "uxion"),
-      gasLimit: fee.gas,
+      gasLimit: BigInt(fee.gas),
       granter: fee.granter || "",
       payer: fee.payer || "",
     },
@@ -146,7 +149,6 @@ export async function getAAccounts(
     return [defaultData];
   }
   for (const account of accounts) {
-    // TODO: More specific
     const { data } = await apolloClient.query<IQueryAAResponse>({
       query: AllSmartWalletQueryByIdAndTypeAndAuthenticator,
       variables: {
@@ -169,18 +171,17 @@ export async function getAAccounts(
           continue;
         }
         for (const authenticator of smartAccountAuthenticators.nodes) {
-          const splitAuthenticatorId = authenticator.id.split("-");
-          const address = splitAuthenticatorId[0];
-          const authenticatorId = Number(splitAuthenticatorId[1]);
           allAAAcounts.push({
-            /** The authenticator id was encoded as the contract address + "-" + <id>
-             * e.g. xion3214141231312323-1
+            /** The authenticator id was encoded as the contract address + xion + <id>
+             * e.g. xion3214141231312323 + xion + 1
              */
-            address,
+            address: "xion" + authenticator.authenticatorId.split("xion")[1],
             accountAddress: account.address,
             algo: authenticator.type.toLowerCase() as Algo,
-            pubkey: account.pubkey || new Uint8Array(), // to signify an AA account
-            authenticatorId,
+            pubkey: new Uint8Array(), // to signify an AA account
+            authenticatorId: Number(
+              authenticator.authenticatorId.split("xion")[2],
+            ),
           });
         }
       }
