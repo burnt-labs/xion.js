@@ -49,7 +49,7 @@ export const useAbstraxionSigningClient = () => {
         case "graz":
           if (data && data.offlineSigner) {
             signer = new AADirectSigner(
-              data?.offlineSigner,
+              data?.offlineSigner as any, // Temp solution. graz vs internal cosmjs version mismatch
               abstractAccount.id,
               abstractAccount.currentAuthenticatorIndex,
               // @ts-ignore - signArbitrary function exists on Keplr although it doesn't show
