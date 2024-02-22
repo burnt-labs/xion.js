@@ -27,14 +27,6 @@ export const useAbstraxionSigningClient = (): {
     }
     return wallet;
   };
-  useEffect(() => {
-    (async () => {
-      const wallet = await getTempAccount();
-      if (wallet) {
-        setSignArbWallet(wallet);
-      }
-    })();
-  }, []);
 
   const [abstractClient, setAbstractClient] = useState<
     GranteeSignerClient | undefined
@@ -69,6 +61,11 @@ export const useAbstraxionSigningClient = (): {
             granteeAddress,
           },
         );
+
+        const wallet = await getTempAccount();
+        if (wallet) {
+          setSignArbWallet(wallet);
+        }
 
         setAbstractClient(directClient);
       } catch (error) {
