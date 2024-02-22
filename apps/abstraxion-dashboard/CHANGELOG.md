@@ -1,5 +1,48 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.14
+
+### Minor Changes
+
+- [#94](https://github.com/burnt-labs/xion.js/pull/94) [`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e) Thanks [@justinbarry](https://github.com/justinbarry)! - Update the following packages to the latest version:
+
+  | Package                   | Version |
+  | ------------------------- | ------- |
+  | @cosmjs/cosmwasm-stargate | ^0.32.2 |
+  | @cosmjs/proto-signing     | ^0.32.2 |
+  | @cosmjs/stargate          | ^0.32.2 |
+  | @cosmjs/tendermint-rpc    | ^0.32.2 |
+  | cosmjs-types              | ^0.9.0  |
+
+### Patch Changes
+
+- Updated dependencies [[`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.33
+  - @burnt-labs/signers@0.1.0-alpha.6
+
+## 0.2.0-alpha.13
+
+### Minor Changes
+
+- [#97](https://github.com/burnt-labs/xion.js/pull/97) [`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8) Thanks [@justinbarry](https://github.com/justinbarry)! - Update default RPC/Rest Urls and allow for dapps to pass in rest url via the AbstraxionProvider.
+
+  ```typescript
+          <AbstraxionProvider
+            config={{
+              restUrl: "https://api.example.com",
+            }}
+          >
+            {children}
+          </AbstraxionProvider>
+
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.32
+  - @burnt-labs/constants@0.1.0-alpha.6
+
 ## 0.2.0-alpha.12
 
 ### Minor Changes

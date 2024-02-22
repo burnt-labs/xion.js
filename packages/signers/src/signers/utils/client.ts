@@ -151,8 +151,8 @@ export class AAClient extends SigningCosmWasmClient {
       this.abstractSigner.abstractAccount = signerAddress;
     }
     /// This check simply makes sure the signer is an AASigner and not a regular signer
-    const foo = await this.abstractSigner.getAccounts();
-    const accountFromSigner = foo.find(
+    const accounts = await this.abstractSigner.getAccounts();
+    const accountFromSigner = accounts.find(
       (account) =>
         account.authenticatorId ===
         this.abstractSigner.accountAuthenticatorIndex,
@@ -197,7 +197,7 @@ export class AAClient extends SigningCosmWasmClient {
       bodyBytes,
       authInfoBytes,
       chainId: signerData.chainId,
-      accountNumber: aaAcount.accountNumber,
+      accountNumber: BigInt(aaAcount.accountNumber),
     });
     const signature = await this.abstractSigner
       .signDirect(accountFromSigner.accountAddress, signDoc)

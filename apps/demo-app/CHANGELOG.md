@@ -1,5 +1,34 @@
 # demo-app
 
+## 1.1.0-alpha.18
+
+### Minor Changes
+
+- [#94](https://github.com/burnt-labs/xion.js/pull/94) [`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e) Thanks [@justinbarry](https://github.com/justinbarry)! - Update the following packages to the latest version:
+
+  | Package                   | Version |
+  | ------------------------- | ------- |
+  | @cosmjs/cosmwasm-stargate | ^0.32.2 |
+  | @cosmjs/proto-signing     | ^0.32.2 |
+  | @cosmjs/stargate          | ^0.32.2 |
+  | @cosmjs/tendermint-rpc    | ^0.32.2 |
+  | cosmjs-types              | ^0.9.0  |
+
+### Patch Changes
+
+- Updated dependencies [[`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.33
+  - @burnt-labs/signers@0.1.0-alpha.6
+
+## 1.1.0-alpha.17
+
+### Patch Changes
+
+- [#97](https://github.com/burnt-labs/xion.js/pull/97) [`7bf0fa8`](https://github.com/burnt-labs/xion.js/commit/7bf0fa87726b9f5a695fd96a1b6b81361d420d0d) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix Next.js build issue with layout exporting constants
+
+- Updated dependencies [[`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.32
+
 ## 1.1.0-alpha.16
 
 ### Patch Changes

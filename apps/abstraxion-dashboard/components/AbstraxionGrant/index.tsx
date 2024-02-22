@@ -67,7 +67,7 @@ export const AbstraxionGrant = ({
                   typeUrl: "/cosmwasm.wasm.v1.MaxCallsLimit",
                   value: MaxCallsLimit.encode(
                     MaxCallsLimit.fromPartial({
-                      remaining: "255",
+                      remaining: BigInt("255"),
                     }),
                   ).finish(),
                 },
@@ -84,7 +84,7 @@ export const AbstraxionGrant = ({
                 typeUrl: "/cosmwasm.wasm.v1.CombinedLimit",
                 value: CombinedLimit.encode(
                   CombinedLimit.fromPartial({
-                    callsRemaining: "255",
+                    callsRemaining: BigInt("255"),
                     amounts,
                   }),
                 ).finish(),
@@ -103,7 +103,7 @@ export const AbstraxionGrant = ({
           value: contractExecutionAuthorizationValue,
         },
         expiration: {
-          seconds: timestampThreeMonthsFromNow,
+          seconds: BigInt(timestampThreeMonthsFromNow),
         },
       },
       grantee,
