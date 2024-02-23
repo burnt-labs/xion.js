@@ -322,7 +322,7 @@ export const AbstraxionWallets = () => {
             ) : null}
             {!fetchingNewWallets &&
             abstractAccount &&
-            abstractAccount.authenticators.nodes.length < 2 ? (
+            abstractAccount.authenticators.nodes.length < 3 ? (
               <>
                 <Button
                   structure="outlined"
