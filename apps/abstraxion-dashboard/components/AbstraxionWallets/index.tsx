@@ -50,7 +50,6 @@ export const AbstraxionWallets = () => {
     ? decodeJwt(session_jwt)
     : { aud: undefined, sub: undefined };
 
-  // TODO: More robust
   const queryAuthenticator =
     connectionType === "graz"
       ? getHumanReadablePubkey(grazAccount?.pubKey)

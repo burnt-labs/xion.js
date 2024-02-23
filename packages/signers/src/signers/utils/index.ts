@@ -251,6 +251,18 @@ export async function getAuthenticatorIdByAuthenticatorIndex(
     return 0;
   }
 
+  if (data.smartAccounts.nodes.length > 1) {
+    console.warn(
+      "Unexpected behavior. Indexer returned multiple smart accounts",
+    );
+  }
+
+  if (data.smartAccounts.nodes[0].authenticators.nodes.length > 1) {
+    console.warn(
+      "Unexpected behavior. Indexer returned multiple authenticators",
+    );
+  }
+
   // Always returning the first one found because this query should only return an array of 1
   return (
     data.smartAccounts.nodes[0].authenticators.nodes[0].authenticatorIndex || 0

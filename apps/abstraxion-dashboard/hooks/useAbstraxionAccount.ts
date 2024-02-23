@@ -47,7 +47,6 @@ export const useAbstraxionAccount = () => {
       if (session) {
         setConnectionType("stytch");
       } else if (isConnected) {
-        // Is this the right conditional
         setConnectionType("graz");
       }
     };

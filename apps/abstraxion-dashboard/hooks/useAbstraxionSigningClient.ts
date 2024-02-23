@@ -58,13 +58,12 @@ export const useAbstraxionSigningClient = () => {
             break;
           }
         case "none":
-          // TODO: What do we want to do here?
           signer = undefined;
           break;
       }
 
       if (!signer) {
-        // TODO: More robust edge handling
+        console.warn("No signer found");
         return;
       }
 
