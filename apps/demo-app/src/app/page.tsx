@@ -46,6 +46,7 @@ export default function Page(): JSX.Element {
   async function handleSign() {
     if (client?.granteeAddress) {
       const response = await signArb?.(client.granteeAddress, arbitraryMessage);
+      // eslint-disable-next-line no-console -- We log this for testing purposes.
       console.log(response);
     }
   }
