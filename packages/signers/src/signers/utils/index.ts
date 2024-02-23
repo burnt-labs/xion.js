@@ -288,3 +288,7 @@ export async function buildAddJWTAuthenticatorMsg(
   };
   return addAuthMsg;
 }
+
+export function encodeHex(bytes: Uint8Array) {
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}

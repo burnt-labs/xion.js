@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useStytch } from "@stytch/nextjs";
 import {
   AAClient,
@@ -12,6 +12,7 @@ import {
 } from "@/components/AbstraxionContext";
 import { getKeplr, useOfflineSigners } from "graz";
 import { testnetChainInfo } from "@burnt-labs/constants";
+import { AAEthSigner } from "@burnt-labs/signers";
 
 export const useAbstraxionSigningClient = () => {
   const {
@@ -30,60 +31,82 @@ export const useAbstraxionSigningClient = () => {
     undefined,
   );
 
-  useEffect(() => {
-    async function getSigner() {
-      let signer: AbstractAccountJWTSigner | AADirectSigner | undefined =
-        undefined;
+  async function ethSigningFn(msg: any) {
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+    return window.ethereum.request({
+      method: "personal_sign",
+      params: [msg, accounts[0]],
+    });
+  }
 
-      // TODO: authenticator vs index. which one is better long term
-      // How do you get authenticator index if there are duplicates...?
-      // Client-side disable ability to add duplicate authenticators
-      switch (connectionType) {
-        case "stytch":
-          signer = new AbstractAccountJWTSigner(
+  const getSigner = useCallback(async () => {
+    let signer:
+      | AbstractAccountJWTSigner
+      | AADirectSigner
+      | AAEthSigner
+      | undefined = undefined;
+
+    switch (connectionType) {
+      case "stytch":
+        signer = new AbstractAccountJWTSigner(
+          abstractAccount.id,
+          abstractAccount.currentAuthenticatorIndex,
+          sessionToken,
+        );
+        break;
+      case "graz":
+        if (data && data.offlineSigner) {
+          signer = new AADirectSigner(
+            data?.offlineSigner as any, // Temp solution. graz vs internal cosmjs version mismatch
             abstractAccount.id,
             abstractAccount.currentAuthenticatorIndex,
-            sessionToken,
+            // @ts-ignore - signArbitrary function exists on Keplr although it doesn't show
+            keplr.signArbitrary,
           );
           break;
-        case "graz":
-          if (data && data.offlineSigner) {
-            signer = new AADirectSigner(
-              data?.offlineSigner as any, // Temp solution. graz vs internal cosmjs version mismatch
-              abstractAccount.id,
-              abstractAccount.currentAuthenticatorIndex,
-              // @ts-ignore - signArbitrary function exists on Keplr although it doesn't show
-              keplr.signArbitrary,
-            );
-            break;
-          }
-        case "none":
-          // TODO: What do we want to do here?
-          signer = undefined;
-          break;
-      }
-
-      if (!signer) {
-        // TODO: More robust edge handling
-        return;
-      }
-
-      const abstractClient = await AAClient.connectWithSigner(
-        // Should be set in the context but defaulting here just in case.
-        rpcUrl || testnetChainInfo.rpc,
-        signer,
-        {
-          gasPrice: GasPrice.fromString("0uxion"),
-        },
-      );
-
-      setAbstractClient(abstractClient);
+        }
+      case "metamask":
+        signer = new AAEthSigner(
+          abstractAccount.id,
+          abstractAccount.currentAuthenticatorIndex,
+          ethSigningFn,
+        );
+        break;
+      case "none":
+        // TODO: What do we want to do here?
+        signer = undefined;
+        break;
     }
 
-    if (abstractAccount) {
+    if (!signer) {
+      // TODO: More robust edge handling
+      return;
+    }
+
+    const abstractClient = await AAClient.connectWithSigner(
+      // Should be set in the context but defaulting here just in case.
+      rpcUrl || testnetChainInfo.rpc,
+      signer,
+      {
+        gasPrice: GasPrice.fromString("0uxion"),
+      },
+    );
+
+    setAbstractClient(abstractClient);
+  }, [sessionToken, abstractAccount, connectionType, data, keplr]);
+
+  useEffect(() => {
+    if (abstractAccount && !abstractClient) {
       getSigner();
     }
-  }, [sessionToken, abstractAccount, connectionType]);
+  }, [abstractAccount, getSigner]);
 
-  return { client: abstractClient };
+  const memoizedClient = useMemo(
+    () => ({ client: abstractClient }),
+    [abstractClient],
+  );
+
+  return memoizedClient;
 };

@@ -1,10 +1,12 @@
 import { useContext, useEffect } from "react";
 import { useAccount } from "graz";
-import { useStytchSession } from "@stytch/nextjs";
+import { useStytch, useStytchSession } from "@stytch/nextjs";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
+import { decodeJwt } from "jose";
+import { getHumanReadablePubkey } from "@/utils";
 
 export interface AuthenticatorNodes {
   __typename: string;
@@ -42,14 +44,39 @@ export const useAbstraxionAccount = () => {
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
+  const loginType = localStorage.getItem("loginType");
+  const loginAuthenticator = localStorage.getItem("loginAuthenticator"); // Primarily for metamask case
+
+  const { data: grazAccount } = useAccount();
+  const stytchClient = useStytch();
+  const session_jwt = stytchClient.session.getTokens()?.session_jwt;
+
+  function getAuthenticator() {
+    let authenticator = "";
+    switch (connectionType) {
+      case "stytch":
+        const { aud, sub } = session_jwt
+          ? decodeJwt(session_jwt)
+          : { aud: undefined, sub: undefined };
+        authenticator = `${Array.isArray(aud) ? aud[0] : aud}.${sub}`;
+        break;
+      case "graz":
+        authenticator = getHumanReadablePubkey(grazAccount?.pubKey);
+        break;
+      case "metamask":
+        authenticator = loginAuthenticator || "";
+        break;
+      case "none":
+        authenticator = "";
+        break;
+    }
+
+    return authenticator;
+  }
+
   useEffect(() => {
     const refreshConnectionType = () => {
-      if (session) {
-        setConnectionType("stytch");
-      } else if (isConnected) {
-        // Is this the right conditional
-        setConnectionType("graz");
-      }
+      setConnectionType((loginType as any) || "none");
     };
 
     if (connectionType === "none") {
@@ -60,11 +87,14 @@ export const useAbstraxionAccount = () => {
   return {
     data: (abstractAccount as AbstraxionAccount) || undefined,
     connectionType,
+    loginAuthenticator: getAuthenticator(),
     isConnected:
       connectionType === "stytch"
         ? !!session
         : connectionType === "graz"
         ? isConnected
+        : connectionType === "metamask"
+        ? !!loginAuthenticator
         : false,
   };
 };
