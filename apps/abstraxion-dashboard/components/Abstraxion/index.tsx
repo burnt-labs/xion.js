@@ -34,6 +34,17 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   const { isConnected, data: account } = useAbstraxionAccount();
 
   const contracts = searchParams.get("contracts");
+  const stake = Boolean(searchParams.get("stake"));
+  const bank = searchParams.get("bank");
+
+  let bankArray;
+  try {
+    bankArray = JSON.parse(bank || "");
+  } catch (e) {
+    // If the bank is not a valid JSON, we split it by comma. Dapp using old version of the library.
+    bankArray = [];
+  }
+
   let contractsArray;
   try {
     contractsArray = JSON.parse(contracts || "");
@@ -59,8 +70,16 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
         <DialogContent>
           {abstraxionError ? (
             <ErrorDisplay message={abstraxionError} onClose={onClose} />
-          ) : account?.id && contracts && grantee ? (
-            <AbstraxionGrant contracts={contractsArray} grantee={grantee} />
+          ) : account?.id &&
+            grantee &&
+            // We support granting any combunation of
+            (contractsArray.length > 0 || stake || bankArray.length > 0) ? (
+            <AbstraxionGrant
+              bank={bankArray}
+              contracts={contractsArray}
+              grantee={grantee}
+              stake={stake}
+            />
           ) : isConnected ? (
             <AbstraxionWallets />
           ) : (

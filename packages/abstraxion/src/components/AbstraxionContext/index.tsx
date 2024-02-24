@@ -1,13 +1,15 @@
 import type { ReactNode } from "react";
-import { useEffect, createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import type { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { testnetChainInfo } from "@burnt-labs/constants";
+
+export type SpendLimit = { denom: string; amount: string };
 
 export type ContractGrantDescription =
   | string
   | {
       address: string;
-      amounts: { denom: string; amount: string }[];
+      amounts: SpendLimit[];
     };
 
 export interface AbstraxionContextProps {
@@ -27,6 +29,8 @@ export interface AbstraxionContextProps {
   dashboardUrl?: string;
   rpcUrl?: string;
   restUrl?: string;
+  stake?: boolean;
+  bank?: SpendLimit[];
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -39,12 +43,16 @@ export function AbstraxionContextProvider({
   dashboardUrl = "https://dashboard.burnt.com",
   rpcUrl = testnetChainInfo.rpc,
   restUrl = testnetChainInfo.rest,
+  stake = false,
+  bank,
 }: {
   children: ReactNode;
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
   rpcUrl?: string;
   restUrl?: string;
+  stake?: boolean;
+  bank?: SpendLimit[];
 }): JSX.Element {
   const [abstraxionError, setAbstraxionError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -81,6 +89,8 @@ export function AbstraxionContextProvider({
         dashboardUrl,
         rpcUrl,
         restUrl,
+        stake,
+        bank,
       }}
     >
       {children}
