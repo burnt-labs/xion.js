@@ -9,6 +9,7 @@ import {
 } from "../AbstraxionContext";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import { KeplrLogo } from "@burnt-labs/ui";
+import { MetamaskLogo } from "@burnt-labs/ui";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
@@ -16,6 +17,7 @@ export const AbstraxionSignin = () => {
   const { suggestAndConnect } = useSuggestChainAndConnect({
     onError: (error) => console.log("connection error: ", error),
     onSuccess: () => {
+      localStorage.setItem("loginType", "graz");
       setConnectionType("graz");
     },
   });
@@ -28,7 +30,7 @@ export const AbstraxionSignin = () => {
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
-  const { setConnectionType } = useContext(
+  const { setConnectionType, setAbstraxionError } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -78,6 +80,7 @@ export const AbstraxionSignin = () => {
       await stytchClient.otps.authenticate(otp, methodId, {
         session_duration_minutes: 60,
       });
+      localStorage.setItem("loginType", "stytch");
     } catch (error) {
       setOtpError("Error verifying otp");
     }
@@ -88,6 +91,20 @@ export const AbstraxionSignin = () => {
       chainInfo: testnetChainInfo,
       walletType: WalletType.KEPLR,
     });
+  }
+
+  async function handleMetamask() {
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const primaryAccount = accounts[0];
+      setConnectionType("metamask");
+      localStorage.setItem("loginType", "metamask");
+      localStorage.setItem("loginAuthenticator", primaryAccount);
+    } catch (error) {
+      setAbstraxionError("Metamask connect error");
+    }
   }
 
   // For the "resend otp" countdown
@@ -158,14 +175,25 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
-          <Button
-            className="ui-rounded-md ui-font-akkuratLL ui-uppercase ui-px-5 ui-py-3.5 ui-text-sm ui-outline-none ui-hover:opacity-70 ui-border ui-bg-transparent ui-border-neutral-300 ui-text-white hover:ui-bg-white/5 ui-flex ui-items-center ui-justify-center ui-gap-2 ui-w-full"
-            onClick={handleKeplr}
-            structure="outlined"
-          >
-            <KeplrLogo />
-            Keplr
-          </Button>
+          <div className="ui-flex ui-items-center ui-w-full ui-opacity-40">
+            <div className="ui-grow ui-border-b ui-border-neutral-300"></div>
+            <span className="ui-shrink ui-px-1 ui-text-neutral-300 ui-text-xs">
+              OR
+            </span>
+            <div className="ui-grow ui-border-b ui-border-neutral-300"></div>
+          </div>
+          <div className="ui-flex ui-w-full ui-gap-2">
+            <Button fullWidth={true} onClick={handleKeplr} structure="outlined">
+              <KeplrLogo />
+            </Button>
+            <Button
+              fullWidth={true}
+              onClick={handleMetamask}
+              structure="outlined"
+            >
+              <MetamaskLogo />
+            </Button>
+          </div>
         </>
       )}
     </ModalSection>
