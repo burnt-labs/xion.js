@@ -28,6 +28,13 @@ export default function RootLayout({
                 amounts: [{ denom: "uxion", amount: "1000000" }],
               },
             ],
+            stake: true,
+            bank: [
+              {
+                denom: "uxion",
+                amount: "1000000",
+              },
+            ],
           }}
         >
           {children}

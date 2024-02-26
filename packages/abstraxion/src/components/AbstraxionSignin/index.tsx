@@ -1,6 +1,6 @@
 "use client";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Button, ModalSection, BrowserIcon } from "@burnt-labs/ui";
+import { BrowserIcon, Button, ModalSection } from "@burnt-labs/ui";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { wait } from "@/utils/wait";
 import {
@@ -50,12 +50,13 @@ export function AbstraxionSignin(): JSX.Element {
     setIsConnecting,
     setIsConnected,
     setAbstraxionAccount,
-    abstraxionAccount,
     setGranterAddress,
     granterAddress,
     contracts,
     dashboardUrl,
     restUrl,
+    stake,
+    bank,
   } = useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
@@ -72,9 +73,18 @@ export function AbstraxionSignin(): JSX.Element {
   ): void {
     const currentUrl = window.location.href;
     const urlParams = new URLSearchParams();
+
+    if (bank) {
+      urlParams.set("bank", JSON.stringify(bank));
+    }
+
+    if (stake) {
+      urlParams.set("stake", "true");
+    }
     urlParams.set("grantee", userAddress);
-    // @ts-expect-error - url encoding array
-    urlParams.set("contracts", JSON.stringify(grantContracts));
+    if (grantContracts) {
+      urlParams.set("contracts", JSON.stringify(grantContracts));
+    }
     urlParams.set("redirect_uri", currentUrl);
     const queryString = urlParams.toString(); // Convert URLSearchParams to string
     window.location.href = `${dashboardUrl}?${queryString}`;

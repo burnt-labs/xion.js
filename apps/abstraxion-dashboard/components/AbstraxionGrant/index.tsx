@@ -1,29 +1,31 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button, Spinner } from "@burnt-labs/ui";
-import { MsgGrant } from "cosmjs-types/cosmos/authz/v1beta1/tx";
-import {
-  CombinedLimit,
-  ContractExecutionAuthorization,
-  MaxCallsLimit,
-} from "cosmjs-types/cosmwasm/wasm/v1/authz";
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import burntAvatar from "@/public/burntAvatarCircle.png";
 import { CheckIcon } from "../Icons";
 import { EncodeObject } from "@cosmjs/proto-signing";
-import { redirect, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
 import type { ContractGrantDescription } from "@burnt-labs/abstraxion";
+import { assertIsDeliverTxSuccess } from "@cosmjs/stargate/build/stargateclient";
+import { generateBankGrant } from "@/components/AbstraxionGrant/generateBankGrant.tsx";
+import { generateContractGrant } from "@/components/AbstraxionGrant/generateContractGrant.tsx";
+import { generateStakeGrant } from "@/components/AbstraxionGrant/generateStakeGrant.tsx";
 
 interface AbstraxionGrantProps {
   contracts: ContractGrantDescription[];
   grantee: string;
+  stake: boolean;
+  bank: { denom: string; amount: string }[];
 }
 
 export const AbstraxionGrant = ({
   contracts,
   grantee,
+  stake,
+  bank,
 }: AbstraxionGrantProps) => {
   const { client } = useAbstraxionSigningClient();
   const { data: account } = useAbstraxionAccount();
@@ -50,72 +52,6 @@ export const AbstraxionGrant = ({
     }
   });
 
-  const generateContractGrant = (granter: string) => {
-    const timestampThreeMonthsFromNow = Math.floor(
-      new Date(new Date().setMonth(new Date().getMonth() + 3)).getTime() / 1000,
-    );
-
-    const contractExecutionAuthorizationValue =
-      ContractExecutionAuthorization.encode(
-        ContractExecutionAuthorization.fromPartial({
-          grants: contracts.map((contractGrantDescription) => {
-            if (typeof contractGrantDescription === "string") {
-              const contract = contractGrantDescription;
-              return {
-                contract,
-                limit: {
-                  typeUrl: "/cosmwasm.wasm.v1.MaxCallsLimit",
-                  value: MaxCallsLimit.encode(
-                    MaxCallsLimit.fromPartial({
-                      remaining: BigInt("255"),
-                    }),
-                  ).finish(),
-                },
-                filter: {
-                  typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
-                },
-              };
-            }
-
-            const { address, amounts } = contractGrantDescription;
-            return {
-              contract: address,
-              limit: {
-                typeUrl: "/cosmwasm.wasm.v1.CombinedLimit",
-                value: CombinedLimit.encode(
-                  CombinedLimit.fromPartial({
-                    callsRemaining: BigInt("255"),
-                    amounts,
-                  }),
-                ).finish(),
-              },
-              filter: {
-                typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
-              },
-            };
-          }),
-        }),
-      ).finish();
-    const grantValue = MsgGrant.fromPartial({
-      grant: {
-        authorization: {
-          typeUrl: "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
-          value: contractExecutionAuthorizationValue,
-        },
-        expiration: {
-          seconds: BigInt(timestampThreeMonthsFromNow),
-        },
-      },
-      grantee,
-      granter,
-    });
-
-    return {
-      typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-      value: grantValue,
-    };
-  };
-
   const grant = async () => {
     setInProgress(true);
     if (!client) {
@@ -127,17 +63,59 @@ export const AbstraxionGrant = ({
     }
 
     const granter = account.id;
-    const msg = generateContractGrant(granter);
+    const timestampThreeMonthsFromNow = BigInt(
+      Math.floor(
+        new Date(new Date().setMonth(new Date().getMonth() + 3)).getTime() /
+          1000,
+      ),
+    );
+
+    const msgs: EncodeObject[] = [];
+
+    if (contracts.length > 0) {
+      msgs.push(
+        generateContractGrant(
+          timestampThreeMonthsFromNow,
+          grantee,
+          granter,
+          contracts,
+        ),
+      );
+    }
+
+    if (stake) {
+      msgs.push(
+        ...generateStakeGrant(timestampThreeMonthsFromNow, grantee, granter),
+      );
+    }
+
+    if (bank.length > 0) {
+      msgs.push(
+        generateBankGrant(timestampThreeMonthsFromNow, grantee, granter, bank),
+      );
+    }
 
     try {
-      const foo = await client?.signAndBroadcast(
+      console.log("msgs", msgs.length, msgs);
+      if (msgs.length === 0) {
+        throw new Error("No grants to send");
+      }
+
+      const deliverTxResponse = await client?.signAndBroadcast(
         account.id,
-        [msg as EncodeObject],
+        msgs,
         {
           amount: [{ amount: "0", denom: "uxion" }],
           gas: "500000",
         },
       );
+
+      assertIsDeliverTxSuccess({
+        ...deliverTxResponse,
+        gasUsed: BigInt(deliverTxResponse.gasUsed),
+        gasWanted: BigInt(deliverTxResponse.gasWanted),
+      });
+
       setShowSuccess(true);
       setInProgress(false);
     } catch (error) {
