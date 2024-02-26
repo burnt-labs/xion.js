@@ -129,7 +129,13 @@ export default function Page(): JSX.Element {
                 placeholder="Message..."
                 value={arbitraryMessage}
               />
-              <Button disabled={loading} fullWidth onClick={() => handleSign()}>
+              <Button
+                disabled={loading}
+                fullWidth
+                onClick={() => {
+                  void handleSign();
+                }}
+              >
                 Sign
               </Button>
             </div>
