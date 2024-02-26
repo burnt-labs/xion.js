@@ -21,7 +21,11 @@ interface GranteeSignerOptions {
 
 export class GranteeSignerClient extends SigningCosmWasmClient {
   protected readonly granterAddress: string;
-  protected readonly granteeAddress: string;
+  private readonly _granteeAddress: string;
+
+  public get granteeAddress(): string {
+    return this._granteeAddress;
+  }
 
   public static async connectWithSigner(
     endpoint: string | HttpEndpoint,
@@ -58,7 +62,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     if (granteeAddress === undefined) {
       throw new Error("granteeAddress is required");
     }
-    this.granteeAddress = granteeAddress;
+    this._granteeAddress = granteeAddress;
   }
 
   public async getAccount(searchAddress: string): Promise<Account | null> {
