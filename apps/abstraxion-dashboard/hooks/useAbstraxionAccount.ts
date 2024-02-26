@@ -6,14 +6,25 @@ import {
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
 
+export interface AuthenticatorNodes {
+  __typename: string;
+  id: string;
+  type: string;
+  authenticator: string;
+  authenticatorIndex: number;
+  version: string;
+}
+
+export interface AccountAuthenticators {
+  __typename: string;
+  nodes: AuthenticatorNodes[];
+}
+
 export interface AbstraxionAccount {
-  name?: string;
-  algo?: string;
-  pubKey?: Uint8Array;
-  address?: Uint8Array;
-  bech32Address: string;
-  isNanoLedger?: boolean;
-  isKeystone?: boolean;
+  __typename: string;
+  id: string; // bech32Address
+  authenticators: AccountAuthenticators;
+  currentAuthenticatorIndex: number;
 }
 
 export interface useAbstraxionAccountProps {
@@ -25,7 +36,7 @@ export interface useAbstraxionAccountProps {
 
 export const useAbstraxionAccount = () => {
   const { session } = useStytchSession();
-  const { data, isConnected, isConnecting, isReconnecting } = useAccount();
+  const { isConnected } = useAccount();
 
   const { connectionType, setConnectionType, abstractAccount } = useContext(
     AbstraxionContext,
@@ -35,7 +46,7 @@ export const useAbstraxionAccount = () => {
     const refreshConnectionType = () => {
       if (session) {
         setConnectionType("stytch");
-      } else if (data) {
+      } else if (isConnected) {
         setConnectionType("graz");
       }
     };
@@ -43,25 +54,16 @@ export const useAbstraxionAccount = () => {
     if (connectionType === "none") {
       refreshConnectionType();
     }
-  }, [session, data]);
+  }, [session]);
 
-  switch (connectionType) {
-    case "stytch":
-      return {
-        data: {
-          ...abstractAccount,
-          bech32Address: abstractAccount?.id,
-        } as AbstraxionAccount,
-        isConnected: !!session,
-      };
-    case "graz":
-      return {
-        data: data as AbstraxionAccount,
-        isConnected: isConnected,
-        isConnecting: isConnecting,
-        isReconnecting: isReconnecting,
-      };
-    default:
-      return { data: undefined, isConnected: false };
-  }
+  return {
+    data: (abstractAccount as AbstraxionAccount) || undefined,
+    connectionType,
+    isConnected:
+      connectionType === "stytch"
+        ? !!session
+        : connectionType === "graz"
+        ? isConnected
+        : false,
+  };
 };

@@ -3,19 +3,22 @@ import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { sha256 } from "@cosmjs/crypto";
 import { AAccountData, AASigner } from "../interfaces/AASigner";
 import { AAAlgo } from "../interfaces/smartAccount";
-import { getAALastAuthenticatorId } from "./utils";
+import { getAuthenticatorIdByAuthenticatorIndex } from "./utils";
 
 export class AbstractAccountJWTSigner extends AASigner {
   // requires a session token already created
   sessionToken: string | undefined;
+  accountAuthenticatorIndex: number;
   indexerUrl: string;
   constructor(
     abstractAccount: string,
+    accountAuthenticatorIndex: number,
     sessionToken?: string,
     indexerUrl?: string,
   ) {
     super(abstractAccount);
     this.sessionToken = sessionToken;
+    this.accountAuthenticatorIndex = accountAuthenticatorIndex;
     this.indexerUrl =
       indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
   }
@@ -34,8 +37,9 @@ export class AbstractAccountJWTSigner extends AASigner {
         address: this.abstractAccount,
         algo: "secp256k1", // we don't really care about this
         pubkey: new Uint8Array(),
-        authenticatorId: await getAALastAuthenticatorId(
+        authenticatorId: await getAuthenticatorIdByAuthenticatorIndex(
           this.abstractAccount,
+          this.accountAuthenticatorIndex,
           this.indexerUrl,
         ),
         accountAddress: this.abstractAccount,

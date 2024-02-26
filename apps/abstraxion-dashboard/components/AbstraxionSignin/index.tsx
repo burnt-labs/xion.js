@@ -1,14 +1,24 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
 import { useStytch } from "@stytch/nextjs";
+import { WalletType, useSuggestChainAndConnect } from "graz";
 import { Button, Input, ModalSection } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
+import { testnetChainInfo } from "@burnt-labs/constants";
+import { KeplrLogo } from "@burnt-labs/ui";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
+
+  const { suggestAndConnect } = useSuggestChainAndConnect({
+    onError: (error) => console.log("connection error: ", error),
+    onSuccess: () => {
+      setConnectionType("graz");
+    },
+  });
 
   const [email, setEmail] = useState("");
   const [methodId, setMethodId] = useState("");
@@ -72,6 +82,13 @@ export const AbstraxionSignin = () => {
       setOtpError("Error verifying otp");
     }
   };
+
+  function handleKeplr() {
+    suggestAndConnect({
+      chainInfo: testnetChainInfo,
+      walletType: WalletType.KEPLR,
+    });
+  }
 
   // For the "resend otp" countdown
   useEffect(() => {
@@ -140,6 +157,14 @@ export const AbstraxionSignin = () => {
             disabled={!!emailError}
           >
             Log in / Sign up
+          </Button>
+          <Button
+            className="ui-rounded-md ui-font-akkuratLL ui-uppercase ui-px-5 ui-py-3.5 ui-text-sm ui-outline-none ui-hover:opacity-70 ui-border ui-bg-transparent ui-border-neutral-300 ui-text-white hover:ui-bg-white/5 ui-flex ui-items-center ui-justify-center ui-gap-2 ui-w-full"
+            onClick={handleKeplr}
+            structure="outlined"
+          >
+            <KeplrLogo />
+            Keplr
           </Button>
         </>
       )}

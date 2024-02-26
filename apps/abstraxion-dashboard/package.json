@@ -15,6 +15,7 @@
     "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
+    "@cosmjs/crypto": "^0.32.2",
     "@cosmjs/proto-signing": "^0.32.2",
     "@cosmjs/stargate": "^0.32.2",
     "@sentry/nextjs": "^7.100.1",

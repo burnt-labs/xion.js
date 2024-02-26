@@ -14,3 +14,4 @@ export * from "./icons/close";
 export * from "./icons/accountWalletLogo";
 export * from "./icons/spinner";
 export * from "./icons/browser";
+export * from "./icons/keplr";

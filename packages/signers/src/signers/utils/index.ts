@@ -20,6 +20,7 @@ import {
 import {
   AllSmartWalletQueryByIdAndTypeAndAuthenticator,
   SingleSmartWalletQuery,
+  SmartWalletIndexQueryByAccountId,
 } from "../../interfaces/queries";
 import { OTPsAuthenticateResponse } from "stytch";
 import {
@@ -211,6 +212,61 @@ export async function getAALastAuthenticatorId(
     return 0;
   }
   return data.smartAccount.latestAuthenticatorId;
+}
+
+/**
+ * Get the last authenticator id of the abstract account
+ * @param abstractAccount
+ * @returns
+ */
+export async function getAuthenticatorIdByAuthenticatorIndex(
+  abstractAccount: string,
+  authenticatorIndex: number,
+  indexerUrl: string,
+): Promise<number> {
+  const apolloClient = getApolloClient(indexerUrl);
+  const { data } = await apolloClient.query<{
+    smartAccounts: {
+      nodes: {
+        authenticators: {
+          nodes: {
+            authenticator: string;
+            authenticatorIndex: number;
+            id: string;
+            type: string;
+            version: string;
+          }[];
+        };
+        id: string;
+      }[];
+    };
+  }>({
+    query: SmartWalletIndexQueryByAccountId,
+    variables: {
+      id: abstractAccount,
+      index: authenticatorIndex,
+    },
+  });
+  if (!data || !data.smartAccounts) {
+    return 0;
+  }
+
+  if (data.smartAccounts.nodes.length > 1) {
+    console.warn(
+      "Unexpected behavior. Indexer returned multiple smart accounts",
+    );
+  }
+
+  if (data.smartAccounts.nodes[0].authenticators.nodes.length > 1) {
+    console.warn(
+      "Unexpected behavior. Indexer returned multiple authenticators",
+    );
+  }
+
+  // Always returning the first one found because this query should only return an array of 1
+  return (
+    data.smartAccounts.nodes[0].authenticators.nodes[0].authenticatorIndex || 0
+  );
 }
 
 /**

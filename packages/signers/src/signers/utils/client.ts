@@ -5,6 +5,7 @@ import {
   Registry,
   EncodeObject,
   DirectSignResponse,
+  makeSignBytes,
 } from "@cosmjs/proto-signing";
 import {
   Account,
@@ -150,8 +151,11 @@ export class AAClient extends SigningCosmWasmClient {
       this.abstractSigner.abstractAccount = signerAddress;
     }
     /// This check simply makes sure the signer is an AASigner and not a regular signer
-    const accountFromSigner = (await this.abstractSigner.getAccounts()).find(
-      (account) => account.address === signerAddress,
+    const accounts = await this.abstractSigner.getAccounts();
+    const accountFromSigner = accounts.find(
+      (account) =>
+        account.authenticatorId ===
+        this.abstractSigner.accountAuthenticatorIndex,
     );
 
     if (!accountFromSigner) {
@@ -206,6 +210,7 @@ export class AAClient extends SigningCosmWasmClient {
           ]),
         ).toString("base64");
       });
+
     return TxRaw.fromPartial({
       bodyBytes,
       authInfoBytes,

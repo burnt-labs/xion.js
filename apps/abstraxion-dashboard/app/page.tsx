@@ -1,9 +1,8 @@
 "use client";
-
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AccountInfo } from "@/components/AccountInfo";
 import { Overview } from "@/components/Overview";
-
-import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { useAccountBalance } from "@/hooks/useAccountBalance";
 import { ChevronDownIcon, WalletIcon } from "@/components/Icons";
@@ -13,11 +12,6 @@ import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
 } from "../hooks";
-import { useSearchParams } from "next/navigation";
-
-export interface AccountWithAuthenticator extends AbstraxionAccount {
-  authenticators: Authenticators;
-}
 
 export default function Home() {
   const searchParams = useSearchParams();
@@ -31,7 +25,7 @@ export default function Home() {
 
   return (
     <>
-      {!account?.bech32Address || (contracts && grantee) ? (
+      {!account?.id || (contracts && grantee) ? (
         <div className="ui-flex ui-h-screen ui-flex-1 ui-items-center ui-justify-center ui-overflow-y-auto ui-p-6">
           <Abstraxion onClose={() => null} isOpen={true} />
         </div>
@@ -70,7 +64,7 @@ export default function Home() {
                   <h3 className="ui-font-akkuratLL ui-mb-4 ui-mt-8 ui-text-base ui-font-bold ui-text-black">
                     Account Info
                   </h3>
-                  <AccountInfo account={account as AccountWithAuthenticator} />
+                  <AccountInfo account={account as AbstraxionAccount} />
                 </div>
                 {/* Right Tiles */}
                 <div className="ui-flex ui-flex-1 ui-flex-col"></div>

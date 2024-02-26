@@ -1,13 +1,17 @@
 import { useContext, useEffect, useState } from "react";
 import { useStytch } from "@stytch/nextjs";
-import { useCosmWasmSigningClient } from "graz";
-import { AAClient, AbstractAccountJWTSigner } from "@burnt-labs/signers";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import {
+  AAClient,
+  AADirectSigner,
+  AbstractAccountJWTSigner,
+  GasPrice,
+} from "@burnt-labs/signers";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
-import { GasPrice } from "@cosmjs/stargate";
+import { getKeplr, useOfflineSigners } from "graz";
+import { testnetChainInfo } from "@burnt-labs/constants";
 
 export const useAbstraxionSigningClient = () => {
   const {
@@ -18,41 +22,67 @@ export const useAbstraxionSigningClient = () => {
 
   const stytch = useStytch();
   const sessionToken = stytch.session.getTokens()?.session_token;
-  const { data: grazClient } = useCosmWasmSigningClient();
+
+  const { data } = useOfflineSigners();
+  const keplr = getKeplr();
 
   const [abstractClient, setAbstractClient] = useState<AAClient | undefined>(
     undefined,
   );
 
   useEffect(() => {
-    async function getStytchSigner() {
-      const jwtSigner = new AbstractAccountJWTSigner(
-        abstractAccount.bech32Address,
-        sessionToken,
-      );
+    async function getSigner() {
+      let signer: AbstractAccountJWTSigner | AADirectSigner | undefined =
+        undefined;
 
-      const jwtClient = await AAClient.connectWithSigner(
+      // TODO: authenticator vs index. which one is better long term
+      // How do you get authenticator index if there are duplicates...?
+      // Client-side disable ability to add duplicate authenticators
+      switch (connectionType) {
+        case "stytch":
+          signer = new AbstractAccountJWTSigner(
+            abstractAccount.id,
+            abstractAccount.currentAuthenticatorIndex,
+            sessionToken,
+          );
+          break;
+        case "graz":
+          if (data && data.offlineSigner) {
+            signer = new AADirectSigner(
+              data?.offlineSigner as any, // Temp solution. graz vs internal cosmjs version mismatch
+              abstractAccount.id,
+              abstractAccount.currentAuthenticatorIndex,
+              // @ts-ignore - signArbitrary function exists on Keplr although it doesn't show
+              keplr.signArbitrary,
+            );
+            break;
+          }
+        case "none":
+          signer = undefined;
+          break;
+      }
+
+      if (!signer) {
+        console.warn("No signer found");
+        return;
+      }
+
+      const abstractClient = await AAClient.connectWithSigner(
         // Should be set in the context but defaulting here just in case.
         rpcUrl || testnetChainInfo.rpc,
-        jwtSigner,
+        signer,
         {
-        gasPrice: GasPrice.fromString("0uxion"),
-      });
+          gasPrice: GasPrice.fromString("0uxion"),
+        },
+      );
 
-      setAbstractClient(jwtClient);
+      setAbstractClient(abstractClient);
     }
 
-    if (connectionType === "stytch" && abstractAccount) {
-      getStytchSigner();
+    if (abstractAccount) {
+      getSigner();
     }
   }, [sessionToken, abstractAccount, connectionType]);
 
-  switch (connectionType) {
-    case "stytch":
-      return { client: abstractClient };
-    case "graz":
-      return { client: grazClient };
-    default:
-      return { client: undefined };
-  }
+  return { client: abstractClient };
 };
