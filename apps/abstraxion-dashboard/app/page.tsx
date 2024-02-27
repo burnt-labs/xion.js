@@ -21,11 +21,13 @@ export default function Home() {
   const accountBalance = useAccountBalance(account, client);
 
   const contracts = searchParams.get("contracts");
+  const stake = Boolean(searchParams.get("stake"));
+  const bank = searchParams.get("bank");
   const grantee = searchParams.get("grantee");
 
   return (
     <>
-      {!account?.id || (contracts && grantee) ? (
+      {!account?.id || (grantee && (contracts || stake || bank)) ? (
         <div className="ui-flex ui-h-screen ui-flex-1 ui-items-center ui-justify-center ui-overflow-y-auto ui-p-6">
           <Abstraxion onClose={() => null} isOpen={true} />
         </div>
