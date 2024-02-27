@@ -91,9 +91,11 @@ export const useAbstraxionAccount = () => {
   // Metamask account detection
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
-      localStorage.setItem("loginAuthenticator", accounts[0]);
-      setMetamaskAuthenticator(accounts[0]);
-      setAbstractAccount(undefined);
+      if (connectionType === "metamask") {
+        localStorage.setItem("loginAuthenticator", accounts[0]);
+        setMetamaskAuthenticator(accounts[0]);
+        setAbstractAccount(undefined);
+      }
     };
 
     window.ethereum.on("accountsChanged", handleAccountsChanged);
@@ -106,7 +108,9 @@ export const useAbstraxionAccount = () => {
   // Keplr account detection
   useEffect(() => {
     const handleAccountsChanged = () => {
-      setAbstractAccount(undefined);
+      if (connectionType === "graz") {
+        setAbstractAccount(undefined);
+      }
     };
 
     window.addEventListener("keplr_keystorechange", handleAccountsChanged);
