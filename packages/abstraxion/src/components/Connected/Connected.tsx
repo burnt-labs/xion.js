@@ -3,8 +3,7 @@ import { Button, ModalSection } from "@burnt-labs/ui";
 import { AbstraxionContext } from "../AbstraxionContext";
 
 export function Connected({ onClose }: { onClose: VoidFunction }): JSX.Element {
-  const { setIsConnected, setAbstraxionAccount, setGranterAddress, logout } =
-    useContext(AbstraxionContext);
+  const { logout } = useContext(AbstraxionContext);
 
   function handleLogout(): void {
     if (logout) {
