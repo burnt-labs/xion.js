@@ -18,7 +18,7 @@ type ExecuteResultOrUndefined = ExecuteResult | undefined;
 export default function Page(): JSX.Element {
   // Abstraxion hooks
   const { data: account } = useAbstraxionAccount();
-  const { client, signArb } = useAbstraxionSigningClient();
+  const { client, signArb, logout } = useAbstraxionSigningClient();
 
   // General state hooks
   const [, setShowModal]: [
@@ -116,6 +116,18 @@ export default function Page(): JSX.Element {
           >
             {loading ? "LOADING..." : "CLAIM SEAT"}
           </Button>
+          {logout ? (
+            <Button
+              disabled={loading}
+              fullWidth
+              onClick={() => {
+                logout();
+              }}
+              structure="base"
+            >
+              {"LOGOUT"}
+            </Button>
+          ) : null}
           {signArb ? (
             <div className="mt-10 w-full">
               <h1 className="text-lg font-normal tracking-tighter text-white">
