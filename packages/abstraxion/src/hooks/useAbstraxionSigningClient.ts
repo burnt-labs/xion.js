@@ -10,8 +10,9 @@ export const useAbstraxionSigningClient = (): {
   readonly signArb:
     | ((signerAddress: string, message: string | Uint8Array) => Promise<string>)
     | undefined;
+  readonly logout: (() => void) | undefined;
 } => {
-  const { isConnected, abstraxionAccount, granterAddress, rpcUrl } =
+  const { isConnected, abstraxionAccount, granterAddress, rpcUrl, logout } =
     useContext(AbstraxionContext);
   const [signArbWallet, setSignArbWallet] = useState<
     SignArbSecp256k1HdWallet | undefined
@@ -77,5 +78,9 @@ export const useAbstraxionSigningClient = (): {
     getSigner();
   }, [isConnected, abstraxionAccount, granterAddress]);
 
-  return { client: abstractClient, signArb: signArbWallet?.signArb } as const;
+  return {
+    client: abstractClient,
+    signArb: signArbWallet?.signArb,
+    logout,
+  } as const;
 };

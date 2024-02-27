@@ -31,6 +31,7 @@ export interface AbstraxionContextProps {
   restUrl?: string;
   stake?: boolean;
   bank?: SpendLimit[];
+  logout?: () => void;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -70,6 +71,14 @@ export function AbstraxionContextProvider({
     }
   }, []);
 
+  const logout = () => {
+    setIsConnected(false);
+    localStorage.removeItem("xion-authz-temp-account");
+    localStorage.removeItem("xion-authz-granter-account");
+    setAbstraxionAccount(undefined);
+    setGranterAddress("");
+  };
+
   return (
     <AbstraxionContext.Provider
       value={{
@@ -91,6 +100,7 @@ export function AbstraxionContextProvider({
         restUrl,
         stake,
         bank,
+        logout,
       }}
     >
       {children}
