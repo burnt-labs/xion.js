@@ -88,10 +88,6 @@ export const AbstraxionWallets = () => {
   };
 
   const addKeplrAuthenticator = async () => {
-    if (!window.keplr) {
-      alert("Please install the Keplr wallet extension");
-      return;
-    }
     setErrorMessage("");
     try {
       if (!client) {
@@ -336,6 +332,10 @@ export const AbstraxionWallets = () => {
                   structure="outlined"
                   fullWidth={true}
                   onClick={() => {
+                    if (!window.keplr) {
+                      alert("Please install the Keplr wallet extension");
+                      return;
+                    }
                     suggestAndConnect({
                       chainInfo: testnetChainInfo,
                       walletType: WalletType.KEPLR,
