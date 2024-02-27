@@ -1,48 +1,66 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.17
+
+### Minor Changes
+
+- [#112](https://github.com/burnt-labs/xion.js/pull/112) [`04f02b1`](https://github.com/burnt-labs/xion.js/commit/04f02b1dc2f689b318c642628f32bb22f536ec4e) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix window.keplr error on startup when keplr is not installed
+
+- [#111](https://github.com/burnt-labs/xion.js/pull/111) [`97685ba`](https://github.com/burnt-labs/xion.js/commit/97685bab1c531937a817c53bc314b079fe60cde8) Thanks [@icfor](https://github.com/icfor)! - Allow extra messages in the fee grant
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Impl Ethereum authenticator and signer
+
+### Patch Changes
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Move Keplr/Metamask signin buttons into an "advanced" dropdown panel.
+
+- Updated dependencies [[`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77), [`6ea5c28`](https://github.com/burnt-labs/xion.js/commit/6ea5c282a9cd4ca15068052a4b615cd902f6113d)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.36
+  - @burnt-labs/signers@0.1.0-alpha.8
+  - @burnt-labs/ui@0.1.0-alpha.7
+
 ## 0.2.0-alpha.16
 
 ### Minor Changes
 
 - [#78](https://github.com/burnt-labs/xion.js/pull/78) [`6de3996`](https://github.com/burnt-labs/xion.js/commit/6de39966e4a308c740ab8e66eb00a4c1f2d479b4) Thanks [@BurntVal](https://github.com/BurntVal)! - introduce the ability to add a secp256k1 authenticator (via Keplr) and use it as a signer for transactions
 
-- # [#107](https://github.com/burnt-labs/xion.js/pull/107) [`2c33c31`](https://github.com/burnt-labs/xion.js/commit/2c33c3136280558ec505b401911244310432ebd3) Thanks [@justinbarry](https://github.com/justinbarry)! - 
+- # [#107](https://github.com/burnt-labs/xion.js/pull/107) [`2c33c31`](https://github.com/burnt-labs/xion.js/commit/2c33c3136280558ec505b401911244310432ebd3) Thanks [@justinbarry](https://github.com/justinbarry)! -
 
-Staking Grants
-===
+# Staking Grants
 
-  Add the ability for dapps to request staking grants be give via the dashboard. To request a grant, the dapp will need to set the `stake` prop to `true` in the config of the `abstraxion` provider.
+Add the ability for dapps to request staking grants be give via the dashboard. To request a grant, the dapp will need to set the `stake` prop to `true` in the config of the `abstraxion` provider.
 
-  ```jsx
-  <AbstraxionProvider
-    config={{
-      stake: true,
-    }}
-  >
-    {children}
-  </AbstraxionProvider>
-  ```
+```jsx
+<AbstraxionProvider
+  config={{
+    stake: true,
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
 
-  This will grant `StakeAuthorization` to delegate, undelegate, redelegate and a GenericAuthorization to exec a MsgWithdrawDelegatorReward msg along with a feegrant for these message to cover the fees.
+This will grant `StakeAuthorization` to delegate, undelegate, redelegate and a GenericAuthorization to exec a MsgWithdrawDelegatorReward msg along with a feegrant for these message to cover the fees.
 
-  # Bank Send Grants
+# Bank Send Grants
 
-  Add the ability for dapps to request bank send grants be give via the dashboard. To request a grant, the dapp will need to set pass the requested `denom` and `amount` to the config of the `abstraxion` provider.
+Add the ability for dapps to request bank send grants be give via the dashboard. To request a grant, the dapp will need to set pass the requested `denom` and `amount` to the config of the `abstraxion` provider.
 
-  ```jsx
-  <AbstraxionProvider
-    config={{
-      bank: [
-        {
-          denom: "uxion",
-          amount: "1000000",
-        },
-      ],
-    }}
-  >
-    {children}
-  </AbstraxionProvider>
-  ```
+```jsx
+<AbstraxionProvider
+  config={{
+    bank: [
+      {
+        denom: "uxion",
+        amount: "1000000",
+      },
+    ],
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
 
 ### Patch Changes
 

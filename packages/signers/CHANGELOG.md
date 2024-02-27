@@ -1,5 +1,11 @@
 # @burnt-labs/signers
 
+## 0.1.0-alpha.8
+
+### Minor Changes
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Impl Ethereum authenticator and signer
+
 ## 0.1.0-alpha.7
 
 ### Minor Changes

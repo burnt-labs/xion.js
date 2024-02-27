@@ -1,5 +1,18 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.34
+
+### Minor Changes
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Impl Ethereum authenticator and signer
+
+- [#103](https://github.com/burnt-labs/xion.js/pull/103) [`ace50e5`](https://github.com/burnt-labs/xion.js/commit/ace50e507e5d33b75092e3c4823ba0c5c6ad04d2) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added sign arb demo to demo app and made granteeAddress readable in GranteeSignerClient.
+
+### Patch Changes
+
+- Updated dependencies [[`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77)]:
+  - @burnt-labs/signers@0.1.0-alpha.8
+
 ## 1.0.0-alpha.33
 
 ### Patch Changes

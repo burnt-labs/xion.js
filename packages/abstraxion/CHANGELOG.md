@@ -1,45 +1,64 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.36
+
+### Minor Changes
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Impl Ethereum authenticator and signer
+
+- [#113](https://github.com/burnt-labs/xion.js/pull/113) [`6ea5c28`](https://github.com/burnt-labs/xion.js/commit/6ea5c282a9cd4ca15068052a4b615cd902f6113d) Thanks [@justinbarry](https://github.com/justinbarry)! - Add a logout hook method to the `useAbstraxionSigningClient` hook.
+
+  ```typescript
+  const { client, signArb, logout } = useAbstraxionSigningClient();
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77), [`ace50e5`](https://github.com/burnt-labs/xion.js/commit/ace50e507e5d33b75092e3c4823ba0c5c6ad04d2)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.34
+  - @burnt-labs/signers@0.1.0-alpha.8
+  - @burnt-labs/ui@0.1.0-alpha.7
+
 ## 1.0.0-alpha.35
 
 ### Minor Changes
 
-- # [#107](https://github.com/burnt-labs/xion.js/pull/107) [`2c33c31`](https://github.com/burnt-labs/xion.js/commit/2c33c3136280558ec505b401911244310432ebd3) Thanks [@justinbarry](https://github.com/justinbarry)! - 
+- # [#107](https://github.com/burnt-labs/xion.js/pull/107) [`2c33c31`](https://github.com/burnt-labs/xion.js/commit/2c33c3136280558ec505b401911244310432ebd3) Thanks [@justinbarry](https://github.com/justinbarry)! -
 
-Staking Grants
-===
-  Add the ability for dapps to request staking grants be give via the dashboard. To request a grant, the dapp will need to set the `stake` prop to `true` in the config of the `abstraxion` provider.
+# Staking Grants
 
-  ```jsx
-  <AbstraxionProvider
-    config={{
-      stake: true,
-    }}
-  >
-    {children}
-  </AbstraxionProvider>
-  ```
+Add the ability for dapps to request staking grants be give via the dashboard. To request a grant, the dapp will need to set the `stake` prop to `true` in the config of the `abstraxion` provider.
 
-  This will grant `StakeAuthorization` to delegate, undelegate, redelegate and a GenericAuthorization to exec a MsgWithdrawDelegatorReward msg along with a feegrant for these message to cover the fees.
+```jsx
+<AbstraxionProvider
+  config={{
+    stake: true,
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
 
-  # Bank Send Grants
+This will grant `StakeAuthorization` to delegate, undelegate, redelegate and a GenericAuthorization to exec a MsgWithdrawDelegatorReward msg along with a feegrant for these message to cover the fees.
 
-  Add the ability for dapps to request bank send grants be give via the dashboard. To request a grant, the dapp will need to set pass the requested `denom` and `amount` to the config of the `abstraxion` provider.
+# Bank Send Grants
 
-  ```jsx
-  <AbstraxionProvider
-    config={{
-      bank: [
-        {
-          denom: "uxion",
-          amount: "1000000",
-        },
-      ],
-    }}
-  >
-    {children}
-  </AbstraxionProvider>
-  ```
+Add the ability for dapps to request bank send grants be give via the dashboard. To request a grant, the dapp will need to set pass the requested `denom` and `amount` to the config of the `abstraxion` provider.
+
+```jsx
+<AbstraxionProvider
+  config={{
+    bank: [
+      {
+        denom: "uxion",
+        amount: "1000000",
+      },
+    ],
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
 
 ### Patch Changes
 
