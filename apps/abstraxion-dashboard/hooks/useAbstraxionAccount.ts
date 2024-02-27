@@ -98,10 +98,10 @@ export const useAbstraxionAccount = () => {
       }
     };
 
-    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    window.ethereum?.on("accountsChanged", handleAccountsChanged);
 
     return () => {
-      window.ethereum.off("accountsChanged", handleAccountsChanged);
+      window.ethereum?.off("accountsChanged", handleAccountsChanged);
     };
   }, []);
 

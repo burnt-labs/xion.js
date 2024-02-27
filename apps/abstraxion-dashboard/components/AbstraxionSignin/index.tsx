@@ -88,6 +88,10 @@ export const AbstraxionSignin = () => {
   };
 
   function handleKeplr() {
+    if (!window.keplr) {
+      alert("Please install the Keplr wallet extension");
+      return;
+    }
     suggestAndConnect({
       chainInfo: testnetChainInfo,
       walletType: WalletType.KEPLR,
@@ -95,6 +99,10 @@ export const AbstraxionSignin = () => {
   }
 
   async function handleMetamask() {
+    if (!window.ethereum) {
+      alert("Please install the Metamask wallet extension");
+      return;
+    }
     try {
       const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",

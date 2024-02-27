@@ -25,22 +25,17 @@ export const useAbstraxionSigningClient = () => {
   const sessionToken = stytch.session.getTokens()?.session_token;
 
   const { data } = useOfflineSigners();
-  let keplr;
-  try {
-    keplr = getKeplr();
-  } catch (e) {
-    console.log("Keplr not found");
-  }
+  const keplr = window.keplr ? getKeplr() : undefined;
 
   const [abstractClient, setAbstractClient] = useState<AAClient | undefined>(
     undefined,
   );
 
   async function ethSigningFn(msg: any) {
-    const accounts = await window.ethereum.request({
+    const accounts = await window.ethereum?.request({
       method: "eth_requestAccounts",
     });
-    return window.ethereum.request({
+    return window.ethereum?.request({
       method: "personal_sign",
       params: [msg, accounts[0]],
     });
@@ -62,7 +57,7 @@ export const useAbstraxionSigningClient = () => {
         );
         break;
       case "graz":
-        if (data && data.offlineSigner) {
+        if (data && data.offlineSigner && keplr) {
           signer = new AADirectSigner(
             data?.offlineSigner as any, // Temp solution. TS doesn't like this
             abstractAccount.id,
@@ -73,11 +68,13 @@ export const useAbstraxionSigningClient = () => {
           break;
         }
       case "metamask":
-        signer = new AAEthSigner(
-          abstractAccount.id,
-          abstractAccount.currentAuthenticatorIndex,
-          ethSigningFn,
-        );
+        if (window.ethereum) {
+          signer = new AAEthSigner(
+            abstractAccount.id,
+            abstractAccount.currentAuthenticatorIndex,
+            ethSigningFn,
+          );
+        }
         break;
       case "none":
         signer = undefined;

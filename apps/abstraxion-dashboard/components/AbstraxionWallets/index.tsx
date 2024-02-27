@@ -36,12 +36,7 @@ export const AbstraxionWallets = () => {
   const session_jwt = stytchClient.session.getTokens()?.session_jwt;
   const session_token = stytchClient.session.getTokens()?.session_token;
 
-  let keplr;
-  try {
-    keplr = getKeplr();
-  } catch (e) {
-    console.log("Keplr not found");
-  }
+  const keplr = window.keplr ? getKeplr() : undefined;
   const { data: grazAccount } = useAccount();
   const { loginAuthenticator } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
@@ -93,6 +88,10 @@ export const AbstraxionWallets = () => {
   };
 
   const addKeplrAuthenticator = async () => {
+    if (!window.keplr) {
+      alert("Please install the Keplr wallet extension");
+      return;
+    }
     setErrorMessage("");
     try {
       if (!client) {
@@ -144,6 +143,10 @@ export const AbstraxionWallets = () => {
   };
 
   async function addEthAuthenticator() {
+    if (!window.ethereum) {
+      alert("Please install the Metamask wallet extension");
+      return;
+    }
     try {
       if (!client) {
         throw new Error("No client found.");
