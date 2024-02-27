@@ -266,9 +266,9 @@ export const AbstraxionWallets = () => {
                 data?.smartAccounts?.nodes?.map((node: any, i: number) => (
                   <div
                     className={`ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-6 ui-flex ui-bg-transparent hover:ui-cursor-pointer ui-border-[1px] ui-border-white hover:ui-bg-white/5 ${
-                      node.id === abstractAccount?.bech32Address
+                      node.id === abstractAccount?.id
                         ? ""
-                        : "ui-border-opacity-50"
+                        : "ui-border-opacity-30"
                     }`}
                     key={i}
                     onClick={() => {

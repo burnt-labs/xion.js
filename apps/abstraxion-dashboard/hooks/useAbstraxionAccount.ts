@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useAccount } from "graz";
 import { useStytch, useStytchSession } from "@stytch/nextjs";
 import {
@@ -38,16 +38,20 @@ export interface useAbstraxionAccountProps {
 
 export const useAbstraxionAccount = () => {
   const { session } = useStytchSession();
-  const { isConnected } = useAccount();
 
-  const { connectionType, setConnectionType, abstractAccount } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+  const {
+    connectionType,
+    setConnectionType,
+    abstractAccount,
+    setAbstractAccount,
+  } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const loginType = localStorage.getItem("loginType");
-  const loginAuthenticator = localStorage.getItem("loginAuthenticator"); // Primarily for metamask case
+  const [metamaskAuthenticator, setMetamaskAuthenticator] = useState(
+    localStorage.getItem("loginAuthenticator"),
+  );
 
-  const { data: grazAccount } = useAccount();
+  const { data: grazAccount, isConnected } = useAccount();
   const stytchClient = useStytch();
   const session_jwt = stytchClient.session.getTokens()?.session_jwt;
 
@@ -64,7 +68,7 @@ export const useAbstraxionAccount = () => {
         authenticator = getHumanReadablePubkey(grazAccount?.pubKey);
         break;
       case "metamask":
-        authenticator = loginAuthenticator || "";
+        authenticator = metamaskAuthenticator || "";
         break;
       case "none":
         authenticator = "";
@@ -82,7 +86,34 @@ export const useAbstraxionAccount = () => {
     if (connectionType === "none") {
       refreshConnectionType();
     }
-  }, [session]);
+  }, [session, isConnected, grazAccount]);
+
+  // Metamask account detection
+  useEffect(() => {
+    const handleAccountsChanged = (accounts: string[]) => {
+      localStorage.setItem("loginAuthenticator", accounts[0]);
+      setMetamaskAuthenticator(accounts[0]);
+      setAbstractAccount(undefined);
+    };
+
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+
+    return () => {
+      window.ethereum.off("accountsChanged", handleAccountsChanged);
+    };
+  }, []);
+
+  // Keplr account detection
+  useEffect(() => {
+    const handleAccountsChanged = () => {
+      setAbstractAccount(undefined);
+    };
+
+    window.addEventListener("keplr_keystorechange", handleAccountsChanged);
+    return () => {
+      window.removeEventListener("keplr_keystorechange", handleAccountsChanged);
+    };
+  }, []);
 
   return {
     data: (abstractAccount as AbstraxionAccount) || undefined,
@@ -94,7 +125,7 @@ export const useAbstraxionAccount = () => {
         : connectionType === "graz"
         ? isConnected
         : connectionType === "metamask"
-        ? !!loginAuthenticator
+        ? !!metamaskAuthenticator
         : false,
   };
 };
