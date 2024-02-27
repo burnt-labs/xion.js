@@ -29,7 +29,7 @@ export const Button: React.FC<ButtonProps> = ({
 
     switch (structure) {
       case "outlined":
-        return "ui-border ui-bg-transparent ui-border-neutral-300 ui-text-white hover:ui-bg-white/5";
+        return "ui-border ui-bg-transparent ui-border-neutral-300 ui-border-opacity-50 ui-text-white hover:ui-bg-white/5";
       case "naked":
         return "ui-border-none ui-bg-transparent ui-text-white ui-underline ui-font-normal";
       case "destructive":
@@ -41,7 +41,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`ui-rounded-md ui-font-akkuratLL ui-uppercase ui-px-5 ui-py-3.5 ui-text-sm ui-outline-none ui-hover:opacity-70 ${
+      className={`ui-flex ui-items-center ui-justify-center ui-rounded-md ui-font-akkuratLL ui-uppercase ui-px-5 ui-py-3.5 ui-text-sm ui-outline-none ui-hover:opacity-70 ${
         fullWidth ? "ui-w-full" : ""
       } ${getButtonClasses()}`}
       {...props}

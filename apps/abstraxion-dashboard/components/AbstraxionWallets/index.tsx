@@ -8,7 +8,6 @@ import {
 } from "graz";
 import { useStytch, useStytchUser } from "@stytch/nextjs";
 import { useQuery } from "@apollo/client";
-import { decodeJwt } from "jose";
 import { Button, Spinner } from "@burnt-labs/ui";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import {
@@ -16,8 +15,8 @@ import {
   AbstraxionContextProps,
 } from "../AbstraxionContext";
 import { AllSmartWalletQuery } from "@/utils/queries";
-import { getHumanReadablePubkey, truncateAddress } from "@/utils";
-import { useAbstraxionSigningClient } from "@/hooks";
+import { encodeHex, truncateAddress } from "@/utils";
+import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { Loading } from "../Loading";
 import { WalletIcon } from "../Icons";
 
@@ -37,13 +36,9 @@ export const AbstraxionWallets = () => {
   const session_jwt = stytchClient.session.getTokens()?.session_jwt;
   const session_token = stytchClient.session.getTokens()?.session_token;
 
-  let keplr;
-  try {
-    keplr = getKeplr();
-  } catch (e) {
-    console.log("Keplr not found");
-  }
+  const keplr = window.keplr ? getKeplr() : undefined;
   const { data: grazAccount } = useAccount();
+  const { loginAuthenticator } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
 
   const { suggestAndConnect } = useSuggestChainAndConnect({
@@ -51,19 +46,10 @@ export const AbstraxionWallets = () => {
   });
   const { disconnect } = useDisconnect();
 
-  const { aud, sub } = session_jwt
-    ? decodeJwt(session_jwt)
-    : { aud: undefined, sub: undefined };
-
-  const queryAuthenticator =
-    connectionType === "graz"
-      ? getHumanReadablePubkey(grazAccount?.pubKey)
-      : `${Array.isArray(aud) ? aud[0] : aud}.${sub}`;
-
   const { loading, error, data, startPolling, stopPolling, previousData } =
     useQuery(AllSmartWalletQuery, {
       variables: {
-        authenticator: queryAuthenticator,
+        authenticator: loginAuthenticator,
       },
       fetchPolicy: "network-only",
       notifyOnNetworkStatusChange: true,
@@ -97,6 +83,8 @@ export const AbstraxionWallets = () => {
     disconnect();
     setConnectionType("none");
     setAbstractAccount(undefined);
+    localStorage.removeItem("loginType");
+    localStorage.removeItem("loginAuthenticator");
   };
 
   const addKeplrAuthenticator = async () => {
@@ -142,10 +130,6 @@ export const AbstraxionWallets = () => {
       startPolling(3000);
       return res;
     } catch (error) {
-      console.log(
-        "Something went wrong trying to add Keplr wallet as authenticator: ",
-        error,
-      );
       setErrorMessage(
         "Something went wrong trying to add Keplr wallet as authenticator",
       );
@@ -154,12 +138,72 @@ export const AbstraxionWallets = () => {
     }
   };
 
+  async function addEthAuthenticator() {
+    if (!window.ethereum) {
+      alert("Please install the Metamask wallet extension");
+      return;
+    }
+    try {
+      if (!client) {
+        throw new Error("No client found.");
+      }
+
+      setFetchingNewWallets(true);
+
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const primaryAccount = accounts[0];
+
+      const encoder = new TextEncoder();
+      const ten = encodeHex(Buffer.from(encoder.encode(abstractAccount?.id)));
+
+      const ethSignature = await window.ethereum.request({
+        method: "personal_sign",
+        params: [ten, primaryAccount],
+      });
+
+      const byteArray = new Uint8Array(
+        ethSignature.match(/[\da-f]{2}/gi).map((hex) => parseInt(hex, 16)),
+      );
+      const base64String = btoa(String.fromCharCode.apply(null, byteArray));
+
+      const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
+
+      const msg = {
+        add_auth_method: {
+          add_authenticator: {
+            EthWallet: {
+              id: accountIndex,
+              address: primaryAccount,
+              signature: base64String,
+            },
+          },
+        },
+      };
+
+      const res = await client.addAbstractAccountAuthenticator(msg, "", {
+        amount: [{ amount: "0", denom: "uxion" }],
+        gas: "500000",
+      });
+
+      if (res?.rawLog?.includes("failed")) {
+        throw new Error("Transaction failed");
+      }
+
+      startPolling(3000);
+      return res;
+    } catch (error) {
+      setErrorMessage(
+        "Something went wrong trying to add Ethereum wallet as authenticator",
+      );
+      setFetchingNewWallets(false);
+      stopPolling();
+    }
+  }
+
   const handleJwtAALoginOrCreate = async () => {
     try {
-      if (!session_jwt || !session_token) {
-        alert("Please log in with email to create an account");
-        throw new Error("Missing token/jwt");
-      }
       setIsGeneratingNewWallet(true);
       const res = await fetch(
         "https://aa.xion-testnet-1.burnt.com/api/v1/jwt-accounts/create",
@@ -226,9 +270,9 @@ export const AbstraxionWallets = () => {
                 data?.smartAccounts?.nodes?.map((node: any, i: number) => (
                   <div
                     className={`ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-6 ui-flex ui-bg-transparent hover:ui-cursor-pointer ui-border-[1px] ui-border-white hover:ui-bg-white/5 ${
-                      node.id === abstractAccount?.bech32Address
+                      node.id === abstractAccount?.id
                         ? ""
-                        : "ui-border-opacity-50"
+                        : "ui-border-opacity-30"
                     }`}
                     key={i}
                     onClick={() => {
@@ -239,7 +283,7 @@ export const AbstraxionWallets = () => {
                           node.authenticators.nodes.find(
                             (authenticator) =>
                               authenticator.authenticator ===
-                              queryAuthenticator,
+                              loginAuthenticator,
                           ).authenticatorIndex,
                       });
                     }}
@@ -282,19 +326,34 @@ export const AbstraxionWallets = () => {
             ) : null}
             {!fetchingNewWallets &&
             abstractAccount &&
-            abstractAccount.authenticators.nodes.length < 2 ? (
-              <Button
-                structure="outlined"
-                fullWidth={true}
-                onClick={() => {
-                  suggestAndConnect({
-                    chainInfo: testnetChainInfo,
-                    walletType: WalletType.KEPLR,
-                  });
-                }}
-              >
-                Add Keplr Authenticator
-              </Button>
+            abstractAccount.authenticators.nodes.length < 3 ? (
+              <>
+                <Button
+                  structure="outlined"
+                  fullWidth={true}
+                  onClick={() => {
+                    if (!window.keplr) {
+                      alert("Please install the Keplr wallet extension");
+                      return;
+                    }
+                    suggestAndConnect({
+                      chainInfo: testnetChainInfo,
+                      walletType: WalletType.KEPLR,
+                    });
+                  }}
+                >
+                  Add Keplr Authenticator
+                </Button>
+                <Button
+                  structure="outlined"
+                  fullWidth={true}
+                  onClick={() => {
+                    addEthAuthenticator();
+                  }}
+                >
+                  Add Eth Authenticator
+                </Button>
+              </>
             ) : null}
             <Button
               structure="outlined"

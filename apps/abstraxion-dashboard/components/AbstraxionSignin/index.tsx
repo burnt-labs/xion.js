@@ -9,6 +9,7 @@ import {
 } from "../AbstraxionContext";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import { KeplrLogo } from "@burnt-labs/ui";
+import { MetamaskLogo } from "@burnt-labs/ui";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
@@ -16,6 +17,7 @@ export const AbstraxionSignin = () => {
   const { suggestAndConnect } = useSuggestChainAndConnect({
     onError: (error) => console.log("connection error: ", error),
     onSuccess: () => {
+      localStorage.setItem("loginType", "graz");
       setConnectionType("graz");
     },
   });
@@ -27,8 +29,9 @@ export const AbstraxionSignin = () => {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const { setConnectionType } = useContext(
+  const { setConnectionType, setAbstraxionError } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -78,16 +81,39 @@ export const AbstraxionSignin = () => {
       await stytchClient.otps.authenticate(otp, methodId, {
         session_duration_minutes: 60,
       });
+      localStorage.setItem("loginType", "stytch");
     } catch (error) {
       setOtpError("Error verifying otp");
     }
   };
 
   function handleKeplr() {
+    if (!window.keplr) {
+      alert("Please install the Keplr wallet extension");
+      return;
+    }
     suggestAndConnect({
       chainInfo: testnetChainInfo,
       walletType: WalletType.KEPLR,
     });
+  }
+
+  async function handleMetamask() {
+    if (!window.ethereum) {
+      alert("Please install the Metamask wallet extension");
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const primaryAccount = accounts[0];
+      setConnectionType("metamask");
+      localStorage.setItem("loginType", "metamask");
+      localStorage.setItem("loginAuthenticator", primaryAccount);
+    } catch (error) {
+      setAbstraxionError("Metamask connect error");
+    }
   }
 
   // For the "resend otp" countdown
@@ -158,14 +184,30 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
-          <Button
-            className="ui-rounded-md ui-font-akkuratLL ui-uppercase ui-px-5 ui-py-3.5 ui-text-sm ui-outline-none ui-hover:opacity-70 ui-border ui-bg-transparent ui-border-neutral-300 ui-text-white hover:ui-bg-white/5 ui-flex ui-items-center ui-justify-center ui-gap-2 ui-w-full"
-            onClick={handleKeplr}
-            structure="outlined"
+          <button
+            className="ui-text-white ui-text-sm ui-underline ui-w-full"
+            onClick={() => setShowAdvanced((showAdvanced) => !showAdvanced)}
           >
-            <KeplrLogo />
-            Keplr
-          </Button>
+            Advanced Options
+          </button>
+          {showAdvanced ? (
+            <div className="ui-flex ui-w-full ui-gap-2">
+              <Button
+                fullWidth={true}
+                onClick={handleKeplr}
+                structure="outlined"
+              >
+                <KeplrLogo />
+              </Button>
+              <Button
+                fullWidth={true}
+                onClick={handleMetamask}
+                structure="outlined"
+              >
+                <MetamaskLogo />
+              </Button>
+            </div>
+          ) : null}
         </>
       )}
     </ModalSection>
