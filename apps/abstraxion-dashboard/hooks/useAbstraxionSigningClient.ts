@@ -32,6 +32,10 @@ export const useAbstraxionSigningClient = () => {
   );
 
   async function ethSigningFn(msg: any) {
+    if (!window.ethereum) {
+      alert("Please install the Metamask wallet extension");
+      return;
+    }
     const accounts = await window.ethereum?.request({
       method: "eth_requestAccounts",
     });
