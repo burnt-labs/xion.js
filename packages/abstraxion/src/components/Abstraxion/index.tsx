@@ -5,6 +5,7 @@ import {
   AbstraxionContext,
   AbstraxionContextProvider,
   ContractGrantDescription,
+  SpendLimit,
 } from "../AbstraxionContext";
 import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
@@ -63,6 +64,8 @@ export interface AbstraxionConfig {
   dashboardUrl?: string;
   rpcUrl?: string;
   restUrl?: string;
+  stake?: boolean;
+  bank?: SpendLimit[];
 }
 
 export function AbstraxionProvider({
@@ -78,6 +81,8 @@ export function AbstraxionProvider({
       dashboardUrl={config.dashboardUrl}
       rpcUrl={config.rpcUrl}
       restUrl={config.restUrl}
+      stake={config.stake}
+      bank={config.bank}
     >
       {children}
     </AbstraxionContextProvider>

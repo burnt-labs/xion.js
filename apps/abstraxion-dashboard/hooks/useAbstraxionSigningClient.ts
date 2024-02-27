@@ -25,7 +25,12 @@ export const useAbstraxionSigningClient = () => {
   const sessionToken = stytch.session.getTokens()?.session_token;
 
   const { data } = useOfflineSigners();
-  const keplr = getKeplr();
+  let keplr;
+  try {
+    keplr = getKeplr();
+  } catch (e) {
+    console.log("Keplr not found");
+  }
 
   const [abstractClient, setAbstractClient] = useState<AAClient | undefined>(
     undefined,

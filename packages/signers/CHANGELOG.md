@@ -1,5 +1,11 @@
 # @burnt-labs/signers
 
+## 0.1.0-alpha.7
+
+### Minor Changes
+
+- [#78](https://github.com/burnt-labs/xion.js/pull/78) [`6de3996`](https://github.com/burnt-labs/xion.js/commit/6de39966e4a308c740ab8e66eb00a4c1f2d479b4) Thanks [@BurntVal](https://github.com/BurntVal)! - introduce the ability to add a secp256k1 authenticator (via Keplr) and use it as a signer for transactions
+
 ## 0.1.0-alpha.6
 
 ### Minor Changes
