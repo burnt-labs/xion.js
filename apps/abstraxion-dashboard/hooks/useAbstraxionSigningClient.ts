@@ -24,7 +24,12 @@ export const useAbstraxionSigningClient = () => {
   const sessionToken = stytch.session.getTokens()?.session_token;
 
   const { data } = useOfflineSigners();
-  const keplr = getKeplr();
+  let keplr;
+  try {
+    keplr = getKeplr();
+  } catch (e) {
+    console.log("Keplr not found");
+  }
 
   const [abstractClient, setAbstractClient] = useState<AAClient | undefined>(
     undefined,
@@ -47,7 +52,7 @@ export const useAbstraxionSigningClient = () => {
           );
           break;
         case "graz":
-          if (data && data.offlineSigner) {
+          if (data && data.offlineSigner && keplr) {
             signer = new AADirectSigner(
               data?.offlineSigner as any, // Temp solution. graz vs internal cosmjs version mismatch
               abstractAccount.id,
