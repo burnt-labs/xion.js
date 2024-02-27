@@ -125,7 +125,7 @@ export const useAbstraxionAccount = () => {
         : connectionType === "graz"
         ? isConnected
         : connectionType === "metamask"
-        ? !!metamaskAuthenticator
+        ? window.ethereum.isConnected()
         : false,
   };
 };

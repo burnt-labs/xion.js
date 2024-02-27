@@ -29,6 +29,7 @@ export const AbstraxionSignin = () => {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { setConnectionType, setAbstraxionError } = useContext(
     AbstraxionContext,
@@ -175,25 +176,30 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
-          <div className="ui-flex ui-items-center ui-w-full ui-opacity-40">
-            <div className="ui-grow ui-border-b ui-border-neutral-300"></div>
-            <span className="ui-shrink ui-px-1 ui-text-neutral-300 ui-text-xs">
-              OR
-            </span>
-            <div className="ui-grow ui-border-b ui-border-neutral-300"></div>
-          </div>
-          <div className="ui-flex ui-w-full ui-gap-2">
-            <Button fullWidth={true} onClick={handleKeplr} structure="outlined">
-              <KeplrLogo />
-            </Button>
-            <Button
-              fullWidth={true}
-              onClick={handleMetamask}
-              structure="outlined"
-            >
-              <MetamaskLogo />
-            </Button>
-          </div>
+          <button
+            className="ui-text-white ui-text-sm ui-underline ui-w-full"
+            onClick={() => setShowAdvanced((showAdvanced) => !showAdvanced)}
+          >
+            Advanced Options
+          </button>
+          {showAdvanced ? (
+            <div className="ui-flex ui-w-full ui-gap-2">
+              <Button
+                fullWidth={true}
+                onClick={handleKeplr}
+                structure="outlined"
+              >
+                <KeplrLogo />
+              </Button>
+              <Button
+                fullWidth={true}
+                onClick={handleMetamask}
+                structure="outlined"
+              >
+                <MetamaskLogo />
+              </Button>
+            </div>
+          ) : null}
         </>
       )}
     </ModalSection>
