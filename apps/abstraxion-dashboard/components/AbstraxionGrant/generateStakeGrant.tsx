@@ -1,10 +1,14 @@
-import { MsgGrant } from "cosmjs-types/cosmos/authz/v1beta1/tx";
+import { MsgGrant, MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { MsgWithdrawDelegatorReward } from "cosmjs-types/cosmos/distribution/v1beta1/tx";
 import {
   AuthorizationType,
   StakeAuthorization,
 } from "cosmjs-types/cosmos/staking/v1beta1/authz";
+import {
+  MsgDelegate,
+  MsgUndelegate,
+} from "cosmjs-types/cosmos/staking/v1beta1/tx";
 import {
   AllowedMsgAllowance,
   BasicAllowance,
@@ -38,8 +42,10 @@ export const generateStakeGrant = (
               ).finish(),
             },
             allowedMessages: [
-              StakeAuthorization.typeUrl,
               MsgWithdrawDelegatorReward.typeUrl,
+              MsgDelegate.typeUrl,
+              MsgUndelegate.typeUrl,
+              MsgExec.typeUrl,
             ],
           }),
         ).finish(),
