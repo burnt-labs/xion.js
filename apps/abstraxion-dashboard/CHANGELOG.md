@@ -1,5 +1,16 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.18
+
+### Minor Changes
+
+- [#116](https://github.com/burnt-labs/xion.js/pull/116) [`774562b`](https://github.com/burnt-labs/xion.js/commit/774562b9b02fe82ab98d694d6a3b10c30f89c33e) Thanks [@justinbarry](https://github.com/justinbarry)! - Disable "Allow and Continue" on grant screen until the client is ready
+
+### Patch Changes
+
+- Updated dependencies [[`d7abb7a`](https://github.com/burnt-labs/xion.js/commit/d7abb7ab9f8f09dca90496f5cf42e97d6635304c)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.37
+
 ## 0.2.0-alpha.17
 
 ### Minor Changes
