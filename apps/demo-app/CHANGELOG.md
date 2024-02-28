@@ -1,5 +1,16 @@
 # demo-app
 
+## 1.1.0-alpha.22
+
+### Minor Changes
+
+- [#114](https://github.com/burnt-labs/xion.js/pull/114) [`d7abb7a`](https://github.com/burnt-labs/xion.js/commit/d7abb7ab9f8f09dca90496f5cf42e97d6635304c) Thanks [@justinbarry](https://github.com/justinbarry)! - No longer show "connected" screen upon return to dapp
+
+### Patch Changes
+
+- Updated dependencies [[`d7abb7a`](https://github.com/burnt-labs/xion.js/commit/d7abb7ab9f8f09dca90496f5cf42e97d6635304c)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.37
+
 ## 1.1.0-alpha.21
 
 ### Minor Changes
