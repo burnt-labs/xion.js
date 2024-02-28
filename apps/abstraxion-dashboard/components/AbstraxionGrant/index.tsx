@@ -96,7 +96,6 @@ export const AbstraxionGrant = ({
     }
 
     try {
-      console.log("msgs", msgs.length, msgs);
       if (msgs.length === 0) {
         throw new Error("No grants to send");
       }
@@ -173,7 +172,7 @@ export const AbstraxionGrant = ({
             <div className="ui-w-full ui-bg-white ui-opacity-20 ui-h-[1px] ui-mb-8" />
             <div className="ui-w-full ui-flex ui-flex-col ui-gap-4">
               <Button
-                disabled={inProgress}
+                disabled={inProgress || !client}
                 structure="base"
                 fullWidth={true}
                 onClick={grant}
