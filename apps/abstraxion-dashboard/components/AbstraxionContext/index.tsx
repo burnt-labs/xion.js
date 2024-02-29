@@ -1,5 +1,5 @@
 import { ReactNode, createContext, useState } from "react";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { getEnvStringOrThrow } from "@/utils";
 
 type ConnectionType = "stytch" | "graz" | "metamask" | "none";
 
@@ -11,6 +11,7 @@ export interface AbstraxionContextProps {
   abstraxionError: string;
   setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
   rpcUrl?: string;
+  apiUrl?: string;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -19,10 +20,18 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 
 export const AbstraxionContextProvider = ({
   children,
-  rpcUrl = testnetChainInfo.rpc,
+  rpcUrl = getEnvStringOrThrow(
+    "NEXT_PUBLIC_DEFAULT_RPC_URL",
+    process.env.NEXT_PUBLIC_DEFAULT_RPC_URL,
+  ),
+  apiUrl = getEnvStringOrThrow(
+    "NEXT_PUBLIC_DEFAULT_API_URL",
+    process.env.NEXT_PUBLIC_DEFAULT_API_URL,
+  ),
 }: {
   children: ReactNode;
   rpcUrl?: string;
+  apiUrl?: string;
 }) => {
   const [connectionType, setConnectionType] = useState<ConnectionType>("none");
   const [abstractAccount, setAbstractAccount] = useState<any | undefined>(
@@ -40,6 +49,7 @@ export const AbstraxionContextProvider = ({
         abstraxionError,
         setAbstraxionError,
         rpcUrl,
+        apiUrl,
       }}
     >
       {children}

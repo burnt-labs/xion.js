@@ -27,6 +27,7 @@ export const AbstraxionWallets = () => {
     abstractAccount,
     setAbstractAccount,
     setAbstraxionError,
+    apiUrl,
   } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -100,7 +101,7 @@ export const AbstraxionWallets = () => {
       const signArbMessage = Buffer.from(encoder.encode(abstractAccount?.id));
       // @ts-ignore - function exists in keplr extension
       const signArbRes = await keplr.signArbitrary(
-        testnetChainInfo.chainId,
+        testnetChainInfo.chainId, // TODO: Make this responsive...or might be able to just ""
         grazAccount?.bech32Address,
         signArbMessage,
       );
@@ -205,20 +206,17 @@ export const AbstraxionWallets = () => {
   const handleJwtAALoginOrCreate = async () => {
     try {
       setIsGeneratingNewWallet(true);
-      const res = await fetch(
-        "https://aa.xion-testnet-1.burnt.com/api/v1/jwt-accounts/create",
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            salt: Date.now().toString(),
-            session_jwt,
-            session_token,
-          }),
+      const res = await fetch(`${apiUrl}/api/v1/jwt-accounts/create`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          salt: Date.now().toString(),
+          session_jwt,
+          session_token,
+        }),
+      });
       const body = await res.json();
       if (!res.ok) {
         throw new Error(body.error);

@@ -93,7 +93,7 @@ export const AbstraxionSignin = () => {
       return;
     }
     suggestAndConnect({
-      chainInfo: testnetChainInfo,
+      chainInfo: testnetChainInfo, // can't have chainInfo object as env var...
       walletType: WalletType.KEPLR,
     });
   }
