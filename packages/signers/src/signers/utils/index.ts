@@ -280,6 +280,7 @@ export async function buildAddJWTAuthenticatorMsg(
   abstractAccount: string,
   session: OTPsAuthenticateResponse, // this is the extra data required for the authenticator,
   indexerUrl: string,
+  aud: string,
 ): Promise<AddAuthenticator | undefined> {
   // get the AA lastAuthenticatorId
   const lastAuthenticatorId = await getAALastAuthenticatorId(
@@ -291,7 +292,7 @@ export async function buildAddJWTAuthenticatorMsg(
       add_authenticator: {
         Jwt: {
           id: lastAuthenticatorId + 1,
-          aud: "project-live-7e4a3221-79cd-4f34-ac1d-fedac4bde13e",
+          aud, // "project-live-7e4a3221-79cd-4f34-ac1d-fedac4bde13e",
           sub: session.user.user_id,
           token: session.session_token,
         },
