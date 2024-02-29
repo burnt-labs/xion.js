@@ -28,6 +28,7 @@ export const AbstraxionWallets = () => {
     setAbstractAccount,
     setAbstraxionError,
     apiUrl,
+    chainInfo,
   } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -101,7 +102,7 @@ export const AbstraxionWallets = () => {
       const signArbMessage = Buffer.from(encoder.encode(abstractAccount?.id));
       // @ts-ignore - function exists in keplr extension
       const signArbRes = await keplr.signArbitrary(
-        testnetChainInfo.chainId, // TODO: Make this responsive...or might be able to just ""
+        chainInfo.chainId,
         grazAccount?.bech32Address,
         signArbMessage,
       );

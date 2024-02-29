@@ -2,7 +2,7 @@
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": [".env"],
   "globalEnv": [
-    "NEXT_PUBLIC_DEFAULT_RPC_URL",
+    "NEXT_PUBLIC_DEFAULT_CHAIN_INFO",
     "NEXT_PUBLIC_DEFAULT_API_URL",
     "NEXT_PUBLIC_DEFAULT_INDEXER_URL",
     "NEXT_PUBLIC_DEFAULT_STYTCH_PUBLIC_TOKEN"

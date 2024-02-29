@@ -16,11 +16,9 @@ import { AAEthSigner } from "@burnt-labs/signers";
 import { getEnvStringOrThrow } from "@/utils";
 
 export const useAbstraxionSigningClient = () => {
-  const {
-    connectionType,
-    abstractAccount,
-    rpcUrl = testnetChainInfo.rpc,
-  } = useContext(AbstraxionContext) as AbstraxionContextProps;
+  const { connectionType, abstractAccount, chainInfo } = useContext(
+    AbstraxionContext,
+  ) as AbstraxionContextProps;
 
   const stytch = useStytch();
   const sessionToken = stytch.session.getTokens()?.session_token;
@@ -109,7 +107,7 @@ export const useAbstraxionSigningClient = () => {
 
     const abstractClient = await AAClient.connectWithSigner(
       // Should be set in the context but defaulting here just in case.
-      rpcUrl || testnetChainInfo.rpc,
+      chainInfo.rpc || testnetChainInfo.rpc,
       signer,
       {
         gasPrice: GasPrice.fromString("0uxion"),
