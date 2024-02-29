@@ -41,7 +41,7 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 export function AbstraxionContextProvider({
   children,
   contracts,
-  dashboardUrl = "http://localhost:3000",
+  dashboardUrl = "https://dashboard.burnt.com",
   rpcUrl = testnetChainInfo.rpc,
   restUrl = testnetChainInfo.rest,
   stake = false,

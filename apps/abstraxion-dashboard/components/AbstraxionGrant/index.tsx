@@ -96,7 +96,6 @@ export const AbstraxionGrant = ({
     }
 
     try {
-<<<<<<< HEAD
       if (msgs.length === 0) {
         throw new Error("No grants to send");
       }
@@ -108,12 +107,6 @@ export const AbstraxionGrant = ({
           amount: [{ amount: "0", denom: "uxion" }],
           gas: "500000",
         },
-=======
-      const foo = await client?.signAndBroadcast(
-        account.bech32Address,
-        [msg as EncodeObject],
-        "auto",
->>>>>>> 75db91f (rough in)
       );
 
       assertIsDeliverTxSuccess({
