@@ -3,7 +3,11 @@ import {
   SigningCosmWasmClient,
   SigningCosmWasmClientOptions,
 } from "@cosmjs/cosmwasm-stargate";
-import { EncodeObject, OfflineSigner } from "@cosmjs/proto-signing";
+import {
+  AccountData,
+  EncodeObject,
+  OfflineSigner,
+} from "@cosmjs/proto-signing";
 import type { Account, SignerData, StdFee } from "@cosmjs/stargate";
 import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
@@ -22,9 +26,20 @@ interface GranteeSignerOptions {
 export class GranteeSignerClient extends SigningCosmWasmClient {
   protected readonly granterAddress: string;
   private readonly _granteeAddress: string;
+  private readonly _signer: OfflineSigner;
 
   public get granteeAddress(): string {
     return this._granteeAddress;
+  }
+
+  public async getGranteeAccountData(): Promise<AccountData | undefined> {
+    return this._signer.getAccounts().then((accounts) => {
+      for (const account of accounts) {
+        if (account.address === this._granteeAddress) {
+          return account;
+        }
+      }
+    });
   }
 
   public static async connectWithSigner(
@@ -63,6 +78,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       throw new Error("granteeAddress is required");
     }
     this._granteeAddress = granteeAddress;
+    this._signer = signer;
   }
 
   public async getAccount(searchAddress: string): Promise<Account | null> {
