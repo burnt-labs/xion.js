@@ -1,5 +1,12 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.19
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion@1.0.0-alpha.38
+
 ## 0.2.0-alpha.18
 
 ### Minor Changes

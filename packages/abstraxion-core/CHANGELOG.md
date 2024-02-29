@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.35
+
+### Minor Changes
+
+- [#118](https://github.com/burnt-labs/xion.js/pull/118) [`fafb2af`](https://github.com/burnt-labs/xion.js/commit/fafb2af44b647dcfce3bccd9b91b6d0ffefc4ed0) Thanks [@justinbarry](https://github.com/justinbarry)! - Add `getGranteeAccountData` method to the GranteeSignerClient class
+
 ## 1.0.0-alpha.34
 
 ### Minor Changes
