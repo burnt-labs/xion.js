@@ -108,7 +108,6 @@ export class AbstractAccountJWTSigner extends AASigner {
    * This method allows for signing arbitrary messages
    * It does not compose a SignDoc but simply sets the transaction_hash
    * property of the session claims property to the hash of the passed msg
-   * @param signerAddress -
    * @param message - Arbitrary message to be signed
    * @returns
    */
