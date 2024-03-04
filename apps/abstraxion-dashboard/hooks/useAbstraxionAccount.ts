@@ -1,19 +1,32 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useAccount } from "graz";
-import { useStytchSession } from "@stytch/nextjs";
+import { useStytch, useStytchSession } from "@stytch/nextjs";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
+import { decodeJwt } from "jose";
+import { getHumanReadablePubkey } from "@/utils";
+
+export interface AuthenticatorNodes {
+  __typename: string;
+  id: string;
+  type: string;
+  authenticator: string;
+  authenticatorIndex: number;
+  version: string;
+}
+
+export interface AccountAuthenticators {
+  __typename: string;
+  nodes: AuthenticatorNodes[];
+}
 
 export interface AbstraxionAccount {
-  name?: string;
-  algo?: string;
-  pubKey?: Uint8Array;
-  address?: Uint8Array;
-  bech32Address: string;
-  isNanoLedger?: boolean;
-  isKeystone?: boolean;
+  __typename: string;
+  id: string; // bech32Address
+  authenticators: AccountAuthenticators;
+  currentAuthenticatorIndex: number;
 }
 
 export interface useAbstraxionAccountProps {
@@ -25,43 +38,98 @@ export interface useAbstraxionAccountProps {
 
 export const useAbstraxionAccount = () => {
   const { session } = useStytchSession();
-  const { data, isConnected, isConnecting, isReconnecting } = useAccount();
 
-  const { connectionType, setConnectionType, abstractAccount } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+  const {
+    connectionType,
+    setConnectionType,
+    abstractAccount,
+    setAbstractAccount,
+  } = useContext(AbstraxionContext) as AbstraxionContextProps;
+
+  const loginType = localStorage.getItem("loginType");
+  const [metamaskAuthenticator, setMetamaskAuthenticator] = useState(
+    localStorage.getItem("loginAuthenticator"),
+  );
+
+  const { data: grazAccount, isConnected } = useAccount();
+  const stytchClient = useStytch();
+  const session_jwt = stytchClient.session.getTokens()?.session_jwt;
+
+  function getAuthenticator() {
+    let authenticator = "";
+    switch (connectionType) {
+      case "stytch":
+        const { aud, sub } = session_jwt
+          ? decodeJwt(session_jwt)
+          : { aud: undefined, sub: undefined };
+        authenticator = `${Array.isArray(aud) ? aud[0] : aud}.${sub}`;
+        break;
+      case "graz":
+        authenticator = getHumanReadablePubkey(grazAccount?.pubKey);
+        break;
+      case "metamask":
+        authenticator = metamaskAuthenticator || "";
+        break;
+      case "none":
+        authenticator = "";
+        break;
+    }
+
+    return authenticator;
+  }
 
   useEffect(() => {
     const refreshConnectionType = () => {
-      if (session) {
-        setConnectionType("stytch");
-      } else if (data) {
-        setConnectionType("graz");
-      }
+      setConnectionType((loginType as any) || "none");
     };
 
     if (connectionType === "none") {
       refreshConnectionType();
     }
-  }, [session, data]);
+  }, [session, isConnected, grazAccount]);
 
-  switch (connectionType) {
-    case "stytch":
-      return {
-        data: {
-          ...abstractAccount,
-          bech32Address: abstractAccount?.id,
-        } as AbstraxionAccount,
-        isConnected: !!session,
-      };
-    case "graz":
-      return {
-        data: data as AbstraxionAccount,
-        isConnected: isConnected,
-        isConnecting: isConnecting,
-        isReconnecting: isReconnecting,
-      };
-    default:
-      return { data: undefined, isConnected: false };
-  }
+  // Metamask account detection
+  useEffect(() => {
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (connectionType === "metamask") {
+        localStorage.setItem("loginAuthenticator", accounts[0]);
+        setMetamaskAuthenticator(accounts[0]);
+        setAbstractAccount(undefined);
+      }
+    };
+
+    window.ethereum?.on("accountsChanged", handleAccountsChanged);
+
+    return () => {
+      window.ethereum?.off("accountsChanged", handleAccountsChanged);
+    };
+  }, []);
+
+  // Keplr account detection
+  useEffect(() => {
+    const handleAccountsChanged = () => {
+      if (connectionType === "graz") {
+        setAbstractAccount(undefined);
+      }
+    };
+
+    window.addEventListener("keplr_keystorechange", handleAccountsChanged);
+    return () => {
+      window.removeEventListener("keplr_keystorechange", handleAccountsChanged);
+    };
+  }, []);
+
+  return {
+    data: (abstractAccount as AbstraxionAccount) || undefined,
+    connectionType,
+    loginAuthenticator: getAuthenticator(),
+    isConnected:
+      connectionType === "stytch"
+        ? !!session
+        : connectionType === "graz"
+        ? isConnected
+        : connectionType === "metamask"
+        ? window.ethereum.isConnected()
+        : false,
+  };
 };

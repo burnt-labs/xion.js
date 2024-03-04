@@ -82,8 +82,8 @@ export class AAClient extends SigningCosmWasmClient {
    */
   public async addAbstractAccountAuthenticator(
     msg: AddAuthenticator,
-    memo = "",
     fee: StdFee,
+    memo = "",
   ): Promise<DeliverTxResponse> {
     if (!this.abstractSigner.abstractAccount) {
       throw new Error("Abstract account address not set in signer");
@@ -119,9 +119,9 @@ export class AAClient extends SigningCosmWasmClient {
    * NB: This method is not compatible with regular signers. Use the sign method from SigningStargateClient
    * @param signerAddress - // the abstract account address to be used as the signer
    * @param messages - // the messages to be signed
-   * @param fee -
-   * @param memo -
-   * @param explicitSignerData -
+   * @param fee - info about the amount, gas, and granter
+   * @param memo - // a memo to be included in the transaction
+   * @param explicitSignerData - account number, sequence, and chainId
    * @returns
    */
   public async sign(
@@ -144,8 +144,11 @@ export class AAClient extends SigningCosmWasmClient {
       this.abstractSigner.abstractAccount = signerAddress;
     }
     /// This check simply makes sure the signer is an AASigner and not a regular signer
-    const accountFromSigner = (await this.abstractSigner.getAccounts()).find(
-      (account) => account.address === signerAddress,
+    const accounts = await this.abstractSigner.getAccounts();
+    const accountFromSigner = accounts.find(
+      (account) =>
+        account.authenticatorId ===
+        this.abstractSigner.accountAuthenticatorIndex,
     );
 
     if (!accountFromSigner) {
@@ -187,7 +190,7 @@ export class AAClient extends SigningCosmWasmClient {
       bodyBytes,
       authInfoBytes,
       chainId: signerData.chainId,
-      accountNumber: aaAcount.accountNumber,
+      accountNumber: BigInt(aaAcount.accountNumber),
     });
     const signature = await this.abstractSigner
       .signDirect(accountFromSigner.accountAddress, signDoc)
@@ -200,6 +203,7 @@ export class AAClient extends SigningCosmWasmClient {
           ]),
         ).toString("base64");
       });
+
     return TxRaw.fromPartial({
       bodyBytes,
       authInfoBytes,

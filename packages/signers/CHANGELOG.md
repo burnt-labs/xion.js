@@ -1,5 +1,31 @@
 # @burnt-labs/signers
 
+## 0.1.0-alpha.8
+
+### Minor Changes
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Impl Ethereum authenticator and signer
+
+## 0.1.0-alpha.7
+
+### Minor Changes
+
+- [#78](https://github.com/burnt-labs/xion.js/pull/78) [`6de3996`](https://github.com/burnt-labs/xion.js/commit/6de39966e4a308c740ab8e66eb00a4c1f2d479b4) Thanks [@BurntVal](https://github.com/BurntVal)! - introduce the ability to add a secp256k1 authenticator (via Keplr) and use it as a signer for transactions
+
+## 0.1.0-alpha.6
+
+### Minor Changes
+
+- [#94](https://github.com/burnt-labs/xion.js/pull/94) [`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e) Thanks [@justinbarry](https://github.com/justinbarry)! - Update the following packages to the latest version:
+
+  | Package                   | Version |
+  | ------------------------- | ------- |
+  | @cosmjs/cosmwasm-stargate | ^0.32.2 |
+  | @cosmjs/proto-signing     | ^0.32.2 |
+  | @cosmjs/stargate          | ^0.32.2 |
+  | @cosmjs/tendermint-rpc    | ^0.32.2 |
+  | cosmjs-types              | ^0.9.0  |
+
 ## 0.1.0-alpha.5
 
 ### Patch Changes

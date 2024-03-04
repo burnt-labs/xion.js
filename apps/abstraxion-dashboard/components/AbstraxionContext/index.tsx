@@ -1,14 +1,16 @@
 import { ReactNode, createContext, useState } from "react";
+import { testnetChainInfo } from "@burnt-labs/constants";
+
+type ConnectionType = "stytch" | "graz" | "metamask" | "none";
 
 export interface AbstraxionContextProps {
-  connectionType: "stytch" | "graz" | "none";
-  setConnectionType: React.Dispatch<
-    React.SetStateAction<"stytch" | "graz" | "none">
-  >;
+  connectionType: ConnectionType;
+  setConnectionType: React.Dispatch<React.SetStateAction<ConnectionType>>;
   abstractAccount: any; // TODO: Properly define interface here
   setAbstractAccount: React.Dispatch<any>;
   abstraxionError: string;
   setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
+  rpcUrl?: string;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -17,12 +19,12 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 
 export const AbstraxionContextProvider = ({
   children,
+  rpcUrl = testnetChainInfo.rpc,
 }: {
   children: ReactNode;
+  rpcUrl?: string;
 }) => {
-  const [connectionType, setConnectionType] = useState<
-    "stytch" | "graz" | "none"
-  >("none");
+  const [connectionType, setConnectionType] = useState<ConnectionType>("none");
   const [abstractAccount, setAbstractAccount] = useState<any | undefined>(
     undefined,
   );
@@ -37,6 +39,7 @@ export const AbstraxionContextProvider = ({
         setAbstractAccount,
         abstraxionError,
         setAbstraxionError,
+        rpcUrl,
       }}
     >
       {children}

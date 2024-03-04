@@ -1,11 +1,20 @@
 import type {
   DirectSignResponse,
-  OfflineDirectSigner,
+  OfflineDirectSigner} from "@cosmjs/proto-signing";
+import {
+  makeSignBytes,
 } from "@cosmjs/proto-signing";
 import type { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import type { AAccountData } from "../interfaces/AASigner";
+import type { StdSignature } from "@cosmjs/amino";
+import type { AAccountData} from "../interfaces/AASigner";
 import { AASigner } from "../interfaces/AASigner";
 import { getAAccounts } from "./utils";
+
+export type SignArbitraryFn = (
+  chainId: string,
+  signer: string,
+  data: string | Uint8Array,
+) => Promise<StdSignature>;
 
 /**
  * This class is an implementation of the AASigner interface using the DirectSecp256k1HdWallet
@@ -21,23 +30,45 @@ import { getAAccounts } from "./utils";
  */
 export class AADirectSigner extends AASigner {
   signer: OfflineDirectSigner;
+  accountAuthenticatorIndex: number;
   indexerUrl: string;
+  signArbFn: SignArbitraryFn;
 
   constructor(
     initializedSigner: OfflineDirectSigner,
     abstractAccount: string,
+    accountAuthenticatorIndex: number,
+    signArbFn: SignArbitraryFn,
     indexerUrl?: string,
   ) {
     super(abstractAccount);
     this.signer = initializedSigner;
+    this.accountAuthenticatorIndex = accountAuthenticatorIndex;
+    this.signArbFn = signArbFn;
     this.indexerUrl =
       indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
   }
+
   async signDirect(
     signerAddress: string,
     signDoc: SignDoc,
   ): Promise<DirectSignResponse> {
-    return this.signer.signDirect(signerAddress, signDoc);
+    const signBytes = makeSignBytes(signDoc);
+    const signature = await this.signArbFn(
+      signDoc.chainId,
+      signerAddress,
+      signBytes,
+    );
+    return {
+      signed: signDoc,
+      signature: {
+        pub_key: {
+          type: "tendermint/PubKeySecp256k1",
+          value: "", // This doesn't matter. All we need is signature below
+        },
+        signature: signature.signature,
+      },
+    };
   }
 
   async getAccounts(): Promise<readonly AAccountData[]> {

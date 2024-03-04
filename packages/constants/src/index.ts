@@ -70,8 +70,8 @@ const commonInfo: ChainInfo = {
 
 export const testnetChainInfo: ChainInfo = {
   ...commonInfo,
-  rpc: "https://rpc.xion-testnet-1.burnt.com:443",
-  rest: "https://api.xion-testnet-1.burnt.com",
+  rpc: "https://testnet-rpc.xion-api.com:443",
+  rest: "https://testnet-api.xion-api.com:443",
   chainId: "xion-testnet-1",
   chainName: "Xion Testnet",
 };

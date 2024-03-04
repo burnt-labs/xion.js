@@ -14,6 +14,7 @@ export abstract class AASigner {
   /// The abstract account address of the signer
   /// must be set by implementing class
   abstractAccount: string | undefined;
+  accountAuthenticatorIndex: number | undefined;
 
   constructor(abstractAccount: string) {
     this.abstractAccount = abstractAccount;

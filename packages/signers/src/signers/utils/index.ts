@@ -24,6 +24,7 @@ import { AAAlgo } from "../../interfaces/smartAccount";
 import {
   AllSmartWalletQueryByIdAndTypeAndAuthenticator,
   SingleSmartWalletQuery,
+  SmartWalletIndexQueryByAccountId,
 } from "../../interfaces/queries";
 import type { Any } from "../../types/generated/google/protobuf/any";
 
@@ -44,7 +45,11 @@ export interface INodes<T> {
   nodes: T[];
 }
 
-function accountFromBaseAccount(input: BaseAccount): Account {
+function uint64FromProto(input: number | bigint): Uint64 {
+  return Uint64.fromString(input.toString());
+}
+
+function accountFromBaseAccount(input: BaseAccount): {address: string, pubkey: Pubkey | null, accountNumber: number, sequence: number} {
   const { address, pubKey, accountNumber, sequence } = input;
   let pubkey: Pubkey | null = null;
   if (pubKey) {
@@ -53,8 +58,8 @@ function accountFromBaseAccount(input: BaseAccount): Account {
   return {
     address,
     pubkey,
-    accountNumber: Uint64.fromString(accountNumber.toString()).toNumber(),
-    sequence: Uint64.fromString(sequence.toString()).toNumber(),
+    accountNumber: uint64FromProto(accountNumber).toNumber(),
+    sequence: uint64FromProto(sequence).toNumber(),
   };
 }
 
@@ -68,7 +73,7 @@ export function customAccountFromAny(input: Any): Account {
   const { typeUrl, value } = input;
   switch (typeUrl) {
     case "/abstractaccount.v1.AbstractAccount": {
-      const abstractAccount = AbstractAccount.decode(value);
+      const abstractAccount = AbstractAccount.fromBinary(value);
       assert(abstractAccount);
       return accountFromBaseAccount(abstractAccount);
     }
@@ -102,14 +107,14 @@ export function makeAAuthInfo(
             mode: SignMode.SIGN_MODE_DIRECT,
           },
         },
-        sequence: account.sequence,
+        sequence: BigInt(account.sequence),
       }),
     ],
     fee: {
       amount: fee.amount
         ? coins(fee.amount[0].amount, fee.amount[0].denom)
         : coins(1, "uxion"),
-      gasLimit: fee.gas,
+      gasLimit: BigInt(fee.gas),
       granter: fee.granter || "",
       payer: fee.payer || "",
     },
@@ -210,6 +215,61 @@ export async function getAALastAuthenticatorId(
 }
 
 /**
+ * Get the last authenticator id of the abstract account
+ * @param abstractAccount
+ * @returns
+ */
+export async function getAuthenticatorIdByAuthenticatorIndex(
+  abstractAccount: string,
+  authenticatorIndex: number,
+  indexerUrl: string,
+): Promise<number> {
+  const apolloClient = getApolloClient(indexerUrl);
+  const { data } = await apolloClient.query<{
+    smartAccounts: {
+      nodes: {
+        authenticators: {
+          nodes: {
+            authenticator: string;
+            authenticatorIndex: number;
+            id: string;
+            type: string;
+            version: string;
+          }[];
+        };
+        id: string;
+      }[];
+    };
+  }>({
+    query: SmartWalletIndexQueryByAccountId,
+    variables: {
+      id: abstractAccount,
+      index: authenticatorIndex,
+    },
+  });
+  if (!data.smartAccounts) {
+    return 0;
+  }
+
+  if (data.smartAccounts.nodes.length > 1) {
+    console.warn(
+      "Unexpected behavior. Indexer returned multiple smart accounts",
+    );
+  }
+
+  if (data.smartAccounts.nodes[0].authenticators.nodes.length > 1) {
+    console.warn(
+      "Unexpected behavior. Indexer returned multiple authenticators",
+    );
+  }
+
+  // Always returning the first one found because this query should only return an array of 1
+  return (
+    data.smartAccounts.nodes[0].authenticators.nodes[0].authenticatorIndex || 0
+  );
+}
+
+/**
  * Build an add authenticator message for the abstract account
  * @param authType -
  * @param abstractAccount - the abstract account address
@@ -239,4 +299,8 @@ export async function buildAddJWTAuthenticatorMsg(
     },
   };
   return addAuthMsg;
+}
+
+export function encodeHex(bytes: Uint8Array) {
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }

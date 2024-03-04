@@ -1,5 +1,195 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.19
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion@1.0.0-alpha.38
+
+## 0.2.0-alpha.18
+
+### Minor Changes
+
+- [#116](https://github.com/burnt-labs/xion.js/pull/116) [`774562b`](https://github.com/burnt-labs/xion.js/commit/774562b9b02fe82ab98d694d6a3b10c30f89c33e) Thanks [@justinbarry](https://github.com/justinbarry)! - Disable "Allow and Continue" on grant screen until the client is ready
+
+### Patch Changes
+
+- Updated dependencies [[`d7abb7a`](https://github.com/burnt-labs/xion.js/commit/d7abb7ab9f8f09dca90496f5cf42e97d6635304c)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.37
+
+## 0.2.0-alpha.17
+
+### Minor Changes
+
+- [#112](https://github.com/burnt-labs/xion.js/pull/112) [`04f02b1`](https://github.com/burnt-labs/xion.js/commit/04f02b1dc2f689b318c642628f32bb22f536ec4e) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix window.keplr error on startup when keplr is not installed
+
+- [#111](https://github.com/burnt-labs/xion.js/pull/111) [`97685ba`](https://github.com/burnt-labs/xion.js/commit/97685bab1c531937a817c53bc314b079fe60cde8) Thanks [@icfor](https://github.com/icfor)! - Allow extra messages in the fee grant
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Impl Ethereum authenticator and signer
+
+### Patch Changes
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Move Keplr/Metamask signin buttons into an "advanced" dropdown panel.
+
+- Updated dependencies [[`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77), [`6ea5c28`](https://github.com/burnt-labs/xion.js/commit/6ea5c282a9cd4ca15068052a4b615cd902f6113d)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.36
+  - @burnt-labs/signers@0.1.0-alpha.8
+  - @burnt-labs/ui@0.1.0-alpha.7
+
+## 0.2.0-alpha.16
+
+### Minor Changes
+
+- [#78](https://github.com/burnt-labs/xion.js/pull/78) [`6de3996`](https://github.com/burnt-labs/xion.js/commit/6de39966e4a308c740ab8e66eb00a4c1f2d479b4) Thanks [@BurntVal](https://github.com/BurntVal)! - introduce the ability to add a secp256k1 authenticator (via Keplr) and use it as a signer for transactions
+
+- # [#107](https://github.com/burnt-labs/xion.js/pull/107) [`2c33c31`](https://github.com/burnt-labs/xion.js/commit/2c33c3136280558ec505b401911244310432ebd3) Thanks [@justinbarry](https://github.com/justinbarry)! -
+
+# Staking Grants
+
+Add the ability for dapps to request staking grants be give via the dashboard. To request a grant, the dapp will need to set the `stake` prop to `true` in the config of the `abstraxion` provider.
+
+```jsx
+<AbstraxionProvider
+  config={{
+    stake: true,
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
+
+This will grant `StakeAuthorization` to delegate, undelegate, redelegate and a GenericAuthorization to exec a MsgWithdrawDelegatorReward msg along with a feegrant for these message to cover the fees.
+
+# Bank Send Grants
+
+Add the ability for dapps to request bank send grants be give via the dashboard. To request a grant, the dapp will need to set pass the requested `denom` and `amount` to the config of the `abstraxion` provider.
+
+```jsx
+<AbstraxionProvider
+  config={{
+    bank: [
+      {
+        denom: "uxion",
+        amount: "1000000",
+      },
+    ],
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
+
+### Patch Changes
+
+- Updated dependencies [[`6de3996`](https://github.com/burnt-labs/xion.js/commit/6de39966e4a308c740ab8e66eb00a4c1f2d479b4), [`2c33c31`](https://github.com/burnt-labs/xion.js/commit/2c33c3136280558ec505b401911244310432ebd3)]:
+  - @burnt-labs/signers@0.1.0-alpha.7
+  - @burnt-labs/ui@0.1.0-alpha.6
+  - @burnt-labs/abstraxion@1.0.0-alpha.35
+
+## 0.2.0-alpha.15
+
+### Patch Changes
+
+- Updated dependencies [[`0236eea`](https://github.com/burnt-labs/xion.js/commit/0236eea22a4c5a9b0b9b413cac4a8b62038a4456)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.34
+
+## 0.2.0-alpha.14
+
+### Minor Changes
+
+- [#94](https://github.com/burnt-labs/xion.js/pull/94) [`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e) Thanks [@justinbarry](https://github.com/justinbarry)! - Update the following packages to the latest version:
+
+  | Package                   | Version |
+  | ------------------------- | ------- |
+  | @cosmjs/cosmwasm-stargate | ^0.32.2 |
+  | @cosmjs/proto-signing     | ^0.32.2 |
+  | @cosmjs/stargate          | ^0.32.2 |
+  | @cosmjs/tendermint-rpc    | ^0.32.2 |
+  | cosmjs-types              | ^0.9.0  |
+
+### Patch Changes
+
+- Updated dependencies [[`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.33
+  - @burnt-labs/signers@0.1.0-alpha.6
+
+## 0.2.0-alpha.13
+
+### Minor Changes
+
+- [#97](https://github.com/burnt-labs/xion.js/pull/97) [`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8) Thanks [@justinbarry](https://github.com/justinbarry)! - Update default RPC/Rest Urls and allow for dapps to pass in rest url via the AbstraxionProvider.
+
+  ```typescript
+          <AbstraxionProvider
+            config={{
+              restUrl: "https://api.example.com",
+            }}
+          >
+            {children}
+          </AbstraxionProvider>
+
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.32
+  - @burnt-labs/constants@0.1.0-alpha.6
+
+## 0.2.0-alpha.12
+
+### Minor Changes
+
+- [#95](https://github.com/burnt-labs/xion.js/pull/95) [`e6f0696`](https://github.com/burnt-labs/xion.js/commit/e6f06961f7368447a18fbd76bf3500cab8a686a2) Thanks [@justinbarry](https://github.com/justinbarry)! - Allow setting of the dashboard RPC via NEXT_PUBLIC_RPC_URL env var
+
+### Patch Changes
+
+- Updated dependencies [[`415f15a`](https://github.com/burnt-labs/xion.js/commit/415f15a50a85b55271e8ecf220801f67c4b3f7d1)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.31
+
+## 0.2.0-alpha.11
+
+### Patch Changes
+
+- Updated dependencies [[`a9a882a`](https://github.com/burnt-labs/xion.js/commit/a9a882a23ff3227591287e7dc28438f7644a7bfa)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.30
+
+## 0.2.0-alpha.10
+
+### Patch Changes
+
+- Updated dependencies [[`874ef2b`](https://github.com/burnt-labs/xion.js/commit/874ef2b6e0096285beff6752c7e2dc1e1c276ba4)]:
+  - @burnt-labs/constants@0.1.0-alpha.5
+  - @burnt-labs/abstraxion@1.0.0-alpha.29
+
+## 0.2.0-alpha.9
+
+### Patch Changes
+
+- Updated dependencies [[`e60fb47`](https://github.com/burnt-labs/xion.js/commit/e60fb4714b8cdf90ad2cfbba5c77b8b78a11542b), [`f46fa86`](https://github.com/burnt-labs/xion.js/commit/f46fa8672ccf38d66b9bde244eecef573ee86ded)]:
+  - @burnt-labs/constants@0.1.0-alpha.4
+  - @burnt-labs/abstraxion@1.0.0-alpha.28
+
+## 0.2.0-alpha.8
+
+### Minor Changes
+
+- [#80](https://github.com/burnt-labs/xion.js/pull/80) [`00dbb89`](https://github.com/burnt-labs/xion.js/commit/00dbb89f13028ec5251c744b1130e82b86afb8d6) Thanks [@justinbarry](https://github.com/justinbarry)! - Add sentry.io error tracking
+
+- [#83](https://github.com/burnt-labs/xion.js/pull/83) [`7dd82fe`](https://github.com/burnt-labs/xion.js/commit/7dd82fe902ca1d0f64f91a1dd185be965beb6331) Thanks [@justinbarry](https://github.com/justinbarry)! - Add ability for a DAPP to request a token budget alongside contract exec privileges
+
+### Patch Changes
+
+- [#77](https://github.com/burnt-labs/xion.js/pull/77) [`cc24142`](https://github.com/burnt-labs/xion.js/commit/cc24142ce8ea3f62c83f35b528c5739427208d25) Thanks [@justinbarry](https://github.com/justinbarry)! - Enable vercel analytics on dashboard
+
+- [#81](https://github.com/burnt-labs/xion.js/pull/81) [`6afb4dd`](https://github.com/burnt-labs/xion.js/commit/6afb4dd96af14bae2bd0a06632b37613e69faafb) Thanks [@justinbarry](https://github.com/justinbarry)! - Add error tracking for chain errors
+
+- [#75](https://github.com/burnt-labs/xion.js/pull/75) [`2da222b`](https://github.com/burnt-labs/xion.js/commit/2da222bd97540a0eb5aefb3efd2c93e1fafe3ce7) Thanks [@justinbarry](https://github.com/justinbarry)! - Remove passkey biometrics button, remove white avatar and update copy
+
+- Updated dependencies [[`7dd82fe`](https://github.com/burnt-labs/xion.js/commit/7dd82fe902ca1d0f64f91a1dd185be965beb6331)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.27
+
 ## 0.2.0-alpha.7
 
 ### Patch Changes

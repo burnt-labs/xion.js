@@ -1,5 +1,175 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.38
+
+### Patch Changes
+
+- Updated dependencies [[`fafb2af`](https://github.com/burnt-labs/xion.js/commit/fafb2af44b647dcfce3bccd9b91b6d0ffefc4ed0)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.35
+
+## 1.0.0-alpha.37
+
+### Minor Changes
+
+- [#114](https://github.com/burnt-labs/xion.js/pull/114) [`d7abb7a`](https://github.com/burnt-labs/xion.js/commit/d7abb7ab9f8f09dca90496f5cf42e97d6635304c) Thanks [@justinbarry](https://github.com/justinbarry)! - No longer show "connected" screen upon return to dapp
+
+## 1.0.0-alpha.36
+
+### Minor Changes
+
+- [#109](https://github.com/burnt-labs/xion.js/pull/109) [`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77) Thanks [@BurntVal](https://github.com/BurntVal)! - Impl Ethereum authenticator and signer
+
+- [#113](https://github.com/burnt-labs/xion.js/pull/113) [`6ea5c28`](https://github.com/burnt-labs/xion.js/commit/6ea5c282a9cd4ca15068052a4b615cd902f6113d) Thanks [@justinbarry](https://github.com/justinbarry)! - Add a logout hook method to the `useAbstraxionSigningClient` hook.
+
+  ```typescript
+  const { client, signArb, logout } = useAbstraxionSigningClient();
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`4594b46`](https://github.com/burnt-labs/xion.js/commit/4594b46fa3c668e02c5ccade8d3b7aae2e7c0d77), [`ace50e5`](https://github.com/burnt-labs/xion.js/commit/ace50e507e5d33b75092e3c4823ba0c5c6ad04d2)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.34
+  - @burnt-labs/signers@0.1.0-alpha.8
+  - @burnt-labs/ui@0.1.0-alpha.7
+
+## 1.0.0-alpha.35
+
+### Minor Changes
+
+- # [#107](https://github.com/burnt-labs/xion.js/pull/107) [`2c33c31`](https://github.com/burnt-labs/xion.js/commit/2c33c3136280558ec505b401911244310432ebd3) Thanks [@justinbarry](https://github.com/justinbarry)! -
+
+# Staking Grants
+
+Add the ability for dapps to request staking grants be give via the dashboard. To request a grant, the dapp will need to set the `stake` prop to `true` in the config of the `abstraxion` provider.
+
+```jsx
+<AbstraxionProvider
+  config={{
+    stake: true,
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
+
+This will grant `StakeAuthorization` to delegate, undelegate, redelegate and a GenericAuthorization to exec a MsgWithdrawDelegatorReward msg along with a feegrant for these message to cover the fees.
+
+# Bank Send Grants
+
+Add the ability for dapps to request bank send grants be give via the dashboard. To request a grant, the dapp will need to set pass the requested `denom` and `amount` to the config of the `abstraxion` provider.
+
+```jsx
+<AbstraxionProvider
+  config={{
+    bank: [
+      {
+        denom: "uxion",
+        amount: "1000000",
+      },
+    ],
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
+
+### Patch Changes
+
+- Updated dependencies [[`6de3996`](https://github.com/burnt-labs/xion.js/commit/6de39966e4a308c740ab8e66eb00a4c1f2d479b4)]:
+  - @burnt-labs/signers@0.1.0-alpha.7
+  - @burnt-labs/ui@0.1.0-alpha.6
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.33
+
+## 1.0.0-alpha.34
+
+### Minor Changes
+
+- [#101](https://github.com/burnt-labs/xion.js/pull/101) [`0236eea`](https://github.com/burnt-labs/xion.js/commit/0236eea22a4c5a9b0b9b413cac4a8b62038a4456) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Refactored useAbstraxionSigningClient for better performance.
+
+## 1.0.0-alpha.33
+
+### Minor Changes
+
+- [#94](https://github.com/burnt-labs/xion.js/pull/94) [`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e) Thanks [@justinbarry](https://github.com/justinbarry)! - Update the following packages to the latest version:
+
+  | Package                   | Version |
+  | ------------------------- | ------- |
+  | @cosmjs/cosmwasm-stargate | ^0.32.2 |
+  | @cosmjs/proto-signing     | ^0.32.2 |
+  | @cosmjs/stargate          | ^0.32.2 |
+  | @cosmjs/tendermint-rpc    | ^0.32.2 |
+  | cosmjs-types              | ^0.9.0  |
+
+### Patch Changes
+
+- Updated dependencies [[`c695fbf`](https://github.com/burnt-labs/xion.js/commit/c695fbfa636dd149a2f7305cd87298c6cc84d67e)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.32
+  - @burnt-labs/signers@0.1.0-alpha.6
+
+## 1.0.0-alpha.32
+
+### Minor Changes
+
+- [#97](https://github.com/burnt-labs/xion.js/pull/97) [`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8) Thanks [@justinbarry](https://github.com/justinbarry)! - Update default RPC/Rest Urls and allow for dapps to pass in rest url via the AbstraxionProvider.
+
+  ```typescript
+          <AbstraxionProvider
+            config={{
+              restUrl: "https://api.example.com",
+            }}
+          >
+            {children}
+          </AbstraxionProvider>
+
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8)]:
+  - @burnt-labs/constants@0.1.0-alpha.6
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.31
+
+## 1.0.0-alpha.31
+
+### Minor Changes
+
+- [#88](https://github.com/burnt-labs/xion.js/pull/88) [`415f15a`](https://github.com/burnt-labs/xion.js/commit/415f15a50a85b55271e8ecf220801f67c4b3f7d1) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added new class for signArb functionality
+
+## 1.0.0-alpha.30
+
+### Minor Changes
+
+- [#92](https://github.com/burnt-labs/xion.js/pull/92) [`a9a882a`](https://github.com/burnt-labs/xion.js/commit/a9a882a23ff3227591287e7dc28438f7644a7bfa) Thanks [@Peartes](https://github.com/Peartes)! - Pull GranteeSignerClient into a separate "core" package to help others reproduce abstraxion functionality
+
+### Patch Changes
+
+- Updated dependencies [[`a9a882a`](https://github.com/burnt-labs/xion.js/commit/a9a882a23ff3227591287e7dc28438f7644a7bfa)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.30
+
+## 1.0.0-alpha.29
+
+### Patch Changes
+
+- Updated dependencies [[`874ef2b`](https://github.com/burnt-labs/xion.js/commit/874ef2b6e0096285beff6752c7e2dc1e1c276ba4)]:
+  - @burnt-labs/constants@0.1.0-alpha.5
+
+## 1.0.0-alpha.28
+
+### Minor Changes
+
+- [#87](https://github.com/burnt-labs/xion.js/pull/87) [`f46fa86`](https://github.com/burnt-labs/xion.js/commit/f46fa8672ccf38d66b9bde244eecef573ee86ded) Thanks [@justinbarry](https://github.com/justinbarry)! - Allow for dapp to pass in custom rpc url
+
+### Patch Changes
+
+- Updated dependencies [[`e60fb47`](https://github.com/burnt-labs/xion.js/commit/e60fb4714b8cdf90ad2cfbba5c77b8b78a11542b)]:
+  - @burnt-labs/constants@0.1.0-alpha.4
+
+## 1.0.0-alpha.27
+
+### Minor Changes
+
+- [#83](https://github.com/burnt-labs/xion.js/pull/83) [`7dd82fe`](https://github.com/burnt-labs/xion.js/commit/7dd82fe902ca1d0f64f91a1dd185be965beb6331) Thanks [@justinbarry](https://github.com/justinbarry)! - Add ability for a DAPP to request a token budget alongside contract exec privileges
+
 ## 1.0.0-alpha.26
 
 ### Patch Changes

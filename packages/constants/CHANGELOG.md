@@ -1,5 +1,34 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.6
+
+### Minor Changes
+
+- [#97](https://github.com/burnt-labs/xion.js/pull/97) [`9ff23cb`](https://github.com/burnt-labs/xion.js/commit/9ff23cb244c271fb7438f2caef2b18ce4fa0afb8) Thanks [@justinbarry](https://github.com/justinbarry)! - Update default RPC/Rest Urls and allow for dapps to pass in rest url via the AbstraxionProvider.
+
+  ```typescript
+          <AbstraxionProvider
+            config={{
+              restUrl: "https://api.example.com",
+            }}
+          >
+            {children}
+          </AbstraxionProvider>
+
+  ```
+
+## 0.1.0-alpha.5
+
+### Minor Changes
+
+- [#89](https://github.com/burnt-labs/xion.js/pull/89) [`874ef2b`](https://github.com/burnt-labs/xion.js/commit/874ef2b6e0096285beff6752c7e2dc1e1c276ba4) Thanks [@justinbarry](https://github.com/justinbarry)! - Return RPC to rpc.xion-testnet-1.burnt.com:443 to avoid proxy rate limiting
+
+## 0.1.0-alpha.4
+
+### Minor Changes
+
+- [#85](https://github.com/burnt-labs/xion.js/pull/85) [`e60fb47`](https://github.com/burnt-labs/xion.js/commit/e60fb4714b8cdf90ad2cfbba5c77b8b78a11542b) Thanks [@justinbarry](https://github.com/justinbarry)! - Update to use a round robin rpc endpoint
+
 ## 0.0.1-alpha.3
 
 ### Patch Changes

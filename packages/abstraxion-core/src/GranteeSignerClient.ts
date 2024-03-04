@@ -1,12 +1,14 @@
-import type { SigningCosmWasmClientOptions } from "@cosmjs/cosmwasm-stargate";
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import type { EncodeObject, OfflineSigner } from "@cosmjs/proto-signing";
-import type {
-  Account,
-  DeliverTxResponse,
-  SignerData,
-  StdFee,
-} from "@cosmjs/stargate";
+import {
+  SigningCosmWasmClient,
+  type DeliverTxResponse,
+  type SigningCosmWasmClientOptions,
+} from "@cosmjs/cosmwasm-stargate";
+import {
+  AccountData,
+  EncodeObject,
+  OfflineSigner,
+} from "@cosmjs/proto-signing";
+import type {Account, SignerData, StdFee } from "@cosmjs/stargate";
 import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import {
@@ -23,7 +25,22 @@ interface GranteeSignerOptions {
 
 export class GranteeSignerClient extends SigningCosmWasmClient {
   protected readonly granterAddress: string;
-  protected readonly granteeAddress: string;
+  private readonly _granteeAddress: string;
+  private readonly _signer: OfflineSigner;
+
+  public get granteeAddress(): string {
+    return this._granteeAddress;
+  }
+
+  public async getGranteeAccountData(): Promise<AccountData | undefined> {
+    return this._signer.getAccounts().then((accounts) => {
+      for (const account of accounts) {
+        if (account.address === this._granteeAddress) {
+          return account;
+        }
+      }
+    });
+  }
 
   public static async connectWithSigner(
     endpoint: string | HttpEndpoint,
@@ -66,7 +83,8 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       // Enforce for Javascript.
       throw new Error("granteeAddress is required");
     }
-    this.granteeAddress = granteeAddress;
+    this._granteeAddress = granteeAddress;
+    this._signer = signer;
   }
 
   public async getAccount(searchAddress: string): Promise<Account | null> {

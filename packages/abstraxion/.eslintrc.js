@@ -17,4 +17,6 @@ module.exports = {
     ],
     "unicorn/filename-case": "off",
   },
+  // Don't run on the jest.config.js file
+  ignorePatterns: ["jest.config.js"],
 };

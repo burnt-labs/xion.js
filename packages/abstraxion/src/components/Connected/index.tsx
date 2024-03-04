@@ -3,15 +3,12 @@ import { Button, ModalSection } from "@burnt-labs/ui";
 import { AbstraxionContext } from "../AbstraxionContext";
 
 export function Connected({ onClose }: { onClose: VoidFunction }): JSX.Element {
-  const { setIsConnected, setAbstraxionAccount, setGranterAddress } =
-    useContext(AbstraxionContext);
+  const { logout } = useContext(AbstraxionContext);
 
   function handleLogout(): void {
-    setIsConnected(false);
-    localStorage.removeItem("xion-authz-temp-account");
-    localStorage.removeItem("xion-authz-granter-account");
-    setAbstraxionAccount(undefined);
-    setGranterAddress("");
+    if (logout) {
+      logout();
+    }
     onClose();
   }
 

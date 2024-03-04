@@ -1,14 +1,26 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
 import { useStytch } from "@stytch/nextjs";
+import { WalletType, useSuggestChainAndConnect } from "graz";
 import { Button, Input, ModalSection } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
+import { testnetChainInfo } from "@burnt-labs/constants";
+import { KeplrLogo } from "@burnt-labs/ui";
+import { MetamaskLogo } from "@burnt-labs/ui";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
+
+  const { suggestAndConnect } = useSuggestChainAndConnect({
+    onError: (error) => console.log("connection error: ", error),
+    onSuccess: () => {
+      localStorage.setItem("loginType", "graz");
+      setConnectionType("graz");
+    },
+  });
 
   const [email, setEmail] = useState("");
   const [methodId, setMethodId] = useState("");
@@ -17,8 +29,9 @@ export const AbstraxionSignin = () => {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const { setConnectionType } = useContext(
+  const { setConnectionType, setAbstraxionError } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -68,10 +81,40 @@ export const AbstraxionSignin = () => {
       await stytchClient.otps.authenticate(otp, methodId, {
         session_duration_minutes: 60,
       });
+      localStorage.setItem("loginType", "stytch");
     } catch (error) {
       setOtpError("Error verifying otp");
     }
   };
+
+  function handleKeplr() {
+    if (!window.keplr) {
+      alert("Please install the Keplr wallet extension");
+      return;
+    }
+    suggestAndConnect({
+      chainInfo: testnetChainInfo,
+      walletType: WalletType.KEPLR,
+    });
+  }
+
+  async function handleMetamask() {
+    if (!window.ethereum) {
+      alert("Please install the Metamask wallet extension");
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const primaryAccount = accounts[0];
+      setConnectionType("metamask");
+      localStorage.setItem("loginType", "metamask");
+      localStorage.setItem("loginAuthenticator", primaryAccount);
+    } catch (error) {
+      setAbstraxionError("Metamask connect error");
+    }
+  }
 
   // For the "resend otp" countdown
   useEffect(() => {
@@ -141,6 +184,30 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
+          <button
+            className="ui-text-white ui-text-sm ui-underline ui-w-full"
+            onClick={() => setShowAdvanced((showAdvanced) => !showAdvanced)}
+          >
+            Advanced Options
+          </button>
+          {showAdvanced ? (
+            <div className="ui-flex ui-w-full ui-gap-2">
+              <Button
+                fullWidth={true}
+                onClick={handleKeplr}
+                structure="outlined"
+              >
+                <KeplrLogo />
+              </Button>
+              <Button
+                fullWidth={true}
+                onClick={handleMetamask}
+                structure="outlined"
+              >
+                <MetamaskLogo />
+              </Button>
+            </div>
+          ) : null}
         </>
       )}
     </ModalSection>

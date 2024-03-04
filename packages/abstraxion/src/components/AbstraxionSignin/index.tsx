@@ -1,9 +1,10 @@
 "use client";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Button, ModalSection, BrowserIcon } from "@burnt-labs/ui";
+import { BrowserIcon, Button, ModalSection } from "@burnt-labs/ui";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { wait } from "@/utils/wait";
 import type { GrantsResponse } from "@/interfaces";
+import type { ContractGrantDescription } from "../AbstraxionContext";
 import { AbstraxionContext } from "../AbstraxionContext";
 
 export function AbstraxionSignin(): JSX.Element {
@@ -15,6 +16,8 @@ export function AbstraxionSignin(): JSX.Element {
     granterAddress,
     contracts,
     dashboardUrl,
+    stake,
+    bank,
   } = useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
@@ -27,12 +30,22 @@ export function AbstraxionSignin(): JSX.Element {
 
   function openDashboardTab(
     userAddress: string,
-    grantContracts?: string[],
+    grantContracts?: ContractGrantDescription[],
   ): void {
     const currentUrl = window.location.href;
     const urlParams = new URLSearchParams();
+
+    if (bank) {
+      urlParams.set("bank", JSON.stringify(bank));
+    }
+
+    if (stake) {
+      urlParams.set("stake", "true");
+    }
     urlParams.set("grantee", userAddress);
-    urlParams.set("contracts", grantContracts ? grantContracts.join(",") : "");
+    if (grantContracts) {
+      urlParams.set("contracts",  grantContracts.join(","));
+    }
     urlParams.set("redirect_uri", currentUrl);
     const queryString = urlParams.toString(); // Convert URLSearchParams to string
     window.location.href = `${dashboardUrl}?${queryString}`;

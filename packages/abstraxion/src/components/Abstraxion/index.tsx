@@ -1,13 +1,15 @@
 "use client";
 import { useContext, useEffect } from "react";
 import { Dialog, DialogContent } from "@burnt-labs/ui";
+import type {
+  ContractGrantDescription,
+  SpendLimit} from "../AbstraxionContext";
 import {
   AbstraxionContext,
-  AbstraxionContextProvider,
+  AbstraxionContextProvider
 } from "../AbstraxionContext";
 import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
-import { Connected } from "../Connected";
 import { AbstraxionSignin } from "../AbstraxionSignin";
 
 export interface ModalProps {
@@ -40,6 +42,12 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
 
   if (!showModal) return null;
 
+  // No longer what to show modal when connected, the dapp should handle showing "logged in" state
+  if (isConnected) {
+    setShowModal(false);
+    return null;
+  }
+
   return (
     <Dialog onOpenChange={onClose} open={showModal}>
       <DialogContent>
@@ -47,8 +55,6 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
           <ErrorDisplay />
         ) : isConnecting ? (
           <Loading />
-        ) : isConnected ? (
-          <Connected onClose={onClose} />
         ) : (
           <AbstraxionSignin />
         )}
@@ -58,8 +64,12 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
 }
 
 export interface AbstraxionConfig {
-  contracts?: string[];
+  contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
+  rpcUrl?: string;
+  restUrl?: string;
+  stake?: boolean;
+  bank?: SpendLimit[];
 }
 
 export function AbstraxionProvider({
@@ -71,8 +81,12 @@ export function AbstraxionProvider({
 }): JSX.Element {
   return (
     <AbstraxionContextProvider
+      bank={config.bank}
       contracts={config.contracts}
       dashboardUrl={config.dashboardUrl}
+      restUrl={config.restUrl}
+      rpcUrl={config.rpcUrl}
+      stake={config.stake}
     >
       {children}
     </AbstraxionContextProvider>
