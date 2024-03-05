@@ -13,6 +13,7 @@ export interface AbstraxionContextProps {
   setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
   apiUrl: string;
   chainInfo: ChainInfo;
+  isMainnet: boolean;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -39,7 +40,15 @@ export const AbstraxionContextProvider = ({
     "NEXT_PUBLIC_DEFAULT_API_URL",
     process.env.NEXT_PUBLIC_DEFAULT_API_URL,
   );
+  const isMainnet =
+    getEnvStringOrThrow(
+      "NEXT_PUBLIC_DEPLOYMENT_ENV",
+      process.env.NEXT_PUBLIC_DEPLOYMENT_ENV,
+    ) === "mainnet"
+      ? true
+      : false;
 
+  console.log(isMainnet);
   return (
     <AbstraxionContext.Provider
       value={{
@@ -51,6 +60,7 @@ export const AbstraxionContextProvider = ({
         setAbstraxionError,
         apiUrl,
         chainInfo,
+        isMainnet,
       }}
     >
       {children}
