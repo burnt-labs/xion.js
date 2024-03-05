@@ -13,13 +13,12 @@ import {
 import { getKeplr, useOfflineSigners } from "graz";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import { AAEthSigner } from "@burnt-labs/signers";
+import { getEnvStringOrThrow } from "@/utils";
 
 export const useAbstraxionSigningClient = () => {
-  const {
-    connectionType,
-    abstractAccount,
-    rpcUrl = testnetChainInfo.rpc,
-  } = useContext(AbstraxionContext) as AbstraxionContextProps;
+  const { connectionType, abstractAccount, chainInfo } = useContext(
+    AbstraxionContext,
+  ) as AbstraxionContextProps;
 
   const stytch = useStytch();
   const sessionToken = stytch.session.getTokens()?.session_token;
@@ -58,6 +57,14 @@ export const useAbstraxionSigningClient = () => {
           abstractAccount.id,
           abstractAccount.currentAuthenticatorIndex,
           sessionToken,
+          getEnvStringOrThrow(
+            "NEXT_PUBLIC_DEFAULT_INDEXER_URL",
+            process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,
+          ),
+          getEnvStringOrThrow(
+            "NEXT_PUBLIC_DEFAULT_API_URL",
+            process.env.NEXT_PUBLIC_DEFAULT_API_URL,
+          ),
         );
         break;
       case "graz":
@@ -68,6 +75,10 @@ export const useAbstraxionSigningClient = () => {
             abstractAccount.currentAuthenticatorIndex,
             // @ts-ignore - signArbitrary function exists on Keplr although it doesn't show
             keplr.signArbitrary,
+            getEnvStringOrThrow(
+              "NEXT_PUBLIC_DEFAULT_INDEXER_URL",
+              process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,
+            ),
           );
           break;
         }
@@ -77,6 +88,10 @@ export const useAbstraxionSigningClient = () => {
             abstractAccount.id,
             abstractAccount.currentAuthenticatorIndex,
             ethSigningFn,
+            getEnvStringOrThrow(
+              "NEXT_PUBLIC_DEFAULT_INDEXER_URL",
+              process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,
+            ),
           );
         }
         break;
@@ -92,7 +107,7 @@ export const useAbstraxionSigningClient = () => {
 
     const abstractClient = await AAClient.connectWithSigner(
       // Should be set in the context but defaulting here just in case.
-      rpcUrl || testnetChainInfo.rpc,
+      chainInfo.rpc || testnetChainInfo.rpc,
       signer,
       {
         gasPrice: GasPrice.fromString("0uxion"),

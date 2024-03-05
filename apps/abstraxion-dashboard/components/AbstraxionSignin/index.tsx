@@ -31,7 +31,7 @@ export const AbstraxionSignin = () => {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const { setConnectionType, setAbstraxionError } = useContext(
+  const { setConnectionType, setAbstraxionError, chainInfo } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -93,7 +93,7 @@ export const AbstraxionSignin = () => {
       return;
     }
     suggestAndConnect({
-      chainInfo: testnetChainInfo,
+      chainInfo,
       walletType: WalletType.KEPLR,
     });
   }

@@ -10,17 +10,20 @@ export class AbstractAccountJWTSigner extends AASigner {
   sessionToken: string | undefined;
   accountAuthenticatorIndex: number;
   indexerUrl: string;
+  apiUrl: string;
   constructor(
     abstractAccount: string,
     accountAuthenticatorIndex: number,
     sessionToken?: string,
     indexerUrl?: string,
+    apiUrl?: string,
   ) {
     super(abstractAccount);
     this.sessionToken = sessionToken;
     this.accountAuthenticatorIndex = accountAuthenticatorIndex;
     this.indexerUrl =
       indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
+    this.apiUrl = apiUrl || "https://aa.xion-testnet-1.burnt.com";
   }
 
   async getAccounts(): Promise<readonly AAccountData[]> {
@@ -60,7 +63,7 @@ export class AbstractAccountJWTSigner extends AASigner {
     const message = Buffer.from(hashSignBytes).toString("base64");
 
     const authResponse = await fetch(
-      "https://aa.xion-testnet-1.burnt.com/api/v1/sessions/authenticate",
+      `${this.apiUrl}/api/v1/sessions/authenticate`,
       {
         method: "POST",
         headers: {
@@ -113,7 +116,7 @@ export class AbstractAccountJWTSigner extends AASigner {
     const hashedMessage = Buffer.from(hashSignBytes).toString("base64");
 
     const authResponse = await fetch(
-      "https://aa.xion-testnet-1.burnt.com/api/v1/sessions/authenticate",
+      `${this.apiUrl}/api/v1/sessions/authenticate`,
       {
         method: "POST",
         headers: {

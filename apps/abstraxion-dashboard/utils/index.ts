@@ -21,3 +21,20 @@ export function getHumanReadablePubkey(pubkey: Uint8Array | undefined) {
 export function encodeHex(bytes: any) {
   return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
+
+export function getEnvNumberOrThrow(key: string, value?: string): number {
+  const val = Number(value);
+  if (isNaN(val)) {
+    throw new Error(`Environment variable ${key} must be defined`);
+  }
+
+  return val;
+}
+
+export function getEnvStringOrThrow(key: string, value?: string): string {
+  if (!value) {
+    throw new Error(`Environment variable ${key} must be defined`);
+  }
+
+  return value;
+}

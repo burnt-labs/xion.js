@@ -120,9 +120,7 @@ export const AbstraxionProvider = ({
   children: React.ReactNode;
 }) => {
   return (
-    <AbstraxionContextProvider
-      rpcUrl={process.env.NEXT_PUBLIC_RPC_URL || testnetChainInfo.rpc}
-    >
+    <AbstraxionContextProvider>
       <StytchProvider stytch={stytchClient}>
         <ApolloProvider client={apolloClient}>
           <GrazProvider>{children}</GrazProvider>

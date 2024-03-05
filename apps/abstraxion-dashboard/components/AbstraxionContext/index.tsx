@@ -1,5 +1,6 @@
 import { ReactNode, createContext, useState } from "react";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { getEnvStringOrThrow } from "@/utils";
+import { ChainInfo } from "@burnt-labs/constants";
 
 type ConnectionType = "stytch" | "graz" | "metamask" | "none";
 
@@ -10,7 +11,9 @@ export interface AbstraxionContextProps {
   setAbstractAccount: React.Dispatch<any>;
   abstraxionError: string;
   setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
-  rpcUrl?: string;
+  apiUrl: string;
+  chainInfo: ChainInfo;
+  isMainnet: boolean;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -19,16 +22,31 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 
 export const AbstraxionContextProvider = ({
   children,
-  rpcUrl = testnetChainInfo.rpc,
 }: {
   children: ReactNode;
-  rpcUrl?: string;
 }) => {
   const [connectionType, setConnectionType] = useState<ConnectionType>("none");
   const [abstractAccount, setAbstractAccount] = useState<any | undefined>(
     undefined,
   );
   const [abstraxionError, setAbstraxionError] = useState("");
+
+  const serializedChainInfo = getEnvStringOrThrow(
+    "NEXT_PUBLIC_DEFAULT_CHAIN_INFO",
+    process.env.NEXT_PUBLIC_DEFAULT_CHAIN_INFO,
+  );
+  const chainInfo = JSON.parse(serializedChainInfo);
+  const apiUrl = getEnvStringOrThrow(
+    "NEXT_PUBLIC_DEFAULT_API_URL",
+    process.env.NEXT_PUBLIC_DEFAULT_API_URL,
+  );
+  const isMainnet =
+    getEnvStringOrThrow(
+      "NEXT_PUBLIC_DEPLOYMENT_ENV",
+      process.env.NEXT_PUBLIC_DEPLOYMENT_ENV,
+    ) === "mainnet"
+      ? true
+      : false;
 
   return (
     <AbstraxionContext.Provider
@@ -39,7 +57,9 @@ export const AbstraxionContextProvider = ({
         setAbstractAccount,
         abstraxionError,
         setAbstraxionError,
-        rpcUrl,
+        apiUrl,
+        chainInfo,
+        isMainnet,
       }}
     >
       {children}
