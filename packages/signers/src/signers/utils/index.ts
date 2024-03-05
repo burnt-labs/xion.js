@@ -292,7 +292,7 @@ export async function buildAddJWTAuthenticatorMsg(
       add_authenticator: {
         Jwt: {
           id: lastAuthenticatorId + 1,
-          aud, // "project-live-7e4a3221-79cd-4f34-ac1d-fedac4bde13e",
+          aud,
           sub: session.user.user_id,
           token: session.session_token,
         },
