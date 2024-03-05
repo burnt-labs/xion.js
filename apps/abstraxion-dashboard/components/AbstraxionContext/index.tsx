@@ -48,7 +48,6 @@ export const AbstraxionContextProvider = ({
       ? true
       : false;
 
-  console.log(isMainnet);
   return (
     <AbstraxionContext.Provider
       value={{
