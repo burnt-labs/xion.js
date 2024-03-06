@@ -87,7 +87,7 @@ export function AbstraxionSignin(): JSX.Element {
     }
     urlParams.set("redirect_uri", currentUrl);
     const queryString = urlParams.toString(); // Convert URLSearchParams to string
-    window.location.href = `${dashboardUrl}?${queryString}`;
+    window.location.href = `https://${dashboardUrl}?${queryString}`;
   }
 
   async function generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {

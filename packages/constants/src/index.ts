@@ -1,3 +1,5 @@
+import { RpcStatusResponse } from "./types";
+
 export interface Coin {
   coinDenom: string;
   coinMinimalDenom: string;
@@ -88,3 +90,24 @@ export const testChainInfo: ChainInfo = {
   chainId: "xion-local-testnet-1",
   chainName: "Xion Testnet Local",
 };
+
+// TODO: Adjust to finalized deployments
+const mainnetDashboardUrl = "dashboard.burnt.com";
+const testnetDashboardUrl = "testnet-dashboard.burnt.com";
+
+export async function fetchConfig(rpcUrl: string): Promise<string> {
+  try {
+    const fetchReq = await fetch(`${rpcUrl}/status`);
+    if (!fetchReq.ok) {
+      throw new Error("Something went wrong querying RPC");
+    }
+
+    const data: RpcStatusResponse = await fetchReq.json();
+    // If mainnet chain-id/network changes be sure to update here.
+    return data.result.node_info.network === "xion-mainnet-1"
+      ? mainnetDashboardUrl
+      : testnetDashboardUrl;
+  } catch (error) {
+    throw error;
+  }
+}

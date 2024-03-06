@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { createContext, useEffect, useState } from "react";
 import type { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { testnetChainInfo, fetchConfig } from "@burnt-labs/constants";
 
 export type SpendLimit = { denom: string; amount: string };
 
@@ -41,7 +41,6 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 export function AbstraxionContextProvider({
   children,
   contracts,
-  dashboardUrl = "https://dashboard.burnt.com",
   rpcUrl = testnetChainInfo.rpc,
   restUrl = testnetChainInfo.rest,
   stake = false,
@@ -63,6 +62,21 @@ export function AbstraxionContextProvider({
     DirectSecp256k1HdWallet | undefined
   >(undefined);
   const [granterAddress, setGranterAddress] = useState("");
+  const [dashboardUrl, setDashboardUrl] = useState("");
+
+  // Not loving this useEffect. Halts user action on mount because of await
+  useEffect(() => {
+    async function fetchDashboardUrl() {
+      try {
+        const url = await fetchConfig(rpcUrl);
+        setDashboardUrl(url);
+      } catch (error) {
+        console.warn("Error fetching config. Make sure RPC url is valid");
+      }
+    }
+
+    fetchDashboardUrl();
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
