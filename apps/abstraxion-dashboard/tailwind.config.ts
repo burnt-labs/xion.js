@@ -7,6 +7,10 @@ const config: Config = {
     extend: {
       colors: {
         primary: "#000",
+        mainnet: "#CAF033",
+        "mainnet-bg": "rgba(4, 199, 0, 0.2)",
+        testnet: "#FFAA4A",
+        "testnet-bg": "rgba(255, 170, 74, 0.2)",
       },
       flexGrow: {
         "2": "2",
