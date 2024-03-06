@@ -27,8 +27,9 @@ export interface AbstraxionContextProps {
   setGranterAddress: React.Dispatch<React.SetStateAction<string>>;
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
-  rpcUrl?: string;
-  restUrl?: string;
+  setDashboardUrl: React.Dispatch<React.SetStateAction<string>>;
+  rpcUrl: string;
+  restUrl: string;
   stake?: boolean;
   bank?: SpendLimit[];
   logout?: () => void;
@@ -64,20 +65,6 @@ export function AbstraxionContextProvider({
   const [granterAddress, setGranterAddress] = useState("");
   const [dashboardUrl, setDashboardUrl] = useState("");
 
-  // Not loving this useEffect. Halts user action on mount because of await
-  useEffect(() => {
-    async function fetchDashboardUrl() {
-      try {
-        const url = await fetchConfig(rpcUrl);
-        setDashboardUrl(url);
-      } catch (error) {
-        console.warn("Error fetching config. Make sure RPC url is valid");
-      }
-    }
-
-    fetchDashboardUrl();
-  }, []);
-
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get("granted") === "true") {
@@ -110,6 +97,7 @@ export function AbstraxionContextProvider({
         setGranterAddress,
         contracts,
         dashboardUrl,
+        setDashboardUrl,
         rpcUrl,
         restUrl,
         stake,
