@@ -24,11 +24,6 @@ interface Bip44 {
   coinType: number;
 }
 
-interface Gas {
-  price: string;
-  denom: string;
-}
-
 export interface ChainInfo {
   rpc: string;
   rest: string;
@@ -91,9 +86,10 @@ export const testChainInfo: ChainInfo = {
   chainName: "Xion Testnet Local",
 };
 
-// TODO: Adjust to finalized deployments
-const mainnetDashboardUrl = "dashboard.burnt.com";
-const testnetDashboardUrl = "testnet-dashboard.burnt.com";
+const DASHBOARD_URLS = {
+  MAINNET: "dashboard.burnt.com",
+  TESTNET: "testnet-dashboard.burnt.com",
+};
 
 export async function fetchConfig(rpcUrl: string): Promise<string> {
   try {
@@ -105,8 +101,8 @@ export async function fetchConfig(rpcUrl: string): Promise<string> {
     const data: RpcStatusResponse = await fetchReq.json();
     // If mainnet chain-id/network changes be sure to update here.
     return data.result.node_info.network === "xion-mainnet-1"
-      ? mainnetDashboardUrl
-      : testnetDashboardUrl;
+      ? DASHBOARD_URLS.MAINNET
+      : DASHBOARD_URLS.TESTNET;
   } catch (error) {
     throw error;
   }
