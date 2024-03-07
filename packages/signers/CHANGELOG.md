@@ -1,5 +1,13 @@
 # @burnt-labs/signers
 
+## 0.1.0-alpha.9
+
+### Patch Changes
+
+- [#117](https://github.com/burnt-labs/xion.js/pull/117) [`6978612`](https://github.com/burnt-labs/xion.js/commit/697861259eff1199d143f79c7d8c0666eec4760b) Thanks [@BurntVal](https://github.com/BurntVal)! - Add configurability to allow for mainnet/testnet deployments
+
+  For devs utilizing the `buildAddJWTAuthenticatorMsg` found in the @burnt-labs/signers package, please note that you will now need to pass in an aud string. Contact the team for details.
+
 ## 0.1.0-alpha.8
 
 ### Minor Changes

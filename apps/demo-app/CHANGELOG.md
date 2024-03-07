@@ -1,5 +1,17 @@
 # demo-app
 
+## 1.1.0-alpha.24
+
+### Minor Changes
+
+- [#120](https://github.com/burnt-labs/xion.js/pull/120) [`0831c9a`](https://github.com/burnt-labs/xion.js/commit/0831c9a9a5685c1b591f96a46a98371711a00e3d) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added visual elements to dashboard to distinguish between net type.
+
+### Patch Changes
+
+- Updated dependencies [[`6978612`](https://github.com/burnt-labs/xion.js/commit/697861259eff1199d143f79c7d8c0666eec4760b)]:
+  - @burnt-labs/signers@0.1.0-alpha.9
+  - @burnt-labs/abstraxion@1.0.0-alpha.39
+
 ## 1.1.0-alpha.23
 
 ### Patch Changes

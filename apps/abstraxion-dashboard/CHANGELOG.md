@@ -1,5 +1,27 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.20
+
+### Minor Changes
+
+- [#122](https://github.com/burnt-labs/xion.js/pull/122) [`f15f5a8`](https://github.com/burnt-labs/xion.js/commit/f15f5a837511d03dae21f16c5a229ddb17f0e565) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added visual differences for net type to sign in modal
+
+- [#120](https://github.com/burnt-labs/xion.js/pull/120) [`0831c9a`](https://github.com/burnt-labs/xion.js/commit/0831c9a9a5685c1b591f96a46a98371711a00e3d) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added visual elements to dashboard to distinguish between net type.
+
+### Patch Changes
+
+- [#123](https://github.com/burnt-labs/xion.js/pull/123) [`e4aa3f0`](https://github.com/burnt-labs/xion.js/commit/e4aa3f096cff27e6672393300532622040b0f781) Thanks [@icfor](https://github.com/icfor)! - Add staking grant for cancelling unbondings (MsgCancelUnbondingDelegation)
+
+- [#117](https://github.com/burnt-labs/xion.js/pull/117) [`6978612`](https://github.com/burnt-labs/xion.js/commit/697861259eff1199d143f79c7d8c0666eec4760b) Thanks [@BurntVal](https://github.com/BurntVal)! - Add configurability to allow for mainnet/testnet deployments
+
+  For devs utilizing the `buildAddJWTAuthenticatorMsg` found in the @burnt-labs/signers package, please note that you will now need to pass in an aud string. Contact the team for details.
+
+- [#69](https://github.com/burnt-labs/xion.js/pull/69) [`989dab6`](https://github.com/burnt-labs/xion.js/commit/989dab66608481b47a745cb2a84d80903b5c93ec) Thanks [@lastly001](https://github.com/lastly001)! - chore: remove unused line
+
+- Updated dependencies [[`6978612`](https://github.com/burnt-labs/xion.js/commit/697861259eff1199d143f79c7d8c0666eec4760b)]:
+  - @burnt-labs/signers@0.1.0-alpha.9
+  - @burnt-labs/abstraxion@1.0.0-alpha.39
+
 ## 0.2.0-alpha.19
 
 ### Patch Changes
