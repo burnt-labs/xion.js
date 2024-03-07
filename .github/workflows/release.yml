@@ -62,7 +62,7 @@ jobs:
         id: install-dependencies
         run: pnpm install
 
-      name: Rename Env file
+      - name: Rename Env file
         id: rename-env-file
         run: |
           mv apps/abstraxion-dashboard/.env.example apps/abstraxion-dashboard/.env
