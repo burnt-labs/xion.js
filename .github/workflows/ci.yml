@@ -1,18 +1,12 @@
-# This workflow will release the packages with Changesets
-
-name: 🚀 Release
+name: 🚀 CI
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   release:
@@ -62,7 +56,7 @@ jobs:
         id: install-dependencies
         run: pnpm install
 
-      name: Rename Env file
+      - name: Rename Env file
         id: rename-env-file
         run: |
           mv apps/abstraxion-dashboard/.env.example apps/abstraxion-dashboard/.env
@@ -71,15 +65,3 @@ jobs:
         id: build-the-mono-repo
         run: |
           pnpm build
-
-      - name: 📣 Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          title: "chore(release): version packages 🦋"
-          publish: pnpm publish:packages
-          version: pnpm version:packages
-          commit: "chore: update versions"
-        env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ env.NPM_TOKEN }}
