@@ -25,9 +25,8 @@ export interface ModalProps {
 
 export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   const searchParams = useSearchParams();
-  const modalRef = useRef<HTMLDivElement>(null);
 
-  const { abstraxionError } = useContext(
+  const { abstraxionError, isMainnet } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -67,7 +66,7 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent>
+        <DialogContent className={isMainnet ? "" : "!ui-bg-white/10"}>
           {abstraxionError ? (
             <ErrorDisplay message={abstraxionError} onClose={onClose} />
           ) : account?.id &&
@@ -89,7 +88,7 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
       </Dialog>
       {/* TOS Footer */}
       {!isConnected && (
-        <div className="ui-absolute ui-pointer-events-auto ui-w-full ui-z-[1000] ui-py-6 ui-px-10 ui-bottom-0 ui-flex ui-justify-between ui-items-center">
+        <div className="ui-absolute ui-pointer-events-auto ui-w-full ui-z-[1000] ui-py-6 ui-px-10 ui-bottom-0 ui-flex ui-justify-between ui-items-end">
           <div className="ui-font-akkuratLL ui-text-sm ui-font-normal ui-leading-none">
             <span className="ui-text-neutral-400">
               By continuing, you agree to and acknowledge that you have read and
@@ -100,13 +99,29 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
             </a>
             <span className="ui-text-neutral-400">.</span>
           </div>
-          <div className="ui-flex ui-gap-2 ui-items-center">
+          <div className="ui-flex ui-gap-2 ui-items-end">
             <p className="ui-font-akkuratLL ui-text-sm ui-text-zinc-100 ui-opacity-50 leading-tight">
               Powered by
             </p>
-            <a href="https://xion.burnt.com/">
-              <Image src="/logo.png" alt="Xion Logo" width="108" height="48" />
-            </a>
+            <div className="ui-flex ui-flex-col ui-items-start">
+              <div
+                className={`ui-flex ui-justify-between ${
+                  isMainnet ? "ui-bg-mainnet-bg" : "ui-bg-testnet-bg"
+                } ui-px-2 ui-py-1 ui-mb-2 ${
+                  isMainnet ? "ui-text-mainnet" : "ui-text-testnet"
+                } ui-rounded-md ui-font-akkuratLL ui-text-xs ui-tracking-widest`}
+              >
+                {isMainnet ? "MAINNET" : "TESTNET"}
+              </div>
+              <a href="https://xion.burnt.com/">
+                <Image
+                  src="/logo.png"
+                  alt="Xion Logo"
+                  width="108"
+                  height="48"
+                />
+              </a>
+            </div>
           </div>
         </div>
       )}
