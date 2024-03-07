@@ -1,6 +1,8 @@
 "use client";
+import { useContext } from "react";
 import { useSearchParams } from "next/navigation";
 import { AccountInfo } from "@/components/AccountInfo";
+import { AbstraxionContext } from "@/components/AbstraxionContext";
 import { Overview } from "@/components/Overview";
 import { Sidebar } from "@/components/Sidebar";
 import { useAccountBalance } from "@/hooks/useAccountBalance";
@@ -10,8 +12,7 @@ import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
 } from "../hooks";
-import { useContext } from "react";
-import { AbstraxionContext } from "@/components/AbstraxionContext";
+
 
 export default function Home() {
   const searchParams = useSearchParams();
