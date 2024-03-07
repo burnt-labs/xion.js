@@ -76,7 +76,7 @@ export function AbstraxionSignin(): JSX.Element {
     grantContracts?: ContractGrantDescription[],
     dashUrl?: string,
   ): void {
-    if (!dashboardUrl) {
+    if (!dashUrl) {
       console.warn("Failed to fetch dashboard url");
       setAbstraxionError("Failed to fetch dashboard url");
     }
