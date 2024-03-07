@@ -43,7 +43,7 @@ export default function Page(): JSX.Element {
   const oneYearFromNow = new Date();
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
-  async function handleSign() {
+  async function handleSign(): Promise<void> {
     if (client?.granteeAddress) {
       const response = await signArb?.(client.granteeAddress, arbitraryMessage);
       // eslint-disable-next-line no-console -- We log this for testing purposes.
@@ -125,7 +125,7 @@ export default function Page(): JSX.Element {
               }}
               structure="base"
             >
-              {"LOGOUT"}
+              LOGOUT
             </Button>
           ) : null}
           {signArb ? (

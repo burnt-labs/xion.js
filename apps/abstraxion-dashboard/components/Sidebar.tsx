@@ -5,12 +5,15 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useContext } from "react";
 import { AbstraxionContext, AbstraxionContextProps } from "./AbstraxionContext";
+import { ChevronDownIcon, WalletIcon } from "./Icons";
 
 const NAV_OPTIONS = [{ text: "home", path: "/" }];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { isMainnet } = useContext(AbstraxionContext) as AbstraxionContextProps;
+  const { isMainnet, setIsOpen } = useContext(
+    AbstraxionContext,
+  ) as AbstraxionContextProps;
 
   const renderNavOptions = () => {
     return NAV_OPTIONS.map((option) => {
@@ -51,7 +54,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="ui-h-screen ui-bg-primary ui-text-white ui-flex ui-flex-col ui-w-64">
+    <div className="ui-h-screen ui-bg-primary ui-border-[#6C6A6A] ui-border-r-[1px] ui-text-white ui-flex ui-flex-col ui-w-64">
       <div className="ui-flex ui-items-center ui-justify-between ui-px-8 ui-pt-8">
         <Image src="/logo.png" alt="Xion Logo" width="90" height="32" />
         <div
@@ -74,6 +77,27 @@ export function Sidebar() {
         >
           History
         </a>
+      </div>
+      <div className="ui-flex ui-justify-between ui-px-4 ui-h-12 ui-w-full ui-items-center ui-rounded ui-bg-black ui-mx-auto ui-my-0">
+        <div className="ui-flex ui-items-center">
+          <div className="ui-flex ui-mr-1 ui-h-8 ui-w-8 ui-items-center ui-justify-center ui-rounded-full ui-bg-black">
+            <WalletIcon color="white" backgroundColor="black" />
+          </div>
+          <p className="ui-font-akkuratLL ui-text-white ui-font-medium">
+            Personal Account
+          </p>
+        </div>
+
+        <div
+          onClick={() => setIsOpen(true)}
+          className="ui-flex ui-items-center ui-ml-2 ui-justify-center ui-border-white/40 ui-border-[1px] ui-rounded-full ui-h-8 ui-w-8 ui-cursor-pointer"
+        >
+          <div className="ui-flex ui-flex-col">
+            <div className="ui-h-1 ui-w-1 ui-bg-white/40 ui-rounded-full ui-mb-0.5" />
+            <div className="ui-h-1 ui-w-1 ui-bg-white/40 ui-rounded-full ui-mb-0.5" />
+            <div className="ui-h-1 ui-w-1 ui-bg-white/40 ui-rounded-full" />
+          </div>
+        </div>
       </div>
       {/* TODO: Display User Info */}
       {/* <div className="p-8">

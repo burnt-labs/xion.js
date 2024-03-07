@@ -14,6 +14,8 @@ export interface AbstraxionContextProps {
   apiUrl: string;
   chainInfo: ChainInfo;
   isMainnet: boolean;
+  isOpen: boolean;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -30,6 +32,7 @@ export const AbstraxionContextProvider = ({
     undefined,
   );
   const [abstraxionError, setAbstraxionError] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const serializedChainInfo = getEnvStringOrThrow(
     "NEXT_PUBLIC_DEFAULT_CHAIN_INFO",
@@ -60,6 +63,8 @@ export const AbstraxionContextProvider = ({
         apiUrl,
         chainInfo,
         isMainnet,
+        isOpen,
+        setIsOpen,
       }}
     >
       {children}

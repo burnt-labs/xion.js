@@ -10,14 +10,19 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
   );
 
   return (
-    <div className="ui-w-full ui-bg-gradient-to-l ui-from-slate-300 ui-via-slate-400 ui-to-slate-400 ui-rounded-2xl ui-p-6">
+    <div
+      style={{
+        backgroundImage: `url('/overviewBackground.png')`,
+      }}
+      className="ui-w-full ui-bg-cover ui-bg-no-repeat ui-bg-center ui-rounded-2xl ui-p-6 bg-fixed"
+    >
       <div className="ui-mb-6 ui-flex ui-items-center">
         <h1 className="ui-font-akkuratLL ui-mr-6 ui-text-2xl ui-font-bold ui-leading-7 ui-text-white">
           Personal Account
         </h1>
         {/* <ScanIcon color="white" /> */}
       </div>
-      <h3 className="ui-font-akkuratLL ui-text-sm ui-font-bold ui-text-white ui-text-opacity-50">
+      <h3 className="ui-font-akkuratLL ui-text-sm ui-text-white/50 ui-mb-2">
         Current Balance
       </h3>
       <div className="ui-flex ui-items-center ui-justify-between">
@@ -37,7 +42,7 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
         </div> */}
       </div>
       {/* Divider */}
-      <div className="ui-my-6 ui-h-[1px] ui-w-full ui-bg-white ui-bg-opacity-20"></div>
+      <div className="ui-my-6 ui-h-[1px] ui-w-full ui-bg-white/20"></div>
       {/* Wait for USDC */}
       {/* <div className="flex justify-between items-center mb-3">
         <p className="text-white text-base font-normal font-akkuratLL leading-normal">
@@ -61,7 +66,7 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
             <p className="ui-font-akkuratLL ui-text-base ui-font-normal ui-leading-normal ui-text-white">
               {xionBalance.amount} XION
             </p>
-            <p className="ui-font-akkuratLL ui-ml-6 ui-text-right ui-text-base ui-font-normal ui-leading-normal ui-text-white ui-text-opacity-70">
+            <p className="ui-font-akkuratLL ui-ml-6 ui-text-right ui-text-base ui-font-normal ui-leading-normal ui-text-white/70">
               ${Number(xionBalance.amount) * XION_TO_USDC_CONVERSION} USDC
             </p>
           </div>

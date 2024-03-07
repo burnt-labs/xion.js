@@ -5,6 +5,10 @@ const config: Config = {
   content: ["./components/**/*.{js,ts,jsx,tsx,mdx}", "./app/page.tsx"],
   theme: {
     extend: {
+      backgroundImage: {
+        "overview-bg":
+          "url('/apps/abstraxion-dashboard/public/overviewBackground.png')",
+      },
       colors: {
         primary: "#000",
         mainnet: "#CAF033",
