@@ -6,6 +6,7 @@ import {
   StakeAuthorization,
 } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import {
+  MsgCancelUnbondingDelegation,
   MsgDelegate,
   MsgUndelegate,
 } from "cosmjs-types/cosmos/staking/v1beta1/tx";
@@ -46,6 +47,7 @@ export const generateStakeGrant = (
               MsgDelegate.typeUrl,
               MsgUndelegate.typeUrl,
               MsgExec.typeUrl,
+              MsgCancelUnbondingDelegation.typeUrl,
             ],
           }),
         ).finish(),
@@ -55,8 +57,11 @@ export const generateStakeGrant = (
     }),
   };
 
-  // Need to grant MsgWithdrawDelegatorReward
-  const genericMsgGrant = {
+  // Need to grant MsgWithdrawDelegatorReward and MsgCancelUnbondingDelegation
+  const genericMsgGrants = [
+    MsgWithdrawDelegatorReward.typeUrl,
+    MsgCancelUnbondingDelegation.typeUrl,
+  ].map((msg) => ({
     typeUrl: MsgGrant.typeUrl,
     value: MsgGrant.fromPartial({
       grant: {
@@ -64,7 +69,7 @@ export const generateStakeGrant = (
           typeUrl: GenericAuthorization.typeUrl,
           value: GenericAuthorization.encode(
             GenericAuthorization.fromPartial({
-              msg: MsgWithdrawDelegatorReward.typeUrl,
+              msg,
             }),
           ).finish(),
         },
@@ -75,7 +80,7 @@ export const generateStakeGrant = (
       grantee,
       granter,
     }),
-  };
+  }));
 
   const grants = [
     AuthorizationType.AUTHORIZATION_TYPE_DELEGATE,
@@ -102,5 +107,5 @@ export const generateStakeGrant = (
     }),
   }));
 
-  return [...grants, genericMsgGrant, feeGrant];
+  return [...grants, ...genericMsgGrants, feeGrant];
 };
