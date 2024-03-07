@@ -86,9 +86,10 @@ export const testChainInfo: ChainInfo = {
   chainName: "Xion Testnet Local",
 };
 
+// If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
-  MAINNET: "dashboard.burnt.com",
-  TESTNET: "testnet-dashboard.burnt.com",
+  "xion-mainnet-1": "dashboard.burnt.com",
+  "xion-testnet-1": "testnet-dashboard.burnt.com",
 };
 
 export async function fetchConfig(rpcUrl: string): Promise<string> {
@@ -99,10 +100,10 @@ export async function fetchConfig(rpcUrl: string): Promise<string> {
     }
 
     const data: RpcStatusResponse = await fetchReq.json();
-    // If mainnet chain-id/network changes be sure to update here.
-    return data.result.node_info.network === "xion-mainnet-1"
-      ? DASHBOARD_URLS.MAINNET
-      : DASHBOARD_URLS.TESTNET;
+    const lookup = data.result.node_info.network;
+    const returnUrl = DASHBOARD_URLS[lookup as keyof typeof DASHBOARD_URLS];
+    if (!returnUrl) throw new Error("Network not found.");
+    return returnUrl;
   } catch (error) {
     throw error;
   }
