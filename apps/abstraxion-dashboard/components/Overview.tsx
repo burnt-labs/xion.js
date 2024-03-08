@@ -1,3 +1,5 @@
+import { formatBalance, getCommaSeperatedNumber } from "@/utils";
+
 interface OverviewProps {
   balanceInfo: BalanceInfo | null;
 }
@@ -6,7 +8,7 @@ const XION_TO_USDC_CONVERSION = 50;
 
 export const Overview = ({ balanceInfo }: OverviewProps) => {
   const xionBalance = balanceInfo?.balances.find(
-    (balance) => balance.denom === "xion"
+    (balance) => balance.denom === "xion",
   );
 
   return (
@@ -28,7 +30,10 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
       <div className="ui-flex ui-items-center ui-justify-between">
         {balanceInfo && (
           <h1 className="ui-font-akkuratLL ui-leading-wide ui-text-4xl ui-font-bold ui-text-white">
-            ${balanceInfo?.total}
+            ${/* TODO: Change once we support multiple currencies */}
+            {formatBalance(
+              Number(xionBalance?.amount) * XION_TO_USDC_CONVERSION,
+            )}
           </h1>
         )}
         {/* Hidden until functionality is in place. */}
@@ -64,10 +69,14 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
           </p>
           <div className="ui-flex">
             <p className="ui-font-akkuratLL ui-text-base ui-font-normal ui-leading-normal ui-text-white">
-              {xionBalance.amount} XION
+              {getCommaSeperatedNumber(Number(xionBalance.amount))} XION
             </p>
             <p className="ui-font-akkuratLL ui-ml-6 ui-text-right ui-text-base ui-font-normal ui-leading-normal ui-text-white/70">
-              ${Number(xionBalance.amount) * XION_TO_USDC_CONVERSION} USDC
+              $
+              {formatBalance(
+                Number(xionBalance.amount) * XION_TO_USDC_CONVERSION,
+              )}{" "}
+              USD
             </p>
           </div>
         </div>

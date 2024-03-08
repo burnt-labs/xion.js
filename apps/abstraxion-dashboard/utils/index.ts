@@ -38,3 +38,28 @@ export function getEnvStringOrThrow(key: string, value?: string): string {
 
   return value;
 }
+
+export function removeTrailingDigits(number: number) {
+  return Math.floor(number / 1000000);
+}
+
+export function getCommaSeperatedNumber(number: number) {
+  const millionthPart = removeTrailingDigits(number);
+  return new Intl.NumberFormat("en-US").format(millionthPart);
+}
+
+export function formatBalance(
+  number: number,
+  locale: string = "en-US",
+  currency: string = "USD",
+) {
+  const millionthPart = removeTrailingDigits(number);
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    currencyDisplay: "code",
+  })
+    .format(millionthPart)
+    .replace(currency, "")
+    .trim();
+}
