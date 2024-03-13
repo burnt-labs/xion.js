@@ -229,11 +229,34 @@ export function WalletSend({
                 SEND
               </h1>
               <div className="ui-flex ui-flex-col ui-gap-4">
-                <p className="ui-text-white ui-font-semibold">Amount</p>
+                <div className="ui-flex ui-flex-col ui-items-start ui-p-4 ui-border ui-border-white/50 ui-rounded-2xl">
+                  <p className="ui-text-md ui-font-bold ui-text-white">XION</p>
+                  <p className="ui-text-md ui-text-white">
+                    {/* TODO: Make configurable once we support multiple currencies */}
+                    Balance: {formatBalance(Number(balanceInfo.total))} XION{" "}
+                    <span className="ui-text-white/50 ui-pl-2">
+                      $
+                      {formatBalance(
+                        Number(balanceInfo.total) * XION_TO_USDC_CONVERSION,
+                      )}{" "}
+                      USD
+                    </span>
+                  </p>
+                </div>
+                <div className="ui-flex ui-justify-between">
+                  <p className="ui-text-white ui-font-semibold">Amount</p>
+                  <p className="ui-text-white/50 ui-font-semibold">
+                    =$
+                    {formatBalance(
+                      Number(sendAmount) * 1000000 * XION_TO_USDC_CONVERSION,
+                    )}{" "}
+                    USD
+                  </p>
+                </div>
                 <div
                   className={`ui-flex ui-items-center ui-justify-between ui-p-6 ui-border ${
-                    amountError ? "ui-border-red-500" : "ui-border-white"
-                  } ui-rounded-lg`}
+                    amountError ? "ui-border-red-500" : "ui-border-white/50"
+                  } ui-rounded-2xl`}
                 >
                   <input
                     className="ui-w-full ui-bg-transparent ui-text-white ui-font-bold ui-text-5xl placeholder:ui-text-white/50 focus:ui-outline-none"

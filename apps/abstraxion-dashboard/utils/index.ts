@@ -73,7 +73,7 @@ export function formatBalance(
 }
 
 export function isValidWalletAddress(address: string) {
-  if (address.length !== 40 && address.length !== 63) {
+  if (address.length !== 43 && address.length !== 63) {
     return false;
   }
 
