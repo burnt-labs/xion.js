@@ -11,6 +11,8 @@ import { formatBalance, isValidWalletAddress, truncateAddress } from "@/utils";
 import { XION_TO_USDC_CONVERSION } from "../Overview";
 import { ErrorDisplay } from "../ErrorDisplay";
 import { DeliverTxResponse } from "@cosmjs/stargate";
+import { DialogClose } from "@burnt-labs/ui";
+import { CloseIcon } from "@burnt-labs/ui";
 
 export function WalletSend({
   trigger,
@@ -106,7 +108,13 @@ export function WalletSend({
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogTrigger>{trigger}</DialogTrigger>
-      <DialogContent className="ui-text-white">
+      <DialogContent
+        className="ui-text-white"
+        onPointerDownOutside={(e: any) => e.preventDefault()}
+      >
+        <DialogClose className="ui-absolute ui-top-5 ui-right-10">
+          <CloseIcon className="ui-stroke-white/50" />
+        </DialogClose>
         {sendTokensError ? (
           <ErrorDisplay
             title="ERROR!"
