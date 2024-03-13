@@ -5,20 +5,12 @@ import { AccountInfo } from "@/components/AccountInfo";
 import { AbstraxionContext } from "@/components/AbstraxionContext";
 import { Overview } from "@/components/Overview";
 import { Sidebar } from "@/components/Sidebar";
-import { useAccountBalance } from "@/hooks/useAccountBalance";
 import { Abstraxion } from "@/components/Abstraxion";
-import {
-  AbstraxionAccount,
-  useAbstraxionAccount,
-  useAbstraxionSigningClient,
-} from "../hooks";
-
+import { AbstraxionAccount, useAbstraxionAccount } from "../hooks";
 
 export default function Home() {
   const searchParams = useSearchParams();
   const { data: account } = useAbstraxionAccount();
-  const { client } = useAbstraxionSigningClient();
-  const accountBalance = useAccountBalance(account, client);
 
   const contracts = searchParams.get("contracts");
   const stake = Boolean(searchParams.get("stake"));
@@ -45,7 +37,7 @@ export default function Home() {
                   <h3 className="ui-font-akkuratLL ui-mb-4 ui-text-2xl ui-text-white ui-font-bold">
                     Overview
                   </h3>
-                  <Overview balanceInfo={accountBalance} />
+                  <Overview />
                   <h3 className="ui-font-akkuratLL ui-mb-4 ui-mt-8 ui-text-2xl ui-font-bold ui-text-white">
                     Account Info
                   </h3>

@@ -40,12 +40,20 @@ export function getEnvStringOrThrow(key: string, value?: string): string {
 }
 
 export function removeTrailingDigits(number: number) {
-  return Math.floor(number / 1000000);
+  return number / 1000000;
 }
 
 export function getCommaSeperatedNumber(number: number) {
   const millionthPart = removeTrailingDigits(number);
-  return new Intl.NumberFormat("en-US").format(millionthPart);
+  return millionthPart.toLocaleString("en-US", {
+    minimumFractionDigits: Math.max(
+      0,
+      Math.ceil(
+        Math.abs(millionthPart) < 1 ? Math.log10(Math.abs(millionthPart)) : 0,
+      ),
+    ),
+    maximumFractionDigits: 6,
+  });
 }
 
 export function formatBalance(
@@ -62,4 +70,21 @@ export function formatBalance(
     .format(millionthPart)
     .replace(currency, "")
     .trim();
+}
+
+export function isValidWalletAddress(address: string) {
+  if (address.length !== 40 && address.length !== 63) {
+    return false;
+  }
+
+  const validCharacters = /^[0-9a-zA-Z]+$/;
+  if (!validCharacters.test(address)) {
+    return false;
+  }
+
+  if (!address.startsWith("xion")) {
+    return false;
+  }
+
+  return true;
 }
