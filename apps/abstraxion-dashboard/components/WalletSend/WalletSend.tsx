@@ -7,7 +7,7 @@ import {
   Input,
 } from "@burnt-labs/ui";
 import { useAbstraxionAccount } from "@/hooks";
-import { formatBalance, isValidWalletAddress, truncateAddress } from "@/utils";
+import { formatBalance, isValidWalletAddress } from "@/utils";
 import { XION_TO_USDC_CONVERSION } from "../Overview";
 import { ErrorDisplay } from "../ErrorDisplay";
 import { DeliverTxResponse } from "@cosmjs/stargate";
@@ -224,10 +224,10 @@ export function WalletSend({
           </>
         ) : (
           <>
-            <h1 className="ui-w-full ui-text-center ui-text-3xl ui-font-akkuratLL ui-font-thin">
-              SEND
-            </h1>
-            <div className="ui-flex ui-flex-col ui-p-8 ui-gap-8">
+            <div className="ui-flex ui-flex-col ui-p-0 md:ui-p-8 ui-gap-8">
+              <h1 className="ui-w-full ui-text-center ui-text-3xl ui-font-akkuratLL ui-font-thin">
+                SEND
+              </h1>
               <div className="ui-flex ui-flex-col ui-gap-4">
                 <p className="ui-text-white ui-font-semibold">Amount</p>
                 <div
@@ -252,8 +252,8 @@ export function WalletSend({
               </div>
               <div className="ui-flex ui-flex-col">
                 <label className="ui-text-xs ui-text-white/50">From:</label>
-                <p className="ui-max-w-sm ui-overflow-scroll">
-                  {truncateAddress(account.id)}
+                <p className="ui-text-xs ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white">
+                  {account.id}
                 </p>
               </div>
               <Input
