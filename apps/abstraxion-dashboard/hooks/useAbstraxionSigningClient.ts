@@ -118,10 +118,10 @@ export const useAbstraxionSigningClient = () => {
   }, [sessionToken, abstractAccount, connectionType, data, keplr]);
 
   useEffect(() => {
-    if (abstractAccount && !abstractClient) {
+    if (abstractAccount) {
       getSigner();
     }
-  }, [abstractAccount, getSigner]);
+  }, [abstractAccount]);
 
   const memoizedClient = useMemo(
     () => ({ client: abstractClient }),

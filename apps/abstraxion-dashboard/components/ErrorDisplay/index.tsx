@@ -6,9 +6,11 @@ import {
 import { Button } from "@burnt-labs/ui";
 
 export const ErrorDisplay = ({
-  message,
+  title = "OOPS! Something went wrong...",
+  message = "Please try again later.",
   onClose,
 }: {
+  title?: string;
   message?: string;
   onClose: VoidFunction;
 }) => {
@@ -17,25 +19,21 @@ export const ErrorDisplay = ({
   ) as AbstraxionContextProps;
 
   return (
-    <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-start ui-justify-center ui-gap-4 ui-p-8">
-      <h1 className="ui-text-3xl ui-font-bold ui-uppercase ui-tracking-tighter ui-text-white">
-        Uh oh.
+    <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-center ui-justify-center ui-gap-4 ui-p-8 ui-font-akkuratLL">
+      <h1 className="ui-text-3xl ui-font-thin ui-uppercase ui-tracking-tighter ui-text-white">
+        {title}
       </h1>
-      <h2 className="ui-tracking-tight ui-text-white">Something went wrong.</h2>
-      {message && (
-        <p className="ui-tracking-tight ui-text-zinc-400 dark:ui-text-zinc-700">
-          {message}
-        </p>
-      )}
+      <p className="ui-tracking-tight ui-text-zinc-400 dark:ui-text-zinc-700">
+        {message}
+      </p>
       <Button
-        structure="outlined"
         fullWidth={true}
         onClick={() => {
           onClose();
           setAbstraxionError("");
         }}
       >
-        Dismiss
+        Close
       </Button>
     </div>
   );

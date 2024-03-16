@@ -1,12 +1,15 @@
-interface OverviewProps {
-  balanceInfo: BalanceInfo | null;
-}
+import { formatBalance, getCommaSeperatedNumber } from "@/utils";
+import { useAccountBalance } from "@/hooks/useAccountBalance";
+import { RightArrowIcon } from "./Icons";
+import { WalletSend } from "./WalletSend/WalletSend";
 
-const XION_TO_USDC_CONVERSION = 50;
+export const XION_TO_USDC_CONVERSION = 50;
 
-export const Overview = ({ balanceInfo }: OverviewProps) => {
-  const xionBalance = balanceInfo?.balances.find(
-    (balance) => balance.denom === "xion"
+export const Overview = () => {
+  const { balanceInfo: accountBalance, sendTokens } = useAccountBalance();
+
+  const xionBalance = accountBalance?.balances.find(
+    (balance) => balance.denom === "uxion",
   );
 
   return (
@@ -26,37 +29,32 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
         Current Balance
       </h3>
       <div className="ui-flex ui-items-center ui-justify-between">
-        {balanceInfo && (
+        {accountBalance && (
           <h1 className="ui-font-akkuratLL ui-leading-wide ui-text-4xl ui-font-bold ui-text-white">
-            ${balanceInfo?.total}
+            ${/* TODO: Change once we support multiple currencies */}
+            {formatBalance(
+              Number(xionBalance?.amount) * XION_TO_USDC_CONVERSION,
+            )}
           </h1>
         )}
         {/* Hidden until functionality is in place. */}
-        {/* <div className="flex">
-          <div className="w-12 h-12 bg-black rounded-full flex justify-center items-center mr-6">
+        <div className="ui-flex">
+          {/* <div className="w-12 h-12 bg-black rounded-full flex justify-center items-center mr-6">
             <ScanIcon color="white" />
-          </div>
-          <div className="w-12 h-12 bg-black rounded-full flex justify-center items-center">
-            <RightArrowIcon color="white" />
-          </div>
-        </div> */}
+          </div> */}
+          <WalletSend
+            balanceInfo={accountBalance}
+            sendTokens={sendTokens}
+            trigger={
+              <div className="ui-flex ui-h-12 ui-w-12 ui-items-center ui-justify-center ui-rounded-full ui-bg-black hover:ui-cursor-pointer">
+                <RightArrowIcon color="white" />
+              </div>
+            }
+          />
+        </div>
       </div>
       {/* Divider */}
-      <div className="ui-my-6 ui-h-[1px] ui-w-full ui-bg-white/20"></div>
-      {/* Wait for USDC */}
-      {/* <div className="flex justify-between items-center mb-3">
-        <p className="text-white text-base font-normal font-akkuratLL leading-normal">
-          USDC
-        </p>
-        <div className="flex">
-          <p className="text-white text-base font-normal font-akkuratLL leading-normal">
-            190 USDC
-          </p>
-          <p className="ml-6 text-right text-white text-opacity-70 text-base font-normal font-akkuratLL leading-normal">
-            $190 USDC
-          </p>
-        </div>
-      </div> */}
+      <div className="ui-my-6 ui-h-[1px] ui-w-full ui-bg-white/20" />
       {xionBalance && (
         <div className="ui-flex ui-items-center ui-justify-between">
           <p className="ui-font-akkuratLL ui-text-base ui-font-normal ui-leading-normal ui-text-white">
@@ -64,10 +62,14 @@ export const Overview = ({ balanceInfo }: OverviewProps) => {
           </p>
           <div className="ui-flex">
             <p className="ui-font-akkuratLL ui-text-base ui-font-normal ui-leading-normal ui-text-white">
-              {xionBalance.amount} XION
+              {getCommaSeperatedNumber(Number(xionBalance.amount))} XION
             </p>
             <p className="ui-font-akkuratLL ui-ml-6 ui-text-right ui-text-base ui-font-normal ui-leading-normal ui-text-white/70">
-              ${Number(xionBalance.amount) * XION_TO_USDC_CONVERSION} USDC
+              $
+              {formatBalance(
+                Number(xionBalance.amount) * XION_TO_USDC_CONVERSION,
+              )}{" "}
+              USD
             </p>
           </div>
         </div>

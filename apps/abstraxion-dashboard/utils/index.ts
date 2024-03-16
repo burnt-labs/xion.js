@@ -38,3 +38,53 @@ export function getEnvStringOrThrow(key: string, value?: string): string {
 
   return value;
 }
+
+export function removeTrailingDigits(number: number) {
+  return number / 1000000;
+}
+
+export function getCommaSeperatedNumber(number: number) {
+  const millionthPart = removeTrailingDigits(number);
+  return millionthPart.toLocaleString("en-US", {
+    minimumFractionDigits: Math.max(
+      0,
+      Math.ceil(
+        Math.abs(millionthPart) < 1 ? Math.log10(Math.abs(millionthPart)) : 0,
+      ),
+    ),
+    maximumFractionDigits: 6,
+  });
+}
+
+export function formatBalance(
+  number: number,
+  locale: string = "en-US",
+  currency: string = "USD",
+) {
+  const millionthPart = removeTrailingDigits(number);
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    currencyDisplay: "code",
+  })
+    .format(millionthPart)
+    .replace(currency, "")
+    .trim();
+}
+
+export function isValidWalletAddress(address: string) {
+  if (address.length !== 43 && address.length !== 63) {
+    return false;
+  }
+
+  const validCharacters = /^[0-9a-zA-Z]+$/;
+  if (!validCharacters.test(address)) {
+    return false;
+  }
+
+  if (!address.startsWith("xion")) {
+    return false;
+  }
+
+  return true;
+}
