@@ -47,7 +47,10 @@ export const AbstraxionWallets = () => {
   useEffect(() => {
     async function onStartup() {
       if (!loading && data && !previousData && !isGeneratingNewWallet) {
-        if (data?.smartAccounts?.nodes.length === 0) {
+        if (
+          data?.smartAccounts?.nodes.length === 0 &&
+          connectionType === "stytch"
+        ) {
           await handleJwtAALoginOrCreate();
         }
       }
