@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect } from "react";
 import { GrazProvider } from "graz";
 import { StytchProvider } from "@stytch/nextjs";
 import { ApolloProvider } from "@apollo/client";
@@ -16,7 +16,6 @@ import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useSearchParams } from "next/navigation";
 import { AbstraxionGrant } from "../AbstraxionGrant";
 import Image from "next/image";
-import { testnetChainInfo } from "@burnt-labs/constants";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -116,7 +115,7 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
               <a href="https://xion.burnt.com/">
                 <Image
                   src="/logo.png"
-                  alt="Xion Logo"
+                  alt="XION Logo"
                   width="108"
                   height="48"
                 />

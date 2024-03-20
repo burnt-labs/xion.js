@@ -55,7 +55,7 @@ const commonInfo: ChainInfo = {
   rpc: "undefined",
   rest: "undefined",
   chainId: "base",
-  chainName: "Xion Testnet",
+  chainName: "XION Testnet",
   bip44: {
     coinType: 118,
   },
@@ -78,7 +78,7 @@ export const testnetChainInfo: ChainInfo = {
   rpc: "https://testnet-rpc.xion-api.com:443",
   rest: "https://testnet-api.xion-api.com:443",
   chainId: "xion-testnet-1",
-  chainName: "Xion Testnet",
+  chainName: "XION Testnet",
 };
 
 export const testChainInfo: ChainInfo = {
@@ -86,5 +86,5 @@ export const testChainInfo: ChainInfo = {
   rpc: "http://localhost:26657",
   rest: "http://localhost:26656",
   chainId: "xion-local-testnet-1",
-  chainName: "Xion Testnet Local",
+  chainName: "XION Testnet Local",
 };
