@@ -1,11 +1,13 @@
 import { formatBalance, getCommaSeperatedNumber } from "@/utils";
 import { useAccountBalance } from "@/hooks/useAccountBalance";
-import { RightArrowIcon } from "./Icons";
+import { RightArrowIcon, ScanIcon } from "./Icons";
 import { WalletSend } from "./WalletSend/WalletSend";
+import { WalletReceive } from "./WalletReceive";
+import { AbstraxionAccount } from "@/hooks";
 
 export const XION_TO_USDC_CONVERSION = 50;
 
-export const Overview = () => {
+export const Overview = ({ account }: { account?: AbstraxionAccount }) => {
   const { balanceInfo: accountBalance, sendTokens } = useAccountBalance();
 
   const xionBalance = accountBalance?.balances.find(
@@ -42,6 +44,16 @@ export const Overview = () => {
           {/* <div className="w-12 h-12 bg-black rounded-full flex justify-center items-center mr-6">
             <ScanIcon color="white" />
           </div> */}
+          {account?.id && (
+            <WalletReceive
+              xionAddress={account.id}
+              trigger={
+                <div className="ui-mr-4 ui-flex ui-h-12 ui-w-12 ui-items-center ui-justify-center ui-rounded-full ui-bg-black hover:ui-cursor-pointer">
+                  <ScanIcon color="white" />
+                </div>
+              }
+            />
+          )}
           <WalletSend
             balanceInfo={accountBalance}
             sendTokens={sendTokens}
