@@ -24,7 +24,7 @@ export const useAbstraxionAccount = (): UseAbstraxionAccountProps => {
   } = useContext(AbstraxionContext);
 
   useEffect(() => {
-    async function configureAccount() {
+    async function configureAccount(): Promise<void> {
       setIsConnecting(true);
       const tempKeypair = localStorage.getItem("xion-authz-temp-account");
       if (tempKeypair) {
@@ -52,6 +52,7 @@ export const useAbstraxionAccount = (): UseAbstraxionAccountProps => {
     if (!isConnecting && !abstraxionAccount && !granterAddress) {
       configureAccount();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, abstraxionAccount, granterAddress]);
 
   return {

@@ -3,47 +3,9 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { BrowserIcon, Button, ModalSection } from "@burnt-labs/ui";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { wait } from "@/utils/wait";
-import {
-  AbstraxionContext,
-  ContractGrantDescription,
-} from "../AbstraxionContext";
-
-interface GrantsResponse {
-  grants: Grant[];
-  pagination: Pagination;
-}
-
-interface Grant {
-  granter: string;
-  grantee: string;
-  authorization: Authorization;
-  expiration: string;
-}
-
-interface Authorization {
-  "@type": string;
-  grants: GrantAuthorization[];
-}
-
-interface GrantAuthorization {
-  contract: string;
-  limit: Limit;
-  filter: Filter;
-}
-
-interface Limit {
-  "@type": string;
-  remaining: string;
-}
-
-interface Filter {
-  "@type": string;
-}
-
-interface Pagination {
-  next_key: null | string;
-  total: string;
-}
+import type { GrantsResponse } from "@/interfaces";
+import type { ContractGrantDescription } from "../AbstraxionContext";
+import { AbstraxionContext } from "../AbstraxionContext";
 
 export function AbstraxionSignin(): JSX.Element {
   const {
@@ -54,7 +16,6 @@ export function AbstraxionSignin(): JSX.Element {
     granterAddress,
     contracts,
     dashboardUrl,
-    restUrl,
     stake,
     bank,
   } = useContext(AbstraxionContext);
@@ -62,7 +23,7 @@ export function AbstraxionSignin(): JSX.Element {
   const isMounted = useRef(false);
   const [tempAccountAddress, setTempAccountAddress] = useState("");
 
-  function configuregranter(address: string) {
+  function configuregranter(address: string): void {
     setGranterAddress(address);
     localStorage.setItem("xion-authz-granter-account", address);
   }
@@ -83,7 +44,7 @@ export function AbstraxionSignin(): JSX.Element {
     }
     urlParams.set("grantee", userAddress);
     if (grantContracts) {
-      urlParams.set("contracts", JSON.stringify(grantContracts));
+      urlParams.set("contracts",  grantContracts.join(","));
     }
     urlParams.set("redirect_uri", currentUrl);
     const queryString = urlParams.toString(); // Convert URLSearchParams to string
@@ -100,46 +61,53 @@ export function AbstraxionSignin(): JSX.Element {
     return keypair;
   }
 
-  async function pollForGrants(address: string): Promise<void> {
-    if (!address) {
-      throw new Error("No keypair address");
+  async function fetchGrants(address: string): Promise<GrantsResponse | null> {
+    try {
+      const response = await fetch(
+        `https://api.xion-testnet-1.burnt.com/cosmos/authz/v1beta1/grants/grantee/${address}`,
+        {
+          cache: "no-store",
+        },
+      );
+      if (!response.ok) throw new Error("Fetch failed");
+      return (await response.json()) as GrantsResponse;
+    } catch (error) {
+      console.error("Error fetching grants:", error);
+      return null;
     }
-    setIsConnecting(true);
+  }
 
-    const shouldContinue = true;
-    while (shouldContinue) {
-      try {
-        await wait(3000);
-        const res = await fetch(
-          `${restUrl}/cosmos/authz/v1beta1/grants/grantee/${address}`,
-          {
-            cache: "no-store",
-          },
-        );
-        const data = (await res.json()) as GrantsResponse;
-        if (data.grants.length > 0) {
-          const granterAddresses = data.grants.map((grant) => grant.granter);
-          const uniqueGranters = [...new Set(granterAddresses)];
-          if (uniqueGranters.length > 1) {
-            console.error("More than one granter found. Taking first.");
-          }
-
-          configuregranter(uniqueGranters[0]);
-          // Remove query parameter "granted"
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.delete("granted");
-          history.pushState({}, "", currentUrl.href);
-
-          break;
+  async function pollGrants(address: string): Promise<void> {
+    const data = await fetchGrants(address);
+    if (data) {
+      const uniqueGranters =
+        data.grants.length > 0
+          ? [...new Set(data.grants.map((grant) => grant.granter))]
+          : null;
+      if (uniqueGranters && uniqueGranters.length > 0) {
+        if (uniqueGranters.length > 1) {
+          console.error("More than one granter found. Taking first.");
         }
-      } catch (error) {
-        throw error;
+        configuregranter(uniqueGranters[0]);
+        updateURL();
+        return; // Exit the recursive loop on success
       }
+    }
+    // Continue polling if the condition isn't met
+    await wait(3000);
+    pollGrants(address);
+  }
+
+  function updateURL(): void {
+    const currentUrl = new URL(window.location.href);
+    if (currentUrl.searchParams.has("granted")) {
+      currentUrl.searchParams.delete("granted");
+      history.pushState({}, "", currentUrl.href);
     }
   }
 
   useEffect(() => {
-    async function onStartup() {
+    async function onStartup(): Promise<void> {
       try {
         const existingKeypair = localStorage.getItem("xion-authz-temp-account");
         let keypair;
@@ -160,7 +128,7 @@ export function AbstraxionSignin(): JSX.Element {
         if (!isGranted && !granterAddress) {
           openDashboardTab(address, contracts);
         } else if (isGranted && !granterAddress) {
-          await pollForGrants(address);
+          await pollGrants(address);
           setIsConnecting(false);
           setIsConnected(true);
           setAbstraxionAccount(keypair);
@@ -168,7 +136,7 @@ export function AbstraxionSignin(): JSX.Element {
           setIsConnected(true);
         }
       } catch (error) {
-        console.log("Something went wrong: ", error);
+        console.error("Something went wrong: ", error);
       }
     }
 
@@ -177,7 +145,8 @@ export function AbstraxionSignin(): JSX.Element {
     }
 
     isMounted.current = true;
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Should only run once so disabling rule for this case.
 
   return (
     <ModalSection className="ui-items-center">

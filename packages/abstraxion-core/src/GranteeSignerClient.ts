@@ -1,20 +1,20 @@
 import {
-  DeliverTxResponse,
   SigningCosmWasmClient,
-  SigningCosmWasmClientOptions,
+  type DeliverTxResponse,
+  type SigningCosmWasmClientOptions,
 } from "@cosmjs/cosmwasm-stargate";
 import {
   AccountData,
   EncodeObject,
   OfflineSigner,
 } from "@cosmjs/proto-signing";
-import type { Account, SignerData, StdFee } from "@cosmjs/stargate";
+import type {Account, SignerData, StdFee } from "@cosmjs/stargate";
 import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import {
-  HttpEndpoint,
   Tendermint37Client,
-  TendermintClient,
+  type HttpEndpoint,
+  type TendermintClient,
 } from "@cosmjs/tendermint-rpc";
 import { customAccountFromAny } from "@burnt-labs/signers";
 
@@ -51,7 +51,9 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     return GranteeSignerClient.createWithSigner(tmClient, signer, options);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   public static async createWithSigner(
+    // Class extended from requires to be async.
     cometClient: TendermintClient,
     signer: OfflineSigner,
     options: SigningCosmWasmClientOptions & GranteeSignerOptions,
@@ -69,12 +71,16 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     }: SigningCosmWasmClientOptions & GranteeSignerOptions,
   ) {
     super(cometClient, signer, options);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (granterAddress === undefined) {
+      // Enforce for Javascript.
       throw new Error("granterAddress is required");
     }
     this.granterAddress = granterAddress;
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (granteeAddress === undefined) {
+      // Enforce for Javascript.
       throw new Error("granteeAddress is required");
     }
     this._granteeAddress = granteeAddress;
@@ -97,10 +103,12 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     memo = "",
   ): Promise<DeliverTxResponse> {
     // Figure out if the signerAddress is a granter
+    let updatedSignerAddress = signerAddress;
+    let updatedMessages = messages;
     if (signerAddress === this.granterAddress) {
-      signerAddress = this.granteeAddress;
+      updatedSignerAddress = this.granteeAddress;
       // Wrap the signerAddress in a MsgExec
-      messages = [
+      updatedMessages = [
         {
           typeUrl: "/cosmos.authz.v1beta1.MsgExec",
           value: MsgExec.fromPartial({
@@ -111,7 +119,12 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       ];
     }
 
-    return super.signAndBroadcast(signerAddress, messages, fee, memo);
+    return super.signAndBroadcast(
+      updatedSignerAddress,
+      updatedMessages,
+      fee,
+      memo,
+    );
   }
 
   public async sign(
@@ -122,20 +135,28 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     explicitSignerData?: SignerData,
   ): Promise<TxRaw> {
     // Figure out if the signerAddress is a granter
+    let updatedSignerAddress = signerAddress;
+    let updatedMessages = messages;
     if (signerAddress === this.granterAddress) {
-      signerAddress = this.granteeAddress;
+      updatedSignerAddress = this.granteeAddress;
       // Wrap the signerAddress in a MsgExec
-      messages = [
+      updatedMessages = [
         {
           typeUrl: "/cosmos.authz.v1beta1.MsgExec",
           value: MsgExec.fromPartial({
-            grantee: signerAddress,
+            grantee: updatedSignerAddress,
             msgs: messages.map((msg) => this.registry.encodeAsAny(msg)),
           }),
         },
       ];
     }
 
-    return super.sign(signerAddress, messages, fee, memo, explicitSignerData);
+    return super.sign(
+      updatedSignerAddress,
+      updatedMessages,
+      fee,
+      memo,
+      explicitSignerData,
+    );
   }
 }

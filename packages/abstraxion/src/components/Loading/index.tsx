@@ -1,6 +1,6 @@
 import { ModalSection, Spinner } from "@burnt-labs/ui";
 
-export const Loading = () => {
+export function Loading(): JSX.Element {
   return (
     <ModalSection>
       <div className="ui-flex ui-flex-col ui-w-full ui-text-center">

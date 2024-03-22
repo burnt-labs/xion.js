@@ -1,38 +1,31 @@
 import { bech32 } from "bech32";
 import { TxRaw, AuthInfo, SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import {
+import type {
   GeneratedType,
-  Registry,
   EncodeObject,
   DirectSignResponse,
-  makeSignBytes,
 } from "@cosmjs/proto-signing";
-import {
+import { Registry } from "@cosmjs/proto-signing";
+import type {
   Account,
-  defaultRegistryTypes,
   DeliverTxResponse,
   SignerData,
   SigningStargateClientOptions,
   StdFee,
 } from "@cosmjs/stargate";
+import { defaultRegistryTypes } from "@cosmjs/stargate";
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
-import { MsgRegisterAccount } from "../../types/generated/abstractaccount/v1/tx";
-import {
-  abstractAccountTypes,
-  MsgRegisterAccountEncodeObject,
-  typeUrlMsgRegisterAccount,
-} from "./messages";
-import { customAccountFromAny, makeAAuthInfo } from ".";
-import { AASigner } from "../../interfaces/AASigner";
-import {
-  SigningCosmWasmClient,
-  wasmTypes,
-  MsgExecuteContractEncodeObject,
-} from "@cosmjs/cosmwasm-stargate";
+import type { MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
+import { SigningCosmWasmClient, wasmTypes } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
-import { AddAuthenticator } from "../../interfaces/smartAccount";
+import type { MsgRegisterAccount } from "../../types/generated/abstractaccount/v1/tx";
+import type { AASigner } from "../../interfaces/AASigner";
+import type { AddAuthenticator } from "../../interfaces/smartAccount";
+import type { MsgRegisterAccountEncodeObject } from "./messages";
+import { abstractAccountTypes, typeUrlMsgRegisterAccount } from "./messages";
+import { customAccountFromAny, makeAAuthInfo } from ".";
 
-export const AADefaultRegistryTypes: ReadonlyArray<[string, GeneratedType]> = [
+export const AADefaultRegistryTypes: readonly [string, GeneratedType][] = [
   ...defaultRegistryTypes,
   ...wasmTypes,
   ...abstractAccountTypes,
@@ -68,7 +61,7 @@ export class AAClient extends SigningCosmWasmClient {
 
   /**
    * Creates a MsgRegisterAbstractAccount message and broadcasts it
-   * @param msg the message to be sent
+   * @param msg - the message to be sent
    * @returns
    */
   public async registerAbstractAccount(
@@ -84,13 +77,13 @@ export class AAClient extends SigningCosmWasmClient {
 
   /**
    * Create and a cosmwasm add authenticator msg to the abstract account
-   * @param msg the message to be sent
+   * @param msg - the message to be sent
    * @returns
    */
   public async addAbstractAccountAuthenticator(
     msg: AddAuthenticator,
-    memo = "",
     fee: StdFee,
+    memo = "",
   ): Promise<DeliverTxResponse> {
     if (!this.abstractSigner.abstractAccount) {
       throw new Error("Abstract account address not set in signer");
@@ -124,11 +117,11 @@ export class AAClient extends SigningCosmWasmClient {
    * required to verify the transaction on the chain and also builds the authInfoBytes using
    * the Abstract Account pubkey type NilPubKey
    * NB: This method is not compatible with regular signers. Use the sign method from SigningStargateClient
-   * @param signerAddress // the abstract account address to be used as the signer
-   * @param messages // the messages to be signed
-   * @param fee
-   * @param memo
-   * @param explicitSignerData
+   * @param signerAddress - // the abstract account address to be used as the signer
+   * @param messages - // the messages to be signed
+   * @param fee - info about the amount, gas, and granter
+   * @param memo - // a memo to be included in the transaction
+   * @param explicitSignerData - account number, sequence, and chainId
    * @returns
    */
   public async sign(
@@ -140,7 +133,7 @@ export class AAClient extends SigningCosmWasmClient {
   ): Promise<TxRaw> {
     const aaAcount = await this.getAccount(signerAddress);
     // we want to use the normal signingstargate client sign method if the signer is not an AASigner
-    if (aaAcount && aaAcount.pubkey) {
+    if (aaAcount?.pubkey) {
       // this is a regular signer
       this.abstractSigner.abstractAccount = undefined;
       return super.sign(signerAddress, messages, fee, memo, explicitSignerData);
@@ -185,8 +178,8 @@ export class AAClient extends SigningCosmWasmClient {
     const txBodyEncodeObject = {
       typeUrl: "/cosmos.tx.v1beta1.TxBody",
       value: {
-        messages: messages,
-        memo: memo,
+        messages,
+        memo,
       },
     };
     const authInfo = makeAAuthInfo(aaAcount, Uint8Array.from(pubKeyBytes), fee);

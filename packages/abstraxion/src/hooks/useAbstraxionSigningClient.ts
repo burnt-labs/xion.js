@@ -17,7 +17,7 @@ export const useAbstraxionSigningClient = (): {
   const [signArbWallet, setSignArbWallet] = useState<
     SignArbSecp256k1HdWallet | undefined
   >(undefined);
-  const getTempAccount = async () => {
+  const getTempAccount = async (): Promise<SignArbSecp256k1HdWallet | undefined> => {
     const tempKeypair = localStorage.getItem("xion-authz-temp-account");
     let wallet;
     if (tempKeypair) {
@@ -34,7 +34,7 @@ export const useAbstraxionSigningClient = (): {
   >(undefined);
 
   useEffect(() => {
-    async function getSigner() {
+    async function getSigner(): Promise<void> {
       try {
         if (!abstraxionAccount) {
           throw new Error("No account found.");
@@ -70,7 +70,7 @@ export const useAbstraxionSigningClient = (): {
 
         setAbstractClient(directClient);
       } catch (error) {
-        console.log("Something went wrong: ", error);
+        console.error("Something went wrong: ", error);
         setAbstractClient(undefined);
       }
     }

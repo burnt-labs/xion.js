@@ -120,10 +120,14 @@ export const AbstraxionWallets = () => {
           },
         },
       };
-      const res = await client.addAbstractAccountAuthenticator(msg, "", {
-        amount: [{ amount: "0", denom: "uxion" }],
-        gas: "500000",
-      });
+      const res = await client.addAbstractAccountAuthenticator(
+        msg,
+        {
+          amount: [{ amount: "0", denom: "uxion" }],
+          gas: "500000",
+        },
+        "",
+      );
 
       if (res.rawLog?.includes("failed")) {
         throw new Error(res.rawLog);

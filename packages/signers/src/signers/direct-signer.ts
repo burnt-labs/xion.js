@@ -1,12 +1,14 @@
-import {
+import type {
   DirectSignResponse,
-  OfflineDirectSigner,
+  OfflineDirectSigner} from "@cosmjs/proto-signing";
+import {
   makeSignBytes,
 } from "@cosmjs/proto-signing";
-import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { AAccountData, AASigner } from "../interfaces/AASigner";
+import type { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import type { StdSignature } from "@cosmjs/amino";
+import type { AAccountData} from "../interfaces/AASigner";
+import { AASigner } from "../interfaces/AASigner";
 import { getAAccounts } from "./utils";
-import { StdSignature } from "@cosmjs/amino";
 
 export type SignArbitraryFn = (
   chainId: string,
@@ -84,6 +86,6 @@ export class AADirectSigner extends AASigner {
         };
       });
     }
-    return await getAAccounts(accounts, this.abstractAccount, this.indexerUrl);
+    return getAAccounts(accounts, this.abstractAccount, this.indexerUrl);
   }
 }

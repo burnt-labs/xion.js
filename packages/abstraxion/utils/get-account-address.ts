@@ -1,6 +1,6 @@
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
-export async function getAccountAddress() {
+export async function getAccountAddress(): Promise<string> {
   const existingKeypair = localStorage.getItem("xion-authz-temp-account");
   if (!existingKeypair) {
     return "";

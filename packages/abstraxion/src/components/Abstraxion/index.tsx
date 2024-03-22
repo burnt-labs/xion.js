@@ -1,11 +1,12 @@
 "use client";
 import { useContext, useEffect } from "react";
 import { Dialog, DialogContent } from "@burnt-labs/ui";
+import type {
+  ContractGrantDescription,
+  SpendLimit} from "../AbstraxionContext";
 import {
   AbstraxionContext,
-  AbstraxionContextProvider,
-  ContractGrantDescription,
-  SpendLimit,
+  AbstraxionContextProvider
 } from "../AbstraxionContext";
 import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
@@ -80,12 +81,12 @@ export function AbstraxionProvider({
 }): JSX.Element {
   return (
     <AbstraxionContextProvider
+      bank={config.bank}
       contracts={config.contracts}
       dashboardUrl={config.dashboardUrl}
-      rpcUrl={config.rpcUrl}
       restUrl={config.restUrl}
+      rpcUrl={config.rpcUrl}
       stake={config.stake}
-      bank={config.bank}
     >
       {children}
     </AbstraxionContextProvider>

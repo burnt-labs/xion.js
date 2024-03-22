@@ -1,56 +1,55 @@
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
-import { Account } from "@cosmjs/stargate";
-import { Any } from "../../types/generated/google/protobuf/any";
-import { BaseAccount } from "cosmjs-types/cosmos/auth/v1beta1/auth";
+import type { Account } from "@cosmjs/stargate";
+import type { BaseAccount } from "cosmjs-types/cosmos/auth/v1beta1/auth";
 import { AuthInfo, SignerInfo } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { decodePubkey, AccountData, Algo } from "@cosmjs/proto-signing";
-import { coins, StdFee, type Pubkey } from "@cosmjs/amino";
+import type { AccountData, Algo } from "@cosmjs/proto-signing";
+import { decodePubkey } from "@cosmjs/proto-signing";
+import { coins } from "@cosmjs/amino";
+import type { StdFee, Pubkey } from "@cosmjs/amino";
 import { Uint64 } from "@cosmjs/math";
-import { AbstractAccount } from "../../types/generated/abstractaccount/v1/account";
 import { assert } from "@cosmjs/utils";
 import { accountFromAny } from "@cosmjs/stargate/build/accounts";
-import { AAccountData } from "../../interfaces/AASigner";
-import {
-  AAAlgo,
+import type { OTPsAuthenticateResponse } from "stytch";
+import type { NormalizedCacheObject } from "@apollo/client";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { AbstractAccount } from "../../types/generated/abstractaccount/v1/account";
+import type { AAccountData } from "../../interfaces/AASigner";
+import type {
   AddAuthenticator,
   IQueryAAResponse,
   ISmartAccountAuthenticator,
   ISmartAccounts,
 } from "../../interfaces/smartAccount";
+import { AAAlgo } from "../../interfaces/smartAccount";
 import {
   AllSmartWalletQueryByIdAndTypeAndAuthenticator,
   SingleSmartWalletQuery,
   SmartWalletIndexQueryByAccountId,
 } from "../../interfaces/queries";
-import { OTPsAuthenticateResponse } from "stytch";
-import {
-  ApolloClient,
-  InMemoryCache,
-  NormalizedCacheObject,
-} from "@apollo/client";
+import type { Any } from "../../types/generated/google/protobuf/any";
 
 let apolloClientInstance: ApolloClient<NormalizedCacheObject>;
 
-export const getApolloClient = (url?: string) => {
-  if (!apolloClientInstance) {
-    apolloClientInstance = new ApolloClient({
-      uri: url || "https://api.subquery.network/sq/burnt-labs/xion-indexer",
-      cache: new InMemoryCache(),
-      assumeImmutableResults: true,
-    });
-  }
+export const getApolloClient = (
+  url?: string,
+): ApolloClient<NormalizedCacheObject> => {
+  apolloClientInstance = new ApolloClient({
+    uri: url || "https://api.subquery.network/sq/burnt-labs/xion-indexer",
+    cache: new InMemoryCache(),
+    assumeImmutableResults: true,
+  });
   return apolloClientInstance;
 };
 
-export type INodes<T> = {
-  nodes: Array<T>;
-};
+export interface INodes<T> {
+  nodes: T[];
+}
 
 function uint64FromProto(input: number | bigint): Uint64 {
   return Uint64.fromString(input.toString());
 }
 
-function accountFromBaseAccount(input: BaseAccount) {
+function accountFromBaseAccount(input: BaseAccount): {address: string, pubkey: Pubkey | null, accountNumber: number, sequence: number} {
   const { address, pubKey, accountNumber, sequence } = input;
   let pubkey: Pubkey | null = null;
   if (pubKey) {
@@ -67,7 +66,7 @@ function accountFromBaseAccount(input: BaseAccount) {
 /**
  * Custom implementation of AccountParser. This is supposed to support the most relevant
  * common Cosmos SDK account types and AbstractAccount account types.
- * @param input encoded account from the chain
+ * @param input - encoded account from the chain
  * @returns decoded account
  */
 export function customAccountFromAny(input: Any): Account {
@@ -86,9 +85,9 @@ export function customAccountFromAny(input: Any): Account {
 /**
  * Abstract Account specific implementation of the authInfo
  * Only one signer is allowed and must be a registered AbstractAccount
- * @param account AbstractAccount
- * @param pubKey
- * @param fee
+ * @param account - AbstractAccount
+ * @param pubKey -
+ * @param fee -
  * @returns
  */
 export function makeAAuthInfo(
@@ -125,8 +124,8 @@ export function makeAAuthInfo(
 /**
  * This method gets all the AA accounts in which the signers in the accountData
  * are authenticators for
- *  @param accounts the account data of the signer
- *  @param abstractAccount the abstract account address
+ *  @param accounts -  the account data of the signer
+ *  @param abstractAccount -  the abstract account address
  **/
 export async function getAAccounts(
   accounts: readonly AccountData[],
@@ -145,6 +144,7 @@ export async function getAAccounts(
   // class then we use the public key and algo type to query the xion-indexer
   // for the abstract account authenticators matching the public key and algo type
   const apolloClient = getApolloClient(indexerUrl);
+  // Need these conditions for Vanilla JS.
   if (!apolloClient || !accounts || accounts.length === 0) {
     return [defaultData];
   }
@@ -175,7 +175,7 @@ export async function getAAccounts(
             /** The authenticator id was encoded as the contract address + xion + <id>
              * e.g. xion3214141231312323 + xion + 1
              */
-            address: "xion" + authenticator.authenticatorId.split("xion")[1],
+            address: `xion${authenticator.authenticatorId.split("xion")[1]}`,
             accountAddress: account.address,
             algo: authenticator.type.toLowerCase() as Algo,
             pubkey: new Uint8Array(), // to signify an AA account
@@ -208,7 +208,7 @@ export async function getAALastAuthenticatorId(
       id: abstractAccount,
     },
   });
-  if (!data || !data.smartAccount || !data.smartAccount.latestAuthenticatorId) {
+  if (!data.smartAccount.latestAuthenticatorId) {
     return 0;
   }
   return data.smartAccount.latestAuthenticatorId;
@@ -247,7 +247,7 @@ export async function getAuthenticatorIdByAuthenticatorIndex(
       index: authenticatorIndex,
     },
   });
-  if (!data || !data.smartAccounts) {
+  if (!data.smartAccounts) {
     return 0;
   }
 
@@ -271,9 +271,9 @@ export async function getAuthenticatorIdByAuthenticatorIndex(
 
 /**
  * Build an add authenticator message for the abstract account
- * @param authType
- * @param abstractAccount the abstract account address
- * @param authData
+ * @param authType -
+ * @param abstractAccount - the abstract account address
+ * @param authData -
  * @returns
  */
 export async function buildAddJWTAuthenticatorMsg(
@@ -287,7 +287,7 @@ export async function buildAddJWTAuthenticatorMsg(
     abstractAccount,
     indexerUrl,
   );
-  let addAuthMsg: AddAuthenticator = {
+  const addAuthMsg: AddAuthenticator = {
     add_auth_method: {
       add_authenticator: {
         Jwt: {

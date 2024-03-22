@@ -22,11 +22,6 @@ interface Bip44 {
   coinType: number;
 }
 
-interface Gas {
-  price: string;
-  denom: string;
-}
-
 export interface ChainInfo {
   rpc: string;
   rest: string;
