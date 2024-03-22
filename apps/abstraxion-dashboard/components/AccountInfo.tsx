@@ -3,7 +3,7 @@ import { CopyIcon, ScanIcon } from "./Icons";
 import { truncateAddress } from "@/utils";
 
 export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
-  const copyXionAddress = () => {
+  const copyXIONAddress = () => {
     if (account?.id) {
       navigator.clipboard.writeText(account?.id);
     }
@@ -34,7 +34,7 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
         XION Address
       </h3>
       <div
-        onClick={copyXionAddress}
+        onClick={copyXIONAddress}
         className="ui-flex ui-cursor-pointer ui-items-center ui-justify-between ui-mb-10 ui-px-4 ui-w-full ui-h-16 ui-bg-black ui-rounded-lg"
       >
         <p className="ui-text-white ui-text-base ui-font-normal ui-font-akkuratLL ui-leading-normal">
