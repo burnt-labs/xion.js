@@ -11,6 +11,7 @@ export const Button: React.FC<ButtonProps> = ({
   structure = "base",
   disabled = false,
   children,
+  className,
   ...props
 }) => {
   const getButtonClasses = () => {
@@ -43,7 +44,7 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       className={`ui-flex ui-items-center ui-justify-center ui-rounded-md ui-font-akkuratLL ui-uppercase ui-px-5 ui-py-3.5 ui-text-sm ui-outline-none ui-hover:opacity-70 ${
         fullWidth ? "ui-w-full" : ""
-      } ${getButtonClasses()}`}
+      } ${getButtonClasses()} ${className}`}
       {...props}
     >
       {children}
