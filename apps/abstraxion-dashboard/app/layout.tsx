@@ -32,8 +32,8 @@ const akkuratLL = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Xion Account Dashboard",
-  description: "A dashboard for managing Xion accounts.",
+  title: "XION Account Dashboard",
+  description: "A dashboard for managing XION accounts.",
 };
 
 export default function RootLayout({

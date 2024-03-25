@@ -37,7 +37,7 @@ export default function Home() {
                   <h3 className="ui-font-akkuratLL ui-mb-4 ui-text-2xl ui-text-white ui-font-bold">
                     Overview
                   </h3>
-                  <Overview />
+                  <Overview account={account as AbstraxionAccount} />
                   <h3 className="ui-font-akkuratLL ui-mb-4 ui-mt-8 ui-text-2xl ui-font-bold ui-text-white">
                     Account Info
                   </h3>
