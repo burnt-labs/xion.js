@@ -88,8 +88,8 @@ export const testChainInfo: ChainInfo = {
 
 // If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
-  "xion-mainnet-1": "dashboard.burnt.com",
-  "xion-testnet-1": "testnet-dashboard.burnt.com",
+  "xion-mainnet-1": "https://dashboard.burnt.com",
+  "xion-testnet-1": "https://testnet.dashboard.burnt.com",
 };
 
 export async function fetchConfig(rpcUrl: string): Promise<string> {
