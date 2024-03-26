@@ -28,7 +28,7 @@ export function WalletReceive({
         className="ui-text-white"
         onPointerDownOutside={(e: any) => e.preventDefault()}
       >
-        <DialogClose className="ui-absolute ui-top-5 ui-right-10">
+        <DialogClose className="ui-absolute ui-top-5 ui-right-5">
           <CloseIcon className="ui-stroke-white/50" />
         </DialogClose>
         <div className="ui-flex ui-flex-col ui-pt-8">

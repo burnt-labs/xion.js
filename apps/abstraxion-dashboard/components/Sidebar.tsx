@@ -5,11 +5,15 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useContext } from "react";
 import { AbstraxionContext, AbstraxionContextProps } from "./AbstraxionContext";
-import { WalletIcon } from "./Icons";
+import { CloseIcon, WalletIcon } from "./Icons";
 
 const NAV_OPTIONS = [{ text: "home", path: "/" }];
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: VoidFunction;
+}
+
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const { isMainnet, setIsOpen } = useContext(
     AbstraxionContext,
@@ -57,15 +61,19 @@ export function Sidebar() {
     <div className="ui-h-screen ui-bg-primary ui-border-[#6C6A6A] ui-border-r-[1px] ui-text-white ui-flex ui-flex-col ui-w-64">
       <div className="ui-flex ui-items-center ui-justify-between ui-px-8 ui-pt-8">
         <Image src="/logo.png" alt="XION Logo" width="90" height="32" />
-        <div
-          className={`ui-flex ${
-            isMainnet ? "ui-bg-mainnet-bg" : "ui-bg-testnet-bg"
-          } ui-px-2 ui-py-1 ui-ml-6 ${
-            isMainnet ? "ui-text-mainnet" : "ui-text-testnet"
-          } ui-rounded-md ui-font-akkuratLL ui-text-xs ui-tracking-widest`}
-        >
-          {isMainnet ? "MAINNET" : "TESTNET"}
-        </div>
+        {!onClose ? (
+          <div
+            className={`ui-flex ${
+              isMainnet ? "ui-bg-mainnet-bg" : "ui-bg-testnet-bg"
+            } ui-px-2 ui-py-1 ui-ml-6 ${
+              isMainnet ? "ui-text-mainnet" : "ui-text-testnet"
+            } ui-rounded-md ui-font-akkuratLL ui-text-xs ui-tracking-widest`}
+          >
+            {isMainnet ? "MAINNET" : "TESTNET"}
+          </div>
+        ) : (
+          <CloseIcon color="#6C6A6A" onClick={onClose} />
+        )}
       </div>
 
       <div className="ui-flex ui-justify-center ui-flex-col ui-flex-grow ">

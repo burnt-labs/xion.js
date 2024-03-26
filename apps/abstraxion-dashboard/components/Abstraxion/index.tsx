@@ -87,8 +87,8 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
       </Dialog>
       {/* TOS Footer */}
       {!isConnected && (
-        <div className="ui-absolute ui-pointer-events-auto ui-w-full ui-z-[1000] ui-py-6 ui-px-10 ui-bottom-0 ui-flex ui-justify-between ui-items-end">
-          <div className="ui-font-akkuratLL ui-text-sm ui-font-normal ui-leading-none">
+        <div className="ui-absolute ui-pointer-events-auto ui-w-full ui-z-[1000] ui-py-6 ui-px-10 ui-bottom-0 ui-flex ui-flex-col sm:ui-flex-row sm:ui-justify-between sm:ui-items-end">
+          <div className="ui-font-akkuratLL ui-text-xs sm:ui-text-sm ui-font-normal ui-text-center sm:ui-text-left">
             <span className="ui-text-neutral-400">
               By continuing, you agree to and acknowledge that you have read and
               understand the
@@ -98,15 +98,15 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
             </a>
             <span className="ui-text-neutral-400">.</span>
           </div>
-          <div className="ui-flex ui-gap-2 ui-items-end">
+          <div className="ui-flex ui-gap-2 ui-justify-center ui-items-end ui-my-6 sm:ui-my-0">
             <p className="ui-font-akkuratLL ui-text-sm ui-text-zinc-100 ui-opacity-50 leading-tight">
               Powered by
             </p>
-            <div className="ui-flex ui-flex-col ui-items-start">
+            <div className="ui-flex ui-flex-row-reverse ui-items-center sm:ui-items-start  sm:ui-flex-col">
               <div
                 className={`ui-flex ui-justify-between ${
                   isMainnet ? "ui-bg-mainnet-bg" : "ui-bg-testnet-bg"
-                } ui-px-2 ui-py-1 ui-mb-2 ${
+                } ui-px-2 ui-py-1 ui-ml-2 sm:ui-ml-0 sm:ui-mb-2 ${
                   isMainnet ? "ui-text-mainnet" : "ui-text-testnet"
                 } ui-rounded-md ui-font-akkuratLL ui-text-xs ui-tracking-widest`}
               >

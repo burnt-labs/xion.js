@@ -241,7 +241,10 @@ export function WalletSendForm({
             </div>
             <div className="ui-flex ui-flex-col">
               <label className="ui-text-xs ui-text-white/50">From:</label>
-              <p className="ui-text-xs ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white">
+              <p
+                style={{ wordBreak: "break-word" }}
+                className="ui-text-xs ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white"
+              >
                 {account.id}
               </p>
             </div>
