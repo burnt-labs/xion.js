@@ -44,9 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={akkuratLL.variable}>
-        <Providers>
-          <div className="ui-flex">{children}</div>
-        </Providers>
+        <Providers>{children}</Providers>
         <Analytics />
       </body>
     </html>

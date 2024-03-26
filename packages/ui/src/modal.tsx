@@ -75,7 +75,7 @@ export function ModalSection({
   return (
     <div
       className={cn(
-        "ui-inline-flex ui-w-full ui-h-full ui-p-10 ui-flex-col ui-items-start ui-justify-between ui-gap-8",
+        "ui-inline-flex ui-w-full ui-h-full sm:ui-p-10 ui-flex-col ui-items-start ui-justify-between ui-gap-8",
         className,
       )}
       {...props}
