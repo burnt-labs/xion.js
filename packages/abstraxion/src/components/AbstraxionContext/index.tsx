@@ -27,8 +27,9 @@ export interface AbstraxionContextProps {
   setGranterAddress: React.Dispatch<React.SetStateAction<string>>;
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
-  rpcUrl?: string;
-  restUrl?: string;
+  setDashboardUrl: React.Dispatch<React.SetStateAction<string>>;
+  rpcUrl: string;
+  restUrl: string;
   stake?: boolean;
   bank?: SpendLimit[];
   logout?: () => void;
@@ -41,7 +42,6 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 export function AbstraxionContextProvider({
   children,
   contracts,
-  dashboardUrl = "https://dashboard.burnt.com",
   rpcUrl = testnetChainInfo.rpc,
   restUrl = testnetChainInfo.rest,
   stake = false,
@@ -63,6 +63,7 @@ export function AbstraxionContextProvider({
     DirectSecp256k1HdWallet | undefined
   >(undefined);
   const [granterAddress, setGranterAddress] = useState("");
+  const [dashboardUrl, setDashboardUrl] = useState("");
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -96,6 +97,7 @@ export function AbstraxionContextProvider({
         setGranterAddress,
         contracts,
         dashboardUrl,
+        setDashboardUrl,
         rpcUrl,
         restUrl,
         stake,

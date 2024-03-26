@@ -1,3 +1,5 @@
+import { RpcStatusResponse } from "./types";
+
 export interface Coin {
   coinDenom: string;
   coinMinimalDenom: string;
@@ -20,11 +22,6 @@ interface Bech32Config {
 
 interface Bip44 {
   coinType: number;
-}
-
-interface Gas {
-  price: string;
-  denom: string;
 }
 
 export interface ChainInfo {
@@ -88,3 +85,26 @@ export const testChainInfo: ChainInfo = {
   chainId: "xion-local-testnet-1",
   chainName: "XION Testnet Local",
 };
+
+// If mainnet chain-id/network changes be sure to update here.
+const DASHBOARD_URLS = {
+  "xion-mainnet-1": "https://dashboard.burnt.com",
+  "xion-testnet-1": "https://testnet.dashboard.burnt.com",
+};
+
+export async function fetchConfig(rpcUrl: string): Promise<string> {
+  try {
+    const fetchReq = await fetch(`${rpcUrl}/status`);
+    if (!fetchReq.ok) {
+      throw new Error("Something went wrong querying RPC");
+    }
+
+    const data: RpcStatusResponse = await fetchReq.json();
+    const lookup = data.result.node_info.network;
+    const returnUrl = DASHBOARD_URLS[lookup as keyof typeof DASHBOARD_URLS];
+    if (!returnUrl) throw new Error("Network not found.");
+    return returnUrl;
+  } catch (error) {
+    throw error;
+  }
+}

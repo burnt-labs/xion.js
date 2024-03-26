@@ -7,6 +7,7 @@ import {
   AbstraxionContext,
   ContractGrantDescription,
 } from "../AbstraxionContext";
+import { fetchConfig } from "@burnt-labs/constants";
 
 interface GrantsResponse {
   grants: Grant[];
@@ -49,11 +50,14 @@ export function AbstraxionSignin(): JSX.Element {
   const {
     setIsConnecting,
     setIsConnected,
+    setAbstraxionError,
     setAbstraxionAccount,
     setGranterAddress,
     granterAddress,
     contracts,
     dashboardUrl,
+    setDashboardUrl,
+    rpcUrl,
     restUrl,
     stake,
     bank,
@@ -70,7 +74,12 @@ export function AbstraxionSignin(): JSX.Element {
   function openDashboardTab(
     userAddress: string,
     grantContracts?: ContractGrantDescription[],
+    dashUrl?: string,
   ): void {
+    if (!dashUrl) {
+      console.warn("Failed to fetch dashboard url");
+      setAbstraxionError("Failed to fetch dashboard url");
+    }
     const currentUrl = window.location.href;
     const urlParams = new URLSearchParams();
 
@@ -87,7 +96,7 @@ export function AbstraxionSignin(): JSX.Element {
     }
     urlParams.set("redirect_uri", currentUrl);
     const queryString = urlParams.toString(); // Convert URLSearchParams to string
-    window.location.href = `${dashboardUrl}?${queryString}`;
+    window.location.href = `${dashUrl}?${queryString}`;
   }
 
   async function generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {
@@ -158,7 +167,9 @@ export function AbstraxionSignin(): JSX.Element {
         setTempAccountAddress(address);
 
         if (!isGranted && !granterAddress) {
-          openDashboardTab(address, contracts);
+          const dashUrl = await fetchConfig(rpcUrl);
+          setDashboardUrl(dashUrl);
+          openDashboardTab(address, contracts, dashUrl);
         } else if (isGranted && !granterAddress) {
           await pollForGrants(address);
           setIsConnecting(false);
@@ -169,6 +180,7 @@ export function AbstraxionSignin(): JSX.Element {
         }
       } catch (error) {
         console.log("Something went wrong: ", error);
+        setAbstraxionError((error as Error).message);
       }
     }
 
@@ -193,7 +205,7 @@ export function AbstraxionSignin(): JSX.Element {
       <BrowserIcon />
       <Button
         onClick={() => {
-          openDashboardTab(tempAccountAddress, contracts);
+          openDashboardTab(tempAccountAddress, contracts, dashboardUrl);
         }}
         structure="naked"
       >
