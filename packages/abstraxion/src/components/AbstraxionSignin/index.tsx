@@ -167,9 +167,9 @@ export function AbstraxionSignin(): JSX.Element {
         setTempAccountAddress(address);
 
         if (!isGranted && !granterAddress) {
-          const dashUrl = await fetchConfig(rpcUrl);
-          setDashboardUrl(dashUrl);
-          openDashboardTab(address, contracts, dashUrl);
+          const { dashboardUrl } = await fetchConfig(rpcUrl);
+          setDashboardUrl(dashboardUrl);
+          openDashboardTab(address, contracts, dashboardUrl);
         } else if (isGranted && !granterAddress) {
           await pollForGrants(address);
           setIsConnecting(false);
