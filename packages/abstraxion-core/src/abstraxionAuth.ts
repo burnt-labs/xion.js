@@ -196,27 +196,32 @@ export class AbstraxionAuth {
 
   // Redirects to dashboard in order to issue claim with XION meta account for local keypair
   openDashboardTab(userAddress: string): void {
-    const currentUrl = window.location.href;
-    const urlParams = new URLSearchParams();
+    if (typeof window !== "undefined") {
+      const currentUrl = window.location.href;
+      const urlParams = new URLSearchParams();
 
-    if (this.bank) {
-      urlParams.set("bank", JSON.stringify(this.bank));
+      if (this.bank) {
+        urlParams.set("bank", JSON.stringify(this.bank));
+      }
+
+      if (this.stake) {
+        urlParams.set("stake", "true");
+      }
+
+      urlParams.set("grantee", userAddress);
+
+      if (this.grantContracts) {
+        urlParams.set("contracts", JSON.stringify(this.grantContracts));
+      }
+
+      urlParams.set("redirect_uri", currentUrl);
+
+      const queryString = urlParams.toString(); // Convert URLSearchParams to string
+      window.location.href = `${this.dashboardUrl}?${queryString}`;
+    } else {
+      // TODO - Adjust behavior
+      alert("Window not defined. Cannot redirect to dashboard");
     }
-
-    if (this.stake) {
-      urlParams.set("stake", "true");
-    }
-
-    urlParams.set("grantee", userAddress);
-
-    if (this.grantContracts) {
-      urlParams.set("contracts", JSON.stringify(this.grantContracts));
-    }
-
-    urlParams.set("redirect_uri", currentUrl);
-
-    const queryString = urlParams.toString(); // Convert URLSearchParams to string
-    window.location.href = `${this.dashboardUrl}?${queryString}`;
   }
 
   // Polls for grants issued to the local keypair
@@ -250,9 +255,11 @@ export class AbstraxionAuth {
           this.abstractAccount = this.keypair;
           this.triggerAuthStateChange(true);
           // Remove query parameter "granted"
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.delete("granted");
-          history.pushState({}, "", currentUrl.href);
+          if (typeof window !== undefined) {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete("granted");
+            history.pushState({}, "", currentUrl.href);
+          }
           break;
         }
       } catch (error) {
