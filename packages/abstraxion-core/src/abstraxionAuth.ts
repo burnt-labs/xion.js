@@ -1,9 +1,12 @@
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { GasPrice } from "@cosmjs/stargate";
 import { fetchConfig } from "@burnt-labs/constants";
-import { ContractGrantDescription, GrantsResponse, SpendLimit } from "@/types";
+import type {
+  ContractGrantDescription,
+  GrantsResponse,
+  SpendLimit,
+} from "@/types";
 import { wait } from "@/utils";
 import { GranteeSignerClient } from "./GranteeSignerClient";
-import { GasPrice } from "@cosmjs/stargate";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 
 export class AbstraxionAuth {
@@ -21,13 +24,10 @@ export class AbstraxionAuth {
 
   // Signer
   private client?: GranteeSignerClient;
-  signArbWallet?: SignArbSecp256k1HdWallet;
-
-  // TODO: Clean up. Do we need keypair? Difference between abstractAccount and signArbWallet
 
   // Accounts
-  keypair?: DirectSecp256k1HdWallet;
-  abstractAccount?: DirectSecp256k1HdWallet; // Only exists if grants were issued, irregardless if localStorage keypair exists
+  signArbWallet?: SignArbSecp256k1HdWallet; // local keypair
+  abstractAccount?: SignArbSecp256k1HdWallet; // Only exists if grants were issued, irregardless if localStorage keypair exists
 
   constructor(
     rpc: string,
@@ -47,7 +47,7 @@ export class AbstraxionAuth {
       this.dashboardUrl = dashboardUrl;
       this.restUrl = restUrl;
       this.rpcUrl = rpc;
-      await this.getTempAccount();
+      await this.getLocalKeypair();
       return;
     } catch (error) {
       throw error;
@@ -85,20 +85,7 @@ export class AbstraxionAuth {
   }
 
   // Local Keypair Functions
-  private async getTempAccount() {
-    const localKeypair = localStorage.getItem("xion-authz-temp-account");
-    if (!localKeypair) {
-      return undefined;
-    }
-    const keypairWallet = await DirectSecp256k1HdWallet.deserialize(
-      localKeypair,
-      "abstraxion",
-    );
-    this.keypair = keypairWallet;
-    return keypairWallet;
-  }
-
-  private async getSignArbAccount() {
+  private async getLocalKeypair() {
     const localKeypair = localStorage.getItem("xion-authz-temp-account");
     if (!localKeypair) {
       return undefined;
@@ -111,23 +98,23 @@ export class AbstraxionAuth {
     return keypairWallet;
   }
 
-  private async generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {
-    const keypair = await DirectSecp256k1HdWallet.generate(12, {
+  private async generateAndStoreTempAccount(): Promise<SignArbSecp256k1HdWallet> {
+    const keypair = await SignArbSecp256k1HdWallet.generate(12, {
       prefix: "xion",
     });
 
     const serializedKeypair = await keypair.serialize("abstraxion");
     localStorage.setItem("xion-authz-temp-account", serializedKeypair);
 
-    this.keypair = keypair;
+    this.signArbWallet = keypair;
     this.removeGranterAddress(); // Prevent multiple truth issue
 
     return keypair;
   }
 
   private async getKeypairAddress() {
-    if (this.keypair) {
-      const accounts = await this.keypair.getAccounts();
+    if (this.signArbWallet) {
+      const accounts = await this.signArbWallet.getAccounts();
       const address = accounts[0].address;
       return address;
     } else {
@@ -148,6 +135,10 @@ export class AbstraxionAuth {
   // Signer related functions
   async getSigner() {
     try {
+      if (this.client) {
+        return this.client;
+      }
+
       if (!this.rpcUrl) {
         throw new Error("Configuration not initialized");
       }
@@ -164,7 +155,7 @@ export class AbstraxionAuth {
 
       const granteeAddress = await this.abstractAccount
         .getAccounts()
-        .then((accounts) => {
+        .then((accounts: any) => {
           if (accounts.length === 0) {
             throw new Error("No account found.");
           }
@@ -181,7 +172,7 @@ export class AbstraxionAuth {
         },
       );
 
-      const wallet = await this.getSignArbAccount();
+      const wallet = await this.getLocalKeypair();
       if (wallet) {
         this.signArbWallet = wallet;
       }
@@ -189,8 +180,9 @@ export class AbstraxionAuth {
       this.client = directClient;
       return directClient;
     } catch (error) {
-      console.log("Something went wrong: ", error);
+      console.warn("Something went wrong getting signer: ", error);
       this.client = undefined;
+      throw error;
     }
   }
 
@@ -226,7 +218,7 @@ export class AbstraxionAuth {
 
   // Polls for grants issued to the local keypair
   async pollForGrants(): Promise<boolean> {
-    const localKeypair = await this.getTempAccount();
+    const localKeypair = await this.getLocalKeypair();
     if (!localKeypair) {
       throw new Error("No account found.");
     }
@@ -252,7 +244,7 @@ export class AbstraxionAuth {
           }
 
           this.setGranter(uniqueGranters[0]);
-          this.abstractAccount = this.keypair;
+          this.abstractAccount = this.signArbWallet;
           this.triggerAuthStateChange(true);
           // Remove query parameter "granted"
           if (typeof window !== undefined) {
@@ -272,18 +264,18 @@ export class AbstraxionAuth {
   logout() {
     localStorage.removeItem("xion-authz-temp-account");
     localStorage.removeItem("xion-authz-granter-account");
-    this.keypair = undefined;
+    this.signArbWallet = undefined;
     this.abstractAccount = undefined;
     this.triggerAuthStateChange(false);
   }
 
   // Do we want to build this out more?
   async authenticate() {
-    const keypair = await this.getTempAccount();
+    const keypair = await this.getLocalKeypair();
     const granter = this.getGranter();
 
     if (keypair && granter) {
-      this.abstractAccount = this.keypair;
+      this.abstractAccount = this.signArbWallet;
       this.triggerAuthStateChange(true);
     }
   }
@@ -291,12 +283,12 @@ export class AbstraxionAuth {
   // Handle different possible cases of logging in
   async login() {
     try {
-      const keypair = await this.getTempAccount();
+      const keypair = await this.getLocalKeypair();
       const granter = this.getGranter();
 
       if (keypair && granter) {
         // Already logged in, just update state
-        this.abstractAccount = this.keypair;
+        this.abstractAccount = this.signArbWallet;
         this.triggerAuthStateChange(true);
       } else if (keypair && !granter) {
         // TODO: Need to implement a timeout or a max request for polling
@@ -307,6 +299,7 @@ export class AbstraxionAuth {
       }
     } catch (error) {
       console.warn("Something went wrong: ", error);
+      throw error;
     }
   }
 
@@ -319,6 +312,7 @@ export class AbstraxionAuth {
       this.openDashboardTab(address);
     } catch (error) {
       console.warn("Something went wrong: ", error);
+      throw error;
     }
   }
 }

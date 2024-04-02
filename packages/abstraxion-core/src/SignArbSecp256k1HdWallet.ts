@@ -1,6 +1,8 @@
-import type { AccountData } from "@cosmjs/proto-signing";
+import { Buffer } from "buffer";
+import { makeSignBytes, type AccountData } from "@cosmjs/proto-signing";
 import type { KdfConfiguration } from "@cosmjs/amino";
 import {
+  encodeSecp256k1Signature,
   makeCosmoshubPath,
   rawSecp256k1PubkeyToRawAddress,
 } from "@cosmjs/amino";
@@ -14,13 +16,44 @@ import {
   stringToPath,
   EnglishMnemonic,
   Bip39,
+  Random,
+  Argon2id,
+  isArgon2idOptions,
+  pathToString,
+  sha256,
 } from "@cosmjs/crypto";
-import { fromBase64, fromUtf8, toBech32 } from "@cosmjs/encoding";
+import {
+  fromBase64,
+  fromUtf8,
+  toBase64,
+  toBech32,
+  toUtf8,
+} from "@cosmjs/encoding";
 import { makeADR36AminoSignDoc, serializeSignDoc } from "@keplr-wallet/cosmos";
 import type { EncryptionConfiguration } from "@cosmjs/proto-signing/build/wallet";
-import { decrypt, executeKdf } from "@cosmjs/proto-signing/build/wallet";
+import {
+  cosmjsSalt,
+  decrypt,
+  encrypt,
+  executeKdf,
+  supportedAlgorithms,
+} from "@cosmjs/proto-signing/build/wallet";
+import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 
 const serializationTypeV1 = "directsecp256k1hdwallet-v1";
+
+/**
+ * A KDF configuration that is not very strong but can be used on the main thread.
+ * It takes about 1 second in Node.js 16.0.0 and should have similar runtimes in other modern Wasm hosts.
+ */
+const basicPasswordHashingOptions = {
+  algorithm: "argon2id",
+  params: {
+    outputLength: 32,
+    opsLimit: 24,
+    memLimitKib: 12 * 1024,
+  },
+};
 
 export interface DirectSecp256k1HdWalletOptions {
   /** The password to use when deriving a BIP39 seed from a mnemonic. */
@@ -105,6 +138,20 @@ export class SignArbSecp256k1HdWallet {
       seed,
     });
   }
+
+  /**
+   * Generates a new wallet with a BIP39 mnemonic of the given length.
+   *
+   * @param length The number of words in the mnemonic (12, 15, 18, 21 or 24).
+   * @param options An optional `DirectSecp256k1HdWalletOptions` object optionally containing a bip39Password, hdPaths, and prefix.
+   */
+  static async generate(length = 12, options = {}) {
+    const entropyLength = 4 * Math.floor((11 * length) / 33);
+    const entropy = Random.getBytes(entropyLength);
+    const mnemonic = Bip39.encode(entropy);
+    return this.fromMnemonic(mnemonic.toString(), options);
+  }
+
   /**
    * Restores a wallet from an encrypted serialization.
    *
@@ -123,6 +170,7 @@ export class SignArbSecp256k1HdWallet {
     }
     throw new Error("Unsupported serialization type");
   }
+
   /**
    * Restores a wallet from an encrypted serialization.
    *
@@ -152,11 +200,11 @@ export class SignArbSecp256k1HdWallet {
           untypedRoot.encryption,
         );
         const decryptedDocument = JSON.parse(fromUtf8(decryptedBytes)) as {
-          mnemonic: string;
+          mnemonic: { data: string };
           accounts: readonly Secp256k1Derivation[];
         };
         const { mnemonic, accounts } = decryptedDocument;
-        assert(typeof mnemonic === "string");
+        assert(typeof mnemonic.data === "string");
         if (!Array.isArray(accounts))
           throw new Error("Property 'accounts' is not an array");
         if (!accounts.every((account) => isDerivationJson(account))) {
@@ -169,7 +217,7 @@ export class SignArbSecp256k1HdWallet {
         const hdPaths = accounts.map(({ hdPath }: { hdPath: string }) =>
           stringToPath(hdPath),
         );
-        return this.fromMnemonic(mnemonic, {
+        return this.fromMnemonic(mnemonic.data, {
           hdPaths,
           prefix: firstPrefix,
         });
@@ -205,6 +253,77 @@ export class SignArbSecp256k1HdWallet {
     };
   }
 
+  async executeKdf(password: string, configuration: KdfConfiguration) {
+    switch (configuration.algorithm) {
+      case "argon2id": {
+        const options = configuration.params;
+        if (!isArgon2idOptions(options))
+          throw new Error("Invalid format of argon2id params");
+        return Argon2id.execute(password, cosmjsSalt, options);
+      }
+      default:
+        throw new Error("Unsupported KDF algorithm");
+    }
+  }
+
+  /**
+   * Generates an encrypted serialization of this wallet.
+   *
+   * @param password The user provided password used to generate an encryption key via a KDF.
+   *                 This is not normalized internally (see "Unicode normalization" to learn more).
+   */
+  async serialize(password: string) {
+    const kdfConfiguration = basicPasswordHashingOptions;
+    const encryptionKey = await this.executeKdf(password, kdfConfiguration);
+    return this.serializeWithEncryptionKey(encryptionKey, kdfConfiguration);
+  }
+  /**
+   * Generates an encrypted serialization of this wallet.
+   *
+   * This is an advanced alternative to calling `serialize(password)` directly, which allows you to
+   * offload the KDF execution to a non-UI thread (e.g. in a WebWorker).
+   *
+   * The caller is responsible for ensuring the key was derived with the given KDF options. If this
+   * is not the case, the wallet cannot be restored with the original password.
+   */
+  async serializeWithEncryptionKey(
+    encryptionKey: Uint8Array,
+    kdfConfiguration: KdfConfiguration,
+  ) {
+    const dataToEncrypt = {
+      mnemonic: this.secret,
+      accounts: this.accounts.map(({ hdPath, prefix }) => ({
+        hdPath: pathToString(hdPath),
+        prefix: prefix,
+      })),
+    };
+    const dataToEncryptRaw = toUtf8(JSON.stringify(dataToEncrypt));
+    const encryptionConfiguration = {
+      algorithm: supportedAlgorithms.xchacha20poly1305Ietf,
+    };
+    const encryptedData = await encrypt(
+      dataToEncryptRaw,
+      encryptionKey,
+      encryptionConfiguration,
+    );
+    const out = {
+      type: serializationTypeV1,
+      kdf: kdfConfiguration,
+      encryption: encryptionConfiguration,
+      data: toBase64(encryptedData),
+    };
+    return JSON.stringify(out);
+  }
+
+  async getAccounts() {
+    const accountsWithPrivkeys = await this.getAccountsWithPrivkeys();
+    return accountsWithPrivkeys.map(({ algo, pubkey, address }) => ({
+      algo: algo,
+      pubkey: pubkey,
+      address: address,
+    }));
+  }
+
   private async getAccountsWithPrivkeys(): Promise<
     readonly AccountDataWithPrivkey[]
   > {
@@ -223,6 +342,27 @@ export class SignArbSecp256k1HdWallet {
         };
       }) as readonly Promise<AccountDataWithPrivkey>[],
     );
+  }
+
+  async signDirect(signerAddress: string, signDoc: SignDoc) {
+    const accounts = await this.getAccountsWithPrivkeys();
+    const account = accounts.find(({ address }) => address === signerAddress);
+    if (account === undefined) {
+      throw new Error(`Address ${signerAddress} not found in wallet`);
+    }
+    const { privkey, pubkey } = account;
+    const signBytes = makeSignBytes(signDoc);
+    const hashedMessage = sha256(signBytes);
+    const signature = await Secp256k1.createSignature(hashedMessage, privkey);
+    const signatureBytes = new Uint8Array([
+      ...signature.r(32),
+      ...signature.s(32),
+    ]);
+    const stdSignature = encodeSecp256k1Signature(pubkey, signatureBytes);
+    return {
+      signed: signDoc,
+      signature: stdSignature,
+    };
   }
 
   signArb = async (
