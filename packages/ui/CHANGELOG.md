@@ -1,5 +1,13 @@
 # @burnt-labs/ui
 
+## 0.1.0-alpha.8
+
+### Minor Changes
+
+- [#131](https://github.com/burnt-labs/xion.js/pull/131) [`d6673bf`](https://github.com/burnt-labs/xion.js/commit/d6673bfa9d9a72472f4336758976aa3dd3a78785) Thanks [@BurntVal](https://github.com/BurntVal)! - Implement wallet send functionality
+
+- [#138](https://github.com/burnt-labs/xion.js/pull/138) [`1f006dd`](https://github.com/burnt-labs/xion.js/commit/1f006dd5ea7bfa67eb46d01057838b0d5287d466) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Adapted dashboard for better mobile UI
+
 ## 0.1.0-alpha.7
 
 ### Minor Changes

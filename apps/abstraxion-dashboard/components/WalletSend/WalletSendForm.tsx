@@ -249,6 +249,7 @@ export function WalletSendForm({
               </p>
             </div>
             <Input
+              data-testid="recipient-input"
               error={recipientAddressError}
               onChange={(e) => {
                 setRecipientAddressError("");
@@ -258,6 +259,7 @@ export function WalletSendForm({
               value={recipientAddress}
             />
             <Input
+              data-testid="memo-input"
               onChange={(e) => setUserMemo(e.target.value)}
               placeholder="Memo (Optional)"
               value={userMemo}

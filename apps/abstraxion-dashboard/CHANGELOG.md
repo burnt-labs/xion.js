@@ -1,5 +1,26 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.21
+
+### Minor Changes
+
+- [#131](https://github.com/burnt-labs/xion.js/pull/131) [`d6673bf`](https://github.com/burnt-labs/xion.js/commit/d6673bfa9d9a72472f4336758976aa3dd3a78785) Thanks [@BurntVal](https://github.com/BurntVal)! - Implement wallet send functionality
+
+- [#127](https://github.com/burnt-labs/xion.js/pull/127) [`00167f0`](https://github.com/burnt-labs/xion.js/commit/00167f0304a065d1d244c73b5ba02edc88f85460) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Updated UI for mainnet release
+
+- [#138](https://github.com/burnt-labs/xion.js/pull/138) [`1f006dd`](https://github.com/burnt-labs/xion.js/commit/1f006dd5ea7bfa67eb46d01057838b0d5287d466) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Adapted dashboard for better mobile UI
+
+- [#135](https://github.com/burnt-labs/xion.js/pull/135) [`6ea54fc`](https://github.com/burnt-labs/xion.js/commit/6ea54fc6fbca0de8434e09cb43b563e26643d7fc) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added receive functionality to dashboard
+
+### Patch Changes
+
+- [#137](https://github.com/burnt-labs/xion.js/pull/137) [`8de24aa`](https://github.com/burnt-labs/xion.js/commit/8de24aa187e9316c9cf9a1f431f08e4ae629842e) Thanks [@justinbarry](https://github.com/justinbarry)! - Update casing of "XION" from across multiple components
+
+- Updated dependencies [[`d6673bf`](https://github.com/burnt-labs/xion.js/commit/d6673bfa9d9a72472f4336758976aa3dd3a78785), [`1f006dd`](https://github.com/burnt-labs/xion.js/commit/1f006dd5ea7bfa67eb46d01057838b0d5287d466), [`8de24aa`](https://github.com/burnt-labs/xion.js/commit/8de24aa187e9316c9cf9a1f431f08e4ae629842e), [`12b995f`](https://github.com/burnt-labs/xion.js/commit/12b995f5c3216bad7537d4232ea2bbd2340ced32)]:
+  - @burnt-labs/ui@0.1.0-alpha.8
+  - @burnt-labs/constants@0.1.0-alpha.7
+  - @burnt-labs/abstraxion@1.0.0-alpha.40
+
 ## 0.2.0-alpha.20
 
 ### Minor Changes
