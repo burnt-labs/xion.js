@@ -31,21 +31,22 @@ export class AbstraxionAuth {
 
   constructor(
     rpc: string,
+    restUrl?: string,
     grantContracts?: ContractGrantDescription[],
     stake?: boolean,
     bank?: SpendLimit[],
   ) {
-    this.initializeConfig(rpc);
+    this.initializeConfig(rpc, restUrl);
     this.grantContracts = grantContracts;
     this.stake = stake;
     this.bank = bank;
   }
 
-  private async initializeConfig(rpc: string) {
+  private async initializeConfig(rpc: string, restUrl?: string) {
     try {
-      const { dashboardUrl, restUrl } = await fetchConfig(rpc);
+      const { dashboardUrl, restUrl: configRestUrl } = await fetchConfig(rpc);
       this.dashboardUrl = dashboardUrl;
-      this.restUrl = restUrl;
+      this.restUrl = restUrl || configRestUrl;
       this.rpcUrl = rpc;
       await this.getLocalKeypair();
       return;
