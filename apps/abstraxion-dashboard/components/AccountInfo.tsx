@@ -1,8 +1,29 @@
+import { Dispatch, SetStateAction, useState } from "react";
+import dynamic from "next/dynamic";
+import { Button } from "@burnt-labs/ui";
+import { CopyIcon, ScanIcon } from "@/components/Icons";
 import type { AbstraxionAccount } from "@/hooks";
-import { CopyIcon, ScanIcon } from "./Icons";
 import { truncateAddress } from "@/utils";
 
+const AddAuthenticatorsModal = dynamic<{
+  isOpen: boolean;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
+}>(
+  () =>
+    import("@/components/ModalViews/AddAuthenticators/AddAuthenticatorsModal"),
+  {
+    ssr: false,
+    loading: () => (
+      <Button className="!ui-p-0" structure="naked">
+        Add more
+      </Button>
+    ),
+  },
+);
+
 export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const copyXIONAddress = () => {
     if (account?.id) {
       navigator.clipboard.writeText(account?.id);
@@ -48,10 +69,14 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
             <h3 className="ui-text-white ui-text-sm ui-font-bold ui-font-akkuratLL ui-leading-none">
               Your Logins
             </h3>
-            {/* TODO: Add ability to add authenticator */}
-            {/* <button className="text-right text-black text-sm font-normal font-akkuratLL underline leading-tight">
-              Add Member
-            </button> */}
+            <Button
+              className="!ui-p-0"
+              onClick={() => setIsOpen(true)}
+              structure="naked"
+            >
+              Add more
+            </Button>
+            <AddAuthenticatorsModal isOpen={isOpen} setIsOpen={setIsOpen} />
           </div>
           {renderAuthenticators()}
         </div>
