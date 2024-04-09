@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import Image from "next/image";
 import { WalletType, useAccount, useSuggestChainAndConnect } from "graz";
 import { useQuery } from "@apollo/client";
 import {
@@ -23,7 +24,7 @@ import { encodeHex } from "@/utils";
 import { AllSmartWalletQuery } from "@/utils/queries";
 
 // TODO: Add webauthn to this and remove "disable" prop from button when implemented
-type AuthenticatorStates = "none" | "keplr" | "metamask";
+type AuthenticatorStates = "none" | "keplr" | "metamask" | "okx";
 
 export function AddAuthenticatorsForm({
   setIsOpen,
@@ -37,6 +38,7 @@ export function AddAuthenticatorsForm({
   // General UI state
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Context state
   const { abstractAccount, setAbstractAccount, chainInfo } = useContext(
@@ -49,6 +51,8 @@ export function AddAuthenticatorsForm({
   const { data: grazAccount } = useAccount();
   const { suggestAndConnect } = useSuggestChainAndConnect({
     onSuccess: async () => await addKeplrAuthenticator(),
+    onError: () => setIsLoading(false),
+    onLoading: () => setIsLoading(true),
   });
 
   const { data, previousData, startPolling, stopPolling } = useQuery(
@@ -67,6 +71,7 @@ export function AddAuthenticatorsForm({
     if (previousData && data !== previousData) {
       stopPolling();
       setIsLoading(false);
+      setIsSuccess(true);
       setAbstractAccount(
         data?.smartAccounts?.nodes.find(
           (smartAccount) => smartAccount.id === abstractAccount.id,
@@ -83,7 +88,6 @@ export function AddAuthenticatorsForm({
 
   async function handleSelection() {
     setErrorMessage("");
-    setIsLoading(true);
     switch (selectedAuthenticator) {
       case "none":
         break;
@@ -96,6 +100,11 @@ export function AddAuthenticatorsForm({
       case "metamask":
         await addEthAuthenticator();
         break;
+      case "okx":
+        await addEthAuthenticator();
+        break;
+      default:
+        break;
     }
   }
 
@@ -106,6 +115,8 @@ export function AddAuthenticatorsForm({
 
   async function addKeplrAuthenticator() {
     try {
+      setIsLoading(true);
+
       if (!client) {
         throw new Error("No client found.");
       }
@@ -147,17 +158,17 @@ export function AddAuthenticatorsForm({
       setErrorMessage(
         "Something went wrong trying to add Keplr wallet as authenticator",
       );
-    } finally {
       setIsLoading(false);
     }
   }
 
   async function addEthAuthenticator() {
     if (!window.ethereum) {
-      alert("Please install the Metamask wallet extension");
+      alert("Please install wallet extension");
       return;
     }
     try {
+      setIsLoading(true);
       if (!client) {
         throw new Error("No client found.");
       }
@@ -209,7 +220,6 @@ export function AddAuthenticatorsForm({
       setErrorMessage(
         "Something went wrong trying to add Ethereum wallet as authenticator",
       );
-    } finally {
       setIsLoading(false);
     }
   }
@@ -220,7 +230,12 @@ export function AddAuthenticatorsForm({
         <h1 className="ui-w-full ui-text-center ui-text-3xl ui-font-akkuratLL ui-font-thin">
           ADD AUTHENTICATORS
         </h1>
-        {errorMessage ? (
+        {isSuccess ? (
+          <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white/40">
+            Successfully added authenticator to account. Please click continue
+            to navigate back to home page.
+          </p>
+        ) : errorMessage ? (
           <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-red-500">
             {errorMessage}
           </p>
@@ -231,15 +246,17 @@ export function AddAuthenticatorsForm({
           </p>
         )}
       </div>
-      <Button
-        className="!ui-no-underline !ui-text-sm !ui-p-0 ui-max-w-max"
-        onClick={() => setIsOpen(false)}
-        structure="naked"
-      >
-        SKIP FOR NOW
-      </Button>
-      <div className="ui-flex ui-gap-4 ui-w-full ui-justify-center">
-        <Button
+      {!isSuccess ? (
+        <>
+          <Button
+            className="!ui-no-underline !ui-text-sm !ui-p-0 ui-max-w-max"
+            onClick={() => setIsOpen(false)}
+            structure="naked"
+          >
+            SKIP FOR NOW
+          </Button>
+          <div className="ui-flex ui-gap-4 ui-w-full ui-justify-center">
+            {/* <Button
           className={
             selectedAuthenticator === "keplr" ? "!ui-border-white" : ""
           }
@@ -256,18 +273,41 @@ export function AddAuthenticatorsForm({
           structure="outlined"
         >
           <MetamaskLogo />
+        </Button> */}
+            <Button
+              className={
+                selectedAuthenticator === "okx" ? "!ui-border-white" : ""
+              }
+              onClick={() => handleSwitch("okx")}
+              structure="outlined"
+            >
+              <Image
+                className="ui-invert"
+                src="https://www.okx.com/cdn/assets/imgs/239/4A66953783FC5452.png"
+                height={24}
+                width={24}
+                alt="OKX Logo"
+              />
+            </Button>
+            <Button disabled structure="outlined">
+              <PasskeyIcon />
+            </Button>
+          </div>
+        </>
+      ) : null}
+      {isSuccess ? (
+        <Button className="ui-mt-4 ui-w-full" onClick={() => setIsOpen(false)}>
+          CONTINUE
         </Button>
-        <Button disabled structure="outlined">
-          <PasskeyIcon />
+      ) : (
+        <Button
+          className="ui-mt-4 ui-w-full"
+          disabled={selectedAuthenticator === "none" || isLoading}
+          onClick={handleSelection}
+        >
+          {isLoading ? <Spinner /> : "SET UP AUTHENTICATOR"}
         </Button>
-      </div>
-      <Button
-        className="ui-mt-4 ui-w-full"
-        disabled={selectedAuthenticator === "none" || isLoading}
-        onClick={handleSelection}
-      >
-        {isLoading ? <Spinner /> : "SET UP AUTHENTICATOR"}
-      </Button>
+      )}
     </div>
   );
 }

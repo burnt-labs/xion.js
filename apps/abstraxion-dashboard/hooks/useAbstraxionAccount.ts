@@ -47,7 +47,7 @@ export const useAbstraxionAccount = () => {
   } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const loginType = localStorage.getItem("loginType");
-  const [metamaskAuthenticator, setMetamaskAuthenticator] = useState(
+  const [loginAuthenticator, setLoginAuthenticator] = useState(
     localStorage.getItem("loginAuthenticator"),
   );
 
@@ -68,7 +68,10 @@ export const useAbstraxionAccount = () => {
         authenticator = getHumanReadablePubkey(grazAccount?.pubKey);
         break;
       case "metamask":
-        authenticator = metamaskAuthenticator || "";
+        authenticator = loginAuthenticator || "";
+        break;
+      case "okx":
+        authenticator = loginAuthenticator || "";
         break;
       case "none":
         authenticator = "";
@@ -88,12 +91,12 @@ export const useAbstraxionAccount = () => {
     }
   }, [session, isConnected, grazAccount]);
 
-  // Metamask account detection
+  // Metamask & OKX account detection
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
-      if (connectionType === "metamask") {
+      if (connectionType === "metamask" || connectionType === "okx") {
         localStorage.setItem("loginAuthenticator", accounts[0]);
-        setMetamaskAuthenticator(accounts[0]);
+        setLoginAuthenticator(accounts[0]);
         setAbstractAccount(undefined);
       }
     };
@@ -128,7 +131,7 @@ export const useAbstraxionAccount = () => {
         ? !!session
         : connectionType === "graz"
         ? isConnected
-        : connectionType === "metamask"
+        : connectionType === "metamask" || connectionType === "okx"
         ? window.ethereum.isConnected()
         : false,
   };

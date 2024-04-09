@@ -171,17 +171,13 @@ export async function getAAccounts(
           continue;
         }
         for (const authenticator of smartAccountAuthenticators.nodes) {
+          const splitAuthenticatorId = authenticator.id.split("-");
           allAAAcounts.push({
-            /** The authenticator id was encoded as the contract address + xion + <id>
-             * e.g. xion3214141231312323 + xion + 1
-             */
-            address: "xion" + authenticator.authenticatorId.split("xion")[1],
+            address: splitAuthenticatorId[0],
             accountAddress: account.address,
             algo: authenticator.type.toLowerCase() as Algo,
             pubkey: new Uint8Array(), // to signify an AA account
-            authenticatorId: Number(
-              authenticator.authenticatorId.split("xion")[2],
-            ),
+            authenticatorId: Number(splitAuthenticatorId[1]),
           });
         }
       }

@@ -12,3 +12,7 @@ interface BalanceInfo {
 interface Authenticators {
   nodes: { type: string; id: string }[];
 }
+
+interface Window {
+  okxwallet: any; // TODO: Properly define
+}

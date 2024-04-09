@@ -1,5 +1,6 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
+import Image from "next/image";
 import { useStytch } from "@stytch/nextjs";
 import { WalletType, useSuggestChainAndConnect } from "graz";
 import { Button, Input, ModalSection } from "@burnt-labs/ui";
@@ -7,9 +8,6 @@ import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { testnetChainInfo } from "@burnt-labs/constants";
-import { KeplrLogo } from "@burnt-labs/ui";
-import { MetamaskLogo } from "@burnt-labs/ui";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
@@ -116,6 +114,24 @@ export const AbstraxionSignin = () => {
     }
   }
 
+  async function handleOkx() {
+    if (!window.okxwallet) {
+      alert("Please install the OKX wallet extension");
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const primaryAccount = accounts[0];
+      setConnectionType("okx");
+      localStorage.setItem("loginType", "okx");
+      localStorage.setItem("loginAuthenticator", primaryAccount);
+    } catch (error) {
+      setAbstraxionError("OKX wallet connect error");
+    }
+  }
+
   // For the "resend otp" countdown
   useEffect(() => {
     if (timeLeft === 0) {
@@ -192,7 +208,15 @@ export const AbstraxionSignin = () => {
           </button>
           {showAdvanced ? (
             <div className="ui-flex ui-w-full ui-gap-2">
-              <Button
+              <Button fullWidth={true} onClick={handleOkx} structure="outlined">
+                <Image
+                  src="/okx-logo.png"
+                  height={82}
+                  width={50}
+                  alt="OKX Logo"
+                />
+              </Button>
+              {/* <Button
                 fullWidth={true}
                 onClick={handleKeplr}
                 structure="outlined"
@@ -205,7 +229,7 @@ export const AbstraxionSignin = () => {
                 structure="outlined"
               >
                 <MetamaskLogo />
-              </Button>
+              </Button> */}
             </div>
           ) : null}
         </>
