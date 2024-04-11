@@ -63,9 +63,6 @@ export const AbstraxionWallets = () => {
     if (previousData && data !== previousData) {
       stopPolling();
       setFetchingNewWallets(false);
-      setAbstractAccount(
-        data?.smartAccounts?.nodes[data?.smartAccounts?.nodes.length - 1], // set to most recently created account to handle cases where smartAccounts !== 1
-      );
     }
   }, [data, previousData]);
 
