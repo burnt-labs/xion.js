@@ -6,7 +6,6 @@ import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { testnetChainInfo } from "@burnt-labs/constants";
 import { KeplrLogo } from "@burnt-labs/ui";
 import { MetamaskLogo } from "@burnt-labs/ui";
 

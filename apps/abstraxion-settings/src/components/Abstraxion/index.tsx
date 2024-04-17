@@ -1,13 +1,8 @@
 import { useContext, useEffect } from "react";
-import { GrazProvider } from "graz";
-import { StytchProvider } from "@stytch/react";
-import { ApolloProvider } from "@apollo/client";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
-  AbstraxionContextProvider,
 } from "../AbstraxionContext";
-import { apolloClient, stytchClient } from "../../lib";
 import { Dialog, DialogContent } from "@burnt-labs/ui";
 import { AbstraxionSignin } from "../AbstraxionSignin";
 import { useAbstraxionAccount } from "../../hooks/useAbstraxionAccount";
@@ -15,6 +10,7 @@ import { AbstraxionWallets } from "../AbstraxionWallets";
 import { ErrorDisplay } from "../ErrorDisplay";
 import { AbstraxionGrant } from "../AbstraxionGrant";
 import { useQueryParams } from "../../hooks/useQueryParams";
+import xionLogo from "../../assets/logo.png";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -114,7 +110,7 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
                 {isMainnet ? "MAINNET" : "TESTNET"}
               </div>
               <a href="https://xion.burnt.com/">
-                <img src="/logo.png" alt="XION Logo" width="108" height="48" />
+                <img src={xionLogo} alt="XION Logo" width="108" height="48" />
               </a>
             </div>
           </div>
@@ -130,11 +126,4 @@ export const AbstraxionProvider = ({
   children: React.ReactNode;
 }) => {
   return { children };
-  // <AbstraxionContextProvider>
-  //   <StytchProvider stytch={stytchClient}>
-  //     <ApolloProvider client={apolloClient}>
-  //       <GrazProvider>{children}</GrazProvider>
-  //     </ApolloProvider>
-  //   </StytchProvider>
-  // </AbstraxionContextProvider>
 };

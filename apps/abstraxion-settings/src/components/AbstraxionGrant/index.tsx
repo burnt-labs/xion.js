@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-// import Image from "next/image";
 import { Button, Spinner } from "@burnt-labs/ui";
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "../../hooks";
 import burntAvatar from "../../assets/burntAvatarCircle.png";
 import { CheckIcon } from "../Icons";
 import { EncodeObject } from "@cosmjs/proto-signing";
-// import { useSearchParams } from "next/navigation";
-// import * as Sentry from "@sentry/nextjs";
 import type { ContractGrantDescription } from "@burnt-labs/abstraxion";
 import { assertIsDeliverTxSuccess } from "@cosmjs/stargate/build/stargateclient";
 import { generateBankGrant } from "./generateBankGrant";
