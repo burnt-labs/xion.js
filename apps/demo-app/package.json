@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "@burnt-labs/abstraxion": "workspace:*",
+    "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
+    "@cosmjs/amino": "^0.32.3",
     "@cosmjs/cosmwasm-stargate": "^0.32.2",
+    "@keplr-wallet/cosmos": "^0.12.80",
     "next": "^14.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
