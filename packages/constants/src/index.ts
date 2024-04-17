@@ -1,4 +1,4 @@
-import { RpcStatusResponse } from "./types";
+import type { RpcStatusResponse } from "./types";
 
 export interface Coin {
   coinDenom: string;
@@ -89,7 +89,8 @@ export const testChainInfo: ChainInfo = {
 // If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
   "xion-mainnet-1": "https://settings.burnt.com",
-  "xion-testnet-1": "https://testnet.settings.burnt.com",
+  // "xion-testnet-1": "https://testnet.settings.burnt.com",
+  "xion-testnet-1": "http://localhost:3000",
 };
 
 const REST_URLS = {
