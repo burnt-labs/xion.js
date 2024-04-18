@@ -8,6 +8,7 @@ import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
+import { getHumanReadablePubkey } from "@/utils";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
@@ -120,13 +121,12 @@ export const AbstraxionSignin = () => {
       return;
     }
     try {
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      const primaryAccount = accounts[0];
+      await window.okxwallet.keplr.enable("xion-testnet-1");
+      const okxAccount = await window.okxwallet.keplr.getKey("xion-testnet-1");
+      const authenticator = getHumanReadablePubkey(okxAccount.pubKey);
       setConnectionType("okx");
       localStorage.setItem("loginType", "okx");
-      localStorage.setItem("loginAuthenticator", primaryAccount);
+      localStorage.setItem("loginAuthenticator", authenticator);
     } catch (error) {
       setAbstraxionError("OKX wallet connect error");
     }

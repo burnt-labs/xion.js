@@ -94,7 +94,7 @@ export const useAbstraxionAccount = () => {
   // Metamask & OKX account detection
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
-      if (connectionType === "metamask" || connectionType === "okx") {
+      if (connectionType === "metamask") {
         localStorage.setItem("loginAuthenticator", accounts[0]);
         setLoginAuthenticator(accounts[0]);
         setAbstractAccount(undefined);
@@ -105,6 +105,21 @@ export const useAbstraxionAccount = () => {
 
     return () => {
       window.ethereum?.off("accountsChanged", handleAccountsChanged);
+    };
+  }, []);
+
+  // OKX account detection
+  useEffect(() => {
+    const handleAccountsChanged = () => {
+      if (connectionType === "okx") {
+        // Figure out event name and logic
+        // setAbstractAccount(undefined);
+      }
+    };
+
+    window.okxwallet.keplr.on("connect", handleAccountsChanged);
+    return () => {
+      window.okxwallet.keplr.on("connect", handleAccountsChanged);
     };
   }, []);
 
@@ -131,8 +146,10 @@ export const useAbstraxionAccount = () => {
         ? !!session
         : connectionType === "graz"
         ? isConnected
-        : connectionType === "metamask" || connectionType === "okx"
+        : connectionType === "metamask"
         ? window.ethereum.isConnected()
+        : connectionType === "okx"
+        ? localStorage.getItem("loginAuthenticator")
         : false,
   };
 };

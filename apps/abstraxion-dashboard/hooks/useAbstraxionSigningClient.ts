@@ -40,9 +40,9 @@ export const useAbstraxionSigningClient = () => {
       return;
     }
     await window.okxwallet.keplr.enable("xion-testnet-1");
-    // const messageHash = sha256(signBytes);
-    const signData = Buffer.from(signBytes).toString("base64");
-    return window.okxwallet.keplr.signArbitrary(chainId, account, signData);
+    // const signData = Buffer.from(signBytes).toString("base64");
+    const signDataNew = Uint8Array.from(Object.values(signBytes));
+    return window.okxwallet.keplr.signArbitrary(chainId, account, signDataNew);
   }
 
   async function ethSigningFn(msg: any) {
@@ -97,10 +97,11 @@ export const useAbstraxionSigningClient = () => {
         if (window.okxwallet) {
           const okxOfflineSigner =
             await window.okxwallet.keplr.getOfflineSigner("xion-testnet-1");
-          signer = new AAEthSigner(
+          signer = new AADirectSigner(
+            okxOfflineSigner,
             abstractAccount.id,
             abstractAccount.currentAuthenticatorIndex,
-            ethSigningFn,
+            okxSignArb,
             getEnvStringOrThrow(
               "NEXT_PUBLIC_DEFAULT_INDEXER_URL",
               process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,

@@ -101,7 +101,7 @@ export function AddAuthenticatorsForm({
         await addEthAuthenticator();
         break;
       case "okx":
-        await addEthAuthenticator();
+        await addOkxAuthenticator();
         break;
       default:
         break;
@@ -157,6 +157,65 @@ export function AddAuthenticatorsForm({
     } catch (error) {
       setErrorMessage(
         "Something went wrong trying to add Keplr wallet as authenticator",
+      );
+      setIsLoading(false);
+    }
+  }
+
+  async function addOkxAuthenticator() {
+    try {
+      if (!window.okxwallet) {
+        alert("Install OKX Wallet");
+        return;
+      }
+      setIsLoading(true);
+
+      if (!client) {
+        throw new Error("No client found.");
+      }
+
+      const encoder = new TextEncoder();
+      // TODO: REMOVE TOSTRING FROM HERE AFTER RELEASE
+      const signArbMessage = Buffer.from(
+        encoder.encode(abstractAccount?.id),
+      ).toString();
+
+      await window.okxwallet.keplr.enable("xion-testnet-1");
+      const okxAccount = await window.okxwallet.keplr.getKey("xion-testnet-1");
+      const signArbRes = await window.okxwallet.keplr.signArbitrary(
+        chainInfo.chainId,
+        okxAccount.bech32Address,
+        signArbMessage,
+      );
+
+      const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
+
+      const msg = {
+        add_auth_method: {
+          add_authenticator: {
+            Secp256K1: {
+              id: accountIndex,
+              pubkey: signArbRes.pub_key.value,
+              signature: signArbRes.signature,
+            },
+          },
+        },
+      };
+      const res = await client.addAbstractAccountAuthenticator(msg, "", {
+        amount: [{ amount: "0", denom: "uxion" }],
+        gas: "500000",
+      });
+
+      if (res.rawLog?.includes("failed")) {
+        throw new Error(res.rawLog);
+      }
+
+      postAddFunction();
+      return res;
+    } catch (error) {
+      console.log(error);
+      setErrorMessage(
+        "Something went wrong trying to add OKX wallet as authenticator",
       );
       setIsLoading(false);
     }
