@@ -8,6 +8,7 @@ import {
 import Image from "next/image";
 import { WalletType, useAccount, useSuggestChainAndConnect } from "graz";
 import { useQuery } from "@apollo/client";
+import { useStytchUser } from "@stytch/nextjs";
 import {
   Button,
   KeplrLogo,
@@ -49,6 +50,7 @@ export function AddAuthenticatorsForm({
   const { loginAuthenticator } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
   const { data: grazAccount } = useAccount();
+  const { user } = useStytchUser();
   const { suggestAndConnect } = useSuggestChainAndConnect({
     onSuccess: async () => await addKeplrAuthenticator(),
     onError: () => setIsLoading(false),
@@ -72,11 +74,16 @@ export function AddAuthenticatorsForm({
       stopPolling();
       setIsLoading(false);
       setIsSuccess(true);
-      setAbstractAccount(
-        data?.smartAccounts?.nodes.find(
-          (smartAccount) => smartAccount.id === abstractAccount.id,
-        ),
+      const node = data?.smartAccounts?.nodes.find(
+        (smartAccount) => smartAccount.id === abstractAccount.id,
       );
+      setAbstractAccount({
+        ...node,
+        userId: user?.user_id,
+        currentAuthenticatorIndex: node.authenticators.nodes.find(
+          (authenticator) => authenticator.authenticator === loginAuthenticator,
+        ).authenticatorIndex,
+      });
     }
   }, [data, previousData]);
 

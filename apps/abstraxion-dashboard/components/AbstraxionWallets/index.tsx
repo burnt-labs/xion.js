@@ -72,11 +72,16 @@ export const AbstraxionWallets = () => {
   useEffect(() => {
     if (abstractAccount && previousData && data !== previousData) {
       // Updating abstract account in context on poll
-      setAbstractAccount(
-        data?.smartAccounts?.nodes.find(
-          (smartAccount) => smartAccount.id === abstractAccount.id,
-        ),
+      const node = data?.smartAccounts?.nodes.find(
+        (smartAccount) => smartAccount.id === abstractAccount.id,
       );
+      setAbstractAccount({
+        ...node,
+        userId: user?.user_id,
+        currentAuthenticatorIndex: node.authenticators.nodes.find(
+          (authenticator) => authenticator.authenticator === loginAuthenticator,
+        ).authenticatorIndex,
+      });
     }
   }, [data, previousData]);
 
