@@ -17,3 +17,4 @@ export * from "./icons/browser";
 export * from "./icons/keplr";
 export * from "./icons/metamask";
 export * from "./icons/passkey";
+export * from "./icons/email";
