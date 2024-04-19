@@ -175,10 +175,7 @@ export function AddAuthenticatorsForm({
       }
 
       const encoder = new TextEncoder();
-      // TODO: REMOVE TOSTRING FROM HERE AFTER RELEASE
-      const signArbMessage = Buffer.from(
-        encoder.encode(abstractAccount?.id),
-      ).toString();
+      const signArbMessage = Buffer.from(encoder.encode(abstractAccount?.id));
 
       await window.okxwallet.keplr.enable("xion-testnet-1");
       const okxAccount = await window.okxwallet.keplr.getKey("xion-testnet-1");

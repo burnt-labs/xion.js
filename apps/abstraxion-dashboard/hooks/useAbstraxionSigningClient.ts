@@ -40,7 +40,6 @@ export const useAbstraxionSigningClient = () => {
       return;
     }
     await window.okxwallet.keplr.enable("xion-testnet-1");
-    // const signData = Buffer.from(signBytes).toString("base64");
     const signDataNew = Uint8Array.from(Object.values(signBytes));
     return window.okxwallet.keplr.signArbitrary(chainId, account, signDataNew);
   }
