@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useAccount } from "graz";
 import { useStytch, useStytchSession } from "@stytch/nextjs";
 import {
@@ -110,14 +110,30 @@ export const useAbstraxionAccount = () => {
 
   // OKX account detection
   useEffect(() => {
-    const handleAccountsChanged = () => {
+    const handleAccountsChanged = async (accounts: any) => {
       if (connectionType === "okx") {
-        // Figure out event name and logic
-        // setAbstractAccount(undefined);
+        const okxXionAddress = localStorage.getItem("okxXionAddress");
+        const okxWalletName = localStorage.getItem("okxWalletName");
+
+        // If user switches account via extension, log user out.
+        // No good way to handle account switch via the OKX keplr event system
+        if (
+          okxXionAddress !== accounts.account.XION_TEST ||
+          okxWalletName !== accounts.name
+        ) {
+          // Basically log out
+          setConnectionType("none");
+          setAbstractAccount(undefined);
+          localStorage.removeItem("loginType");
+          localStorage.removeItem("loginAuthenticator");
+          localStorage.removeItem("okxXionAddress");
+          localStorage.removeItem("okxWalletName");
+        }
       }
     };
 
     window.okxwallet.keplr.on("connect", handleAccountsChanged);
+
     return () => {
       window.okxwallet.keplr.on("connect", handleAccountsChanged);
     };

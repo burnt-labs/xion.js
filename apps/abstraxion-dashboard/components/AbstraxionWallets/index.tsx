@@ -89,6 +89,8 @@ export const AbstraxionWallets = () => {
     setAbstractAccount(undefined);
     localStorage.removeItem("loginType");
     localStorage.removeItem("loginAuthenticator");
+    localStorage.removeItem("okxXionAddress");
+    localStorage.removeItem("okxWalletName");
   };
 
   const handleJwtAALoginOrCreate = async () => {

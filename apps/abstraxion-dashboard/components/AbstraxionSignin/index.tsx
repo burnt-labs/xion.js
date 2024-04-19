@@ -127,6 +127,8 @@ export const AbstraxionSignin = () => {
       setConnectionType("okx");
       localStorage.setItem("loginType", "okx");
       localStorage.setItem("loginAuthenticator", authenticator);
+      localStorage.setItem("okxXionAddress", okxAccount.bech32Address);
+      localStorage.setItem("okxWalletName", okxAccount.name);
     } catch (error) {
       setAbstraxionError("OKX wallet connect error");
     }
