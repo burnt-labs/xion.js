@@ -9,6 +9,7 @@ import {
 import { CopyIcon } from "@/components/Icons";
 import type { AbstraxionAccount } from "@/hooks";
 import { truncateAddress } from "@/utils";
+import { EthereumLogo } from "@burnt-labs/ui";
 
 const AddAuthenticatorsModal = dynamic<{
   isOpen: boolean;
@@ -42,7 +43,7 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
       case "SECP256K1":
         return "OKX WALLET";
       case "ETHWALLET":
-        return "ETH WALLET";
+        return "EVM WALLET";
       case "JWT":
         return "EMAIL";
       default:
@@ -63,7 +64,7 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
           />
         );
       case "ETHWALLET":
-        return <MetamaskLogo />;
+        return <EthereumLogo />;
       case "JWT":
         return <EmailIcon />;
       default:

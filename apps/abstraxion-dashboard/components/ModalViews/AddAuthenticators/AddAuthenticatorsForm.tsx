@@ -338,16 +338,15 @@ export function AddAuthenticatorsForm({
               structure="outlined"
             >
               <Image
-                className="ui-invert"
-                src="https://www.okx.com/cdn/assets/imgs/239/4A66953783FC5452.png"
-                height={24}
-                width={24}
+                src="/okxWallet.png"
+                height={48}
+                width={48}
                 alt="OKX Logo"
               />
             </Button>
-            <Button disabled structure="outlined">
-              <PasskeyIcon />
-            </Button>
+            {/* <Button disabled structure="outlined">
+              <PasskeyIcon className="ui-w-12" />
+            </Button> */}
           </div>
         </>
       ) : null}
