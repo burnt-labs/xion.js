@@ -311,13 +311,13 @@ export function AddAuthenticatorsForm({
       </div>
       {!isSuccess ? (
         <>
-          <Button
+          {/* <Button
             className="!ui-no-underline !ui-text-sm !ui-p-0 ui-max-w-max"
             onClick={() => setIsOpen(false)}
             structure="naked"
           >
             SKIP FOR NOW
-          </Button>
+          </Button> */}
           <div className="ui-flex ui-gap-4 ui-w-full ui-justify-center">
             {/* <Button
           className={
