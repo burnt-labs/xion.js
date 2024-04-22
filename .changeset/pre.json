@@ -11,7 +11,8 @@
     "@burnt-labs/tsconfig": "0.0.0",
     "@burnt-labs/ui": "0.0.0",
     "abstraxion-dashboard": "0.1.0",
-    "@burnt-labs/abstraxion-core": "1.0.0-alpha.29"
+    "@burnt-labs/abstraxion-core": "1.0.0-alpha.29",
+    "abstraxion-settings": "1.0.0"
   },
   "changesets": [
     "blue-lobsters-taste",
@@ -33,7 +34,9 @@
     "four-forks-occur",
     "good-cougars-turn",
     "grumpy-pens-give",
+    "happy-lies-check",
     "honest-apples-admire",
+    "hungry-cherries-decide",
     "khaki-bats-try",
     "khaki-mails-listen",
     "khaki-pots-brake",
@@ -42,17 +45,21 @@
     "light-penguins-deny",
     "long-icons-kiss",
     "long-windows-look",
+    "modern-mayflies-invent",
     "moody-months-hunt",
     "neat-pillows-lie",
     "new-shrimps-listen",
     "new-timers-sleep",
+    "odd-bananas-drum",
     "odd-planets-hammer",
     "poor-papayas-grin",
+    "purple-penguins-refuse",
     "rich-wolves-whisper",
     "rotten-horses-teach",
     "shiny-pandas-repeat",
     "shy-planets-watch",
     "silver-plants-rule",
+    "six-zebras-impress",
     "sixty-dragons-reflect",
     "smart-deers-cough",
     "sour-wasps-film",
@@ -74,6 +81,7 @@
     "weak-ears-suffer",
     "weak-glasses-rush",
     "wicked-colts-reflect",
-    "wild-chicken-bathe"
+    "wild-chicken-bathe",
+    "wild-mice-hope"
   ]
 }
