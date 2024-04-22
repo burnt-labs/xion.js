@@ -225,8 +225,8 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2(@types/node@20.10.5)
       vite-plugin-node-polyfills:
-        specifier: ^0.21.0
-        version: 0.21.0(vite@4.3.2)
+        specifier: ^0.17.0
+        version: 0.17.0(vite@4.3.2)
 
   apps/demo-app:
     dependencies:
@@ -13790,13 +13790,15 @@ packages:
       use-sync-external-store: 1.2.0(react@18.2.0)
     dev: false
 
-  /vite-plugin-node-polyfills@0.21.0(vite@4.3.2):
-    resolution: {integrity: sha512-Sk4DiKnmxN8E0vhgEhzLudfJQfaT8k4/gJ25xvUPG54KjLJ6HAmDKbr4rzDD/QWEY+Lwg80KE85fGYBQihEPQA==}
+  /vite-plugin-node-polyfills@0.17.0(vite@4.3.2):
+    resolution: {integrity: sha512-iPmPn7376e5u6QvoTSJa16hf5Q0DFwHFXJk2uYpsNlmI3JdPms7hWyh55o+OysJ5jo9J5XPhLC9sMOYifwFd1w==}
     peerDependencies:
       vite: ^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0
     dependencies:
       '@rollup/plugin-inject': 5.0.5
+      buffer-polyfill: /buffer@6.0.3
       node-stdlib-browser: 1.2.0
+      process: 0.11.10
       vite: 4.3.2(@types/node@20.10.5)
     transitivePeerDependencies:
       - rollup
