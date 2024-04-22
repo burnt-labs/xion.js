@@ -1,4 +1,4 @@
-import { RpcStatusResponse } from "./types";
+import type { RpcStatusResponse } from "./types";
 
 export interface Coin {
   coinDenom: string;

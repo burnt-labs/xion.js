@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'AkkuratLL';
+    src: url('/fonts/AkkuratLLWeb-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'AkkuratLL';
+    src: url('/fonts/AkkuratLLWeb-Light.woff2') format('woff2');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'AkkuratLL';
+    src: url('/fonts/AkkuratLLWeb-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'AkkuratLL';
+    src: url('/fonts/AkkuratLLWeb-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'AkkuratLL';
+    src: url('/fonts/AkkuratLLWeb-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+  }
+  
+
