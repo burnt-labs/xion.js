@@ -6,12 +6,13 @@ export interface AbstraxionAccount {
   bech32Address: string;
 }
 
-export interface UseAbstraxionAccountProps {
+export interface AbstraxionAccountState {
   data: AbstraxionAccount;
   isConnected: boolean;
+  isConnecting: boolean;
 }
 
-export const useAbstraxionAccount = (): UseAbstraxionAccountProps => {
+export const useAbstraxionAccount = (): AbstraxionAccountState => {
   const {
     isConnected,
     granterAddress,
@@ -59,5 +60,6 @@ export const useAbstraxionAccount = (): UseAbstraxionAccountProps => {
       bech32Address: granterAddress,
     },
     isConnected,
+    isConnecting,
   };
 };
