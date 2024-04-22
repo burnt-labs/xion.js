@@ -85,8 +85,8 @@ importers:
         specifier: ^0.0.51
         version: 0.0.51(@types/react@18.2.47)(react-dom@18.2.0)(react@18.2.0)
       jose:
-        specifier: ^5.1.3
-        version: 5.1.3
+        specifier: ^5.2.0
+        version: 5.2.0
       next:
         specifier: ^14.0.3
         version: 14.0.3(@babel/core@7.23.9)(react-dom@18.2.0)(react@18.2.0)
@@ -191,8 +191,8 @@ importers:
         specifier: ^0.0.51
         version: 0.0.51(@types/react@18.2.47)(react-dom@18.2.0)(react@18.2.0)
       jose:
-        specifier: ^5.1.3
-        version: 5.1.3
+        specifier: ^5.2.0
+        version: 5.2.0
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -343,8 +343,8 @@ importers:
         specifier: ^0.0.51
         version: 0.0.51(@types/react@18.2.47)(react-dom@18.2.0)(react@18.2.0)
       jose:
-        specifier: ^5.1.3
-        version: 5.1.3
+        specifier: ^5.2.0
+        version: 5.2.0
     devDependencies:
       '@burnt-labs/eslint-config-custom':
         specifier: workspace:*
@@ -449,8 +449,8 @@ importers:
         specifier: ^0.0.51
         version: 0.0.51(@types/react@18.2.47)(react-dom@18.2.0)(react@18.2.0)
       jose:
-        specifier: ^5.1.3
-        version: 5.1.3
+        specifier: ^5.2.0
+        version: 5.2.0
     devDependencies:
       '@burnt-labs/eslint-config-custom':
         specifier: workspace:*
@@ -10378,8 +10378,8 @@ packages:
     resolution: {integrity: sha512-W+oqK4H+r5sITxfxpSU+MMdr/YSWGvgZMQDIsNoBDGGy4i7GBPTtvFKibQzW06n3U3TqHjhvBJsirShsEJ6eeQ==}
     dev: false
 
-  /jose@5.1.3:
-    resolution: {integrity: sha512-GPExOkcMsCLBTi1YetY2LmkoY559fss0+0KVa6kOfb2YFe84nAM7Nm/XzuZozah4iHgmBGrCOHL5/cy670SBRw==}
+  /jose@5.2.0:
+    resolution: {integrity: sha512-oW3PCnvyrcm1HMvGTzqjxxfnEs9EoFOFWi2HsEGhlFVOXxTE3K9GKWVMFoFw06yPUqwpvEWic1BmtUZBI/tIjw==}
     dev: false
 
   /joycon@3.1.1:

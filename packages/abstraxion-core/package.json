@@ -42,6 +42,6 @@
     "@keplr-wallet/crypto": "^0.12.69",
     "cosmjs-types": "^0.9.0",
     "graz": "^0.0.51",
-    "jose": "^5.1.3"
+    "jose": "^5.2.0"
   }
 }
