@@ -132,10 +132,12 @@ export const useAbstraxionAccount = () => {
       }
     };
 
-    window.okxwallet.keplr.on("connect", handleAccountsChanged);
+    if (window.okxwallet) {
+      window.okxwallet?.keplr.on("connect", handleAccountsChanged);
+    }
 
     return () => {
-      window.okxwallet.keplr.on("connect", handleAccountsChanged);
+      window.okxwallet?.keplr.on("connect", handleAccountsChanged);
     };
   }, []);
 
