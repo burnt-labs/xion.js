@@ -89,8 +89,7 @@ export const testChainInfo: ChainInfo = {
 // If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
   "xion-mainnet-1": "https://settings.burnt.com",
-  // "xion-testnet-1": "https://testnet.settings.burnt.com",
-  "xion-testnet-1": "http://localhost:3000",
+  "xion-testnet-1": "https://testnet.settings.burnt.com",
 };
 
 const REST_URLS = {
