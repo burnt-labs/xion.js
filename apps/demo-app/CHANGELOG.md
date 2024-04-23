@@ -1,5 +1,17 @@
 # demo-app
 
+## 1.1.0-alpha.26
+
+### Minor Changes
+
+- [#139](https://github.com/burnt-labs/xion.js/pull/139) [`f09cc0b`](https://github.com/burnt-labs/xion.js/commit/f09cc0b7167e41673f7aeb0ce317896e2e4b5582) Thanks [@BurntVal](https://github.com/BurntVal)! - Extend abstraxion-core to allow for framework agnostic implementations
+
+### Patch Changes
+
+- Updated dependencies [[`958f66a`](https://github.com/burnt-labs/xion.js/commit/958f66ab7b82bdbb8a591d16b2cc399859e8508b), [`c1ed608`](https://github.com/burnt-labs/xion.js/commit/c1ed60803731b13b831169ed675049e7a257aeeb), [`4c230d8`](https://github.com/burnt-labs/xion.js/commit/4c230d82f20b934acd77ea102e45a29ad3e148ae), [`f09cc0b`](https://github.com/burnt-labs/xion.js/commit/f09cc0b7167e41673f7aeb0ce317896e2e4b5582)]:
+  - @burnt-labs/ui@0.1.0-alpha.9
+  - @burnt-labs/abstraxion@1.0.0-alpha.41
+
 ## 1.1.0-alpha.25
 
 ### Patch Changes
