@@ -2,7 +2,6 @@
 import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { useStytch } from "@stytch/nextjs";
-import { WalletType, useSuggestChainAndConnect } from "graz";
 import { Button, Input, ModalSection } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
@@ -13,14 +12,6 @@ import { getHumanReadablePubkey } from "@/utils";
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
 
-  const { suggestAndConnect } = useSuggestChainAndConnect({
-    onError: (error) => console.log("connection error: ", error),
-    onSuccess: () => {
-      localStorage.setItem("loginType", "graz");
-      setConnectionType("graz");
-    },
-  });
-
   const [email, setEmail] = useState("");
   const [methodId, setMethodId] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -28,7 +19,6 @@ export const AbstraxionSignin = () => {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { setConnectionType, setAbstraxionError, chainInfo } = useContext(
     AbstraxionContext,
@@ -85,35 +75,6 @@ export const AbstraxionSignin = () => {
       setOtpError("Error verifying otp");
     }
   };
-
-  function handleKeplr() {
-    if (!window.keplr) {
-      alert("Please install the Keplr wallet extension");
-      return;
-    }
-    suggestAndConnect({
-      chainInfo,
-      walletType: WalletType.KEPLR,
-    });
-  }
-
-  async function handleMetamask() {
-    if (!window.ethereum) {
-      alert("Please install the Metamask wallet extension");
-      return;
-    }
-    try {
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      const primaryAccount = accounts[0];
-      setConnectionType("metamask");
-      localStorage.setItem("loginType", "metamask");
-      localStorage.setItem("loginAuthenticator", primaryAccount);
-    } catch (error) {
-      setAbstraxionError("Metamask connect error");
-    }
-  }
 
   async function handleOkx() {
     if (!window.okxwallet) {
@@ -218,21 +179,6 @@ export const AbstraxionSignin = () => {
                   alt="OKX Logo"
                 />
               </Button>
-              {/* <Button
-                fullWidth={true}
-                onClick={handleKeplr}
-                structure="outlined"
-              >
-                <KeplrLogo />
-              </Button>
-              <Button
-                fullWidth={true}
-                onClick={handleMetamask}
-                structure="outlined"
-              >
-                <MetamaskLogo />
-              </Button> */}
-            </div>
           ) : null}
         </>
       )}

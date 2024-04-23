@@ -4,12 +4,14 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   structure?: "base" | "outlined" | "naked" | "destructive";
   disabled?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   structure = "base",
   disabled = false,
+  onClick,
   children,
   className,
   ...props
@@ -45,6 +47,7 @@ export const Button: React.FC<ButtonProps> = ({
       className={`ui-flex ui-items-center ui-justify-center ui-rounded-md ui-font-akkuratLL ui-uppercase ui-px-5 ui-py-3.5 ui-text-sm ui-outline-none ui-hover:opacity-70 ${
         fullWidth ? "ui-w-full" : ""
       } ${getButtonClasses()} ${className}`}
+      onClick={onClick}
       {...props}
     >
       {children}

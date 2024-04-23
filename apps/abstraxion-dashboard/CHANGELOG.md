@@ -1,5 +1,26 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.22
+
+### Minor Changes
+
+- [#151](https://github.com/burnt-labs/xion.js/pull/151) [`958f66a`](https://github.com/burnt-labs/xion.js/commit/958f66ab7b82bdbb8a591d16b2cc399859e8508b) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Broke out grant flow to unique app.
+
+- [#134](https://github.com/burnt-labs/xion.js/pull/134) [`4c230d8`](https://github.com/burnt-labs/xion.js/commit/4c230d82f20b934acd77ea102e45a29ad3e148ae) Thanks [@BurntVal](https://github.com/BurntVal)! - Add Authenticator Modal & Fresh User Dashboard Flow
+
+- [#139](https://github.com/burnt-labs/xion.js/pull/139) [`f09cc0b`](https://github.com/burnt-labs/xion.js/commit/f09cc0b7167e41673f7aeb0ce317896e2e4b5582) Thanks [@BurntVal](https://github.com/BurntVal)! - Extend abstraxion-core to allow for framework agnostic implementations
+
+- [#148](https://github.com/burnt-labs/xion.js/pull/148) [`e46656b`](https://github.com/burnt-labs/xion.js/commit/e46656ba2880e7fe80e8425f4f49047d54b665e5) Thanks [@justinbarry](https://github.com/justinbarry)! - No longer auto select first account after first login
+
+### Patch Changes
+
+- [#140](https://github.com/burnt-labs/xion.js/pull/140) [`e21e824`](https://github.com/burnt-labs/xion.js/commit/e21e8244923a764acada81197da821949aaa2ff2) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added unit test for dashboard send and receive functionality
+
+- Updated dependencies [[`958f66a`](https://github.com/burnt-labs/xion.js/commit/958f66ab7b82bdbb8a591d16b2cc399859e8508b), [`c1ed608`](https://github.com/burnt-labs/xion.js/commit/c1ed60803731b13b831169ed675049e7a257aeeb), [`4c230d8`](https://github.com/burnt-labs/xion.js/commit/4c230d82f20b934acd77ea102e45a29ad3e148ae), [`f09cc0b`](https://github.com/burnt-labs/xion.js/commit/f09cc0b7167e41673f7aeb0ce317896e2e4b5582), [`8ec1c5b`](https://github.com/burnt-labs/xion.js/commit/8ec1c5b752f8136c9e6ba7fcfec16e85542d7c21)]:
+  - @burnt-labs/constants@0.1.0-alpha.8
+  - @burnt-labs/ui@0.1.0-alpha.9
+  - @burnt-labs/abstraxion@1.0.0-alpha.41
+
 ## 0.2.0-alpha.21
 
 ### Minor Changes
