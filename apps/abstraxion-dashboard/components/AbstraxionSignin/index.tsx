@@ -19,6 +19,7 @@ export const AbstraxionSignin = () => {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { setConnectionType, setAbstraxionError, chainInfo } = useContext(
     AbstraxionContext,
@@ -179,6 +180,7 @@ export const AbstraxionSignin = () => {
                   alt="OKX Logo"
                 />
               </Button>
+            </div>
           ) : null}
         </>
       )}
