@@ -52,6 +52,7 @@ export function AbstraxionSignin(): JSX.Element {
     setAbstraxionError,
     setAbstraxionAccount,
     setGranterAddress,
+    setShowModal,
     granterAddress,
     contracts,
     dashboardUrl,
@@ -180,6 +181,7 @@ export function AbstraxionSignin(): JSX.Element {
           await pollForGrants(address, granter);
           setIsConnecting(false);
           setIsConnected(true);
+          setShowModal(false);
           setAbstraxionAccount(keypair);
         } else {
           setIsConnected(true);
