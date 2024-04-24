@@ -1,6 +1,6 @@
 {
   "name": "abstraxion-dashboard",
-  "version": "0.2.0-alpha.23",
+  "version": "0.2.0-alpha.24",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3002",
