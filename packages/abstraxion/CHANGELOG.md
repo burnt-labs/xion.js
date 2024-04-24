@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.43
+
+### Minor Changes
+
+- [#163](https://github.com/burnt-labs/xion.js/pull/163) [`aa57bfd`](https://github.com/burnt-labs/xion.js/commit/aa57bfdd0ed1651b652b2a9a39a2eeb54ab25d11) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix issue where connected modal was not showing up when connected
+
 ## 1.0.0-alpha.42
 
 ### Minor Changes
