@@ -237,17 +237,15 @@ export class AbstraxionAuth {
     let retries = 0;
 
     const poll = async () => {
-      const baseUrl = `${this.restUrl}/cosmos/authz/v1beta1/grants`;
-      const url = new URL(baseUrl);
-      const params = new URLSearchParams({
-        grantee,
-        granter,
-      });
-      url.search = params.toString();
-
       try {
-        await wait(3000);
-        const res = await fetch(baseUrl, {
+        const baseUrl = `${this.restUrl}/cosmos/authz/v1beta1/grants`;
+        const url = new URL(baseUrl);
+        const params = new URLSearchParams({
+          grantee,
+          granter,
+        });
+        url.search = params.toString();
+        const res = await fetch(url, {
           cache: "no-store",
         });
         const data = (await res.json()) as GrantsResponse;
