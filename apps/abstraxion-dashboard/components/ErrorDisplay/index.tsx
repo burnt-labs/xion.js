@@ -23,9 +23,7 @@ export const ErrorDisplay = ({
       <h1 className="ui-text-3xl ui-font-thin ui-uppercase ui-tracking-tighter ui-text-white">
         {title}
       </h1>
-      <p className="ui-tracking-tight ui-text-zinc-400 dark:ui-text-zinc-700">
-        {message}
-      </p>
+      <p className="ui-tracking-tight ui-text-zinc-400">{message}</p>
       <Button
         fullWidth={true}
         onClick={() => {

@@ -1,6 +1,9 @@
-export function PasskeyIcon() {
+import { cn } from "../../lib/utils";
+
+export function PasskeyIcon({ className }: { className?: string }) {
   return (
     <svg
+      className={cn(className)}
       width="24"
       height="24"
       viewBox="0 0 32 32"

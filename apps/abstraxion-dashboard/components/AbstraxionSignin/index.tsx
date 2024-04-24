@@ -1,23 +1,16 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
+import Image from "next/image";
 import { useStytch } from "@stytch/nextjs";
-import { useSuggestChainAndConnect, WalletType } from "graz";
 import { Button, Input, ModalSection } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
+import { getHumanReadablePubkey } from "@/utils";
 
 export const AbstraxionSignin = () => {
   const stytchClient = useStytch();
-
-  const { suggestAndConnect } = useSuggestChainAndConnect({
-    onError: (error) => console.log("connection error: ", error),
-    onSuccess: () => {
-      localStorage.setItem("loginType", "graz");
-      setConnectionType("graz");
-    },
-  });
 
   const [email, setEmail] = useState("");
   const [methodId, setMethodId] = useState("");
@@ -26,6 +19,7 @@ export const AbstraxionSignin = () => {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { setConnectionType, setAbstraxionError, chainInfo } = useContext(
     AbstraxionContext,
@@ -83,32 +77,22 @@ export const AbstraxionSignin = () => {
     }
   };
 
-  function handleKeplr() {
-    if (!window.keplr) {
-      alert("Please install the Keplr wallet extension");
-      return;
-    }
-    suggestAndConnect({
-      chainInfo,
-      walletType: WalletType.KEPLR,
-    });
-  }
-
-  async function handleMetamask() {
-    if (!window.ethereum) {
-      alert("Please install the Metamask wallet extension");
+  async function handleOkx() {
+    if (!window.okxwallet) {
+      alert("Please install the OKX wallet extension");
       return;
     }
     try {
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      const primaryAccount = accounts[0];
-      setConnectionType("metamask");
-      localStorage.setItem("loginType", "metamask");
-      localStorage.setItem("loginAuthenticator", primaryAccount);
+      await window.okxwallet.keplr.enable("xion-testnet-1");
+      const okxAccount = await window.okxwallet.keplr.getKey("xion-testnet-1");
+      const authenticator = getHumanReadablePubkey(okxAccount.pubKey);
+      setConnectionType("okx");
+      localStorage.setItem("loginType", "okx");
+      localStorage.setItem("loginAuthenticator", authenticator);
+      localStorage.setItem("okxXionAddress", okxAccount.bech32Address);
+      localStorage.setItem("okxWalletName", okxAccount.name);
     } catch (error) {
-      setAbstraxionError("Metamask connect error");
+      setAbstraxionError("OKX wallet connect error");
     }
   }
 
@@ -180,6 +164,24 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
+          <button
+            className="ui-text-white ui-text-sm ui-underline ui-w-full"
+            onClick={() => setShowAdvanced((showAdvanced) => !showAdvanced)}
+          >
+            Advanced Options
+          </button>
+          {showAdvanced ? (
+            <div className="ui-flex ui-w-full ui-gap-2">
+              <Button fullWidth={true} onClick={handleOkx} structure="outlined">
+                <Image
+                  src="/okx-logo.png"
+                  height={82}
+                  width={50}
+                  alt="OKX Logo"
+                />
+              </Button>
+            </div>
+          ) : null}
         </>
       )}
     </ModalSection>

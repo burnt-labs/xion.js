@@ -2,7 +2,7 @@ import { ReactNode, createContext, useState } from "react";
 import { getEnvStringOrThrow } from "@/utils";
 import { ChainInfo } from "@burnt-labs/constants";
 
-type ConnectionType = "stytch" | "graz" | "metamask" | "none";
+type ConnectionType = "stytch" | "graz" | "metamask" | "okx" | "none";
 
 export interface AbstraxionContextProps {
   connectionType: ConnectionType;

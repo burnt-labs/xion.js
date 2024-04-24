@@ -30,11 +30,21 @@ export const useAbstraxionSigningClient = () => {
     undefined,
   );
 
-  async function ethSigningFn(msg: any) {
-    if (!window.ethereum) {
-      alert("Please install the Metamask wallet extension");
+  async function okxSignArb(
+    chainId: string,
+    account: string,
+    signBytes: Uint8Array,
+  ) {
+    if (!window.okxwallet) {
+      alert("Please install the OKX wallet extension");
       return;
     }
+    await window.okxwallet.keplr.enable("xion-testnet-1");
+    const signDataNew = Uint8Array.from(Object.values(signBytes));
+    return window.okxwallet.keplr.signArbitrary(chainId, account, signDataNew);
+  }
+
+  async function ethSigningFn(msg: any) {
     const accounts = await window.ethereum?.request({
       method: "eth_requestAccounts",
     });
@@ -75,6 +85,22 @@ export const useAbstraxionSigningClient = () => {
             abstractAccount.currentAuthenticatorIndex,
             // @ts-ignore - signArbitrary function exists on Keplr although it doesn't show
             keplr.signArbitrary,
+            getEnvStringOrThrow(
+              "NEXT_PUBLIC_DEFAULT_INDEXER_URL",
+              process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,
+            ),
+          );
+          break;
+        }
+      case "okx":
+        if (window.okxwallet) {
+          const okxOfflineSigner =
+            await window.okxwallet.keplr.getOfflineSigner("xion-testnet-1");
+          signer = new AADirectSigner(
+            okxOfflineSigner,
+            abstractAccount.id,
+            abstractAccount.currentAuthenticatorIndex,
+            okxSignArb,
             getEnvStringOrThrow(
               "NEXT_PUBLIC_DEFAULT_INDEXER_URL",
               process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,
