@@ -2,7 +2,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { BrowserIcon, Button, ModalSection } from "@burnt-labs/ui";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { wait } from "@/utils/wait";
 import {
   AbstraxionContext,
   ContractGrantDescription,
@@ -109,34 +108,40 @@ export function AbstraxionSignin(): JSX.Element {
     return keypair;
   }
 
-  async function pollForGrants(address: string): Promise<void> {
-    if (!address) {
+  async function pollForGrants(
+    grantee: string,
+    granter: string | null,
+  ): Promise<void> {
+    if (!grantee) {
       throw new Error("No keypair address");
     }
+    if (!granter) {
+      throw new Error("No granter address");
+    }
+
     setIsConnecting(true);
+
+    const baseUrl = `${restUrl}/cosmos/authz/v1beta1/grants`;
+    const url = new URL(baseUrl);
+    const params = new URLSearchParams({
+      grantee,
+      granter,
+    });
+    url.search = params.toString();
 
     const shouldContinue = true;
     while (shouldContinue) {
       try {
-        await wait(3000);
-        const res = await fetch(
-          `${restUrl}/cosmos/authz/v1beta1/grants/grantee/${address}`,
-          {
-            cache: "no-store",
-          },
-        );
+        const res = await fetch(url, {
+          cache: "no-store",
+        });
         const data = (await res.json()) as GrantsResponse;
         if (data.grants.length > 0) {
-          const granterAddresses = data.grants.map((grant) => grant.granter);
-          const uniqueGranters = [...new Set(granterAddresses)];
-          if (uniqueGranters.length > 1) {
-            console.error("More than one granter found. Taking first.");
-          }
-
-          configuregranter(uniqueGranters[0]);
-          // Remove query parameter "granted"
+          configuregranter(granter);
+          // Remove query parameter "granted" and "granter"
           const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.delete("granted");
+          currentUrl.searchParams.delete("granter");
           history.pushState({}, "", currentUrl.href);
 
           break;
@@ -162,6 +167,7 @@ export function AbstraxionSignin(): JSX.Element {
         }
         const searchParams = new URLSearchParams(window.location.search);
         const isGranted = searchParams.get("granted");
+        const granter = searchParams.get("granter");
         const accounts = await keypair.getAccounts();
         const address = accounts[0].address;
         setTempAccountAddress(address);
@@ -171,7 +177,7 @@ export function AbstraxionSignin(): JSX.Element {
           setDashboardUrl(dashboardUrl);
           openDashboardTab(address, contracts, dashboardUrl);
         } else if (isGranted && !granterAddress) {
-          await pollForGrants(address);
+          await pollForGrants(address, granter);
           setIsConnecting(false);
           setIsConnected(true);
           setAbstraxionAccount(keypair);

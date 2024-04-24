@@ -43,8 +43,8 @@ export const AbstraxionGrant = ({
       if (redirectUri) {
         url = new URL(redirectUri);
         let params = new URLSearchParams(url.search);
-
         params.append("granted", "true");
+        params.append("granter", account.id);
         url.search = params.toString();
         redirectUri = url.toString();
         window.location.href = redirectUri;
