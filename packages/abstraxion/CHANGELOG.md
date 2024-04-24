@@ -1,5 +1,18 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.42
+
+### Minor Changes
+
+- [#161](https://github.com/burnt-labs/xion.js/pull/161) [`deb1a8d`](https://github.com/burnt-labs/xion.js/commit/deb1a8dae04fe878a56e9e17d090b94c56069f44) Thanks [@justinbarry](https://github.com/justinbarry)! - Update the url used to check for grants to include the granter to avoid the rest node having to do a table scan.
+
+### Patch Changes
+
+- Updated dependencies [[`bed091d`](https://github.com/burnt-labs/xion.js/commit/bed091d74557457efb681734a27b46d97cdefbbe)]:
+  - @burnt-labs/signers@0.1.0-alpha.10
+  - @burnt-labs/ui@0.1.0-alpha.10
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.39
+
 ## 1.0.0-alpha.41
 
 ### Minor Changes

@@ -1,5 +1,20 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.23
+
+### Minor Changes
+
+- [#147](https://github.com/burnt-labs/xion.js/pull/147) [`bed091d`](https://github.com/burnt-labs/xion.js/commit/bed091d74557457efb681734a27b46d97cdefbbe) Thanks [@BurntVal](https://github.com/BurntVal)! - Implementation of OKX wallet (cosmos provider)
+
+- [#161](https://github.com/burnt-labs/xion.js/pull/161) [`deb1a8d`](https://github.com/burnt-labs/xion.js/commit/deb1a8dae04fe878a56e9e17d090b94c56069f44) Thanks [@justinbarry](https://github.com/justinbarry)! - Update the url used to check for grants to include the granter to avoid the rest node having to do a table scan.
+
+### Patch Changes
+
+- Updated dependencies [[`bed091d`](https://github.com/burnt-labs/xion.js/commit/bed091d74557457efb681734a27b46d97cdefbbe), [`deb1a8d`](https://github.com/burnt-labs/xion.js/commit/deb1a8dae04fe878a56e9e17d090b94c56069f44)]:
+  - @burnt-labs/signers@0.1.0-alpha.10
+  - @burnt-labs/ui@0.1.0-alpha.10
+  - @burnt-labs/abstraxion@1.0.0-alpha.42
+
 ## 0.2.0-alpha.22
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # demo-app
 
+## 1.1.0-alpha.27
+
+### Patch Changes
+
+- Updated dependencies [[`bed091d`](https://github.com/burnt-labs/xion.js/commit/bed091d74557457efb681734a27b46d97cdefbbe), [`deb1a8d`](https://github.com/burnt-labs/xion.js/commit/deb1a8dae04fe878a56e9e17d090b94c56069f44)]:
+  - @burnt-labs/signers@0.1.0-alpha.10
+  - @burnt-labs/ui@0.1.0-alpha.10
+  - @burnt-labs/abstraxion@1.0.0-alpha.42
+
 ## 1.1.0-alpha.26
 
 ### Minor Changes
