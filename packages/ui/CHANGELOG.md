@@ -1,5 +1,11 @@
 # @burnt-labs/ui
 
+## 0.1.0-alpha.10
+
+### Minor Changes
+
+- [#147](https://github.com/burnt-labs/xion.js/pull/147) [`bed091d`](https://github.com/burnt-labs/xion.js/commit/bed091d74557457efb681734a27b46d97cdefbbe) Thanks [@BurntVal](https://github.com/BurntVal)! - Implementation of OKX wallet (cosmos provider)
+
 ## 0.1.0-alpha.9
 
 ### Minor Changes
