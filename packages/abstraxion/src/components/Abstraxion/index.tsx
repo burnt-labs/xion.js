@@ -10,6 +10,7 @@ import {
 import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
 import { AbstraxionSignin } from "../AbstraxionSignin";
+import { Connected } from "@/src/components/Connected/Connected.tsx";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -41,12 +42,6 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
 
   if (!showModal) return null;
 
-  // No longer what to show modal when connected, the dapp should handle showing "logged in" state
-  if (isConnected) {
-    setShowModal(false);
-    return null;
-  }
-
   return (
     <Dialog onOpenChange={onClose} open={showModal}>
       <DialogContent>
@@ -54,6 +49,8 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
           <ErrorDisplay />
         ) : isConnecting ? (
           <Loading />
+        ) : isConnected ? (
+          <Connected onClose={onClose} />
         ) : (
           <AbstraxionSignin />
         )}
