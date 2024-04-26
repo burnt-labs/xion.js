@@ -6,13 +6,18 @@ type BaseInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "prefix">;
 export interface ITextFieldProps extends BaseInputProps {
   className?: string;
   error?: string;
+  baseInputClassName?: string;
+  onKeyDown?: (e: any) => false | Promise<void>;
 }
 export function Input({
   className,
   placeholder,
+  // This should only be used for specific classes that can't override the base input styles.
+  baseInputClassName,
   value,
   error,
   onBlur,
+  onKeyDown,
   ...props
 }: ITextFieldProps) {
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -46,11 +51,14 @@ export function Input({
       </label>
       <input
         {...props}
-        className={`ui-z-10 ui-block ui-h-8 ui-w-full ui-border-b ui-relative ${
+        className={`${
+          baseInputClassName || ""
+        } ui-z-10 ui-block ui-h-8 ui-w-full ui-border-b ui-relative ${
           error ? "ui-border-red-400" : ""
         } ui-bg-transparent ui-font-akkuratLL ui-text-sm ui-text-zinc-100 ui-font-normal ui-leading-tight ui-outline-none`}
         onBlur={handleBlur}
         onFocus={handleFocus}
+        onKeyDown={onKeyDown}
         value={value}
       />
     </div>

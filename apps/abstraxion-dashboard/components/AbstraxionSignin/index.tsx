@@ -121,10 +121,12 @@ export const AbstraxionSignin = () => {
             </h2>
           </div>
           <Input
+            baseInputClassName="!ui-text-[16px]"
             placeholder="Verification Code"
             value={otp}
             onChange={handleOtpChange}
             error={otpError}
+            onKeyDown={(e) => e.key === "Enter" && handleOtp(e)}
           />
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
             <Button fullWidth={true} onClick={handleOtp} disabled={!!otpError}>
@@ -151,11 +153,13 @@ export const AbstraxionSignin = () => {
             </h2>
           </div>
           <Input
+            baseInputClassName="!ui-text-[16px]"
             placeholder="Email address"
             value={email}
             onChange={handleEmailChange}
             error={emailError}
             onBlur={validateEmail}
+            onKeyDown={(e) => e.key === "Enter" && handleEmail(e)}
           />
           <Button
             fullWidth={true}
