@@ -7,6 +7,7 @@ export interface ITextFieldProps extends BaseInputProps {
   className?: string;
   error?: string;
   baseInputClassName?: string;
+  onKeyDown?: VoidFunction;
 }
 export function Input({
   className,
@@ -16,6 +17,7 @@ export function Input({
   value,
   error,
   onBlur,
+  onKeyDown,
   ...props
 }: ITextFieldProps) {
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -56,6 +58,7 @@ export function Input({
         } ui-bg-transparent ui-font-akkuratLL ui-text-sm ui-text-zinc-100 ui-font-normal ui-leading-tight ui-outline-none`}
         onBlur={handleBlur}
         onFocus={handleFocus}
+        onKeyDown={onKeyDown}
         value={value}
       />
     </div>
