@@ -7,7 +7,7 @@ export interface ITextFieldProps extends BaseInputProps {
   className?: string;
   error?: string;
   baseInputClassName?: string;
-  onKeyDown?: VoidFunction;
+  onKeyDown?: (e: any) => false | Promise<void>;
 }
 export function Input({
   className,
