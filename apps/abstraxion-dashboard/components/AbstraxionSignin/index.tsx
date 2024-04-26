@@ -121,6 +121,7 @@ export const AbstraxionSignin = () => {
             </h2>
           </div>
           <Input
+            className="ui-text-[16px]"
             placeholder="Verification Code"
             value={otp}
             onChange={handleOtpChange}
@@ -151,6 +152,7 @@ export const AbstraxionSignin = () => {
             </h2>
           </div>
           <Input
+            className="ui-text-[16px]"
             placeholder="Email address"
             value={email}
             onChange={handleEmailChange}
