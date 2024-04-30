@@ -34,7 +34,7 @@ export function Modal({
   return (
     <div
       className={cn(
-        "ui-relative ui-w-full ui-max-w-[465px] ui-text-black ui-rounded ui-z-[1000] ui-bg-black/25 backdrop-blur-xl",
+        "ui-relative ui-h-full ui-w-full ui-max-w-[465px] ui-text-black ui-rounded ui-z-[1000] ui-bg-black/25 backdrop-blur-xl",
         className,
       )}
       {...props}
@@ -75,7 +75,7 @@ export function ModalSection({
   return (
     <div
       className={cn(
-        "ui-inline-flex ui-w-full ui-h-full sm:ui-p-10 ui-flex-col ui-items-start ui-justify-between ui-gap-8",
+        "ui-inline-flex ui-w-full ui-h-full ui-flex-col ui-items-start ui-justify-between ui-gap-8",
         className,
       )}
       {...props}

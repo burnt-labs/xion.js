@@ -57,8 +57,6 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
 
   if (!isOpen) return null;
 
-  console.log("Abstraxion");
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>

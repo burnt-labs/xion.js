@@ -136,10 +136,10 @@ export const AbstraxionWallets = () => {
       ) : (
         <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-start ui-justify-between ui-gap-8 sm:ui-p-10 ui-text-white">
           <div className="ui-flex ui-flex-col ui-w-full ui-text-center">
-            <h1 className="ui-w-full ui-leading-[38.40px] ui-tracking-tighter ui-text-3xl ui-font-light ui-text-white ui-uppercase ui-mb-3">
+            <h1 className="ui-font-akkuratLL ui-w-full ui-leading-[38.40px] ui-tracking-tighter ui-text-3xl ui-font-light ui-text-white ui-uppercase ui-mb-3">
               Welcome
             </h1>
-            <h2 className="ui-w-full ui-mb-4 ui-text-center ui-text-sm ui-font-normal ui-leading-tight ui-text-white/50">
+            <h2 className="ui-font-akkuratLL ui-w-full ui-mb-4 ui-text-center ui-text-sm ui-font-normal ui-leading-tight ui-text-white/50">
               Select an account to continue
             </h2>
           </div>
@@ -209,7 +209,7 @@ export const AbstraxionWallets = () => {
               </Button>
             ) : null}
             <Button
-              structure="outlined"
+              structure="destructive"
               fullWidth={true}
               onClick={handleDisconnect}
             >

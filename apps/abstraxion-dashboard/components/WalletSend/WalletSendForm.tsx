@@ -5,6 +5,7 @@ import { XION_TO_USDC_CONVERSION } from "@/components/Overview";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useAbstraxionAccount } from "@/hooks";
 import { formatBalance, isValidWalletAddress } from "@/utils";
+import { USDCIcon } from "../Icons/USDC";
 
 export function WalletSendForm({
   sendTokens,
@@ -89,7 +90,7 @@ export function WalletSendForm({
         />
       ) : isSuccess ? (
         <>
-          <div className="ui-p-0 md:ui-p-8 ui-flex ui-flex-col ui-gap-4">
+          <div className="ui-p-0 ui-flex ui-flex-col ui-gap-4">
             <h1 className="ui-w-full ui-text-center ui-text-3xl ui-font-akkuratLL ui-font-thin">
               SUCCESS!
             </h1>
@@ -115,18 +116,18 @@ export function WalletSendForm({
             </p>
             <div className="ui-my-6 ui-h-[1px] ui-w-full ui-bg-white/20" />
             <div>
-              <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white/40">
+              <p className="ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white/40">
                 From
               </p>
-              <p className="ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white">
+              <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white">
                 {account.id}
               </p>
             </div>
             <div className="ui-mb-4">
-              <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white/40">
+              <p className="ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white/40">
                 To
               </p>
-              <p className="ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white">
+              <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white">
                 {recipientAddress}
               </p>
             </div>
@@ -135,7 +136,7 @@ export function WalletSendForm({
         </>
       ) : isOnReviewStep ? (
         <>
-          <div className="ui-p-0 md:ui-p-8 ui-flex ui-flex-col ui-gap-4">
+          <div className="ui-p-0 ui-flex ui-flex-col ui-gap-4">
             <h1 className="ui-w-full ui-text-center ui-text-3xl ui-font-akkuratLL ui-font-thin">
               REVIEW
             </h1>
@@ -161,18 +162,18 @@ export function WalletSendForm({
             </p>
             <div className="ui-my-6 ui-h-[1px] ui-w-full ui-bg-white/20" />
             <div>
-              <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white/40">
+              <p className="ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white/40">
                 From
               </p>
-              <p className="ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white">
+              <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white">
                 {account.id}
               </p>
             </div>
             <div className="ui-mb-4">
-              <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white/40">
+              <p className="ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white/40">
                 To
               </p>
-              <p className="ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white">
+              <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white">
                 {recipientAddress}
               </p>
             </div>
@@ -190,26 +191,30 @@ export function WalletSendForm({
         </>
       ) : (
         <>
-          <div className="ui-flex ui-flex-col ui-p-0 md:ui-p-8 ui-gap-8">
+          <div className="ui-flex ui-flex-col ui-p-0 ui-gap-8">
             <h1 className="ui-w-full ui-text-center ui-text-3xl ui-font-akkuratLL ui-font-thin">
               SEND
             </h1>
-            <div className="ui-flex ui-flex-col ui-gap-4">
-              <div className="ui-flex ui-flex-col ui-items-start ui-p-4 ui-border ui-border-white/50 ui-rounded-2xl">
-                <p className="ui-text-md ui-font-bold ui-text-white">XION</p>
-                <p className="ui-text-md ui-text-white">
-                  {/* TODO: Make configurable once we support multiple currencies */}
-                  Balance: {formatBalance(Number(balanceInfo.total))} XION{" "}
-                  <span className="ui-text-white/50 ui-pl-2">
-                    $
-                    {formatBalance(
-                      Number(balanceInfo.total) * XION_TO_USDC_CONVERSION,
-                    )}{" "}
-                    USD
-                  </span>
-                </p>
+            <div className="ui-flex ui-flex-col">
+              <div className="ui-flex ui-items-center ui-p-4 ui-bg-black ui-rounded-lg">
+                <USDCIcon color="black" />
+                <div className="ui-flex ui-flex-col ui-items-start">
+                  <p className="ui-text-md ui-font-bold ui-text-white">XION</p>
+                  <p className="ui-text-md ui-text-white">
+                    {/* TODO: Make configurable once we support multiple currencies */}
+                    Balance: {formatBalance(Number(balanceInfo.total))} XION{" "}
+                    <span className="ui-text-white/50 ui-pl-2">
+                      $
+                      {formatBalance(
+                        Number(balanceInfo.total) * XION_TO_USDC_CONVERSION,
+                      )}{" "}
+                      USD
+                    </span>
+                  </p>
+                </div>
               </div>
-              <div className="ui-flex ui-justify-between">
+
+              <div className="ui-font-akkuratLL ui-flex ui-justify-between ui-mb-4 ui-mt-8">
                 <p className="ui-text-white ui-font-semibold">Amount</p>
                 <p className="ui-text-white/50 ui-font-semibold">
                   =$
@@ -222,10 +227,12 @@ export function WalletSendForm({
               <div
                 className={`ui-flex ui-items-center ui-justify-between ui-p-6 ui-border ${
                   amountError ? "ui-border-red-500" : "ui-border-white/50"
-                } ui-rounded-2xl`}
+                } ui-rounded-lg`}
               >
                 <input
-                  className="ui-w-full ui-bg-transparent ui-text-white ui-font-bold ui-text-5xl placeholder:ui-text-white/50 focus:ui-outline-none"
+                  className={`ui-w-full ui-bg-transparent ${
+                    sendAmount === "0" && "!ui-text-[#6C6A6A]"
+                  } ui-text-white ui-font-bold ui-text-5xl placeholder:ui-text-white/50 focus:ui-outline-none`}
                   onChange={handleAmountChange}
                   placeholder="Amount"
                   type="number"
@@ -240,10 +247,12 @@ export function WalletSendForm({
               ) : null}
             </div>
             <div className="ui-flex ui-flex-col">
-              <label className="ui-text-xs ui-text-white/50">From:</label>
+              <label className="ui-font-akkuratLL ui-text-xs ui-text-white/50">
+                From:
+              </label>
               <p
                 style={{ wordBreak: "break-word" }}
-                className="ui-text-xs ui-w-full ui-text-center ui-text-xs ui-font-akkuratLL ui-text-white"
+                className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white"
               >
                 {account.id}
               </p>
