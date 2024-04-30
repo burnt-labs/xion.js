@@ -59,6 +59,9 @@ export function Input({
         onBlur={handleBlur}
         onFocus={handleFocus}
         onKeyDown={onKeyDown}
+        style={{
+          WebkitBorderRadius: "none",
+        }}
         value={value}
       />
     </div>

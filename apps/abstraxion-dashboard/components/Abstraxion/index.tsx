@@ -65,7 +65,7 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className={isMainnet ? "" : "!ui-bg-white/10"}>
+        <DialogContent className={`${isMainnet ? "" : "!ui-bg-white/10"}`}>
           {abstraxionError ? (
             <ErrorDisplay message={abstraxionError} onClose={onClose} />
           ) : account?.id &&
@@ -87,7 +87,7 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
       </Dialog>
       {/* TOS Footer */}
       {!isConnected && (
-        <div className="ui-absolute ui-pointer-events-auto ui-w-full ui-z-[1000] ui-py-6 ui-px-10 ui-bottom-0 ui-flex ui-flex-col sm:ui-flex-row sm:ui-justify-between sm:ui-items-end">
+        <div className="ui-absolute ui-pointer-events-auto ui-w-full ui-z-[1000] sm:ui-py-6 ui-px-10 ui-bottom-0 ui-flex ui-flex-col sm:ui-flex-row sm:ui-justify-between sm:ui-items-end">
           <div className="ui-font-akkuratLL ui-text-xs sm:ui-text-sm ui-font-normal ui-text-center sm:ui-text-left">
             <span className="ui-text-neutral-400">
               By continuing, you agree to and acknowledge that you have read and

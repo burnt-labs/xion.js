@@ -112,10 +112,10 @@ export function AbstraxionWallets() {
       ) : (
         <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-start ui-justify-between ui-gap-8 ui-p-10 ui-text-white">
           <div className="ui-flex ui-flex-col ui-w-full ui-text-center">
-            <h1 className="ui-w-full ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
+            <h1 className="ui-font-akkuratLL ui-w-full ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
               Welcome
             </h1>
-            <h2 className="ui-w-full ui-tracking-tighter ui-text-sm ui-mb-4 ui-text-neutral-500">
+            <h2 className="ui-font-akkuratLL ui-w-full ui-tracking-tighter ui-text-sm ui-mb-4 ui-text-neutral-500">
               Select an account to continue
             </h2>
           </div>
@@ -177,18 +177,16 @@ export function AbstraxionWallets() {
           )}
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
             {connectionType === "stytch" &&
-              user &&
-              user.webauthn_registrations.length < 1 ? <Button
-                  fullWidth
-                  onClick={registerWebAuthn}
-                  structure="outlined"
-                >
-                  Add Passkey/Biometrics
-                </Button> : null}
+            user &&
+            user.webauthn_registrations.length < 1 ? (
+              <Button fullWidth onClick={registerWebAuthn} structure="outlined">
+                Add Passkey/Biometrics
+              </Button>
+            ) : null}
             <Button
               fullWidth
               onClick={handleDisconnect}
-              structure="outlined"
+              structure="destructive"
             >
               Disconnect
             </Button>

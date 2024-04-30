@@ -31,7 +31,7 @@ export function WalletReceive({
         <DialogClose className="ui-absolute ui-top-5 ui-right-5">
           <CloseIcon className="ui-stroke-white/50" />
         </DialogClose>
-        <div className="ui-flex ui-flex-col ui-pt-8">
+        <div className="ui-flex ui-flex-col">
           <h1 className="ui-w-full ui-text-center ui-text-3xl ui-font-akkuratLL ui-font-thin">
             RECEIVE
           </h1>
@@ -50,7 +50,11 @@ export function WalletReceive({
           <div className="ui-flex ui-items-center ui-justify-center ui-my-6 ui-p-6 ui-w-full ui-bg-black ui-rounded-lg">
             <QRCodeSVG value={"uxion:" + xionAddress} />
           </div>
-          <Button onClick={() => setIsOpen(false)} fullWidth>
+          <Button
+            className="ui-mt-6"
+            onClick={() => setIsOpen(false)}
+            fullWidth
+          >
             Close
           </Button>
         </div>
