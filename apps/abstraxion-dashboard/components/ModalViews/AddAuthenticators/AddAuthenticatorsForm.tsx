@@ -234,7 +234,8 @@ export function AddAuthenticatorsForm({
       setIsLoading(true);
       const encoder = new TextEncoder();
       const challenge = Buffer.from(encoder.encode(abstractAccount?.id));
-      const rpUrl = "http://localhost:3000"; // TODO: This will have to be pointing to current domain, ex. testnet-dashboard.xion.com OR mainnet-dashboard.xion.com
+      const rpUrl =
+        "https://xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app/";
       const options: CredentialCreationOptions = {
         publicKey: {
           rp: {
