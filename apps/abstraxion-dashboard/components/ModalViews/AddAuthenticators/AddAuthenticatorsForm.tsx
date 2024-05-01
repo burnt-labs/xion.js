@@ -9,6 +9,7 @@ import Image from "next/image";
 import { WalletType, useAccount, useSuggestChainAndConnect } from "graz";
 import { useQuery } from "@apollo/client";
 import { useStytchUser } from "@stytch/nextjs";
+import { create } from "@github/webauthn-json/browser-ponyfill";
 import {
   Button,
   KeplrLogo,
@@ -25,7 +26,7 @@ import { encodeHex } from "@/utils";
 import { AllSmartWalletQuery } from "@/utils/queries";
 
 // TODO: Add webauthn to this and remove "disable" prop from button when implemented
-type AuthenticatorStates = "none" | "keplr" | "metamask" | "okx";
+type AuthenticatorStates = "none" | "keplr" | "metamask" | "okx" | "passkey";
 
 export function AddAuthenticatorsForm({
   setIsOpen,
@@ -109,6 +110,9 @@ export function AddAuthenticatorsForm({
         break;
       case "okx":
         await addOkxAuthenticator();
+        break;
+      case "passkey":
+        await addWebauthnAuthenticator();
         break;
       default:
         break;
@@ -224,6 +228,78 @@ export function AddAuthenticatorsForm({
       setIsLoading(false);
     }
   }
+
+  const addWebauthnAuthenticator = async () => {
+    try {
+      setIsLoading(true);
+      const encoder = new TextEncoder();
+      const challenge = Buffer.from(encoder.encode(abstractAccount?.id));
+      const rpUrl = "http://localhost:3000"; // TODO: This will have to be pointing to current domain, ex. testnet-dashboard.xion.com OR mainnet-dashboard.xion.com
+      const options: CredentialCreationOptions = {
+        publicKey: {
+          rp: {
+            name: rpUrl,
+          },
+          user: {
+            name: abstractAccount.id,
+            displayName: abstractAccount.id,
+            id: challenge,
+          },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+          challenge,
+          authenticatorSelection: { userVerification: "preferred" },
+          timeout: 300000, // 5 minutes,
+          excludeCredentials: [],
+        },
+      };
+
+      // What happens on a failed addAuthenticator tx, do we just delete the registered browser key or just leave it and let them try again?
+
+      const publicKeyCredential = await create(options);
+      if (publicKeyCredential === null) {
+        console.log("null credential");
+        return;
+      }
+      console.log("publicKeyCredential: ", publicKeyCredential);
+      const publicKeyCredentialJSON = JSON.stringify(publicKeyCredential);
+      // Encode Uint8Array as base64
+      const base64EncodedCredential = Buffer.from(
+        encoder.encode(publicKeyCredentialJSON),
+      ).toString("base64");
+
+      const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
+
+      const msg = {
+        add_auth_method: {
+          add_authenticator: {
+            Passkey: {
+              id: accountIndex,
+              url: rpUrl,
+              credential: base64EncodedCredential,
+            },
+          },
+        },
+      };
+      const res = await client?.addAbstractAccountAuthenticator(msg, "", {
+        amount: [{ amount: "0", denom: "uxion" }],
+        gas: "500000",
+      });
+
+      if (res?.rawLog?.includes("failed")) {
+        throw new Error(res.rawLog);
+      }
+
+      console.log(res);
+      return res;
+    } catch (error) {
+      console.log(error);
+      setErrorMessage(
+        "Something went wrong trying to add Webauthn as authenticator",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   async function addEthAuthenticator() {
     if (!window.ethereum) {
@@ -351,9 +427,17 @@ export function AddAuthenticatorsForm({
                 alt="OKX Logo"
               />
             </Button>
-            {/* <Button disabled structure="outlined">
+            <Button
+              className={
+                selectedAuthenticator === "passkey" ? "!ui-border-white" : ""
+              }
+              onClick={() => {
+                handleSwitch("passkey");
+              }}
+              structure="outlined"
+            >
               <PasskeyIcon className="ui-w-12" />
-            </Button> */}
+            </Button>
           </div>
         </>
       ) : null}
