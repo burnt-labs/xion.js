@@ -50,7 +50,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
       setIsConnecting(false);
     }
 
-    if (!isConnecting && !abstraxionAccount && !granterAddress) {
+    if ((!isConnecting && !abstraxionAccount) || !granterAddress) {
       configureAccount();
     }
   }, [isConnected, abstraxionAccount, granterAddress]);

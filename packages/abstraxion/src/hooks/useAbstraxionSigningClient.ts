@@ -70,7 +70,6 @@ export const useAbstraxionSigningClient = (): {
 
         setAbstractClient(directClient);
       } catch (error) {
-        console.log("Something went wrong: ", error);
         setAbstractClient(undefined);
       }
     }
