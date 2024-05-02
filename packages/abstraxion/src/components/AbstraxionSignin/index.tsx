@@ -8,43 +8,6 @@ import {
 } from "../AbstraxionContext";
 import { fetchConfig } from "@burnt-labs/constants";
 
-interface GrantsResponse {
-  grants: Grant[];
-  pagination: Pagination;
-}
-
-interface Grant {
-  granter: string;
-  grantee: string;
-  authorization: Authorization;
-  expiration: string;
-}
-
-interface Authorization {
-  "@type": string;
-  grants: GrantAuthorization[];
-}
-
-interface GrantAuthorization {
-  contract: string;
-  limit: Limit;
-  filter: Filter;
-}
-
-interface Limit {
-  "@type": string;
-  remaining: string;
-}
-
-interface Filter {
-  "@type": string;
-}
-
-interface Pagination {
-  next_key: null | string;
-  total: string;
-}
-
 export function AbstraxionSignin(): JSX.Element {
   const {
     setIsConnecting,
@@ -53,10 +16,7 @@ export function AbstraxionSignin(): JSX.Element {
     setAbstraxionAccount,
     setGranterAddress,
     setShowModal,
-    granterAddress,
     contracts,
-    dashboardUrl,
-    setDashboardUrl,
     rpcUrl,
     restUrl,
     stake,
@@ -99,14 +59,28 @@ export function AbstraxionSignin(): JSX.Element {
     window.location.href = `${dashUrl}?${queryString}`;
   }
 
-  async function generateAndStoreTempAccount(): Promise<DirectSecp256k1HdWallet> {
+  async function getTempAccount() {
+    const existingKeypair = localStorage.getItem("xion-authz-temp-account");
+    if (!existingKeypair) return null;
+    const keypair = await DirectSecp256k1HdWallet.deserialize(
+      existingKeypair,
+      "abstraxion",
+    );
+    return keypair;
+  }
+
+  async function generateAndStoreTempAccount(): Promise<string> {
     const keypair = await DirectSecp256k1HdWallet.generate(12, {
       prefix: "xion",
     });
-    // TODO: serialization password and localStorage key
+    const accounts = await keypair.getAccounts();
+    const address = accounts[0].address;
+    setTempAccountAddress(address);
+
     const serializedKeypair = await keypair.serialize("abstraxion");
     localStorage.setItem("xion-authz-temp-account", serializedKeypair);
-    return keypair;
+    localStorage.removeItem("xion-authz-granter-account"); // just in case
+    return address;
   }
 
   async function pollForGrants(
@@ -158,47 +132,43 @@ export function AbstraxionSignin(): JSX.Element {
     async function onStartup() {
       try {
         setIsConnecting(true);
-        const existingKeypair = localStorage.getItem("xion-authz-temp-account");
-        let keypair;
-        if (existingKeypair) {
-          keypair = await DirectSecp256k1HdWallet.deserialize(
-            existingKeypair,
-            "abstraxion",
-          );
-        } else {
-          keypair = await generateAndStoreTempAccount();
-        }
-
+        // Check for existing keypair and granter address
+        const existingKeypair = await getTempAccount();
         const existingGranter = localStorage.getItem(
           "xion-authz-granter-account",
         );
         const searchParams = new URLSearchParams(window.location.search);
         const granter = existingGranter || searchParams.get("granter");
-        const accounts = await keypair.getAccounts();
-        const address = accounts[0].address;
-        setTempAccountAddress(address);
 
+        // If both exist, we can assume user is either 1. already logged in and grants have been created for the temp key, or 2. been redirected with the granter url param
+        // In either case, we poll for grants and make the appropriate state changes to reflect a "logged in" state
         if (existingKeypair && granter) {
+          const accounts = await existingKeypair.getAccounts();
+          const address = accounts[0].address;
+          setTempAccountAddress(address);
+
           const pollSuccess = await pollForGrants(address, granter);
           if (!pollSuccess) {
             throw new Error("Error polling for grant");
           }
+
           setIsConnecting(false);
           setIsConnected(true);
           setShowModal(false);
-          setAbstraxionAccount(keypair);
+          setAbstraxionAccount(existingKeypair);
           configuregranter(granter);
+
           // Remove query parameter "granted" and "granter"
           const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.delete("granted");
           currentUrl.searchParams.delete("granter");
           history.pushState({}, "", currentUrl.href);
-        } else if (existingKeypair && !granter) {
-          await generateAndStoreTempAccount(); // just replace existing keypair
-          localStorage.removeItem("xion-authz-granter-account"); // just in case
+        } else if (!existingKeypair || !granter) {
+          // If there isn't an existing keypair, or there isn't a granter in either localStorage or the url params, we want to start from scratch
+          // Generate new keypair and redirect to dashboard
+          const newKeypairaddress = await generateAndStoreTempAccount(); // remove and replace existing keypair
           const { dashboardUrl } = await fetchConfig(rpcUrl);
-          setDashboardUrl(dashboardUrl);
-          openDashboardTab(address, contracts, dashboardUrl);
+          openDashboardTab(newKeypairaddress, contracts, dashboardUrl);
         }
       } catch (error) {
         console.log("Something went wrong: ", error);
@@ -228,7 +198,8 @@ export function AbstraxionSignin(): JSX.Element {
       </div>
       <BrowserIcon />
       <Button
-        onClick={() => {
+        onClick={async () => {
+          const { dashboardUrl } = await fetchConfig(rpcUrl);
           openDashboardTab(tempAccountAddress, contracts, dashboardUrl);
         }}
         structure="naked"
