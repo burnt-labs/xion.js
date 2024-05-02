@@ -209,7 +209,6 @@ export function AbstraxionSignin(): JSX.Element {
     }
 
     if (!isMounted.current) {
-      console.log("mounted...trigger startup");
       onStartup();
     }
 
