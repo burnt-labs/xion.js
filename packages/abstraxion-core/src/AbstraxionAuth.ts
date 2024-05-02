@@ -218,24 +218,36 @@ export class AbstraxionAuth {
   }
 
   // Polls for grants issued to the local keypair
-  async pollForGrants(): Promise<boolean> {
+  async pollForGrants(): Promise<void> {
     const localKeypair = await this.getLocalKeypair();
     if (!localKeypair) {
       throw new Error("No account found.");
     }
 
-    const address = await this.getKeypairAddress();
+    const grantee = await this.getKeypairAddress();
 
-    const shouldContinue = true;
-    while (shouldContinue) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const granter = searchParams.get("granter");
+
+    if (!granter) {
+      throw new Error("No granter found.");
+    }
+
+    const maxRetries = 5;
+    let retries = 0;
+
+    const poll = async () => {
       try {
-        await wait(3000);
-        const res = await fetch(
-          `${this.restUrl}/cosmos/authz/v1beta1/grants/grantee/${address}`,
-          {
-            cache: "no-store",
-          },
-        );
+        const baseUrl = `${this.restUrl}/cosmos/authz/v1beta1/grants`;
+        const url = new URL(baseUrl);
+        const params = new URLSearchParams({
+          grantee,
+          granter,
+        });
+        url.search = params.toString();
+        const res = await fetch(url, {
+          cache: "no-store",
+        });
         const data = (await res.json()) as GrantsResponse;
         if (data.grants.length > 0) {
           const granterAddresses = data.grants.map((grant) => grant.granter);
@@ -251,15 +263,35 @@ export class AbstraxionAuth {
           if (typeof window !== undefined) {
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.delete("granted");
+            currentUrl.searchParams.delete("granter");
             history.pushState({}, "", currentUrl.href);
+            return true;
           }
-          break;
+        } else {
+          // No grants found, retry with exponential backoff
+          if (retries < maxRetries) {
+            const delay = Math.pow(2, retries) * 1000;
+            setTimeout(poll, delay);
+            retries++;
+          } else {
+            console.error("Max retries exceeded, giving up.");
+            return false;
+          }
         }
       } catch (error) {
-        throw error;
+        console.error("Error while polling:", error);
+        // Retry immediately in case of network error
+        if (retries < maxRetries) {
+          setTimeout(poll, 1000);
+          retries++;
+        } else {
+          console.error("Max retries exceeded, giving up.");
+          throw error;
+        }
       }
-    }
-    return true;
+    };
+
+    await poll();
   }
 
   logout() {
@@ -285,16 +317,13 @@ export class AbstraxionAuth {
   async login() {
     try {
       const keypair = await this.getLocalKeypair();
-      const granter = this.getGranter();
+      const searchParams = new URLSearchParams(window.location.search);
+      const granter = this.getGranter() || searchParams.get("granter");
 
       if (keypair && granter) {
-        // Already logged in, just update state
+        await this.pollForGrants();
         this.abstractAccount = this.signArbWallet;
         this.triggerAuthStateChange(true);
-      } else if (keypair && !granter) {
-        // TODO: Need to implement a timeout or a max request for polling
-        // Then handle case where nothing was found
-        await this.pollForGrants();
       } else {
         await this.newKeypairFlow();
       }
