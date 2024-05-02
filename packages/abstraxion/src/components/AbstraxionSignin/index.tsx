@@ -200,8 +200,9 @@ export function AbstraxionSignin(): JSX.Element {
           setShowModal(false);
           setAbstraxionAccount(keypair);
           configuregranter(granter);
-        } else {
+        } else if (existingKeypair && !granter) {
           await generateAndStoreTempAccount(); // just replace existing keypair
+          localStorage.removeItem("xion-authz-granter-account"); // just in case
           const { dashboardUrl } = await fetchConfig(rpcUrl);
           setDashboardUrl(dashboardUrl);
           openDashboardTab(address, contracts, dashboardUrl);
