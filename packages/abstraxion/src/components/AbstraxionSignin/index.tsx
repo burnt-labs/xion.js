@@ -112,7 +112,7 @@ export function AbstraxionSignin(): JSX.Element {
   async function pollForGrants(
     grantee: string,
     granter: string | null,
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (!grantee) {
       throw new Error("No keypair address");
     }
@@ -123,10 +123,8 @@ export function AbstraxionSignin(): JSX.Element {
     const maxRetries = 5;
     let retries = 0;
 
-    const poll = async () => {
+    while (retries < maxRetries) {
       try {
-        setIsConnecting(true);
-
         const baseUrl = `${restUrl}/cosmos/authz/v1beta1/grants`;
         const url = new URL(baseUrl);
         const params = new URLSearchParams({
@@ -137,42 +135,29 @@ export function AbstraxionSignin(): JSX.Element {
         const res = await fetch(url, {
           cache: "no-store",
         });
-        const data = (await res.json()) as GrantsResponse;
+        const data = await res.json();
         if (data.grants.length > 0) {
-          // Remove query parameter "granted" and "granter"
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.delete("granted");
-          currentUrl.searchParams.delete("granter");
-          history.pushState({}, "", currentUrl.href);
+          return true;
         } else {
-          // No grants found, retry with exponential backoff
-          if (retries < maxRetries) {
-            const delay = Math.pow(2, retries) * 1000;
-            setTimeout(poll, delay);
-            retries++;
-          } else {
-            console.error("Max retries exceeded, giving up.");
-          }
+          const delay = Math.pow(2, retries) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          retries++;
         }
       } catch (error) {
-        console.error("Error while polling:", error);
-        // Retry immediately in case of network error
-        if (retries < maxRetries) {
-          setTimeout(poll, 1000);
-          retries++;
-        } else {
-          console.error("Max retries exceeded, giving up.");
-          throw error;
-        }
+        const delay = Math.pow(2, retries) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        retries++;
       }
-    };
+    }
 
-    await poll();
+    console.error("Max retries exceeded, giving up.");
+    return false;
   }
 
   useEffect(() => {
     async function onStartup() {
       try {
+        setIsConnecting(true);
         const existingKeypair = localStorage.getItem("xion-authz-temp-account");
         let keypair;
         if (existingKeypair) {
@@ -194,12 +179,20 @@ export function AbstraxionSignin(): JSX.Element {
         setTempAccountAddress(address);
 
         if (existingKeypair && granter) {
-          await pollForGrants(address, granter);
+          const pollSuccess = await pollForGrants(address, granter);
+          if (!pollSuccess) {
+            throw new Error("Error polling for grant");
+          }
           setIsConnecting(false);
           setIsConnected(true);
           setShowModal(false);
           setAbstraxionAccount(keypair);
           configuregranter(granter);
+          // Remove query parameter "granted" and "granter"
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.delete("granted");
+          currentUrl.searchParams.delete("granter");
+          history.pushState({}, "", currentUrl.href);
         } else if (existingKeypair && !granter) {
           await generateAndStoreTempAccount(); // just replace existing keypair
           localStorage.removeItem("xion-authz-granter-account"); // just in case
@@ -210,10 +203,13 @@ export function AbstraxionSignin(): JSX.Element {
       } catch (error) {
         console.log("Something went wrong: ", error);
         setAbstraxionError((error as Error).message);
+      } finally {
+        setIsConnecting(false);
       }
     }
 
     if (!isMounted.current) {
+      console.log("mounted...trigger startup");
       onStartup();
     }
 
