@@ -193,7 +193,7 @@ export function AbstraxionSignin(): JSX.Element {
         const address = accounts[0].address;
         setTempAccountAddress(address);
 
-        if (keypair && granter) {
+        if (existingKeypair && granter) {
           await pollForGrants(address, granter);
           setIsConnecting(false);
           setIsConnected(true);
