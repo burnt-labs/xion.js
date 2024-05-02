@@ -139,7 +139,6 @@ export function AbstraxionSignin(): JSX.Element {
         });
         const data = (await res.json()) as GrantsResponse;
         if (data.grants.length > 0) {
-          configuregranter(granter);
           // Remove query parameter "granted" and "granter"
           const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.delete("granted");
@@ -184,25 +183,28 @@ export function AbstraxionSignin(): JSX.Element {
         } else {
           keypair = await generateAndStoreTempAccount();
         }
+
+        const existingGranter = localStorage.getItem(
+          "xion-authz-granter-account",
+        );
         const searchParams = new URLSearchParams(window.location.search);
-        const isGranted = searchParams.get("granted");
-        const granter = searchParams.get("granter");
+        const granter = existingGranter || searchParams.get("granter");
         const accounts = await keypair.getAccounts();
         const address = accounts[0].address;
         setTempAccountAddress(address);
 
-        if (!isGranted && !granterAddress) {
-          const { dashboardUrl } = await fetchConfig(rpcUrl);
-          setDashboardUrl(dashboardUrl);
-          openDashboardTab(address, contracts, dashboardUrl);
-        } else if (isGranted && !granterAddress) {
+        if (keypair && granter) {
           await pollForGrants(address, granter);
           setIsConnecting(false);
           setIsConnected(true);
           setShowModal(false);
           setAbstraxionAccount(keypair);
+          configuregranter(granter);
         } else {
-          setIsConnected(true);
+          await generateAndStoreTempAccount(); // just replace existing keypair
+          const { dashboardUrl } = await fetchConfig(rpcUrl);
+          setDashboardUrl(dashboardUrl);
+          openDashboardTab(address, contracts, dashboardUrl);
         }
       } catch (error) {
         console.log("Something went wrong: ", error);
