@@ -69,6 +69,8 @@ export function AddAuthenticatorsForm({
     },
   );
 
+  console.log(data);
+
   // Stop polling upon new data and update context
   useEffect(() => {
     if (previousData && data !== previousData) {
