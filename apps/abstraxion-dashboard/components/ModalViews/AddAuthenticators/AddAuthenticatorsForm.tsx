@@ -234,11 +234,10 @@ export function AddAuthenticatorsForm({
       setIsLoading(true);
       const encoder = new TextEncoder();
 
-      const challenge = Buffer.from(
-        Buffer.from(abstractAccount?.id).toString("base64"),
-      );
+      console.log("account address: ", abstractAccount?.id);
+      const challenge = Buffer.from(abstractAccount?.id);
 
-      console.log(challenge);
+      console.log("challenge: ", challenge);
 
       const rpUrl =
         "https://xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app/";
@@ -251,7 +250,7 @@ export function AddAuthenticatorsForm({
           user: {
             name: abstractAccount.id,
             displayName: abstractAccount.id,
-            id: Buffer.from(abstractAccount?.id), // "user id exceeds 64 bytes"
+            id: challenge,
           },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }],
           challenge,
@@ -260,6 +259,8 @@ export function AddAuthenticatorsForm({
           excludeCredentials: [],
         },
       };
+
+      console.log("options: ", options);
 
       // What happens on a failed addAuthenticator tx, do we just delete the registered browser key or just leave it and let them try again?
 
@@ -270,13 +271,13 @@ export function AddAuthenticatorsForm({
       }
       console.log("publicKeyCredential: ", publicKeyCredential);
       const publicKeyCredentialJSON = JSON.stringify(publicKeyCredential);
-      console.log(publicKeyCredentialJSON);
+      console.log("publicKeyCredentialJSON: ", publicKeyCredentialJSON);
       // Encode Uint8Array as base64
       const base64EncodedCredential = Buffer.from(
         encoder.encode(publicKeyCredentialJSON),
       ).toString("base64");
 
-      console.log(base64EncodedCredential);
+      console.log("base64EncodedCredential: ", base64EncodedCredential);
 
       const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
 
