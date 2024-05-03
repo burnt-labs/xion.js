@@ -233,9 +233,16 @@ export function AddAuthenticatorsForm({
     try {
       setIsLoading(true);
       const encoder = new TextEncoder();
-      const challenge = Buffer.from(encoder.encode(abstractAccount?.id));
+
+      const challenge = Buffer.from(
+        Buffer.from(abstractAccount?.id).toString("base64"),
+      );
+
+      console.log(challenge);
+
       const rpUrl =
         "https://xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app/";
+
       const options: CredentialCreationOptions = {
         publicKey: {
           rp: {
@@ -244,7 +251,7 @@ export function AddAuthenticatorsForm({
           user: {
             name: abstractAccount.id,
             displayName: abstractAccount.id,
-            id: challenge,
+            id: Buffer.from(abstractAccount?.id), // "user id exceeds 64 bytes"
           },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }],
           challenge,
@@ -263,10 +270,13 @@ export function AddAuthenticatorsForm({
       }
       console.log("publicKeyCredential: ", publicKeyCredential);
       const publicKeyCredentialJSON = JSON.stringify(publicKeyCredential);
+      console.log(publicKeyCredentialJSON);
       // Encode Uint8Array as base64
       const base64EncodedCredential = Buffer.from(
         encoder.encode(publicKeyCredentialJSON),
       ).toString("base64");
+
+      console.log(base64EncodedCredential);
 
       const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
 
