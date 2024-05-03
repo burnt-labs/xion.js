@@ -309,6 +309,7 @@ export function AddAuthenticatorsForm({
       }
 
       console.log(res);
+      postAddFunction();
       return res;
     } catch (error) {
       console.log(error);
