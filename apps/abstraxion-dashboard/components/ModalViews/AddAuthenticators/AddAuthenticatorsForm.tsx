@@ -234,7 +234,7 @@ export function AddAuthenticatorsForm({
   const webauthnTest = async () => {
     try {
       const rpUrl =
-        "https://xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app";
+        "xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app";
 
       let credential = await navigator.credentials.get({
         publicKey: {
