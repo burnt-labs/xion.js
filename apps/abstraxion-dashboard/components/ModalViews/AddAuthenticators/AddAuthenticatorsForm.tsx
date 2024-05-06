@@ -233,19 +233,14 @@ export function AddAuthenticatorsForm({
 
   const webauthnTest = async () => {
     try {
-      const challenge = Buffer.from(abstractAccount?.id);
       const rpUrl =
         "https://xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app";
-      let credential = await navigator.credentials.create({
+
+      let credential = await navigator.credentials.get({
         publicKey: {
-          challenge,
-          rp: { name: rpUrl },
-          user: {
-            name: abstractAccount.id,
-            displayName: abstractAccount.id,
-            id: challenge,
-          },
-          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+          rpId: rpUrl,
+          userVerification: "required",
+          challenge: new Uint8Array([139, 66, 181, 87, 7, 203]), // Random for now
         },
       });
 
