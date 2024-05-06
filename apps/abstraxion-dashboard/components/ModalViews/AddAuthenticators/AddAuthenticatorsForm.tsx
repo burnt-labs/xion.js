@@ -9,7 +9,7 @@ import Image from "next/image";
 import { WalletType, useAccount, useSuggestChainAndConnect } from "graz";
 import { useQuery } from "@apollo/client";
 import { useStytchUser } from "@stytch/nextjs";
-import { create } from "@github/webauthn-json/browser-ponyfill";
+import { create, get } from "@github/webauthn-json/browser-ponyfill";
 import {
   Button,
   KeplrLogo,
@@ -230,6 +230,30 @@ export function AddAuthenticatorsForm({
       setIsLoading(false);
     }
   }
+
+  const webauthnTest = async () => {
+    try {
+      const challenge = Buffer.from(abstractAccount?.id);
+      const rpUrl =
+        "https://xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app";
+      let credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { id: rpUrl, name: abstractAccount.id },
+          user: {
+            name: abstractAccount.id,
+            displayName: abstractAccount.id,
+            id: challenge,
+          },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+        },
+      });
+
+      console.log(credential);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const addWebauthnAuthenticator = async () => {
     try {
@@ -460,6 +484,7 @@ export function AddAuthenticatorsForm({
             >
               <PasskeyIcon className="ui-w-12" />
             </Button>
+            <Button onClick={webauthnTest}>WEBAUTHN GET</Button>
           </div>
         </>
       ) : null}
