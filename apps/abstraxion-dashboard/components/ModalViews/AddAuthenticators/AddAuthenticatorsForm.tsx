@@ -239,7 +239,7 @@ export function AddAuthenticatorsForm({
       let credential = await navigator.credentials.create({
         publicKey: {
           challenge,
-          rp: { id: rpUrl, name: rpUrl },
+          rp: { name: rpUrl },
           user: {
             name: abstractAccount.id,
             displayName: abstractAccount.id,
