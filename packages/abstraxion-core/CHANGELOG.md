@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.40
+
+### Minor Changes
+
+- [#162](https://github.com/burnt-labs/xion.js/pull/162) [`f018dc1`](https://github.com/burnt-labs/xion.js/commit/f018dc124615bbf467abbea35cb656852233593d) Thanks [@BurntVal](https://github.com/BurntVal)! - Improve polling mechanism
+
 ## 1.0.0-alpha.39
 
 ### Patch Changes
