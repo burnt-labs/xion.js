@@ -1,5 +1,23 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.44
+
+### Minor Changes
+
+- [#171](https://github.com/burnt-labs/xion.js/pull/171) [`2edf674`](https://github.com/burnt-labs/xion.js/commit/2edf674428695388127a24c93cd28e815db43425) Thanks [@BurntVal](https://github.com/BurntVal)! - Fix bugs introduced by previous patch related to abstraxion login flow
+
+- [#170](https://github.com/burnt-labs/xion.js/pull/170) [`210bac1`](https://github.com/burnt-labs/xion.js/commit/210bac17b576cba3b470084aed6b07c991a91453) Thanks [@BurntVal](https://github.com/BurntVal)! - Fix connect/login logic
+
+- [#167](https://github.com/burnt-labs/xion.js/pull/167) [`1cddf5b`](https://github.com/burnt-labs/xion.js/commit/1cddf5bd9c91393b93e177d8f625ab00d3d284c5) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added mobile UI fixes for dashboard
+
+- [#162](https://github.com/burnt-labs/xion.js/pull/162) [`f018dc1`](https://github.com/burnt-labs/xion.js/commit/f018dc124615bbf467abbea35cb656852233593d) Thanks [@BurntVal](https://github.com/BurntVal)! - Improve polling mechanism
+
+### Patch Changes
+
+- Updated dependencies [[`e53a5bd`](https://github.com/burnt-labs/xion.js/commit/e53a5bd382481001f1968d3314c858de0fe2b5ea), [`1cddf5b`](https://github.com/burnt-labs/xion.js/commit/1cddf5bd9c91393b93e177d8f625ab00d3d284c5), [`f018dc1`](https://github.com/burnt-labs/xion.js/commit/f018dc124615bbf467abbea35cb656852233593d)]:
+  - @burnt-labs/ui@0.1.0-alpha.11
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.40
+
 ## 1.0.0-alpha.43
 
 ### Minor Changes
