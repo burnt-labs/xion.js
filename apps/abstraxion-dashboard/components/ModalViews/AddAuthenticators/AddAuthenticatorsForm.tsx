@@ -313,7 +313,7 @@ export function AddAuthenticatorsForm({
         add_auth_method: {
           add_authenticator: {
             Passkey: {
-              id: accountIndex,
+              id: 3, // temp hardcode for testing
               url: rpUrl,
               credential: base64EncodedCredential,
             },
