@@ -9,6 +9,7 @@ import Image from "next/image";
 import { WalletType, useAccount, useSuggestChainAndConnect } from "graz";
 import { useQuery } from "@apollo/client";
 import { useStytchUser } from "@stytch/nextjs";
+import { create, get } from "@github/webauthn-json/browser-ponyfill";
 import {
   Button,
   KeplrLogo,
@@ -25,7 +26,7 @@ import { encodeHex } from "@/utils";
 import { AllSmartWalletQuery } from "@/utils/queries";
 
 // TODO: Add webauthn to this and remove "disable" prop from button when implemented
-type AuthenticatorStates = "none" | "keplr" | "metamask" | "okx";
+type AuthenticatorStates = "none" | "keplr" | "metamask" | "okx" | "passkey";
 
 export function AddAuthenticatorsForm({
   setIsOpen,
@@ -68,6 +69,8 @@ export function AddAuthenticatorsForm({
     },
   );
 
+  console.log(data);
+
   // Stop polling upon new data and update context
   useEffect(() => {
     if (previousData && data !== previousData) {
@@ -109,6 +112,9 @@ export function AddAuthenticatorsForm({
         break;
       case "okx":
         await addOkxAuthenticator();
+        break;
+      case "passkey":
+        await addWebauthnAuthenticator();
         break;
       default:
         break;
@@ -224,6 +230,117 @@ export function AddAuthenticatorsForm({
       setIsLoading(false);
     }
   }
+
+  const webauthnTest = async () => {
+    try {
+      const rpUrl =
+        "xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app";
+
+      let credential = await navigator.credentials.get({
+        publicKey: {
+          rpId: rpUrl,
+          userVerification: "required",
+          challenge: new Uint8Array([139, 66, 181, 87, 7, 203]), // Random for now
+        },
+      });
+
+      console.log(credential);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addWebauthnAuthenticator = async () => {
+    try {
+      setIsLoading(true);
+      const encoder = new TextEncoder();
+
+      console.log("account address: ", abstractAccount?.id);
+      const challenge = Buffer.from(abstractAccount?.id);
+      const challengeBase64 = Buffer.from(abstractAccount?.id).toString(
+        "base64",
+      );
+
+      console.log("challenge: ", challenge);
+      console.log("challengeBase64: ", challengeBase64);
+
+      const rpUrl =
+        "https://xion-js-abstraxion-dashboard-git-feat-webauthn-burntfinance.vercel.app";
+
+      const options: CredentialCreationOptions = {
+        publicKey: {
+          rp: {
+            name: rpUrl,
+          },
+          user: {
+            name: abstractAccount.id,
+            displayName: abstractAccount.id,
+            id: challenge,
+          },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+          challenge,
+          authenticatorSelection: { userVerification: "preferred" },
+          timeout: 300000, // 5 minutes,
+          excludeCredentials: [],
+        },
+      };
+
+      console.log("options: ", options);
+
+      // What happens on a failed addAuthenticator tx, do we just delete the registered browser key or just leave it and let them try again?
+
+      const publicKeyCredential = await create(options);
+      if (publicKeyCredential === null) {
+        console.log("null credential");
+        return;
+      }
+
+      // stringify the credential
+      const publicKeyCredentialJSON = JSON.stringify(publicKeyCredential);
+
+      // base64 encode it
+      const base64EncodedCredential = Buffer.from(
+        publicKeyCredentialJSON,
+      ).toString("base64");
+
+      console.log("publicKeyCredential: ", publicKeyCredential);
+      console.log("publicKeyCredentialJSON: ", publicKeyCredentialJSON);
+      console.log("base64EncodedCredential: ", base64EncodedCredential);
+
+      const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
+
+      const msg = {
+        add_auth_method: {
+          add_authenticator: {
+            Passkey: {
+              id: 4, // temp hardcode for testing
+              url: rpUrl,
+              credential: base64EncodedCredential,
+            },
+          },
+        },
+      };
+      const res = await client?.addAbstractAccountAuthenticator(msg, "", {
+        amount: [{ amount: "0", denom: "uxion" }],
+        gas: "500000",
+      });
+
+      if (res?.rawLog?.includes("failed")) {
+        throw new Error(res.rawLog);
+      }
+
+      console.log(res);
+      postAddFunction();
+      return res;
+    } catch (error) {
+      console.log(error);
+      setErrorMessage(
+        "Something went wrong trying to add Webauthn as authenticator",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   async function addEthAuthenticator() {
     if (!window.ethereum) {
@@ -351,9 +468,18 @@ export function AddAuthenticatorsForm({
                 alt="OKX Logo"
               />
             </Button>
-            {/* <Button disabled structure="outlined">
+            <Button
+              className={
+                selectedAuthenticator === "passkey" ? "!ui-border-white" : ""
+              }
+              onClick={() => {
+                handleSwitch("passkey");
+              }}
+              structure="outlined"
+            >
               <PasskeyIcon className="ui-w-12" />
-            </Button> */}
+            </Button>
+            <Button onClick={webauthnTest}>WEBAUTHN GET</Button>
           </div>
         </>
       ) : null}

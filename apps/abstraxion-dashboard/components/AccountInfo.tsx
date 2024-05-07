@@ -5,6 +5,7 @@ import {
   EmailIcon,
   AccountWalletLogo,
   MetamaskLogo,
+  PasskeyIcon,
 } from "@burnt-labs/ui";
 import { CopyIcon } from "@/components/Icons";
 import type { AbstraxionAccount } from "@/hooks";
@@ -36,7 +37,7 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
     }
   };
 
-  type authenticatorTypes = "SECP256K1" | "ETHWALLET" | "JWT";
+  type authenticatorTypes = "SECP256K1" | "ETHWALLET" | "JWT" | "PASSKEY";
 
   const handleAuthenticatorLabels = (type: authenticatorTypes) => {
     switch (type) {
@@ -46,6 +47,8 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
         return "EVM WALLET";
       case "JWT":
         return "EMAIL";
+      case "PASSKEY":
+        return "PASSKEY";
       default:
         return "";
     }
@@ -67,6 +70,8 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
         return <EthereumLogo />;
       case "JWT":
         return <EmailIcon />;
+      case "PASSKEY":
+        return <PasskeyIcon />;
       default:
         return <AccountWalletLogo />;
     }

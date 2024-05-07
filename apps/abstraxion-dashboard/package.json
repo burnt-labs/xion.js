@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@burnt-labs/tsconfig": "workspace:*",
+    "@github/webauthn-json": "^2.1.1",
     "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
