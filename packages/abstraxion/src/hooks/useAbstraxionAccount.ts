@@ -19,7 +19,6 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     abstraxionAccount,
     isConnecting,
     setIsConnected,
-    setIsConnecting,
     setAbstraxionAccount,
     setGranterAddress,
   } = useContext(AbstraxionContext);
@@ -44,9 +43,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
 
   useEffect(() => {
     async function persistAuthenticateState() {
-      setIsConnecting(true);
       await abstraxionAuth.authenticate();
-      setIsConnecting(false);
     }
 
     if (!isConnecting && !abstraxionAccount && !granterAddress) {

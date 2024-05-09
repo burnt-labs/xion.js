@@ -49,7 +49,7 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
       <DialogContent>
         {abstraxionError ? (
           <ErrorDisplay />
-        ) : isConnected ? (
+        ) : abstraxionAccount || isConnected ? (
           <Connected onClose={onClose} />
         ) : !abstraxionAccount ? (
           <AbstraxionSignin />

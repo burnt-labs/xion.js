@@ -33,7 +33,7 @@ export interface AbstraxionContextProps {
   restUrl: string;
   stake?: boolean;
   bank?: SpendLimit[];
-  logout?: () => void;
+  logout: () => void;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
