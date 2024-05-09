@@ -1,34 +1,36 @@
 import { GasPrice } from "@cosmjs/stargate";
 import { fetchConfig } from "@burnt-labs/constants";
-import type {
-  ContractGrantDescription,
-  GrantsResponse,
-  SpendLimit,
-} from "@/types";
-import { wait } from "@/utils";
+import type { ContractGrantDescription, SpendLimit } from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 
 export class AbstraxionAuth {
   // Config
-  private dashboardUrl?: string;
+  private rpcUrl: string;
   private restUrl?: string;
-  private rpcUrl?: string;
   grantContracts?: ContractGrantDescription[];
   stake?: boolean;
   bank?: SpendLimit[];
-
-  // State
-  isLoggedIn = false;
-  authStateChangeSubscribers: ((isLoggedIn: boolean) => void)[] = [];
 
   // Signer
   private client?: GranteeSignerClient;
 
   // Accounts
-  signArbWallet?: SignArbSecp256k1HdWallet; // local keypair
-  abstractAccount?: SignArbSecp256k1HdWallet; // Only exists if grants were issued, irregardless if localStorage keypair exists
+  abstractAccount?: SignArbSecp256k1HdWallet;
 
+  // State
+  isLoggedIn = false;
+  authStateChangeSubscribers: ((isLoggedIn: boolean) => void)[] = [];
+
+  /**
+   * Creates an instance of the AbstraxionAuth class.
+   *
+   * @param {string} rpc - The RPC URL used for communication with the blockchain.
+   * @param {string} [restUrl] - The REST URL used for additional communication.
+   * @param {ContractGrantDescription[]} [grantContracts] - Contracts for granting permissions.
+   * @param {boolean} [stake] - Indicates whether staking is enabled.
+   * @param {SpendLimit[]} [bank] - The spend limits for the user.
+   */
   constructor(
     rpc: string,
     restUrl?: string,
@@ -36,26 +38,71 @@ export class AbstraxionAuth {
     stake?: boolean,
     bank?: SpendLimit[],
   ) {
-    this.initializeConfig(rpc, restUrl);
+    this.rpcUrl = rpc;
+    this.restUrl = restUrl;
     this.grantContracts = grantContracts;
     this.stake = stake;
     this.bank = bank;
   }
 
-  private async initializeConfig(rpc: string, restUrl?: string) {
-    try {
-      const { dashboardUrl, restUrl: configRestUrl } = await fetchConfig(rpc);
-      this.dashboardUrl = dashboardUrl;
-      this.restUrl = restUrl || configRestUrl;
-      this.rpcUrl = rpc;
-      await this.getLocalKeypair();
-      return;
-    } catch (error) {
-      throw error;
-    }
-  }
+  // /**
+  //  * Creates an instance of the AbstraxionAuth class.
+  //  *
+  //  * @param {string} rpc - The RPC URL used for communication with the blockchain.
+  //  * @param {string} [restUrl] - The REST URL used for additional communication.
+  //  * @param {ContractGrantDescription[]} [grantContracts] - Contracts for granting permissions.
+  //  * @param {boolean} [stake] - Indicates whether staking is enabled.
+  //  * @param {SpendLimit[]} [bank] - The spend limits for the user.
+  //  */
+  // static async create(
+  //   rpc: string,
+  //   restUrl?: string,
+  //   grantContracts?: ContractGrantDescription[],
+  //   stake?: boolean,
+  //   bank?: SpendLimit[],
+  // ) {
+  //   const instance = new AbstraxionAuth(
+  //     rpc,
+  //     restUrl,
+  //     grantContracts,
+  //     stake,
+  //     bank,
+  //   );
+  //   await instance.initializeConfig(rpc, restUrl);
+  //   return instance;
+  // }
 
-  // Authentication State Subscription Related Functions
+  // /**
+  //  * Get config urls from the `constants` package and sets instance vars.
+  //  *
+  //  * @param {string} rpc - The RPC URL used for communication with the blockchain.
+  //  * @param {string} [restUrl] - The REST URL used for additional communication.
+  //  * @throws {Error} If configuration initialization fails.
+  //  */
+  // private async initializeConfig(rpc: string, restUrl?: string) {
+  //   try {
+  //     const { dashboardUrl, restUrl: configRestUrl } = await fetchConfig(rpc);
+  //     this.dashboardUrl = dashboardUrl;
+  //     this.restUrl = restUrl || configRestUrl;
+  //     await this.getLocalKeypair();
+  //     return;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+
+  /**
+   * Subscribes to changes in authentication state.
+   * When the authentication state changes, the provided callback function is invoked
+   * with the new authentication state (isLoggedIn).
+   * Returns an unsubscribe function that can be called to remove the subscription.
+   *
+   * @param {function} callback - A function to be invoked when the authentication state changes.
+   *                             Receives a single parameter, isLoggedIn, indicating whether the user is logged in.
+   *                             The callback should accept a boolean parameter.
+   * @returns {function} - A function that, when called, removes the subscription to authentication state changes.
+   *                      This function should be invoked to clean up the subscription when no longer needed.
+   */
   subscribeToAuthStateChange(callback: (isLoggedIn: boolean) => void) {
     this.authStateChangeSubscribers.push(callback);
     return () => {
@@ -66,39 +113,66 @@ export class AbstraxionAuth {
     };
   }
 
-  private triggerAuthStateChange(isLoggedIn: boolean) {
+  /**
+   * Triggers a change in authentication state and notifies all subscribers.
+   *
+   * @param {boolean} isLoggedIn - The new authentication state, indicating whether the user is logged in.
+   */
+  private triggerAuthStateChange(isLoggedIn: boolean): void {
     this.isLoggedIn = isLoggedIn;
     this.authStateChangeSubscribers.forEach((callback) => callback(isLoggedIn));
   }
 
-  // Granter Related Functions
-  getGranter() {
+  /**
+   * Get the account address of the granter from persisted state.
+   *
+   * @returns {string} The account address of the granter wallet (XION Meta Account).
+   */
+  getGranter(): string {
     const granterAddress = localStorage.getItem("xion-authz-granter-account");
+    if (
+      !granterAddress ||
+      granterAddress === undefined ||
+      granterAddress === "undefined"
+    ) {
+      return "";
+    }
     return granterAddress;
   }
 
-  private removeGranterAddress() {
+  /**
+   * Remove persisted instance of granter account.
+   */
+  private removeGranterAddress(): void {
     localStorage.removeItem("xion-authz-granter-account");
   }
 
-  private setGranter(address: string) {
+  /**
+   * Set a persisted instance for granter account.
+   *
+   * @param {string} address - account address of the granter wallet (XION Meta Account).
+   */
+  private setGranter(address: string): void {
     localStorage.setItem("xion-authz-granter-account", address);
   }
 
-  // Local Keypair Functions
-  private async getLocalKeypair() {
+  /**
+   * Get temp keypair from persisted state.
+   */
+  async getLocalKeypair(): Promise<SignArbSecp256k1HdWallet | undefined> {
     const localKeypair = localStorage.getItem("xion-authz-temp-account");
     if (!localKeypair) {
       return undefined;
     }
-    const keypairWallet = await SignArbSecp256k1HdWallet.deserialize(
+    return await SignArbSecp256k1HdWallet.deserialize(
       localKeypair,
       "abstraxion",
     );
-    this.signArbWallet = keypairWallet;
-    return keypairWallet;
   }
 
+  /**
+   * Generate a new temp keypair and store in persisted state.
+   */
   private async generateAndStoreTempAccount(): Promise<SignArbSecp256k1HdWallet> {
     const keypair = await SignArbSecp256k1HdWallet.generate(12, {
       prefix: "xion",
@@ -107,34 +181,26 @@ export class AbstraxionAuth {
     const serializedKeypair = await keypair.serialize("abstraxion");
     localStorage.setItem("xion-authz-temp-account", serializedKeypair);
 
-    this.signArbWallet = keypair;
     this.removeGranterAddress(); // Prevent multiple truth issue
 
     return keypair;
   }
 
-  private async getKeypairAddress() {
-    if (this.signArbWallet) {
-      const accounts = await this.signArbWallet.getAccounts();
-      const address = accounts[0].address;
-      return address;
-    } else {
-      return "";
-    }
+  /**
+   * Get keypair account address.
+   */
+  async getKeypairAddress(): Promise<string> {
+    const keypair = await this.getLocalKeypair();
+    if (!keypair) return "";
+    const accounts = await keypair.getAccounts();
+    const address = accounts[0].address;
+    return address;
   }
 
-  async getAccountAddress() {
-    if (this.abstractAccount) {
-      const accounts = await this.abstractAccount.getAccounts();
-      const address = accounts[0].address;
-      return address;
-    } else {
-      return "";
-    }
-  }
-
-  // Signer related functions
-  async getSigner() {
+  /**
+   * Get GranteeSignerClient for the temp keypair.
+   */
+  async getSigner(): Promise<GranteeSignerClient> {
     try {
       if (this.client) {
         return this.client;
@@ -173,11 +239,6 @@ export class AbstraxionAuth {
         },
       );
 
-      const wallet = await this.getLocalKeypair();
-      if (wallet) {
-        this.signArbWallet = wallet;
-      }
-
       this.client = directClient;
       return directClient;
     } catch (error) {
@@ -187,8 +248,25 @@ export class AbstraxionAuth {
     }
   }
 
-  // Redirects to dashboard in order to issue claim with XION meta account for local keypair
-  openDashboardTab(userAddress: string): void {
+  /**
+   * Get dashboard url and redirect in order to issue claim with XION meta account for local keypair.
+   */
+  async redirectToDashboard(userAddress: string) {
+    try {
+      const { dashboardUrl } = await fetchConfig(this.rpcUrl);
+      this.openDashboardTab(dashboardUrl, userAddress);
+    } catch (error) {
+      console.warn(
+        "Something went wrong trying to redirect to XION dashboard: ",
+        error,
+      );
+    }
+  }
+
+  /**
+   * Configure URL and redirect page
+   */
+  private openDashboardTab(dashboardUrl: string, userAddress: string): void {
     if (typeof window !== "undefined") {
       const currentUrl = window.location.href;
       const urlParams = new URLSearchParams();
@@ -210,35 +288,40 @@ export class AbstraxionAuth {
       urlParams.set("redirect_uri", currentUrl);
 
       const queryString = urlParams.toString(); // Convert URLSearchParams to string
-      window.location.href = `${this.dashboardUrl}?${queryString}`;
+      window.location.href = `${dashboardUrl}?${queryString}`;
     } else {
-      // TODO - Adjust behavior
-      alert("Window not defined. Cannot redirect to dashboard");
+      console.warn("Window not defined. Cannot redirect to dashboard");
     }
   }
 
-  // Polls for grants issued to the local keypair
-  async pollForGrants(): Promise<void> {
-    const localKeypair = await this.getLocalKeypair();
-    if (!localKeypair) {
-      throw new Error("No account found.");
+  /**
+   * Poll for grants issued to a grantee from a granter.
+   *
+   * @param {string} grantee - The address of the grantee.
+   * @param {string | null} granter - The address of the granter, or null if not available.
+   * @returns {Promise<boolean>} A Promise that resolves to true if grants are found, otherwise false.
+   * @throws {Error} If the grantee or granter address is invalid, or if maximum retries are exceeded.
+   */
+  async pollForGrants(
+    grantee: string,
+    granter: string | null,
+  ): Promise<boolean> {
+    if (!grantee) {
+      throw new Error("No keypair address");
     }
-
-    const grantee = await this.getKeypairAddress();
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const granter = searchParams.get("granter");
-
     if (!granter) {
-      throw new Error("No granter found.");
+      throw new Error("No granter address");
     }
+
+    const pollBaseUrl =
+      this.restUrl || (await fetchConfig(this.rpcUrl)).restUrl;
 
     const maxRetries = 5;
     let retries = 0;
 
-    const poll = async () => {
+    while (retries < maxRetries) {
       try {
-        const baseUrl = `${this.restUrl}/cosmos/authz/v1beta1/grants`;
+        const baseUrl = `${pollBaseUrl}/cosmos/authz/v1beta1/grants`;
         const url = new URL(baseUrl);
         const params = new URLSearchParams({
           grantee,
@@ -248,83 +331,87 @@ export class AbstraxionAuth {
         const res = await fetch(url, {
           cache: "no-store",
         });
-        const data = (await res.json()) as GrantsResponse;
+        const data = await res.json();
         if (data.grants.length > 0) {
-          const granterAddresses = data.grants.map((grant) => grant.granter);
-          const uniqueGranters = [...new Set(granterAddresses)];
-          if (uniqueGranters.length > 1) {
-            console.warn("More than one granter found. Taking first.");
-          }
-
-          this.setGranter(uniqueGranters[0]);
-          this.abstractAccount = this.signArbWallet;
-          this.triggerAuthStateChange(true);
-          // Remove query parameter "granted"
-          if (typeof window !== undefined) {
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.delete("granted");
-            currentUrl.searchParams.delete("granter");
-            history.pushState({}, "", currentUrl.href);
-            return true;
-          }
-        } else {
-          // No grants found, retry with exponential backoff
-          if (retries < maxRetries) {
-            const delay = Math.pow(2, retries) * 1000;
-            setTimeout(poll, delay);
-            retries++;
-          } else {
-            console.error("Max retries exceeded, giving up.");
-            return false;
-          }
+          return true;
         }
+        // Retry if no grants found
+        throw new Error("No grants found.");
       } catch (error) {
-        console.error("Error while polling:", error);
-        // Retry immediately in case of network error
-        if (retries < maxRetries) {
-          setTimeout(poll, 1000);
-          retries++;
-        } else {
-          console.error("Max retries exceeded, giving up.");
-          throw error;
-        }
+        console.warn("Error fetching grants: ", error);
+        const delay = Math.pow(2, retries) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        retries++;
       }
-    };
-
-    await poll();
+    }
+    console.error("Max retries exceeded, giving up.");
+    return false;
   }
 
-  logout() {
+  /**
+   * Wipe persisted state and instance variables.
+   */
+  logout(): void {
     localStorage.removeItem("xion-authz-temp-account");
     localStorage.removeItem("xion-authz-granter-account");
-    this.signArbWallet = undefined;
     this.abstractAccount = undefined;
     this.triggerAuthStateChange(false);
   }
 
-  // Do we want to build this out more?
-  async authenticate() {
+  /**
+   * Authenticates the user based on the presence of a local keypair and a granter address.
+   * If a local keypair and granter address are found, sets the abstract account and triggers authentication state change.
+   * This method is typically called to authenticate the user and persist state between renders.
+   */
+  async authenticate(): Promise<void> {
     const keypair = await this.getLocalKeypair();
     const granter = this.getGranter();
 
     if (keypair && granter) {
-      this.abstractAccount = this.signArbWallet;
+      this.abstractAccount = keypair;
       this.triggerAuthStateChange(true);
     }
   }
 
-  // Handle different possible cases of logging in
-  async login() {
+  /**
+   * Initiates the login process for the user.
+   * Checks if a local keypair and granter address exist, either from URL parameters or localStorage.
+   * If both exist, polls for grants and updates the authentication state if successful.
+   * If not, generates a new keypair and redirects to the dashboard for grant issuance.
+   *
+   * @returns {Promise<void>} - A Promise that resolves once the login process is complete.
+   * @throws {Error} - If the login process encounters an error.
+   */
+  async login(): Promise<void> {
     try {
+      // Get local keypair and granter address from either URL param (if new) or localStorage (if existing)
       const keypair = await this.getLocalKeypair();
       const searchParams = new URLSearchParams(window.location.search);
       const granter = this.getGranter() || searchParams.get("granter");
 
+      // If both exist, we can assume user is either 1. already logged in and grants have been created for the temp key, or 2. been redirected with the granter url param
+      // In either case, we poll for grants and make the appropriate state changes to reflect a "logged in" state
       if (keypair && granter) {
-        await this.pollForGrants();
-        this.abstractAccount = this.signArbWallet;
+        const accounts = await keypair.getAccounts();
+        const keypairAddress = accounts[0].address;
+        const pollSuccess = await this.pollForGrants(keypairAddress, granter);
+        if (!pollSuccess) {
+          throw new Error("Poll was unsuccessful. Please try again");
+        }
+
+        this.setGranter(granter);
+        this.abstractAccount = keypair;
         this.triggerAuthStateChange(true);
+
+        if (typeof window !== undefined) {
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.delete("granted");
+          currentUrl.searchParams.delete("granter");
+          history.pushState({}, "", currentUrl.href);
+        }
       } else {
+        // If there isn't an existing keypair, or there isn't a granter in either localStorage or the url params, we want to start from scratch
+        // Generate new keypair and redirect to dashboard
         await this.newKeypairFlow();
       }
     } catch (error) {
@@ -333,13 +420,15 @@ export class AbstraxionAuth {
     }
   }
 
-  // Fresh flow, create new keypair and redirect to dashboard for grant
-  private async newKeypairFlow() {
+  /**
+   * Initiates the flow to generate a new keypair and redirect to the dashboard for grant issuance.
+   */
+  private async newKeypairFlow(): Promise<void> {
     try {
       const newKeypair = await this.generateAndStoreTempAccount();
       const accounts = await newKeypair.getAccounts();
       const address = accounts[0].address;
-      this.openDashboardTab(address);
+      await this.redirectToDashboard(address);
     } catch (error) {
       console.warn("Something went wrong: ", error);
       throw error;

@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { createContext, useEffect, useState } from "react";
-import type { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { testnetChainInfo } from "@burnt-labs/constants";
+import {
+  AbstraxionAuth,
+  SignArbSecp256k1HdWallet,
+} from "@burnt-labs/abstraxion-core";
 
 export type SpendLimit = { denom: string; amount: string };
 
@@ -13,14 +16,18 @@ export type ContractGrantDescription =
     };
 
 export interface AbstraxionContextProps {
+  abstraxionAuth?: AbstraxionAuth;
+  setAbstraxionAuth: React.Dispatch<
+    React.SetStateAction<AbstraxionAuth | undefined>
+  >;
   isConnected: boolean;
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
   isConnecting: boolean;
   setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
   abstraxionError: string;
   setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
-  abstraxionAccount: DirectSecp256k1HdWallet | undefined;
-  setAbstraxionAccount: React.Dispatch<DirectSecp256k1HdWallet | undefined>;
+  abstraxionAccount: SignArbSecp256k1HdWallet | undefined;
+  setAbstraxionAccount: React.Dispatch<SignArbSecp256k1HdWallet | undefined>;
   granterAddress: string;
   showModal: boolean;
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -60,10 +67,36 @@ export function AbstraxionContextProvider({
   const [isConnecting, setIsConnecting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [abstraxionAccount, setAbstraxionAccount] = useState<
-    DirectSecp256k1HdWallet | undefined
+    SignArbSecp256k1HdWallet | undefined
   >(undefined);
   const [granterAddress, setGranterAddress] = useState("");
   const [dashboardUrl, setDashboardUrl] = useState("");
+
+  const [abstraxionAuth, setAbstraxionAuth] = useState<
+    AbstraxionAuth | undefined
+  >(undefined);
+
+  useEffect(() => {
+    async function initializeAbstraxionAuth() {
+      try {
+        const abstraxionAuth = new AbstraxionAuth(
+          rpcUrl,
+          restUrl || "",
+          contracts,
+          stake,
+          bank,
+        );
+
+        setAbstraxionAuth(abstraxionAuth);
+      } catch (error) {
+        console.warn("Failed to intialize abstraxion-core: ", error);
+      }
+    }
+
+    if (!abstraxionAuth) {
+      initializeAbstraxionAuth();
+    }
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -74,15 +107,16 @@ export function AbstraxionContextProvider({
 
   const logout = () => {
     setIsConnected(false);
-    localStorage.removeItem("xion-authz-temp-account");
-    localStorage.removeItem("xion-authz-granter-account");
     setAbstraxionAccount(undefined);
     setGranterAddress("");
+    abstraxionAuth?.logout();
   };
 
   return (
     <AbstraxionContext.Provider
       value={{
+        abstraxionAuth,
+        setAbstraxionAuth,
         isConnected,
         setIsConnected,
         isConnecting,
