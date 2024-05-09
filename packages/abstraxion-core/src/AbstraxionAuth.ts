@@ -374,12 +374,12 @@ export class AbstraxionAuth {
           currentUrl.searchParams.delete("granter");
           history.pushState({}, "", currentUrl.href);
         }
-        return;
       } else {
         // If there isn't an existing keypair, or there isn't a granter in either localStorage or the url params, we want to start from scratch
         // Generate new keypair and redirect to dashboard
         await this.newKeypairFlow();
       }
+      return;
     } catch (error) {
       console.warn("Something went wrong: ", error);
       throw error;

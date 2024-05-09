@@ -27,13 +27,13 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
   useEffect(() => {
     const unsubscribe = abstraxionAuth.subscribeToAuthStateChange(
       async (newState: boolean) => {
+        setIsConnected(newState);
         if (Boolean(newState) === true) {
           const account = await abstraxionAuth.getLocalKeypair();
           const granterAddress = abstraxionAuth.getGranter();
           setAbstraxionAccount(account);
           setGranterAddress(granterAddress);
         }
-        setIsConnected(newState);
       },
     );
 
