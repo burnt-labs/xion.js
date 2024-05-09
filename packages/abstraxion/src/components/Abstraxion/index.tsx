@@ -7,19 +7,21 @@ import {
   ContractGrantDescription,
   SpendLimit,
 } from "../AbstraxionContext";
-import { Loading } from "../Loading";
 import { ErrorDisplay } from "../ErrorDisplay";
 import { AbstraxionSignin } from "../AbstraxionSignin";
 import { Connected } from "@/src/components/Connected/Connected.tsx";
+import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
 
 export interface ModalProps {
   onClose: VoidFunction;
 }
 
+export const abstraxionAuth = new AbstraxionAuth();
+
 export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
   const {
+    abstraxionAccount,
     abstraxionError,
-    isConnecting,
     isConnected,
     showModal,
     setShowModal,
@@ -47,13 +49,11 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
       <DialogContent>
         {abstraxionError ? (
           <ErrorDisplay />
-        ) : isConnecting ? (
-          <Loading />
+        ) : !abstraxionAccount ? (
+          <AbstraxionSignin />
         ) : isConnected ? (
           <Connected onClose={onClose} />
-        ) : (
-          <AbstraxionSignin />
-        )}
+        ) : null}
       </DialogContent>
     </Dialog>
   );

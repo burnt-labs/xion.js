@@ -2,18 +2,16 @@
 import { useContext, useEffect, useRef } from "react";
 import { BrowserIcon, Button, ModalSection } from "@burnt-labs/ui";
 import { AbstraxionContext } from "../AbstraxionContext";
+import { abstraxionAuth } from "../Abstraxion";
+import { Loading } from "../Loading";
 
 export function AbstraxionSignin(): JSX.Element {
-  const { abstraxionAuth, setIsConnecting, setAbstraxionError } =
+  const { isConnecting, setIsConnecting, setAbstraxionError } =
     useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
 
   const retryRedirect = async () => {
-    if (!abstraxionAuth) {
-      console.warn("abstraxion-core is not intialized");
-      return;
-    }
     const tempAddress = await abstraxionAuth.getKeypairAddress();
     abstraxionAuth.redirectToDashboard(tempAddress);
   };
@@ -40,6 +38,10 @@ export function AbstraxionSignin(): JSX.Element {
 
     isMounted.current = true;
   }, []);
+
+  if (isConnecting) {
+    return <Loading />;
+  }
 
   return (
     <ModalSection className="ui-items-center">

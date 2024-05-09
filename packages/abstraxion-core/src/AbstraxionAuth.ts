@@ -6,7 +6,7 @@ import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 
 export class AbstraxionAuth {
   // Config
-  private rpcUrl: string;
+  private rpcUrl?: string;
   private restUrl?: string;
   grantContracts?: ContractGrantDescription[];
   stake?: boolean;
@@ -24,6 +24,11 @@ export class AbstraxionAuth {
 
   /**
    * Creates an instance of the AbstraxionAuth class.
+   */
+  constructor() {}
+
+  /**
+   * Updates AbstraxionAuth instance with user config
    *
    * @param {string} rpc - The RPC URL used for communication with the blockchain.
    * @param {string} [restUrl] - The REST URL used for additional communication.
@@ -31,7 +36,7 @@ export class AbstraxionAuth {
    * @param {boolean} [stake] - Indicates whether staking is enabled.
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    */
-  constructor(
+  configureAbstraxionInstance(
     rpc: string,
     restUrl?: string,
     grantContracts?: ContractGrantDescription[],
@@ -44,52 +49,6 @@ export class AbstraxionAuth {
     this.stake = stake;
     this.bank = bank;
   }
-
-  // /**
-  //  * Creates an instance of the AbstraxionAuth class.
-  //  *
-  //  * @param {string} rpc - The RPC URL used for communication with the blockchain.
-  //  * @param {string} [restUrl] - The REST URL used for additional communication.
-  //  * @param {ContractGrantDescription[]} [grantContracts] - Contracts for granting permissions.
-  //  * @param {boolean} [stake] - Indicates whether staking is enabled.
-  //  * @param {SpendLimit[]} [bank] - The spend limits for the user.
-  //  */
-  // static async create(
-  //   rpc: string,
-  //   restUrl?: string,
-  //   grantContracts?: ContractGrantDescription[],
-  //   stake?: boolean,
-  //   bank?: SpendLimit[],
-  // ) {
-  //   const instance = new AbstraxionAuth(
-  //     rpc,
-  //     restUrl,
-  //     grantContracts,
-  //     stake,
-  //     bank,
-  //   );
-  //   await instance.initializeConfig(rpc, restUrl);
-  //   return instance;
-  // }
-
-  // /**
-  //  * Get config urls from the `constants` package and sets instance vars.
-  //  *
-  //  * @param {string} rpc - The RPC URL used for communication with the blockchain.
-  //  * @param {string} [restUrl] - The REST URL used for additional communication.
-  //  * @throws {Error} If configuration initialization fails.
-  //  */
-  // private async initializeConfig(rpc: string, restUrl?: string) {
-  //   try {
-  //     const { dashboardUrl, restUrl: configRestUrl } = await fetchConfig(rpc);
-  //     this.dashboardUrl = dashboardUrl;
-  //     this.restUrl = restUrl || configRestUrl;
-  //     await this.getLocalKeypair();
-  //     return;
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
 
   /**
    * Subscribes to changes in authentication state.
@@ -253,6 +212,9 @@ export class AbstraxionAuth {
    */
   async redirectToDashboard(userAddress: string) {
     try {
+      if (!this.rpcUrl) {
+        throw new Error("AbstraxionAuth needs to be configured.");
+      }
       const { dashboardUrl } = await fetchConfig(this.rpcUrl);
       this.openDashboardTab(dashboardUrl, userAddress);
     } catch (error) {
@@ -306,6 +268,9 @@ export class AbstraxionAuth {
     grantee: string,
     granter: string | null,
   ): Promise<boolean> {
+    if (!this.rpcUrl) {
+      throw new Error("AbstraxionAuth needs to be configured.");
+    }
     if (!grantee) {
       throw new Error("No keypair address");
     }
@@ -409,6 +374,7 @@ export class AbstraxionAuth {
           currentUrl.searchParams.delete("granter");
           history.pushState({}, "", currentUrl.href);
         }
+        return;
       } else {
         // If there isn't an existing keypair, or there isn't a granter in either localStorage or the url params, we want to start from scratch
         // Generate new keypair and redirect to dashboard

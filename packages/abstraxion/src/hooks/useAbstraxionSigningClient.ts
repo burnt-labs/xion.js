@@ -6,6 +6,7 @@ import {
   SignArbSecp256k1HdWallet,
 } from "@burnt-labs/abstraxion-core";
 import { AbstraxionContext } from "@/src/components/AbstraxionContext";
+import { abstraxionAuth } from "../components/Abstraxion";
 
 export const useAbstraxionSigningClient = (): {
   readonly client: GranteeSignerClient | undefined;
@@ -14,14 +15,8 @@ export const useAbstraxionSigningClient = (): {
     | undefined;
   readonly logout: (() => void) | undefined;
 } => {
-  const {
-    abstraxionAuth,
-    isConnected,
-    abstraxionAccount,
-    granterAddress,
-    rpcUrl,
-    logout,
-  } = useContext(AbstraxionContext);
+  const { isConnected, abstraxionAccount, granterAddress, rpcUrl, logout } =
+    useContext(AbstraxionContext);
   const [signArbWallet, setSignArbWallet] = useState<
     SignArbSecp256k1HdWallet | undefined
   >(undefined);
@@ -33,10 +28,6 @@ export const useAbstraxionSigningClient = (): {
   useEffect(() => {
     async function getSigner() {
       try {
-        if (!abstraxionAuth) {
-          throw new Error("abstraxion-core not initialized.");
-        }
-
         if (!abstraxionAccount) {
           throw new Error("No account found.");
         }

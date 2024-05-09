@@ -1,5 +1,6 @@
 import { useContext, useEffect } from "react";
 import { AbstraxionContext } from "@/src/components/AbstraxionContext";
+import { abstraxionAuth } from "../components/Abstraxion";
 
 export interface AbstraxionAccount {
   bech32Address: string;
@@ -13,7 +14,6 @@ export interface AbstraxionAccountState {
 
 export const useAbstraxionAccount = (): AbstraxionAccountState => {
   const {
-    abstraxionAuth,
     isConnected,
     granterAddress,
     abstraxionAccount,
@@ -25,7 +25,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
   } = useContext(AbstraxionContext);
 
   useEffect(() => {
-    const unsubscribe = abstraxionAuth?.subscribeToAuthStateChange(
+    const unsubscribe = abstraxionAuth.subscribeToAuthStateChange(
       async (newState: boolean) => {
         if (Boolean(newState) === true) {
           const account = await abstraxionAuth.getLocalKeypair();
@@ -45,7 +45,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
   useEffect(() => {
     async function persistAuthenticateState() {
       setIsConnecting(true);
-      await abstraxionAuth?.authenticate();
+      await abstraxionAuth.authenticate();
       setIsConnecting(false);
     }
 
