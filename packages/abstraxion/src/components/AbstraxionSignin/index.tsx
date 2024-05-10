@@ -12,8 +12,7 @@ export function AbstraxionSignin(): JSX.Element {
   const isMounted = useRef(false);
 
   const retryRedirect = async () => {
-    const tempAddress = await abstraxionAuth.getKeypairAddress();
-    abstraxionAuth.redirectToDashboard(tempAddress);
+    abstraxionAuth.redirectToDashboard();
   };
 
   useEffect(() => {

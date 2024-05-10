@@ -19,6 +19,7 @@ export class AbstraxionAuth {
   abstractAccount?: SignArbSecp256k1HdWallet;
 
   // State
+  private isLoginInProgress = false;
   isLoggedIn = false;
   authStateChangeSubscribers: ((isLoggedIn: boolean) => void)[] = [];
 
@@ -210,13 +211,14 @@ export class AbstraxionAuth {
   /**
    * Get dashboard url and redirect in order to issue claim with XION meta account for local keypair.
    */
-  async redirectToDashboard(userAddress: string) {
+  async redirectToDashboard() {
     try {
       if (!this.rpcUrl) {
         throw new Error("AbstraxionAuth needs to be configured.");
       }
+      const userAddress = await this.getKeypairAddress();
       const { dashboardUrl } = await fetchConfig(this.rpcUrl);
-      this.openDashboardTab(dashboardUrl, userAddress);
+      this.configureUrlAndRedirect(dashboardUrl, userAddress);
     } catch (error) {
       console.warn(
         "Something went wrong trying to redirect to XION dashboard: ",
@@ -228,7 +230,10 @@ export class AbstraxionAuth {
   /**
    * Configure URL and redirect page
    */
-  private openDashboardTab(dashboardUrl: string, userAddress: string): void {
+  private configureUrlAndRedirect(
+    dashboardUrl: string,
+    userAddress: string,
+  ): void {
     if (typeof window !== "undefined") {
       const currentUrl = window.location.href;
       const urlParams = new URLSearchParams();
@@ -349,6 +354,11 @@ export class AbstraxionAuth {
    */
   async login(): Promise<void> {
     try {
+      if (this.isLoginInProgress) {
+        console.warn("Login is already in progress.");
+        return;
+      }
+      this.isLoginInProgress = true;
       // Get local keypair and granter address from either URL param (if new) or localStorage (if existing)
       const keypair = await this.getLocalKeypair();
       const searchParams = new URLSearchParams(window.location.search);
@@ -383,6 +393,8 @@ export class AbstraxionAuth {
     } catch (error) {
       console.warn("Something went wrong: ", error);
       throw error;
+    } finally {
+      this.isLoginInProgress = false;
     }
   }
 
@@ -391,10 +403,8 @@ export class AbstraxionAuth {
    */
   private async newKeypairFlow(): Promise<void> {
     try {
-      const newKeypair = await this.generateAndStoreTempAccount();
-      const accounts = await newKeypair.getAccounts();
-      const address = accounts[0].address;
-      await this.redirectToDashboard(address);
+      await this.generateAndStoreTempAccount();
+      await this.redirectToDashboard();
     } catch (error) {
       console.warn("Something went wrong: ", error);
       throw error;
