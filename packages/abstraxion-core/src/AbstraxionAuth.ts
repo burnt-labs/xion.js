@@ -132,7 +132,7 @@ export class AbstraxionAuth {
   /**
    * Generate a new temp keypair and store in persisted state.
    */
-  private async generateAndStoreTempAccount(): Promise<SignArbSecp256k1HdWallet> {
+  async generateAndStoreTempAccount(): Promise<SignArbSecp256k1HdWallet> {
     const keypair = await SignArbSecp256k1HdWallet.generate(12, {
       prefix: "xion",
     });
