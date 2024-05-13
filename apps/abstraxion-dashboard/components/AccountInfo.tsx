@@ -13,7 +13,6 @@ import {
   EthereumLogo,
   Popover,
   PopoverTrigger,
-  PopoverPortal,
   PopoverContent,
 } from "@burnt-labs/ui";
 
