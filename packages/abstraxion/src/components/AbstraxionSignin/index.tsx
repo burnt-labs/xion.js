@@ -6,7 +6,7 @@ import { abstraxionAuth } from "../Abstraxion";
 import { Loading } from "../Loading";
 
 export function AbstraxionSignin(): JSX.Element {
-  const { isConnecting, setIsConnecting, setAbstraxionError } =
+  const { isConnecting, setShowModal, setIsConnecting, setAbstraxionError } =
     useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
@@ -28,6 +28,7 @@ export function AbstraxionSignin(): JSX.Element {
         setAbstraxionError((error as Error).message);
       } finally {
         setIsConnecting(false);
+        setShowModal(false);
       }
     }
 
