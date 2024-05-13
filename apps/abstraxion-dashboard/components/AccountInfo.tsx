@@ -116,7 +116,6 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
         <Popover>
           <PopoverTrigger>
             <CopyIcon color="white" />
-            {/* <button>Copy</button> */}
           </PopoverTrigger>
           <PopoverContent>
             <p>Copied!</p>
