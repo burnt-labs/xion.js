@@ -186,7 +186,7 @@ export function AbstraxionWallets() {
             <Button
               fullWidth
               onClick={handleDisconnect}
-              structure="destructive"
+              structure="destructive-outline"
             >
               Disconnect
             </Button>
