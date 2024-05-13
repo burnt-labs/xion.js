@@ -1,5 +1,13 @@
 # @burnt-labs/ui
 
+## 0.1.0-alpha.11
+
+### Minor Changes
+
+- [#165](https://github.com/burnt-labs/xion.js/pull/165) [`e53a5bd`](https://github.com/burnt-labs/xion.js/commit/e53a5bd382481001f1968d3314c858de0fe2b5ea) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added prop for more direct access to input styles
+
+- [#167](https://github.com/burnt-labs/xion.js/pull/167) [`1cddf5b`](https://github.com/burnt-labs/xion.js/commit/1cddf5bd9c91393b93e177d8f625ab00d3d284c5) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added mobile UI fixes for dashboard
+
 ## 0.1.0-alpha.10
 
 ### Minor Changes

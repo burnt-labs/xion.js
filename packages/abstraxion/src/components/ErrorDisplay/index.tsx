@@ -14,6 +14,10 @@ export function ErrorDisplay() {
         structure="naked"
         fullWidth={true}
         onClick={() => {
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.delete("granted");
+          currentUrl.searchParams.delete("granter");
+          history.pushState({}, "", currentUrl.href);
           window.location.reload();
         }}
       >
