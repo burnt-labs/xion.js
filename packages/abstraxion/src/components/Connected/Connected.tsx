@@ -6,9 +6,7 @@ export function Connected({ onClose }: { onClose: VoidFunction }): JSX.Element {
   const { logout } = useContext(AbstraxionContext);
 
   function handleLogout(): void {
-    if (logout) {
-      logout();
-    }
+    logout();
     onClose();
   }
 

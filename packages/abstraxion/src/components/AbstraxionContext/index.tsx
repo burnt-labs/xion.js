@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { createContext, useEffect, useState } from "react";
-import type { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { testnetChainInfo } from "@burnt-labs/constants";
+import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
+import { abstraxionAuth } from "../Abstraxion";
 
 export type SpendLimit = { denom: string; amount: string };
 
@@ -19,8 +20,8 @@ export interface AbstraxionContextProps {
   setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
   abstraxionError: string;
   setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
-  abstraxionAccount: DirectSecp256k1HdWallet | undefined;
-  setAbstraxionAccount: React.Dispatch<DirectSecp256k1HdWallet | undefined>;
+  abstraxionAccount: SignArbSecp256k1HdWallet | undefined;
+  setAbstraxionAccount: React.Dispatch<SignArbSecp256k1HdWallet | undefined>;
   granterAddress: string;
   showModal: boolean;
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -32,7 +33,7 @@ export interface AbstraxionContextProps {
   restUrl: string;
   stake?: boolean;
   bank?: SpendLimit[];
-  logout?: () => void;
+  logout: () => void;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -60,10 +61,21 @@ export function AbstraxionContextProvider({
   const [isConnecting, setIsConnecting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [abstraxionAccount, setAbstraxionAccount] = useState<
-    DirectSecp256k1HdWallet | undefined
+    SignArbSecp256k1HdWallet | undefined
   >(undefined);
   const [granterAddress, setGranterAddress] = useState("");
   const [dashboardUrl, setDashboardUrl] = useState("");
+
+  useEffect(() => {
+    // Update abstraxion-core with user config
+    abstraxionAuth.configureAbstraxionInstance(
+      rpcUrl,
+      restUrl || "",
+      contracts,
+      stake,
+      bank,
+    );
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -74,10 +86,9 @@ export function AbstraxionContextProvider({
 
   const logout = () => {
     setIsConnected(false);
-    localStorage.removeItem("xion-authz-temp-account");
-    localStorage.removeItem("xion-authz-granter-account");
     setAbstraxionAccount(undefined);
     setGranterAddress("");
+    abstraxionAuth?.logout();
   };
 
   return (

@@ -13,7 +13,8 @@
     "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "declaration": true
   },
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]
