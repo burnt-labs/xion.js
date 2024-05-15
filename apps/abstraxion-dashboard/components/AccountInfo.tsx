@@ -1,9 +1,13 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import dynamic from "next/dynamic";
-import { Button, EmailIcon, AccountWalletLogo } from "@burnt-labs/ui";
+import {
+  Button,
+  EmailIcon,
+  AccountWalletLogo,
+  EthereumLogo,
+} from "@burnt-labs/ui";
 import { CopyIcon } from "@/components/Icons";
 import { truncateAddress } from "@/utils";
-import { EthereumLogo } from "@burnt-labs/ui";
 import RemoveAuthenticatorModal from "./ModalViews/RemoveAuthenticator/RemoveAuthenticatorModal";
 import type {
   AbstraxionAccount,
