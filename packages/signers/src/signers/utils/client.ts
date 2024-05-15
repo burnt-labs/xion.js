@@ -30,7 +30,10 @@ import {
   MsgExecuteContractEncodeObject,
 } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
-import { AddAuthenticator } from "../../interfaces/smartAccount";
+import {
+  AddAuthenticator,
+  RemoveAuthenticator,
+} from "../../interfaces/smartAccount";
 
 export const AADefaultRegistryTypes: ReadonlyArray<[string, GeneratedType]> = [
   ...defaultRegistryTypes,
@@ -89,6 +92,33 @@ export class AAClient extends SigningCosmWasmClient {
    */
   public async addAbstractAccountAuthenticator(
     msg: AddAuthenticator,
+    memo = "",
+    fee: StdFee,
+  ): Promise<DeliverTxResponse> {
+    if (!this.abstractSigner.abstractAccount) {
+      throw new Error("Abstract account address not set in signer");
+    }
+    const sender = this.abstractSigner.abstractAccount;
+    const addMsg: MsgExecuteContractEncodeObject = {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender,
+        contract: sender,
+        msg: Buffer.from(JSON.stringify(msg), "utf-8"),
+        funds: [],
+      }),
+    };
+    const tx = await this.sign(sender, [addMsg], fee, memo);
+    return this.broadcastTx(TxRaw.encode(tx).finish());
+  }
+
+  /**
+   * Create a cosmwasm remove authenticator msg to the abstract account
+   * @param msg the message to be sent
+   * @returns
+   */
+  public async removeAbstractAccountAuthenticator(
+    msg: RemoveAuthenticator,
     memo = "",
     fee: StdFee,
   ): Promise<DeliverTxResponse> {

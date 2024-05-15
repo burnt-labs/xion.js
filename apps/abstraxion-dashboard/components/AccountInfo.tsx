@@ -1,15 +1,15 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import dynamic from "next/dynamic";
-import {
-  Button,
-  EmailIcon,
-  AccountWalletLogo,
-  MetamaskLogo,
-} from "@burnt-labs/ui";
+import { Button, EmailIcon, AccountWalletLogo } from "@burnt-labs/ui";
 import { CopyIcon } from "@/components/Icons";
-import type { AbstraxionAccount } from "@/hooks";
 import { truncateAddress } from "@/utils";
 import { EthereumLogo } from "@burnt-labs/ui";
+import RemoveAuthenticatorModal from "./ModalViews/RemoveAuthenticator/RemoveAuthenticatorModal";
+import type {
+  AbstraxionAccount,
+  AuthenticatorNodes,
+  authenticatorTypes,
+} from "@/types";
 
 const AddAuthenticatorsModal = dynamic<{
   isOpen: boolean;
@@ -28,15 +28,17 @@ const AddAuthenticatorsModal = dynamic<{
 );
 
 export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [authenticatorToRemove, setAuthenticatorToRemove] = useState<
+    AuthenticatorNodes | undefined
+  >();
 
   const copyXIONAddress = () => {
     if (account?.id) {
       navigator.clipboard.writeText(account?.id);
     }
   };
-
-  type authenticatorTypes = "SECP256K1" | "ETHWALLET" | "JWT";
 
   const handleAuthenticatorLabels = (type: authenticatorTypes) => {
     switch (type) {
@@ -91,6 +93,15 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
               )}
             </p>
           </div>
+          <button
+            className="ui-text-white"
+            onClick={() => {
+              setAuthenticatorToRemove(authenticator);
+              setIsRemoveModalOpen(true);
+            }}
+          >
+            REMOVE
+          </button>
         </div>
       );
     });
@@ -117,18 +128,26 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
             </h3>
             <Button
               className="!ui-p-0"
-              onClick={() => setIsOpen(true)}
+              onClick={() => setIsAddModalOpen(true)}
               structure="naked"
             >
               Add more
             </Button>
-            <AddAuthenticatorsModal isOpen={isOpen} setIsOpen={setIsOpen} />
+            <AddAuthenticatorsModal
+              isOpen={isAddModalOpen}
+              setIsOpen={setIsAddModalOpen}
+            />
           </div>
           {renderAuthenticators()}
         </div>
         {/* TODO: Add history components */}
         {/* <div className="flex flex-1 flex-col"></div> */}
       </div>
+      <RemoveAuthenticatorModal
+        isOpen={isRemoveModalOpen}
+        setIsOpen={setIsRemoveModalOpen}
+        authenticator={authenticatorToRemove}
+      />
     </div>
   );
 };

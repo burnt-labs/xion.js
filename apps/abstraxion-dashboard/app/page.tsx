@@ -6,8 +6,9 @@ import { AbstraxionContext } from "@/components/AbstraxionContext";
 import { Overview } from "@/components/Overview";
 import { Sidebar } from "@/components/Sidebar";
 import { Abstraxion } from "@/components/Abstraxion";
-import { AbstraxionAccount, useAbstraxionAccount } from "../hooks";
+import { useAbstraxionAccount } from "../hooks";
 import Image from "next/image";
+import type { AbstraxionAccount } from "@/types";
 
 export default function Home() {
   const searchParams = useSearchParams();

@@ -7,34 +7,7 @@ import {
 } from "@/components/AbstraxionContext";
 import { decodeJwt } from "jose";
 import { getHumanReadablePubkey } from "@/utils";
-
-export interface AuthenticatorNodes {
-  __typename: string;
-  id: string;
-  type: string;
-  authenticator: string;
-  authenticatorIndex: number;
-  version: string;
-}
-
-export interface AccountAuthenticators {
-  __typename: string;
-  nodes: AuthenticatorNodes[];
-}
-
-export interface AbstraxionAccount {
-  __typename: string;
-  id: string; // bech32Address
-  authenticators: AccountAuthenticators;
-  currentAuthenticatorIndex: number;
-}
-
-export interface useAbstraxionAccountProps {
-  data?: AbstraxionAccount;
-  isConnected: boolean;
-  isConnecting?: boolean;
-  isReconnecting?: boolean;
-}
+import type { AbstraxionAccount } from "@/types";
 
 export const useAbstraxionAccount = () => {
   const { session } = useStytchSession();
