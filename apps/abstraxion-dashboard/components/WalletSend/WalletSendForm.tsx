@@ -6,6 +6,7 @@ import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useAbstraxionAccount } from "@/hooks";
 import { formatBalance, isValidWalletAddress } from "@/utils";
 import { USDCIcon } from "../Icons/USDC";
+import { XionIcon } from "../Icons";
 
 export function WalletSendForm({
   sendTokens,
@@ -191,13 +192,16 @@ export function WalletSendForm({
         </>
       ) : (
         <>
-          <div className="ui-flex ui-flex-col ui-p-0 ui-gap-8">
+          <div className="ui-flex ui-flex-col ui-p-0 ui-gap-8 ui-max-h-full ui-overflow-y-auto ui-mt-2">
             <h1 className="ui-w-full ui-text-center ui-text-3xl ui-font-akkuratLL ui-font-thin">
               SEND
             </h1>
             <div className="ui-flex ui-flex-col">
               <div className="ui-flex ui-items-center ui-p-4 ui-bg-black ui-rounded-lg">
-                <USDCIcon color="black" />
+                <div className="ui-mr-2">
+                  <XionIcon />
+                </div>
+
                 <div className="ui-flex ui-flex-col ui-items-start">
                   <p className="ui-text-md ui-font-bold ui-text-white">XION</p>
                   <p className="ui-text-md ui-text-white">

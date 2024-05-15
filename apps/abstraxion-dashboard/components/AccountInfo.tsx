@@ -9,7 +9,12 @@ import {
 import { CopyIcon } from "@/components/Icons";
 import type { AbstraxionAccount } from "@/hooks";
 import { truncateAddress } from "@/utils";
-import { EthereumLogo } from "@burnt-labs/ui";
+import {
+  EthereumLogo,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@burnt-labs/ui";
 
 const AddAuthenticatorsModal = dynamic<{
   isOpen: boolean;
@@ -107,7 +112,14 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
         <p className="ui-text-white ui-text-base ui-font-normal ui-font-akkuratLL ui-leading-normal">
           {truncateAddress(account?.id)}
         </p>
-        <CopyIcon color="white" />
+        <Popover>
+          <PopoverTrigger>
+            <CopyIcon color="white" />
+          </PopoverTrigger>
+          <PopoverContent>
+            <p>Copied!</p>
+          </PopoverContent>
+        </Popover>
       </div>
       <div className="ui-flex">
         <div className="ui-flex ui-flex-1 ui-flex-col">

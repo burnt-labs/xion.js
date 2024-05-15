@@ -15,6 +15,7 @@ const config: Config = {
         "mainnet-bg": "rgba(4, 199, 0, 0.2)",
         testnet: "#FFAA4A",
         "testnet-bg": "rgba(255, 170, 74, 0.2)",
+        inactive: "#BDBDBD",
       },
       flexGrow: {
         "2": "2",

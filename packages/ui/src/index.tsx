@@ -7,6 +7,7 @@ export * from "./pinInput";
 export * from "./button";
 export * from "./modal";
 export * from "./dialog";
+export * from "./popover";
 
 // icons
 export * from "./icons/chevronDown";
