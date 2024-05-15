@@ -19,3 +19,4 @@ export * from "./icons/metamask";
 export * from "./icons/passkey";
 export * from "./icons/email";
 export * from "./icons/ethereumLogo";
+export * from "./icons/trash";

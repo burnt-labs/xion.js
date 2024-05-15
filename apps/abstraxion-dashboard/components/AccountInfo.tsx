@@ -14,6 +14,7 @@ import type {
   AuthenticatorNodes,
   authenticatorTypes,
 } from "@/types";
+import { TrashIcon } from "@burnt-labs/ui";
 
 const AddAuthenticatorsModal = dynamic<{
   isOpen: boolean;
@@ -104,7 +105,7 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
               setIsRemoveModalOpen(true);
             }}
           >
-            REMOVE
+            <TrashIcon />
           </button>
         </div>
       );
