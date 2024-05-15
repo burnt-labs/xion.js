@@ -1,5 +1,17 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.26
+
+### Minor Changes
+
+- [#176](https://github.com/burnt-labs/xion.js/pull/176) [`a80ed9c`](https://github.com/burnt-labs/xion.js/commit/a80ed9c32f0c5c91a8ec7aacfba5bddddfc43f84) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added UI Fixes and new button style
+
+### Patch Changes
+
+- Updated dependencies [[`a80ed9c`](https://github.com/burnt-labs/xion.js/commit/a80ed9c32f0c5c91a8ec7aacfba5bddddfc43f84), [`b3ecf24`](https://github.com/burnt-labs/xion.js/commit/b3ecf24cf8c240c2b0c721ed803decca9f6a91a4)]:
+  - @burnt-labs/ui@0.1.0-alpha.12
+  - @burnt-labs/abstraxion@1.0.0-alpha.45
+
 ## 0.2.0-alpha.25
 
 ### Minor Changes
