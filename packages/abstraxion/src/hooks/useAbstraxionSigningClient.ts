@@ -1,9 +1,12 @@
 import { useContext, useEffect, useState } from "react";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import { GasPrice } from "@cosmjs/stargate";
-import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import {
+  GranteeSignerClient,
+  SignArbSecp256k1HdWallet,
+} from "@burnt-labs/abstraxion-core";
 import { AbstraxionContext } from "@/src/components/AbstraxionContext";
-import { SignArbSecp256k1HdWallet } from "../SignArbSecp256k1HdWallet";
+import { abstraxionAuth } from "../components/Abstraxion";
 
 export const useAbstraxionSigningClient = (): {
   readonly client: GranteeSignerClient | undefined;
@@ -17,17 +20,6 @@ export const useAbstraxionSigningClient = (): {
   const [signArbWallet, setSignArbWallet] = useState<
     SignArbSecp256k1HdWallet | undefined
   >(undefined);
-  const getTempAccount = async () => {
-    const tempKeypair = localStorage.getItem("xion-authz-temp-account");
-    let wallet;
-    if (tempKeypair) {
-      wallet = await SignArbSecp256k1HdWallet.deserialize(
-        tempKeypair,
-        "abstraxion",
-      );
-    }
-    return wallet;
-  };
 
   const [abstractClient, setAbstractClient] = useState<
     GranteeSignerClient | undefined
@@ -43,6 +35,7 @@ export const useAbstraxionSigningClient = (): {
         if (!granterAddress) {
           throw new Error("No granter found.");
         }
+
         const granteeAddress = await abstraxionAccount
           .getAccounts()
           .then((accounts) => {
@@ -53,7 +46,7 @@ export const useAbstraxionSigningClient = (): {
           });
 
         const directClient = await GranteeSignerClient.connectWithSigner(
-          // Should be set in the context but defaulting here just in aca
+          // Should be set in the context but defaulting here just in case
           rpcUrl || testnetChainInfo.rpc,
           abstraxionAccount,
           {
@@ -63,7 +56,7 @@ export const useAbstraxionSigningClient = (): {
           },
         );
 
-        const wallet = await getTempAccount();
+        const wallet = await abstraxionAuth.getLocalKeypair();
         if (wallet) {
           setSignArbWallet(wallet);
         }
@@ -75,7 +68,7 @@ export const useAbstraxionSigningClient = (): {
     }
 
     getSigner();
-  }, [isConnected, abstraxionAccount, granterAddress]);
+  }, [isConnected, abstraxionAccount, granterAddress, abstraxionAuth]);
 
   return {
     client: abstractClient,

@@ -1,6 +1,6 @@
 import { useContext, useEffect } from "react";
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { AbstraxionContext } from "@/src/components/AbstraxionContext";
+import { abstraxionAuth } from "../components/Abstraxion";
 
 export interface AbstraxionAccount {
   bech32Address: string;
@@ -18,42 +18,38 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     granterAddress,
     abstraxionAccount,
     isConnecting,
-    setGranterAddress,
-    setAbstraxionAccount,
     setIsConnected,
-    setIsConnecting,
+    setAbstraxionAccount,
+    setGranterAddress,
   } = useContext(AbstraxionContext);
 
   useEffect(() => {
-    async function configureAccount() {
-      setIsConnecting(true);
-      const tempKeypair = localStorage.getItem("xion-authz-temp-account");
-      if (tempKeypair) {
-        const deserializedKeypair = await DirectSecp256k1HdWallet.deserialize(
-          tempKeypair,
-          "abstraxion",
-        );
-        setAbstraxionAccount(deserializedKeypair);
-        const granterAccount = localStorage.getItem(
-          "xion-authz-granter-account",
-        );
-        if (granterAccount) {
-          setGranterAddress(granterAccount);
-          setIsConnected(true);
+    const unsubscribe = abstraxionAuth.subscribeToAuthStateChange(
+      async (newState: boolean) => {
+        if (Boolean(newState) === true) {
+          const account = await abstraxionAuth.getLocalKeypair();
+          const granterAddress = abstraxionAuth.getGranter();
+          setAbstraxionAccount(account);
+          setGranterAddress(granterAddress);
         }
-      } else {
-        // Wipe granter even if it exists, clean context
-        localStorage.removeItem("xion-authz-granter-account");
-        setAbstraxionAccount(undefined);
-        setGranterAddress("");
-      }
-      setIsConnecting(false);
+        setIsConnected(newState);
+      },
+    );
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [abstraxionAuth]);
+
+  useEffect(() => {
+    async function persistAuthenticateState() {
+      await abstraxionAuth.authenticate();
     }
 
     if (!isConnecting && !abstraxionAccount && !granterAddress) {
-      configureAccount();
+      persistAuthenticateState();
     }
-  }, [isConnected, abstraxionAccount, granterAddress]);
+  }, [isConnected, abstraxionAccount, granterAddress, abstraxionAuth]);
 
   return {
     data: {

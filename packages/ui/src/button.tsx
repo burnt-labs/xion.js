@@ -2,7 +2,12 @@ import React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
-  structure?: "base" | "outlined" | "naked" | "destructive";
+  structure?:
+    | "base"
+    | "outlined"
+    | "naked"
+    | "destructive"
+    | "destructive-outline";
   disabled?: boolean;
   onClick?: (e: React.MouseEvent) => void;
 }
@@ -37,6 +42,8 @@ export const Button: React.FC<ButtonProps> = ({
         return "ui-border-none ui-bg-transparent ui-text-white ui-underline ui-font-normal";
       case "destructive":
         return "ui-bg-red-500 ui-text-white hover:ui-bg-red-400";
+      case "destructive-outline":
+        return "ui-border ui-border-red-500 ui-bg-transparent ui-text-red-500 hover:ui-bg-red-500/5";
       default:
         return "ui-bg-white ui-text-black hover:ui-bg-neutral-100";
     }
