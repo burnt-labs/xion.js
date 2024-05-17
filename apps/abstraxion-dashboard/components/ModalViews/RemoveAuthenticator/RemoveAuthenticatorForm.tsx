@@ -124,11 +124,6 @@ export function RemoveAuthenticatorForm({
     );
   };
 
-  function postAddFunction() {
-    setIsLoading(true);
-    startPolling(3000);
-  }
-
   async function removeAuthenticator() {
     try {
       setIsLoading(true);
@@ -146,7 +141,9 @@ export function RemoveAuthenticatorForm({
       }
 
       if (abstractAccount.authenticators.nodes.length <= 1) {
-        throw new Error("We cannot allow this operation.");
+        throw new Error(
+          "You are trying to remove the only authenticator on the account and will lose all access. We cannot allow this operation.",
+        );
       }
 
       const msg = {
@@ -164,7 +161,7 @@ export function RemoveAuthenticatorForm({
         throw new Error("Transaction failed");
       }
 
-      postAddFunction();
+      startPolling(3000);
       return res;
     } catch (error) {
       console.warn(error);
@@ -198,15 +195,11 @@ export function RemoveAuthenticatorForm({
         )}
       </div>
       {errorMessage ? (
-        <Button className="ui-w-full" onClick={() => setIsOpen(false)}>
+        <Button fullWidth onClick={() => setIsOpen(false)}>
           CONTINUE
         </Button>
       ) : (
-        <Button
-          className="ui-w-full"
-          disabled={isLoading}
-          onClick={removeAuthenticator}
-        >
+        <Button fullWidth disabled={isLoading} onClick={removeAuthenticator}>
           {isLoading ? <Spinner /> : "CONFIRM"}
         </Button>
       )}
