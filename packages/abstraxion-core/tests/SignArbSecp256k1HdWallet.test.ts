@@ -1,5 +1,5 @@
 import { TextEncoder, TextDecoder } from "node:util";
-import { SignArbSecp256k1HdWallet } from "./index";
+import { SignArbSecp256k1HdWallet } from "@/SignArbSecp256k1HdWallet";
 
 global.TextEncoder = TextEncoder;
 // @ts-expect-error: TextDecoder is not available in testing environment by default.
