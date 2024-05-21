@@ -3,7 +3,7 @@ import { useAccountBalance } from "@/hooks/useAccountBalance";
 import { RightArrowIcon, ScanIcon } from "./Icons";
 import { WalletSend } from "./WalletSend/WalletSend";
 import { WalletReceive } from "./WalletReceive";
-import { AbstraxionAccount } from "@/hooks";
+import type { AbstraxionAccount } from "@/types";
 
 export const XION_TO_USDC_CONVERSION = 50;
 
