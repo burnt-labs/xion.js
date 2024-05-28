@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
+import { XION_TO_USDC_CONVERSION } from "@/components/Overview";
+
+export const usdcSearchDenom =
+  "ibc/57097251ED81A232CE3C9D899E7C8096D6D87EF84BA203E12E424AA4C9B57A64";
 
 export function useAccountBalance() {
   const { data: account } = useAbstraxionAccount();
@@ -18,11 +22,15 @@ export function useAccountBalance() {
       if (!client) {
         throw new Error("No signing client");
       }
+      // TODO: Can we optimize balance fetching
       const uxionBalance = await client.getBalance(account.id, "uxion");
+      const usdcBalance = await client.getBalance(account.id, usdcSearchDenom);
+
+      const uxionToUsd = Number(uxionBalance.amount) * XION_TO_USDC_CONVERSION;
 
       setBalanceInfo({
-        total: Number(uxionBalance.amount),
-        balances: [uxionBalance],
+        total: uxionToUsd + Number(usdcBalance.amount),
+        balances: [uxionBalance, usdcBalance],
       });
     } catch (error) {
       console.error("Error fetching balances:", error);
@@ -38,6 +46,7 @@ export function useAccountBalance() {
   async function sendTokens(
     senderAddress: string,
     sendAmount: number,
+    denom: string,
     memo: string,
   ) {
     try {
@@ -49,13 +58,12 @@ export function useAccountBalance() {
         throw new Error("No signing client");
       }
 
-      // Convert user input to uxion
-      const amountToUxion = String(sendAmount * 1000000);
+      const convertedSendAmount = String(sendAmount * 1000000);
 
       const res = await client.sendTokens(
         account.id,
         senderAddress,
-        [{ denom: "uxion", amount: amountToUxion }],
+        [{ denom, amount: convertedSendAmount }],
         {
           amount: [{ denom: "uxion", amount: "0" }],
           gas: "200000", // TODO: Dynamic?
