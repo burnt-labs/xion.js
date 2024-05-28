@@ -14,7 +14,6 @@ export function WalletSend({
   sendTokens: (
     senderAddress: string,
     sendAmount: number,
-    denom: string,
     memo: string,
   ) => Promise<DeliverTxResponse>;
   balanceInfo: BalanceInfo;

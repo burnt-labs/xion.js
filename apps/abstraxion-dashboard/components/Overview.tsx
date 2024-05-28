@@ -1,5 +1,5 @@
 import { formatBalance, getCommaSeperatedNumber } from "@/utils";
-import { usdcSearchDenom, useAccountBalance } from "@/hooks/useAccountBalance";
+import { useAccountBalance } from "@/hooks/useAccountBalance";
 import { RightArrowIcon, ScanIcon } from "./Icons";
 import { WalletSend } from "./WalletSend/WalletSend";
 import { WalletReceive } from "./WalletReceive";
@@ -12,9 +12,6 @@ export const Overview = ({ account }: { account?: AbstraxionAccount }) => {
 
   const xionBalance = accountBalance?.balances.find(
     (balance) => balance.denom === "uxion",
-  );
-  const usdcBalance = accountBalance.balances.find(
-    (coin) => coin.denom === usdcSearchDenom,
   );
 
   return (
@@ -37,7 +34,9 @@ export const Overview = ({ account }: { account?: AbstraxionAccount }) => {
         {accountBalance && (
           <h1 className="ui-font-akkuratLL ui-leading-wide ui-text-4xl ui-font-bold ui-text-white">
             ${/* TODO: Change once we support multiple currencies */}
-            {formatBalance(accountBalance.total)}
+            {formatBalance(
+              Number(xionBalance?.amount) * XION_TO_USDC_CONVERSION,
+            )}
           </h1>
         )}
         {/* Hidden until functionality is in place. */}
@@ -83,21 +82,6 @@ export const Overview = ({ account }: { account?: AbstraxionAccount }) => {
                 Number(xionBalance.amount) * XION_TO_USDC_CONVERSION,
               )}{" "}
               USD
-            </p>
-          </div>
-        </div>
-      )}
-      {usdcBalance && (
-        <div className="ui-flex ui-items-center ui-justify-between">
-          <p className="ui-font-akkuratLL ui-text-base ui-font-normal ui-leading-normal ui-text-white">
-            USDC
-          </p>
-          <div className="ui-flex">
-            <p className="ui-font-akkuratLL ui-text-base ui-font-normal ui-leading-normal ui-text-white">
-              {getCommaSeperatedNumber(Number(usdcBalance.amount))} USDC
-            </p>
-            <p className="ui-font-akkuratLL ui-ml-6 ui-text-right ui-text-base ui-font-normal ui-leading-normal ui-text-white/70">
-              ${formatBalance(Number(usdcBalance.amount))} USD
             </p>
           </div>
         </div>
