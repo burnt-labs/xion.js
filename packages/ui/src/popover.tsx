@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { cn } from "../lib/utils";
 
 const Popover = PopoverPrimitive.Root;
 
@@ -11,11 +12,11 @@ const PopoverContent = React.forwardRef<
 >(({ className, children, ...props }, forwardedRef) => (
   <PopoverPrimitive.Portal>
     <PopoverPrimitive.Content
-      className={`${className} ui-rounded ui-text-white ui-p-2 ui-bg-[#434040] ui-data-[state=open]:ui-data-[side=top]:ui-animate-slideDownAndFade ui-data-[state=open]:ui-data-[side=right]:ui-animate-slideLeftAndFade ui-data-[state=open]:ui-data-[side=bottom]:ui-animate-slideUpAndFade ui-data-[state=open]:ui-data-[side=left]:ui-animate-slideRightAndFade
-      `}
+      className={cn(
+        "ui-rounded ui-text-white ui-z-50 ui-p-2 ui-bg-[#434040] ui-data-[state=open]:ui-data-[side=top]:ui-animate-slideDownAndFade ui-data-[state=open]:ui-data-[side=right]:ui-animate-slideLeftAndFade ui-data-[state=open]:ui-data-[side=bottom]:ui-animate-slideUpAndFade ui-data-[state=open]:ui-data-[side=left]:ui-animate-slideRightAndFade",
+        className,
+      )}
       ref={forwardedRef}
-      side="top"
-      sideOffset={10}
       {...props}
     >
       {children}
