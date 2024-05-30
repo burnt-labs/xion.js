@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useAccount } from "graz";
 import { useStytch, useStytchSession } from "@stytch/react";
 import {
@@ -47,7 +47,7 @@ export const useAbstraxionAccount = () => {
   } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const loginType = localStorage.getItem("loginType");
-  const [metamaskAuthenticator, setMetamaskAuthenticator] = useState(
+  const [loginAuthenticator, setLoginAuthenticator] = useState(
     localStorage.getItem("loginAuthenticator"),
   );
 
@@ -68,7 +68,10 @@ export const useAbstraxionAccount = () => {
         authenticator = getHumanReadablePubkey(grazAccount?.pubKey);
         break;
       case "metamask":
-        authenticator = metamaskAuthenticator || "";
+        authenticator = loginAuthenticator || "";
+        break;
+      case "okx":
+        authenticator = loginAuthenticator || "";
         break;
       case "none":
         authenticator = "";
@@ -88,12 +91,12 @@ export const useAbstraxionAccount = () => {
     }
   }, [session, isConnected, grazAccount]);
 
-  // Metamask account detection
+  // Metamask & OKX account detection
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
       if (connectionType === "metamask") {
         localStorage.setItem("loginAuthenticator", accounts[0]);
-        setMetamaskAuthenticator(accounts[0]);
+        setLoginAuthenticator(accounts[0]);
         setAbstractAccount(undefined);
       }
     };
@@ -102,6 +105,39 @@ export const useAbstraxionAccount = () => {
 
     return () => {
       window.ethereum?.off("accountsChanged", handleAccountsChanged);
+    };
+  }, []);
+
+  // OKX account detection
+  useEffect(() => {
+    const handleAccountsChanged = async (accounts: any) => {
+      if (connectionType === "okx") {
+        const okxXionAddress = localStorage.getItem("okxXionAddress");
+        const okxWalletName = localStorage.getItem("okxWalletName");
+
+        // If user switches account via extension, log user out.
+        // No good way to handle account switch via the OKX keplr event system
+        if (
+          okxXionAddress !== accounts.account.XION_TEST ||
+          okxWalletName !== accounts.name
+        ) {
+          // Basically log out
+          setConnectionType("none");
+          setAbstractAccount(undefined);
+          localStorage.removeItem("loginType");
+          localStorage.removeItem("loginAuthenticator");
+          localStorage.removeItem("okxXionAddress");
+          localStorage.removeItem("okxWalletName");
+        }
+      }
+    };
+
+    if (window.okxwallet) {
+      window.okxwallet?.keplr.on("connect", handleAccountsChanged);
+    }
+
+    return () => {
+      window.okxwallet?.keplr.on("connect", handleAccountsChanged);
     };
   }, []);
 
@@ -130,6 +166,8 @@ export const useAbstraxionAccount = () => {
         ? isConnected
         : connectionType === "metamask"
         ? window.ethereum.isConnected()
+        : connectionType === "okx"
+        ? localStorage.getItem("loginAuthenticator")
         : false,
   };
 };

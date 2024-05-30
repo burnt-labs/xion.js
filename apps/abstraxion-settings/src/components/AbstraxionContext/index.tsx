@@ -3,7 +3,7 @@ import { ChainInfo } from "@burnt-labs/constants";
 
 import { getEnvStringOrThrow } from "../../utils";
 
-type ConnectionType = "stytch" | "graz" | "metamask" | "none";
+type ConnectionType = "stytch" | "graz" | "metamask" | "okx" | "none";
 type Dispatch<A> = (value: A) => void;
 type SetStateAction<S> = S | ((prevState: S) => S);
 

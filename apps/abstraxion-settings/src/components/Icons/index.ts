@@ -7,3 +7,4 @@ export { AvatarIcon } from "./Avatar";
 export { ChevronDownIcon } from "./ChevronDown";
 export { WalletIcon } from "./Wallet";
 export { CloseIcon } from "./Close";
+export { XionIcon } from "./Xion";
