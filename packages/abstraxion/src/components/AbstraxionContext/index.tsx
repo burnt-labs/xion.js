@@ -75,7 +75,7 @@ export function AbstraxionContextProvider({
       stake,
       bank,
     );
-  }, []);
+  }, [rpcUrl, restUrl, contracts, stake, bank]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
