@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.41
+
+### Minor Changes
+
+- [#174](https://github.com/burnt-labs/xion.js/pull/174) [`b3ecf24`](https://github.com/burnt-labs/xion.js/commit/b3ecf24cf8c240c2b0c721ed803decca9f6a91a4) Thanks [@BurntVal](https://github.com/BurntVal)! - Refactor abstraxion to implement core; clean up and fix AbstraxionAuth class; impl unit tests for AbstraxionAuth
+
 ## 1.0.0-alpha.40
 
 ### Minor Changes

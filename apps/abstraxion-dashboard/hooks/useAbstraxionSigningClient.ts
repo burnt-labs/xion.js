@@ -78,9 +78,10 @@ export const useAbstraxionSigningClient = () => {
         );
         break;
       case "graz":
-        if (data && data.offlineSigner && keplr) {
+        if (keplr) {
+          const offlineSigner = window.keplr.getOfflineSigner("xion-testnet-1");
           signer = new AADirectSigner(
-            data?.offlineSigner as any, // Temp solution. TS doesn't like this
+            offlineSigner,
             abstractAccount.id,
             abstractAccount.currentAuthenticatorIndex,
             // @ts-ignore - signArbitrary function exists on Keplr although it doesn't show
@@ -90,8 +91,8 @@ export const useAbstraxionSigningClient = () => {
               process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,
             ),
           );
-          break;
         }
+        break;
       case "okx":
         if (window.okxwallet) {
           const okxOfflineSigner =
@@ -106,8 +107,8 @@ export const useAbstraxionSigningClient = () => {
               process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,
             ),
           );
-          break;
         }
+        break;
       case "metamask":
         if (window.ethereum) {
           signer = new AAEthSigner(

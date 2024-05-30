@@ -33,7 +33,7 @@ For example, in [tailwind.config.js](packages/tailwind-config/tailwind.config.js
   ],
 ```
 
-### Utilities
+### Utilities Used
 
 This Turborepo has some additional tools already setup for you:
 

@@ -85,6 +85,12 @@ export interface AddJwtAuthenticator {
   };
 }
 
+export interface RemoveAuthenticator {
+  remove_auth_method: {
+    id: number;
+  };
+}
+
 export type AddAuthenticator =
   | AddSecp256K1Authenticator
   | AddEd25519Authenticator
