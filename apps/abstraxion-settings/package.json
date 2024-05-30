@@ -4,8 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    // Set to an abnormal port to avoid conflicts with other projects
-    // When testing with demo app change to 3000
     "dev": "vite --port 3005",
     "build": "vite build",
     "preview": "vite preview"
