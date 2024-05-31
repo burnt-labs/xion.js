@@ -133,7 +133,7 @@ export const AbstraxionGrant = ({
   }
 
   return (
-    <div className="ui-flex ui-font-akkuratLL ui-flex-col ui-justify-center ui-p-12 ui-min-w-[380px] ui-text-white">
+    <div className="ui-flex ui-font-akkuratLL ui-flex-col ui-justify-center sm:ui-min-w-[380px] ui-text-white">
       {showSuccess ? (
         <>
           <h1 className="ui-text-center ui-text-3xl ui-font-light ui-uppercase ui-text-white ui-mb-6">

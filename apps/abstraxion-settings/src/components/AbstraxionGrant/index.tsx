@@ -10,6 +10,7 @@ import { generateBankGrant } from "./generateBankGrant";
 import { generateContractGrant } from "./generateContractGrant";
 import { generateStakeGrant } from "./generateStakeGrant";
 import { useQueryParams } from "../../hooks/useQueryParams";
+import { ErrorDisplay } from "../ErrorDisplay";
 
 interface AbstraxionGrantProps {
   contracts: ContractGrantDescription[];
@@ -26,29 +27,47 @@ export const AbstraxionGrant = ({
 }: AbstraxionGrantProps) => {
   const { client } = useAbstraxionSigningClient();
   const { data: account } = useAbstraxionAccount();
-  // const searchParams = useSearchParams();
   const { redirect_uri } = useQueryParams(["redirect_uri"]);
 
   const [inProgress, setInProgress] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
-  useEffect(function redirectToDapp() {
+  function redirectToDapp() {
+    let redirectUri = new URLSearchParams(window.location.search).get(
+      "redirect_uri",
+    );
+    let url: URL | null = null;
+    if (redirectUri) {
+      url = new URL(redirectUri);
+      let params = new URLSearchParams(url.search);
+      params.append("granted", "true");
+      params.append("granter", account.id);
+      url.search = params.toString();
+      redirectUri = url.toString();
+      window.location.href = redirectUri;
+    }
+  }
+
+  useEffect(() => {
     if (showSuccess && redirect_uri) {
-      let redirectUri = new URLSearchParams(window.location.search).get(
-        "redirect_uri",
-      );
-      let url: URL | null = null;
-      if (redirectUri) {
-        url = new URL(redirectUri);
-        let params = new URLSearchParams(url.search);
-
-        params.append("granted", "true");
-        url.search = params.toString();
-        redirectUri = url.toString();
-        window.location.href = redirectUri;
-      }
+      redirectToDapp();
     }
   });
+
+  const denyAccess = () => {
+    let redirectUri = new URLSearchParams(window.location.search).get(
+      "redirect_uri",
+    );
+    setAccessDenied(true);
+    // Wait 3 seconds before redirecting to dapp
+    if (redirect_uri) {
+      setTimeout(() => {
+        window.location.href = redirectUri;
+      }, 3000);
+    }
+  };
 
   const grant = async () => {
     setInProgress(true);
@@ -106,7 +125,6 @@ export const AbstraxionGrant = ({
           gas: "500000",
         },
       );
-
       assertIsDeliverTxSuccess({
         ...deliverTxResponse,
         gasUsed: BigInt(deliverTxResponse.gasUsed),
@@ -118,6 +136,7 @@ export const AbstraxionGrant = ({
     } catch (error) {
       setInProgress(false);
       console.log("something went wrong: ", error);
+      setFailed(true);
     }
   };
 
@@ -129,8 +148,26 @@ export const AbstraxionGrant = ({
     );
   }
 
+  if (accessDenied) {
+    return (
+      <div className="ui-flex ui-h-full ui-w-full ui-flex-col ui-items-center ui-justify-center ui-gap-4 ui-p-8 ui-font-akkuratLL">
+        <h1 className="ui-text-3xl ui-font-thin ui-uppercase ui-tracking-tighter ui-text-white ui-text-center">
+          ACCESS DENIED
+        </h1>
+        <p className="ui-tracking-tight ui-text-zinc-400 ui-text-center">
+          This tab will close automatically in a few moments. Please switch back
+          to the previous window to continue your experience.
+        </p>
+      </div>
+    );
+  }
+
+  if (failed) {
+    return <ErrorDisplay />;
+  }
+
   return (
-    <div className="ui-flex ui-font-akkuratLL ui-flex-col ui-justify-center ui-p-12 ui-min-w-[380px] ui-text-white">
+    <div className="ui-flex ui-font-akkuratLL ui-flex-col ui-justify-center sm:ui-min-w-[380px] ui-text-white">
       {showSuccess ? (
         <>
           <h1 className="ui-text-center ui-text-3xl ui-font-light ui-uppercase ui-text-white ui-mb-6">
@@ -176,7 +213,9 @@ export const AbstraxionGrant = ({
               >
                 Allow and Continue
               </Button>
-              <Button structure="naked">Deny Access</Button>
+              <Button structure="naked" onClick={() => denyAccess()}>
+                Deny Access
+              </Button>
             </div>
           </div>
         </>

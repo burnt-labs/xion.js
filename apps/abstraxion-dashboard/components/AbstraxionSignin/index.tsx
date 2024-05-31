@@ -181,24 +181,39 @@ export const AbstraxionSignin = () => {
           >
             Log in / Sign up
           </Button>
-          <button
-            className="ui-text-white ui-text-sm ui-underline ui-w-full"
-            onClick={() => setShowAdvanced((showAdvanced) => !showAdvanced)}
-          >
-            Advanced Options
-          </button>
-          {showAdvanced ? (
-            <div className="ui-flex ui-w-full ui-gap-2">
-              <Button fullWidth={true} onClick={handleOkx} structure="outlined">
-                <Image
-                  src="/okx-logo.png"
-                  height={82}
-                  width={50}
-                  alt="OKX Logo"
-                />
-              </Button>
-            </div>
-          ) : null}
+          <div className="ui-w-full">
+            <button
+              className="ui-flex ui-text-white ui-text-sm ui-w-full ui-items-center ui-gap-3"
+              onClick={() => setShowAdvanced((showAdvanced) => !showAdvanced)}
+            >
+              <span>Advanced Options</span>
+              {/* Down Caret */}
+              <div
+                className={`ui-h-1.5 ui-w-1.5 ${
+                  showAdvanced ? "-ui-rotate-[135deg]" : "ui-rotate-45"
+                }  ui-border-white ui-border-r-[1px] ui-border-b-[1px]`}
+              />
+            </button>
+            {showAdvanced ? (
+              <div className="ui-flex ui-flex-col ui-w-full ui-gap-2">
+                <p className="ui-my-4 ui-text-sm ui-text-white ui-opacity-50">
+                  Log into your existing XION Meta account with a crypto wallet
+                </p>
+                <Button
+                  fullWidth={true}
+                  onClick={handleOkx}
+                  structure="outlined"
+                >
+                  <Image
+                    src="/okx-logo.png"
+                    height={82}
+                    width={50}
+                    alt="OKX Logo"
+                  />
+                </Button>
+              </div>
+            ) : null}
+          </div>
         </>
       )}
     </ModalSection>
