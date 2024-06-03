@@ -7,9 +7,28 @@ export default defineConfig({
   plugins: [
     react(),
     nodePolyfills({
-      // Need to be polyfilled for graz.
-      // Only these three are polyfilled.
-      include: ["buffer", "util", "stream"],
+      include: ["buffer", "util", "stream", "crypto", "vm"],
     }),
   ],
+  optimizeDeps: {
+    esbuildOptions: {
+      // Node.js global to browser globalThis
+      define: {
+        global: "globalThis",
+      },
+    },
+  },
+  resolve: {
+    alias: {
+      crypto: "crypto-browserify",
+      stream: "stream-browserify",
+      buffer: "buffer",
+      vm: "vm-browserify",
+    },
+  },
+  build: {
+    rollupOptions: {
+      plugins: [nodePolyfills()],
+    },
+  },
 });

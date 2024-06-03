@@ -85,7 +85,15 @@ export function AddAuthenticatorsForm({
         ).authenticatorIndex,
       });
     }
-  }, [data, previousData]);
+  }, [
+    data,
+    previousData,
+    abstractAccount.id,
+    loginAuthenticator,
+    setAbstractAccount,
+    stopPolling,
+    user?.user_id,
+  ]);
 
   // Functions
   function handleSwitch(authenticator: AuthenticatorStates) {

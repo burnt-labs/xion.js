@@ -9,7 +9,7 @@
   "types": "./dist/index.d.ts",
   "license": "MIT",
   "scripts": {
-    "build": "tsup",
+    "build": "tsup --format cjs,esm",
     "lint": "eslint src/",
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
