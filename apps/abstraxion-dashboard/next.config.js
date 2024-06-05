@@ -25,6 +25,9 @@ module.exports = {
     // Modify the file loader rule to ignore *.svg, since we have it handled now.
     fileLoaderRule.exclude = /\.svg$/i;
 
+    // Resolve " Module not found: Can't resolve 'pino-pretty' in " warning coming from wallet-connect
+    config.externals.push("pino-pretty", "lokijs", "encoding");
+
     return config;
   },
   images: {

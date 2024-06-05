@@ -34,7 +34,8 @@
         ".env.local",
         ".env.development",
         ".env"
-      ]
+      ],
+      "dependsOn": ["^build"]
     },
     "clean": {
       "cache": false

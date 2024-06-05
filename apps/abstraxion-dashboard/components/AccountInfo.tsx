@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import {
   Button,
   EmailIcon,
@@ -65,7 +66,7 @@ export const AccountInfo = ({ account }: { account?: AbstraxionAccount }) => {
     switch (type) {
       case "SECP256K1":
         return (
-          <img
+          <Image
             className="ui-invert"
             src="https://www.okx.com/cdn/assets/imgs/239/4A66953783FC5452.png"
             height={24}

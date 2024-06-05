@@ -25,14 +25,18 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@burnt-labs/tailwind-config": "workspace:*",
     "@types/node": "^20",
     "@vitejs/plugin-react": "^4.2.1",
-    "@burnt-labs/tailwind-config": "workspace:*",
     "autoprefixer": "^10.4.13",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
     "postcss": "^8.4.20",
+    "stream-browserify": "^3.0.0",
     "tailwindcss": "^3.2.4",
     "typescript": "^5.2.2",
     "vite": "^4.3.2",
-    "vite-plugin-node-polyfills": "^0.17.0"
+    "vite-plugin-node-polyfills": "^0.17.0",
+    "vm-browserify": "^1.1.2"
   }
 }
