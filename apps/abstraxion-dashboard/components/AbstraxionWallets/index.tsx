@@ -77,7 +77,6 @@ export const AbstraxionWallets = () => {
       }
       startPolling(3000);
       setFetchingNewWallets(true);
-      return;
     } catch (error) {
       console.log(error);
       setAbstraxionError("Error creating abstract account.");
