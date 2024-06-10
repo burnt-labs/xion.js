@@ -93,8 +93,6 @@ export const AbstraxionWallets = () => {
     setAbstraxionError,
   ]);
 
-  console.log({ loading, data, previousData, isGeneratingNewWallet });
-
   useEffect(() => {
     async function onStartup() {
       if (!loading && data && !previousData && !isGeneratingNewWallet) {
@@ -102,7 +100,6 @@ export const AbstraxionWallets = () => {
           data?.smartAccounts?.nodes.length === 0 &&
           connectionType === "stytch"
         ) {
-          console.log("create triggered");
           await handleJwtAALoginOrCreate();
         }
       }
