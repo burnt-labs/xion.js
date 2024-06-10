@@ -106,14 +106,7 @@ export const AbstraxionWallets = () => {
     }
 
     onStartup();
-  }, [
-    loading,
-    data,
-    connectionType,
-    handleJwtAALoginOrCreate,
-    isGeneratingNewWallet,
-    previousData,
-  ]);
+  }, [loading, data]);
 
   useEffect(() => {
     if (previousData && data !== previousData) {
