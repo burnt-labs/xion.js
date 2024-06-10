@@ -39,7 +39,7 @@ export const useAbstraxionSigningClient = () => {
       alert("Please install the OKX wallet extension");
       return;
     }
-    await window.okxwallet.keplr.enable("xion-testnet-1");
+    await window.okxwallet.keplr.enable(chainInfo.chainId);
     const signDataNew = Uint8Array.from(Object.values(signBytes));
     return window.okxwallet.keplr.signArbitrary(chainId, account, signDataNew);
   }
@@ -90,12 +90,12 @@ export const useAbstraxionSigningClient = () => {
               import.meta.env.VITE_DEFAULT_INDEXER_URL,
             ),
           );
-          break;
         }
+        break;
       case "okx":
         if (window.okxwallet) {
           const okxOfflineSigner =
-            await window.okxwallet.keplr.getOfflineSigner("xion-testnet-1");
+            await window.okxwallet.keplr.getOfflineSigner(chainInfo.chainId);
           signer = new AADirectSigner(
             okxOfflineSigner,
             abstractAccount.id,
@@ -106,8 +106,8 @@ export const useAbstraxionSigningClient = () => {
               import.meta.env.VITE_DEFAULT_INDEXER_URL,
             ),
           );
-          break;
         }
+        break;
       case "metamask":
         if (window.ethereum) {
           signer = new AAEthSigner(

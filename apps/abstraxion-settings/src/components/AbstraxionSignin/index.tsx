@@ -1,12 +1,18 @@
 import { useContext, useEffect, useState } from "react";
 import { useStytch } from "@stytch/react";
-import { Button, Input, ModalSection } from "@burnt-labs/ui";
+import { WalletType, useSuggestChainAndConnect } from "graz";
+import {
+  Button,
+  Input,
+  ModalSection,
+  KeplrLogo,
+  MetamaskLogo,
+} from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
 import { getHumanReadablePubkey } from "../../utils";
-
 import okxLogo from "../../assets/okx-logo.png";
 
 export const AbstraxionSignin = () => {
@@ -20,6 +26,14 @@ export const AbstraxionSignin = () => {
   const [otpError, setOtpError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const { suggestAndConnect } = useSuggestChainAndConnect({
+    onError: (error) => console.log("connection error: ", error),
+    onSuccess: () => {
+      localStorage.setItem("loginType", "graz");
+      setConnectionType("graz");
+    },
+  });
 
   const { setConnectionType, setAbstraxionError, chainInfo } = useContext(
     AbstraxionContext,
@@ -76,6 +90,35 @@ export const AbstraxionSignin = () => {
       setOtpError("Error verifying otp");
     }
   };
+
+  function handleKeplr() {
+    if (!window.keplr) {
+      alert("Please install the Keplr wallet extension");
+      return;
+    }
+    suggestAndConnect({
+      chainInfo,
+      walletType: WalletType.KEPLR,
+    });
+  }
+
+  async function handleMetamask() {
+    if (!window.ethereum) {
+      alert("Please install the Metamask wallet extension");
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const primaryAccount = accounts[0];
+      setConnectionType("metamask");
+      localStorage.setItem("loginType", "metamask");
+      localStorage.setItem("loginAuthenticator", primaryAccount);
+    } catch (error) {
+      setAbstraxionError("Metamask connect error");
+    }
+  }
 
   async function handleOkx() {
     if (!window.okxwallet) {
@@ -201,14 +244,23 @@ export const AbstraxionSignin = () => {
                 <p className="ui-my-4 ui-text-sm ui-text-white ui-opacity-50">
                   Log into your existing XION Meta account with a crypto wallet
                 </p>
-                <Button
-                  fullWidth={true}
-                  onClick={handleOkx}
-                  structure="outlined"
-                  className="ui-mb-16 sm:ui-mb-0"
-                >
-                  <img src={okxLogo} height={82} width={50} alt="OKX Logo" />
-                </Button>
+                <div className="ui-flex ui-w-full ui-gap-2">
+                  <Button
+                    fullWidth={true}
+                    onClick={handleOkx}
+                    structure="outlined"
+                  >
+                    <img src={okxLogo} height={82} width={50} alt="OKX Logo" />
+                  </Button>
+                  <Button
+                    fullWidth={true}
+                    onClick={handleMetamask}
+                    structure="outlined"
+                    className="ui-mb-16 sm:ui-mb-0"
+                  >
+                    <MetamaskLogo />
+                  </Button>
+                </div>
               </div>
             ) : null}
           </div>
