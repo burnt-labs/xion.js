@@ -81,6 +81,7 @@ export const useCombinedQuery = (
 
       setPreviousData(data || []);
       setData(combinedData);
+      setLoading(false);
       retryCountRef.current = 0;
     } catch (error) {
       if (retryCountRef.current < MAX_ATTEMPTS) {
@@ -89,9 +90,8 @@ export const useCombinedQuery = (
         setTimeout(fetchFromBothIndexers, retryDelay);
       } else {
         setError(error);
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
     }
   }, [loginAuthenticator, data]);
 
