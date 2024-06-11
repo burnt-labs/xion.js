@@ -124,7 +124,7 @@ export const AbstraxionWallets = () => {
   ]);
 
   if (error) {
-    setAbstraxionError((error as Error).message);
+    setAbstraxionError("Failed to fetch accounts");
     return null;
   }
 
