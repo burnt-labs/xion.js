@@ -50,7 +50,7 @@ export const useCombinedQuery = (
 
   const fetchFromBothIndexersRef = useRef<() => void>();
   const retryCountRef = useRef(0);
-  const MAX_ATTEMPTS = 5;
+  const MAX_ATTEMPTS = 10;
 
   const fetchFromBothIndexers = useCallback(
     async (isRefetch: boolean = false) => {
@@ -93,9 +93,8 @@ export const useCombinedQuery = (
         retryCountRef.current = 0;
       } catch (error) {
         if (isRefetch && retryCountRef.current < MAX_ATTEMPTS) {
-          const retryDelay = Math.pow(2, retryCountRef.current) * 1000;
           retryCountRef.current += 1;
-          setTimeout(() => fetchFromBothIndexers(true), retryDelay);
+          setTimeout(() => fetchFromBothIndexers(true), 1000);
         } else {
           setError(error);
           setLoading(false);
