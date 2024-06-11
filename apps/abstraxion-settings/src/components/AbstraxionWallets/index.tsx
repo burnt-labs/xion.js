@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { useDisconnect } from "graz";
 import { useStytch, useStytchUser } from "@stytch/react";
 import { useQuery } from "@apollo/client";
@@ -21,7 +21,6 @@ export const AbstraxionWallets = () => {
     setAbstractAccount,
     setAbstraxionError,
     apiUrl,
-    chainInfo,
   } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const { user } = useStytchUser();
@@ -45,6 +44,55 @@ export const AbstraxionWallets = () => {
   const [isGeneratingNewWallet, setIsGeneratingNewWallet] = useState(false);
   const [fetchingNewWallets, setFetchingNewWallets] = useState(false);
 
+  const handleDisconnect = async () => {
+    if (connectionType === "stytch") {
+      await stytchClient.session.revoke();
+    }
+    disconnect();
+    setConnectionType("none");
+    setAbstractAccount(undefined);
+    localStorage.removeItem("loginType");
+    localStorage.removeItem("loginAuthenticator");
+    localStorage.removeItem("okxXionAddress");
+    localStorage.removeItem("okxWalletName");
+  };
+
+  const handleJwtAALoginOrCreate = useCallback(async () => {
+    try {
+      setIsGeneratingNewWallet(true);
+      const res = await fetch(`${apiUrl}/api/v1/jwt-accounts/create`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          salt: Date.now().toString(),
+          session_jwt,
+          session_token,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(body.error);
+      }
+      startPolling(3000);
+      setFetchingNewWallets(true);
+    } catch (error) {
+      console.log(error);
+      setAbstraxionError("Error creating abstract account.");
+    } finally {
+      setIsGeneratingNewWallet(false);
+    }
+  }, [
+    apiUrl,
+    session_jwt,
+    session_token,
+    setIsGeneratingNewWallet,
+    startPolling,
+    setFetchingNewWallets,
+    setAbstraxionError,
+  ]);
+
   useEffect(() => {
     async function onStartup() {
       if (!loading && data && !previousData && !isGeneratingNewWallet) {
@@ -65,7 +113,7 @@ export const AbstraxionWallets = () => {
       stopPolling();
       setFetchingNewWallets(false);
     }
-  }, [data, previousData]);
+  }, [data, previousData, stopPolling]);
 
   useEffect(() => {
     if (abstractAccount && previousData && data !== previousData) {
@@ -81,49 +129,14 @@ export const AbstraxionWallets = () => {
         ).authenticatorIndex,
       });
     }
-  }, [data, previousData]);
-
-  const handleDisconnect = async () => {
-    if (connectionType === "stytch") {
-      await stytchClient.session.revoke();
-    }
-    disconnect();
-    setConnectionType("none");
-    setAbstractAccount(undefined);
-    localStorage.removeItem("loginType");
-    localStorage.removeItem("loginAuthenticator");
-    localStorage.removeItem("okxXionAddress");
-    localStorage.removeItem("okxWalletName");
-  };
-
-  const handleJwtAALoginOrCreate = async () => {
-    try {
-      setIsGeneratingNewWallet(true);
-      const res = await fetch(`${apiUrl}/api/v1/jwt-accounts/create`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          salt: Date.now().toString(),
-          session_jwt,
-          session_token,
-        }),
-      });
-      const body = await res.json();
-      if (!res.ok) {
-        throw new Error(body.error);
-      }
-      startPolling(3000);
-      setFetchingNewWallets(true);
-      return;
-    } catch (error) {
-      console.log(error);
-      setAbstraxionError("Error creating abstract account.");
-    } finally {
-      setIsGeneratingNewWallet(false);
-    }
-  };
+  }, [
+    data,
+    previousData,
+    abstractAccount,
+    loginAuthenticator,
+    setAbstractAccount,
+    user?.user_id,
+  ]);
 
   if (error) {
     setAbstraxionError((error as Error).message);
