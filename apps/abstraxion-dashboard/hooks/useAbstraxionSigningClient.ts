@@ -55,6 +55,7 @@ export const useAbstraxionSigningClient = () => {
   }
 
   const getSigner = useCallback(async () => {
+    console.log("Getting signer");
     let signer:
       | AbstractAccountJWTSigner
       | AADirectSigner

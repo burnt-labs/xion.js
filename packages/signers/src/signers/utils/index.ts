@@ -1,35 +1,35 @@
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
-import { Account } from "@cosmjs/stargate";
-import { Any } from "../../types/generated/google/protobuf/any";
-import { BaseAccount } from "cosmjs-types/cosmos/auth/v1beta1/auth";
+import type { Account } from "@cosmjs/stargate";
+import type { BaseAccount } from "cosmjs-types/cosmos/auth/v1beta1/auth";
 import { AuthInfo, SignerInfo } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { decodePubkey, AccountData, Algo } from "@cosmjs/proto-signing";
-import { coins, StdFee, type Pubkey } from "@cosmjs/amino";
+import type { AccountData, Algo } from "@cosmjs/proto-signing";
+import { decodePubkey } from "@cosmjs/proto-signing";
+import { coins } from "@cosmjs/amino";
+import type { StdFee, Pubkey } from "@cosmjs/amino";
 import { Uint64 } from "@cosmjs/math";
-import { AbstractAccount } from "../../types/generated/abstractaccount/v1/account";
 import { assert } from "@cosmjs/utils";
 import { accountFromAny } from "@cosmjs/stargate/build/accounts";
-import { AAccountData } from "../../interfaces/AASigner";
-import {
-  AAAlgo,
+import type { OTPsAuthenticateResponse } from "stytch";
+import type { NormalizedCacheObject } from "@apollo/client";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { AbstractAccount } from "../../types/generated/abstractaccount/v1/account";
+import type { AAccountData } from "../../interfaces/AASigner";
+import type {
   AddAuthenticator,
   IQueryAAResponse,
   ISmartAccountAuthenticator,
   ISmartAccounts,
 } from "../../interfaces/smartAccount";
+import { AAAlgo } from "../../interfaces/smartAccount";
 import {
   AllSmartWalletQueryByIdAndTypeAndAuthenticator,
   SingleSmartWalletQuery,
   SmartWalletIndexQueryByAccountId,
 } from "../../interfaces/queries";
-import { OTPsAuthenticateResponse } from "stytch";
-import {
-  ApolloClient,
-  InMemoryCache,
-  NormalizedCacheObject,
-} from "@apollo/client";
+import type { Any } from "../../types/generated/google/protobuf/any";
 
 let apolloClientInstance: ApolloClient<NormalizedCacheObject>;
+let secondaryClientInstance: ApolloClient<NormalizedCacheObject>;
 
 export const getApolloClient = (url?: string) => {
   if (!apolloClientInstance) {
@@ -42,9 +42,43 @@ export const getApolloClient = (url?: string) => {
   return apolloClientInstance;
 };
 
-export type INodes<T> = {
-  nodes: Array<T>;
+export const getSecondaryClient = () => {
+  if (!secondaryClientInstance) {
+    secondaryClientInstance = new ApolloClient({
+      uri: "https://api.subquery.network/sq/burnt-labs/xion-indexer-rere",
+      cache: new InMemoryCache(),
+      assumeImmutableResults: true,
+    });
+  }
+  return secondaryClientInstance;
 };
+
+const queryBothClients = async (
+  query: any,
+  variables: any,
+  indexerUrl: string,
+) => {
+  const clientOne = getApolloClient(indexerUrl);
+  const clientTwo = getSecondaryClient();
+
+  const [responseOne, responseTwo] = await Promise.allSettled([
+    clientOne.query({ query, variables }),
+    clientTwo.query({ query, variables }),
+  ]);
+
+  const dataOne =
+    responseOne.status === "fulfilled" ? responseOne.value.data : null;
+  const dataTwo =
+    responseTwo.status === "fulfilled" ? responseTwo.value.data : null;
+  console.log("dataOne", dataOne);
+  console.log("dataTwo", dataTwo);
+
+  return dataOne || dataTwo || null;
+};
+
+export interface INodes<T> {
+  nodes: T[];
+}
 
 function uint64FromProto(input: number | bigint): Uint64 {
   return Uint64.fromString(input.toString());
@@ -149,14 +183,26 @@ export async function getAAccounts(
     return [defaultData];
   }
   for (const account of accounts) {
-    const { data } = await apolloClient.query<IQueryAAResponse>({
-      query: AllSmartWalletQueryByIdAndTypeAndAuthenticator,
-      variables: {
+    // const { data } = await apolloClient.query<IQueryAAResponse>({
+    //   query: AllSmartWalletQueryByIdAndTypeAndAuthenticator,
+    //   variables: {
+    //     id: abstractAccount,
+    //     type: AAAlgo[account.algo],
+    //     authenticator: Buffer.from(account.pubkey).toString("base64"),
+    //   },
+    // });
+    const data = await queryBothClients(
+      AllSmartWalletQueryByIdAndTypeAndAuthenticator,
+      {
         id: abstractAccount,
         type: AAAlgo[account.algo],
         authenticator: Buffer.from(account.pubkey).toString("base64"),
       },
-    });
+      indexerUrl,
+    );
+    console.log("getAAcounts");
+    console.log("data", data);
+    // COMBINE HERE
     if (data) {
       const smartAccounts: ISmartAccounts = data.smartAccounts;
       if (!smartAccounts.nodes.length) {
@@ -195,16 +241,22 @@ export async function getAALastAuthenticatorId(
   abstractAccount: string,
   indexerUrl: string,
 ): Promise<number> {
-  const apolloClient = getApolloClient(indexerUrl);
-  const { data } = await apolloClient.query<{
-    smartAccount: { id: string; latestAuthenticatorId: number };
-  }>({
-    query: SingleSmartWalletQuery,
-    variables: {
-      id: abstractAccount,
-    },
-  });
-  if (!data || !data.smartAccount || !data.smartAccount.latestAuthenticatorId) {
+  // const apolloClient = getApolloClient(indexerUrl);
+  // const { data } = await apolloClient.query<{
+  //   smartAccount: { id: string; latestAuthenticatorId: number };
+  // }>({
+  //   query: SingleSmartWalletQuery,
+  //   variables: {
+  //     id: abstractAccount,
+  //   },
+  // });
+  const data = await queryBothClients(
+    SingleSmartWalletQuery,
+    { id: abstractAccount },
+    indexerUrl,
+  );
+  // COMBINE HERE
+  if (!data.smartAccount.latestAuthenticatorId) {
     return 0;
   }
   return data.smartAccount.latestAuthenticatorId;
@@ -221,29 +273,40 @@ export async function getAuthenticatorIdByAuthenticatorIndex(
   indexerUrl: string,
 ): Promise<number> {
   const apolloClient = getApolloClient(indexerUrl);
-  const { data } = await apolloClient.query<{
-    smartAccounts: {
-      nodes: {
-        authenticators: {
-          nodes: {
-            authenticator: string;
-            authenticatorIndex: number;
-            id: string;
-            type: string;
-            version: string;
-          }[];
-        };
-        id: string;
-      }[];
-    };
-  }>({
-    query: SmartWalletIndexQueryByAccountId,
-    variables: {
+  // const { data } = await apolloClient.query<{
+  //   smartAccounts: {
+  //     nodes: {
+  //       authenticators: {
+  //         nodes: {
+  //           authenticator: string;
+  //           authenticatorIndex: number;
+  //           id: string;
+  //           type: string;
+  //           version: string;
+  //         }[];
+  //       };
+  //       id: string;
+  //     }[];
+  //   };
+  // }>({
+  //   query: SmartWalletIndexQueryByAccountId,
+  //   variables: {
+  //     id: abstractAccount,
+  //     index: authenticatorIndex,
+  //   },
+  // });
+  const data = await queryBothClients(
+    SmartWalletIndexQueryByAccountId,
+    {
       id: abstractAccount,
       index: authenticatorIndex,
     },
-  });
-  if (!data || !data.smartAccounts) {
+    indexerUrl,
+  );
+  console.log("queryBothClients");
+  console.log("data", data);
+  // COMBINE HERE
+  if (!data.smartAccounts) {
     return 0;
   }
 
@@ -283,7 +346,7 @@ export async function buildAddJWTAuthenticatorMsg(
     abstractAccount,
     indexerUrl,
   );
-  let addAuthMsg: AddAuthenticator = {
+  const addAuthMsg: AddAuthenticator = {
     add_auth_method: {
       add_authenticator: {
         Jwt: {
