@@ -94,28 +94,6 @@ export const AbstraxionWallets = () => {
   ]);
 
   useEffect(() => {
-    async function onStartup() {
-      if (!loading && data && !previousData && !isGeneratingNewWallet) {
-        if (
-          data?.smartAccounts?.nodes.length === 0 &&
-          connectionType === "stytch"
-        ) {
-          await handleJwtAALoginOrCreate();
-        }
-      }
-    }
-
-    onStartup();
-  }, [
-    loading,
-    data,
-    connectionType,
-    handleJwtAALoginOrCreate,
-    isGeneratingNewWallet,
-    previousData,
-  ]);
-
-  useEffect(() => {
     if (previousData && data !== previousData) {
       stopPolling();
       setFetchingNewWallets(false);
@@ -222,11 +200,11 @@ export const AbstraxionWallets = () => {
             data?.smartAccounts?.nodes.length < 1 &&
             connectionType === "stytch" ? (
               <Button
-                structure="naked"
+                structure="outlined"
                 fullWidth={true}
                 onClick={handleJwtAALoginOrCreate}
               >
-                Create
+                Create your first account now!
               </Button>
             ) : null}
             <Button

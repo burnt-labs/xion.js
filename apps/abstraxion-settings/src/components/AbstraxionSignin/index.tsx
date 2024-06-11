@@ -108,8 +108,6 @@ export const AbstraxionSignin = () => {
     return () => clearInterval(intervalId);
   }, [timeLeft]);
 
-  console.log("AbstraxionSignin");
-
   return (
     <ModalSection className="!ui-justify-center sm:ui-py-5 sm:ui-px-7">
       {isOnOtpStep ? (

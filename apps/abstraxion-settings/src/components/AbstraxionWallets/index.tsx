@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { useDisconnect } from "graz";
 import { useStytch, useStytchUser } from "@stytch/react";
 import { useQuery } from "@apollo/client";
@@ -21,7 +21,6 @@ export const AbstraxionWallets = () => {
     setAbstractAccount,
     setAbstraxionError,
     apiUrl,
-    chainInfo,
   } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const { user } = useStytchUser();
@@ -45,44 +44,6 @@ export const AbstraxionWallets = () => {
   const [isGeneratingNewWallet, setIsGeneratingNewWallet] = useState(false);
   const [fetchingNewWallets, setFetchingNewWallets] = useState(false);
 
-  useEffect(() => {
-    async function onStartup() {
-      if (!loading && data && !previousData && !isGeneratingNewWallet) {
-        if (
-          data?.smartAccounts?.nodes.length === 0 &&
-          connectionType === "stytch"
-        ) {
-          await handleJwtAALoginOrCreate();
-        }
-      }
-    }
-
-    onStartup();
-  }, [loading, data]);
-
-  useEffect(() => {
-    if (previousData && data !== previousData) {
-      stopPolling();
-      setFetchingNewWallets(false);
-    }
-  }, [data, previousData]);
-
-  useEffect(() => {
-    if (abstractAccount && previousData && data !== previousData) {
-      // Updating abstract account in context on poll
-      const node = data?.smartAccounts?.nodes.find(
-        (smartAccount) => smartAccount.id === abstractAccount.id,
-      );
-      setAbstractAccount({
-        ...node,
-        userId: user?.user_id,
-        currentAuthenticatorIndex: node.authenticators.nodes.find(
-          (authenticator) => authenticator.authenticator === loginAuthenticator,
-        ).authenticatorIndex,
-      });
-    }
-  }, [data, previousData]);
-
   const handleDisconnect = async () => {
     if (connectionType === "stytch") {
       await stytchClient.session.revoke();
@@ -96,7 +57,7 @@ export const AbstraxionWallets = () => {
     localStorage.removeItem("okxWalletName");
   };
 
-  const handleJwtAALoginOrCreate = async () => {
+  const handleJwtAALoginOrCreate = useCallback(async () => {
     try {
       setIsGeneratingNewWallet(true);
       const res = await fetch(`${apiUrl}/api/v1/jwt-accounts/create`, {
@@ -116,14 +77,51 @@ export const AbstraxionWallets = () => {
       }
       startPolling(3000);
       setFetchingNewWallets(true);
-      return;
     } catch (error) {
       console.log(error);
       setAbstraxionError("Error creating abstract account.");
     } finally {
       setIsGeneratingNewWallet(false);
     }
-  };
+  }, [
+    apiUrl,
+    session_jwt,
+    session_token,
+    setIsGeneratingNewWallet,
+    startPolling,
+    setFetchingNewWallets,
+    setAbstraxionError,
+  ]);
+
+  useEffect(() => {
+    if (previousData && data !== previousData) {
+      stopPolling();
+      setFetchingNewWallets(false);
+    }
+  }, [data, previousData, stopPolling]);
+
+  useEffect(() => {
+    if (abstractAccount && previousData && data !== previousData) {
+      // Updating abstract account in context on poll
+      const node = data?.smartAccounts?.nodes.find(
+        (smartAccount) => smartAccount.id === abstractAccount.id,
+      );
+      setAbstractAccount({
+        ...node,
+        userId: user?.user_id,
+        currentAuthenticatorIndex: node.authenticators.nodes.find(
+          (authenticator) => authenticator.authenticator === loginAuthenticator,
+        ).authenticatorIndex,
+      });
+    }
+  }, [
+    data,
+    previousData,
+    abstractAccount,
+    loginAuthenticator,
+    setAbstractAccount,
+    user?.user_id,
+  ]);
 
   if (error) {
     setAbstraxionError((error as Error).message);
@@ -202,11 +200,11 @@ export const AbstraxionWallets = () => {
             data?.smartAccounts?.nodes.length < 1 &&
             connectionType === "stytch" ? (
               <Button
-                structure="naked"
+                structure="outlined"
                 fullWidth={true}
                 onClick={handleJwtAALoginOrCreate}
               >
-                Create
+                Create your first account now!
               </Button>
             ) : null}
             <Button

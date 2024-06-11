@@ -23,7 +23,6 @@ export function Landing() {
         <div className="ui-mt-8 ui-min-w-[150px] lg:ui-min-w-[300px]">
           <Button
             onClick={() => {
-              console.log(setShowModal);
               setShowModal(true);
             }}
             fullWidth
