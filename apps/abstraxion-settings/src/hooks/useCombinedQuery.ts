@@ -79,7 +79,10 @@ export const useCombinedQuery = (
         throw new Error("No data fetched");
       }
 
-      setPreviousData(data || []);
+      if (data) {
+        setPreviousData(data);
+      }
+
       setData(combinedData);
       setLoading(false);
       retryCountRef.current = 0;

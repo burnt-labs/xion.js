@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { XION_TO_USDC_CONVERSION } from "@/components/Overview";
 
@@ -13,7 +13,7 @@ export function useAccountBalance() {
     balances: [],
   });
 
-  async function fetchBalances() {
+  const fetchBalances = useCallback(async () => {
     try {
       if (!account) {
         throw new Error("No account");
@@ -35,7 +35,7 @@ export function useAccountBalance() {
     } catch (error) {
       console.error("Error fetching balances:", error);
     }
-  }
+  }, [account, client, balanceInfo]);
 
   useEffect(() => {
     if (account && client) {
