@@ -18,3 +18,12 @@ export const apolloClient = new ApolloClient({
   cache: new InMemoryCache(),
   assumeImmutableResults: true,
 });
+
+export const tempNewApolloClient = new ApolloClient({
+  uri: getEnvStringOrThrow(
+    "VITE_TEMP_NEW_INDEXER_URL",
+    import.meta.env.VITE_TEMP_NEW_INDEXER_URL,
+  ),
+  cache: new InMemoryCache(),
+  assumeImmutableResults: true,
+});

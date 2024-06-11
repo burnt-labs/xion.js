@@ -5,7 +5,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useQuery } from "@apollo/client";
 import {
   AccountWalletLogo,
   Button,
@@ -18,7 +17,7 @@ import {
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
-import { AllSmartWalletQuery } from "@/utils/queries";
+import { useCombinedQuery } from "@/hooks/useCombinedQuery";
 import type { AuthenticatorNodes, authenticatorTypes } from "@/types";
 
 export function RemoveAuthenticatorForm({
@@ -41,21 +40,11 @@ export function RemoveAuthenticatorForm({
   const { loginAuthenticator } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
 
-  const { data, previousData, startPolling, stopPolling } = useQuery(
-    AllSmartWalletQuery,
-    {
-      variables: {
-        authenticator: loginAuthenticator,
-      },
-      fetchPolicy: "network-only",
-      notifyOnNetworkStatusChange: true,
-    },
-  );
+  const { data, previousData, refetch } = useCombinedQuery(loginAuthenticator);
 
   // Stop polling upon new data and update context
   useEffect(() => {
     if (previousData && data !== previousData) {
-      stopPolling();
       setIsLoading(false);
       setAbstractAccount(undefined); // set account to undefined to throw users back to account select screen
     }
@@ -161,7 +150,7 @@ export function RemoveAuthenticatorForm({
         throw new Error("Transaction failed");
       }
 
-      startPolling(3000);
+      refetch();
       return res;
     } catch (error) {
       console.warn(error);

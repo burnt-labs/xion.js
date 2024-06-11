@@ -7,7 +7,6 @@ import {
 } from "react";
 import Image from "next/image";
 import { WalletType, useAccount, useSuggestChainAndConnect } from "graz";
-import { useQuery } from "@apollo/client";
 import { useStytchUser } from "@stytch/nextjs";
 import {
   Button,
@@ -21,8 +20,8 @@ import {
   AbstraxionContextProps,
 } from "@/components/AbstraxionContext";
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
+import { useCombinedQuery } from "@/hooks/useCombinedQuery";
 import { encodeHex } from "@/utils";
-import { AllSmartWalletQuery } from "@/utils/queries";
 
 // TODO: Add webauthn to this and remove "disable" prop from button when implemented
 type AuthenticatorStates = "none" | "keplr" | "metamask" | "okx";
@@ -57,32 +56,24 @@ export function AddAuthenticatorsForm({
     onLoading: () => setIsLoading(true),
   });
 
-  const { data, previousData, startPolling, stopPolling } = useQuery(
-    AllSmartWalletQuery,
-    {
-      variables: {
-        authenticator: loginAuthenticator,
-      },
-      fetchPolicy: "network-only",
-      notifyOnNetworkStatusChange: true,
-    },
-  );
+  const { data, previousData, refetch } = useCombinedQuery(loginAuthenticator);
 
   // Stop polling upon new data and update context
   useEffect(() => {
     if (previousData && data !== previousData) {
-      stopPolling();
       setIsLoading(false);
       setIsSuccess(true);
-      const node = data?.smartAccounts?.nodes.find(
+      const node = data?.find(
         (smartAccount) => smartAccount.id === abstractAccount.id,
+      );
+      if (!node) return;
+      const currentAuthenticator = node.authenticators.nodes.find(
+        (authenticator) => authenticator.authenticator === loginAuthenticator,
       );
       setAbstractAccount({
         ...node,
         userId: user?.user_id,
-        currentAuthenticatorIndex: node.authenticators.nodes.find(
-          (authenticator) => authenticator.authenticator === loginAuthenticator,
-        ).authenticatorIndex,
+        currentAuthenticatorIndex: currentAuthenticator?.authenticatorIndex,
       });
     }
   }, [
@@ -91,7 +82,6 @@ export function AddAuthenticatorsForm({
     abstractAccount.id,
     loginAuthenticator,
     setAbstractAccount,
-    stopPolling,
     user?.user_id,
   ]);
 
@@ -125,7 +115,7 @@ export function AddAuthenticatorsForm({
 
   function postAddFunction() {
     setIsLoading(true);
-    startPolling(3000);
+    refetch();
   }
 
   async function addKeplrAuthenticator() {

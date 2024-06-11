@@ -1,15 +1,14 @@
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useDisconnect } from "graz";
 import { useStytch, useStytchUser } from "@stytch/react";
-import { useQuery } from "@apollo/client";
 import { Button, Spinner } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
 } from "../AbstraxionContext";
-import { AllSmartWalletQuery } from "../../utils/queries";
 import { truncateAddress } from "../../utils";
 import { useAbstraxionAccount } from "../../hooks";
+import { useCombinedQuery } from "../../hooks/useCombinedQuery";
 import { Loading } from "../Loading";
 import { WalletIcon } from "../Icons";
 
@@ -32,14 +31,8 @@ export const AbstraxionWallets = () => {
 
   const { disconnect } = useDisconnect();
 
-  const { loading, error, data, startPolling, stopPolling, previousData } =
-    useQuery(AllSmartWalletQuery, {
-      variables: {
-        authenticator: loginAuthenticator,
-      },
-      fetchPolicy: "network-only",
-      notifyOnNetworkStatusChange: true,
-    });
+  const { loading, error, data, previousData, refetch } =
+    useCombinedQuery(loginAuthenticator);
 
   const [isGeneratingNewWallet, setIsGeneratingNewWallet] = useState(false);
   const [fetchingNewWallets, setFetchingNewWallets] = useState(false);
@@ -75,7 +68,7 @@ export const AbstraxionWallets = () => {
       if (!res.ok) {
         throw new Error(body.error);
       }
-      startPolling(3000);
+      refetch();
       setFetchingNewWallets(true);
     } catch (error) {
       console.log(error);
@@ -88,30 +81,31 @@ export const AbstraxionWallets = () => {
     session_jwt,
     session_token,
     setIsGeneratingNewWallet,
-    startPolling,
+    refetch,
     setFetchingNewWallets,
     setAbstraxionError,
   ]);
 
   useEffect(() => {
     if (previousData && data !== previousData) {
-      stopPolling();
       setFetchingNewWallets(false);
     }
-  }, [data, previousData, stopPolling]);
+  }, [data, previousData]);
 
   useEffect(() => {
     if (abstractAccount && previousData && data !== previousData) {
       // Updating abstract account in context on poll
-      const node = data?.smartAccounts?.nodes.find(
+      const node = data?.find(
         (smartAccount) => smartAccount.id === abstractAccount.id,
+      );
+      if (!node) return;
+      const currentAuthenticator = node.authenticators.nodes.find(
+        (authenticator) => authenticator.authenticator === loginAuthenticator,
       );
       setAbstractAccount({
         ...node,
         userId: user?.user_id,
-        currentAuthenticatorIndex: node.authenticators.nodes.find(
-          (authenticator) => authenticator.authenticator === loginAuthenticator,
-        ).authenticatorIndex,
+        currentAuthenticatorIndex: currentAuthenticator?.authenticatorIndex,
       });
     }
   }, [
@@ -149,8 +143,8 @@ export const AbstraxionWallets = () => {
             <div className="ui-flex ui-max-h-64 ui-w-full ui-flex-col ui-items-center ui-gap-4 ui-overflow-auto">
               {loading || fetchingNewWallets ? (
                 <Spinner />
-              ) : data?.smartAccounts?.nodes.length >= 1 ? (
-                data?.smartAccounts?.nodes?.map((node: any, i: number) => (
+              ) : data && data.length >= 1 ? (
+                data.map((node: any, i: number) => (
                   <div
                     className={`ui-w-full ui-items-center ui-gap-4 ui-rounded-lg ui-p-6 ui-flex ui-bg-transparent hover:ui-cursor-pointer ui-border-[1px] ui-border-white hover:ui-bg-white/5 ${
                       node.id === abstractAccount?.id
@@ -197,7 +191,8 @@ export const AbstraxionWallets = () => {
           </div>
           <div className="ui-flex ui-w-full ui-flex-col ui-items-center ui-gap-4">
             {!fetchingNewWallets &&
-            data?.smartAccounts?.nodes.length < 1 &&
+            data &&
+            data.length < 1 &&
             connectionType === "stytch" ? (
               <Button
                 structure="outlined"
