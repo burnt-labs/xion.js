@@ -52,56 +52,63 @@ export const useCombinedQuery = (
   const retryCountRef = useRef(0);
   const MAX_ATTEMPTS = 5;
 
-  const fetchFromBothIndexers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [oldIndexerResult, newIndexerResult] = await Promise.all([
-        apolloClient.query({
-          query: AllSmartWalletQuery,
-          variables: { authenticator: loginAuthenticator },
-          fetchPolicy: "network-only",
-        }),
-        tempNewApolloClient.query({
-          query: AllSmartWalletQuery,
-          variables: { authenticator: loginAuthenticator },
-          fetchPolicy: "network-only",
-        }),
-      ]);
+  const fetchFromBothIndexers = useCallback(
+    async (isRefetch: boolean = false) => {
+      setLoading(true);
+      try {
+        const [oldIndexerResult, newIndexerResult] = await Promise.all([
+          apolloClient.query({
+            query: AllSmartWalletQuery,
+            variables: { authenticator: loginAuthenticator },
+            fetchPolicy: "network-only",
+          }),
+          tempNewApolloClient.query({
+            query: AllSmartWalletQuery,
+            variables: { authenticator: loginAuthenticator },
+            fetchPolicy: "network-only",
+          }),
+        ]);
 
-      const oldIndexerData: SmartAccountNodes[] =
-        oldIndexerResult.data.smartAccounts.nodes;
-      const newIndexerData: SmartAccountNodes[] =
-        newIndexerResult.data.smartAccounts.nodes;
+        const oldIndexerData: SmartAccountNodes[] =
+          oldIndexerResult.data.smartAccounts.nodes;
+        const newIndexerData: SmartAccountNodes[] =
+          newIndexerResult.data.smartAccounts.nodes;
 
-      const combinedData = [...oldIndexerData, ...newIndexerData];
+        const combinedData = [...oldIndexerData, ...newIndexerData];
 
-      if (combinedData.length === 0 && retryCountRef.current < MAX_ATTEMPTS) {
-        throw new Error("No data fetched");
-      }
+        if (
+          combinedData.length === 0 &&
+          isRefetch &&
+          retryCountRef.current < MAX_ATTEMPTS
+        ) {
+          throw new Error("No data fetched");
+        }
 
-      if (data) {
-        setPreviousData(data);
-      }
+        if (data) {
+          setPreviousData(data);
+        }
 
-      setData(combinedData);
-      setLoading(false);
-      retryCountRef.current = 0;
-    } catch (error) {
-      if (retryCountRef.current < MAX_ATTEMPTS) {
-        const retryDelay = Math.pow(2, retryCountRef.current) * 1000;
-        retryCountRef.current += 1;
-        setTimeout(fetchFromBothIndexers, retryDelay);
-      } else {
-        setError(error);
+        setData(combinedData);
         setLoading(false);
+        retryCountRef.current = 0;
+      } catch (error) {
+        if (isRefetch && retryCountRef.current < MAX_ATTEMPTS) {
+          const retryDelay = Math.pow(2, retryCountRef.current) * 1000;
+          retryCountRef.current += 1;
+          setTimeout(() => fetchFromBothIndexers(true), retryDelay);
+        } else {
+          setError(error);
+          setLoading(false);
+        }
       }
-    }
-  }, [loginAuthenticator, data]);
+    },
+    [loginAuthenticator, data],
+  );
 
   fetchFromBothIndexersRef.current = fetchFromBothIndexers;
 
   useEffect(() => {
-    fetchFromBothIndexers();
+    fetchFromBothIndexers(false);
   }, [loginAuthenticator]);
 
   return {
@@ -109,6 +116,6 @@ export const useCombinedQuery = (
     error,
     data,
     previousData,
-    refetch: fetchFromBothIndexers,
+    refetch: () => fetchFromBothIndexers(true),
   };
 };
