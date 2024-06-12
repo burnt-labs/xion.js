@@ -14,7 +14,7 @@ export type ISmartAccountAuthenticator = {
   id: string;
   type: string;
   authenticator: string;
-  authenticatorId: string;
+  authenticatorIndex: string;
   version: string;
 };
 

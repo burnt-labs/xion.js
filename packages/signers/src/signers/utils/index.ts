@@ -4,8 +4,8 @@ import type { BaseAccount } from "cosmjs-types/cosmos/auth/v1beta1/auth";
 import { AuthInfo, SignerInfo } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import type { AccountData, Algo } from "@cosmjs/proto-signing";
 import { decodePubkey } from "@cosmjs/proto-signing";
+import type { Pubkey, StdFee } from "@cosmjs/amino";
 import { coins } from "@cosmjs/amino";
-import type { StdFee, Pubkey } from "@cosmjs/amino";
 import { Uint64 } from "@cosmjs/math";
 import { assert } from "@cosmjs/utils";
 import { accountFromAny } from "@cosmjs/stargate/build/accounts";
@@ -14,13 +14,7 @@ import type { NormalizedCacheObject } from "@apollo/client";
 import { ApolloClient, InMemoryCache } from "@apollo/client";
 import { AbstractAccount } from "../../types/generated/abstractaccount/v1/account";
 import type { AAccountData } from "../../interfaces/AASigner";
-import type {
-  AddAuthenticator,
-  IQueryAAResponse,
-  ISmartAccountAuthenticator,
-  ISmartAccounts,
-} from "../../interfaces/smartAccount";
-import { AAAlgo } from "../../interfaces/smartAccount";
+import { AAAlgo, AddAuthenticator } from "../../interfaces/smartAccount";
 import {
   AllSmartWalletQueryByIdAndTypeAndAuthenticator,
   SingleSmartWalletQuery,
@@ -53,11 +47,11 @@ export const getSecondaryClient = () => {
   return secondaryClientInstance;
 };
 
-const queryBothClients = async (
+const queryBothClients = async <T>(
   query: any,
   variables: any,
   indexerUrl: string,
-) => {
+): Promise<[T | null, T | null]> => {
   const clientOne = getApolloClient(indexerUrl);
   const clientTwo = getSecondaryClient();
 
@@ -73,7 +67,7 @@ const queryBothClients = async (
   console.log("dataOne", dataOne);
   console.log("dataTwo", dataTwo);
 
-  return dataOne || dataTwo || null;
+  return [dataOne, dataTwo];
 };
 
 export interface INodes<T> {
@@ -191,41 +185,41 @@ export async function getAAccounts(
     //     authenticator: Buffer.from(account.pubkey).toString("base64"),
     //   },
     // });
-    const data = await queryBothClients(
-      AllSmartWalletQueryByIdAndTypeAndAuthenticator,
-      {
-        id: abstractAccount,
-        type: AAAlgo[account.algo],
-        authenticator: Buffer.from(account.pubkey).toString("base64"),
-      },
-      indexerUrl,
-    );
+    const [dataOne, dataTwo] =
+      await queryBothClients<AllSmartWalletQueryByIdAndTypeAndAuthenticator>(
+        AllSmartWalletQueryByIdAndTypeAndAuthenticator,
+        {
+          id: abstractAccount,
+          type: AAAlgo[account.algo],
+          authenticator: Buffer.from(account.pubkey).toString("base64"),
+        },
+        indexerUrl,
+      );
+
+    const dataOneNodes = dataOne?.smartAccounts.nodes || [];
+    const dataTwoNodes = dataTwo?.smartAccounts.nodes || [];
+
     console.log("getAAcounts");
-    console.log("data", data);
-    // COMBINE HERE
-    if (data) {
-      const smartAccounts: ISmartAccounts = data.smartAccounts;
-      if (!smartAccounts.nodes.length) {
-        // No smart account found for this account
+    const smartAccounts = [...dataOneNodes, ...dataTwoNodes];
+    if (!smartAccounts.length) {
+      // No smart account found for this account
+      continue;
+    }
+    for (const node of smartAccounts) {
+      const smartAccountAuthenticators = node.authenticators;
+      if (!smartAccountAuthenticators.nodes.length) {
+        // No authenticator found for this account
         continue;
       }
-      for (const node of smartAccounts.nodes) {
-        const smartAccountAuthenticators: INodes<ISmartAccountAuthenticator> =
-          node.authenticators;
-        if (!smartAccountAuthenticators.nodes.length) {
-          // No authenticator found for this account
-          continue;
-        }
-        for (const authenticator of smartAccountAuthenticators.nodes) {
-          const splitAuthenticatorId = authenticator.id.split("-");
-          allAAAcounts.push({
-            address: splitAuthenticatorId[0],
-            accountAddress: account.address,
-            algo: authenticator.type.toLowerCase() as Algo,
-            pubkey: new Uint8Array(), // to signify an AA account
-            authenticatorId: Number(splitAuthenticatorId[1]),
-          });
-        }
+      for (const authenticator of smartAccountAuthenticators.nodes) {
+        const splitAuthenticatorId = authenticator.id.split("-");
+        allAAAcounts.push({
+          address: splitAuthenticatorId[0],
+          accountAddress: account.address,
+          algo: authenticator.type.toLowerCase() as Algo,
+          pubkey: new Uint8Array(), // to signify an AA account
+          authenticatorId: Number(splitAuthenticatorId[1]),
+        });
       }
     }
   }
@@ -250,16 +244,17 @@ export async function getAALastAuthenticatorId(
   //     id: abstractAccount,
   //   },
   // });
-  const data = await queryBothClients(
+  const [dataOne, dataTwo] = await queryBothClients<SingleSmartWalletQuery>(
     SingleSmartWalletQuery,
     { id: abstractAccount },
     indexerUrl,
   );
-  // COMBINE HERE
-  if (!data.smartAccount.latestAuthenticatorId) {
-    return 0;
-  }
-  return data.smartAccount.latestAuthenticatorId;
+
+  return Number(
+    dataOne?.smartAccount.latestAuthenticatorId ||
+      dataTwo?.smartAccount.latestAuthenticatorId ||
+      0,
+  );
 }
 
 /**
@@ -295,37 +290,36 @@ export async function getAuthenticatorIdByAuthenticatorIndex(
   //     index: authenticatorIndex,
   //   },
   // });
-  const data = await queryBothClients(
-    SmartWalletIndexQueryByAccountId,
-    {
-      id: abstractAccount,
-      index: authenticatorIndex,
-    },
-    indexerUrl,
-  );
-  console.log("queryBothClients");
-  console.log("data", data);
-  // COMBINE HERE
-  if (!data.smartAccounts) {
-    return 0;
-  }
+  const [dataOne, dataTwo] =
+    await queryBothClients<SmartWalletIndexQueryByAccountId>(
+      SmartWalletIndexQueryByAccountId,
+      {
+        id: abstractAccount,
+        index: authenticatorIndex,
+      },
+      indexerUrl,
+    );
 
-  if (data.smartAccounts.nodes.length > 1) {
+  const dataOneNodes = dataOne?.smartAccounts.nodes || [];
+  const dataTwoNodes = dataTwo?.smartAccounts.nodes || [];
+
+  const smartAccounts = [...dataOneNodes, ...dataTwoNodes];
+
+  console.log("queryBothClients");
+  if (smartAccounts.length > 1) {
     console.warn(
       "Unexpected behavior. Indexer returned multiple smart accounts",
     );
   }
 
-  if (data.smartAccounts.nodes[0].authenticators.nodes.length > 1) {
+  if (smartAccounts[0].authenticators.nodes.length > 1) {
     console.warn(
       "Unexpected behavior. Indexer returned multiple authenticators",
     );
   }
 
   // Always returning the first one found because this query should only return an array of 1
-  return (
-    data.smartAccounts.nodes[0].authenticators.nodes[0].authenticatorIndex || 0
-  );
+  return smartAccounts[0]?.authenticators.nodes[0].authenticatorIndex || 0;
 }
 
 /**

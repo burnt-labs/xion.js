@@ -1,5 +1,15 @@
 import { gql } from "@apollo/client";
-import { SMART_ACCOUNT_FRAGMENT } from "./fragments";
+import { SMART_ACCOUNT_FRAGMENT, SmartAccountFragment } from "./fragments";
+
+export interface AllSmartWalletQuery {
+  smartAccounts: {
+    nodes: Array<{
+      authenticators: {
+        nodes: SmartAccountFragment[];
+      };
+    }>;
+  };
+}
 
 export const AllSmartWalletQuery = gql`
   ${SMART_ACCOUNT_FRAGMENT}
@@ -20,6 +30,16 @@ export const AllSmartWalletQuery = gql`
   }
 `;
 
+export interface SingleSmartWalletQuery {
+  smartAccount: {
+    id: string;
+    latestAuthenticatorId: string;
+    authenticators: {
+      nodes: SmartAccountFragment[];
+    };
+  };
+}
+
 export const SingleSmartWalletQuery = gql`
   ${SMART_ACCOUNT_FRAGMENT}
   query ($id: String!) {
@@ -35,6 +55,15 @@ export const SingleSmartWalletQuery = gql`
   }
 `;
 
+export interface AllSmartWalletQueryByAccountId {
+  smartAccounts: {
+    nodes: Array<{
+      authenticators: {
+        nodes: SmartAccountFragment[];
+      };
+    }>;
+  };
+}
 export const AllSmartWalletQueryByAccountId = gql`
   ${SMART_ACCOUNT_FRAGMENT}
   query ($id: String!) {
@@ -50,6 +79,15 @@ export const AllSmartWalletQueryByAccountId = gql`
   }
 `;
 
+export interface SmartWalletIndexQueryByAccountId {
+  smartAccounts: {
+    nodes: Array<{
+      authenticators: {
+        nodes: SmartAccountFragment[];
+      };
+    }>;
+  };
+}
 export const SmartWalletIndexQueryByAccountId = gql`
   ${SMART_ACCOUNT_FRAGMENT}
   query ($id: String!, $index: Int!) {
@@ -65,6 +103,15 @@ export const SmartWalletIndexQueryByAccountId = gql`
   }
 `;
 
+export interface AllSmartWalletQueryByIdAndAuthenticator {
+  smartAccounts: {
+    nodes: Array<{
+      authenticators: {
+        nodes: SmartAccountFragment[];
+      };
+    }>;
+  };
+}
 export const AllSmartWalletQueryByIdAndAuthenticator = gql`
   ${SMART_ACCOUNT_FRAGMENT}
   query ($id: String!, $authenticator: String!) {
@@ -85,6 +132,15 @@ export const AllSmartWalletQueryByIdAndAuthenticator = gql`
   }
 `;
 
+export interface AllSmartWalletQueryByIdAndType {
+  smartAccounts: {
+    nodes: Array<{
+      authenticators: {
+        nodes: SmartAccountFragment[];
+      };
+    }>;
+  };
+}
 export const AllSmartWalletQueryByIdAndType = gql`
   ${SMART_ACCOUNT_FRAGMENT}
   query ($id: String!, $type: String!) {
@@ -105,6 +161,15 @@ export const AllSmartWalletQueryByIdAndType = gql`
   }
 `;
 
+export interface AllSmartWalletQueryByIdAndTypeAndAuthenticator {
+  smartAccounts: {
+    nodes: Array<{
+      authenticators: {
+        nodes: SmartAccountFragment[];
+      };
+    }>;
+  };
+}
 export const AllSmartWalletQueryByIdAndTypeAndAuthenticator = gql`
   ${SMART_ACCOUNT_FRAGMENT}
   query ($id: String!, $type: String!, $authenticator: String!) {
