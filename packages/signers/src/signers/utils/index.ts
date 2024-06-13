@@ -64,8 +64,6 @@ const queryBothClients = async <T>(
     responseOne.status === "fulfilled" ? responseOne.value.data : null;
   const dataTwo =
     responseTwo.status === "fulfilled" ? responseTwo.value.data : null;
-  console.log("dataOne", dataOne);
-  console.log("dataTwo", dataTwo);
 
   return [dataOne, dataTwo];
 };
@@ -199,7 +197,6 @@ export async function getAAccounts(
     const dataOneNodes = dataOne?.smartAccounts.nodes || [];
     const dataTwoNodes = dataTwo?.smartAccounts.nodes || [];
 
-    console.log("getAAcounts");
     const smartAccounts = [...dataOneNodes, ...dataTwoNodes];
     if (!smartAccounts.length) {
       // No smart account found for this account
@@ -305,7 +302,6 @@ export async function getAuthenticatorIdByAuthenticatorIndex(
 
   const smartAccounts = [...dataOneNodes, ...dataTwoNodes];
 
-  console.log("queryBothClients");
   if (smartAccounts.length > 1) {
     console.warn(
       "Unexpected behavior. Indexer returned multiple smart accounts",

@@ -1,10 +1,4 @@
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useContext, useState } from "react";
 import {
   AccountWalletLogo,
   Button,
@@ -40,15 +34,10 @@ export function RemoveAuthenticatorForm({
   const { loginAuthenticator } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
 
-  const { data, previousData, refetch } = useCombinedQuery(loginAuthenticator);
-
-  // Stop polling upon new data and update context
-  useEffect(() => {
-    if (previousData && data !== previousData) {
-      setIsLoading(false);
-      setAbstractAccount(undefined); // set account to undefined to throw users back to account select screen
-    }
-  }, [data, previousData]);
+  const { refetch } = useCombinedQuery(loginAuthenticator, (newData) => {
+    setIsLoading(false);
+    setAbstractAccount(undefined); // set account to undefined to throw users back to account select screen
+  });
 
   const handleAuthenticatorLabels = (type: authenticatorTypes) => {
     switch (type) {

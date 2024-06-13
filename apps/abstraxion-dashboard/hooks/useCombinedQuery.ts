@@ -6,7 +6,7 @@ interface CombinedQueryResponse {
   loading: boolean;
   error?: Error;
   data?: SmartAccountNodes[];
-  previousData?: any[];
+  previousData?: SmartAccountNodes[];
   refetch: () => void;
 }
 
@@ -30,16 +30,20 @@ interface SmartAccountAuthenticatorNodes {
   version: string;
 }
 
+const MAX_ATTEMPTS = 10;
+
 /**
  * Queries two indexers and combines the results into a single response.
  * This hook handles the loading, error, and data states for the combined query.
  *
  * @param {string} loginAuthenticator - The authenticator token used in the query variables.
+ * @param {function} onNewData - Callback function to be called when new data is fetched.
  * @returns {CombinedQueryResponse} - An object containing the loading status, error message (if any), combined data, previous data, and dummy polling functions.
  * @throws {Error} - Throws an error if both indexer queries fail.
  */
 export const useCombinedQuery = (
   loginAuthenticator: string,
+  onNewData?: (newData: SmartAccountNodes[]) => void,
 ): CombinedQueryResponse => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | undefined>();
@@ -48,9 +52,7 @@ export const useCombinedQuery = (
     SmartAccountNodes[] | undefined
   >();
 
-  const fetchFromBothIndexersRef = useRef<() => void>();
   const retryCountRef = useRef(0);
-  const MAX_ATTEMPTS = 10;
 
   const fetchFromBothIndexers = useCallback(
     async (isRefetch: boolean = false) => {
@@ -84,27 +86,37 @@ export const useCombinedQuery = (
           throw new Error("No data fetched");
         }
 
-        if (data) {
-          setPreviousData(data);
+        const isNewData =
+          data && previousData
+            ? JSON.stringify(combinedData) !== JSON.stringify(previousData)
+            : false;
+
+        if (isRefetch && !isNewData && retryCountRef.current < MAX_ATTEMPTS) {
+          throw new Error("Stale data");
         }
 
+        if (isRefetch) {
+          setPreviousData(data);
+        }
         setData(combinedData);
         setLoading(false);
         retryCountRef.current = 0;
-      } catch (error) {
+
+        if (isRefetch && onNewData) {
+          onNewData(combinedData);
+        }
+      } catch (err) {
         if (isRefetch && retryCountRef.current < MAX_ATTEMPTS) {
           retryCountRef.current += 1;
           setTimeout(() => fetchFromBothIndexers(true), 1000);
         } else {
-          setError(error);
+          setError(err);
           setLoading(false);
         }
       }
     },
-    [loginAuthenticator, data],
+    [loginAuthenticator, data, previousData, onNewData],
   );
-
-  fetchFromBothIndexersRef.current = fetchFromBothIndexers;
 
   useEffect(() => {
     fetchFromBothIndexers(false);

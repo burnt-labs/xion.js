@@ -1,10 +1,4 @@
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useContext, useState } from "react";
 import Image from "next/image";
 import { WalletType, useAccount, useSuggestChainAndConnect } from "graz";
 import { useStytchUser } from "@stytch/nextjs";
@@ -56,34 +50,22 @@ export function AddAuthenticatorsForm({
     onLoading: () => setIsLoading(true),
   });
 
-  const { data, previousData, refetch } = useCombinedQuery(loginAuthenticator);
-
-  // Stop polling upon new data and update context
-  useEffect(() => {
-    if (previousData && data !== previousData) {
-      setIsLoading(false);
-      setIsSuccess(true);
-      const node = data?.find(
-        (smartAccount) => smartAccount.id === abstractAccount.id,
-      );
-      if (!node) return;
-      const currentAuthenticator = node.authenticators.nodes.find(
-        (authenticator) => authenticator.authenticator === loginAuthenticator,
-      );
-      setAbstractAccount({
-        ...node,
-        userId: user?.user_id,
-        currentAuthenticatorIndex: currentAuthenticator?.authenticatorIndex,
-      });
-    }
-  }, [
-    data,
-    previousData,
-    abstractAccount.id,
-    loginAuthenticator,
-    setAbstractAccount,
-    user?.user_id,
-  ]);
+  const { refetch } = useCombinedQuery(loginAuthenticator, (newData) => {
+    setIsLoading(false);
+    setIsSuccess(true);
+    const node = newData.find(
+      (smartAccount) => smartAccount.id === abstractAccount.id,
+    );
+    if (!node) return;
+    const currentAuthenticator = node.authenticators.nodes.find(
+      (authenticator) => authenticator.authenticator === loginAuthenticator,
+    );
+    setAbstractAccount({
+      ...node,
+      userId: user?.user_id,
+      currentAuthenticatorIndex: currentAuthenticator?.authenticatorIndex,
+    });
+  });
 
   // Functions
   function handleSwitch(authenticator: AuthenticatorStates) {
