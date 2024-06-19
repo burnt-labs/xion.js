@@ -152,10 +152,7 @@ export function RemoveAuthenticatorForm({
         },
       };
 
-      const res = await client.removeAbstractAccountAuthenticator(msg, "", {
-        amount: [{ amount: "0", denom: "uxion" }],
-        gas: "500000",
-      });
+      const res = await client.removeAbstractAccountAuthenticator(msg, "");
 
       if (res?.rawLog?.includes("failed")) {
         throw new Error("Transaction failed");

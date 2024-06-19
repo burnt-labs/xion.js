@@ -12,7 +12,7 @@ export function WalletSend({
 }: {
   trigger: ReactElement;
   sendTokens: (
-    senderAddress: string,
+    recipientAddress: string,
     sendAmount: number,
     denom: string,
     memo: string,

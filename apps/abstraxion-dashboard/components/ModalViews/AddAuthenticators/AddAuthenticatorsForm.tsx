@@ -158,10 +158,7 @@ export function AddAuthenticatorsForm({
           },
         },
       };
-      const res = await client.addAbstractAccountAuthenticator(msg, "", {
-        amount: [{ amount: "0", denom: "uxion" }],
-        gas: "500000",
-      });
+      const res = await client.addAbstractAccountAuthenticator(msg, "");
 
       if (res.rawLog?.includes("failed")) {
         throw new Error(res.rawLog);
@@ -213,10 +210,7 @@ export function AddAuthenticatorsForm({
           },
         },
       };
-      const res = await client.addAbstractAccountAuthenticator(msg, "", {
-        amount: [{ amount: "0", denom: "uxion" }],
-        gas: "500000",
-      });
+      const res = await client.addAbstractAccountAuthenticator(msg, "");
 
       if (res.rawLog?.includes("failed")) {
         throw new Error(res.rawLog);
@@ -276,10 +270,7 @@ export function AddAuthenticatorsForm({
         },
       };
 
-      const res = await client.addAbstractAccountAuthenticator(msg, "", {
-        amount: [{ amount: "0", denom: "uxion" }],
-        gas: "500000",
-      });
+      const res = await client.addAbstractAccountAuthenticator(msg, "");
 
       if (res?.rawLog?.includes("failed")) {
         throw new Error("Transaction failed");
