@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import { makeSignBytes, type AccountData } from "@cosmjs/proto-signing";
+import { type AccountData, makeSignBytes } from "@cosmjs/proto-signing";
 import type { KdfConfiguration } from "@cosmjs/amino";
 import {
   encodeSecp256k1Signature,
@@ -10,17 +10,17 @@ import { assert, isNonNullObject } from "@cosmjs/utils";
 import { Hash, PrivKeySecp256k1 } from "@keplr-wallet/crypto";
 import type { HdPath, Secp256k1Keypair } from "@cosmjs/crypto";
 import {
+  Argon2id,
+  Bip39,
+  EnglishMnemonic,
+  isArgon2idOptions,
+  pathToString,
+  Random,
   Secp256k1,
+  sha256,
   Slip10,
   Slip10Curve,
   stringToPath,
-  EnglishMnemonic,
-  Bip39,
-  Random,
-  Argon2id,
-  isArgon2idOptions,
-  pathToString,
-  sha256,
 } from "@cosmjs/crypto";
 import {
   fromBase64,
@@ -315,7 +315,7 @@ export class SignArbSecp256k1HdWallet {
     return JSON.stringify(out);
   }
 
-  async getAccounts() {
+  async getAccounts(): Promise<readonly AccountData[]> {
     const accountsWithPrivkeys = await this.getAccountsWithPrivkeys();
     return accountsWithPrivkeys.map(({ algo, pubkey, address }) => ({
       algo: algo,

@@ -7,14 +7,16 @@ import {
   useAbstraxionSigningClient,
   useModal,
 } from "@burnt-labs/abstraxion";
-import { Button, Input } from "@burnt-labs/ui";
+import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
+import { SignArb } from "../components/sign-arb.tsx";
 
 const seatContractAddress =
   "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
 
 type ExecuteResultOrUndefined = ExecuteResult | undefined;
+
 export default function Page(): JSX.Element {
   // Abstraxion hooks
   const { data: account } = useAbstraxionAccount();
@@ -28,7 +30,6 @@ export default function Page(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [executeResult, setExecuteResult] =
     useState<ExecuteResultOrUndefined>(undefined);
-  const [arbitraryMessage, setArbitraryMessage] = useState<string>("");
 
   const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${executeResult?.transactionHash}`;
 
@@ -42,14 +43,6 @@ export default function Page(): JSX.Element {
   now.setSeconds(now.getSeconds() + 15);
   const oneYearFromNow = new Date();
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-
-  async function handleSign(): Promise<void> {
-    if (client?.granteeAddress) {
-      const response = await signArb?.(client.granteeAddress, arbitraryMessage);
-      // eslint-disable-next-line no-console -- We log this for testing purposes.
-      console.log(response);
-    }
-  }
 
   async function claimSeat(): Promise<void> {
     setLoading(true);
@@ -128,30 +121,7 @@ export default function Page(): JSX.Element {
               LOGOUT
             </Button>
           ) : null}
-          {signArb ? (
-            <div className="mt-10 w-full">
-              <h1 className="text-lg font-normal tracking-tighter text-white">
-                SIGN ARBITRARY MESSAGE
-              </h1>
-              <Input
-                className="ui-w-full ui-mb-4"
-                onChange={(e) => {
-                  setArbitraryMessage(e.target.value);
-                }}
-                placeholder="Message..."
-                value={arbitraryMessage}
-              />
-              <Button
-                disabled={loading}
-                fullWidth
-                onClick={() => {
-                  void handleSign();
-                }}
-              >
-                Sign
-              </Button>
-            </div>
-          ) : null}
+          {signArb ? <SignArb /> : null}
         </>
       ) : null}
       <Abstraxion
