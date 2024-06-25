@@ -28,7 +28,9 @@ export function BlockingButton({ text, onExecute }: BlockingButtonProps) {
   return (
     <button
       className="hover:ui-bg-neutral-100 min-w-full rounded-md bg-white px-4 py-2 text-black shadow-md"
-      onClick={() => handleClick()}
+      onClick={() => {
+        void handleClick();
+      }}
       disabled={loading}
     >
       {loading ? (

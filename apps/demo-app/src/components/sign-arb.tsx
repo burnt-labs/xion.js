@@ -4,9 +4,7 @@ import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
 } from "@burnt-labs/abstraxion";
-
 import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
-
 import { BlockingButton } from "./blocking-button.tsx";
 
 const copyToClipboard = (textToCopy: string) => async () => {
@@ -14,28 +12,31 @@ const copyToClipboard = (textToCopy: string) => async () => {
 };
 
 // This component is a wizard of sorts showcasing the ability to sign and verify arbitrary ADR-036 signatures
-export function SignArb() {
+export function SignArb(): React.ReactNode {
   const [signArbResult, setSignArbResult] = useState<string | undefined>();
   const [arbitraryMessage, setArbitraryMessage] = useState<string>("");
 
   if (signArbResult) {
     return (
       <SignArbVerify
-        message={arbitraryMessage}
-        signature={signArbResult}
         clearSigFn={async () => {
           setArbitraryMessage("");
           setSignArbResult(undefined);
+
+          // Added to make ESLint happy
+          return Promise.resolve();
         }}
+        message={arbitraryMessage}
+        signature={signArbResult}
       />
     );
   }
 
   return (
     <SignArbSign
-      setResult={setSignArbResult}
       arbitraryMessage={arbitraryMessage}
       setArbitraryMessage={setArbitraryMessage}
+      setResult={setSignArbResult}
     />
   );
 }
@@ -56,7 +57,7 @@ function SignArbSign({
   async function handleSign(): Promise<void> {
     if (client?.granteeAddress) {
       const response = await signArb?.(client.granteeAddress, arbitraryMessage);
-      // eslint-disable-next-line no-console -- We log this for testing purposes.
+
       if (response) setResult(response);
     }
   }
@@ -89,7 +90,7 @@ function SignArbSign({
 interface SignArbVerifyProps {
   message: string;
   signature: string;
-  clearSigFn(): Promise<void>;
+  clearSigFn: () => Promise<void>;
 }
 
 const verifySignatureWithApi = async (
@@ -142,7 +143,7 @@ function SignArbVerify({ message, signature, clearSigFn }: SignArbVerifyProps) {
   const { client } = useAbstraxionSigningClient();
   const { data: account } = useAbstraxionAccount();
 
-  if (!client) return <div></div>;
+  if (!client) return <div />;
 
   return (
     <div className="mt-10 w-full">
@@ -165,7 +166,6 @@ function SignArbVerify({ message, signature, clearSigFn }: SignArbVerifyProps) {
 
       <div className="flex-col space-y-2">
         <BlockingButton
-          text="Verify Signature"
           onExecute={async () => {
             const result = await verifySignatureWithApi(
               client,
@@ -174,14 +174,16 @@ function SignArbVerify({ message, signature, clearSigFn }: SignArbVerifyProps) {
               signature,
             );
 
+            // eslint-disable-next-line no-alert --- No need for more complex user notification scheme
             alert(`You message is ${result ? "valid" : "invalid"}!!!!`);
           }}
+          text="Verify Signature"
         />
         <BlockingButton
-          text="Copy Signature to Clipboard"
           onExecute={copyToClipboard(signature || "")}
+          text="Copy Signature to Clipboard"
         />
-        <BlockingButton text="Reset" onExecute={clearSigFn} />
+        <BlockingButton onExecute={clearSigFn} text="Reset" />
       </div>
     </div>
   );

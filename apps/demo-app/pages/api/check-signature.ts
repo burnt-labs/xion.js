@@ -77,7 +77,7 @@ export async function verifyXionSignatureAndGrants(
  * @param grantee - The address of the granter.
  * @param granter - The address of the grantee.
  *
- * @return {Promise<boolean>} - A promise that resolves to a boolean indicating whether ANY grants have been given.
+ * @returns Promise<boolean> - A promise that resolves to a boolean indicating whether ANY grants have been given.
  */
 export async function verifyGrants(
   granter: string,
