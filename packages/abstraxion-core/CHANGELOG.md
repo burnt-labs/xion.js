@@ -1,5 +1,19 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.42
+
+### Minor Changes
+
+- [#190](https://github.com/burnt-labs/xion.js/pull/190) [`bcc35c9`](https://github.com/burnt-labs/xion.js/commit/bcc35c9ed8faf2edb6f1e19f06e8b8ced9530067) Thanks [@BurntVal](https://github.com/BurntVal)! - Introduce configurable redirect url param
+
+- [#183](https://github.com/burnt-labs/xion.js/pull/183) [`750803b`](https://github.com/burnt-labs/xion.js/commit/750803b1a4235334322262d1e932f81d3ea13060) Thanks [@BurntVal](https://github.com/BurntVal)! - General cleanup and build optimization
+
+### Patch Changes
+
+- Updated dependencies [[`750803b`](https://github.com/burnt-labs/xion.js/commit/750803b1a4235334322262d1e932f81d3ea13060), [`a0b5031`](https://github.com/burnt-labs/xion.js/commit/a0b5031f8766369b00562387b692450f396a9d7f)]:
+  - @burnt-labs/constants@0.1.0-alpha.9
+  - @burnt-labs/signers@0.1.0-alpha.11
+
 ## 1.0.0-alpha.41
 
 ### Minor Changes

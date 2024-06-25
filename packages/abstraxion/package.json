@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/abstraxion",
-  "version": "1.0.0-alpha.45",
+  "version": "1.0.0-alpha.46",
   "sideEffects": [
     "**/*.css"
   ],
