@@ -241,6 +241,9 @@ importers:
       '@burnt-labs/abstraxion':
         specifier: workspace:*
         version: link:../../packages/abstraxion
+      '@burnt-labs/abstraxion-core':
+        specifier: workspace:*
+        version: link:../../packages/abstraxion-core
       '@burnt-labs/constants':
         specifier: workspace:*
         version: link:../../packages/constants
@@ -256,6 +259,9 @@ importers:
       '@cosmjs/cosmwasm-stargate':
         specifier: ^0.32.2
         version: 0.32.2
+      '@heroicons/react':
+        specifier: ^2.1.4
+        version: 2.1.4(react@18.2.0)
       '@keplr-wallet/cosmos':
         specifier: ^0.12.80
         version: 0.12.80
@@ -3219,6 +3225,14 @@ packages:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 16.8.0
+    dev: false
+
+  /@heroicons/react@2.1.4(react@18.2.0):
+    resolution: {integrity: sha512-ju0wj0wwrUTMQ2Yceyrma7TKuI3BpSjp+qKqV81K9KGcUHdvTMdiwfRc2cwXBp3uXtKuDZkh0v03nWOQnJFv2Q==}
+    peerDependencies:
+      react: '>= 16'
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /@humanwhocodes/config-array@0.11.13:
