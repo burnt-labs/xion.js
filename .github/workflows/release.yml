@@ -91,6 +91,7 @@ jobs:
           publish: pnpm publish:packages
           version: pnpm version:packages
           commit: "chore: update versions"
+          setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
