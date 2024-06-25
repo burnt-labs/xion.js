@@ -98,7 +98,7 @@ export async function verifyGrants(
       console.error("Could not fetch grants info", err);
     });
 
-  return data && data.grants.length > 0;
+  return Boolean(data && data.grants.length > 0);
 }
 
 export default async function handler(
