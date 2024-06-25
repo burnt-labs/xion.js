@@ -65,6 +65,7 @@ export interface AbstraxionConfig {
   restUrl?: string;
   stake?: boolean;
   bank?: SpendLimit[];
+  callbackUrl?: string;
 }
 
 export function AbstraxionProvider({
@@ -81,6 +82,7 @@ export function AbstraxionProvider({
       restUrl={config.restUrl}
       stake={config.stake}
       bank={config.bank}
+      callbackUrl={config.callbackUrl}
     >
       {children}
     </AbstraxionContextProvider>

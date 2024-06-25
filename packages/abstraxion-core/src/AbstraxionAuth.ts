@@ -11,6 +11,7 @@ export class AbstraxionAuth {
   grantContracts?: ContractGrantDescription[];
   stake?: boolean;
   bank?: SpendLimit[];
+  callbackUrl?: string;
 
   // Signer
   private client?: GranteeSignerClient;
@@ -36,6 +37,7 @@ export class AbstraxionAuth {
    * @param {ContractGrantDescription[]} [grantContracts] - Contracts for granting permissions.
    * @param {boolean} [stake] - Indicates whether staking is enabled.
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
+   * @param {string} callbackUrl - preferred callback url to override default
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -43,12 +45,14 @@ export class AbstraxionAuth {
     grantContracts?: ContractGrantDescription[],
     stake?: boolean,
     bank?: SpendLimit[],
+    callbackUrl?: string,
   ) {
     this.rpcUrl = rpc;
     this.restUrl = restUrl;
     this.grantContracts = grantContracts;
     this.stake = stake;
     this.bank = bank;
+    this.callbackUrl = callbackUrl;
   }
 
   /**
@@ -235,7 +239,7 @@ export class AbstraxionAuth {
     userAddress: string,
   ): void {
     if (typeof window !== "undefined") {
-      const currentUrl = window.location.href;
+      const currentUrl = this.callbackUrl || window.location.href;
       const urlParams = new URLSearchParams();
 
       if (this.bank) {

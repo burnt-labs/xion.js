@@ -47,6 +47,7 @@ export function AbstraxionContextProvider({
   restUrl = testnetChainInfo.rest,
   stake = false,
   bank,
+  callbackUrl,
 }: {
   children: ReactNode;
   contracts?: ContractGrantDescription[];
@@ -55,6 +56,7 @@ export function AbstraxionContextProvider({
   restUrl?: string;
   stake?: boolean;
   bank?: SpendLimit[];
+  callbackUrl?: string;
 }): JSX.Element {
   const [abstraxionError, setAbstraxionError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -74,8 +76,9 @@ export function AbstraxionContextProvider({
       contracts,
       stake,
       bank,
+      callbackUrl,
     );
-  }, [rpcUrl, restUrl, contracts, stake, bank]);
+  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
