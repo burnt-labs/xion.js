@@ -1,5 +1,15 @@
 # @burnt-labs/ui
 
+## 0.1.0-alpha.13
+
+### Minor Changes
+
+- [#183](https://github.com/burnt-labs/xion.js/pull/183) [`750803b`](https://github.com/burnt-labs/xion.js/commit/750803b1a4235334322262d1e932f81d3ea13060) Thanks [@BurntVal](https://github.com/BurntVal)! - General cleanup and build optimization
+
+- [#181](https://github.com/burnt-labs/xion.js/pull/181) [`b618cc8`](https://github.com/burnt-labs/xion.js/commit/b618cc8edc57463925e3e8945dd2c5ee55d87879) Thanks [@BurntVal](https://github.com/BurntVal)! - usdc iteration for sending tokens
+
+- [#178](https://github.com/burnt-labs/xion.js/pull/178) [`a0b5031`](https://github.com/burnt-labs/xion.js/commit/a0b5031f8766369b00562387b692450f396a9d7f) Thanks [@BurntVal](https://github.com/BurntVal)! - Implement ability to remove authenticators
+
 ## 0.1.0-alpha.12
 
 ### Minor Changes

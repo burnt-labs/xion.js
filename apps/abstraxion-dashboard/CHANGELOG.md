@@ -1,5 +1,27 @@
 # abstraxion-dashboard
 
+## 0.2.0-alpha.27
+
+### Minor Changes
+
+- [#183](https://github.com/burnt-labs/xion.js/pull/183) [`750803b`](https://github.com/burnt-labs/xion.js/commit/750803b1a4235334322262d1e932f81d3ea13060) Thanks [@BurntVal](https://github.com/BurntVal)! - General cleanup and build optimization
+
+- [#185](https://github.com/burnt-labs/xion.js/pull/185) [`b1a90e9`](https://github.com/burnt-labs/xion.js/commit/b1a90e956180d3262c69122dacd3cdfee55d5afb) Thanks [@BurntVal](https://github.com/BurntVal)! - revert to explicit flow for creating initial meta account
+
+- [#189](https://github.com/burnt-labs/xion.js/pull/189) [`7556cda`](https://github.com/burnt-labs/xion.js/commit/7556cda956eddf2e37d154ffb10c4ec6165c79ed) Thanks [@justinbarry](https://github.com/justinbarry)! - Disable sentry replays and performance tracing for dashboard
+
+- [#181](https://github.com/burnt-labs/xion.js/pull/181) [`b618cc8`](https://github.com/burnt-labs/xion.js/commit/b618cc8edc57463925e3e8945dd2c5ee55d87879) Thanks [@BurntVal](https://github.com/BurntVal)! - usdc iteration for sending tokens
+
+- [#178](https://github.com/burnt-labs/xion.js/pull/178) [`a0b5031`](https://github.com/burnt-labs/xion.js/commit/a0b5031f8766369b00562387b692450f396a9d7f) Thanks [@BurntVal](https://github.com/BurntVal)! - Implement ability to remove authenticators
+
+### Patch Changes
+
+- Updated dependencies [[`bcc35c9`](https://github.com/burnt-labs/xion.js/commit/bcc35c9ed8faf2edb6f1e19f06e8b8ced9530067), [`750803b`](https://github.com/burnt-labs/xion.js/commit/750803b1a4235334322262d1e932f81d3ea13060), [`33493c5`](https://github.com/burnt-labs/xion.js/commit/33493c5a33224d59e517ddd84aec3e35d1f5c291), [`b618cc8`](https://github.com/burnt-labs/xion.js/commit/b618cc8edc57463925e3e8945dd2c5ee55d87879), [`a0b5031`](https://github.com/burnt-labs/xion.js/commit/a0b5031f8766369b00562387b692450f396a9d7f)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.46
+  - @burnt-labs/constants@0.1.0-alpha.9
+  - @burnt-labs/signers@0.1.0-alpha.11
+  - @burnt-labs/ui@0.1.0-alpha.13
+
 ## 0.2.0-alpha.26
 
 ### Minor Changes
