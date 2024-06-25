@@ -104,7 +104,7 @@ const verifySignatureWithApi = async (
 
   const userSessionAddress = granteeAccountData.address;
   const userSessionPubKey = Buffer.from(granteeAccountData.pubkey).toString(
-    "Base64",
+    "base64",
   );
 
   const baseUrl = `${window.location.origin}/api/check-signature`;
