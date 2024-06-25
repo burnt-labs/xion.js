@@ -30,6 +30,7 @@ jobs:
         with:
           token: ${{ env.GITHUB_TOKEN }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: 🟢 Setup node
         id: setup-node
@@ -72,6 +73,15 @@ jobs:
         run: |
           pnpm build
 
+      - name: Set git user
+        shell: bash
+        run: |
+          git config user.name "burnt-daemon"
+          git config user.email "146226939+burnt-daemon@users.noreply.github.com"
+          git config commit.gpgsign true
+          git config gpg.format ssh
+          git config user.signingkey 'key::${{ secrets.SSH_SIGNING_PK }}'
+
       - name: 📣 Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
@@ -80,6 +90,7 @@ jobs:
           publish: pnpm publish:packages
           version: pnpm version:packages
           commit: "chore: update versions"
+          setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
