@@ -30,6 +30,7 @@ jobs:
         with:
           token: ${{ env.GITHUB_TOKEN }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: 🟢 Setup node
         id: setup-node
@@ -71,6 +72,15 @@ jobs:
         id: build-the-mono-repo
         run: |
           pnpm build
+
+      - name: Set git user
+        shell: bash
+        run: |
+          echo "${{ secrets.SSH_SIGNING_PK }}" > ~/.ssh/key
+          git config --global user.name "burnt-daemon"
+          git config --global user.email "devops@burnt.com"
+          git config --global gpg.format ssh
+          git config --global user.signingkey ~/.ssh/key
 
       - name: 📣 Create Release Pull Request or Publish to npm
         id: changesets
