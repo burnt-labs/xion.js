@@ -76,12 +76,11 @@ jobs:
       - name: Set git user
         shell: bash
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_SIGNING_PK }}" > ~/.ssh/key
-          git config --global user.name "burnt-daemon"
-          git config --global user.email "devops@burnt.com"
-          git config --global gpg.format ssh
-          git config --global user.signingkey ~/.ssh/key
+          git config user.name "burnt-daemon"
+          git config user.email "146226939+burnt-daemon@users.noreply.github.com"
+          git config commit.gpgsign true
+          git config gpg.format ssh
+          git config user.signingkey 'key::${{ secrets.SSH_SIGNING_PK }}'
 
       - name: 📣 Create Release Pull Request or Publish to npm
         id: changesets
