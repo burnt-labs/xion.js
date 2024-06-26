@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { Button, Spinner } from "@burnt-labs/ui";
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
@@ -13,6 +13,8 @@ import { assertIsDeliverTxSuccess } from "@cosmjs/stargate/build/stargateclient"
 import { generateBankGrant } from "@/components/AbstraxionGrant/generateBankGrant.tsx";
 import { generateContractGrant } from "@/components/AbstraxionGrant/generateContractGrant.tsx";
 import { generateStakeGrant } from "@/components/AbstraxionGrant/generateStakeGrant.tsx";
+import { AbstraxionContext } from "@/components/AbstraxionContext";
+import { getGasCalculation } from "@/utils/gasCalc";
 
 interface AbstraxionGrantProps {
   contracts: ContractGrantDescription[];
@@ -29,6 +31,7 @@ export const AbstraxionGrant = ({
 }: AbstraxionGrantProps) => {
   const { client } = useAbstraxionSigningClient();
   const { data: account } = useAbstraxionAccount();
+  const { chainInfo } = useContext(AbstraxionContext);
   const searchParams = useSearchParams();
 
   const [inProgress, setInProgress] = useState(false);
@@ -100,13 +103,21 @@ export const AbstraxionGrant = ({
         throw new Error("No grants to send");
       }
 
+      console.log(account);
+
+      const simmedGas = await client.simulate(
+        account.id,
+        msgs,
+        `grant-${timestampThreeMonthsFromNow}`,
+      );
+      const fee = getGasCalculation(simmedGas, chainInfo.chainId);
+
+      console.log({ simmedGas, fee });
+
       const deliverTxResponse = await client?.signAndBroadcast(
         account.id,
         msgs,
-        {
-          amount: [{ amount: "0", denom: "uxion" }],
-          gas: "500000",
-        },
+        fee,
       );
 
       assertIsDeliverTxSuccess({

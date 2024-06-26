@@ -48,6 +48,12 @@ export const xionCoin: Coin = {
   },
 };
 
+export const xionGasValues = {
+  gasPrice: "0.025uxion",
+  gasAdjustment: 1.3,
+  gasAdjustmentMargin: 5000,
+};
+
 const commonInfo: ChainInfo = {
   rpc: "undefined",
   rest: "undefined",

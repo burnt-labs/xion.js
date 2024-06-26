@@ -21,7 +21,7 @@ export function WalletSendForm({
   setIsOpen,
 }: {
   sendTokens: (
-    senderAddress: string,
+    recipientAddress: string,
     sendAmount: number,
     denom: string,
     memo: string,

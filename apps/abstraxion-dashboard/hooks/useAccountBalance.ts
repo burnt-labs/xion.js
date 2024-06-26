@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { XION_TO_USDC_CONVERSION } from "@/components/Overview";
+import { getGasCalculation } from "@/utils/gasCalc";
 
 export const usdcSearchDenom =
   "ibc/57097251ED81A232CE3C9D899E7C8096D6D87EF84BA203E12E424AA4C9B57A64";
@@ -44,7 +45,7 @@ export function useAccountBalance() {
   }, [account, client]);
 
   async function sendTokens(
-    senderAddress: string,
+    recipientAddress: string,
     sendAmount: number,
     denom: string,
     memo: string,
@@ -60,14 +61,27 @@ export function useAccountBalance() {
 
       const convertedSendAmount = String(sendAmount * 1000000);
 
+      const msgs = [
+        {
+          typeUrl: "/cosmos.bank.v1beta1.MsgSend",
+          value: {
+            fromAddress: account.id,
+            toAddress: recipientAddress,
+            amount: [{ denom, amount: convertedSendAmount }],
+          },
+        },
+      ];
+
+      const simmedGas = await client.simulate(account.id, msgs, memo);
+
+      const chainId = await client.getChainId();
+      const fee = getGasCalculation(simmedGas, chainId);
+
       const res = await client.sendTokens(
         account.id,
-        senderAddress,
+        recipientAddress,
         [{ denom, amount: convertedSendAmount }],
-        {
-          amount: [{ denom: "uxion", amount: "0" }],
-          gas: "200000", // TODO: Dynamic?
-        },
+        fee,
         memo,
       );
 

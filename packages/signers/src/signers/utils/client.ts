@@ -1,21 +1,33 @@
 import { bech32 } from "bech32";
-import { TxRaw, AuthInfo, SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import {
+  TxRaw,
+  AuthInfo,
+  SignDoc,
+  Tx,
+  Fee,
+  TxBody,
+} from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import {
   GeneratedType,
   Registry,
   EncodeObject,
   DirectSignResponse,
   makeSignBytes,
+  encodePubkey,
 } from "@cosmjs/proto-signing";
 import {
   Account,
+  calculateFee,
+  createProtobufRpcClient,
   defaultRegistryTypes,
   DeliverTxResponse,
+  GasPrice,
   SignerData,
   SigningStargateClientOptions,
   StdFee,
 } from "@cosmjs/stargate";
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
+import { xionGasValues } from "@burnt-labs/constants";
 import { MsgRegisterAccount } from "../../types/generated/abstractaccount/v1/tx";
 import {
   abstractAccountTypes,
@@ -34,6 +46,13 @@ import {
   AddAuthenticator,
   RemoveAuthenticator,
 } from "../../interfaces/smartAccount";
+import { Uint53 } from "@cosmjs/math";
+import { coins, encodeSecp256k1Pubkey } from "@cosmjs/amino";
+import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
+import {
+  ServiceClientImpl,
+  SimulateRequest,
+} from "cosmjs-types/cosmos/tx/v1beta1/service";
 
 export const AADefaultRegistryTypes: ReadonlyArray<[string, GeneratedType]> = [
   ...defaultRegistryTypes,
@@ -93,7 +112,7 @@ export class AAClient extends SigningCosmWasmClient {
   public async addAbstractAccountAuthenticator(
     msg: AddAuthenticator,
     memo = "",
-    fee: StdFee,
+    fee?: StdFee,
   ): Promise<DeliverTxResponse> {
     if (!this.abstractSigner.abstractAccount) {
       throw new Error("Abstract account address not set in signer");
@@ -108,7 +127,36 @@ export class AAClient extends SigningCosmWasmClient {
         funds: [],
       }),
     };
-    const tx = await this.sign(sender, [addMsg], fee, memo);
+
+    const {
+      gasPrice: gasPriceString,
+      gasAdjustment,
+      gasAdjustmentMargin,
+    } = xionGasValues;
+
+    const simmedGas = await this.simulate(sender, [addMsg], memo);
+    console.log({ simmedGas });
+    const gasPrice = GasPrice.fromString(gasPriceString);
+    const calculatedFee: StdFee = calculateFee(
+      simmedGas * gasAdjustment,
+      gasPrice,
+    );
+
+    let defaultFee: StdFee;
+    let gas = (
+      parseInt(calculatedFee.gas) * gasAdjustment +
+      gasAdjustmentMargin
+    ).toString();
+
+    const chainId = await this.getChainId();
+
+    if (/testnet/.test(chainId)) {
+      defaultFee = { amount: [{ amount: "0", denom: "uxion" }], gas: gas };
+    } else {
+      defaultFee = { amount: calculatedFee.amount, gas: gas };
+    }
+
+    const tx = await this.sign(sender, [addMsg], fee || defaultFee, memo);
     return this.broadcastTx(TxRaw.encode(tx).finish());
   }
 
@@ -120,7 +168,7 @@ export class AAClient extends SigningCosmWasmClient {
   public async removeAbstractAccountAuthenticator(
     msg: RemoveAuthenticator,
     memo = "",
-    fee: StdFee,
+    fee?: StdFee,
   ): Promise<DeliverTxResponse> {
     if (!this.abstractSigner.abstractAccount) {
       throw new Error("Abstract account address not set in signer");
@@ -135,8 +183,126 @@ export class AAClient extends SigningCosmWasmClient {
         funds: [],
       }),
     };
-    const tx = await this.sign(sender, [addMsg], fee, memo);
+
+    const {
+      gasPrice: gasPriceString,
+      gasAdjustment,
+      gasAdjustmentMargin,
+    } = xionGasValues;
+
+    const simmedGas = await this.simulate(sender, [addMsg], memo);
+    const gasPrice = GasPrice.fromString(gasPriceString);
+    const calculatedFee: StdFee = calculateFee(
+      simmedGas * gasAdjustment,
+      gasPrice,
+    );
+
+    let defaultFee: StdFee;
+    let gas = (
+      parseInt(calculatedFee.gas) * gasAdjustment +
+      gasAdjustmentMargin
+    ).toString();
+
+    const chainId = await this.getChainId();
+
+    if (/testnet/.test(chainId)) {
+      defaultFee = { amount: [{ amount: "0", denom: "uxion" }], gas: gas };
+    } else {
+      defaultFee = { amount: calculatedFee.amount, gas: gas };
+    }
+
+    const tx = await this.sign(sender, [addMsg], fee || defaultFee, memo);
     return this.broadcastTx(TxRaw.encode(tx).finish());
+  }
+
+  /**
+   * Simulates transaction and returns gas used
+   */
+  public async simulate(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    memo: string | undefined,
+  ): Promise<number> {
+    const anyMsgs = messages.map((m) => this.registry.encodeAsAny(m));
+    const { sequence } = await this.getSequence(signerAddress);
+    const accountFromSigner = (await this.abstractSigner.getAccounts()).find(
+      (account) => account.address === signerAddress,
+    );
+
+    console.log({ messages });
+
+    if (!accountFromSigner) {
+      throw new Error("No account found.");
+    }
+
+    const pubKeyBytes = bech32.fromWords(
+      bech32.decode(accountFromSigner.address).words,
+    );
+
+    const pubkey = Uint8Array.from(pubKeyBytes);
+
+    const queryClient = this.getQueryClient();
+    if (!queryClient) {
+      throw new Error("Couldn't get query client");
+    }
+
+    const rpc = createProtobufRpcClient(queryClient);
+    const queryService = new ServiceClientImpl(rpc);
+
+    const authInfo = AuthInfo.fromPartial({
+      fee: Fee.fromPartial({}),
+      signerInfos: [
+        {
+          publicKey: {
+            typeUrl: "/abstractaccount.v1.NilPubKey",
+            value: new Uint8Array([10, 32, ...pubkey]), // a little hack to encode the pk into proto bytes
+          },
+          modeInfo: {
+            single: {
+              mode: SignMode.SIGN_MODE_DIRECT,
+            },
+          },
+          sequence: BigInt(sequence),
+        },
+      ],
+    });
+    const authInfoBytes = AuthInfo.encode(authInfo).finish();
+
+    console.log({ authInfoBytes });
+
+    const txBodyEncodeObject = {
+      typeUrl: "/cosmos.tx.v1beta1.TxBody",
+      value: {
+        messages: messages,
+        memo: "AA Gas Simulation",
+      },
+    };
+    console.log({ txBodyEncodeObject });
+    const bodyBytes = this.registry.encode(txBodyEncodeObject);
+
+    console.log({ bodyBytes });
+
+    const tx = TxRaw.fromPartial({
+      bodyBytes,
+      authInfoBytes,
+      signatures: [new Uint8Array()],
+    });
+
+    console.log({ tx });
+
+    const request = SimulateRequest.fromPartial({
+      txBytes: TxRaw.encode(tx).finish(),
+    });
+
+    console.log({ request });
+
+    const { gasInfo } = await queryService.Simulate(request);
+
+    if (!gasInfo) {
+      throw new Error("No gas info returned");
+    }
+
+    return Uint53.fromString(gasInfo.gasUsed.toString()).toNumber();
   }
 
   public async getAccount(searchAddress: string): Promise<Account | null> {
