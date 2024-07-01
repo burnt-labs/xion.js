@@ -1,7 +1,7 @@
 import {
   DirectSignResponse,
-  OfflineDirectSigner,
   makeSignBytes,
+  OfflineDirectSigner,
 } from "@cosmjs/proto-signing";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { AAccountData, AASigner } from "../interfaces/AASigner";
@@ -44,7 +44,8 @@ export class AADirectSigner extends AASigner {
     this.accountAuthenticatorIndex = accountAuthenticatorIndex;
     this.signArbFn = signArbFn;
     this.indexerUrl =
-      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
+      indexerUrl ||
+      "https://api.subquery.network/sq/burnt-labs/frankies-a-legend";
   }
 
   async signDirect(
