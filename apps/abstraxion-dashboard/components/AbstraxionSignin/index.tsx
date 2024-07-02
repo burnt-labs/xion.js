@@ -2,7 +2,7 @@
 import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { useStytch } from "@stytch/nextjs";
-import { Button, Input, ModalSection } from "@burnt-labs/ui";
+import { Button, Input, MetamaskLogo, ModalSection } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
@@ -21,7 +21,7 @@ export const AbstraxionSignin = () => {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const { setConnectionType, setAbstraxionError, chainInfo } = useContext(
+  const { setConnectionType, setAbstraxionError } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -76,6 +76,24 @@ export const AbstraxionSignin = () => {
       setOtpError("Error verifying otp");
     }
   };
+
+  async function handleMetamask() {
+    if (!window.ethereum) {
+      alert("Please install the Metamask wallet extension");
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const primaryAccount = accounts[0];
+      setConnectionType("metamask");
+      localStorage.setItem("loginType", "metamask");
+      localStorage.setItem("loginAuthenticator", primaryAccount);
+    } catch (error) {
+      setAbstraxionError("Metamask connect error");
+    }
+  }
 
   async function handleOkx() {
     if (!window.okxwallet) {
@@ -199,18 +217,28 @@ export const AbstraxionSignin = () => {
                 <p className="ui-my-4 ui-text-sm ui-text-white ui-opacity-50">
                   Log into your existing XION Meta account with a crypto wallet
                 </p>
-                <Button
-                  fullWidth={true}
-                  onClick={handleOkx}
-                  structure="outlined"
-                >
-                  <Image
-                    src="/okx-logo.png"
-                    height={82}
-                    width={50}
-                    alt="OKX Logo"
-                  />
-                </Button>
+                <div className="ui-flex ui-w-full ui-gap-2">
+                  <Button
+                    fullWidth={true}
+                    onClick={handleOkx}
+                    structure="outlined"
+                  >
+                    <Image
+                      src="/okx-logo.png"
+                      height={82}
+                      width={50}
+                      alt="OKX Logo"
+                    />
+                  </Button>
+                  <Button
+                    fullWidth={true}
+                    onClick={handleMetamask}
+                    structure="outlined"
+                    className="ui-mb-16 sm:ui-mb-0"
+                  >
+                    <MetamaskLogo />
+                  </Button>
+                </div>
               </div>
             ) : null}
           </div>

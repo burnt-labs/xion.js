@@ -6,16 +6,9 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { WalletType, useAccount, useSuggestChainAndConnect } from "graz";
 import { useQuery } from "@apollo/client";
 import { useStytchUser } from "@stytch/nextjs";
-import {
-  Button,
-  KeplrLogo,
-  MetamaskLogo,
-  PasskeyIcon,
-  Spinner,
-} from "@burnt-labs/ui";
+import { Button, MetamaskLogo, Spinner } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
   AbstraxionContextProps,
@@ -23,6 +16,7 @@ import {
 import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { encodeHex } from "@/utils";
 import { AllSmartWalletQuery } from "@/utils/queries";
+import { findLowestMissingOrNextIndex } from "@/utils/authenticator-util";
 
 // TODO: Add webauthn to this and remove "disable" prop from button when implemented
 type AuthenticatorStates = "none" | "keplr" | "metamask" | "okx";
@@ -49,13 +43,7 @@ export function AddAuthenticatorsForm({
   // Hooks
   const { loginAuthenticator } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
-  const { data: grazAccount } = useAccount();
   const { user } = useStytchUser();
-  const { suggestAndConnect } = useSuggestChainAndConnect({
-    onSuccess: async () => await addKeplrAuthenticator(),
-    onError: () => setIsLoading(false),
-    onLoading: () => setIsLoading(true),
-  });
 
   const { data, previousData, startPolling, stopPolling } = useQuery(
     AllSmartWalletQuery,
@@ -107,10 +95,10 @@ export function AddAuthenticatorsForm({
       case "none":
         break;
       case "keplr":
-        suggestAndConnect({
-          chainInfo: chainInfo,
-          walletType: WalletType.KEPLR,
-        });
+        // suggestAndConnect({
+        //   chainInfo: chainInfo,
+        //   walletType: WalletType.KEPLR,
+        // });
         break;
       case "metamask":
         await addEthAuthenticator();
@@ -126,55 +114,6 @@ export function AddAuthenticatorsForm({
   function postAddFunction() {
     setIsLoading(true);
     startPolling(3000);
-  }
-
-  async function addKeplrAuthenticator() {
-    try {
-      setIsLoading(true);
-
-      if (!client) {
-        throw new Error("No client found.");
-      }
-
-      const encoder = new TextEncoder();
-      const signArbMessage = Buffer.from(encoder.encode(abstractAccount?.id));
-      // @ts-ignore - function exists in keplr extension
-      const signArbRes = await keplr.signArbitrary(
-        chainInfo.chainId,
-        grazAccount?.bech32Address,
-        signArbMessage,
-      );
-
-      const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
-
-      const msg = {
-        add_auth_method: {
-          add_authenticator: {
-            Secp256K1: {
-              id: accountIndex,
-              pubkey: signArbRes.pub_key.value,
-              signature: signArbRes.signature,
-            },
-          },
-        },
-      };
-      const res = await client.addAbstractAccountAuthenticator(msg, "", {
-        amount: [{ amount: "0", denom: "uxion" }],
-        gas: "500000",
-      });
-
-      if (res.rawLog?.includes("failed")) {
-        throw new Error(res.rawLog);
-      }
-
-      postAddFunction();
-      return res;
-    } catch (error) {
-      setErrorMessage(
-        "Something went wrong trying to add Keplr wallet as authenticator",
-      );
-      setIsLoading(false);
-    }
   }
 
   async function addOkxAuthenticator() {
@@ -200,7 +139,9 @@ export function AddAuthenticatorsForm({
         signArbMessage,
       );
 
-      const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
+      const accountIndex = findLowestMissingOrNextIndex(
+        abstractAccount?.authenticators.nodes,
+      );
 
       const msg = {
         add_auth_method: {
@@ -262,7 +203,9 @@ export function AddAuthenticatorsForm({
       );
       const base64String = btoa(String.fromCharCode.apply(null, byteArray));
 
-      const accountIndex = abstractAccount?.authenticators.nodes.length; // TODO: Be careful here, if indexer returns wrong number this can overwrite accounts
+      const accountIndex = findLowestMissingOrNextIndex(
+        abstractAccount?.authenticators.nodes,
+      );
 
       const msg = {
         add_auth_method: {
@@ -327,24 +270,15 @@ export function AddAuthenticatorsForm({
             SKIP FOR NOW
           </Button> */}
           <div className="ui-flex ui-gap-4 ui-w-full ui-justify-center">
-            {/* <Button
-          className={
-            selectedAuthenticator === "keplr" ? "!ui-border-white" : ""
-          }
-          onClick={() => handleSwitch("keplr")}
-          structure="outlined"
-        >
-          <KeplrLogo />
-        </Button>
-        <Button
-          className={
-            selectedAuthenticator === "metamask" ? "!ui-border-white" : ""
-          }
-          onClick={() => handleSwitch("metamask")}
-          structure="outlined"
-        >
-          <MetamaskLogo />
-        </Button> */}
+            <Button
+              className={
+                selectedAuthenticator === "metamask" ? "!ui-border-white" : ""
+              }
+              onClick={() => handleSwitch("metamask")}
+              structure="outlined"
+            >
+              <MetamaskLogo />
+            </Button>
             <Button
               className={
                 selectedAuthenticator === "okx" ? "!ui-border-white" : ""
