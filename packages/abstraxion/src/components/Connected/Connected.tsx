@@ -16,7 +16,7 @@ export function Connected({ onClose }: { onClose: VoidFunction }): JSX.Element {
         <h1 className="ui-tracking-tighter ui-text-3xl ui-font-bold ui-text-white ui-uppercase ui-mb-3">
           Connected
         </h1>
-        <div className="ui-my-4 ui-w-full">
+        <div className="ui-mb-4 ui-w-full">
           <Button fullWidth onClick={onClose}>
             Close
           </Button>

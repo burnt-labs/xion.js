@@ -7,4 +7,11 @@ export {
   useModal,
 } from "./hooks";
 
+export type {
+  AbstraxionAccount,
+  AbstraxionAccountState,
+} from "./hooks/useAbstraxionAccount";
+
+
+
 export { ContractGrantDescription } from "./components/AbstraxionContext";
