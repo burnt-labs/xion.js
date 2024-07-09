@@ -93,7 +93,10 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
               By continuing, you agree to and acknowledge that you have read and
               understand the
             </span>
-            <a href="https://burnt.com" className="ui-pl-1 ui-text-white">
+            <a
+              href="https://burnt.com/terms-and-conditions"
+              className="ui-pl-1 ui-text-white"
+            >
               Disclaimer
             </a>
             <span className="ui-text-neutral-400">.</span>
