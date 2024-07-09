@@ -15,7 +15,8 @@
     "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "declaration": true,
   },
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]

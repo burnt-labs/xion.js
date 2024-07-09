@@ -1,9 +1,9 @@
 import { formatBalance, getCommaSeperatedNumber } from "@/utils";
-import { usdcSearchDenom, useAccountBalance } from "@/hooks/useAccountBalance";
+import { usdcSearchDenom, useAccountBalance } from "@/hooks";
 import { RightArrowIcon, ScanIcon } from "./Icons";
 import { WalletSend } from "./WalletSend/WalletSend";
 import { WalletReceive } from "./WalletReceive";
-import type { AbstraxionAccount } from "@/types";
+import { AbstraxionAccount } from "@burnt-labs/abstraxion";
 
 export const XION_TO_USDC_CONVERSION = 50;
 
@@ -45,9 +45,9 @@ export const Overview = ({ account }: { account?: AbstraxionAccount }) => {
           {/* <div className="w-12 h-12 bg-black rounded-full flex justify-center items-center mr-6">
             <ScanIcon color="white" />
           </div> */}
-          {account?.id && (
+          {account?.bech32Address && (
             <WalletReceive
-              xionAddress={account.id}
+              xionAddress={account.bech32Address}
               trigger={
                 <div className="ui-mr-4 ui-flex ui-h-12 ui-w-12 ui-items-center ui-justify-center ui-rounded-full ui-bg-black hover:ui-cursor-pointer">
                   <ScanIcon color="white" />

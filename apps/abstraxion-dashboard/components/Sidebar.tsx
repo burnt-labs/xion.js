@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useContext } from "react";
-import { AbstraxionContext, AbstraxionContextProps } from "./AbstraxionContext";
+import { DashboardContext } from "./DashboardContext";
 import { CloseIcon, WalletIcon } from "./Icons";
+import { useModal } from "@burnt-labs/abstraxion";
 
 const NAV_OPTIONS = [{ text: "home", path: "/" }];
 
@@ -15,9 +16,8 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { isMainnet, setIsOpen } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+  const { isMainnet } = useContext(DashboardContext);
+  const [, setShowModal] = useModal();
 
   const renderNavOptions = () => {
     return NAV_OPTIONS.map((option) => {
@@ -97,7 +97,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         </div>
 
         <div
-          onClick={() => setIsOpen(true)}
+          onClick={() => setShowModal(true)}
           className="ui-flex ui-items-center ui-ml-2 ui-justify-center ui-border-white/40 ui-border-[1px] ui-rounded-full ui-h-8 ui-w-8 ui-cursor-pointer"
         >
           <div className="ui-flex ui-flex-col">
@@ -107,13 +107,6 @@ export function Sidebar({ onClose }: SidebarProps) {
           </div>
         </div>
       </div>
-      {/* TODO: Display User Info */}
-      {/* <div className="p-8">
-        <div className="flex items-center">
-          <p className="text-base font-normal">User@burnt.com</p>
-          <button type="button"></button>
-        </div>
-      </div> */}
     </div>
   );
 }

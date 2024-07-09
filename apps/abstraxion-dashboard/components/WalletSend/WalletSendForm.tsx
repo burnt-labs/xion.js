@@ -3,10 +3,9 @@ import { DeliverTxResponse } from "@cosmjs/stargate";
 import { Button, Input, ChevronDown } from "@burnt-labs/ui";
 import { XION_TO_USDC_CONVERSION } from "@/components/Overview";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
-import { useAbstraxionAccount } from "@/hooks";
+import { useAbstraxionAccount } from "@burnt-labs/abstraxion";
 import { formatBalance, isValidWalletAddress } from "@/utils";
-import { USDCIcon } from "../Icons/USDC";
-import { XionIcon } from "../Icons/Xion";
+import { USDCIcon, XionIcon } from "../Icons";
 import { usdcSearchDenom } from "@/hooks/useAccountBalance";
 
 interface SelectedCurrency {
@@ -275,7 +274,7 @@ export function WalletSendForm({
                 From
               </p>
               <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white">
-                {account.id}
+                {account.bech32Address}
               </p>
             </div>
             <div className="ui-mb-4">
@@ -328,7 +327,7 @@ export function WalletSendForm({
                 From
               </p>
               <p className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white">
-                {account.id}
+                {account.bech32Address}
               </p>
             </div>
             <div className="ui-mb-4">
@@ -403,7 +402,7 @@ export function WalletSendForm({
                 style={{ wordBreak: "break-word" }}
                 className="ui-w-full ui-text-center ui-text-sm ui-font-akkuratLL ui-text-white"
               >
-                {account.id}
+                {account.bech32Address}
               </p>
             </div>
             <Input

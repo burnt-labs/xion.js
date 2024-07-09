@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { XION_TO_USDC_CONVERSION } from "@/components/Overview";
+import {
+  useAbstraxionAccount,
+  useAbstraxionSigningClient,
+} from "@burnt-labs/abstraxion";
 
 export const usdcSearchDenom =
   "ibc/57097251ED81A232CE3C9D899E7C8096D6D87EF84BA203E12E424AA4C9B57A64";
@@ -23,8 +26,14 @@ export function useAccountBalance() {
         throw new Error("No signing client");
       }
       // TODO: Can we optimize balance fetching
-      const uxionBalance = await client.getBalance(account.id, "uxion");
-      const usdcBalance = await client.getBalance(account.id, usdcSearchDenom);
+      const uxionBalance = await client.getBalance(
+        account.bech32Address,
+        "uxion",
+      );
+      const usdcBalance = await client.getBalance(
+        account.bech32Address,
+        usdcSearchDenom,
+      );
 
       const uxionToUsd = Number(uxionBalance.amount) * XION_TO_USDC_CONVERSION;
 
@@ -61,7 +70,7 @@ export function useAccountBalance() {
       const convertedSendAmount = String(sendAmount * 1000000);
 
       const res = await client.sendTokens(
-        account.id,
+        account.bech32Address,
         senderAddress,
         [{ denom, amount: convertedSendAmount }],
         {

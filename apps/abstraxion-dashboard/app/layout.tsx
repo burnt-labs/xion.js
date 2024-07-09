@@ -4,6 +4,7 @@ import { Providers } from "./providers";
 import "./globals.css";
 import "@burnt-labs/ui/dist/index.css";
 import { Analytics } from "@vercel/analytics/react";
+import { AbstraxionProvider } from "@burnt-labs/abstraxion";
 
 const akkuratLL = localFont({
   src: [
