@@ -10,12 +10,13 @@ import {
 import { apolloClient, stytchClient } from "@/lib";
 import { Dialog, DialogContent } from "@burnt-labs/ui";
 import { AbstraxionSignin } from "@/components/AbstraxionSignin";
-import { useAbstraxionAccount } from "@/hooks";
+import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { AbstraxionWallets } from "@/components/AbstraxionWallets";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { useSearchParams } from "next/navigation";
 import { AbstraxionGrant } from "../AbstraxionGrant";
 import Image from "next/image";
+import { AbstraxionMigrate } from "@/components/AbstraxionMigrate";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -25,11 +26,15 @@ export interface ModalProps {
 export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
   const searchParams = useSearchParams();
 
-  const { abstraxionError, isMainnet } = useContext(
-    AbstraxionContext,
-  ) as AbstraxionContextProps;
+  const {
+    abstraxionError,
+    isMainnet,
+    setAccountNeedsToMigrate,
+    accountNeedsToMigrate,
+  } = useContext(AbstraxionContext) as AbstraxionContextProps;
 
   const { isConnected, data: account } = useAbstraxionAccount();
+  const { client } = useAbstraxionSigningClient();
 
   const contracts = searchParams.get("contracts");
   const stake = Boolean(searchParams.get("stake"));
@@ -60,6 +65,17 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
     };
   }, [onClose]);
 
+  async function getMetaAccountCodeID() {
+    if (client) {
+      const { codeId } = await client.getContract(account.id);
+      setAccountNeedsToMigrate(codeId === 21);
+    }
+  }
+
+  useEffect(() => {
+    if (account && client) getMetaAccountCodeID();
+  }, [account, isConnected, client]);
+
   if (!isOpen) return null;
 
   return (
@@ -79,7 +95,11 @@ export const Abstraxion = ({ isOpen, onClose }: ModalProps) => {
               stake={stake}
             />
           ) : isConnected ? (
-            <AbstraxionWallets />
+            accountNeedsToMigrate ? (
+              <AbstraxionMigrate updateContractCodeID={getMetaAccountCodeID} />
+            ) : (
+              <AbstraxionWallets />
+            )
           ) : (
             <AbstraxionSignin />
           )}

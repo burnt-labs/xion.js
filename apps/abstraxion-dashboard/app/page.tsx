@@ -12,19 +12,22 @@ import type { AbstraxionAccount } from "@/types";
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const { data: account } = useAbstraxionAccount();
+  const { isConnected, data: account } = useAbstraxionAccount();
 
   const contracts = searchParams.get("contracts");
   const stake = Boolean(searchParams.get("stake"));
   const bank = searchParams.get("bank");
   const grantee = searchParams.get("grantee");
-  const { isOpen, setIsOpen, isMainnet } = useContext(AbstraxionContext);
+  const { isOpen, setIsOpen, isMainnet, accountNeedsToMigrate } =
+    useContext(AbstraxionContext);
 
   const [showMobileSiderbar, setShowMobileSiderbar] = useState(false);
 
   return (
     <>
-      {!account?.id || (grantee && (contracts || stake || bank)) ? (
+      {!account?.id ||
+      (grantee && (contracts || stake || bank)) ||
+      accountNeedsToMigrate ? (
         <div className="ui-flex ui-h-screen ui-flex-1 ui-items-center ui-justify-center ui-overflow-y-auto ui-p-6">
           <Abstraxion onClose={() => null} isOpen={true} />
         </div>
