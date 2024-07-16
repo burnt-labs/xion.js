@@ -11,7 +11,7 @@ import {
   AbstraxionContextProps,
 } from "../components/AbstraxionContext";
 import { getKeplr, useOfflineSigners } from "graz";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { mainnetChainInfo } from "@burnt-labs/constants";
 import { AAEthSigner } from "@burnt-labs/signers";
 import { getEnvStringOrThrow } from "../utils";
 
@@ -39,7 +39,7 @@ export const useAbstraxionSigningClient = () => {
       alert("Please install the OKX wallet extension");
       return;
     }
-    await window.okxwallet.keplr.enable("xion-testnet-1");
+    await window.okxwallet.keplr.enable(chainInfo.chainId);
     const signDataNew = Uint8Array.from(Object.values(signBytes));
     return window.okxwallet.keplr.signArbitrary(chainId, account, signDataNew);
   }
@@ -95,7 +95,7 @@ export const useAbstraxionSigningClient = () => {
       case "okx":
         if (window.okxwallet) {
           const okxOfflineSigner =
-            await window.okxwallet.keplr.getOfflineSigner("xion-testnet-1");
+            await window.okxwallet.keplr.getOfflineSigner(chainInfo.chainId);
           signer = new AADirectSigner(
             okxOfflineSigner,
             abstractAccount.id,
@@ -133,7 +133,7 @@ export const useAbstraxionSigningClient = () => {
 
     const abstractClient = await AAClient.connectWithSigner(
       // Should be set in the context but defaulting here just in case.
-      chainInfo.rpc || testnetChainInfo.rpc,
+      chainInfo.rpc || mainnetChainInfo.rpc,
       signer,
       {
         gasPrice: GasPrice.fromString("0uxion"),

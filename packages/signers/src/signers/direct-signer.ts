@@ -44,7 +44,8 @@ export class AADirectSigner extends AASigner {
     this.accountAuthenticatorIndex = accountAuthenticatorIndex;
     this.signArbFn = signArbFn;
     this.indexerUrl =
-      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
+      indexerUrl ||
+      "https://api.subquery.network/sq/burnt-labs/xion-mainnet-indexer";
   }
 
   async signDirect(

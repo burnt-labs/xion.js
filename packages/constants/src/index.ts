@@ -70,6 +70,14 @@ const commonInfo: ChainInfo = {
   features: ["cosmwasm"],
 };
 
+export const mainnetChainInfo: ChainInfo = {
+  ...commonInfo,
+  rpc: "https://rpc.xion-mainnet-1.burnt.com:443",
+  rest: "https://api.xion-mainnet-1.burnt.com:443",
+  chainId: "xion-mainnet-1",
+  chainName: "XION Mainnet",
+};
+
 export const testnetChainInfo: ChainInfo = {
   ...commonInfo,
   rpc: "https://testnet-rpc.xion-api.com:443",
@@ -93,7 +101,7 @@ const DASHBOARD_URLS = {
 };
 
 const REST_URLS = {
-  "xion-mainnet-1": "https://testnet-api.xion-api.com:443", // TODO: Update
+  "xion-mainnet-1": "https://api.xion-mainnet-1.burnt.com:443",
   "xion-testnet-1": "https://testnet-api.xion-api.com:443",
 };
 
