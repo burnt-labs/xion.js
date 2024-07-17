@@ -79,7 +79,11 @@ export function Sidebar({ onClose }: SidebarProps) {
       <div className="ui-flex ui-justify-center ui-flex-col ui-flex-grow ">
         {renderNavOptions()}
         <a
-          href={"https://explorer.burnt.com/xion-testnet-1/"}
+          href={
+            isMainnet
+              ? "https://explorer.burnt.com/xion-testnet-1/"
+              : "https://explorer.burnt.com/xion-mainnet-1/"
+          }
           target="_blank"
           className={`${"ui-text-slate-400 ui-font-regular"} ui-font-akkuratLL ui-block ui-px-8 ui-mt-16 first:ui-mt-0 ui-font-thin ui-leading-3 ui-text-4xl ui-uppercase ui-tracking-widest`}
         >
