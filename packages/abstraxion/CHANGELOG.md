@@ -1,5 +1,17 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.47
+
+### Minor Changes
+
+- [#198](https://github.com/burnt-labs/xion.js/pull/198) [`e9dd176`](https://github.com/burnt-labs/xion.js/commit/e9dd1766dbfe4994948e028b51c07eb6dd52cced) Thanks [@BurntVal](https://github.com/BurntVal)! - Update chainInfo vars across monorepo. Please view the abstraxion package readme for more info on opting into mainnet
+
+### Patch Changes
+
+- Updated dependencies [[`e9dd176`](https://github.com/burnt-labs/xion.js/commit/e9dd1766dbfe4994948e028b51c07eb6dd52cced)]:
+  - @burnt-labs/constants@0.1.0-alpha.10
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.43
+
 ## 1.0.0-alpha.46
 
 ### Minor Changes
