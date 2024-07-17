@@ -83,8 +83,8 @@ export const AbstraxionSignin = () => {
       return;
     }
     try {
-      await window.okxwallet.keplr.enable("xion-testnet-1");
-      const okxAccount = await window.okxwallet.keplr.getKey("xion-testnet-1");
+      await window.okxwallet.keplr.enable(chainInfo.chainId);
+      const okxAccount = await window.okxwallet.keplr.getKey(chainInfo.chainId);
       const authenticator = getHumanReadablePubkey(okxAccount.pubKey);
       setConnectionType("okx");
       localStorage.setItem("loginType", "okx");
