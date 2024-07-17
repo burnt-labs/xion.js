@@ -21,7 +21,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         node-version: [lts/*]
-        pnpm-version: [8]
+        pnpm-version: [8.9.0]
     runs-on: ${{ matrix.os }}
     steps:
       - name: ⬇️ Checkout
@@ -40,7 +40,7 @@ jobs:
 
       - name: 🥡 Setup pnpm
         id: setup-pnpm
-        uses: pnpm/action-setup@v2.4.0
+        uses: pnpm/action-setup@v4
         with:
           version: ${{ matrix.pnpm-version }}
           run_install: false
