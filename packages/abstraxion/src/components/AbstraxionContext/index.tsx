@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { createContext, useEffect, useState } from "react";
-import { mainnetChainInfo } from "@burnt-labs/constants";
+import { testnetChainInfo } from "@burnt-labs/constants";
 import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
 import { abstraxionAuth } from "../Abstraxion";
 
@@ -43,8 +43,8 @@ export const AbstraxionContext = createContext<AbstraxionContextProps>(
 export function AbstraxionContextProvider({
   children,
   contracts,
-  rpcUrl = mainnetChainInfo.rpc,
-  restUrl = mainnetChainInfo.rest,
+  rpcUrl = testnetChainInfo.rpc,
+  restUrl = testnetChainInfo.rest,
   stake = false,
   bank,
   callbackUrl,

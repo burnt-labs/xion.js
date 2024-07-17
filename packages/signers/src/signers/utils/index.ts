@@ -34,9 +34,7 @@ let apolloClientInstance: ApolloClient<NormalizedCacheObject>;
 export const getApolloClient = (url?: string) => {
   if (!apolloClientInstance) {
     apolloClientInstance = new ApolloClient({
-      uri:
-        url ||
-        "https://api.subquery.network/sq/burnt-labs/xion-mainnet-indexer",
+      uri: url || "https://api.subquery.network/sq/burnt-labs/xion-indexer",
       cache: new InMemoryCache(),
       assumeImmutableResults: true,
     });

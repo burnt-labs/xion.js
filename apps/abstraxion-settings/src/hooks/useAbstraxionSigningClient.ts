@@ -11,7 +11,7 @@ import {
   AbstraxionContextProps,
 } from "../components/AbstraxionContext";
 import { getKeplr, useOfflineSigners } from "graz";
-import { mainnetChainInfo } from "@burnt-labs/constants";
+import { testnetChainInfo } from "@burnt-labs/constants";
 import { AAEthSigner } from "@burnt-labs/signers";
 import { getEnvStringOrThrow } from "../utils";
 
@@ -133,7 +133,7 @@ export const useAbstraxionSigningClient = () => {
 
     const abstractClient = await AAClient.connectWithSigner(
       // Should be set in the context but defaulting here just in case.
-      chainInfo.rpc || mainnetChainInfo.rpc,
+      chainInfo.rpc || testnetChainInfo.rpc,
       signer,
       {
         gasPrice: GasPrice.fromString("0uxion"),

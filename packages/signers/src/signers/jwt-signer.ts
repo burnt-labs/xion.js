@@ -22,9 +22,8 @@ export class AbstractAccountJWTSigner extends AASigner {
     this.sessionToken = sessionToken;
     this.accountAuthenticatorIndex = accountAuthenticatorIndex;
     this.indexerUrl =
-      indexerUrl ||
-      "https://api.subquery.network/sq/burnt-labs/xion-mainnet-indexer";
-    this.apiUrl = apiUrl || "https://aa.xion-mainnet-1.burnt.com/"; // Double check. This is assumed endpoint
+      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
+    this.apiUrl = apiUrl || "https://aa.xion-testnet-1.burnt.com";
   }
 
   async getAccounts(): Promise<readonly AAccountData[]> {

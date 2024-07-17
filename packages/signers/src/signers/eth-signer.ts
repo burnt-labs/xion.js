@@ -32,8 +32,7 @@ export class AAEthSigner extends AASigner {
     this.accountAuthenticatorIndex = accountAuthenticatorIndex;
     this.personalSign = personalSign;
     this.indexerUrl =
-      indexerUrl ||
-      "https://api.subquery.network/sq/burnt-labs/xion-mainnet-indexer";
+      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
   }
 
   async signDirect(
