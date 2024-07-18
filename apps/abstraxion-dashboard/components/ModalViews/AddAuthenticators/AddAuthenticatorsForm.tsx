@@ -24,6 +24,13 @@ import { useAbstraxionAccount, useAbstraxionSigningClient } from "@/hooks";
 import { encodeHex } from "@/utils";
 import { AllSmartWalletQuery } from "@/utils/queries";
 
+const okxFlag = process.env.NEXT_PUBLIC_OKX_FLAG === "true";
+const deploymentEnv = process.env.NEXT_PUBLIC_DEPLOYMENT_ENV;
+
+// Variable to be true if deploymentEnv is "testnet", otherwise check okxFlag for "mainnet"
+const shouldEnableFeature =
+  deploymentEnv === "testnet" || (deploymentEnv === "mainnet" && okxFlag);
+
 // TODO: Add webauthn to this and remove "disable" prop from button when implemented
 type AuthenticatorStates = "none" | "keplr" | "metamask" | "okx";
 
@@ -351,6 +358,7 @@ export function AddAuthenticatorsForm({
               }
               onClick={() => handleSwitch("okx")}
               structure="outlined"
+              disabled={!shouldEnableFeature}
             >
               <Image
                 src="/okxWallet.png"
