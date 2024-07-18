@@ -90,8 +90,8 @@ export const useAbstraxionSigningClient = () => {
               import.meta.env.VITE_DEFAULT_INDEXER_URL,
             ),
           );
-          break;
         }
+        break;
       case "okx":
         if (window.okxwallet) {
           const okxOfflineSigner =
@@ -106,8 +106,8 @@ export const useAbstraxionSigningClient = () => {
               import.meta.env.VITE_DEFAULT_INDEXER_URL,
             ),
           );
-          break;
         }
+        break;
       case "metamask":
         if (window.ethereum) {
           signer = new AAEthSigner(
