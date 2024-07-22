@@ -1,5 +1,7 @@
-import { TextEncoder, TextDecoder } from "node:util";
-import { SignArbSecp256k1HdWallet } from "@/SignArbSecp256k1HdWallet";
+import { TextDecoder, TextEncoder } from "node:util";
+import { verifyADR36Amino } from "@keplr-wallet/cosmos";
+import { SignArbSecp256k1HdWallet } from "../src/SignArbSecp256k1HdWallet";
+import { AccountData } from "@cosmjs/proto-signing";
 
 global.TextEncoder = TextEncoder;
 // @ts-expect-error: TextDecoder is not available in testing environment by default.
@@ -7,35 +9,67 @@ global.TextDecoder = TextDecoder;
 
 describe("SignArbSecp256k1HdWallet", () => {
   let wallet: SignArbSecp256k1HdWallet;
+  let account: AccountData;
 
   beforeEach(async () => {
-    // DO NOT USE WALLET IN PRODUCTION
-    const serialization = JSON.stringify({
-      type: "directsecp256k1hdwallet-v1",
-      kdf: {
-        algorithm: "argon2id",
-        params: {
-          outputLength: 32,
-          opsLimit: 24,
-          memLimitKib: 12288,
-        },
-      },
-      encryption: {
-        algorithm: "xchacha20poly1305-ietf",
-      },
-      data: "8AV9HAqwKThQOZ/jW9HCkd89LNUo//W/+Rg+s1pzNp0TuFk3uut6pi9OgIRM2HRnLS68CjOCiZltc09EYmJBBBj5l0oVnPcAyJjcs1nlAPoppKiKqr1TWCYfNx/YhOmdFrghX9tWE9SWaAx5jwQFOvSbVZaWhv2shEShSvhZ/aUcZJDScN+TZFzwyvVFqE0TMpma8ZACDXmr1Mw+rWfy4KkiGV1+shiVsM9owpZfhrCKNzowpIYZJBn5xE/tMA==",
+    wallet = await SignArbSecp256k1HdWallet.generate(12, {
+      prefix: "xion",
     });
-    wallet = await SignArbSecp256k1HdWallet.deserialize(
-      serialization,
-      "abstraxion",
-    );
+
+    [account] = await wallet.getAccounts();
   });
 
   test("signArb returns a signature for a valid signer address and message", async () => {
-    const signerAddress = "xion1cgvua2mkvux6xaw20w4ltjcrs9u3kagfpqd3al"; // Empty test account
+    const signerAddress = account.address; // Empty test account
     const message = "test";
     const signature = await wallet.signArb(signerAddress, message);
     expect(signature).toBeDefined();
     expect(typeof signature).toBe("string");
+  });
+
+  test("example of how to confirm signArb result", async () => {
+    async function verifyXionSignature(
+      address: string,
+      pubKey: string,
+      messageString: string,
+      signature: string,
+    ): Promise<boolean> {
+      const signatureBuffer = Buffer.from(signature, "base64");
+      const uint8Signature = new Uint8Array(signatureBuffer); // Convert the buffer to an Uint8Array
+      const pubKeyValueBuffer = Buffer.from(pubKey, "base64"); // Decode the base64 encoded value
+      const pubKeyUint8Array = new Uint8Array(pubKeyValueBuffer); // Convert the buffer to an Uint8Array
+
+      return verifyADR36Amino(
+        "xion",
+        address,
+        messageString,
+        pubKeyUint8Array,
+        uint8Signature,
+      );
+    }
+
+    const granterAddress =
+      "xion15wvfkv5wkp7dvxquxm3nkhrfy98nahjqpp3a2r5h9tcj29r9wxnq6j5eeh";
+
+    console.log(account.algo);
+    const { pubkey, address: granteeAddress } = account;
+
+    const exampleMessage = "Test message";
+
+    // Passing in as a string since this is likely how be encoded when sent to an api
+    const base64PubKey = Buffer.from(pubkey).toString("base64");
+    const signature = await wallet.signArb(granteeAddress, exampleMessage);
+
+    const result = await verifyXionSignature(
+      granteeAddress,
+      base64PubKey,
+      exampleMessage,
+      signature,
+    );
+
+    expect(result).toBeTruthy();
+
+    // After the signature is verified, we must check to see if ANY grant that exists between the granter and the grantee.
+    // Please see `packages/abstraxion-core/src/AbstraxionAuth.ts` or the docs for an example of how to do this.
   });
 });
