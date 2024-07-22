@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useState } from "react";
+import { createContext, ReactNode, useState } from "react";
 import { getEnvStringOrThrow } from "@/utils";
 import { ChainInfo } from "@burnt-labs/constants";
 
@@ -16,6 +16,8 @@ export interface AbstraxionContextProps {
   isMainnet: boolean;
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setAccountNeedsToMigrate: React.Dispatch<React.SetStateAction<boolean>>;
+  accountNeedsToMigrate: boolean;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -34,15 +36,26 @@ export const AbstraxionContextProvider = ({
   const [abstraxionError, setAbstraxionError] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
+  const [accountNeedsToMigrate, setAccountNeedsToMigrate] = useState(false);
+
   const serializedChainInfo = getEnvStringOrThrow(
     "NEXT_PUBLIC_DEFAULT_CHAIN_INFO",
     process.env.NEXT_PUBLIC_DEFAULT_CHAIN_INFO,
   );
   const chainInfo = JSON.parse(serializedChainInfo);
-  const apiUrl = getEnvStringOrThrow(
+
+  const oldApiUrl = getEnvStringOrThrow(
     "NEXT_PUBLIC_DEFAULT_API_URL",
     process.env.NEXT_PUBLIC_DEFAULT_API_URL,
   );
+
+  const migratedApiUrl = getEnvStringOrThrow(
+    "NEXT_PUBLIC_MIGRATED_API_URL",
+    process.env.NEXT_PUBLIC_MIGRATED_API_URL,
+  );
+
+  const apiUrl = accountNeedsToMigrate ? oldApiUrl : migratedApiUrl;
+
   const isMainnet =
     getEnvStringOrThrow(
       "NEXT_PUBLIC_DEPLOYMENT_ENV",
@@ -50,10 +63,11 @@ export const AbstraxionContextProvider = ({
     ) === "mainnet"
       ? true
       : false;
-
   return (
     <AbstraxionContext.Provider
       value={{
+        accountNeedsToMigrate,
+        setAccountNeedsToMigrate,
         connectionType,
         setConnectionType,
         abstractAccount,

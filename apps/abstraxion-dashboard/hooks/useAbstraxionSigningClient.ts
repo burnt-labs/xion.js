@@ -3,6 +3,7 @@ import { useStytch } from "@stytch/nextjs";
 import {
   AAClient,
   AADirectSigner,
+  AAEthSigner,
   AbstractAccountJWTSigner,
   GasPrice,
 } from "@burnt-labs/signers";
@@ -12,11 +13,10 @@ import {
 } from "@/components/AbstraxionContext";
 import { getKeplr, useOfflineSigners } from "graz";
 import { testnetChainInfo } from "@burnt-labs/constants";
-import { AAEthSigner } from "@burnt-labs/signers";
 import { getEnvStringOrThrow } from "@/utils";
 
 export const useAbstraxionSigningClient = () => {
-  const { connectionType, abstractAccount, chainInfo } = useContext(
+  const { connectionType, abstractAccount, chainInfo, apiUrl } = useContext(
     AbstraxionContext,
   ) as AbstraxionContextProps;
 
@@ -71,10 +71,7 @@ export const useAbstraxionSigningClient = () => {
             "NEXT_PUBLIC_DEFAULT_INDEXER_URL",
             process.env.NEXT_PUBLIC_DEFAULT_INDEXER_URL,
           ),
-          getEnvStringOrThrow(
-            "NEXT_PUBLIC_DEFAULT_API_URL",
-            process.env.NEXT_PUBLIC_DEFAULT_API_URL,
-          ),
+          apiUrl,
         );
         break;
       case "graz":
