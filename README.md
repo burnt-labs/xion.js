@@ -1,4 +1,4 @@
-# xion.js
+# xion.js - New Account Contract Branch
 
 This is the official xion.js repo.
 
