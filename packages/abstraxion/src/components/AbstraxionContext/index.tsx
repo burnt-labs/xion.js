@@ -33,6 +33,7 @@ export interface AbstraxionContextProps {
   restUrl: string;
   stake?: boolean;
   bank?: SpendLimit[];
+  treasury?: string;
   logout: () => void;
 }
 
@@ -48,6 +49,7 @@ export function AbstraxionContextProvider({
   stake = false,
   bank,
   callbackUrl,
+  treasury,
 }: {
   children: ReactNode;
   contracts?: ContractGrantDescription[];
@@ -57,6 +59,7 @@ export function AbstraxionContextProvider({
   stake?: boolean;
   bank?: SpendLimit[];
   callbackUrl?: string;
+  treasury?: string;
 }): JSX.Element {
   const [abstraxionError, setAbstraxionError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -77,8 +80,9 @@ export function AbstraxionContextProvider({
       stake,
       bank,
       callbackUrl,
+      treasury,
     );
-  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl]);
+  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl, treasury]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -116,6 +120,7 @@ export function AbstraxionContextProvider({
         restUrl,
         stake,
         bank,
+        treasury,
         logout,
       }}
     >

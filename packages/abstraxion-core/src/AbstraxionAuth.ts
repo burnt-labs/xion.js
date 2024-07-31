@@ -12,6 +12,7 @@ export class AbstraxionAuth {
   stake?: boolean;
   bank?: SpendLimit[];
   callbackUrl?: string;
+  treasury?: string;
 
   // Signer
   private client?: GranteeSignerClient;
@@ -38,6 +39,7 @@ export class AbstraxionAuth {
    * @param {boolean} [stake] - Indicates whether staking is enabled.
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
+   * @param {string} treasury - Treasury contract
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -46,6 +48,7 @@ export class AbstraxionAuth {
     stake?: boolean,
     bank?: SpendLimit[],
     callbackUrl?: string,
+    treasury?: string,
   ) {
     this.rpcUrl = rpc;
     this.restUrl = restUrl;
@@ -53,6 +56,7 @@ export class AbstraxionAuth {
     this.stake = stake;
     this.bank = bank;
     this.callbackUrl = callbackUrl;
+    this.treasury = treasury;
   }
 
   /**
@@ -242,20 +246,23 @@ export class AbstraxionAuth {
       const currentUrl = this.callbackUrl || window.location.href;
       const urlParams = new URLSearchParams();
 
-      if (this.bank) {
-        urlParams.set("bank", JSON.stringify(this.bank));
-      }
+      if (this.treasury) {
+        urlParams.set("treasury", this.treasury);
+      } else {
+        if (this.bank) {
+          urlParams.set("bank", JSON.stringify(this.bank));
+        }
 
-      if (this.stake) {
-        urlParams.set("stake", "true");
+        if (this.stake) {
+          urlParams.set("stake", "true");
+        }
+
+        if (this.grantContracts) {
+          urlParams.set("contracts", JSON.stringify(this.grantContracts));
+        }
       }
 
       urlParams.set("grantee", userAddress);
-
-      if (this.grantContracts) {
-        urlParams.set("contracts", JSON.stringify(this.grantContracts));
-      }
-
       urlParams.set("redirect_uri", currentUrl);
 
       const queryString = urlParams.toString(); // Convert URLSearchParams to string

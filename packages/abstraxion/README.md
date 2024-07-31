@@ -142,6 +142,41 @@ const { data: account } = useAbstraxionAccount();
 const { client } = useAbstraxionSigningClient();
 ```
 
+## Treasury Contract
+
+If using a treasury contract instance, your Abstraxion config should look something like:
+
+```
+"use client";
+import "./globals.css";
+import { Inter } from "next/font/google";
+import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import "@burnt-labs/abstraxion/dist/index.css";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}): JSX.Element {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <AbstraxionProvider
+          config={{
+            treasury:
+              "xion1q5f8dclqahevxpytk85ruj8njaukczvhmturnsuw9dlyps9wlasq9z37n3",
+          }}
+        >
+          {children}
+        </AbstraxionProvider>
+      </body>
+    </html>
+  );
+}
+```
+
 Feel free to consult the documentation for more advanced usage and configuration.
 
 Please check back regularly for updates and feel free to report any issues. Thank you for using `abstraxion` by Burnt Labs!
