@@ -210,7 +210,8 @@ export class SignArbSecp256k1HdWallet {
         if (!accounts.every((account) => isDerivationJson(account))) {
           throw new Error("Account is not in the correct format.");
         }
-        const firstPrefix = (accounts[0] as Secp256k1Derivation).prefix;
+        const firstPrefix = (accounts[0] as unknown as Secp256k1Derivation)
+          .prefix;
         if (!accounts.every(({ prefix }) => prefix === firstPrefix)) {
           throw new Error("Accounts do not all have the same prefix");
         }
