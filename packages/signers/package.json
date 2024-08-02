@@ -29,6 +29,7 @@
     "stytch": "^9.0.6"
   },
   "devDependencies": {
+    "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/eslint-config-custom": "workspace:*",
     "@types/node": "^20",
     "eslint": "^8.48.0",
