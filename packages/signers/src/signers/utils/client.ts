@@ -100,6 +100,49 @@ export class AAClient extends SigningCosmWasmClient {
   }
 
   /**
+   * Simulates a transaction to estimate the gas and calculates the default fee.
+   *
+   * @param {string} sender - The address of the sender.
+   * @param {readonly EncodeObject[]} messages - An array of messages to include in the transaction.
+   * @param {string | undefined} memo - An optional memo to include in the transaction.
+   * @returns {Promise<StdFee>} - The calculated default fee for the transaction.
+   */
+  private async simulateDefaultFee(
+    sender: string,
+    messages: readonly EncodeObject[],
+    memo: string | undefined,
+  ): Promise<StdFee> {
+    const {
+      gasPrice: gasPriceString,
+      gasAdjustment,
+      gasAdjustmentMargin,
+    } = xionGasValues;
+
+    const simmedGas = await this.simulate(sender, messages, memo);
+    const gasPrice = GasPrice.fromString(gasPriceString);
+    const calculatedFee: StdFee = calculateFee(
+      simmedGas * gasAdjustment,
+      gasPrice,
+    );
+
+    let defaultFee: StdFee;
+    let gas = (
+      parseInt(calculatedFee.gas) * gasAdjustment +
+      gasAdjustmentMargin
+    ).toString();
+
+    const chainId = await this.getChainId();
+
+    if (/testnet/.test(chainId)) {
+      defaultFee = { amount: [{ amount: "0", denom: "uxion" }], gas: gas };
+    } else {
+      defaultFee = { amount: calculatedFee.amount, gas: gas };
+    }
+
+    return defaultFee;
+  }
+
+  /**
    * Create and a cosmwasm add authenticator msg to the abstract account
    * @param msg the message to be sent
    * @returns
@@ -123,32 +166,7 @@ export class AAClient extends SigningCosmWasmClient {
       }),
     };
 
-    const {
-      gasPrice: gasPriceString,
-      gasAdjustment,
-      gasAdjustmentMargin,
-    } = xionGasValues;
-
-    const simmedGas = await this.simulate(sender, [addMsg], memo);
-    const gasPrice = GasPrice.fromString(gasPriceString);
-    const calculatedFee: StdFee = calculateFee(
-      simmedGas * gasAdjustment,
-      gasPrice,
-    );
-
-    let defaultFee: StdFee;
-    let gas = (
-      parseInt(calculatedFee.gas) * gasAdjustment +
-      gasAdjustmentMargin
-    ).toString();
-
-    const chainId = await this.getChainId();
-
-    if (/testnet/.test(chainId)) {
-      defaultFee = { amount: [{ amount: "0", denom: "uxion" }], gas: gas };
-    } else {
-      defaultFee = { amount: calculatedFee.amount, gas: gas };
-    }
+    const defaultFee = await this.simulateDefaultFee(sender, [addMsg], memo);
 
     const tx = await this.sign(sender, [addMsg], fee || defaultFee, memo);
     return this.broadcastTx(TxRaw.encode(tx).finish());
@@ -178,32 +196,7 @@ export class AAClient extends SigningCosmWasmClient {
       }),
     };
 
-    const {
-      gasPrice: gasPriceString,
-      gasAdjustment,
-      gasAdjustmentMargin,
-    } = xionGasValues;
-
-    const simmedGas = await this.simulate(sender, [addMsg], memo);
-    const gasPrice = GasPrice.fromString(gasPriceString);
-    const calculatedFee: StdFee = calculateFee(
-      simmedGas * gasAdjustment,
-      gasPrice,
-    );
-
-    let defaultFee: StdFee;
-    let gas = (
-      parseInt(calculatedFee.gas) * gasAdjustment +
-      gasAdjustmentMargin
-    ).toString();
-
-    const chainId = await this.getChainId();
-
-    if (/testnet/.test(chainId)) {
-      defaultFee = { amount: [{ amount: "0", denom: "uxion" }], gas: gas };
-    } else {
-      defaultFee = { amount: calculatedFee.amount, gas: gas };
-    }
+    const defaultFee = await this.simulateDefaultFee(sender, [addMsg], memo);
 
     const tx = await this.sign(sender, [addMsg], fee || defaultFee, memo);
     return this.broadcastTx(TxRaw.encode(tx).finish());
