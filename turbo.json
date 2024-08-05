@@ -8,11 +8,11 @@
     "NEXT_PUBLIC_DEFAULT_STYTCH_PUBLIC_TOKEN",
     "NEXT_PUBLIC_DEPLOYMENT_ENV"
   ],
-  "pipeline": {
+  "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
-      "dotEnv": [
+      "env": [
         ".env.production.local",
         ".env.local",
         ".env.production",
@@ -20,7 +20,7 @@
       ]
     },
     "test": {
-      "dotEnv": [".env.test.local", ".env.test", ".env"]
+      "env": [".env.test.local", ".env.test", ".env"]
     },
     "lint": {
       "dependsOn": ["^build"]
@@ -29,7 +29,7 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "dotEnv": [
+      "env": [
         ".env.development.local",
         ".env.local",
         ".env.development",
