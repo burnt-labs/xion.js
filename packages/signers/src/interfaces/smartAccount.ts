@@ -34,6 +34,8 @@ export enum AAAlgo {
   JWT = "jwt",
   ethWallet = "ethWallet",
   ETHWALLET = "EthWallet",
+  passkey = "passkey",
+  Passket = "Passkey",
 }
 
 export interface AddSecp256K1Authenticator {
@@ -85,6 +87,18 @@ export interface AddJwtAuthenticator {
   };
 }
 
+export interface AddPasskeyAuthenticator {
+  add_auth_method: {
+    add_authenticator: {
+      Passkey: {
+        id: number;
+        url: string;
+        credential: string; // base64 encoded
+      };
+    };
+  };
+}
+
 export interface RemoveAuthenticator {
   remove_auth_method: {
     id: number;
@@ -95,4 +109,5 @@ export type AddAuthenticator =
   | AddSecp256K1Authenticator
   | AddEd25519Authenticator
   | AddEthWalletAuthenticator
-  | AddJwtAuthenticator;
+  | AddJwtAuthenticator
+  | AddPasskeyAuthenticator;
