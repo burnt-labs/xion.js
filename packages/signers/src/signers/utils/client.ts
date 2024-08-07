@@ -120,10 +120,8 @@ export class AAClient extends SigningCosmWasmClient {
 
     const simmedGas = await this.simulate(sender, messages, memo);
     const gasPrice = GasPrice.fromString(gasPriceString);
-    const calculatedFee: StdFee = calculateFee(
-      simmedGas * gasAdjustment,
-      gasPrice,
-    );
+
+    const calculatedFee: StdFee = calculateFee(simmedGas, gasPrice);
 
     let defaultFee: StdFee;
     let gas = (
