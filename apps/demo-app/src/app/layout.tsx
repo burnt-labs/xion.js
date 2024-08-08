@@ -20,29 +20,27 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ApolloProvider client={apolloClient}>
-          <AbstraxionProvider
-            config={{
-              contracts: [
-                // Usually, you would have a list of different contracts here
-                seatContractAddress,
-                {
-                  address: seatContractAddress,
-                  amounts: [{ denom: "uxion", amount: "1000000" }],
-                },
-              ],
-              stake: true,
-              bank: [
-                {
-                  denom: "uxion",
-                  amount: "1000000",
-                },
-              ],
-            }}
-          >
-            {children}
-          </AbstraxionProvider>
-        </ApolloProvider>
+        <AbstraxionProvider
+          config={{
+            contracts: [
+              // Usually, you would have a list of different contracts here
+              seatContractAddress,
+              {
+                address: seatContractAddress,
+                amounts: [{ denom: "uxion", amount: "1000000" }],
+              },
+            ],
+            stake: true,
+            bank: [
+              {
+                denom: "uxion",
+                amount: "1000000",
+              },
+            ],
+          }}
+        >
+          <ApolloProvider client={apolloClient}>{children}</ApolloProvider>
+        </AbstraxionProvider>
       </body>
     </html>
   );
