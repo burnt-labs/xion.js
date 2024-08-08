@@ -156,7 +156,7 @@ export default function Page(): JSX.Element {
         publicKey: {
           rpId: RP_ID,
           userVerification: "required",
-          challenge: Buffer.from(abstractAccount?.id), // new Uint8Array([139, 66, 181, 87, 7, 203]), // Random for now
+          challenge: new Uint8Array([139, 66, 181, 87, 7, 203]), // Random for now
         },
       });
 
