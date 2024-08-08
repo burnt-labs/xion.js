@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { Button } from "@burnt-labs/ui";
 import { AAClient, AADirectSigner, GasPrice } from "@burnt-labs/signers";
@@ -72,6 +72,15 @@ function findLowestMissingOrNextIndex(authenticators?: any[]): number {
   return indexSet.size;
 }
 
+function getHumanReadablePubkey(pubkey: Uint8Array | undefined) {
+  if (!pubkey) {
+    return "";
+  }
+  const pubUint8Array = new Uint8Array(Object.values(pubkey));
+  const pubBase64 = btoa(String.fromCharCode.apply(null, pubUint8Array));
+  return pubBase64;
+}
+
 export default function Page(): JSX.Element {
   const [isConnected, setIsConnected] = useState(false);
   const [loginAuthenticator, setLoginAuthenticator] = useState("");
@@ -87,15 +96,6 @@ export default function Page(): JSX.Element {
     fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
   });
-
-  function getHumanReadablePubkey(pubkey: Uint8Array | undefined) {
-    if (!pubkey) {
-      return "";
-    }
-    const pubUint8Array = new Uint8Array(Object.values(pubkey));
-    const pubBase64 = btoa(String.fromCharCode.apply(null, pubUint8Array));
-    return pubBase64;
-  }
 
   async function handleConnectOkx() {
     if (!window.okxwallet) {
@@ -131,32 +131,23 @@ export default function Page(): JSX.Element {
     return window.okxwallet.keplr.signArbitrary(chainId, account, signDataNew);
   }
 
-  const memoizedGetSigner = useMemo(() => {
-    return async function getSigner() {
-      const okxOfflineSigner =
-        await window.okxwallet.keplr.getOfflineSigner(CHAIN_ID);
-      const signer = new AADirectSigner(
-        okxOfflineSigner,
-        abstractAccount?.id,
-        abstractAccount?.currentAuthenticatorIndex,
-        okxSignArb,
-        DEFAULT_INDEXER_URL,
-      );
+  async function getSigner() {
+    const okxOfflineSigner =
+      await window.okxwallet.keplr.getOfflineSigner(CHAIN_ID);
+    const signer = new AADirectSigner(
+      okxOfflineSigner,
+      abstractAccount?.id,
+      abstractAccount?.currentAuthenticatorIndex,
+      okxSignArb,
+      DEFAULT_INDEXER_URL,
+    );
 
-      const abstractClient = await AAClient.connectWithSigner(RPC_URL, signer, {
-        gasPrice: GasPrice.fromString("0uxion"),
-      });
+    const abstractClient = await AAClient.connectWithSigner(RPC_URL, signer, {
+      gasPrice: GasPrice.fromString("0uxion"),
+    });
 
-      return abstractClient;
-    };
-  }, [
-    CHAIN_ID,
-    abstractAccount?.id,
-    abstractAccount?.currentAuthenticatorIndex,
-    okxSignArb,
-    DEFAULT_INDEXER_URL,
-    RPC_URL,
-  ]);
+    return abstractClient;
+  }
 
   const addWebauthnAuthenticator = async () => {
     try {
@@ -227,7 +218,7 @@ export default function Page(): JSX.Element {
           },
         },
       };
-      const client = await memoizedGetSigner();
+      const client = await getSigner();
       const res = await client?.addAbstractAccountAuthenticator(msg, "", {
         amount: [{ amount: "0", denom: "uxion" }],
         gas: "500000",
@@ -295,7 +286,9 @@ export default function Page(): JSX.Element {
             </>
           ) : isConnected ? (
             <>
-              {data?.smartAccounts?.nodes.length >= 1 ? (
+              {loading ? (
+                "Loading..."
+              ) : data?.smartAccounts?.nodes.length >= 1 ? (
                 data?.smartAccounts?.nodes?.map((node: any, i: number) => (
                   <div
                     className={`flex w-full items-center gap-4 rounded-lg border-[1px] border-white bg-transparent p-6 hover:cursor-pointer hover:bg-white/5 ${
