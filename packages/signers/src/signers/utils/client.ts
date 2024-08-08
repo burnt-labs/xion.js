@@ -164,9 +164,14 @@ export class AAClient extends SigningCosmWasmClient {
       }),
     };
 
-    const defaultFee = await this.simulateDefaultFee(sender, [addMsg], memo);
+    // const defaultFee = await this.simulateDefaultFee(sender, [addMsg], memo);
 
-    const tx = await this.sign(sender, [addMsg], fee || defaultFee, memo);
+    const tx = await this.sign(
+      sender,
+      [addMsg],
+      fee || (await this.simulateDefaultFee(sender, [addMsg], memo)),
+      memo,
+    );
     return this.broadcastTx(TxRaw.encode(tx).finish());
   }
 

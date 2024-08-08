@@ -2,6 +2,8 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { ApolloProvider } from "@apollo/client";
+import { apolloClient } from "../../lib";
 import "@burnt-labs/abstraxion/dist/index.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -18,27 +20,29 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AbstraxionProvider
-          config={{
-            contracts: [
-              // Usually, you would have a list of different contracts here
-              seatContractAddress,
-              {
-                address: seatContractAddress,
-                amounts: [{ denom: "uxion", amount: "1000000" }],
-              },
-            ],
-            stake: true,
-            bank: [
-              {
-                denom: "uxion",
-                amount: "1000000",
-              },
-            ],
-          }}
-        >
-          {children}
-        </AbstraxionProvider>
+        <ApolloProvider client={apolloClient}>
+          <AbstraxionProvider
+            config={{
+              contracts: [
+                // Usually, you would have a list of different contracts here
+                seatContractAddress,
+                {
+                  address: seatContractAddress,
+                  amounts: [{ denom: "uxion", amount: "1000000" }],
+                },
+              ],
+              stake: true,
+              bank: [
+                {
+                  denom: "uxion",
+                  amount: "1000000",
+                },
+              ],
+            }}
+          >
+            {children}
+          </AbstraxionProvider>
+        </ApolloProvider>
       </body>
     </html>
   );
