@@ -10,7 +10,8 @@ const RPC_URL = "https://testnet-rpc.xion-api.com:443";
 const CHAIN_ID = "xion-testnet-1";
 const DEFAULT_INDEXER_URL =
   "https://api.subquery.network/sq/burnt-labs/xion-indexer-webauthn";
-const RP_URL = "localhost";
+const RP_URL =
+  "https://xion-js-demo-app-git-feat-webauthn-2-burntfinance.vercel.app/";
 
 const SMART_ACCOUNT_FRAGMENT = gql`
   fragment SmartAccountFragment on SmartAccountAuthenticator {
