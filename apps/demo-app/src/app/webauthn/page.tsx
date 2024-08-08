@@ -150,7 +150,7 @@ export default function Page(): JSX.Element {
     return abstractClient;
   }
 
-  const webauthnTest = async () => {
+  const getWebauthn = async () => {
     try {
       let credential = await navigator.credentials.get({
         publicKey: {
@@ -160,7 +160,13 @@ export default function Page(): JSX.Element {
         },
       });
 
+      if (!credential) {
+        throw new Error("Error getting webauthn credentials");
+      }
+
       console.log(credential);
+      setLoginAuthenticator(credential.id);
+      setIsConnected(true);
     } catch (error) {
       console.log(error);
     }
@@ -313,7 +319,7 @@ export default function Page(): JSX.Element {
               >
                 ADD WEBAUTHN AUTHENTICATOR
               </Button>
-              <Button onClick={webauthnTest} fullWidth structure="base">
+              <Button onClick={getWebauthn} fullWidth structure="base">
                 WEBAUTHN GET
               </Button>
               <div className="flex flex-col gap-1">
