@@ -12,6 +12,7 @@ const DEFAULT_INDEXER_URL =
   "https://api.subquery.network/sq/burnt-labs/xion-indexer-webauthn";
 const RP_URL =
   "https://xion-js-demo-app-git-feat-webauthn-2-burntfinance.vercel.app";
+const RP_ID = "xion-js-demo-app-git-feat-webauthn-2-burntfinance.vercel.app";
 
 const SMART_ACCOUNT_FRAGMENT = gql`
   fragment SmartAccountFragment on SmartAccountAuthenticator {
@@ -153,7 +154,7 @@ export default function Page(): JSX.Element {
     try {
       let credential = await navigator.credentials.get({
         publicKey: {
-          rpId: RP_URL,
+          rpId: RP_ID,
           userVerification: "required",
           challenge: new Uint8Array([139, 66, 181, 87, 7, 203]), // Random for now
         },
