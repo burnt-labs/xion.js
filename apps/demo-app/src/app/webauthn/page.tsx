@@ -242,10 +242,10 @@ export default function Page(): JSX.Element {
       return (
         <div
           key={authenticator.id}
-          className="ui-flex ui-items-center ui-px-4 ui-mb-3 ui-h-16 ui-bg-black ui-rounded-lg"
+          className="mb-3 flex h-16 items-center rounded-lg bg-black px-4"
         >
-          <div className="ui-ml-4 ui-flex ui-flex-1 ui-items-center ui-justify-between">
-            <p className="ui-text-white ui-text-base ui-font-normal ui-font-akkuratLL ui-leading-normal">
+          <div className="ml-4 flex flex-1 items-center justify-between">
+            <p className="font-akkuratLL text-base font-normal leading-normal text-white">
               {authenticator.type.toUpperCase()}
             </p>
           </div>
