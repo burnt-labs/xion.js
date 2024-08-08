@@ -319,9 +319,6 @@ export default function Page(): JSX.Element {
               >
                 ADD WEBAUTHN AUTHENTICATOR
               </Button>
-              <Button onClick={getWebauthn} fullWidth structure="base">
-                WEBAUTHN GET
-              </Button>
               <div className="flex flex-col gap-1">
                 {renderAuthenticators()}
               </div>
@@ -367,9 +364,14 @@ export default function Page(): JSX.Element {
               )}
             </>
           ) : (
-            <Button onClick={handleConnectOkx} fullWidth structure="base">
-              CONNECT WITH OKX
-            </Button>
+            <>
+              <Button onClick={handleConnectOkx} fullWidth structure="base">
+                CONNECT WITH OKX
+              </Button>
+              <Button onClick={getWebauthn} fullWidth structure="base">
+                WEBAUTHN GET
+              </Button>
+            </>
           )}
         </>
       )}
