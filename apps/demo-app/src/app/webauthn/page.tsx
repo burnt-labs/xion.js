@@ -237,6 +237,23 @@ export default function Page(): JSX.Element {
     }
   };
 
+  const renderAuthenticators = () => {
+    return abstractAccount?.authenticators?.nodes.map((authenticator) => {
+      return (
+        <div
+          key={authenticator.id}
+          className="ui-flex ui-items-center ui-px-4 ui-mb-3 ui-h-16 ui-bg-black ui-rounded-lg"
+        >
+          <div className="ui-ml-4 ui-flex ui-flex-1 ui-items-center ui-justify-between">
+            <p className="ui-text-white ui-text-base ui-font-normal ui-font-akkuratLL ui-leading-normal">
+              {authenticator.type.toUpperCase()}
+            </p>
+          </div>
+        </div>
+      );
+    });
+  };
+
   useEffect(() => {
     const handleAccountsChanged = async (accounts: any) => {
       const okxXionAddress = localStorage.getItem("okxXionAddress");
@@ -283,6 +300,7 @@ export default function Page(): JSX.Element {
               >
                 ADD WEBAUTHN AUTHENTICATOR
               </Button>
+              {renderAuthenticators()}
             </>
           ) : isConnected ? (
             <>
