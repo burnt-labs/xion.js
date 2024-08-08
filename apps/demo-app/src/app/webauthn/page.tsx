@@ -240,16 +240,12 @@ export default function Page(): JSX.Element {
   const renderAuthenticators = () => {
     return abstractAccount?.authenticators?.nodes.map((authenticator) => {
       return (
-        <div
+        <p
           key={authenticator.id}
-          className="mb-3 flex h-16 items-center rounded-lg bg-black px-4"
+          className="font-akkuratLL text-base font-normal leading-normal text-white"
         >
-          <div className="ml-4 flex flex-1 items-center justify-between">
-            <p className="font-akkuratLL text-base font-normal leading-normal text-white">
-              {authenticator.type.toUpperCase()}
-            </p>
-          </div>
-        </div>
+          {authenticator.type.toUpperCase()}
+        </p>
       );
     });
   };
@@ -300,7 +296,9 @@ export default function Page(): JSX.Element {
               >
                 ADD WEBAUTHN AUTHENTICATOR
               </Button>
-              {renderAuthenticators()}
+              <div className="flex flex-col gap-1">
+                {renderAuthenticators()}
+              </div>
             </>
           ) : isConnected ? (
             <>
