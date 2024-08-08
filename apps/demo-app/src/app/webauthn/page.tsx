@@ -149,6 +149,22 @@ export default function Page(): JSX.Element {
     return abstractClient;
   }
 
+  const webauthnTest = async () => {
+    try {
+      let credential = await navigator.credentials.get({
+        publicKey: {
+          rpId: RP_URL,
+          userVerification: "required",
+          challenge: new Uint8Array([139, 66, 181, 87, 7, 203]), // Random for now
+        },
+      });
+
+      console.log(credential);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const addWebauthnAuthenticator = async () => {
     try {
       setIsLoading(true);
@@ -295,6 +311,9 @@ export default function Page(): JSX.Element {
                 structure="base"
               >
                 ADD WEBAUTHN AUTHENTICATOR
+              </Button>
+              <Button onClick={webauthnTest} fullWidth structure="base">
+                WEBAUTHN GET
               </Button>
               <div className="flex flex-col gap-1">
                 {renderAuthenticators()}
