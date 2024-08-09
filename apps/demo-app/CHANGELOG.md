@@ -1,5 +1,20 @@
 # demo-app
 
+## 1.1.0-alpha.33
+
+### Minor Changes
+
+- [#150](https://github.com/burnt-labs/xion.js/pull/150) [`2df184a`](https://github.com/burnt-labs/xion.js/commit/2df184a661f74f6a9a412336f7df271d9f6f4b9c) Thanks [@justinbarry](https://github.com/justinbarry)! - Add an example signature verification api and an accompanying UI element to execute it
+
+### Patch Changes
+
+- Updated dependencies [[`3f3aa37`](https://github.com/burnt-labs/xion.js/commit/3f3aa37f2e98fa8fb1abd0e3a4ad2b271ca1587a), [`d5780ce`](https://github.com/burnt-labs/xion.js/commit/d5780ce742bba6a6cd7e1a872e4693f0dd078267), [`78cf088`](https://github.com/burnt-labs/xion.js/commit/78cf0886ccc1a4c023642c4a7d87f9196d637940), [`2df184a`](https://github.com/burnt-labs/xion.js/commit/2df184a661f74f6a9a412336f7df271d9f6f4b9c)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.44
+  - @burnt-labs/abstraxion@1.0.0-alpha.48
+  - @burnt-labs/constants@0.1.0-alpha.11
+  - @burnt-labs/signers@0.1.0-alpha.12
+  - @burnt-labs/ui@0.1.0-alpha.14
+
 ## 1.1.0-alpha.32
 
 ### Patch Changes
