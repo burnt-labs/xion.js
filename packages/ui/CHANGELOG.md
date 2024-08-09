@@ -1,5 +1,11 @@
 # @burnt-labs/ui
 
+## 0.1.0-alpha.14
+
+### Patch Changes
+
+- [#205](https://github.com/burnt-labs/xion.js/pull/205) [`3f3aa37`](https://github.com/burnt-labs/xion.js/commit/3f3aa37f2e98fa8fb1abd0e3a4ad2b271ca1587a) Thanks [@justinbarry](https://github.com/justinbarry)! - Ship unminified code to help with downstream debugging
+
 ## 0.1.0-alpha.13
 
 ### Minor Changes
