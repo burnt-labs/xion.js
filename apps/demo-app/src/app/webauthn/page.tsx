@@ -82,6 +82,16 @@ function getHumanReadablePubkey(pubkey: Uint8Array | undefined) {
   return pubBase64;
 }
 
+function convertToUrlSafeBase64(base64: string) {
+  // Replace '+' with '-'
+  let urlSafeBase64 = base64.replace(/\+/g, "-");
+  // Replace '/' with '_'
+  urlSafeBase64 = urlSafeBase64.replace(/\//g, "_");
+  // Remove any '=' padding
+  urlSafeBase64 = urlSafeBase64.replace(/=+$/, "");
+  return urlSafeBase64;
+}
+
 export default function Page(): JSX.Element {
   const [isConnected, setIsConnected] = useState(false);
   const [loginAuthenticator, setLoginAuthenticator] = useState("");
@@ -165,7 +175,7 @@ export default function Page(): JSX.Element {
       }
 
       console.log(credential);
-      setLoginAuthenticator(credential.id);
+      setLoginAuthenticator(convertToUrlSafeBase64(credential.id));
       setIsConnected(true);
     } catch (error) {
       console.log(error);
