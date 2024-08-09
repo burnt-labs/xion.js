@@ -3,6 +3,7 @@ import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { AAccountData, AASigner } from "../interfaces/AASigner";
 import { encodeHex, getAuthenticatorIdByAuthenticatorIndex } from "./utils";
 import { AAAlgo } from "../interfaces";
+import { sha256 } from "@cosmjs/crypto";
 
 /**
  * This class is an implementation of the AASigner interface using WebAuthn.
@@ -39,7 +40,8 @@ export class AAPasskeySigner extends AASigner {
     }
 
     const signBytes = makeSignBytes(signDoc);
-    const signBytesBuffer = Buffer.from(new Uint8Array(signBytes));
+    const hashSignBytes = sha256(signBytes);
+    const signBytesBuffer = Buffer.from(hashSignBytes);
 
     const credential = (await navigator.credentials.get({
       publicKey: {
