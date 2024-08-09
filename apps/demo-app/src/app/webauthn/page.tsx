@@ -82,14 +82,13 @@ function getHumanReadablePubkey(pubkey: Uint8Array | undefined) {
   return pubBase64;
 }
 
-function convertToUrlSafeBase64(base64: string) {
-  // Replace '+' with '-'
-  let urlSafeBase64 = base64.replace(/\+/g, "-");
-  // Replace '/' with '_'
-  urlSafeBase64 = urlSafeBase64.replace(/\//g, "_");
-  // Remove any '=' padding
-  urlSafeBase64 = urlSafeBase64.replace(/=+$/, "");
-  return urlSafeBase64;
+function convertToStandardBase64(urlSafeBase64) {
+  let base64 = urlSafeBase64.replace(/-/g, "+");
+  base64 = base64.replace(/_/g, "/");
+  while (base64.length % 4 !== 0) {
+    base64 += "=";
+  }
+  return base64;
 }
 
 export default function Page(): JSX.Element {
@@ -175,7 +174,7 @@ export default function Page(): JSX.Element {
       }
 
       console.log(credential);
-      setLoginAuthenticator(convertToUrlSafeBase64(credential.id));
+      setLoginAuthenticator(convertToStandardBase64(credential.id));
       setIsConnected(true);
     } catch (error) {
       console.log(error);
