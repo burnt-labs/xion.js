@@ -18,13 +18,16 @@ import { AAAlgo } from "../interfaces";
 export class AAPasskeySigner extends AASigner {
   accountAuthenticatorIndex: number;
   indexerUrl: string;
+  authenticator: string;
 
   constructor(
     abstractAccount: string,
+    authenticator: string,
     accountAuthenticatorIndex: number,
     indexerUrl?: string,
   ) {
     super(abstractAccount);
+    this.authenticator = authenticator;
     this.accountAuthenticatorIndex = accountAuthenticatorIndex;
     this.indexerUrl =
       indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
@@ -46,7 +49,7 @@ export class AAPasskeySigner extends AASigner {
         challenge: signBytesBuffer,
         allowCredentials: [
           {
-            id: Buffer.from(this.abstractAccount),
+            id: Buffer.from(this.authenticator),
             type: "public-key",
           },
         ],

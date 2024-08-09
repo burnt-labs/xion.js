@@ -99,8 +99,7 @@ function convertToStandardBase64(urlSafeBase64) {
 export default function Page(): JSX.Element {
   const [isConnected, setIsConnected] = useState(false);
   const [loginAuthenticator, setLoginAuthenticator] = useState("");
-  const [okxXionAddress, setOkxXionAddress] = useState("");
-  const [okxWalletName, setOkxWalletName] = useState("");
+  const [pubkeyId, setPubkeyId] = useState("");
   const [abstractAccount, setAbstractAccount] = useState<any>();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -167,6 +166,7 @@ export default function Page(): JSX.Element {
   async function getPasskeySigner() {
     const signer = new AAPasskeySigner(
       abstractAccount?.id,
+      pubkeyId,
       abstractAccount?.currentAuthenticatorIndex,
       DEFAULT_INDEXER_URL,
     );
@@ -242,6 +242,7 @@ export default function Page(): JSX.Element {
       }
 
       console.log(credential);
+      setPubkeyId(credential.id);
       setLoginAuthenticator(convertToStandardBase64(credential.id));
       setIsConnected(true);
     } catch (error) {
