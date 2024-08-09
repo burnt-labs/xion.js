@@ -233,7 +233,7 @@ export default function Page(): JSX.Element {
           allowCredentials: JSON.parse(
             localStorage.getItem("xion-passkeys") || "[]",
           ),
-          userVerification: "required",
+          userVerification: "preferred",
           challenge: new Uint8Array([139, 66, 181, 87, 7, 203]), // Random for now
         },
       });

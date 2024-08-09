@@ -57,7 +57,7 @@ export class AAPasskeySigner extends AASigner {
 
     const response = credential.response as AuthenticatorAssertionResponse;
     const byteArray = new Uint8Array(response.signature);
-    const base64String = btoa(String.fromCharCode(...byteArray));
+    const base64String = Buffer.from(byteArray).toString("base64");
 
     return {
       signed: signDoc,
