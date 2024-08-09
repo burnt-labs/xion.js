@@ -2,7 +2,12 @@
 import { useState, useEffect } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { Button } from "@burnt-labs/ui";
-import { AAClient, AADirectSigner, GasPrice } from "@burnt-labs/signers";
+import {
+  AAClient,
+  AADirectSigner,
+  AAPasskeySigner,
+  GasPrice,
+} from "@burnt-labs/signers";
 import { create } from "@github/webauthn-json/browser-ponyfill";
 import "@burnt-labs/ui/dist/index.css";
 
@@ -141,7 +146,7 @@ export default function Page(): JSX.Element {
     return window.okxwallet.keplr.signArbitrary(chainId, account, signDataNew);
   }
 
-  async function getSigner() {
+  async function getOkxSigner() {
     const okxOfflineSigner =
       await window.okxwallet.keplr.getOfflineSigner(CHAIN_ID);
     const signer = new AADirectSigner(
@@ -157,6 +162,69 @@ export default function Page(): JSX.Element {
     });
 
     return abstractClient;
+  }
+
+  async function getPasskeySigner() {
+    const signer = new AAPasskeySigner(
+      abstractAccount?.id,
+      abstractAccount?.currentAuthenticatorIndex,
+      DEFAULT_INDEXER_URL,
+    );
+
+    const abstractClient = await AAClient.connectWithSigner(RPC_URL, signer, {
+      gasPrice: GasPrice.fromString("0uxion"),
+    });
+
+    return abstractClient;
+  }
+
+  function getTimestampInSeconds(date: Date | null): number {
+    if (!date) return 0;
+    const d = new Date(date);
+    return Math.floor(d.getTime() / 1000);
+  }
+
+  const now = new Date();
+  now.setSeconds(now.getSeconds() + 15);
+  const oneYearFromNow = new Date();
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+  async function claimSeat(): Promise<void> {
+    setIsLoading(true);
+    const msg = {
+      sales: {
+        claim_item: {
+          token_id: String(getTimestampInSeconds(now)),
+          owner: abstractAccount.id,
+          token_uri: "",
+          extension: {},
+        },
+      },
+    };
+
+    const seatContractAddress =
+      "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
+    try {
+      const client = await getPasskeySigner();
+      const claimRes = await client?.execute(
+        abstractAccount.id,
+        seatContractAddress,
+        msg,
+        {
+          amount: [{ amount: "0", denom: "uxion" }],
+          gas: "500000",
+        },
+        "",
+        [],
+      );
+
+      console.log(claimRes);
+    } catch (error) {
+      // eslint-disable-next-line no-console -- No UI exists yet to display errors
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const getWebauthn = async () => {
@@ -250,7 +318,7 @@ export default function Page(): JSX.Element {
           },
         },
       };
-      const client = await getSigner();
+      const client = await getOkxSigner();
       const res = await client?.addAbstractAccountAuthenticator(msg, "", {
         amount: [{ amount: "0", denom: "uxion" }],
         gas: "500000",
@@ -327,6 +395,9 @@ export default function Page(): JSX.Element {
                 structure="base"
               >
                 ADD WEBAUTHN AUTHENTICATOR
+              </Button>
+              <Button onClick={claimSeat} fullWidth structure="base">
+                CLAIM SEAT WITH WEBAUTHN
               </Button>
               <div className="flex flex-col gap-1">
                 {renderAuthenticators()}
