@@ -166,7 +166,6 @@ export default function Page(): JSX.Element {
   async function getPasskeySigner() {
     const signer = new AAPasskeySigner(
       abstractAccount?.id,
-      pubkeyId,
       abstractAccount?.currentAuthenticatorIndex,
       DEFAULT_INDEXER_URL,
     );
