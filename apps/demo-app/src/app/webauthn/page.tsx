@@ -231,7 +231,9 @@ export default function Page(): JSX.Element {
     try {
       let credential = await navigator.credentials.get({
         publicKey: {
-          rpId: RP_ID,
+          allowCredentials: JSON.parse(
+            localStorage.getItem("xion-passkeys") || "[]",
+          ),
           userVerification: "required",
           challenge: new Uint8Array([139, 66, 181, 87, 7, 203]), // Random for now
         },
@@ -291,6 +293,11 @@ export default function Page(): JSX.Element {
         console.log("null credential");
         return;
       }
+
+      localStorage.setItem(
+        "xion-passkey",
+        JSON.stringify([publicKeyCredential], null, " "),
+      );
 
       // stringify the credential
       const publicKeyCredentialJSON = JSON.stringify(publicKeyCredential);
