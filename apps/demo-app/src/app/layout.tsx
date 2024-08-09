@@ -2,6 +2,8 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { ApolloProvider } from "@apollo/client";
+import { apolloClient } from "../../lib";
 import "@burnt-labs/abstraxion/dist/index.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -37,7 +39,7 @@ export default function RootLayout({
             ],
           }}
         >
-          {children}
+          <ApolloProvider client={apolloClient}>{children}</ApolloProvider>
         </AbstraxionProvider>
       </body>
     </html>
