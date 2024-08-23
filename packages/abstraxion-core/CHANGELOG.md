@@ -1,5 +1,21 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.44
+
+### Minor Changes
+
+- [#208](https://github.com/burnt-labs/xion.js/pull/208) [`d5780ce`](https://github.com/burnt-labs/xion.js/commit/d5780ce742bba6a6cd7e1a872e4693f0dd078267) Thanks [@BurntVal](https://github.com/BurntVal)! - Introduce gas simulation for AA transactions
+
+### Patch Changes
+
+- [#205](https://github.com/burnt-labs/xion.js/pull/205) [`3f3aa37`](https://github.com/burnt-labs/xion.js/commit/3f3aa37f2e98fa8fb1abd0e3a4ad2b271ca1587a) Thanks [@justinbarry](https://github.com/justinbarry)! - Ship unminified code to help with downstream debugging
+
+- [#150](https://github.com/burnt-labs/xion.js/pull/150) [`2df184a`](https://github.com/burnt-labs/xion.js/commit/2df184a661f74f6a9a412336f7df271d9f6f4b9c) Thanks [@justinbarry](https://github.com/justinbarry)! - Add a return type to SignArbSecp256k1HdWallet's `getAccounts` method
+
+- Updated dependencies [[`3f3aa37`](https://github.com/burnt-labs/xion.js/commit/3f3aa37f2e98fa8fb1abd0e3a4ad2b271ca1587a), [`d5780ce`](https://github.com/burnt-labs/xion.js/commit/d5780ce742bba6a6cd7e1a872e4693f0dd078267), [`78cf088`](https://github.com/burnt-labs/xion.js/commit/78cf0886ccc1a4c023642c4a7d87f9196d637940)]:
+  - @burnt-labs/constants@0.1.0-alpha.11
+  - @burnt-labs/signers@0.1.0-alpha.12
+
 ## 1.0.0-alpha.43
 
 ### Patch Changes
