@@ -48,10 +48,9 @@ export const xionCoin: Coin = {
   },
 };
 
-// TODO: Bump these values?
 export const xionGasValues = {
   gasPrice: "0.025uxion",
-  gasAdjustment: 1.3,
+  gasAdjustment: 1.4,
   gasAdjustmentMargin: 5000,
 };
 
