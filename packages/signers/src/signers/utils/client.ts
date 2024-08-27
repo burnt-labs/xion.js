@@ -123,9 +123,8 @@ export class AAClient extends SigningCosmWasmClient {
     const calculatedFee: StdFee = calculateFee(simmedGas, gasPrice);
 
     let defaultFee: StdFee;
-    let gas = (
-      parseInt(calculatedFee.gas) * gasAdjustment +
-      gasAdjustmentMargin
+    let gas = Math.ceil(
+      parseInt(calculatedFee.gas) * gasAdjustment + gasAdjustmentMargin,
     ).toString();
 
     const chainId = await this.getChainId();
