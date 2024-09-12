@@ -1,5 +1,11 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.12
+
+### Minor Changes
+
+- [#216](https://github.com/burnt-labs/xion.js/pull/216) [`4e84d2b`](https://github.com/burnt-labs/xion.js/commit/4e84d2b8c24a80b81dd79a2b3993df9249b88069) Thanks [@BurntVal](https://github.com/BurntVal)! - Fix under simulation
+
 ## 0.1.0-alpha.11
 
 ### Minor Changes
