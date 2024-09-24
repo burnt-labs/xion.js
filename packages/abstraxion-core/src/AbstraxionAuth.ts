@@ -39,7 +39,7 @@ export class AbstraxionAuth {
    * @param {boolean} [stake] - Indicates whether staking is enabled.
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
-   * @param {string} treasury - treasury contract instance
+   * @param {string} treasury - treasury contract instance address
    */
   configureAbstraxionInstance(
     rpc: string,
