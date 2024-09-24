@@ -32,7 +32,7 @@ const legacyConfig = {
 };
 
 const treasuryConfig = {
-  treasury: "xion1y6q9njhxkamr5fz4qkfvvg3zywh30dnfz2tpavzx3wwrp4um0y9sex0mam", // Example XION treasury contract
+  treasury: "xion17ah4x9te3sttpy2vj5x6hv4xvc0td526nu0msf7mt3kydqj4qs2s9jhe90", // Example XION treasury contract
   // Optional params to activate mainnet config
   // rpcUrl: "https://rpc.xion-mainnet-1.burnt.com:443",
   // restUrl: "https://api.xion-mainnet-1.burnt.com:443",
