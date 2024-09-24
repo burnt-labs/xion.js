@@ -1,5 +1,13 @@
 # @burnt-labs/signers
 
+## 0.1.0-alpha.13
+
+### Minor Changes
+
+- [#219](https://github.com/burnt-labs/xion.js/pull/219) [`076b30b`](https://github.com/burnt-labs/xion.js/commit/076b30b64fc373384b3f9ff4c5e99646a06487d7) Thanks [@justinbarry](https://github.com/justinbarry)! - Upgrade cosmjs dependencies to fix raw log parsing error
+
+- [#216](https://github.com/burnt-labs/xion.js/pull/216) [`4e84d2b`](https://github.com/burnt-labs/xion.js/commit/4e84d2b8c24a80b81dd79a2b3993df9249b88069) Thanks [@BurntVal](https://github.com/BurntVal)! - Fix under simulation
+
 ## 0.1.0-alpha.12
 
 ### Minor Changes

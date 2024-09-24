@@ -15,6 +15,7 @@
     "abstraxion-settings": "1.0.0"
   },
   "changesets": [
+    "beige-suns-tell",
     "blue-lobsters-taste",
     "blue-spoons-train",
     "bright-carpets-rhyme",
@@ -105,6 +106,7 @@
     "wicked-colts-reflect",
     "wild-chicken-bathe",
     "wild-mice-hope",
-    "wise-parrots-behave"
+    "wise-parrots-behave",
+    "young-ladybugs-draw"
   ]
 }

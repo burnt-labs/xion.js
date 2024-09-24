@@ -1,5 +1,17 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.45
+
+### Minor Changes
+
+- [#219](https://github.com/burnt-labs/xion.js/pull/219) [`076b30b`](https://github.com/burnt-labs/xion.js/commit/076b30b64fc373384b3f9ff4c5e99646a06487d7) Thanks [@justinbarry](https://github.com/justinbarry)! - Upgrade cosmjs dependencies to fix raw log parsing error
+
+### Patch Changes
+
+- Updated dependencies [[`076b30b`](https://github.com/burnt-labs/xion.js/commit/076b30b64fc373384b3f9ff4c5e99646a06487d7), [`4e84d2b`](https://github.com/burnt-labs/xion.js/commit/4e84d2b8c24a80b81dd79a2b3993df9249b88069)]:
+  - @burnt-labs/signers@0.1.0-alpha.13
+  - @burnt-labs/constants@0.1.0-alpha.12
+
 ## 1.0.0-alpha.44
 
 ### Minor Changes
