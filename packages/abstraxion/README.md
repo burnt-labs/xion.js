@@ -14,7 +14,7 @@ npm i @burnt-labs/abstraxion
 
 Find an implementation demo here: [abstraxion demo](../../apps/demo-app)
 
-First, wrap your app in the `AbstraxionProvider` at the top level
+First, wrap your app in the `AbstraxionProvider` at the top level with the appropriate config
 
 ```
 "use client";
@@ -29,55 +29,35 @@ const inter = Inter({ subsets: ["latin"] });
 const seatContractAddress =
   "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}): JSX.Element {
-  return (
-    <html lang="en">
-      <body className={inter.className}>
-        <AbstraxionProvider
-          config={{
-            contracts: [
-              // Usually, you would have a list of different contracts here
-              seatContractAddress,
-              {
-                address: seatContractAddress,
-                amounts: [{ denom: "uxion", amount: "1000000" }],
-              },
-            ],
-            stake: true,
-            bank: [
-              {
-                denom: "uxion",
-                amount: "1000000",
-              },
-            ],
-          }}
-        >
-          {children}
-        </AbstraxionProvider>
-      </body>
-    </html>
-  );
-}
-```
+// Legacy config with individual params for stake, bank and contracts
+const legacyConfig = {
+  contracts: [
+    // Usually, you would have a list of different contracts here
+    seatContractAddress,
+    {
+      address: seatContractAddress,
+      amounts: [{ denom: "uxion", amount: "1000000" }],
+    },
+  ],
+  stake: true,
+  bank: [
+    {
+      denom: "uxion",
+      amount: "1000000",
+    },
+  ],
+  // Optional params to activate mainnet config
+  // rpcUrl: "https://rpc.xion-mainnet-1.burnt.com:443",
+  // restUrl: "https://api.xion-mainnet-1.burnt.com:443",
+};
 
-to activate Mainnet just add rpcUrl and restUrl endpoints to the config:
-
-```
-"use client";
-import "./globals.css";
-import { Inter } from "next/font/google";
-import { AbstraxionProvider } from "@burnt-labs/abstraxion";
-import "@burnt-labs/abstraxion/dist/index.css";
-
-const inter = Inter({ subsets: ["latin"] });
-
-// Example XION seat contract
-const seatContractAddress =
-  "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
+// New treasury contract config
+const treasuryConfig = {
+  treasury: "xion17ah4x9te3sttpy2vj5x6hv4xvc0td526nu0msf7mt3kydqj4qs2s9jhe90", // Example XION treasury contract
+  // Optional params to activate mainnet config
+  // rpcUrl: "https://rpc.xion-mainnet-1.burnt.com:443",
+  // restUrl: "https://api.xion-mainnet-1.burnt.com:443",
+};
 
 export default function RootLayout({
   children,
@@ -87,27 +67,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AbstraxionProvider
-          config={{
-            contracts: [
-              // Usually, you would have a list of different contracts here
-              seatContractAddress,
-              {
-                address: seatContractAddress,
-                amounts: [{ denom: "uxion", amount: "1000000" }],
-              },
-            ],
-            stake: true,
-            bank: [
-              {
-                denom: "uxion",
-                amount: "1000000",
-              },
-            ],
-            rpcUrl: "https://rpc.xion-mainnet-1.burnt.com:443",
-            restUrl: "https://api.xion-mainnet-1.burnt.com:443",
-          }}
-        >
+        <AbstraxionProvider config={treasuryConfig}>
           {children}
         </AbstraxionProvider>
       </body>
