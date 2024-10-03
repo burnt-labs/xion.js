@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
 import { abstraxionAuth } from "../Abstraxion";
@@ -71,8 +71,7 @@ export function AbstraxionContextProvider({
   const [granterAddress, setGranterAddress] = useState("");
   const [dashboardUrl, setDashboardUrl] = useState("");
 
-  useEffect(() => {
-    // Update abstraxion-core with user config
+  const configureInstance = useCallback(() => {
     abstraxionAuth.configureAbstraxionInstance(
       rpcUrl,
       restUrl || "",
@@ -85,18 +84,57 @@ export function AbstraxionContextProvider({
   }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl, treasury]);
 
   useEffect(() => {
+    configureInstance();
+  }, [configureInstance]);
+
+  useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get("granted") === "true") {
       setShowModal(true);
     }
   }, []);
 
-  const logout = () => {
+  useEffect(() => {
+    const unsubscribe = abstraxionAuth.subscribeToAuthStateChange(
+      async (newState: boolean) => {
+        if (newState !== isConnected) {
+          setIsConnected(newState);
+          if (newState) {
+            const account = await abstraxionAuth.getLocalKeypair();
+            const granterAddress = abstraxionAuth.getGranter();
+            setAbstraxionAccount(account);
+            setGranterAddress(granterAddress);
+          }
+        }
+      },
+    );
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [isConnected, abstraxionAuth]);
+
+  const persistAuthenticateState = useCallback(async () => {
+    await abstraxionAuth.authenticate();
+  }, [abstraxionAuth]);
+
+  useEffect(() => {
+    if (!isConnecting && !abstraxionAccount && !granterAddress) {
+      persistAuthenticateState();
+    }
+  }, [
+    isConnecting,
+    abstraxionAccount,
+    granterAddress,
+    persistAuthenticateState,
+  ]);
+
+  const logout = useCallback(() => {
     setIsConnected(false);
     setAbstraxionAccount(undefined);
     setGranterAddress("");
     abstraxionAuth?.logout();
-  };
+  }, [abstraxionAuth]);
 
   return (
     <AbstraxionContext.Provider

@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { Dialog, DialogContent } from "@burnt-labs/ui";
 import {
   AbstraxionContext,
@@ -27,20 +27,22 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
     setShowModal,
   } = useContext(AbstraxionContext);
 
+  const closeOnEscKey = useCallback(
+    (e: KeyboardEventInit): void => {
+      if (e.key === "Escape") {
+        onClose();
+        setShowModal(false);
+      }
+    },
+    [onClose, setShowModal],
+  );
+
   useEffect(() => {
-    const closeOnEscKey = (e: KeyboardEventInit): void => {
-      e.key === "Escape"
-        ? () => {
-            onClose();
-            setShowModal(false);
-          }
-        : null;
-    };
     document.addEventListener("keydown", closeOnEscKey);
     return () => {
       document.removeEventListener("keydown", closeOnEscKey);
     };
-  }, [onClose]);
+  }, [closeOnEscKey]);
 
   if (!showModal) return null;
 
