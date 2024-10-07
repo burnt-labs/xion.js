@@ -86,8 +86,8 @@ export const mainnetChainInfo: ChainInfo = {
 
 export const testnetChainInfo: ChainInfo = {
   ...commonInfo,
-  rpc: "https://testnet-rpc.xion-api.com:443",
-  rest: "https://testnet-api.xion-api.com:443",
+  rpc: "https://rpc.xion-testnet-1.burnt.com:443",
+  rest: "https://api.xion-testnet-1.burnt.com:443",
   chainId: "xion-testnet-1",
   chainName: "XION Testnet",
 };
@@ -102,13 +102,13 @@ export const testChainInfo: ChainInfo = {
 
 // If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
-  "xion-mainnet-1": "https://settings.burnt.com",
-  "xion-testnet-1": "https://testnet.settings.burnt.com",
+  "xion-mainnet-1": "https://settings.mainnet.burnt.com",
+  "xion-testnet-1": "https://settings.testnet.burnt.com",
 };
 
 const REST_URLS = {
   "xion-mainnet-1": "https://api.xion-mainnet-1.burnt.com:443",
-  "xion-testnet-1": "https://testnet-api.xion-api.com:443",
+  "xion-testnet-1": "https://api.xion-testnet-1.burnt.com:443",
 };
 
 export async function fetchConfig(rpcUrl: string) {
