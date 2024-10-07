@@ -1,5 +1,17 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.46
+
+### Minor Changes
+
+- [#218](https://github.com/burnt-labs/xion.js/pull/218) [`1e3bd4e`](https://github.com/burnt-labs/xion.js/commit/1e3bd4eb46d730f6a7e7dd31fa1728c78bac1d97) Thanks [@BurntVal](https://github.com/BurntVal)! - Introduce treasury contract parameter. Look into the Abstraxion/README or the demo-app/layout for more information
+
+### Patch Changes
+
+- Updated dependencies [[`147c8db`](https://github.com/burnt-labs/xion.js/commit/147c8dbe36b030edd4d97edcbb1a0f1674103011)]:
+  - @burnt-labs/constants@0.1.0-alpha.13
+  - @burnt-labs/signers@0.1.0-alpha.13
+
 ## 1.0.0-alpha.45
 
 ### Minor Changes
