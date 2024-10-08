@@ -1,5 +1,11 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.13
+
+### Patch Changes
+
+- [#226](https://github.com/burnt-labs/xion.js/pull/226) [`147c8db`](https://github.com/burnt-labs/xion.js/commit/147c8dbe36b030edd4d97edcbb1a0f1674103011) Thanks [@2xburnt](https://github.com/2xburnt)! - Update index.ts to use our rpc domain
+
 ## 0.1.0-alpha.12
 
 ### Minor Changes
