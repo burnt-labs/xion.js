@@ -93,7 +93,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
   public async signAndBroadcast(
     signerAddress: string,
     messages: readonly EncodeObject[],
-    fee: StdFee | "auto" | number,
+    fee: StdFee | "auto" | number = "auto",
     memo = "",
   ): Promise<DeliverTxResponse> {
     // Figure out if the signerAddress is a granter
