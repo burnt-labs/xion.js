@@ -8,8 +8,14 @@ import {
   EncodeObject,
   OfflineSigner,
 } from "@cosmjs/proto-signing";
-import type { Account, SignerData, StdFee } from "@cosmjs/stargate";
-import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import {
+  calculateFee,
+  GasPrice,
+  type Account,
+  type SignerData,
+  type StdFee,
+} from "@cosmjs/stargate";
+import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import {
   HttpEndpoint,
@@ -17,6 +23,7 @@ import {
   TendermintClient,
 } from "@cosmjs/tendermint-rpc";
 import { customAccountFromAny } from "@burnt-labs/signers";
+import { xionGasValues } from "@burnt-labs/constants";
 
 interface GranteeSignerOptions {
   readonly granterAddress: string;
@@ -111,7 +118,45 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       ];
     }
 
-    return super.signAndBroadcast(signerAddress, messages, fee, memo);
+    let usedFee: StdFee;
+    const {
+      gasPrice: gasPriceString,
+      gasAdjustment,
+      gasAdjustmentMargin,
+    } = xionGasValues;
+    if (fee == "auto" || typeof fee === "number") {
+      const gasEstimation = await this.simulate(signerAddress, messages, memo);
+      const multiplier = typeof fee == "number" ? fee : gasAdjustment;
+      const gasPrice = GasPrice.fromString(gasPriceString);
+      // usedFee = calculateFee(Math.round(gasEstimation * multiplier), gasPrice);
+      const calculatedFee = calculateFee(gasEstimation, gasPrice);
+      let gas = Math.ceil(
+        parseInt(calculatedFee.gas) * multiplier + gasAdjustmentMargin,
+      ).toString();
+
+      const chainId = await this.getChainId();
+      if (/testnet/.test(chainId)) {
+        usedFee = { amount: [{ amount: "0", denom: "uxion" }], gas };
+      } else {
+        usedFee = { amount: calculatedFee.amount, gas };
+      }
+    } else {
+      usedFee = fee;
+    }
+
+    const txRaw = await this.sign(
+      signerAddress,
+      messages,
+      usedFee,
+      memo,
+      undefined,
+    );
+    const txBytes = TxRaw.encode(txRaw).finish();
+    return this.broadcastTx(
+      txBytes,
+      this.broadcastTimeoutMs,
+      this.broadcastPollIntervalMs,
+    );
   }
 
   public async sign(

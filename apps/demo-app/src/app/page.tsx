@@ -9,13 +9,11 @@ import {
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
-import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
+import type { DeliverTxResponse } from "@cosmjs/cosmwasm-stargate";
 import { SignArb } from "../components/sign-arb.tsx";
 
 const seatContractAddress =
   "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
-
-type ExecuteResultOrUndefined = ExecuteResult | undefined;
 
 export default function Page(): JSX.Element {
   // Abstraxion hooks
@@ -28,8 +26,9 @@ export default function Page(): JSX.Element {
     React.Dispatch<React.SetStateAction<boolean>>,
   ] = useModal();
   const [loading, setLoading] = useState(false);
-  const [executeResult, setExecuteResult] =
-    useState<ExecuteResultOrUndefined>(undefined);
+  const [executeResult, setExecuteResult] = useState<
+    DeliverTxResponse | undefined
+  >(undefined);
 
   const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${executeResult?.transactionHash}`;
 
@@ -58,17 +57,30 @@ export default function Page(): JSX.Element {
     };
 
     try {
-      const claimRes = await client?.execute(
-        account.bech32Address,
-        seatContractAddress,
-        msg,
-        {
-          amount: [{ amount: "0", denom: "uxion" }],
-          gas: "500000",
+      const msgSerialized = new TextEncoder().encode(JSON.stringify(msg));
+      const msgExecuteContract = {
+        typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+        value: {
+          sender: account.bech32Address,
+          contract: seatContractAddress,
+          msg: msgSerialized,
+          funds: [],
         },
-        "",
-        [],
-      );
+      };
+
+      const claimRes = await client?.signAndBroadcast(account.bech32Address, [
+        msgExecuteContract,
+      ]);
+
+      // OR
+      // const claimRes = await client?.execute(
+      //   account.bech32Address,
+      //   seatContractAddress,
+      //   msg,
+      //   "auto",
+      //   "",
+      //   [],
+      // );
 
       setExecuteResult(claimRes);
     } catch (error) {
