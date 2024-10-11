@@ -9,11 +9,13 @@ import {
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
-import type { DeliverTxResponse } from "@cosmjs/cosmwasm-stargate";
+import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { SignArb } from "../components/sign-arb.tsx";
 
 const seatContractAddress =
   "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
+
+type ExecuteResultOrUndefined = ExecuteResult | undefined;
 
 export default function Page(): JSX.Element {
   // Abstraxion hooks
@@ -26,9 +28,8 @@ export default function Page(): JSX.Element {
     React.Dispatch<React.SetStateAction<boolean>>,
   ] = useModal();
   const [loading, setLoading] = useState(false);
-  const [executeResult, setExecuteResult] = useState<
-    DeliverTxResponse | undefined
-  >(undefined);
+  const [executeResult, setExecuteResult] =
+    useState<ExecuteResultOrUndefined>(undefined);
 
   const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${executeResult?.transactionHash}`;
 
@@ -57,29 +58,23 @@ export default function Page(): JSX.Element {
     };
 
     try {
-      const msgSerialized = new TextEncoder().encode(JSON.stringify(msg));
-      const msgExecuteContract = {
-        typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-        value: {
-          sender: account.bech32Address,
-          contract: seatContractAddress,
-          msg: msgSerialized,
-          funds: [],
-        },
-      };
+      // Use "auto" fee for most transactions
+      const claimRes = await client?.execute(
+        account.bech32Address,
+        seatContractAddress,
+        msg,
+        "auto",
+      );
 
-      const claimRes = await client?.signAndBroadcast(account.bech32Address, [
-        msgExecuteContract,
-      ]);
-
-      // OR
+      // Default cosmsjs gas multiplier for simulation is 1.4
+      // If you're finding that transactions are undersimulating, you can bump up the gas multiplier by setting fee to a number, ex. 1.5
+      // Fee amounts shouldn't stray too far away from the defaults
+      // Example:
       // const claimRes = await client?.execute(
       //   account.bech32Address,
       //   seatContractAddress,
       //   msg,
-      //   "auto",
-      //   "",
-      //   [],
+      //   1.5,
       // );
 
       setExecuteResult(claimRes);
