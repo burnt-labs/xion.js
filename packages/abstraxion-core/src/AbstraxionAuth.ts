@@ -1,6 +1,10 @@
 import { GasPrice } from "@cosmjs/stargate";
 import { fetchConfig } from "@burnt-labs/constants";
-import type { ContractGrantDescription, SpendLimit } from "@/types";
+import type {
+  ContractGrantDescription,
+  GrantsResponse,
+  SpendLimit,
+} from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 
@@ -340,17 +344,88 @@ export class AbstraxionAuth {
   }
 
   /**
+   * Checks if a grant is valid by verifying its expiration.
+   *
+   * @param {string} grantee - The address of the grantee.
+   * @param {string} granter - The address of the granter.
+   * @returns {Promise<boolean>} - Returns true if the grant is valid, otherwise false.
+   */
+  async checkGrantValidity(grantee: string, granter: string): Promise<boolean> {
+    if (!this.rpcUrl) {
+      throw new Error("AbstraxionAuth needs to be configured.");
+    }
+    if (!grantee) {
+      throw new Error("No keypair address");
+    }
+    if (!granter) {
+      throw new Error("No granter address");
+    }
+
+    const pollBaseUrl =
+      this.restUrl || (await fetchConfig(this.rpcUrl)).restUrl;
+
+    try {
+      const url = new URL(`${pollBaseUrl}/cosmos/authz/v1beta1/grants`);
+      url.search = new URLSearchParams({ grantee, granter }).toString();
+
+      const res = await fetch(url, { cache: "no-store" });
+      const data: GrantsResponse = await res.json();
+
+      if (data.grants.length === 0) {
+        console.warn("No grants found.");
+        return false;
+      }
+
+      // Check expiration for each grant
+      const currentTime = new Date().toISOString();
+      const validGrant = data.grants.some((grant) => {
+        const { expiration } = grant;
+        return !expiration || expiration > currentTime;
+      });
+
+      return validGrant;
+    } catch (error) {
+      console.error("Error fetching grants:", error);
+      return false;
+    }
+  }
+
+  /**
    * Authenticates the user based on the presence of a local keypair and a granter address.
-   * If a local keypair and granter address are found, sets the abstract account and triggers authentication state change.
-   * This method is typically called to authenticate the user and persist state between renders.
+   * Also checks if the grant is still valid by verifying the expiration.
+   * If valid, sets the abstract account and triggers authentication state change.
+   * If expired, clears local state and prompts reauthorization.
+   *
+   * @returns {Promise<void>} - Resolves if authentication is successful or logs out the user otherwise.
    */
   async authenticate(): Promise<void> {
-    const keypair = await this.getLocalKeypair();
-    const granter = this.getGranter();
+    try {
+      const keypair = await this.getLocalKeypair();
+      const granter = this.getGranter();
 
-    if (keypair && granter) {
-      this.abstractAccount = keypair;
-      this.triggerAuthStateChange(true);
+      if (!keypair || !granter) {
+        console.warn("Missing keypair or granter, cannot authenticate.");
+        return;
+      }
+
+      const accounts = await keypair.getAccounts();
+      const keypairAddress = accounts[0].address;
+
+      // Check for existing grants with an expiration check
+      const isGrantValid = await this.checkGrantValidity(
+        keypairAddress,
+        granter,
+      );
+
+      if (isGrantValid) {
+        this.abstractAccount = keypair;
+        this.triggerAuthStateChange(true);
+      } else {
+        throw new Error("Grant expired or not found. Logging out.");
+      }
+    } catch (error) {
+      console.error("Error during authentication:", error);
+      this.logout();
     }
   }
 
