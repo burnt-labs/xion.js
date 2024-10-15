@@ -316,12 +316,20 @@ export class AbstraxionAuth {
         const res = await fetch(url, {
           cache: "no-store",
         });
-        const data = await res.json();
-        if (data.grants.length > 0) {
-          return true;
+        const data: GrantsResponse = await res.json();
+        if (data.grants.length === 0) {
+          console.warn("No grants found.");
+          return false;
         }
-        // Retry if no grants found
-        throw new Error("No grants found.");
+
+        // Check expiration for each grant
+        const currentTime = new Date().toISOString();
+        const validGrant = data.grants.some((grant) => {
+          const { expiration } = grant;
+          return !expiration || expiration > currentTime;
+        });
+
+        return validGrant;
       } catch (error) {
         console.warn("Error fetching grants: ", error);
         const delay = Math.pow(2, retries) * 1000;
@@ -341,53 +349,6 @@ export class AbstraxionAuth {
     localStorage.removeItem("xion-authz-granter-account");
     this.abstractAccount = undefined;
     this.triggerAuthStateChange(false);
-  }
-
-  /**
-   * Checks if a grant is valid by verifying its expiration.
-   *
-   * @param {string} grantee - The address of the grantee.
-   * @param {string} granter - The address of the granter.
-   * @returns {Promise<boolean>} - Returns true if the grant is valid, otherwise false.
-   */
-  async checkGrantValidity(grantee: string, granter: string): Promise<boolean> {
-    if (!this.rpcUrl) {
-      throw new Error("AbstraxionAuth needs to be configured.");
-    }
-    if (!grantee) {
-      throw new Error("No keypair address");
-    }
-    if (!granter) {
-      throw new Error("No granter address");
-    }
-
-    const pollBaseUrl =
-      this.restUrl || (await fetchConfig(this.rpcUrl)).restUrl;
-
-    try {
-      const url = new URL(`${pollBaseUrl}/cosmos/authz/v1beta1/grants`);
-      url.search = new URLSearchParams({ grantee, granter }).toString();
-
-      const res = await fetch(url, { cache: "no-store" });
-      const data: GrantsResponse = await res.json();
-
-      if (data.grants.length === 0) {
-        console.warn("No grants found.");
-        return false;
-      }
-
-      // Check expiration for each grant
-      const currentTime = new Date().toISOString();
-      const validGrant = data.grants.some((grant) => {
-        const { expiration } = grant;
-        return !expiration || expiration > currentTime;
-      });
-
-      return validGrant;
-    } catch (error) {
-      console.error("Error fetching grants:", error);
-      return false;
-    }
   }
 
   /**
@@ -412,10 +373,7 @@ export class AbstraxionAuth {
       const keypairAddress = accounts[0].address;
 
       // Check for existing grants with an expiration check
-      const isGrantValid = await this.checkGrantValidity(
-        keypairAddress,
-        granter,
-      );
+      const isGrantValid = await this.pollForGrants(keypairAddress, granter);
 
       if (isGrantValid) {
         this.abstractAccount = keypair;
