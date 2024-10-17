@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.47
+
+### Minor Changes
+
+- [#228](https://github.com/burnt-labs/xion.js/pull/228) [`bfdc30e`](https://github.com/burnt-labs/xion.js/commit/bfdc30e16b4028a561c7f1608f94fdec9faf8f83) Thanks [@BurntVal](https://github.com/BurntVal)! - Added a grant validity check to verify expiration
+
 ## 1.0.0-alpha.46
 
 ### Minor Changes
