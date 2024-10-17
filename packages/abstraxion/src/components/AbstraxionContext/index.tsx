@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { testnetChainInfo, xionGasValues } from "@burnt-labs/constants";
+import { GasPrice } from "@cosmjs/stargate";
 import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
 import { abstraxionAuth } from "../Abstraxion";
 
@@ -34,7 +35,7 @@ export interface AbstraxionContextProps {
   stake?: boolean;
   bank?: SpendLimit[];
   treasury?: string;
-  gasPrice?: string;
+  gasPrice: GasPrice;
   logout: () => void;
 }
 
@@ -73,6 +74,13 @@ export function AbstraxionContextProvider({
   >(undefined);
   const [granterAddress, setGranterAddress] = useState("");
   const [dashboardUrl, setDashboardUrl] = useState("");
+  let gasPriceDefault: GasPrice;
+  const { gasPrice: gasPriceConstant } = xionGasValues;
+  if (rpcUrl.includes("mainnet")) {
+    gasPriceDefault = GasPrice.fromString(gasPriceConstant);
+  } else {
+    gasPriceDefault = GasPrice.fromString("0uxion");
+  }
 
   const configureInstance = useCallback(() => {
     abstraxionAuth.configureAbstraxionInstance(
@@ -163,7 +171,7 @@ export function AbstraxionContextProvider({
         bank,
         treasury,
         logout,
-        gasPrice,
+        gasPrice: gasPrice ? GasPrice.fromString(gasPrice) : gasPriceDefault,
       }}
     >
       {children}

@@ -51,22 +51,12 @@ export const useAbstraxionSigningClient = (): {
             return accounts[0].address;
           });
 
-        let gasPriceDefault: GasPrice;
-        const { gasPrice: gasPriceConstant } = xionGasValues;
-        if (rpcUrl.includes("mainnet")) {
-          gasPriceDefault = GasPrice.fromString(gasPriceConstant);
-        } else {
-          gasPriceDefault = GasPrice.fromString("0uxion");
-        }
-
         const directClient = await GranteeSignerClient.connectWithSigner(
           // Should be set in the context but defaulting here just in case
           rpcUrl || testnetChainInfo.rpc,
           abstraxionAccount,
           {
-            gasPrice: gasPrice
-              ? GasPrice.fromString(gasPrice)
-              : gasPriceDefault,
+            gasPrice,
             granterAddress,
             granteeAddress,
           },
