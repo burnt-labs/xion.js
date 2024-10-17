@@ -58,17 +58,24 @@ export default function Page(): JSX.Element {
     };
 
     try {
+      // Use "auto" fee for most transactions
       const claimRes = await client?.execute(
         account.bech32Address,
         seatContractAddress,
         msg,
-        {
-          amount: [{ amount: "0", denom: "uxion" }],
-          gas: "500000",
-        },
-        "",
-        [],
+        "auto",
       );
+
+      // Default cosmsjs gas multiplier for simulation is 1.4
+      // If you're finding that transactions are undersimulating, you can bump up the gas multiplier by setting fee to a number, ex. 1.5
+      // Fee amounts shouldn't stray too far away from the defaults
+      // Example:
+      // const claimRes = await client?.execute(
+      //   account.bech32Address,
+      //   seatContractAddress,
+      //   msg,
+      //   1.5,
+      // );
 
       setExecuteResult(claimRes);
     } catch (error) {
