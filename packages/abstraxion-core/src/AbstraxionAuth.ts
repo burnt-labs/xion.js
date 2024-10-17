@@ -1,6 +1,10 @@
 import { GasPrice } from "@cosmjs/stargate";
 import { fetchConfig } from "@burnt-labs/constants";
-import type { ContractGrantDescription, SpendLimit } from "@/types";
+import type {
+  ContractGrantDescription,
+  GrantsResponse,
+  SpendLimit,
+} from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 
@@ -312,12 +316,20 @@ export class AbstraxionAuth {
         const res = await fetch(url, {
           cache: "no-store",
         });
-        const data = await res.json();
-        if (data.grants.length > 0) {
-          return true;
+        const data: GrantsResponse = await res.json();
+        if (data.grants.length === 0) {
+          console.warn("No grants found.");
+          return false;
         }
-        // Retry if no grants found
-        throw new Error("No grants found.");
+
+        // Check expiration for each grant
+        const currentTime = new Date().toISOString();
+        const validGrant = data.grants.some((grant) => {
+          const { expiration } = grant;
+          return !expiration || expiration > currentTime;
+        });
+
+        return validGrant;
       } catch (error) {
         console.warn("Error fetching grants: ", error);
         const delay = Math.pow(2, retries) * 1000;
@@ -341,16 +353,37 @@ export class AbstraxionAuth {
 
   /**
    * Authenticates the user based on the presence of a local keypair and a granter address.
-   * If a local keypair and granter address are found, sets the abstract account and triggers authentication state change.
-   * This method is typically called to authenticate the user and persist state between renders.
+   * Also checks if the grant is still valid by verifying the expiration.
+   * If valid, sets the abstract account and triggers authentication state change.
+   * If expired, clears local state and prompts reauthorization.
+   *
+   * @returns {Promise<void>} - Resolves if authentication is successful or logs out the user otherwise.
    */
   async authenticate(): Promise<void> {
-    const keypair = await this.getLocalKeypair();
-    const granter = this.getGranter();
+    try {
+      const keypair = await this.getLocalKeypair();
+      const granter = this.getGranter();
 
-    if (keypair && granter) {
-      this.abstractAccount = keypair;
-      this.triggerAuthStateChange(true);
+      if (!keypair || !granter) {
+        console.warn("Missing keypair or granter, cannot authenticate.");
+        return;
+      }
+
+      const accounts = await keypair.getAccounts();
+      const keypairAddress = accounts[0].address;
+
+      // Check for existing grants with an expiration check
+      const isGrantValid = await this.pollForGrants(keypairAddress, granter);
+
+      if (isGrantValid) {
+        this.abstractAccount = keypair;
+        this.triggerAuthStateChange(true);
+      } else {
+        throw new Error("Grant expired or not found. Logging out.");
+      }
+    } catch (error) {
+      console.error("Error during authentication:", error);
+      this.logout();
     }
   }
 
