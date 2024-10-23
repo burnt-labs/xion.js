@@ -104,11 +104,13 @@ export const testChainInfo: ChainInfo = {
 const DASHBOARD_URLS = {
   "xion-mainnet-1": "https://settings.mainnet.burnt.com",
   "xion-testnet-1": "https://settings.testnet.burnt.com",
+  "xion-devnet-1": "http://localhost:3000",
 };
 
 const REST_URLS = {
   "xion-mainnet-1": "https://api.xion-mainnet-1.burnt.com:443",
   "xion-testnet-1": "https://api.xion-testnet-1.burnt.com:443",
+  "xion-devnet-1": "http://localhost:26657",
 };
 
 export async function fetchConfig(rpcUrl: string) {
