@@ -10,9 +10,7 @@
     "@burnt-labs/tailwind-config": "0.0.0",
     "@burnt-labs/tsconfig": "0.0.0",
     "@burnt-labs/ui": "0.0.0",
-    "abstraxion-dashboard": "0.1.0",
-    "@burnt-labs/abstraxion-core": "1.0.0-alpha.29",
-    "abstraxion-settings": "1.0.0"
+    "@burnt-labs/abstraxion-core": "1.0.0-alpha.29"
   },
   "changesets": [
     "beige-suns-tell",
