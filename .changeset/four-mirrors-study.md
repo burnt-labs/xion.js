@@ -1,6 +1,4 @@
 ---
-"abstraxion-dashboard": minor
-"abstraxion-settings": minor
 "@burnt-labs/abstraxion": minor
 "@burnt-labs/constants": minor
 ---
