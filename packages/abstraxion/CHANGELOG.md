@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.52
+
+### Minor Changes
+
+- [#233](https://github.com/burnt-labs/xion.js/pull/233) [`c971416`](https://github.com/burnt-labs/xion.js/commit/c97141600882ca3d6ac8e3603670b6da21592e28) Thanks [@justinbarry](https://github.com/justinbarry)! - Add a `useAbstraxionClient` hook to expose non-signing client.
+
 ## 1.0.0-alpha.51
 
 ### Minor Changes
