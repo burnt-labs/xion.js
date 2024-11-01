@@ -484,7 +484,7 @@ export class AbstraxionAuth {
    * @returns {Promise<boolean>} - Returns a promise that resolves to `true` if all treasury grants match chain grants; otherwise, `false`.
    * @throws {Error} - Throws an error if the treasury contract is missing.
    */
-  async compareTreasuryWithChainGrants(
+  async compareGrantsToTreasury(
     grantsResponse: GrantsResponse,
   ): Promise<boolean> {
     if (!this.treasury) {
@@ -614,7 +614,7 @@ export class AbstraxionAuth {
 
         let isValid: boolean;
         if (this.treasury) {
-          isValid = await this.compareTreasuryWithChainGrants(data);
+          isValid = await this.compareGrantsToTreasury(data);
         } else {
           isValid = this.compareGrantsToLegacyConfig(data);
         }
