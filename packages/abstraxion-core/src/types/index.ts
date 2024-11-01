@@ -6,8 +6,17 @@ export interface GrantsResponse {
 export interface Grant {
   granter: string;
   grantee: string;
-  authorization: Authorization;
+  authorization: any;
   expiration: string;
+}
+
+export interface TreasuryGrantConfig {
+  description: string;
+  authorization: {
+    type_url: string;
+    value: string;
+  };
+  optional: boolean;
 }
 
 export interface Authorization {
@@ -23,7 +32,9 @@ export interface GrantAuthorization {
 
 export interface Limit {
   "@type": string;
-  remaining: string;
+  remaining?: string;
+  calls_remaining?: string;
+  amounts?: SpendLimit[];
 }
 
 export interface Filter {
