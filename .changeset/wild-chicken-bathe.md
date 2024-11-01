@@ -1,5 +1,4 @@
 ---
-"abstraxion-dashboard": minor
 "demo-app": minor
 ---
 

@@ -1,5 +1,11 @@
 # @burnt-labs/ui
 
+## 0.1.0-alpha.15
+
+### Minor Changes
+
+- [#232](https://github.com/burnt-labs/xion.js/pull/232) [`82733d9`](https://github.com/burnt-labs/xion.js/commit/82733d90a058249f006f358910836b708ae95e9c) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added slight tweaks to fix mobile behavior
+
 ## 0.1.0-alpha.14
 
 ### Patch Changes

@@ -1,5 +1,4 @@
 ---
-"abstraxion-dashboard": patch
 "@burnt-labs/constants": patch
 ---
 

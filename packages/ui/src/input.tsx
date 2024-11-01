@@ -53,9 +53,9 @@ export function Input({
         {...props}
         className={`${
           baseInputClassName || ""
-        } ui-z-10 ui-block ui-h-8 ui-w-full ui-border-b ui-relative ${
+        } ui-z-10 ui-block ui-h-8 ui-w-full ui-border-b ui-rounded-none ui-relative ${
           error ? "ui-border-red-400" : ""
-        } ui-bg-transparent ui-font-akkuratLL ui-py-5 !ui-text-sm ui-text-zinc-100 ui-font-normal ui-leading-tight ui-outline-none`}
+        } ui-bg-transparent ui-font-akkuratLL ui-py-5 !ui-text-base ui-text-zinc-100 ui-font-normal ui-leading-tight ui-outline-none`}
         onBlur={handleBlur}
         onFocus={handleFocus}
         onKeyDown={onKeyDown}

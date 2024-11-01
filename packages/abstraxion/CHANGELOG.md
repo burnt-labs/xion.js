@@ -1,5 +1,23 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.52
+
+### Minor Changes
+
+- [#233](https://github.com/burnt-labs/xion.js/pull/233) [`c971416`](https://github.com/burnt-labs/xion.js/commit/c97141600882ca3d6ac8e3603670b6da21592e28) Thanks [@justinbarry](https://github.com/justinbarry)! - Add a `useAbstraxionClient` hook to expose non-signing client.
+
+## 1.0.0-alpha.51
+
+### Minor Changes
+
+- [#227](https://github.com/burnt-labs/xion.js/pull/227) [`6a1a037`](https://github.com/burnt-labs/xion.js/commit/6a1a0370d0145543b518c72c2141d4ebbbaf655c) Thanks [@BurntVal](https://github.com/BurntVal)! - introduce gasPrice param; provide documentation on "auto" fee use
+
+### Patch Changes
+
+- Updated dependencies [[`82733d9`](https://github.com/burnt-labs/xion.js/commit/82733d90a058249f006f358910836b708ae95e9c), [`bfdc30e`](https://github.com/burnt-labs/xion.js/commit/bfdc30e16b4028a561c7f1608f94fdec9faf8f83)]:
+  - @burnt-labs/ui@0.1.0-alpha.15
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.47
+
 ## 1.0.0-alpha.50
 
 ### Minor Changes

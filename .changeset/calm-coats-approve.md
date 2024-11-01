@@ -1,6 +1,5 @@
 ---
 "@burnt-labs/abstraxion": major
-"abstraxion-dashboard": minor
 "demo-app": minor
 ---
 
