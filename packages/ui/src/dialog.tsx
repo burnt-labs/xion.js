@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { cn } from "../lib/utils";
 
 const Dialog = DialogPrimitive.Root;
@@ -33,6 +34,7 @@ const DialogContent = React.forwardRef<
     <DialogOverlay />
     <div className="ui-absolute ui-h-screen ui-w-screen ui-inset-0 ui-bg-modal-overlay ui-backdrop-blur-3xl ui-opacity-40 ui-bg-no-repeat ui-bg-cover ui-bg-center ui-bg-fixed ui-z-50" />
     <DialogPrimitive.Content
+      aria-describedby={undefined}
       className={cn(
         "ui-z-50 ui-fixed ui-grid ui-w-full ui-max-w-lg ui-gap-4 ui-p-10 ui-duration-200 sm:ui-rounded-[48px] ui-left-[50%] ui-top-[50%] sm:ui-bg-black/20 !ui-flex ui-justify-center ui-flex-col sm:ui-block sm:ui-flex-none ui-h-screen sm:ui-h-auto sm:ui-backdrop-blur-2xl ui-data-[state=open]:ui-animate-in ui-data-[state=closed]:ui-animate-out ui-data-[state=closed]:ui-fade-out-0 ui-data-[state=open]:ui-fade-in-0 ui-data-[state=closed]:ui-zoom-out-95 ui-data-[state=open]:ui-zoom-in-95 ui-data-[state=closed]:ui-slide-out-to-left-1/2 ui-data-[state=closed]:ui-slide-out-to-top-[48%] ui-data-[state=open]:ui-slide-in-from-left-1/2 ui-data-[state=open]:ui-slide-in-from-top-[48%] ui-translate-x-[-50%] ui-translate-y-[-50%]",
         className,
@@ -40,6 +42,9 @@ const DialogContent = React.forwardRef<
       ref={ref}
       {...props}
     >
+      <VisuallyHidden.Root>
+        <DialogPrimitive.Title />
+      </VisuallyHidden.Root>
       {children}
     </DialogPrimitive.Content>
   </DialogPortal>

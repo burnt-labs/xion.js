@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { testnetChainInfo, xionGasValues } from "@burnt-labs/constants";
 import { GasPrice } from "@cosmjs/stargate";
 import {
   GranteeSignerClient,
@@ -15,8 +15,14 @@ export const useAbstraxionSigningClient = (): {
     | undefined;
   readonly logout: (() => void) | undefined;
 } => {
-  const { isConnected, abstraxionAccount, granterAddress, rpcUrl, logout } =
-    useContext(AbstraxionContext);
+  const {
+    isConnected,
+    abstraxionAccount,
+    granterAddress,
+    rpcUrl,
+    logout,
+    gasPrice,
+  } = useContext(AbstraxionContext);
   const [signArbWallet, setSignArbWallet] = useState<
     SignArbSecp256k1HdWallet | undefined
   >(undefined);
@@ -50,7 +56,7 @@ export const useAbstraxionSigningClient = (): {
           rpcUrl || testnetChainInfo.rpc,
           abstraxionAccount,
           {
-            gasPrice: GasPrice.fromString("0uxion"),
+            gasPrice,
             granterAddress,
             granteeAddress,
           },

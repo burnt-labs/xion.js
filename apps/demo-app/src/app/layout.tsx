@@ -32,7 +32,8 @@ const legacyConfig = {
 };
 
 const treasuryConfig = {
-  treasury: "xion17ah4x9te3sttpy2vj5x6hv4xvc0td526nu0msf7mt3kydqj4qs2s9jhe90", // Example XION treasury contract
+  treasury: "xion1h82c0efsxxq4pgua754u6xepfu6avglup20fl834gc2ah0ptgn5s2zffe9", // Example XION treasury contract with /cosmwasm.wasm.v1.MsgExecuteContract grant
+  // gasPrice: "0uxion", // This defaults to "0uxion" on testnet and "0.025uxion" on mainnet. If you feel the need to change the gasPrice when connecting to signer, set this value. Please stick to the string format seen in example
   // Optional params to activate mainnet config
   // rpcUrl: "https://rpc.xion-mainnet-1.burnt.com:443",
   // restUrl: "https://api.xion-mainnet-1.burnt.com:443",

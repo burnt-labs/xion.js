@@ -1,5 +1,4 @@
 ---
-"abstraxion-dashboard": minor
 "@burnt-labs/abstraxion-core": minor
 "@burnt-labs/abstraxion": minor
 "@burnt-labs/signers": minor
