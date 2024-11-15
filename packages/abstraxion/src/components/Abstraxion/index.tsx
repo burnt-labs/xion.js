@@ -70,6 +70,7 @@ export interface AbstraxionConfig {
   callbackUrl?: string;
   treasury?: string;
   gasPrice?: string;
+  governance?: boolean;
 }
 
 export function AbstraxionProvider({
@@ -82,6 +83,7 @@ export function AbstraxionProvider({
   return (
     <AbstraxionContextProvider
       contracts={config.contracts}
+      governance={config.governance}
       rpcUrl={config.rpcUrl}
       restUrl={config.restUrl}
       stake={config.stake}

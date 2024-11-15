@@ -17,7 +17,8 @@ export class AbstraxionAuth {
   bank?: SpendLimit[];
   callbackUrl?: string;
   treasury?: string;
-
+  governance?: boolean;
+  
   // Signer
   private client?: GranteeSignerClient;
 
@@ -44,6 +45,7 @@ export class AbstraxionAuth {
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
    * @param {string} treasury - treasury contract instance address
+   * @param {boolean} [governance] - Indicates whether governance is enabled.
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -53,6 +55,7 @@ export class AbstraxionAuth {
     bank?: SpendLimit[],
     callbackUrl?: string,
     treasury?: string,
+    governance?: boolean,
   ) {
     this.rpcUrl = rpc;
     this.restUrl = restUrl;
@@ -61,6 +64,7 @@ export class AbstraxionAuth {
     this.bank = bank;
     this.callbackUrl = callbackUrl;
     this.treasury = treasury;
+    this.governance = governance;
   }
 
   /**
@@ -260,6 +264,10 @@ export class AbstraxionAuth {
 
       if (this.stake) {
         urlParams.set("stake", "true");
+      }
+
+      if (this.governance) {
+        urlParams.set("governance", "true");
       }
 
       if (this.grantContracts) {

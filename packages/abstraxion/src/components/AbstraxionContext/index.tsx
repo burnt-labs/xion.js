@@ -35,6 +35,7 @@ export interface AbstraxionContextProps {
   stake?: boolean;
   bank?: SpendLimit[];
   treasury?: string;
+  governance?: boolean;
   gasPrice: GasPrice;
   logout: () => void;
 }
@@ -52,6 +53,7 @@ export function AbstraxionContextProvider({
   bank,
   callbackUrl,
   treasury,
+  governance,
   gasPrice,
 }: {
   children: ReactNode;
@@ -63,6 +65,7 @@ export function AbstraxionContextProvider({
   bank?: SpendLimit[];
   callbackUrl?: string;
   treasury?: string;
+  governance?: boolean;
   gasPrice?: string;
 }): JSX.Element {
   const [abstraxionError, setAbstraxionError] = useState("");
@@ -91,8 +94,9 @@ export function AbstraxionContextProvider({
       bank,
       callbackUrl,
       treasury,
+      governance, 
     );
-  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl, treasury]);
+  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl, treasury, governance]);
 
   useEffect(() => {
     configureInstance();
@@ -170,6 +174,7 @@ export function AbstraxionContextProvider({
         stake,
         bank,
         treasury,
+        governance,
         logout,
         gasPrice: gasPrice ? GasPrice.fromString(gasPrice) : gasPriceDefault,
       }}
