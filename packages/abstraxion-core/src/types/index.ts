@@ -4,8 +4,8 @@ export interface GrantsResponse {
 }
 
 export interface Grant {
-  granter: string;
-  grantee: string;
+  granter?: string;
+  grantee?: string;
   authorization: any;
   expiration: string;
 }

@@ -51,7 +51,6 @@ describe("SignArbSecp256k1HdWallet", () => {
     const granterAddress =
       "xion15wvfkv5wkp7dvxquxm3nkhrfy98nahjqpp3a2r5h9tcj29r9wxnq6j5eeh";
 
-    console.log(account.algo);
     const { pubkey, address: granteeAddress } = account;
 
     const exampleMessage = "Test message";
