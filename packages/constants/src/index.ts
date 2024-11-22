@@ -42,14 +42,14 @@ export const xionCoin: Coin = {
   coinMinimalDenom: "uxion",
   coinDecimals: 6,
   gasPriceStep: {
-    low: 0.01,
-    average: 0.025,
-    high: 0.03,
+    low: 0.0005,
+    average: 0.001,
+    high: 0.01,
   },
 };
 
 export const xionGasValues = {
-  gasPrice: "0.025uxion",
+  gasPrice: "0.001uxion",
   gasAdjustment: 1.4,
   gasAdjustmentMargin: 5000,
 };

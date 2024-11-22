@@ -130,7 +130,7 @@ export class AAClient extends SigningCosmWasmClient {
     const chainId = await this.getChainId();
 
     if (/testnet/.test(chainId)) {
-      defaultFee = { amount: [{ amount: "0", denom: "uxion" }], gas: gas };
+      defaultFee = { amount: [{ amount: "0.001", denom: "uxion" }], gas: gas };
     } else {
       defaultFee = { amount: calculatedFee.amount, gas: gas };
     }
