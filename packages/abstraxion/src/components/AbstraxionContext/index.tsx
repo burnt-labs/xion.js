@@ -79,7 +79,7 @@ export function AbstraxionContextProvider({
   if (rpcUrl.includes("mainnet")) {
     gasPriceDefault = GasPrice.fromString(gasPriceConstant);
   } else {
-    gasPriceDefault = GasPrice.fromString("0uxion");
+    gasPriceDefault = GasPrice.fromString("0.001uxion");
   }
 
   const configureInstance = useCallback(() => {
