@@ -8,8 +8,14 @@ import {
   EncodeObject,
   OfflineSigner,
 } from "@cosmjs/proto-signing";
-import type { Account, SignerData, StdFee } from "@cosmjs/stargate";
-import type { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import {
+  calculateFee,
+  GasPrice,
+  type Account,
+  type SignerData,
+  type StdFee,
+} from "@cosmjs/stargate";
+import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import {
   HttpEndpoint,
@@ -18,15 +24,19 @@ import {
 } from "@cosmjs/tendermint-rpc";
 import { customAccountFromAny } from "@burnt-labs/signers";
 
-interface GranteeSignerOptions {
+export interface GranteeSignerOptions {
   readonly granterAddress: string;
   readonly granteeAddress: string;
+  readonly treasuryAddress?: string;
 }
 
 export class GranteeSignerClient extends SigningCosmWasmClient {
   protected readonly granterAddress: string;
   private readonly _granteeAddress: string;
   private readonly _signer: OfflineSigner;
+  private readonly _gasPrice?: GasPrice;
+  private readonly _treasury?: string;
+  private readonly _defaultGasMultiplier = 1.4; // cosmjs 0.32.4 default
 
   public get granteeAddress(): string {
     return this._granteeAddress;
@@ -65,10 +75,12 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     {
       granterAddress,
       granteeAddress,
+      gasPrice,
+      treasuryAddress,
       ...options
     }: SigningCosmWasmClientOptions & GranteeSignerOptions,
   ) {
-    super(cometClient, signer, options);
+    super(cometClient, signer, { ...options, gasPrice });
     if (granterAddress === undefined) {
       throw new Error("granterAddress is required");
     }
@@ -78,6 +90,8 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       throw new Error("granteeAddress is required");
     }
     this._granteeAddress = granteeAddress;
+    this._gasPrice = gasPrice;
+    this._treasury = treasuryAddress;
     this._signer = signer;
   }
 
@@ -111,7 +125,47 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       ];
     }
 
-    return super.signAndBroadcast(signerAddress, messages, fee, memo);
+    let usedFee: StdFee;
+
+    // treasury vs legacy config granter
+    const granter = this._treasury ? this._treasury : this.granterAddress;
+
+    if (fee == "auto" || typeof fee === "number") {
+      if (!this._gasPrice) {
+        throw new Error(
+          "Gas price must be set in the client options when auto gas is used",
+        );
+      }
+      const gasEstimation = await this.simulate(signerAddress, messages, memo);
+      const multiplier =
+        typeof fee == "number" ? fee : this._defaultGasMultiplier;
+      const calculatedFee = calculateFee(
+        Math.round(gasEstimation * multiplier),
+        this._gasPrice,
+      );
+
+      usedFee = {
+        ...calculatedFee,
+        granter,
+      };
+    } else {
+      // Do we want to override granter in this case?
+      usedFee = { ...fee, granter };
+    }
+
+    const txRaw = await this.sign(
+      signerAddress,
+      messages,
+      usedFee,
+      memo,
+      undefined,
+    );
+    const txBytes = TxRaw.encode(txRaw).finish();
+    return this.broadcastTx(
+      txBytes,
+      this.broadcastTimeoutMs,
+      this.broadcastPollIntervalMs,
+    );
   }
 
   public async sign(
