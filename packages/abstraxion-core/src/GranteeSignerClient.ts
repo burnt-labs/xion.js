@@ -127,7 +127,6 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
 
     let usedFee: StdFee;
 
-    // treasury vs legacy config granter
     const granter = this._treasury ? this._treasury : this.granterAddress;
 
     if (fee == "auto" || typeof fee === "number") {
@@ -149,7 +148,6 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
         granter,
       };
     } else {
-      // Do we want to override granter in this case?
       usedFee = { ...fee, granter };
     }
 
