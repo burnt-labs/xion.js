@@ -560,6 +560,15 @@ export class AbstraxionAuth {
     return null;
   }
 
+  /**
+   * Validates that decoded contract execution authorizations match the on-chain authorizations.
+   * @param {DecodeAuthorizationResponse | null} decodedAuth - The decoded authorization from treasury
+   *        containing contract grants with their limits and filters
+   * @param {any} chainAuth - The on-chain authorization to validate against, containing
+   *        grants with their respective limits and filters
+   * @returns {boolean} Returns true if all contract execution authorizations match,
+   *         false if any discrepancy is found
+   */
   private validateContractExecution(
     decodedAuth: DecodeAuthorizationResponse | null,
     chainAuth: any,
