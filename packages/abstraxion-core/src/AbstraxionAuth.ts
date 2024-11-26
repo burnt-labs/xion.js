@@ -1,9 +1,24 @@
 import { GasPrice } from "@cosmjs/stargate";
+import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
+import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
+import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
+import {
+  CombinedLimit,
+  ContractExecutionAuthorization,
+  MaxCallsLimit,
+  MaxFundsLimit,
+  AcceptedMessageKeysFilter,
+  AcceptedMessagesFilter,
+} from "cosmjs-types/cosmwasm/wasm/v1/authz";
+import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { fetchConfig } from "@burnt-labs/constants";
 import type {
   ContractGrantDescription,
+  GrantAuthorization,
   GrantsResponse,
   SpendLimit,
+  TreasuryGrantConfig,
+  DecodeAuthorizationResponse,
 } from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
@@ -20,6 +35,7 @@ export class AbstraxionAuth {
 
   // Signer
   private client?: GranteeSignerClient;
+  private cosmwasmQueryClient?: CosmWasmClient;
 
   // Accounts
   abstractAccount?: SignArbSecp256k1HdWallet;
@@ -222,6 +238,32 @@ export class AbstraxionAuth {
   }
 
   /**
+   * Get non-signing CosmWasmClient
+   * @returns {Promise<CosmWasmClient>} A Promise that resolves to a CosmWasmClient
+   * @throws {Error} If the rpcUrl is missing, or if there is a network issue.
+   */
+  async getCosmWasmClient(): Promise<CosmWasmClient> {
+    try {
+      if (this.cosmwasmQueryClient) {
+        return this.cosmwasmQueryClient;
+      }
+
+      if (!this.rpcUrl) {
+        throw new Error("Configuration not initialized");
+      }
+
+      const cosmwasmClient = await CosmWasmClient.connect(this.rpcUrl || "");
+
+      this.cosmwasmQueryClient = cosmwasmClient;
+      return cosmwasmClient;
+    } catch (error) {
+      console.warn("Something went wrong getting cosmwasm client: ", error);
+      this.cosmwasmQueryClient = undefined;
+      throw error;
+    }
+  }
+
+  /**
    * Get dashboard url and redirect in order to issue claim with XION meta account for local keypair.
    */
   async redirectToDashboard() {
@@ -278,6 +320,449 @@ export class AbstraxionAuth {
   }
 
   /**
+   * Compares a GrantsResponse object to the legacy configuration stored in the instance.
+   * Validates the presence and attributes of grants for each authorization type.
+   *
+   * @param {GrantsResponse} grantsResponse - The grants response object containing the chain grants.
+   * @returns {boolean} - Returns `true` if the grants match the expected configuration; otherwise, `false`.
+   */
+  compareGrantsToLegacyConfig(grantsResponse: GrantsResponse): boolean {
+    const { grants } = grantsResponse;
+
+    const compareContractGrants = () => {
+      // @TODO - Is this an ok assumption?
+      if (!this.grantContracts) {
+        return true;
+      }
+      const contractGrants = grants.filter(
+        (grant) =>
+          grant.authorization["@type"] ===
+          "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+      );
+
+      return this.grantContracts.every((contract) => {
+        const address =
+          typeof contract === "string" ? contract : contract.address;
+        const amounts = typeof contract === "object" ? contract.amounts : [];
+
+        const matchingGrants = contractGrants.filter((grant) =>
+          grant.authorization.grants.some(
+            (grant: GrantAuthorization) => grant.contract === address,
+          ),
+        );
+
+        if (!matchingGrants.length) return false;
+
+        return amounts.length
+          ? matchingGrants.some((grant) =>
+              grant.authorization.grants.some(
+                (authGrant: GrantAuthorization) =>
+                  authGrant.limit.amounts &&
+                  authGrant.limit.amounts.every(
+                    (limit: SpendLimit, index: number) =>
+                      limit.denom === amounts[index].denom &&
+                      limit.amount === amounts[index].amount,
+                  ),
+              ),
+            )
+          : true;
+      });
+    };
+
+    const compareStakeGrants = () => {
+      // @TODO - Is this an ok assumption?
+      if (!this.stake) {
+        return true;
+      }
+
+      const stakeGrants = grants.filter((grant) =>
+        [
+          "/cosmos.staking.v1beta1.StakeAuthorization",
+          "/cosmos.authz.v1beta1.GenericAuthorization",
+        ].includes(grant.authorization["@type"]),
+      );
+
+      const expectedStakeTypes = [
+        "AUTHORIZATION_TYPE_DELEGATE",
+        "AUTHORIZATION_TYPE_UNDELEGATE",
+        "AUTHORIZATION_TYPE_REDELEGATE",
+        "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+        "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation",
+      ];
+
+      const stakeTypesGranted = stakeGrants.map((grant) => {
+        if (
+          grant.authorization["@type"] ===
+          "/cosmos.staking.v1beta1.StakeAuthorization"
+        ) {
+          return grant.authorization.authorization_type;
+        } else if (
+          grant.authorization["@type"] ===
+          "/cosmos.authz.v1beta1.GenericAuthorization"
+        ) {
+          return grant.authorization.msg;
+        }
+      });
+
+      return expectedStakeTypes.every((type) =>
+        stakeTypesGranted.includes(type),
+      );
+    };
+
+    const compareBankGrants = () => {
+      // @TODO - Is this an ok assumption?
+      if (!this.bank) {
+        return true;
+      }
+
+      const bankGrants = grants.filter(
+        (grant) =>
+          grant.authorization["@type"] ===
+          "/cosmos.bank.v1beta1.SendAuthorization",
+      );
+
+      return this.bank?.every((bankEntry) =>
+        bankGrants.some((grant) =>
+          grant.authorization.spend_limit.some(
+            (limit: SpendLimit) =>
+              limit.denom === bankEntry.denom &&
+              limit.amount === bankEntry.amount,
+          ),
+        ),
+      );
+    };
+
+    return (
+      compareContractGrants() && compareStakeGrants() && compareBankGrants()
+    );
+  }
+
+  /**
+   * Decodes an authorization's base64-encoded value according to its `type_url`.
+   *
+   * @param {string} typeUrl - The type URL of the authorization (e.g., `/cosmos.bank.v1beta1.SendAuthorization`).
+   * @param {string} value - The base64-encoded authorization value to decode.
+   * @returns {object|null} - Returns an object containing decoded authorization fields or `null` if decoding fails.
+   */
+  decodeAuthorization(
+    typeUrl: string,
+    value: string,
+  ): DecodeAuthorizationResponse | null {
+    const decodedValue = new Uint8Array(Buffer.from(value, "base64"));
+
+    if (typeUrl === "/cosmos.authz.v1beta1.GenericAuthorization") {
+      const authorization = GenericAuthorization.decode(decodedValue);
+      return { msg: authorization.msg };
+    }
+
+    if (typeUrl === "/cosmos.bank.v1beta1.SendAuthorization") {
+      const authorization = SendAuthorization.decode(decodedValue);
+      return {
+        spendLimit: authorization.spendLimit
+          ?.map((coin) => `${coin.amount} ${coin.denom}`)
+          .join(", "),
+        allowList: authorization.allowList,
+      };
+    }
+
+    if (typeUrl === "/cosmos.staking.v1beta1.StakeAuthorization") {
+      const authorization = StakeAuthorization.decode(decodedValue);
+      return {
+        authorizationType: authorization.authorizationType.toString(),
+        maxTokens: authorization.maxTokens
+          ? `${authorization.maxTokens.amount} ${authorization.maxTokens.denom}`
+          : undefined,
+        allowList: authorization.allowList?.address,
+        denyList: authorization.denyList?.address,
+      };
+    }
+
+    if (typeUrl === "/cosmwasm.wasm.v1.ContractExecutionAuthorization") {
+      const authorization = ContractExecutionAuthorization.decode(decodedValue);
+
+      const contracts = authorization.grants.map((grant) => {
+        let limitType: string | undefined;
+        let maxCalls: string | undefined;
+        let maxFunds: { denom: string; amount: string }[] | undefined;
+        let combinedLimits:
+          | {
+              maxCalls: string;
+              maxFunds: { denom: string; amount: string }[];
+            }
+          | undefined;
+        let filter = grant.filter
+          ? {
+              typeUrl: grant.filter.typeUrl,
+              keys:
+                grant.filter.typeUrl ===
+                "/cosmwasm.wasm.v1.AcceptedMessageKeysFilter"
+                  ? AcceptedMessageKeysFilter.decode(grant.filter.value).keys
+                  : undefined,
+              messages:
+                grant.filter.typeUrl ===
+                "/cosmwasm.wasm.v1.AcceptedMessagesFilter"
+                  ? AcceptedMessagesFilter.decode(grant.filter.value).messages
+                  : undefined,
+            }
+          : undefined;
+
+        // Decode limit based on type_url
+        switch (grant.limit?.typeUrl) {
+          case "/cosmwasm.wasm.v1.MaxCallsLimit": {
+            const limit = MaxCallsLimit.decode(grant.limit.value);
+            limitType = "MaxCalls";
+            maxCalls = String(limit.remaining);
+            break;
+          }
+          case "/cosmwasm.wasm.v1.MaxFundsLimit": {
+            const limit = MaxFundsLimit.decode(
+              new Uint8Array(grant.limit.value),
+            );
+            limitType = "MaxFunds";
+            maxFunds = limit.amounts.map((coin) => ({
+              denom: coin.denom,
+              amount: coin.amount,
+            }));
+            break;
+          }
+          case "/cosmwasm.wasm.v1.CombinedLimit": {
+            const limit = CombinedLimit.decode(
+              new Uint8Array(grant.limit.value),
+            );
+            limitType = "CombinedLimit";
+            combinedLimits = {
+              maxCalls: String(limit.callsRemaining),
+              maxFunds: limit.amounts.map((coin) => ({
+                denom: coin.denom,
+                amount: coin.amount,
+              })),
+            };
+            break;
+          }
+          default:
+            limitType = "Unknown";
+            break;
+        }
+
+        return {
+          contract: grant.contract,
+          limitType,
+          maxCalls,
+          maxFunds,
+          combinedLimits,
+          filter,
+        };
+      });
+
+      return { contracts };
+    }
+
+    return null;
+  }
+
+  /**
+   * Validates that decoded contract execution authorizations match the on-chain authorizations.
+   * @param {DecodeAuthorizationResponse | null} decodedAuth - The decoded authorization from treasury
+   *        containing contract grants with their limits and filters
+   * @param {any} chainAuth - The on-chain authorization to validate against, containing
+   *        grants with their respective limits and filters
+   * @returns {boolean} Returns true if all contract execution authorizations match,
+   *         false if any discrepancy is found
+   */
+  private validateContractExecution(
+    decodedAuth: DecodeAuthorizationResponse | null,
+    chainAuth: any,
+  ): boolean {
+    const chainGrants = chainAuth.grants || [];
+    const decodedGrants = decodedAuth?.contracts || [];
+
+    return decodedGrants.every((decodedGrant) => {
+      const matchingChainGrant = chainGrants.find((chainGrant: any) => {
+        // Basic contract match
+        if (chainGrant.contract !== decodedGrant.contract) {
+          return false;
+        }
+
+        // Filter validation
+        if (decodedGrant.filter) {
+          const chainFilter = chainGrant.filter;
+          if (!chainFilter) {
+            return false;
+          }
+
+          // Check type URL
+          if (chainFilter["@type"] !== decodedGrant.filter.typeUrl) {
+            return false;
+          }
+
+          // Check keys array
+          const decodedKeys = decodedGrant.filter.keys || [];
+          const chainKeys = chainFilter.keys || [];
+          if (decodedKeys.length !== chainKeys.length) {
+            return false;
+          }
+          if (!decodedKeys.every((key, index) => key === chainKeys[index])) {
+            return false;
+          }
+
+          // Check messages array
+          const decodedMessages = decodedGrant.filter.messages || [];
+          const chainMessages = chainFilter.messages || [];
+          if (decodedMessages.length !== chainMessages.length) {
+            return false;
+          }
+
+          // Compare messages byte by byte
+          const messagesMatch = decodedMessages.every((msg, index) => {
+            const chainMsg = chainMessages[index];
+            if (msg.length !== chainMsg.length) {
+              return false;
+            }
+            for (let i = 0; i < msg.length; i++) {
+              if (msg[i] !== chainMsg[i]) {
+                return false;
+              }
+            }
+            return true;
+          });
+          if (!messagesMatch) {
+            return false;
+          }
+        } else if (chainGrant.filter) {
+          return false;
+        }
+
+        return true;
+      });
+
+      if (!matchingChainGrant) {
+        return false;
+      }
+
+      switch (decodedGrant.limitType) {
+        case "MaxCalls":
+          return (
+            matchingChainGrant.limit?.["@type"] ===
+              "/cosmwasm.wasm.v1.MaxCallsLimit" &&
+            decodedGrant.maxCalls === matchingChainGrant.limit.remaining
+          );
+
+        case "MaxFunds":
+          return (
+            matchingChainGrant.limit?.["@type"] ===
+              "/cosmwasm.wasm.v1.MaxFundsLimit" &&
+            JSON.stringify(decodedGrant.maxFunds) ===
+              JSON.stringify(matchingChainGrant.limit.amounts)
+          );
+
+        case "CombinedLimit":
+          return (
+            matchingChainGrant.limit?.["@type"] ===
+              "/cosmwasm.wasm.v1.CombinedLimit" &&
+            decodedGrant.combinedLimits?.maxCalls ===
+              matchingChainGrant.limit.calls_remaining &&
+            JSON.stringify(decodedGrant.combinedLimits?.maxFunds) ===
+              JSON.stringify(matchingChainGrant.limit.amounts)
+          );
+
+        default:
+          return false;
+      }
+    });
+  }
+
+  /**
+   * Compares treasury grant configurations with the grants on-chain to ensure they match.
+   *
+   * @param {GrantsResponse} grantsResponse - The grants currently existing on-chain.
+   * @returns {Promise<boolean>} - Returns a promise that resolves to `true` if all treasury grants match chain grants; otherwise, `false`.
+   * @throws {Error} - Throws an error if the treasury contract is missing.
+   */
+  async compareGrantsToTreasury(
+    grantsResponse: GrantsResponse,
+  ): Promise<boolean> {
+    if (!this.treasury) {
+      throw new Error("Missing treasury");
+    }
+
+    const cosmwasmClient =
+      this.cosmwasmQueryClient || (await this.getCosmWasmClient());
+
+    const queryTreasuryContractMsg = { grant_config_type_urls: {} };
+    const treasuryGrantUrlsResponse: string[] =
+      await cosmwasmClient.queryContractSmart(
+        this.treasury,
+        queryTreasuryContractMsg,
+      );
+
+    const treasuryGrantConfigs: TreasuryGrantConfig[] = [];
+    for (const typeUrl of treasuryGrantUrlsResponse) {
+      const queryByMsg = {
+        grant_config_by_type_url: { msg_type_url: typeUrl },
+      };
+      const grantConfigResponse: TreasuryGrantConfig =
+        await cosmwasmClient.queryContractSmart(this.treasury, queryByMsg);
+      treasuryGrantConfigs.push(grantConfigResponse);
+    }
+
+    const isValid = treasuryGrantConfigs.every((treasuryConfig) => {
+      const decodedAuthorization = this.decodeAuthorization(
+        treasuryConfig.authorization.type_url,
+        treasuryConfig.authorization.value,
+      );
+
+      return grantsResponse.grants.find((grant) => {
+        const chainAuthType = grant.authorization["@type"];
+        const isTypeMatch =
+          chainAuthType === treasuryConfig.authorization.type_url;
+
+        if (!isTypeMatch) return false;
+
+        const chainAuthorization = grant.authorization;
+
+        if (chainAuthType === "/cosmos.authz.v1beta1.GenericAuthorization") {
+          const foo = chainAuthorization.msg === decodedAuthorization?.msg;
+          return foo;
+        }
+
+        if (chainAuthType === "/cosmos.bank.v1beta1.SendAuthorization") {
+          return (
+            decodedAuthorization?.spendLimit ===
+              chainAuthorization.spendLimit &&
+            JSON.stringify(decodedAuthorization?.allowList) ===
+              JSON.stringify(chainAuthorization.allowList)
+          );
+        }
+
+        if (chainAuthType === "/cosmos.staking.v1beta1.StakeAuthorization") {
+          return (
+            decodedAuthorization?.authorizationType ===
+              chainAuthorization.authorizationType &&
+            decodedAuthorization?.maxTokens === chainAuthorization.maxTokens &&
+            JSON.stringify(decodedAuthorization?.allowList) ===
+              JSON.stringify(chainAuthorization.allowList) &&
+            JSON.stringify(decodedAuthorization?.denyList) ===
+              JSON.stringify(chainAuthorization.denyList)
+          );
+        }
+
+        if (
+          chainAuthType === "/cosmwasm.wasm.v1.ContractExecutionAuthorization"
+        ) {
+          return this.validateContractExecution(
+            decodedAuthorization,
+            chainAuthorization,
+          );
+        }
+
+        return false;
+      });
+    });
+
+    return isValid;
+  }
+
+  /**
    * Poll for grants issued to a grantee from a granter.
    *
    * @param {string} grantee - The address of the grantee.
@@ -330,7 +815,14 @@ export class AbstraxionAuth {
           return !expiration || expiration > currentTime;
         });
 
-        return validGrant;
+        let isValid: boolean;
+        if (this.treasury) {
+          isValid = await this.compareGrantsToTreasury(data);
+        } else {
+          isValid = this.compareGrantsToLegacyConfig(data);
+        }
+
+        return validGrant && isValid;
       } catch (error) {
         console.warn("Error fetching grants: ", error);
         const delay = Math.pow(2, retries) * 1000;
@@ -380,7 +872,9 @@ export class AbstraxionAuth {
         this.abstractAccount = keypair;
         this.triggerAuthStateChange(true);
       } else {
-        throw new Error("Grant expired or not found. Logging out.");
+        throw new Error(
+          "Grants expired, no longer valid, or not found. Logging out.",
+        );
       }
     } catch (error) {
       console.error("Error during authentication:", error);
