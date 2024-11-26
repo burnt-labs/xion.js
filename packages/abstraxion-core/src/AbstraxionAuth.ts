@@ -224,6 +224,7 @@ export class AbstraxionAuth {
           gasPrice: GasPrice.fromString("0uxion"),
           granterAddress,
           granteeAddress,
+          treasuryAddress: this.treasury,
         },
       );
 

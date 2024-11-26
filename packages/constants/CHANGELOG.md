@@ -1,5 +1,11 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.14
+
+### Minor Changes
+
+- [#240](https://github.com/burnt-labs/xion.js/pull/240) [`5f5edf4`](https://github.com/burnt-labs/xion.js/commit/5f5edf4cf38546b9f726af9b685ea1ce39444551) Thanks [@justinbarry](https://github.com/justinbarry)! - Update default gas price to 0.001uxion
+
 ## 0.1.0-alpha.13
 
 ### Patch Changes
