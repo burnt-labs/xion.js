@@ -32,8 +32,8 @@ const legacyConfig = {
 };
 
 const treasuryConfig = {
-  treasury: "xion1h82c0efsxxq4pgua754u6xepfu6avglup20fl834gc2ah0ptgn5s2zffe9", // Example XION treasury contract with /cosmwasm.wasm.v1.MsgExecuteContract grant
-  // gasPrice: "0.001uxion", // If you feel the need to change the gasPrice when connecting to signer, set this value. Please stick to the string format seen in example
+  treasury: "xion1nn55ch09p4a4z30am967n5n8r75m2ag3s3sujutxfmchhsxqtg3qghdg7h", // Example XION treasury instance for executing seat contract
+  gasPrice: "0.001uxion", // If you feel the need to change the gasPrice when connecting to signer, set this value. Please stick to the string format seen in example
   // Optional params to activate mainnet config
   // rpcUrl: "https://rpc.xion-mainnet-1.burnt.com:443",
   // restUrl: "https://api.xion-mainnet-1.burnt.com:443",
