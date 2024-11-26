@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.49
+
+### Minor Changes
+
+- [#239](https://github.com/burnt-labs/xion.js/pull/239) [`6ca7dad`](https://github.com/burnt-labs/xion.js/commit/6ca7dad417a01b4a2594cdf4f935966cab62d442) Thanks [@BurntVal](https://github.com/BurntVal)! - simulation fix and granter override
+
 ## 1.0.0-alpha.48
 
 ### Patch Changes
