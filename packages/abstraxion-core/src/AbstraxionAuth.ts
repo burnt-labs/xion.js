@@ -2,6 +2,14 @@ import { GasPrice } from "@cosmjs/stargate";
 import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
+import {
+  CombinedLimit,
+  ContractExecutionAuthorization,
+  MaxCallsLimit,
+  MaxFundsLimit,
+  AcceptedMessageKeysFilter,
+  AcceptedMessagesFilter,
+} from "cosmjs-types/cosmwasm/wasm/v1/authz";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { fetchConfig } from "@burnt-labs/constants";
 import type {
@@ -10,6 +18,7 @@ import type {
   GrantsResponse,
   SpendLimit,
   TreasuryGrantConfig,
+  DecodeAuthorizationResponse,
 } from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
@@ -437,14 +446,7 @@ export class AbstraxionAuth {
   decodeAuthorization(
     typeUrl: string,
     value: string,
-  ): {
-    msg?: string;
-    spendLimit?: string;
-    allowList?: string[];
-    authorizationType?: string;
-    maxTokens?: string;
-    denyList?: string[];
-  } | null {
+  ): DecodeAuthorizationResponse | null {
     const decodedValue = new Uint8Array(Buffer.from(value, "base64"));
 
     if (typeUrl === "/cosmos.authz.v1beta1.GenericAuthorization") {
@@ -474,7 +476,189 @@ export class AbstraxionAuth {
       };
     }
 
+    if (typeUrl === "/cosmwasm.wasm.v1.ContractExecutionAuthorization") {
+      const authorization = ContractExecutionAuthorization.decode(decodedValue);
+
+      const contracts = authorization.grants.map((grant) => {
+        let limitType: string | undefined;
+        let maxCalls: string | undefined;
+        let maxFunds: { denom: string; amount: string }[] | undefined;
+        let combinedLimits:
+          | {
+              maxCalls: string;
+              maxFunds: { denom: string; amount: string }[];
+            }
+          | undefined;
+        let filter = grant.filter
+          ? {
+              typeUrl: grant.filter.typeUrl,
+              keys:
+                grant.filter.typeUrl ===
+                "/cosmwasm.wasm.v1.AcceptedMessageKeysFilter"
+                  ? AcceptedMessageKeysFilter.decode(grant.filter.value).keys
+                  : undefined,
+              messages:
+                grant.filter.typeUrl ===
+                "/cosmwasm.wasm.v1.AcceptedMessagesFilter"
+                  ? AcceptedMessagesFilter.decode(grant.filter.value).messages
+                  : undefined,
+            }
+          : undefined;
+
+        // Decode limit based on type_url
+        switch (grant.limit?.typeUrl) {
+          case "/cosmwasm.wasm.v1.MaxCallsLimit": {
+            const limit = MaxCallsLimit.decode(grant.limit.value);
+            limitType = "MaxCalls";
+            maxCalls = String(limit.remaining);
+            break;
+          }
+          case "/cosmwasm.wasm.v1.MaxFundsLimit": {
+            const limit = MaxFundsLimit.decode(
+              new Uint8Array(grant.limit.value),
+            );
+            limitType = "MaxFunds";
+            maxFunds = limit.amounts.map((coin) => ({
+              denom: coin.denom,
+              amount: coin.amount,
+            }));
+            break;
+          }
+          case "/cosmwasm.wasm.v1.CombinedLimit": {
+            const limit = CombinedLimit.decode(
+              new Uint8Array(grant.limit.value),
+            );
+            limitType = "CombinedLimit";
+            combinedLimits = {
+              maxCalls: String(limit.callsRemaining),
+              maxFunds: limit.amounts.map((coin) => ({
+                denom: coin.denom,
+                amount: coin.amount,
+              })),
+            };
+            break;
+          }
+          default:
+            limitType = "Unknown";
+            break;
+        }
+
+        return {
+          contract: grant.contract,
+          limitType,
+          maxCalls,
+          maxFunds,
+          combinedLimits,
+          filter,
+        };
+      });
+
+      return { contracts };
+    }
+
     return null;
+  }
+
+  private validateContractExecution(
+    decodedAuth: DecodeAuthorizationResponse | null,
+    chainAuth: any,
+  ): boolean {
+    const chainGrants = chainAuth.grants || [];
+    const decodedGrants = decodedAuth?.contracts || [];
+
+    return decodedGrants.every((decodedGrant) => {
+      const matchingChainGrant = chainGrants.find((chainGrant: any) => {
+        // Basic contract match
+        if (chainGrant.contract !== decodedGrant.contract) {
+          return false;
+        }
+
+        // Filter validation
+        if (decodedGrant.filter) {
+          const chainFilter = chainGrant.filter;
+          if (!chainFilter) {
+            return false;
+          }
+
+          // Check type URL
+          if (chainFilter["@type"] !== decodedGrant.filter.typeUrl) {
+            return false;
+          }
+
+          // Check keys array
+          const decodedKeys = decodedGrant.filter.keys || [];
+          const chainKeys = chainFilter.keys || [];
+          if (decodedKeys.length !== chainKeys.length) {
+            return false;
+          }
+          if (!decodedKeys.every((key, index) => key === chainKeys[index])) {
+            return false;
+          }
+
+          // Check messages array
+          const decodedMessages = decodedGrant.filter.messages || [];
+          const chainMessages = chainFilter.messages || [];
+          if (decodedMessages.length !== chainMessages.length) {
+            return false;
+          }
+
+          // Compare messages byte by byte
+          const messagesMatch = decodedMessages.every((msg, index) => {
+            const chainMsg = chainMessages[index];
+            if (msg.length !== chainMsg.length) {
+              return false;
+            }
+            for (let i = 0; i < msg.length; i++) {
+              if (msg[i] !== chainMsg[i]) {
+                return false;
+              }
+            }
+            return true;
+          });
+          if (!messagesMatch) {
+            return false;
+          }
+        } else if (chainGrant.filter) {
+          return false;
+        }
+
+        return true;
+      });
+
+      if (!matchingChainGrant) {
+        return false;
+      }
+
+      switch (decodedGrant.limitType) {
+        case "MaxCalls":
+          return (
+            matchingChainGrant.limit?.["@type"] ===
+              "/cosmwasm.wasm.v1.MaxCallsLimit" &&
+            decodedGrant.maxCalls === matchingChainGrant.limit.remaining
+          );
+
+        case "MaxFunds":
+          return (
+            matchingChainGrant.limit?.["@type"] ===
+              "/cosmwasm.wasm.v1.MaxFundsLimit" &&
+            JSON.stringify(decodedGrant.maxFunds) ===
+              JSON.stringify(matchingChainGrant.limit.amounts)
+          );
+
+        case "CombinedLimit":
+          return (
+            matchingChainGrant.limit?.["@type"] ===
+              "/cosmwasm.wasm.v1.CombinedLimit" &&
+            decodedGrant.combinedLimits?.maxCalls ===
+              matchingChainGrant.limit.calls_remaining &&
+            JSON.stringify(decodedGrant.combinedLimits?.maxFunds) ===
+              JSON.stringify(matchingChainGrant.limit.amounts)
+          );
+
+        default:
+          return false;
+      }
+    });
   }
 
   /**
@@ -549,6 +733,15 @@ export class AbstraxionAuth {
               JSON.stringify(chainAuthorization.allowList) &&
             JSON.stringify(decodedAuthorization?.denyList) ===
               JSON.stringify(chainAuthorization.denyList)
+          );
+        }
+
+        if (
+          chainAuthType === "/cosmwasm.wasm.v1.ContractExecutionAuthorization"
+        ) {
+          return this.validateContractExecution(
+            decodedAuthorization,
+            chainAuthorization,
           );
         }
 

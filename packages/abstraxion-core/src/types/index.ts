@@ -54,3 +54,27 @@ export type ContractGrantDescription =
       address: string;
       amounts: SpendLimit[];
     };
+
+export interface DecodeAuthorizationResponse {
+  msg?: string;
+  spendLimit?: string;
+  allowList?: string[];
+  authorizationType?: string;
+  maxTokens?: string;
+  denyList?: string[];
+  contracts?: {
+    contract: string;
+    limitType?: string;
+    maxCalls?: string;
+    maxFunds?: { denom: string; amount: string }[];
+    combinedLimits?: {
+      maxCalls: string;
+      maxFunds: { denom: string; amount: string }[];
+    };
+    filter?: {
+      typeUrl: string;
+      keys?: string[];
+      messages?: Uint8Array[];
+    };
+  }[];
+}
