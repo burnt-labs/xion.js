@@ -113,15 +113,41 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     return customAccountFromAny(account);
   }
 
+  private transformForMsgExec(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+  ): { signerAddress: string; messages: readonly EncodeObject[] } {
+    if (signerAddress === this.granterAddress) {
+      signerAddress = this.granteeAddress;
+
+      messages = [
+        {
+          typeUrl: "/cosmos.authz.v1beta1.MsgExec",
+          value: MsgExec.fromPartial({
+            grantee: this.granteeAddress,
+            msgs: messages.map((msg) => this.registry.encodeAsAny(msg)),
+          }),
+        },
+      ];
+    }
+
+    return { signerAddress, messages };
+  }
+
   public async simulate(
     signerAddress: string,
     messages: readonly EncodeObject[],
     memo: string | undefined,
     feeGranter?: string,
   ): Promise<number> {
-    const { sequence } = await this.getSequence(signerAddress);
+    const {
+      signerAddress: transformedSignerAddress,
+      messages: transformedMessages,
+    } = this.transformForMsgExec(signerAddress, messages);
+
+    const { sequence } = await this.getSequence(transformedSignerAddress);
     const accountFromSigner = (await this._signer.getAccounts()).find(
-      (account) => account.address === signerAddress,
+      (account) => account.address === transformedSignerAddress,
     );
 
     if (!accountFromSigner) {
@@ -157,7 +183,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     const txBodyEncodeObject = {
       typeUrl: "/cosmos.tx.v1beta1.TxBody",
       value: {
-        messages: messages,
+        messages: transformedMessages,
         memo: memo,
       },
     };
@@ -188,20 +214,10 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     fee: StdFee | "auto" | number,
     memo = "",
   ): Promise<DeliverTxResponse> {
-    // Figure out if the signerAddress is a granter
-    if (signerAddress === this.granterAddress) {
-      signerAddress = this.granteeAddress;
-      // Wrap the signerAddress in a MsgExec
-      messages = [
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgExec",
-          value: MsgExec.fromPartial({
-            grantee: this.granteeAddress,
-            msgs: messages.map((msg) => this.registry.encodeAsAny(msg)),
-          }),
-        },
-      ];
-    }
+    const {
+      signerAddress: transformedSignerAddress,
+      messages: transformedMessages,
+    } = this.transformForMsgExec(signerAddress, messages);
 
     let usedFee: StdFee;
 
@@ -214,8 +230,8 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
         );
       }
       const gasEstimation = await this.simulate(
-        signerAddress,
-        messages,
+        transformedSignerAddress,
+        transformedMessages,
         memo,
         granter,
       );
@@ -235,8 +251,8 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     }
 
     const txRaw = await this.sign(
-      signerAddress,
-      messages,
+      transformedSignerAddress,
+      transformedMessages,
       usedFee,
       memo,
       undefined,
