@@ -1,3 +1,4 @@
+import { customAccountFromAny } from "@burnt-labs/signers";
 import {
   DeliverTxResponse,
   SigningCosmWasmClient,
@@ -6,23 +7,31 @@ import {
 import {
   AccountData,
   EncodeObject,
+  encodePubkey,
   OfflineSigner,
 } from "@cosmjs/proto-signing";
 import {
   calculateFee,
+  createProtobufRpcClient,
   GasPrice,
   type Account,
   type SignerData,
   type StdFee,
 } from "@cosmjs/stargate";
-import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import { AuthInfo, Fee, TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import {
   HttpEndpoint,
   Tendermint37Client,
   TendermintClient,
 } from "@cosmjs/tendermint-rpc";
-import { customAccountFromAny } from "@burnt-labs/signers";
+import { Uint53 } from "@cosmjs/math";
+import { encodeSecp256k1Pubkey } from "@cosmjs/amino";
+import {
+  ServiceClientImpl,
+  SimulateRequest,
+} from "cosmjs-types/cosmos/tx/v1beta1/service";
+import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
 
 export interface GranteeSignerOptions {
   readonly granterAddress: string;
@@ -104,16 +113,13 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     return customAccountFromAny(account);
   }
 
-  public async signAndBroadcast(
+  private transformForMsgExec(
     signerAddress: string,
     messages: readonly EncodeObject[],
-    fee: StdFee | "auto" | number,
-    memo = "",
-  ): Promise<DeliverTxResponse> {
-    // Figure out if the signerAddress is a granter
+  ): { signerAddress: string; messages: readonly EncodeObject[] } {
     if (signerAddress === this.granterAddress) {
       signerAddress = this.granteeAddress;
-      // Wrap the signerAddress in a MsgExec
+
       messages = [
         {
           typeUrl: "/cosmos.authz.v1beta1.MsgExec",
@@ -125,6 +131,94 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       ];
     }
 
+    return { signerAddress, messages };
+  }
+
+  public async simulate(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    memo: string | undefined,
+    feeGranter?: string,
+  ): Promise<number> {
+    const {
+      signerAddress: transformedSignerAddress,
+      messages: transformedMessages,
+    } = this.transformForMsgExec(signerAddress, messages);
+
+    const { sequence } = await this.getSequence(transformedSignerAddress);
+    const accountFromSigner = (await this._signer.getAccounts()).find(
+      (account) => account.address === transformedSignerAddress,
+    );
+
+    if (!accountFromSigner) {
+      throw new Error("No account found.");
+    }
+
+    const pubkey = encodeSecp256k1Pubkey(accountFromSigner.pubkey);
+
+    const queryClient = this.getQueryClient();
+    if (!queryClient) {
+      throw new Error("Couldn't get query client");
+    }
+
+    const rpc = createProtobufRpcClient(queryClient);
+    const queryService = new ServiceClientImpl(rpc);
+
+    const authInfo = AuthInfo.fromPartial({
+      fee: Fee.fromPartial({ granter: feeGranter }),
+      signerInfos: [
+        {
+          publicKey: encodePubkey(pubkey),
+          modeInfo: {
+            single: {
+              mode: SignMode.SIGN_MODE_DIRECT,
+            },
+          },
+          sequence: BigInt(sequence),
+        },
+      ],
+    });
+    const authInfoBytes = AuthInfo.encode(authInfo).finish();
+
+    const txBodyEncodeObject = {
+      typeUrl: "/cosmos.tx.v1beta1.TxBody",
+      value: {
+        messages: transformedMessages,
+        memo: memo,
+      },
+    };
+    const bodyBytes = this.registry.encode(txBodyEncodeObject);
+
+    const tx = TxRaw.fromPartial({
+      bodyBytes,
+      authInfoBytes,
+      signatures: [new Uint8Array([10])],
+    });
+
+    const request = SimulateRequest.fromPartial({
+      txBytes: TxRaw.encode(tx).finish(),
+    });
+
+    const { gasInfo } = await queryService.Simulate(request);
+
+    if (!gasInfo) {
+      throw new Error("No gas info returned");
+    }
+
+    return Uint53.fromString(gasInfo.gasUsed.toString()).toNumber();
+  }
+
+  public async signAndBroadcast(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    fee: StdFee | "auto" | number,
+    memo = "",
+  ): Promise<DeliverTxResponse> {
+    const {
+      signerAddress: transformedSignerAddress,
+      messages: transformedMessages,
+    } = this.transformForMsgExec(signerAddress, messages);
+
     let usedFee: StdFee;
 
     const granter = this._treasury ? this._treasury : this.granterAddress;
@@ -135,7 +229,12 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
           "Gas price must be set in the client options when auto gas is used",
         );
       }
-      const gasEstimation = await this.simulate(signerAddress, messages, memo);
+      const gasEstimation = await this.simulate(
+        transformedSignerAddress,
+        transformedMessages,
+        memo,
+        granter,
+      );
       const multiplier =
         typeof fee == "number" ? fee : this._defaultGasMultiplier;
       const calculatedFee = calculateFee(
@@ -152,8 +251,8 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     }
 
     const txRaw = await this.sign(
-      signerAddress,
-      messages,
+      transformedSignerAddress,
+      transformedMessages,
       usedFee,
       memo,
       undefined,
