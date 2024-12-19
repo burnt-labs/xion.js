@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Abstraxion,
   useAbstraxionAccount,
@@ -11,9 +11,13 @@ import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { SignArb } from "../components/sign-arb.tsx";
+import NftList from "../components/NftList.tsx";
 
 const seatContractAddress =
   "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
+
+const soulboundNftContractAddress =
+  "xion1rcdjfs8f0dqrfyep28m6rgfuw5ue2y788lk5jsj0ll5f2jekh6yqm95y32";
 
 type ExecuteResultOrUndefined = ExecuteResult | undefined;
 
@@ -21,6 +25,7 @@ export default function Page(): JSX.Element {
   // Abstraxion hooks
   const { data: account } = useAbstraxionAccount();
   const { client, signArb, logout } = useAbstraxionSigningClient();
+  const [nfts, setNfts] = useState([]);
 
   // General state hooks
   const [, setShowModal]: [
@@ -28,10 +33,17 @@ export default function Page(): JSX.Element {
     React.Dispatch<React.SetStateAction<boolean>>,
   ] = useModal();
   const [loading, setLoading] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
   const [executeResult, setExecuteResult] =
     useState<ExecuteResultOrUndefined>(undefined);
 
   const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${executeResult?.transactionHash}`;
+
+  useEffect(() => {
+    if (account.bech32Address) {
+      void fetchNfts(account.bech32Address);
+    }
+  }, [account.bech32Address, client]);
 
   function getTimestampInSeconds(date: Date | null): number {
     if (!date) return 0;
@@ -43,6 +55,48 @@ export default function Page(): JSX.Element {
   now.setSeconds(now.getSeconds() + 15);
   const oneYearFromNow = new Date();
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+  async function fetchNfts(owner: string): Promise<void> {
+    if (!client || !owner) return;
+    setLoading(true);
+    try {
+      const result = await client.queryContractSmart(
+        soulboundNftContractAddress,
+        {
+          tokens: { owner, start_after: null, limit: 100 },
+        },
+      );
+      setNfts(result.tokens || []);
+    } catch (error) {
+      console.error("Error fetching NFTs:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleMint() {
+    if (!account.bech32Address) return;
+    setIsMinting(true);
+    setLoading(true);
+    try {
+      const response = await fetch("/api/mint-soulbound", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: account.bech32Address }),
+      });
+      const data = await response.json();
+
+      if (data.txHash) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await fetchNfts(account.bech32Address);
+      }
+    } catch (error) {
+      console.error("Error minting NFT:", error);
+    } finally {
+      setIsMinting(false);
+      setLoading(false);
+    }
+  }
 
   async function claimSeat(): Promise<void> {
     setLoading(true);
@@ -129,6 +183,14 @@ export default function Page(): JSX.Element {
             </Button>
           ) : null}
           {signArb ? <SignArb /> : null}
+          <NftList nfts={nfts} />
+          <Button
+            onClick={handleMint}
+            fullWidth
+            disabled={isMinting || loading}
+          >
+            {loading ? "MINTING..." : "MINT NFT"}
+          </Button>
         </>
       ) : null}
       <Abstraxion
