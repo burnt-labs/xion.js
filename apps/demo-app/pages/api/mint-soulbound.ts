@@ -7,6 +7,8 @@ import { createHash } from "crypto";
 
 const rpcEndpoint = "https://rpc.xion-testnet-1.burnt.com:443";
 const key = process.env.PRIVATE_KEY;
+
+// Put the contract address returned from the deploy script here
 const contractAddress =
   "xion1rcdjfs8f0dqrfyep28m6rgfuw5ue2y788lk5jsj0ll5f2jekh6yqm95y32";
 
