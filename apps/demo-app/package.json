@@ -15,6 +15,7 @@
     "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
     "@cosmjs/amino": "^0.32.4",
+    "@cosmjs/cosmwasm-stargate": "^0.32.4",
     "@heroicons/react": "^2.1.4",
     "@keplr-wallet/cosmos": "^0.12.80",
     "cosmjs-types": "^0.9.0",

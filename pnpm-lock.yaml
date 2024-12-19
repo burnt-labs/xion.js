@@ -72,6 +72,9 @@ importers:
       '@cosmjs/amino':
         specifier: ^0.32.4
         version: 0.32.4
+      '@cosmjs/cosmwasm-stargate':
+        specifier: ^0.32.4
+        version: 0.32.4
       '@heroicons/react':
         specifier: ^2.1.4
         version: 2.1.5(react@18.2.0)
