@@ -8,4 +8,5 @@ export {
   useModal,
 } from "./hooks";
 
-export { ContractGrantDescription } from "./components/AbstraxionContext";
+export type { ContractGrantDescription } from "./components/AbstraxionContext";
+export type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
