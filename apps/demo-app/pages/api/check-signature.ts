@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verifyADR36Amino } from "@keplr-wallet/cosmos";
+import { serializeSignDoc } from "@cosmjs/amino";
+import { Secp256k1, Secp256k1Signature, Sha256 } from "@cosmjs/crypto";
 
 // This import will need to change based on the chain you are confirming against.
 import { testnetChainInfo } from "@burnt-labs/constants";
@@ -7,6 +8,34 @@ import { QueryGrantsResponse } from "cosmjs-types/cosmos/authz/v1beta1/query";
 
 function isString(test: unknown): test is string {
   return typeof test === "string";
+}
+
+function makeADR36AminoSignDoc(
+  signer: string,
+  message: string | Uint8Array,
+): any {
+  return {
+    chain_id: "",
+    account_number: "0",
+    sequence: "0",
+    fee: {
+      amount: [],
+      gas: "0",
+    },
+    msgs: [
+      {
+        type: "sign/MsgSignData",
+        value: {
+          signer: signer,
+          data:
+            typeof message === "string"
+              ? Buffer.from(message).toString("base64")
+              : Buffer.from(message).toString("base64"),
+        },
+      },
+    ],
+    memo: "",
+  };
 }
 
 /**
@@ -18,23 +47,29 @@ function isString(test: unknown): test is string {
  * @param signature - The signature to verify against the message and address.
  * @returns True if the signature is valid, false otherwise.
  */
-export function verifyXionSignature(
+export async function verifyXionSignature(
   address: string,
   pubKey: string,
   messageString: string,
   signature: string,
-): boolean {
+): Promise<boolean> {
   const signatureBuffer = Buffer.from(signature, "base64");
   const uint8Signature = new Uint8Array(signatureBuffer); // Convert the buffer to an Uint8Array
   const pubKeyValueBuffer = Buffer.from(pubKey, "base64"); // Decode the base64 encoded value
   const pubKeyUint8Array = new Uint8Array(pubKeyValueBuffer); // Convert the buffer to an Uint8Array
 
-  return verifyADR36Amino(
-    "xion",
-    address,
-    messageString,
+  const signDoc = makeADR36AminoSignDoc(address, messageString);
+  const serializedSignDoc = serializeSignDoc(signDoc);
+
+  const messageHash = new Sha256(serializedSignDoc).digest();
+  const signatureObject = new Secp256k1Signature(
+    uint8Signature.slice(0, 32),
+    uint8Signature.slice(32, 64),
+  );
+  return Secp256k1.verifySignature(
+    signatureObject,
+    messageHash,
     pubKeyUint8Array,
-    uint8Signature,
   );
 }
 
@@ -58,7 +93,7 @@ export async function verifyXionSignatureAndGrants(
   messageString: string,
   signature: string,
 ): Promise<boolean> {
-  const isValid = verifyXionSignature(
+  const isValid = await verifyXionSignature(
     sessionAddress,
     pubKey,
     messageString,

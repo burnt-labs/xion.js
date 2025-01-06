@@ -1,7 +1,9 @@
 import { TextDecoder, TextEncoder } from "node:util";
-import { verifyADR36Amino } from "@keplr-wallet/cosmos";
 import { SignArbSecp256k1HdWallet } from "../src/SignArbSecp256k1HdWallet";
 import { AccountData } from "@cosmjs/proto-signing";
+import { serializeSignDoc } from "@cosmjs/amino";
+import { Secp256k1, Secp256k1Signature, Sha256 } from "@cosmjs/crypto";
+import { makeADR36AminoSignDoc } from "@/utils";
 
 global.TextEncoder = TextEncoder;
 // @ts-expect-error: TextDecoder is not available in testing environment by default.
@@ -39,12 +41,19 @@ describe("SignArbSecp256k1HdWallet", () => {
       const pubKeyValueBuffer = Buffer.from(pubKey, "base64"); // Decode the base64 encoded value
       const pubKeyUint8Array = new Uint8Array(pubKeyValueBuffer); // Convert the buffer to an Uint8Array
 
-      return verifyADR36Amino(
-        "xion",
-        address,
-        messageString,
+      const signDoc = makeADR36AminoSignDoc(address, messageString);
+      const serializedSignDoc = serializeSignDoc(signDoc);
+
+      const messageHash = new Sha256(serializedSignDoc).digest();
+      const signatureObject = new Secp256k1Signature(
+        uint8Signature.slice(0, 32),
+        uint8Signature.slice(32, 64),
+      );
+
+      return Secp256k1.verifySignature(
+        signatureObject,
+        messageHash,
         pubKeyUint8Array,
-        uint8Signature,
       );
     }
 
