@@ -5,9 +5,9 @@ import {
   encodeSecp256k1Signature,
   makeCosmoshubPath,
   rawSecp256k1PubkeyToRawAddress,
+  serializeSignDoc,
 } from "@cosmjs/amino";
 import { assert, isNonNullObject } from "@cosmjs/utils";
-import { Hash, PrivKeySecp256k1 } from "@keplr-wallet/crypto";
 import type { HdPath, Secp256k1Keypair } from "@cosmjs/crypto";
 import {
   Argon2id,
@@ -17,6 +17,7 @@ import {
   pathToString,
   Random,
   Secp256k1,
+  Sha256,
   sha256,
   Slip10,
   Slip10Curve,
@@ -29,7 +30,6 @@ import {
   toBech32,
   toUtf8,
 } from "@cosmjs/encoding";
-import { makeADR36AminoSignDoc, serializeSignDoc } from "@keplr-wallet/cosmos";
 import type { EncryptionConfiguration } from "@cosmjs/proto-signing/build/wallet";
 import {
   cosmjsSalt,
@@ -39,6 +39,7 @@ import {
   supportedAlgorithms,
 } from "@cosmjs/proto-signing/build/wallet";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import { makeADR36AminoSignDoc } from "./utils";
 
 const serializationTypeV1 = "directsecp256k1hdwallet-v1";
 
@@ -378,11 +379,12 @@ export class SignArbSecp256k1HdWallet {
     const { privkey } = account;
     const signDoc = makeADR36AminoSignDoc(signerAddress, message);
     const serializedSignDoc = serializeSignDoc(signDoc);
-    const digest = Hash.sha256(serializedSignDoc);
-    const cryptoPrivKey = new PrivKeySecp256k1(privkey);
-    const signature = cryptoPrivKey.signDigest32(digest);
+
+    const digest = new Sha256(serializedSignDoc).digest();
+    const signature = await Secp256k1.createSignature(digest, privkey);
+
     return Buffer.from(
-      new Uint8Array([...signature.r, ...signature.s]),
+      new Uint8Array([...signature.r(32), ...signature.s(32)]),
     ).toString("base64");
   };
 }

@@ -43,3 +43,21 @@ export type ContractGrantDescription =
       address: string;
       amounts: SpendLimit[];
     };
+
+export interface AminoSignDoc {
+  chain_id: string;
+  account_number: string;
+  sequence: string;
+  fee: {
+    amount: never[];
+    gas: string;
+  };
+  msgs: {
+    type: string;
+    value: {
+      signer: string;
+      data: string;
+    };
+  }[];
+  memo: string;
+}
