@@ -48,6 +48,6 @@
     "@cosmjs/tendermint-rpc": "^0.32.4",
     "@cosmjs/utils": "^0.32.4",
     "cosmjs-types": "^0.9.0",
-    "jose": "^5.1.3"
+    "jose": "^5.2.0"
   }
 }
