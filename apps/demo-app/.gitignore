@@ -16,6 +16,7 @@
 /build
 
 # misc
+.env
 .DS_Store
 *.pem
 
@@ -32,3 +33,6 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# next
+.open-next
