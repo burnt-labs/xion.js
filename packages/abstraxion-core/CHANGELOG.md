@@ -1,5 +1,13 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.50
+
+### Minor Changes
+
+- [#243](https://github.com/burnt-labs/xion.js/pull/243) [`9fad9c4`](https://github.com/burnt-labs/xion.js/commit/9fad9c415c3131a9b7f4fbc837d299e7cb33fd0d) Thanks [@BurntVal](https://github.com/BurntVal)! - GranteeSignerClient simulate extension for fee granter param
+
+- [#254](https://github.com/burnt-labs/xion.js/pull/254) [`ad2160d`](https://github.com/burnt-labs/xion.js/commit/ad2160d2b5c8192c7b838a477454f64be14ad79c) Thanks [@BurntVal](https://github.com/BurntVal)! - Remove keplr dependencies to resolve related bugs
+
 ## 1.0.0-alpha.49
 
 ### Minor Changes

@@ -1,12 +1,16 @@
 {
   "name": "demo-app",
-  "version": "1.1.0-alpha.39",
+  "version": "1.1.0-alpha.40",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:worker": "opennextjs-cloudflare",
+    "dev:worker": "wrangler dev --port 8771",
+    "preview:worker": "npm run build:worker && npm run dev:worker",
+    "deploy:worker": "npm run build:worker && wrangler deploy"
   },
   "dependencies": {
     "@burnt-labs/abstraxion": "workspace:*",
@@ -16,8 +20,8 @@
     "@burnt-labs/ui": "workspace:*",
     "@cosmjs/amino": "^0.32.4",
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
+    "@cosmjs/crypto": "^0.32.4",
     "@heroicons/react": "^2.1.4",
-    "@keplr-wallet/cosmos": "^0.12.80",
     "cosmjs-types": "^0.9.0",
     "next": "^14.0.3",
     "react": "^18.2.0",
@@ -28,6 +32,8 @@
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
     "@next/eslint-plugin-next": "^13.4.19",
+    "@opennextjs/aws": "^3.3.1",
+    "@opennextjs/cloudflare": "^0.3.8",
     "@types/node": "^20",
     "@types/react": "^18.2.47",
     "@types/react-dom": "^18.2.18",
@@ -35,6 +41,7 @@
     "eslint-config-next": "14.0.4",
     "postcss": "^8.4.20",
     "tailwindcss": "^3.2.4",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "wrangler": "^3.101.0"
   }
 }

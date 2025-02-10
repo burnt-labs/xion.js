@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/abstraxion-core",
-  "version": "1.0.0-alpha.49",
+  "version": "1.0.0-alpha.50",
   "sideEffects": [
     "**/*.css"
   ],
@@ -44,12 +44,11 @@
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
     "@cosmjs/crypto": "^0.32.4",
     "@cosmjs/encoding": "^0.32.4",
+    "@cosmjs/math": "^0.32.4",
     "@cosmjs/proto-signing": "^0.32.4",
     "@cosmjs/stargate": "^0.32.4",
     "@cosmjs/tendermint-rpc": "^0.32.4",
     "@cosmjs/utils": "^0.32.4",
-    "@keplr-wallet/cosmos": "^0.12.67",
-    "@keplr-wallet/crypto": "^0.12.69",
     "cosmjs-types": "^0.9.0",
     "jose": "^5.1.3"
   }
