@@ -1,0 +1,39 @@
+{
+  "grant_config": [
+    {
+      "msg_type_url": "/cosmwasm.wasm.v1.MsgExecuteContract",
+      "grant_config": {
+        "description": "Sample contract execution grant",
+        "authorization": {
+          "@type": "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+          "grants": [
+            {
+              "contract": "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka",
+              "limit": {
+                "@type": "/cosmwasm.wasm.v1.MaxCallsLimit",
+                "remaining": "5"
+              },
+              "filter": {
+                "@type": "/cosmwasm.wasm.v1.AllowAllMessagesFilter"
+              }
+            }
+          ]
+        },
+        "optional": false
+      }
+    }
+  ],
+  "fee_config": {
+    "description": "Sample fee allowance",
+    "allowance": {
+      "@type": "/cosmos.feegrant.v1beta1.BasicAllowance",
+      "spend_limit": [
+        {
+          "denom": "uxion",
+          "amount": "1000"
+        }
+      ],
+      "expiration": "2025-01-01T00:00:00Z"
+    }
+  }
+}
