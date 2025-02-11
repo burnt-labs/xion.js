@@ -86,5 +86,10 @@ jobs:
       - name: 🔄 Install Dependencies
         run: pnpm install
 
+      - name: 🏗️ Build
+        id: build-the-mono-repo
+        run: |
+          pnpm build
+
       - name: 🧪 Run Tests
         run: pnpm test
