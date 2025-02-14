@@ -69,7 +69,9 @@ jobs:
           pnpm build
 
       - name: Load SSH signing key
-        run: echo "${{ secrets.SSH_SIGNING_PK }}" > /tmp/.git_signing_key
+        run: |
+          echo "${{ secrets.SSH_SIGNING_PK }}" > /tmp/.git_signing_key
+          chmod 600 /tmp/.git_signing_key
         shell: bash
 
       - name: Set git user
