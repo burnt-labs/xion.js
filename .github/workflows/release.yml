@@ -71,8 +71,8 @@ jobs:
       - name: Set git user
         shell: bash
         run: |
-          git config user.name "burnt-daemon"
-          git config user.email "146226939+burnt-daemon@users.noreply.github.com"
+          git config user.name "isburnt"
+          git config user.email "197779235+isburnt@users.noreply.github.com"
           git config commit.gpgsign true
           git config gpg.format ssh
           git config user.signingkey 'key::${{ secrets.SSH_SIGNING_PK }}'
