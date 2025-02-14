@@ -1,5 +1,20 @@
 # demo-app
 
+## 1.1.0-alpha.41
+
+### Minor Changes
+
+- [#237](https://github.com/burnt-labs/xion.js/pull/237) [`cff2a3e`](https://github.com/burnt-labs/xion.js/commit/cff2a3e7eabdb1ab217ea7410ca30abfc81e8401) Thanks [@BurntVal](https://github.com/BurntVal)! - implement extended grant checks for legacy grant configs and treasury contracts
+
+- [#256](https://github.com/burnt-labs/xion.js/pull/256) [`974dae0`](https://github.com/burnt-labs/xion.js/commit/974dae00d50f3934ddda400d1738f727c887e4ca) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added cloudflare config
+
+### Patch Changes
+
+- Updated dependencies [[`cff2a3e`](https://github.com/burnt-labs/xion.js/commit/cff2a3e7eabdb1ab217ea7410ca30abfc81e8401)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.51
+  - @burnt-labs/abstraxion@1.0.0-alpha.56
+  - @burnt-labs/ui@0.1.0-alpha.16
+
 ## 1.1.0-alpha.40
 
 ### Minor Changes
