@@ -10,7 +10,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "changeset": "changeset",
     "publish:packages": "changeset publish",
-    "version:packages": "changeset version"
+    "version:packages": "changeset version",
+    "test": "turbo run test"
   },
   "packageManager": "pnpm@8.9.0",
   "dependencies": {

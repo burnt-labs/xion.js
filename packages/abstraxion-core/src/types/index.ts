@@ -4,10 +4,19 @@ export interface GrantsResponse {
 }
 
 export interface Grant {
-  granter: string;
-  grantee: string;
-  authorization: Authorization;
+  granter?: string;
+  grantee?: string;
+  authorization: any;
   expiration: string;
+}
+
+export interface TreasuryGrantConfig {
+  description: string;
+  authorization: {
+    type_url: string;
+    value: string;
+  };
+  optional: boolean;
 }
 
 export interface Authorization {
@@ -23,7 +32,9 @@ export interface GrantAuthorization {
 
 export interface Limit {
   "@type": string;
-  remaining: string;
+  remaining?: string;
+  calls_remaining?: string;
+  amounts?: SpendLimit[];
 }
 
 export interface Filter {
@@ -44,6 +55,29 @@ export type ContractGrantDescription =
       amounts: SpendLimit[];
     };
 
+export interface DecodeAuthorizationResponse {
+  msg?: string;
+  spendLimit?: string;
+  allowList?: string[];
+  authorizationType?: string;
+  maxTokens?: string;
+  denyList?: string[];
+  contracts?: {
+    contract: string;
+    limitType?: string;
+    maxCalls?: string;
+    maxFunds?: { denom: string; amount: string }[];
+    combinedLimits?: {
+      maxCalls: string;
+      maxFunds: { denom: string; amount: string }[];
+    };
+    filter?: {
+      typeUrl: string;
+      keys?: string[];
+      messages?: Uint8Array[];
+    };
+  }[];
+}
 export interface AminoSignDoc {
   chain_id: string;
   account_number: string;

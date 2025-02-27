@@ -3,7 +3,7 @@ import { SignArbSecp256k1HdWallet } from "../src/SignArbSecp256k1HdWallet";
 import { AccountData } from "@cosmjs/proto-signing";
 import { serializeSignDoc } from "@cosmjs/amino";
 import { Secp256k1, Secp256k1Signature, Sha256 } from "@cosmjs/crypto";
-import { makeADR36AminoSignDoc } from "@/utils";
+import { makeADR36AminoSignDoc } from "../src/utils";
 
 global.TextEncoder = TextEncoder;
 // @ts-expect-error: TextDecoder is not available in testing environment by default.
@@ -60,7 +60,6 @@ describe("SignArbSecp256k1HdWallet", () => {
     const granterAddress =
       "xion15wvfkv5wkp7dvxquxm3nkhrfy98nahjqpp3a2r5h9tcj29r9wxnq6j5eeh";
 
-    console.log(account.algo);
     const { pubkey, address: granteeAddress } = account;
 
     const exampleMessage = "Test message";

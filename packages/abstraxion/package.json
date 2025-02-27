@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/abstraxion",
-  "version": "1.0.0-alpha.55",
+  "version": "1.0.0-alpha.56",
   "sideEffects": [
     "**/*.css"
   ],
@@ -13,8 +13,7 @@
     "lint": "eslint src/",
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
-    "clean": "rimraf ./dist",
-    "test": "jest"
+    "clean": "rimraf ./dist"
   },
   "peerDependencies": {
     "react": "^18.2.0",
