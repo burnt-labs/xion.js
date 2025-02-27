@@ -11,6 +11,10 @@ import {
   mockGrantsResponseForTreasury,
   mockLegacyConfig,
 } from "./mockData/grantResponses";
+import {
+  MockStorageStrategy,
+  MockRedirectStrategy,
+} from "./mockData/mockStrategies";
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
@@ -37,9 +41,16 @@ const configureAbstraxionAuthInstance = (abstraxionAuth: AbstraxionAuth) => {
 describe("AbstraxionAuth", () => {
   let abstraxionAuth: AbstraxionAuth;
   let cosmwasmClient: jest.Mocked<CosmWasmClient>;
+  let mockStorage: MockStorageStrategy;
+  let mockRedirect: MockRedirectStrategy;
 
   beforeEach(async () => {
-    abstraxionAuth = new AbstraxionAuth();
+    mockStorage = new MockStorageStrategy();
+    mockRedirect = new MockRedirectStrategy();
+    abstraxionAuth = new AbstraxionAuth(
+      new MockStorageStrategy(),
+      new MockRedirectStrategy(),
+    );
 
     cosmwasmClient = jest.createMockFromModule("@cosmjs/cosmwasm-stargate");
     abstraxionAuth.getCosmWasmClient = jest
@@ -52,6 +63,8 @@ describe("AbstraxionAuth", () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    mockStorage.clear();
+    mockRedirect.reset();
   });
 
   describe("constructor", () => {
@@ -70,7 +83,7 @@ describe("AbstraxionAuth", () => {
         .mockResolvedValueOnce(undefined);
       const getGranterMock = jest
         .spyOn(abstraxionAuth, "getGranter")
-        .mockReturnValueOnce("");
+        .mockResolvedValueOnce("");
 
       const generateAndStoreTempAccountMock = jest
         .spyOn(abstraxionAuth, "generateAndStoreTempAccount")
@@ -102,7 +115,7 @@ describe("AbstraxionAuth", () => {
         } as any);
       const getGranterMock = jest
         .spyOn(abstraxionAuth, "getGranter")
-        .mockReturnValueOnce("granterAddress");
+        .mockResolvedValueOnce("granterAddress");
 
       const pollForGrantsMock = jest
         .spyOn(abstraxionAuth, "pollForGrants")

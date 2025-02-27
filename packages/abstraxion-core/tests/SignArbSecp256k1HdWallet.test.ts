@@ -43,15 +43,12 @@ describe("SignArbSecp256k1HdWallet", () => {
 
       const signDoc = makeADR36AminoSignDoc(address, messageString);
       const serializedSignDoc = serializeSignDoc(signDoc);
-
       const messageHash = new Sha256(serializedSignDoc).digest();
-      const signatureObject = new Secp256k1Signature(
-        uint8Signature.slice(0, 32),
-        uint8Signature.slice(32, 64),
-      );
+
+      const signatureParts = Secp256k1Signature.fromFixedLength(uint8Signature);
 
       return Secp256k1.verifySignature(
-        signatureObject,
+        signatureParts,
         messageHash,
         pubKeyUint8Array,
       );
