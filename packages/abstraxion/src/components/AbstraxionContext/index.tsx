@@ -112,7 +112,7 @@ export function AbstraxionContextProvider({
           setIsConnected(newState);
           if (newState) {
             const account = await abstraxionAuth.getLocalKeypair();
-            const granterAddress = abstraxionAuth.getGranter();
+            const granterAddress = await abstraxionAuth.getGranter();
             setAbstraxionAccount(account);
             setGranterAddress(granterAddress);
           }
