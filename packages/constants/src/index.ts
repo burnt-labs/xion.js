@@ -104,7 +104,7 @@ export const testChainInfo: ChainInfo = {
 const DASHBOARD_URLS = {
   "xion-mainnet-1": "https://settings.mainnet.burnt.com",
   "xion-testnet-1": "https://settings.testnet.burnt.com",
-  "xion-testnet-2": "https://settings.testnet.burnt.com",
+  "xion-testnet-2": "https://auth.testnet.burnt.com",
 };
 
 const REST_URLS = {
