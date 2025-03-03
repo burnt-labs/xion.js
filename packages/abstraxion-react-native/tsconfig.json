@@ -1,0 +1,10 @@
+{
+  "extends": "@burnt-labs/tsconfig/react-library.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "outDir": "dist",
+    "lib": ["ES2019"],
+    "jsx": "react-native",
+    "skipLibCheck": true
+  }
+}
