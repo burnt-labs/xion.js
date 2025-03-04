@@ -301,7 +301,7 @@ export class AbstraxionAuth {
       }
       const userAddress = await this.getKeypairAddress();
       const { dashboardUrl } = await fetchConfig(this.rpcUrl);
-      this.configureUrlAndRedirect(dashboardUrl, userAddress);
+      await this.configureUrlAndRedirect(dashboardUrl, userAddress);
     } catch (error) {
       console.warn(
         "Something went wrong trying to redirect to XION dashboard: ",
