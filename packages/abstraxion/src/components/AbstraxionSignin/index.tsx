@@ -12,7 +12,7 @@ export function AbstraxionSignin(): JSX.Element {
   const isMounted = useRef(false);
 
   const retryRedirect = async () => {
-    abstraxionAuth.redirectToDashboard();
+    await abstraxionAuth.redirectToDashboard();
   };
 
   useEffect(() => {
