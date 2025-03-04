@@ -948,7 +948,7 @@ export class AbstraxionAuth {
         this.abstractAccount = keypair;
         this.triggerAuthStateChange(true);
 
-        if (typeof window !== undefined) {
+        if (typeof window !== 'undefined') {
           const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.delete("granted");
           currentUrl.searchParams.delete("granter");
