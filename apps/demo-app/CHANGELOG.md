@@ -1,5 +1,20 @@
 # demo-app
 
+## 1.1.0-alpha.43
+
+### Minor Changes
+
+- [#270](https://github.com/burnt-labs/xion.js/pull/270) [`be7b831`](https://github.com/burnt-labs/xion.js/commit/be7b83152baff11d025f09efe7ddaa173768f659) Thanks [@BurntVal](https://github.com/BurntVal)! - implement strategy patterns for storage and redirect operations
+
+### Patch Changes
+
+- Updated dependencies [[`be7b831`](https://github.com/burnt-labs/xion.js/commit/be7b83152baff11d025f09efe7ddaa173768f659)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.53
+  - @burnt-labs/abstraxion@1.0.0-alpha.58
+  - @burnt-labs/constants@0.1.0-alpha.16
+  - @burnt-labs/ui@0.1.0-alpha.17
+  - @burnt-labs/signers@0.1.0-alpha.13
+
 ## 1.1.0-alpha.42
 
 ### Patch Changes
