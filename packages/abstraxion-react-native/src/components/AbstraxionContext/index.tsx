@@ -4,7 +4,15 @@ import { testnetChainInfo, xionGasValues } from "@burnt-labs/constants";
 import { GasPrice } from "@cosmjs/stargate";
 import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
 import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
-import { ReactNativeRedirectStrategy, ReactNativeStorageStrategy } from "../../strategies";
+import {
+  ReactNativeRedirectStrategy,
+  ReactNativeStorageStrategy,
+} from "../../strategies";
+
+export const abstraxionAuth = new AbstraxionAuth(
+  new ReactNativeStorageStrategy(),
+  new ReactNativeRedirectStrategy(),
+);
 
 export type SpendLimit = { denom: string; amount: string };
 
@@ -38,15 +46,43 @@ export interface AbstraxionContextProps {
   logout: () => void;
 }
 
+export interface AbstraxionConfig {
+  contracts?: ContractGrantDescription[];
+  rpcUrl?: string;
+  restUrl?: string;
+  stake?: boolean;
+  bank?: SpendLimit[];
+  callbackUrl?: string;
+  treasury?: string;
+  gasPrice?: string;
+}
+
+export function AbstraxionProvider({
+  children,
+  config,
+}: {
+  children: React.ReactNode;
+  config: AbstraxionConfig;
+}): JSX.Element {
+  return (
+    <AbstraxionContextProvider
+      contracts={config.contracts}
+      rpcUrl={config.rpcUrl}
+      restUrl={config.restUrl}
+      stake={config.stake}
+      bank={config.bank}
+      callbackUrl={config.callbackUrl}
+      treasury={config.treasury}
+      gasPrice={config.gasPrice}
+    >
+      {children}
+    </AbstraxionContextProvider>
+  );
+}
+
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
   {} as AbstraxionContextProps,
 );
-
-export const abstraxionAuth = new AbstraxionAuth(
-  new ReactNativeStorageStrategy();
-  new ReactNativeRedirectStrategy();
-);
-
 
 export function AbstraxionContextProvider({
   children,
