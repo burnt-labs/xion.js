@@ -1,5 +1,5 @@
 ---
-"@burnt-labs/abstraxion-core": minor
+"@burnt-labs/abstraxion-core": major
 "@burnt-labs/abstraxion": minor
 "@burnt-labs/constants": minor
 "demo-app": minor
