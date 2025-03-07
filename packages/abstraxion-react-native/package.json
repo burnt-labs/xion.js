@@ -6,7 +6,9 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
-    "dist/**"
+    "dist/**",
+    "libsodiumWrapper.js",
+    "metro.libsodium.js"
   ],
   "sideEffects": false,
   "publishConfig": {
@@ -16,8 +18,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "clean": "rimraf dist",
-    "lint": "eslint src/",
-    "test": "jest"
+    "lint": "eslint src/"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
