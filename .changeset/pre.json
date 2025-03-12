@@ -10,7 +10,8 @@
     "@burnt-labs/tailwind-config": "0.0.0",
     "@burnt-labs/tsconfig": "0.0.0",
     "@burnt-labs/ui": "0.0.0",
-    "@burnt-labs/abstraxion-core": "1.0.0-alpha.29"
+    "@burnt-labs/abstraxion-core": "1.0.0-alpha.29",
+    "@burnt-labs/abstraxion-react-native": "0.1.0"
   },
   "changesets": [
     "beige-suns-tell",
@@ -37,6 +38,7 @@
     "fuzzy-rats-count",
     "good-cougars-turn",
     "great-bags-drum",
+    "grumpy-bananas-sleep",
     "happy-lies-check",
     "honest-apples-admire",
     "hot-terms-reply",
@@ -45,6 +47,7 @@
     "khaki-rats-beam",
     "kind-beans-return",
     "light-penguins-deny",
+    "little-waves-obey",
     "long-icons-kiss",
     "long-windows-look",
     "modern-mayflies-invent",
