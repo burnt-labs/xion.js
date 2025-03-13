@@ -1,4 +1,12 @@
-# @burnt-labs/signers
+# @burnt-labs/signers [DEPRECATED]
+
+> ⚠️ **DEPRECATED**: This package is deprecated as of [CURRENT DATE] and will no longer receive updates or maintenance.
+
+## 0.1.0-alpha.14
+
+### Major Changes
+
+- Package deprecated. This package will no longer receive updates or maintenance. Please contact the Burnt Labs team for migration guidance and alternative solutions.
 
 ## 0.1.0-alpha.13
 

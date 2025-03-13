@@ -58,6 +58,10 @@ function createDefaultRegistry(): Registry {
   return new Registry(AADefaultRegistryTypes);
 }
 
+/**
+ * @deprecated This class is deprecated and will no longer be maintained.
+ * Please contact the Burnt Labs team for alternative solutions.
+ */
 export class AAClient extends SigningCosmWasmClient {
   /// The signer used to crate AA signatures
   public abstractSigner: AASigner;

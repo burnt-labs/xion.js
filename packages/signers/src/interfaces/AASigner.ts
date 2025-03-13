@@ -3,6 +3,8 @@ import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { AAAlgo } from "./smartAccount";
 
 /**
+ * @deprecated This interface is deprecated and will no longer be maintained.
+ * Please contact the Burnt Labs team for alternative solutions.
  * @extends AccountData
  */
 export interface AAccountData extends AccountData {
@@ -13,6 +15,11 @@ export interface AAccountData extends AccountData {
   // The AA algorithm type
   readonly aaalgo?: AAAlgo;
 }
+
+/**
+ * @deprecated This class is deprecated and will no longer be maintained.
+ * Please contact the Burnt Labs team for alternative solutions.
+ */
 export abstract class AASigner {
   /// The abstract account address of the signer
   /// must be set by implementing class
@@ -59,7 +66,10 @@ export abstract class AASigner {
   abstract getAccounts(): Promise<readonly AAccountData[]>;
 }
 
-// Default implementation for a signer class
+/**
+ * @deprecated This class is deprecated and will no longer be maintained.
+ * Please contact the Burnt Labs team for alternative solutions.
+ */
 export class AADefaultSigner extends AASigner {
   constructor(abstractAccount: string) {
     super(abstractAccount);

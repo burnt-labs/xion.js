@@ -5,6 +5,10 @@ import { AAccountData, AASigner } from "../interfaces/AASigner";
 import { AAAlgo } from "../interfaces/smartAccount";
 import { getAuthenticatorIdByAuthenticatorIndex } from "./utils";
 
+/**
+ * @deprecated This class is deprecated and will no longer be maintained.
+ * Please contact the Burnt Labs team for alternative solutions.
+ */
 export class AbstractAccountJWTSigner extends AASigner {
   // requires a session token already created
   sessionToken: string | undefined;
