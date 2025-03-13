@@ -1,4 +1,4 @@
-import { customAccountFromAny } from "@burnt-labs/signers";
+import { customAccountFromAny } from "./utils";
 import {
   DeliverTxResponse,
   SigningCosmWasmClient,
