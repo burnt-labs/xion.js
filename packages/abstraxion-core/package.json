@@ -21,7 +21,6 @@
     "@babel/preset-env": "^7.24.5",
     "@babel/preset-typescript": "^7.26.0",
     "@burnt-labs/eslint-config-custom": "workspace:*",
-    "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
     "@types/jest": "^29.5.12",
@@ -39,7 +38,6 @@
   },
   "dependencies": {
     "@burnt-labs/constants": "workspace:*",
-    "@burnt-labs/signers": "workspace:*",
     "@cosmjs/amino": "^0.32.4",
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
     "@cosmjs/crypto": "^0.32.4",

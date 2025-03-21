@@ -33,3 +33,5 @@ export function makeADR36AminoSignDoc(
     memo: "",
   };
 }
+
+export { customAccountFromAny } from './accountParser';
