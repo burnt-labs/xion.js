@@ -34,4 +34,5 @@ export function makeADR36AminoSignDoc(
   };
 }
 
-export { customAccountFromAny } from './accountParser';
+export { customAccountFromAny } from "./accountParser";
+export { getRpcClient } from "./rpcClient";

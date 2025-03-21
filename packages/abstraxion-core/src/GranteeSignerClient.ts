@@ -1,4 +1,4 @@
-import { customAccountFromAny } from "./utils";
+import { customAccountFromAny, getRpcClient } from "./utils";
 import {
   DeliverTxResponse,
   SigningCosmWasmClient,
@@ -11,20 +11,16 @@ import {
   OfflineSigner,
 } from "@cosmjs/proto-signing";
 import {
+  type Account,
   calculateFee,
   createProtobufRpcClient,
   GasPrice,
-  type Account,
   type SignerData,
   type StdFee,
 } from "@cosmjs/stargate";
 import { AuthInfo, Fee, TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
-import {
-  HttpEndpoint,
-  Tendermint37Client,
-  TendermintClient,
-} from "@cosmjs/tendermint-rpc";
+import { CometClient, HttpEndpoint } from "@cosmjs/tendermint-rpc";
 import { Uint53 } from "@cosmjs/math";
 import { encodeSecp256k1Pubkey } from "@cosmjs/amino";
 import {
@@ -66,12 +62,12 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     signer: OfflineSigner,
     options: SigningCosmWasmClientOptions & GranteeSignerOptions,
   ): Promise<GranteeSignerClient> {
-    const tmClient = await Tendermint37Client.connect(endpoint);
+    const tmClient = await getRpcClient(endpoint);
     return GranteeSignerClient.createWithSigner(tmClient, signer, options);
   }
 
   public static async createWithSigner(
-    cometClient: TendermintClient,
+    cometClient: CometClient,
     signer: OfflineSigner,
     options: SigningCosmWasmClientOptions & GranteeSignerOptions,
   ): Promise<GranteeSignerClient> {
@@ -79,7 +75,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
   }
 
   protected constructor(
-    cometClient: TendermintClient | undefined,
+    cometClient: CometClient | undefined,
     signer: OfflineSigner,
     {
       granterAddress,
