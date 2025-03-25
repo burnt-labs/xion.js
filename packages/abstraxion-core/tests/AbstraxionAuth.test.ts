@@ -15,6 +15,7 @@ import {
   MockStorageStrategy,
   MockRedirectStrategy,
 } from "./mockData/mockStrategies";
+import { DecodeAuthorizationResponse } from "@/types";
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
@@ -273,6 +274,151 @@ describe("AbstraxionAuth", () => {
         mockGrantsResponseForTreasury,
       );
       expect(result).toBe(true);
+    });
+  });
+
+  describe("validateContractExecution", () => {
+    it("should return true when decoded grants match the chain grants", () => {
+      const decodedAuthorization: DecodeAuthorizationResponse = {
+        contracts: [
+          {
+            contract:
+              "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
+            limitType: "CombinedLimit",
+            combinedLimits: {
+              maxCalls: "1000",
+              maxFunds: [
+                {
+                  denom:
+                    "ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4",
+                  amount: "10000",
+                },
+              ],
+            },
+            filter: {
+              typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+            },
+          },
+          {
+            contract:
+              "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
+            limitType: "CombinedLimit",
+            combinedLimits: {
+              maxCalls: "1000",
+              maxFunds: [
+                {
+                  denom: "uxion",
+                  amount: "1000000",
+                },
+              ],
+            },
+            filter: {
+              typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+            },
+          },
+        ],
+      };
+
+      const chainAuthorization = {
+        grants: [
+          {
+            contract:
+              "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
+            limit: {
+              "@type": "/cosmwasm.wasm.v1.CombinedLimit",
+              calls_remaining: "1000",
+              amounts: [
+                {
+                  denom: "uxion",
+                  amount: "1000000",
+                },
+              ],
+            },
+            filter: {
+              "@type": "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+            },
+          },
+          {
+            contract:
+              "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
+            limit: {
+              "@type": "/cosmwasm.wasm.v1.CombinedLimit",
+              calls_remaining: "1000",
+              amounts: [
+                {
+                  denom:
+                    "ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4",
+                  amount: "10000",
+                },
+              ],
+            },
+            filter: {
+              "@type": "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+            },
+          },
+        ],
+      };
+
+      const result = abstraxionAuth.validateContractExecution(
+        decodedAuthorization,
+        chainAuthorization,
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false when decoded grants do not match the chain grants", () => {
+      const decodedAuthorization: DecodeAuthorizationResponse = {
+        contracts: [
+          {
+            contract:
+              "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
+            limitType: "CombinedLimit",
+            combinedLimits: {
+              maxCalls: "1000",
+              maxFunds: [
+                {
+                  denom:
+                    "ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4",
+                  amount: "10000",
+                },
+              ],
+            },
+            filter: {
+              typeUrl: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+            },
+          },
+        ],
+      };
+
+      const chainAuthorization = {
+        grants: [
+          {
+            contract:
+              "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
+            limit: {
+              "@type": "/cosmwasm.wasm.v1.CombinedLimit",
+              calls_remaining: "1000",
+              amounts: [
+                {
+                  denom: "uxion",
+                  amount: "1000000",
+                },
+              ],
+            },
+            filter: {
+              "@type": "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+            },
+          },
+        ],
+      };
+
+      const result = abstraxionAuth.validateContractExecution(
+        decodedAuthorization,
+        chainAuthorization,
+      );
+
+      expect(result).toBe(false);
     });
   });
 });

@@ -383,16 +383,16 @@ export class AbstraxionAuth {
 
         return amounts.length
           ? matchingGrants.some((grant) =>
-            grant.authorization.grants.some(
-              (authGrant: GrantAuthorization) =>
-                authGrant.limit.amounts &&
-                authGrant.limit.amounts.every(
-                  (limit: SpendLimit, index: number) =>
-                    limit.denom === amounts[index].denom &&
-                    limit.amount === amounts[index].amount,
-                ),
-            ),
-          )
+              grant.authorization.grants.some(
+                (authGrant: GrantAuthorization) =>
+                  authGrant.limit.amounts &&
+                  authGrant.limit.amounts.every(
+                    (limit: SpendLimit, index: number) =>
+                      limit.denom === amounts[index].denom &&
+                      limit.amount === amounts[index].amount,
+                  ),
+              ),
+            )
           : true;
       });
     };
@@ -514,24 +514,24 @@ export class AbstraxionAuth {
         let maxFunds: { denom: string; amount: string }[] | undefined;
         let combinedLimits:
           | {
-            maxCalls: string;
-            maxFunds: { denom: string; amount: string }[];
-          }
+              maxCalls: string;
+              maxFunds: { denom: string; amount: string }[];
+            }
           | undefined;
         let filter = grant.filter
           ? {
-            typeUrl: grant.filter.typeUrl,
-            keys:
-              grant.filter.typeUrl ===
+              typeUrl: grant.filter.typeUrl,
+              keys:
+                grant.filter.typeUrl ===
                 "/cosmwasm.wasm.v1.AcceptedMessageKeysFilter"
-                ? AcceptedMessageKeysFilter.decode(grant.filter.value).keys
-                : undefined,
-            messages:
-              grant.filter.typeUrl ===
+                  ? AcceptedMessageKeysFilter.decode(grant.filter.value).keys
+                  : undefined,
+              messages:
+                grant.filter.typeUrl ===
                 "/cosmwasm.wasm.v1.AcceptedMessagesFilter"
-                ? AcceptedMessagesFilter.decode(grant.filter.value).messages
-                : undefined,
-          }
+                  ? AcceptedMessagesFilter.decode(grant.filter.value).messages
+                  : undefined,
+            }
           : undefined;
 
         // Decode limit based on type_url
@@ -597,7 +597,7 @@ export class AbstraxionAuth {
    * @returns {boolean} Returns true if all contract execution authorizations match,
    *         false if any discrepancy is found
    */
-  private validateContractExecution(
+  validateContractExecution(
     decodedAuth: DecodeAuthorizationResponse | null,
     chainAuth: any,
   ): boolean {
@@ -605,7 +605,7 @@ export class AbstraxionAuth {
     const decodedGrants = decodedAuth?.contracts || [];
 
     return decodedGrants.every((decodedGrant) => {
-      const matchingChainGrant = chainGrants.find((chainGrant: any) => {
+      const matchingChainGrants = chainGrants.filter((chainGrant: any) => {
         // Basic contract match
         if (chainGrant.contract !== decodedGrant.contract) {
           return false;
@@ -663,39 +663,45 @@ export class AbstraxionAuth {
         return true;
       });
 
-      if (!matchingChainGrant) {
+      if (matchingChainGrants.length === 0) {
         return false;
       }
 
-      switch (decodedGrant.limitType) {
-        case "MaxCalls":
-          return (
-            matchingChainGrant.limit?.["@type"] ===
-            "/cosmwasm.wasm.v1.MaxCallsLimit" &&
-            decodedGrant.maxCalls === matchingChainGrant.limit.remaining
-          );
+      const limitMatches = matchingChainGrants.some(
+        (matchingChainGrant: any) => {
+          switch (decodedGrant.limitType) {
+            case "MaxCalls":
+              return (
+                matchingChainGrant.limit?.["@type"] ===
+                  "/cosmwasm.wasm.v1.MaxCallsLimit" &&
+                decodedGrant.maxCalls === matchingChainGrant.limit.remaining
+              );
 
-        case "MaxFunds":
-          return (
-            matchingChainGrant.limit?.["@type"] ===
-            "/cosmwasm.wasm.v1.MaxFundsLimit" &&
-            JSON.stringify(decodedGrant.maxFunds) ===
-            JSON.stringify(matchingChainGrant.limit.amounts)
-          );
+            case "MaxFunds":
+              return (
+                matchingChainGrant.limit?.["@type"] ===
+                  "/cosmwasm.wasm.v1.MaxFundsLimit" &&
+                JSON.stringify(decodedGrant.maxFunds) ===
+                  JSON.stringify(matchingChainGrant.limit.amounts)
+              );
 
-        case "CombinedLimit":
-          return (
-            matchingChainGrant.limit?.["@type"] ===
-            "/cosmwasm.wasm.v1.CombinedLimit" &&
-            decodedGrant.combinedLimits?.maxCalls ===
-            matchingChainGrant.limit.calls_remaining &&
-            JSON.stringify(decodedGrant.combinedLimits?.maxFunds) ===
-            JSON.stringify(matchingChainGrant.limit.amounts)
-          );
+            case "CombinedLimit":
+              return (
+                matchingChainGrant.limit?.["@type"] ===
+                  "/cosmwasm.wasm.v1.CombinedLimit" &&
+                decodedGrant.combinedLimits?.maxCalls ===
+                  matchingChainGrant.limit.calls_remaining &&
+                JSON.stringify(decodedGrant.combinedLimits?.maxFunds) ===
+                  JSON.stringify(matchingChainGrant.limit.amounts)
+              );
 
-        default:
-          return false;
-      }
+            default:
+              return false;
+          }
+        },
+      );
+
+      return limitMatches;
     });
   }
 
@@ -756,21 +762,21 @@ export class AbstraxionAuth {
         if (chainAuthType === "/cosmos.bank.v1beta1.SendAuthorization") {
           return (
             decodedAuthorization?.spendLimit ===
-            chainAuthorization.spendLimit &&
+              chainAuthorization.spendLimit &&
             JSON.stringify(decodedAuthorization?.allowList) ===
-            JSON.stringify(chainAuthorization.allowList)
+              JSON.stringify(chainAuthorization.allowList)
           );
         }
 
         if (chainAuthType === "/cosmos.staking.v1beta1.StakeAuthorization") {
           return (
             decodedAuthorization?.authorizationType ===
-            chainAuthorization.authorizationType &&
+              chainAuthorization.authorizationType &&
             decodedAuthorization?.maxTokens === chainAuthorization.maxTokens &&
             JSON.stringify(decodedAuthorization?.allowList) ===
-            JSON.stringify(chainAuthorization.allowList) &&
+              JSON.stringify(chainAuthorization.allowList) &&
             JSON.stringify(decodedAuthorization?.denyList) ===
-            JSON.stringify(chainAuthorization.denyList)
+              JSON.stringify(chainAuthorization.denyList)
           );
         }
 
@@ -948,7 +954,7 @@ export class AbstraxionAuth {
         this.abstractAccount = keypair;
         this.triggerAuthStateChange(true);
 
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.delete("granted");
           currentUrl.searchParams.delete("granter");
