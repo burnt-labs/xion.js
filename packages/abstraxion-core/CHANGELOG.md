@@ -1,5 +1,19 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.54
+
+### Minor Changes
+
+- [#278](https://github.com/burnt-labs/xion.js/pull/278) [`86c23e3`](https://github.com/burnt-labs/xion.js/commit/86c23e33ad080fcb465453564e1df93762efb75f) Thanks [@BurntVal](https://github.com/BurntVal)! - introduces enhancements to the AbstraxionAuth class and its associated test suite. The changes aim to improve the functionality and reliability of the authentication process, particularly in handling and verifying grants.
+
+### Patch Changes
+
+- [#277](https://github.com/burnt-labs/xion.js/pull/277) [`cfd3e01`](https://github.com/burnt-labs/xion.js/commit/cfd3e01e1ee3b161184a415debb5b87888a65549) Thanks [@justinbarry](https://github.com/justinbarry)! - \* Upgrade @cosmjs packages from 0.32.4 to 0.33.1 to support Comet38.
+
+  - Reduce calls to RPC status endpoint.
+
+- [#275](https://github.com/burnt-labs/xion.js/pull/275) [`7228469`](https://github.com/burnt-labs/xion.js/commit/72284694eb61be083829488e8916e46e9836b4e6) Thanks [@justinbarry](https://github.com/justinbarry)! - Move customAccountFromAny function from deprecated @burnt-labs/signers package to abstraxion-core to remove the dependency.
+
 ## 1.0.0-alpha.53
 
 ### Major Changes

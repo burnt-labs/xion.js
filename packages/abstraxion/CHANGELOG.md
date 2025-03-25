@@ -1,5 +1,14 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.59
+
+### Patch Changes
+
+- [#277](https://github.com/burnt-labs/xion.js/pull/277) [`cfd3e01`](https://github.com/burnt-labs/xion.js/commit/cfd3e01e1ee3b161184a415debb5b87888a65549) Thanks [@justinbarry](https://github.com/justinbarry)! - \* Upgrade @cosmjs packages from 0.32.4 to 0.33.1 to support Comet38.
+  - Reduce calls to RPC status endpoint.
+- Updated dependencies [[`86c23e3`](https://github.com/burnt-labs/xion.js/commit/86c23e33ad080fcb465453564e1df93762efb75f), [`cfd3e01`](https://github.com/burnt-labs/xion.js/commit/cfd3e01e1ee3b161184a415debb5b87888a65549), [`7228469`](https://github.com/burnt-labs/xion.js/commit/72284694eb61be083829488e8916e46e9836b4e6)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.54
+
 ## 1.0.0-alpha.58
 
 ### Minor Changes
