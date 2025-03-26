@@ -1,7 +1,9 @@
 import { TextDecoder, TextEncoder } from "node:util";
-import { verifyADR36Amino } from "@keplr-wallet/cosmos";
 import { SignArbSecp256k1HdWallet } from "../src/SignArbSecp256k1HdWallet";
 import { AccountData } from "@cosmjs/proto-signing";
+import { serializeSignDoc } from "@cosmjs/amino";
+import { Secp256k1, Secp256k1Signature, Sha256 } from "@cosmjs/crypto";
+import { makeADR36AminoSignDoc } from "../src/utils";
 
 global.TextEncoder = TextEncoder;
 // @ts-expect-error: TextDecoder is not available in testing environment by default.
@@ -39,19 +41,22 @@ describe("SignArbSecp256k1HdWallet", () => {
       const pubKeyValueBuffer = Buffer.from(pubKey, "base64"); // Decode the base64 encoded value
       const pubKeyUint8Array = new Uint8Array(pubKeyValueBuffer); // Convert the buffer to an Uint8Array
 
-      return verifyADR36Amino(
-        "xion",
-        address,
-        messageString,
+      const signDoc = makeADR36AminoSignDoc(address, messageString);
+      const serializedSignDoc = serializeSignDoc(signDoc);
+      const messageHash = new Sha256(serializedSignDoc).digest();
+
+      const signatureParts = Secp256k1Signature.fromFixedLength(uint8Signature);
+
+      return Secp256k1.verifySignature(
+        signatureParts,
+        messageHash,
         pubKeyUint8Array,
-        uint8Signature,
       );
     }
 
     const granterAddress =
       "xion15wvfkv5wkp7dvxquxm3nkhrfy98nahjqpp3a2r5h9tcj29r9wxnq6j5eeh";
 
-    console.log(account.algo);
     const { pubkey, address: granteeAddress } = account;
 
     const exampleMessage = "Test message";

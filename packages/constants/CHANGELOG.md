@@ -1,5 +1,27 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.16
+
+### Minor Changes
+
+- [#270](https://github.com/burnt-labs/xion.js/pull/270) [`be7b831`](https://github.com/burnt-labs/xion.js/commit/be7b83152baff11d025f09efe7ddaa173768f659) Thanks [@BurntVal](https://github.com/BurntVal)! - implement strategy patterns for storage and redirect operations
+
+## 0.1.0-alpha.15
+
+### Minor Changes
+
+- [#258](https://github.com/burnt-labs/xion.js/pull/258) [`5f8bd03`](https://github.com/burnt-labs/xion.js/commit/5f8bd033ce2845ea74dfbb8cb4380aa5745e19f1) Thanks [@BurntVal](https://github.com/BurntVal)! - Add a key for testnet-2
+
+### Patch Changes
+
+- [#271](https://github.com/burnt-labs/xion.js/pull/271) [`41aa337`](https://github.com/burnt-labs/xion.js/commit/41aa3376963d394eae5dbd3356b61ceb71fe8db4) Thanks [@justinbarry](https://github.com/justinbarry)! - Update testnet-2 dashboard URL
+
+## 0.1.0-alpha.14
+
+### Minor Changes
+
+- [#240](https://github.com/burnt-labs/xion.js/pull/240) [`5f5edf4`](https://github.com/burnt-labs/xion.js/commit/5f5edf4cf38546b9f726af9b685ea1ce39444551) Thanks [@justinbarry](https://github.com/justinbarry)! - Update default gas price to 0.001uxion
+
 ## 0.1.0-alpha.13
 
 ### Patch Changes

@@ -42,14 +42,14 @@ export const xionCoin: Coin = {
   coinMinimalDenom: "uxion",
   coinDecimals: 6,
   gasPriceStep: {
-    low: 0.01,
-    average: 0.025,
-    high: 0.03,
+    low: 0.0005,
+    average: 0.001,
+    high: 0.01,
   },
 };
 
 export const xionGasValues = {
-  gasPrice: "0.025uxion",
+  gasPrice: "0.001uxion",
   gasAdjustment: 1.4,
   gasAdjustmentMargin: 5000,
 };
@@ -102,15 +102,17 @@ export const testChainInfo: ChainInfo = {
 
 // If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
+  "xion-devnet-1": "http://localhost:3000",
   "xion-mainnet-1": "https://settings.mainnet.burnt.com",
   "xion-testnet-1": "https://settings.testnet.burnt.com",
-  "xion-devnet-1": "http://localhost:3000",
+  "xion-testnet-2": "https://auth.testnet.burnt.com",
 };
 
 const REST_URLS = {
+  "xion-devnet-1": "http://localhost:26657",
   "xion-mainnet-1": "https://api.xion-mainnet-1.burnt.com:443",
   "xion-testnet-1": "https://api.xion-testnet-1.burnt.com:443",
-  "xion-devnet-1": "http://localhost:26657",
+  "xion-testnet-2": "https://api.xion-testnet-2.burnt.com:443",
 };
 
 export async function fetchConfig(rpcUrl: string) {

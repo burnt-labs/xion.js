@@ -58,6 +58,10 @@ function createDefaultRegistry(): Registry {
   return new Registry(AADefaultRegistryTypes);
 }
 
+/**
+ * @deprecated This class is deprecated and will no longer be maintained.
+ * Please contact the Burnt Labs team for alternative solutions.
+ */
 export class AAClient extends SigningCosmWasmClient {
   /// The signer used to crate AA signatures
   public abstractSigner: AASigner;
@@ -130,7 +134,7 @@ export class AAClient extends SigningCosmWasmClient {
     const chainId = await this.getChainId();
 
     if (/testnet/.test(chainId)) {
-      defaultFee = { amount: [{ amount: "0", denom: "uxion" }], gas: gas };
+      defaultFee = { amount: [{ amount: "0.001", denom: "uxion" }], gas: gas };
     } else {
       defaultFee = { amount: calculatedFee.amount, gas: gas };
     }

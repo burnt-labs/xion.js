@@ -1,5 +1,67 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.54
+
+### Minor Changes
+
+- [#278](https://github.com/burnt-labs/xion.js/pull/278) [`86c23e3`](https://github.com/burnt-labs/xion.js/commit/86c23e33ad080fcb465453564e1df93762efb75f) Thanks [@BurntVal](https://github.com/BurntVal)! - introduces enhancements to the AbstraxionAuth class and its associated test suite. The changes aim to improve the functionality and reliability of the authentication process, particularly in handling and verifying grants.
+
+### Patch Changes
+
+- [#277](https://github.com/burnt-labs/xion.js/pull/277) [`cfd3e01`](https://github.com/burnt-labs/xion.js/commit/cfd3e01e1ee3b161184a415debb5b87888a65549) Thanks [@justinbarry](https://github.com/justinbarry)! - \* Upgrade @cosmjs packages from 0.32.4 to 0.33.1 to support Comet38.
+
+  - Reduce calls to RPC status endpoint.
+
+- [#275](https://github.com/burnt-labs/xion.js/pull/275) [`7228469`](https://github.com/burnt-labs/xion.js/commit/72284694eb61be083829488e8916e46e9836b4e6) Thanks [@justinbarry](https://github.com/justinbarry)! - Move customAccountFromAny function from deprecated @burnt-labs/signers package to abstraxion-core to remove the dependency.
+
+## 1.0.0-alpha.53
+
+### Major Changes
+
+- [#270](https://github.com/burnt-labs/xion.js/pull/270) [`be7b831`](https://github.com/burnt-labs/xion.js/commit/be7b83152baff11d025f09efe7ddaa173768f659) Thanks [@BurntVal](https://github.com/BurntVal)! - implement strategy patterns for storage and redirect operations
+
+### Patch Changes
+
+- Updated dependencies [[`be7b831`](https://github.com/burnt-labs/xion.js/commit/be7b83152baff11d025f09efe7ddaa173768f659)]:
+  - @burnt-labs/constants@0.1.0-alpha.16
+  - @burnt-labs/signers@0.1.0-alpha.13
+
+## 1.0.0-alpha.52
+
+### Patch Changes
+
+- Updated dependencies [[`41aa337`](https://github.com/burnt-labs/xion.js/commit/41aa3376963d394eae5dbd3356b61ceb71fe8db4), [`5f8bd03`](https://github.com/burnt-labs/xion.js/commit/5f8bd033ce2845ea74dfbb8cb4380aa5745e19f1)]:
+  - @burnt-labs/constants@0.1.0-alpha.15
+  - @burnt-labs/signers@0.1.0-alpha.13
+
+## 1.0.0-alpha.51
+
+### Minor Changes
+
+- [#237](https://github.com/burnt-labs/xion.js/pull/237) [`cff2a3e`](https://github.com/burnt-labs/xion.js/commit/cff2a3e7eabdb1ab217ea7410ca30abfc81e8401) Thanks [@BurntVal](https://github.com/BurntVal)! - implement extended grant checks for legacy grant configs and treasury contracts
+
+## 1.0.0-alpha.50
+
+### Minor Changes
+
+- [#243](https://github.com/burnt-labs/xion.js/pull/243) [`9fad9c4`](https://github.com/burnt-labs/xion.js/commit/9fad9c415c3131a9b7f4fbc837d299e7cb33fd0d) Thanks [@BurntVal](https://github.com/BurntVal)! - GranteeSignerClient simulate extension for fee granter param
+
+- [#254](https://github.com/burnt-labs/xion.js/pull/254) [`ad2160d`](https://github.com/burnt-labs/xion.js/commit/ad2160d2b5c8192c7b838a477454f64be14ad79c) Thanks [@BurntVal](https://github.com/BurntVal)! - Remove keplr dependencies to resolve related bugs
+
+## 1.0.0-alpha.49
+
+### Minor Changes
+
+- [#239](https://github.com/burnt-labs/xion.js/pull/239) [`6ca7dad`](https://github.com/burnt-labs/xion.js/commit/6ca7dad417a01b4a2594cdf4f935966cab62d442) Thanks [@BurntVal](https://github.com/BurntVal)! - simulation fix and granter override
+
+## 1.0.0-alpha.48
+
+### Patch Changes
+
+- Updated dependencies [[`5f5edf4`](https://github.com/burnt-labs/xion.js/commit/5f5edf4cf38546b9f726af9b685ea1ce39444551)]:
+  - @burnt-labs/constants@0.1.0-alpha.14
+  - @burnt-labs/signers@0.1.0-alpha.13
+
 ## 1.0.0-alpha.47
 
 ### Minor Changes

@@ -1,5 +1,91 @@
 # demo-app
 
+## 1.1.0-alpha.44
+
+### Patch Changes
+
+- Updated dependencies [[`86c23e3`](https://github.com/burnt-labs/xion.js/commit/86c23e33ad080fcb465453564e1df93762efb75f), [`cfd3e01`](https://github.com/burnt-labs/xion.js/commit/cfd3e01e1ee3b161184a415debb5b87888a65549), [`7228469`](https://github.com/burnt-labs/xion.js/commit/72284694eb61be083829488e8916e46e9836b4e6)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.54
+  - @burnt-labs/abstraxion@1.0.0-alpha.59
+
+## 1.1.0-alpha.43
+
+### Minor Changes
+
+- [#270](https://github.com/burnt-labs/xion.js/pull/270) [`be7b831`](https://github.com/burnt-labs/xion.js/commit/be7b83152baff11d025f09efe7ddaa173768f659) Thanks [@BurntVal](https://github.com/BurntVal)! - implement strategy patterns for storage and redirect operations
+
+### Patch Changes
+
+- Updated dependencies [[`be7b831`](https://github.com/burnt-labs/xion.js/commit/be7b83152baff11d025f09efe7ddaa173768f659)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.53
+  - @burnt-labs/abstraxion@1.0.0-alpha.58
+  - @burnt-labs/constants@0.1.0-alpha.16
+  - @burnt-labs/ui@0.1.0-alpha.17
+  - @burnt-labs/signers@0.1.0-alpha.13
+
+## 1.1.0-alpha.42
+
+### Patch Changes
+
+- Updated dependencies [[`41aa337`](https://github.com/burnt-labs/xion.js/commit/41aa3376963d394eae5dbd3356b61ceb71fe8db4), [`5f8bd03`](https://github.com/burnt-labs/xion.js/commit/5f8bd033ce2845ea74dfbb8cb4380aa5745e19f1)]:
+  - @burnt-labs/constants@0.1.0-alpha.15
+  - @burnt-labs/abstraxion@1.0.0-alpha.57
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.52
+  - @burnt-labs/signers@0.1.0-alpha.13
+
+## 1.1.0-alpha.41
+
+### Minor Changes
+
+- [#237](https://github.com/burnt-labs/xion.js/pull/237) [`cff2a3e`](https://github.com/burnt-labs/xion.js/commit/cff2a3e7eabdb1ab217ea7410ca30abfc81e8401) Thanks [@BurntVal](https://github.com/BurntVal)! - implement extended grant checks for legacy grant configs and treasury contracts
+
+- [#256](https://github.com/burnt-labs/xion.js/pull/256) [`974dae0`](https://github.com/burnt-labs/xion.js/commit/974dae00d50f3934ddda400d1738f727c887e4ca) Thanks [@BurntNerve](https://github.com/BurntNerve)! - Added cloudflare config
+
+### Patch Changes
+
+- Updated dependencies [[`cff2a3e`](https://github.com/burnt-labs/xion.js/commit/cff2a3e7eabdb1ab217ea7410ca30abfc81e8401)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.51
+  - @burnt-labs/abstraxion@1.0.0-alpha.56
+  - @burnt-labs/ui@0.1.0-alpha.16
+
+## 1.1.0-alpha.40
+
+### Minor Changes
+
+- [#254](https://github.com/burnt-labs/xion.js/pull/254) [`ad2160d`](https://github.com/burnt-labs/xion.js/commit/ad2160d2b5c8192c7b838a477454f64be14ad79c) Thanks [@BurntVal](https://github.com/BurntVal)! - Remove keplr dependencies to resolve related bugs
+
+### Patch Changes
+
+- Updated dependencies [[`9fad9c4`](https://github.com/burnt-labs/xion.js/commit/9fad9c415c3131a9b7f4fbc837d299e7cb33fd0d), [`ad2160d`](https://github.com/burnt-labs/xion.js/commit/ad2160d2b5c8192c7b838a477454f64be14ad79c)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.50
+  - @burnt-labs/abstraxion@1.0.0-alpha.55
+
+## 1.1.0-alpha.39
+
+### Minor Changes
+
+- [#239](https://github.com/burnt-labs/xion.js/pull/239) [`6ca7dad`](https://github.com/burnt-labs/xion.js/commit/6ca7dad417a01b4a2594cdf4f935966cab62d442) Thanks [@BurntVal](https://github.com/BurntVal)! - simulation fix and granter override
+
+### Patch Changes
+
+- Updated dependencies [[`6ca7dad`](https://github.com/burnt-labs/xion.js/commit/6ca7dad417a01b4a2594cdf4f935966cab62d442)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.49
+  - @burnt-labs/abstraxion@1.0.0-alpha.54
+
+## 1.1.0-alpha.38
+
+### Minor Changes
+
+- [#240](https://github.com/burnt-labs/xion.js/pull/240) [`5f5edf4`](https://github.com/burnt-labs/xion.js/commit/5f5edf4cf38546b9f726af9b685ea1ce39444551) Thanks [@justinbarry](https://github.com/justinbarry)! - Update default gas price to 0.001uxion
+
+### Patch Changes
+
+- Updated dependencies [[`5f5edf4`](https://github.com/burnt-labs/xion.js/commit/5f5edf4cf38546b9f726af9b685ea1ce39444551)]:
+  - @burnt-labs/constants@0.1.0-alpha.14
+  - @burnt-labs/abstraxion@1.0.0-alpha.53
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.48
+  - @burnt-labs/signers@0.1.0-alpha.13
+
 ## 1.1.0-alpha.37
 
 ### Patch Changes

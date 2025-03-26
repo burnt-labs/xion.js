@@ -5,6 +5,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "license": "MIT",
+  "deprecated": "This package is deprecated and will no longer receive updates. Please contact the Burnt Labs team for alternative solutions.",
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",

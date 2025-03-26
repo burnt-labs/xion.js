@@ -1,5 +1,17 @@
 # @burnt-labs/ui
 
+## 0.1.0-alpha.17
+
+### Minor Changes
+
+- [#270](https://github.com/burnt-labs/xion.js/pull/270) [`be7b831`](https://github.com/burnt-labs/xion.js/commit/be7b83152baff11d025f09efe7ddaa173768f659) Thanks [@BurntVal](https://github.com/BurntVal)! - implement strategy patterns for storage and redirect operations
+
+## 0.1.0-alpha.16
+
+### Minor Changes
+
+- [#237](https://github.com/burnt-labs/xion.js/pull/237) [`cff2a3e`](https://github.com/burnt-labs/xion.js/commit/cff2a3e7eabdb1ab217ea7410ca30abfc81e8401) Thanks [@BurntVal](https://github.com/BurntVal)! - implement extended grant checks for legacy grant configs and treasury contracts
+
 ## 0.1.0-alpha.15
 
 ### Minor Changes

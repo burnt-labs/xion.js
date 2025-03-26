@@ -11,12 +11,19 @@ import { ErrorDisplay } from "../ErrorDisplay";
 import { AbstraxionSignin } from "../AbstraxionSignin";
 import { Connected } from "@/src/components/Connected/Connected.tsx";
 import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
+import {
+  BrowserRedirectStrategy,
+  BrowserStorageStrategy,
+} from "@/src/strategies";
 
 export interface ModalProps {
   onClose: VoidFunction;
 }
 
-export const abstraxionAuth = new AbstraxionAuth();
+export const abstraxionAuth = new AbstraxionAuth(
+  new BrowserStorageStrategy(),
+  new BrowserRedirectStrategy(),
+);
 
 export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
   const {
