@@ -1,5 +1,16 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.55
+
+### Minor Changes
+
+- [#279](https://github.com/burnt-labs/xion.js/pull/279) [`5572077`](https://github.com/burnt-labs/xion.js/commit/557207735cece8a6050e9fb4aff4b398e3467cdb) Thanks [@burnt-sun](https://github.com/burnt-sun)! - Chore: apply prettier formatting.
+
+### Patch Changes
+
+- Updated dependencies [[`f2d6e5a`](https://github.com/burnt-labs/xion.js/commit/f2d6e5a8abf36d0bae7ffc85ad16552ad58ef5aa)]:
+  - @burnt-labs/constants@0.1.0-alpha.17
+
 ## 1.0.0-alpha.54
 
 ### Minor Changes

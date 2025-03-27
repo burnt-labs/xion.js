@@ -1,5 +1,13 @@
 # @burnt-labs/signers [DEPRECATED]
 
+## 0.1.0-alpha.14
+
+### Minor Changes
+
+- [#279](https://github.com/burnt-labs/xion.js/pull/279) [`d390f1e`](https://github.com/burnt-labs/xion.js/commit/d390f1e4df207cde79056b7919965b0f2e473f3d) Thanks [@burnt-sun](https://github.com/burnt-sun)! - chore: apply prettier formatting
+
+- [#279](https://github.com/burnt-labs/xion.js/pull/279) [`5572077`](https://github.com/burnt-labs/xion.js/commit/557207735cece8a6050e9fb4aff4b398e3467cdb) Thanks [@burnt-sun](https://github.com/burnt-sun)! - Chore: apply prettier formatting.
+
 > ⚠️ **DEPRECATED**: This package is deprecated as of [CURRENT DATE] and will no longer receive updates or maintenance.
 
 ## 0.1.0-alpha.14
