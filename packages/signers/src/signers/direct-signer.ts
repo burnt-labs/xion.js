@@ -21,7 +21,7 @@ export type SignArbitraryFn = (
 /**
  * @deprecated This class is deprecated and will no longer be maintained.
  * Please contact the Burnt Labs team for alternative solutions.
- * 
+ *
  * This class is an implementation of the AASigner interface using the DirectSecp256k1HdWallet
  * or any other signer that implements the AASigner interface
  * This class use would generally be with a wallet since it's method of signing is the same as the

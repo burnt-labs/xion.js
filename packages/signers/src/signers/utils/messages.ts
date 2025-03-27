@@ -20,7 +20,7 @@ export interface MsgRegisterAccountEncodeObject extends EncodeObject {
 }
 
 export function isMsgRegisterAccount(
-  encodeObject: EncodeObject
+  encodeObject: EncodeObject,
 ): encodeObject is MsgRegisterAccountEncodeObject {
   return (
     (encodeObject as MsgRegisterAccountEncodeObject).typeUrl ===
@@ -34,7 +34,7 @@ export interface MsgRegisterAccountResponseEncodeObject {
 }
 
 export function isMsgRegisterAccountResponse(
-  encodeObject: EncodeObject
+  encodeObject: EncodeObject,
 ): encodeObject is MsgRegisterAccountResponseEncodeObject {
   return (
     (encodeObject as MsgRegisterAccountResponseEncodeObject).typeUrl ===
