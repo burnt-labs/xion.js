@@ -9,13 +9,10 @@ import {
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
-import type { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
+import type { InstantiateResult } from "@cosmjs/cosmwasm-stargate";
 import { SignArb } from "../components/sign-arb.tsx";
 
-const seatContractAddress =
-  "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
-
-type ExecuteResultOrUndefined = ExecuteResult | undefined;
+type InstantiateResultOrUndefined = InstantiateResult | undefined;
 
 export default function Page(): JSX.Element {
   // Abstraxion hooks
@@ -28,56 +25,66 @@ export default function Page(): JSX.Element {
     React.Dispatch<React.SetStateAction<boolean>>,
   ] = useModal();
   const [loading, setLoading] = useState(false);
-  const [executeResult, setExecuteResult] =
-    useState<ExecuteResultOrUndefined>(undefined);
+  const [instantiateResult, setInstantiateResult] =
+    useState<InstantiateResultOrUndefined>(undefined);
 
-  const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${executeResult?.transactionHash}`;
-
-  function getTimestampInSeconds(date: Date | null): number {
-    if (!date) return 0;
-    const d = new Date(date);
-    return Math.floor(d.getTime() / 1000);
-  }
-
-  const now = new Date();
-  now.setSeconds(now.getSeconds() + 15);
-  const oneYearFromNow = new Date();
-  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+  const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${instantiateResult?.transactionHash}`;
 
   async function claimSeat(): Promise<void> {
     setLoading(true);
-    const msg = {
-      sales: {
-        claim_item: {
-          token_id: String(getTimestampInSeconds(now)),
-          owner: account.bech32Address,
-          token_uri: "",
-          extension: {},
-        },
-      },
-    };
 
     try {
       // Use "auto" fee for most transactions
-      const claimRes = await client?.execute(
+      // Sample treasury contract instantiate msg
+      const msg = {
+        type_urls: ["/cosmwasm.wasm.v1.MsgInstantiateContract"],
+        grant_configs: [
+          {
+            description: "Ability to instantiate contracts",
+            optional: false,
+            authorization: {
+              type_url: "/cosmos.authz.v1beta1.GenericAuthorization",
+              value: "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN0",
+            },
+          },
+        ],
+        fee_config: {
+          description: "Sample fee config for testnet-2",
+          allowance: {
+            type_url: "/cosmos.feegrant.v1beta1.BasicAllowance",
+            value: "Cg8KBXV4aW9uEgY1MDAwMDA=",
+          },
+        },
+        admin: account.bech32Address,
+      };
+
+      const instantiateRes = await client?.instantiate(
         account.bech32Address,
-        seatContractAddress,
+        33,
         msg,
+        "instantiate on expo demo",
         "auto",
       );
+
+      console.log(instantiateRes);
+
+      if (!instantiateRes) {
+        throw new Error("Instantiate failed.");
+      }
 
       // Default cosmsjs gas multiplier for simulation is 1.4
       // If you're finding that transactions are undersimulating, you can bump up the gas multiplier by setting fee to a number, ex. 1.5
       // Fee amounts shouldn't stray too far away from the defaults
       // Example:
-      // const claimRes = await client?.execute(
+      // const instantiateRes = await client?.instantiate(
       //   account.bech32Address,
-      //   seatContractAddress,
+      //   33,
       //   msg,
-      //   1.5,
+      //   "instantiate on expo demo",
+      //   1.5
       // );
 
-      setExecuteResult(claimRes);
+      setInstantiateResult(instantiateRes);
     } catch (error) {
       // eslint-disable-next-line no-console -- No UI exists yet to display errors
       console.log(error);
@@ -114,7 +121,7 @@ export default function Page(): JSX.Element {
             }}
             structure="base"
           >
-            {loading ? "LOADING..." : "CLAIM SEAT"}
+            {loading ? "LOADING..." : "Instantiate Sample Treasury"}
           </Button>
           {logout ? (
             <Button
@@ -136,19 +143,19 @@ export default function Page(): JSX.Element {
           setShowModal(false);
         }}
       />
-      {executeResult ? (
+      {instantiateResult ? (
         <div className="flex flex-col rounded border-2 border-black p-2 dark:border-white">
           <div className="mt-2">
             <p className="text-zinc-500">
               <span className="font-bold">Transaction Hash</span>
             </p>
-            <p className="text-sm">{executeResult.transactionHash}</p>
+            <p className="text-sm">{instantiateResult.transactionHash}</p>
           </div>
           <div className="mt-2">
             <p className=" text-zinc-500">
               <span className="font-bold">Block Height:</span>
             </p>
-            <p className="text-sm">{executeResult.height}</p>
+            <p className="text-sm">{instantiateResult.height}</p>
           </div>
           <div className="mt-2">
             <Link
