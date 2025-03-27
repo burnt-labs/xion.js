@@ -41,4 +41,4 @@ export function customAccountFromAny(input: Any): Account {
     default:
       return accountFromAny(input);
   }
-} 
+}

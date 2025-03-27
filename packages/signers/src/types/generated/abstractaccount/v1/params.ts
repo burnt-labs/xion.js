@@ -35,11 +35,19 @@ export interface Params {
 }
 
 function createBaseParams(): Params {
-  return { allowAllCodeIds: false, allowedCodeIds: [], maxGasBefore: Long.UZERO, maxGasAfter: Long.UZERO };
+  return {
+    allowAllCodeIds: false,
+    allowedCodeIds: [],
+    maxGasBefore: Long.UZERO,
+    maxGasAfter: Long.UZERO,
+  };
 }
 
 export const Params = {
-  encode(message: Params, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: Params,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.allowAllCodeIds === true) {
       writer.uint32(8).bool(message.allowAllCodeIds);
     }
@@ -58,7 +66,8 @@ export const Params = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): Params {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseParams();
     while (reader.pos < end) {
@@ -113,12 +122,18 @@ export const Params = {
 
   fromJSON(object: any): Params {
     return {
-      allowAllCodeIds: isSet(object.allowAllCodeIds) ? globalThis.Boolean(object.allowAllCodeIds) : false,
+      allowAllCodeIds: isSet(object.allowAllCodeIds)
+        ? globalThis.Boolean(object.allowAllCodeIds)
+        : false,
       allowedCodeIds: globalThis.Array.isArray(object?.allowedCodeIds)
         ? object.allowedCodeIds.map((e: any) => Long.fromValue(e))
         : [],
-      maxGasBefore: isSet(object.maxGasBefore) ? Long.fromValue(object.maxGasBefore) : Long.UZERO,
-      maxGasAfter: isSet(object.maxGasAfter) ? Long.fromValue(object.maxGasAfter) : Long.UZERO,
+      maxGasBefore: isSet(object.maxGasBefore)
+        ? Long.fromValue(object.maxGasBefore)
+        : Long.UZERO,
+      maxGasAfter: isSet(object.maxGasAfter)
+        ? Long.fromValue(object.maxGasAfter)
+        : Long.UZERO,
     };
   },
 
@@ -128,7 +143,9 @@ export const Params = {
       obj.allowAllCodeIds = message.allowAllCodeIds;
     }
     if (message.allowedCodeIds?.length) {
-      obj.allowedCodeIds = message.allowedCodeIds.map((e) => (e || Long.UZERO).toString());
+      obj.allowedCodeIds = message.allowedCodeIds.map((e) =>
+        (e || Long.UZERO).toString(),
+      );
     }
     if (!message.maxGasBefore.isZero()) {
       obj.maxGasBefore = (message.maxGasBefore || Long.UZERO).toString();
@@ -145,28 +162,47 @@ export const Params = {
   fromPartial<I extends Exact<DeepPartial<Params>, I>>(object: I): Params {
     const message = createBaseParams();
     message.allowAllCodeIds = object.allowAllCodeIds ?? false;
-    message.allowedCodeIds = object.allowedCodeIds?.map((e) => Long.fromValue(e)) || [];
-    message.maxGasBefore = (object.maxGasBefore !== undefined && object.maxGasBefore !== null)
-      ? Long.fromValue(object.maxGasBefore)
-      : Long.UZERO;
-    message.maxGasAfter = (object.maxGasAfter !== undefined && object.maxGasAfter !== null)
-      ? Long.fromValue(object.maxGasAfter)
-      : Long.UZERO;
+    message.allowedCodeIds =
+      object.allowedCodeIds?.map((e) => Long.fromValue(e)) || [];
+    message.maxGasBefore =
+      object.maxGasBefore !== undefined && object.maxGasBefore !== null
+        ? Long.fromValue(object.maxGasBefore)
+        : Long.UZERO;
+    message.maxGasAfter =
+      object.maxGasAfter !== undefined && object.maxGasAfter !== null
+        ? Long.fromValue(object.maxGasAfter)
+        : Long.UZERO;
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends Long ? string | number | Long : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Long
+  ? string | number | Long
+  : T extends globalThis.Array<infer U>
+  ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

@@ -29,18 +29,18 @@ export namespace AbstractAccount {
     // In a real implementation, you would use a proper protobuf decoder
     const decoder = new TextDecoder();
     let data;
-    
+
     try {
       data = JSON.parse(decoder.decode(binary));
     } catch (e) {
       // Fallback to a generic object in case the binary isn't valid JSON
       data = {};
     }
-    
+
     return {
       address: data.address || "",
       accountNumber: BigInt(data.account_number || 0),
       sequence: BigInt(data.sequence || 0),
     };
   }
-} 
+}

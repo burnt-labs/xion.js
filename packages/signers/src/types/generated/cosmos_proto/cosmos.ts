@@ -99,7 +99,10 @@ function createBaseInterfaceDescriptor(): InterfaceDescriptor {
 }
 
 export const InterfaceDescriptor = {
-  encode(message: InterfaceDescriptor, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: InterfaceDescriptor,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
@@ -110,7 +113,8 @@ export const InterfaceDescriptor = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): InterfaceDescriptor {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseInterfaceDescriptor();
     while (reader.pos < end) {
@@ -142,7 +146,9 @@ export const InterfaceDescriptor = {
   fromJSON(object: any): InterfaceDescriptor {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      description: isSet(object.description)
+        ? globalThis.String(object.description)
+        : "",
     };
   },
 
@@ -157,10 +163,14 @@ export const InterfaceDescriptor = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<InterfaceDescriptor>, I>>(base?: I): InterfaceDescriptor {
+  create<I extends Exact<DeepPartial<InterfaceDescriptor>, I>>(
+    base?: I,
+  ): InterfaceDescriptor {
     return InterfaceDescriptor.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<InterfaceDescriptor>, I>>(object: I): InterfaceDescriptor {
+  fromPartial<I extends Exact<DeepPartial<InterfaceDescriptor>, I>>(
+    object: I,
+  ): InterfaceDescriptor {
     const message = createBaseInterfaceDescriptor();
     message.name = object.name ?? "";
     message.description = object.description ?? "";
@@ -173,7 +183,10 @@ function createBaseScalarDescriptor(): ScalarDescriptor {
 }
 
 export const ScalarDescriptor = {
-  encode(message: ScalarDescriptor, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: ScalarDescriptor,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
@@ -189,7 +202,8 @@ export const ScalarDescriptor = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ScalarDescriptor {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseScalarDescriptor();
     while (reader.pos < end) {
@@ -238,7 +252,9 @@ export const ScalarDescriptor = {
   fromJSON(object: any): ScalarDescriptor {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      description: isSet(object.description)
+        ? globalThis.String(object.description)
+        : "",
       fieldType: globalThis.Array.isArray(object?.fieldType)
         ? object.fieldType.map((e: any) => scalarTypeFromJSON(e))
         : [],
@@ -259,10 +275,14 @@ export const ScalarDescriptor = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ScalarDescriptor>, I>>(base?: I): ScalarDescriptor {
+  create<I extends Exact<DeepPartial<ScalarDescriptor>, I>>(
+    base?: I,
+  ): ScalarDescriptor {
     return ScalarDescriptor.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ScalarDescriptor>, I>>(object: I): ScalarDescriptor {
+  fromPartial<I extends Exact<DeepPartial<ScalarDescriptor>, I>>(
+    object: I,
+  ): ScalarDescriptor {
     const message = createBaseScalarDescriptor();
     message.name = object.name ?? "";
     message.description = object.description ?? "";
@@ -271,17 +291,33 @@ export const ScalarDescriptor = {
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends Long ? string | number | Long : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Long
+  ? string | number | Long
+  : T extends globalThis.Array<infer U>
+  ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
