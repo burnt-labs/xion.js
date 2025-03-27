@@ -93,3 +93,6 @@ jobs:
 
       - name: 🧪 Run Tests
         run: pnpm test
+
+      - name: Check Prettier
+        run: pnpm run prettier-check

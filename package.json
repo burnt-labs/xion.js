@@ -9,6 +9,7 @@
     "clean": "turbo clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "changeset": "changeset",
+    "prettier-check": "prettier --check \"**/*.{ts,tsx,md}\"",
     "publish:packages": "changeset publish",
     "version:packages": "changeset version",
     "test": "turbo run test"
