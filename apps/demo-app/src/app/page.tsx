@@ -28,7 +28,7 @@ export default function Page(): JSX.Element {
   const [instantiateResult, setInstantiateResult] =
     useState<InstantiateResultOrUndefined>(undefined);
 
-  const blockExplorerUrl = `https://explorer.burnt.com/xion-testnet-1/tx/${instantiateResult?.transactionHash}`;
+  const blockExplorerUrl = `https://www.mintscan.io/xion-testnet/tx/${instantiateResult?.transactionHash}`;
 
   async function claimSeat(): Promise<void> {
     setLoading(true);
