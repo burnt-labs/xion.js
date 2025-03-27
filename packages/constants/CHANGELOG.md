@@ -1,5 +1,11 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.17
+
+### Patch Changes
+
+- [#280](https://github.com/burnt-labs/xion.js/pull/280) [`f2d6e5a`](https://github.com/burnt-labs/xion.js/commit/f2d6e5a8abf36d0bae7ffc85ad16552ad58ef5aa) Thanks [@BurntVal](https://github.com/BurntVal)! - Default to testnet-2
+
 ## 0.1.0-alpha.16
 
 ### Minor Changes
