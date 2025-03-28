@@ -476,7 +476,7 @@ export class AbstraxionAuth {
     typeUrl: string,
     value: string,
   ): DecodeAuthorizationResponse | null {
-    const decodedValue = new Uint8Array(Buffer.from(value, "base64"));
+    const decodedValue = Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
 
     if (typeUrl === "/cosmos.authz.v1beta1.GenericAuthorization") {
       const authorization = GenericAuthorization.decode(decodedValue);
