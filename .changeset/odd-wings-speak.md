@@ -2,4 +2,4 @@
 "@burnt-labs/abstraxion-core": patch
 ---
 
-Replace Buffer with atob
+Replace Buffer with toByteArray
