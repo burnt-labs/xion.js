@@ -12,6 +12,7 @@ import {
 } from "cosmjs-types/cosmwasm/wasm/v1/authz";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { fetchConfig } from "@burnt-labs/constants";
+import { toByteArray } from "base64-js";
 import type {
   ContractGrantDescription,
   GrantAuthorization,
@@ -476,7 +477,7 @@ export class AbstraxionAuth {
     typeUrl: string,
     value: string,
   ): DecodeAuthorizationResponse | null {
-    const decodedValue = new Uint8Array(Buffer.from(value, "base64"));
+    const decodedValue = toByteArray(value);
 
     if (typeUrl === "/cosmos.authz.v1beta1.GenericAuthorization") {
       const authorization = GenericAuthorization.decode(decodedValue);
