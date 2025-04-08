@@ -16,7 +16,6 @@
     "@burnt-labs/abstraxion": "workspace:*",
     "@burnt-labs/abstraxion-core": "workspace:*",
     "@burnt-labs/constants": "workspace:*",
-    "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
     "@cosmjs/amino": "^0.32.4",
     "@cosmjs/cosmwasm-stargate": "^0.32.4",

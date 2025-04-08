@@ -27,7 +27,6 @@
   "dependencies": {
     "@burnt-labs/abstraxion-core": "workspace:*",
     "@burnt-labs/constants": "workspace:*",
-    "@burnt-labs/signers": "workspace:*",
     "@cosmjs/cosmwasm-stargate": "^0.33.1",
     "@cosmjs/stargate": "^0.33.1",
     "@react-native-async-storage/async-storage": "1.23.1",
