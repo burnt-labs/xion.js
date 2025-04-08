@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.61
+
+### Patch Changes
+
+- [#283](https://github.com/burnt-labs/xion.js/pull/283) [`5feab68`](https://github.com/burnt-labs/xion.js/commit/5feab68d40533214cf7c01a6d52cfcf23a6fdd9d) Thanks [@justinbarry](https://github.com/justinbarry)! - Remove references to deprecated `@burnt-labs/signers` package
+
 ## 1.0.0-alpha.60
 
 ### Patch Changes
