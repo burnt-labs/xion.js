@@ -43,7 +43,6 @@
   "dependencies": {
     "@burnt-labs/abstraxion-core": "workspace:*",
     "@burnt-labs/constants": "workspace:*",
-    "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
     "@cosmjs/amino": "^0.33.1",
     "@cosmjs/cosmwasm-stargate": "^0.33.1",
