@@ -102,12 +102,14 @@ export const testChainInfo: ChainInfo = {
 
 // If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
+  "xion-devnet-1": "http://localhost:3000",
   "xion-mainnet-1": "https://settings.mainnet.burnt.com",
   "xion-testnet-1": "https://settings.testnet.burnt.com",
   "xion-testnet-2": "https://auth.testnet.burnt.com",
 };
 
 const REST_URLS = {
+  "xion-devnet-1": "http://localhost:26657",
   "xion-mainnet-1": "https://api.xion-mainnet-1.burnt.com:443",
   "xion-testnet-1": "https://api.xion-testnet-1.burnt.com:443",
   "xion-testnet-2": "https://api.xion-testnet-2.burnt.com:443",
