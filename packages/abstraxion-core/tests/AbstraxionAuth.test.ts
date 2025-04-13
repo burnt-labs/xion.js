@@ -3,6 +3,7 @@
  */
 import { TextEncoder, TextDecoder } from "text-encoding";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import fetch from "node-fetch";
 import { AbstraxionAuth } from "../src/AbstraxionAuth";
 import {
   mockAccountAddress,
@@ -16,6 +17,9 @@ import {
   MockRedirectStrategy,
 } from "./mockData/mockStrategies";
 import { DecodeAuthorizationResponse } from "@/types";
+
+// Set up global fetch for the test environment
+global.fetch = fetch as any;
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
@@ -420,5 +424,71 @@ describe("AbstraxionAuth", () => {
 
       expect(result).toBe(false);
     });
+  });
+
+  describe("mainnet integration", () => {
+    it("should poll for grants on mainnet with real addresses", async () => {
+      // Create a new instance without mocking the CosmWasmClient
+      const mainnetAbstraxionAuth = new AbstraxionAuth(
+        new MockStorageStrategy(),
+        new MockRedirectStrategy(),
+      );
+
+      // Configure with mainnet endpoints
+      const rpcUrl = "https://rpc.xion-mainnet-1.burnt.com:443";
+      const restUrl = "https://api.xion-mainnet-1.burnt.com:443";
+      const treasury = "xion1jmmlgu07y9ypvsa0rdu7tdkygx7v9gc5k9v9qysw4q5wwq4vvmjsscrkrg";
+      const sessionKey = "xion1p2lh0ejzc6g3zl4gjdfk2lqpujcpmz4mav850z";
+      const smartAccount = "xion1n7r6sxu7c3gh6pfnk49mdtj5upzqg7lav4ckgps9p20py8a2st0sdq3jc7";
+
+      // Configure the instance with mainnet settings
+      mainnetAbstraxionAuth.configureAbstraxionInstance(
+        rpcUrl,
+        restUrl,
+        undefined, // No specific grant contracts
+        false,     // Enable stake
+        undefined, // No specific bank limits
+        undefined, // No callback URL
+        treasury  // Set the treasury address
+      );
+
+      // Poll for grants between the session key and smart account
+      const result = await mainnetAbstraxionAuth.pollForGrants(sessionKey, smartAccount);
+
+      // We expect the poll to succeed if the grants exist
+      expect(result).toBe(true);
+    }, 30000); // Increase timeout for network requests
+    
+    it("should poll for grants on mainnet with allow_list", async () => {
+      // Create a new instance without mocking the CosmWasmClient
+      const mainnetAbstraxionAuth = new AbstraxionAuth(
+        new MockStorageStrategy(),
+        new MockRedirectStrategy(),
+      );
+
+      // Configure with mainnet endpoints
+      const rpcUrl = "https://rpc.xion-mainnet-1.burnt.com:443";
+      const restUrl = "https://api.xion-mainnet-1.burnt.com:443";
+      const treasury = "xion1y69y5p86qy8awezg2edhq2wclr9m6ucva9xdwk0leqs6mq00f5fsy7554z";
+      const sessionKey = "xion18cwx77ur8lze7l0rmksw5n7vx33mnpsza43gq2";
+      const smartAccount = "xion1n7r6sxu7c3gh6pfnk49mdtj5upzqg7lav4ckgps9p20py8a2st0sdq3jc7";
+
+      // Configure the instance with mainnet settings
+      mainnetAbstraxionAuth.configureAbstraxionInstance(
+        rpcUrl,
+        restUrl,
+        undefined, // No specific grant contracts
+        false,     // Enable stake
+        undefined, // No specific bank limits
+        undefined, // No callback URL
+        treasury  // Set the treasury address
+      );
+
+      // Poll for grants between the session key and smart account
+      const result = await mainnetAbstraxionAuth.pollForGrants(sessionKey, smartAccount);
+
+      // We expect the poll to succeed if the grants exist
+      expect(result).toBe(true);
+    }, 30000); // Increase timeout for network requests
   });
 });
