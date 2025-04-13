@@ -1,4 +1,4 @@
-import { GasPrice } from "@cosmjs/stargate";
+import { Coin, GasPrice } from "@cosmjs/stargate";
 import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
@@ -25,6 +25,10 @@ import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 import type { RedirectStrategy, StorageStrategy } from "./types/strategyTypes";
 
+const formatCoinArray = (coins: Coin[] = []) => {
+  return coins.map((coin) => `${coin.amount} ${coin.denom}`).join(", ");
+};
+
 export class AbstraxionAuth {
   // Config
   private rpcUrl?: string;
@@ -47,20 +51,13 @@ export class AbstraxionAuth {
   isLoggedIn = false;
   authStateChangeSubscribers: ((isLoggedIn: boolean) => void)[] = [];
 
-  // Strategies
-  private storageStrategy: StorageStrategy;
-  private redirectStrategy: RedirectStrategy;
-
   /**
    * Creates an instance of the AbstraxionAuth class.
    */
   constructor(
-    storageStrategy: StorageStrategy,
-    redirectStrategy: RedirectStrategy,
+    private storageStrategy: StorageStrategy,
+    private redirectStrategy: RedirectStrategy,
   ) {
-    this.storageStrategy = storageStrategy;
-    this.redirectStrategy = redirectStrategy;
-
     // Specific to mobile flow
     if (this.redirectStrategy.onRedirectComplete) {
       this.redirectStrategy.onRedirectComplete(async (params) => {
@@ -487,9 +484,7 @@ export class AbstraxionAuth {
     if (typeUrl === "/cosmos.bank.v1beta1.SendAuthorization") {
       const authorization = SendAuthorization.decode(decodedValue);
       return {
-        spendLimit: authorization.spendLimit
-          ?.map((coin) => `${coin.amount} ${coin.denom}`)
-          .join(", "),
+        spendLimit: formatCoinArray(authorization.spendLimit),
         allowList: authorization.allowList,
       };
     }
@@ -763,9 +758,9 @@ export class AbstraxionAuth {
         if (chainAuthType === "/cosmos.bank.v1beta1.SendAuthorization") {
           return (
             decodedAuthorization?.spendLimit ===
-              chainAuthorization.spendLimit &&
+              formatCoinArray(chainAuthorization.spend_limit) &&
             JSON.stringify(decodedAuthorization?.allowList) ===
-              JSON.stringify(chainAuthorization.allowList)
+              JSON.stringify(chainAuthorization.allow_list)
           );
         }
 
@@ -773,11 +768,11 @@ export class AbstraxionAuth {
           return (
             decodedAuthorization?.authorizationType ===
               chainAuthorization.authorizationType &&
-            decodedAuthorization?.maxTokens === chainAuthorization.maxTokens &&
+            decodedAuthorization?.maxTokens === chainAuthorization.max_tokens &&
             JSON.stringify(decodedAuthorization?.allowList) ===
-              JSON.stringify(chainAuthorization.allowList) &&
+              JSON.stringify(chainAuthorization.allow_list) &&
             JSON.stringify(decodedAuthorization?.denyList) ===
-              JSON.stringify(chainAuthorization.denyList)
+              JSON.stringify(chainAuthorization.deny_list)
           );
         }
 
