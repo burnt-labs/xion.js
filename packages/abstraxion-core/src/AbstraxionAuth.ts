@@ -25,8 +25,6 @@ import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 import type { RedirectStrategy, StorageStrategy } from "./types/strategyTypes";
 
-
-
 const formatCoinArray = (coins: Coin[] = []) => {
   return coins.map((coin) => `${coin.amount} ${coin.denom}`).join(", ");
 };
@@ -60,7 +58,6 @@ export class AbstraxionAuth {
     private storageStrategy: StorageStrategy,
     private redirectStrategy: RedirectStrategy,
   ) {
-
     // Specific to mobile flow
     if (this.redirectStrategy.onRedirectComplete) {
       this.redirectStrategy.onRedirectComplete(async (params) => {
