@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.56
+
+### Patch Changes
+
+- [#285](https://github.com/burnt-labs/xion.js/pull/285) [`0671c16`](https://github.com/burnt-labs/xion.js/commit/0671c1642fb2ab2241aeed4ce0daaecfd46c228a) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix mismatch between rest and rpc endpoint grant queries
+
 ## 1.0.0-alpha.55
 
 ### Minor Changes
