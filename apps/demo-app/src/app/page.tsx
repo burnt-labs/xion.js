@@ -98,6 +98,14 @@ export default function Page(): JSX.Element {
       <h1 className="text-2xl font-bold tracking-tighter text-white">
         ABSTRAXION
       </h1>
+      <div className="w-full">
+        <Link
+          href="/debug-grants"
+          className="mb-4 block text-blue-500 hover:underline"
+        >
+          Debug Grants Comparison
+        </Link>
+      </div>
       <Button
         fullWidth
         onClick={() => {

@@ -3,23 +3,23 @@ import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import {
+  AcceptedMessageKeysFilter,
+  AcceptedMessagesFilter,
   CombinedLimit,
   ContractExecutionAuthorization,
   MaxCallsLimit,
   MaxFundsLimit,
-  AcceptedMessageKeysFilter,
-  AcceptedMessagesFilter,
 } from "cosmjs-types/cosmwasm/wasm/v1/authz";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { fetchConfig } from "@burnt-labs/constants";
 import { toByteArray } from "base64-js";
 import type {
   ContractGrantDescription,
+  DecodeAuthorizationResponse,
   GrantAuthorization,
   GrantsResponse,
   SpendLimit,
   TreasuryGrantConfig,
-  DecodeAuthorizationResponse,
 } from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
@@ -793,6 +793,64 @@ export class AbstraxionAuth {
   }
 
   /**
+   * Fetch grants issued to a grantee from a granter.
+   *
+   * @param {string} grantee - The address of the grantee.
+   * @param {string} granter - The address of the granter.
+   * @param {string} [customRestUrl] - Optional custom REST URL to use for fetching grants.
+   * @returns {Promise<GrantsResponse>} A Promise that resolves to the grants response.
+   * @throws {Error} If the grantee or granter address is invalid, or if there's an error fetching grants.
+   */
+  async fetchGrants(
+    grantee: string,
+    granter: string,
+    customRestUrl?: string,
+  ): Promise<GrantsResponse> {
+    if (!grantee) {
+      throw new Error("Grantee address is required");
+    }
+    if (!granter) {
+      throw new Error("Granter address is required");
+    }
+
+    // Get the REST URL from the parameter, instance, or fetch from RPC
+    const restUrl =
+      customRestUrl ||
+      this.restUrl ||
+      (this.rpcUrl ? (await fetchConfig(this.rpcUrl)).restUrl : undefined);
+
+    if (!restUrl) {
+      throw new Error(
+        "REST URL is required. Configure the instance or provide a custom REST URL.",
+      );
+    }
+
+    const baseUrl = `${restUrl}/cosmos/authz/v1beta1/grants`;
+    const url = new URL(baseUrl);
+    const params = new URLSearchParams({
+      grantee,
+      granter,
+    });
+    url.search = params.toString();
+
+    try {
+      const res = await fetch(url, {
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch grants: ${res.statusText}`);
+      }
+
+      const data: GrantsResponse = await res.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching grants:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Poll for grants issued to a grantee from a granter.
    *
    * @param {string} grantee - The address of the grantee.
@@ -814,25 +872,13 @@ export class AbstraxionAuth {
       throw new Error("No granter address");
     }
 
-    const pollBaseUrl =
-      this.restUrl || (await fetchConfig(this.rpcUrl)).restUrl;
-
     const maxRetries = 5;
     let retries = 0;
 
     while (retries < maxRetries) {
       try {
-        const baseUrl = `${pollBaseUrl}/cosmos/authz/v1beta1/grants`;
-        const url = new URL(baseUrl);
-        const params = new URLSearchParams({
-          grantee,
-          granter,
-        });
-        url.search = params.toString();
-        const res = await fetch(url, {
-          cache: "no-store",
-        });
-        const data: GrantsResponse = await res.json();
+        const data = await this.fetchGrants(grantee, granter);
+
         if (data.grants.length === 0) {
           console.warn("No grants found.");
           return false;
