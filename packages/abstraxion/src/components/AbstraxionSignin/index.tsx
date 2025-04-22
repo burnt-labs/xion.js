@@ -18,7 +18,7 @@ export function AbstraxionSignin(): JSX.Element {
   useEffect(() => {
     async function onStartup() {
       try {
-        await login()
+        await login();
       } catch (error) {
         console.warn("Something went wrong: ", error);
         setAbstraxionError((error as Error).message);

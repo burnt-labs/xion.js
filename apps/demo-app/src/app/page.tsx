@@ -18,7 +18,7 @@ export default function Page(): JSX.Element {
   const { client, signArb } = useAbstraxionSigningClient();
 
   // General state hooks
-  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [instantiateResult, setInstantiateResult] =
     useState<InstantiateResultOrUndefined>(undefined);
@@ -90,22 +90,24 @@ export default function Page(): JSX.Element {
 
   const handleLogin = async () => {
     try {
-      setIsLoggingIn(true)
-      await login()
-    } catch(error){
-      console.error("There's been an error loggin in")
+      setIsLoggingIn(true);
+      await login();
+    } catch (error) {
+      console.error("There's been an error loggin in");
     }
-  }
+  };
 
-  if(isLoggingIn){
+  if (isLoggingIn) {
     return (
       <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
         <div className="rounded border border-white/20 p-6 text-center">
           <p className="font-bold">You are being redirected...</p>
-          <p className="text-sm">Use custom UI to render loading state with your own branding</p>
+          <p className="text-sm">
+            Use custom UI to render loading state with your own branding
+          </p>
         </div>
       </main>
-    )
+    );
   }
 
   return (
@@ -121,7 +123,9 @@ export default function Page(): JSX.Element {
       >
         {account.bech32Address ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
-        ) : isConnecting ? "LOADING..." : (
+        ) : isConnecting ? (
+          "LOADING..."
+        ) : (
           "CONNECT"
         )}
       </Button>
