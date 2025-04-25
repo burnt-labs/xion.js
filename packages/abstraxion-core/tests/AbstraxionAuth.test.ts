@@ -20,6 +20,19 @@ import { DecodeAuthorizationResponse } from "@/types";
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// Add fetch polyfill for Node.js environment
+if (typeof fetch === "undefined") {
+  global.fetch = jest.fn();
+}
+
+// Mock fetchConfig from @burnt-labs/constants
+jest.mock("@burnt-labs/constants", () => ({
+  fetchConfig: jest.fn().mockResolvedValue({
+    dashboardUrl: "https://settings.testnet.burnt.com",
+    restUrl: "https://api.xion-testnet-2.burnt.com:443",
+  }),
+}));
+
 /**
  * Helper function to configure the AbstraxionAuth instance
  */
@@ -832,7 +845,7 @@ describe("AbstraxionAuth", () => {
         .spyOn(mainnetAbstraxionAuth, "getCosmWasmClient")
         .mockResolvedValue(mockCosmWasmClient as any);
 
-      // Mock the fetch call to return an empty grants response
+      // Mock the fetch call to return grants response
       global.fetch = jest.fn().mockImplementation((url) => {
         if (url.toString().includes("/cosmos/authz/v1beta1/grants")) {
           return Promise.resolve({

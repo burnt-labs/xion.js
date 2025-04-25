@@ -3,23 +3,23 @@ import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import {
+  AcceptedMessageKeysFilter,
+  AcceptedMessagesFilter,
   CombinedLimit,
   ContractExecutionAuthorization,
   MaxCallsLimit,
   MaxFundsLimit,
-  AcceptedMessageKeysFilter,
-  AcceptedMessagesFilter,
 } from "cosmjs-types/cosmwasm/wasm/v1/authz";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { fetchConfig } from "@burnt-labs/constants";
 import { toByteArray } from "base64-js";
 import type {
   ContractGrantDescription,
+  DecodeAuthorizationResponse,
   GrantAuthorization,
   GrantsResponse,
   SpendLimit,
   TreasuryGrantConfig,
-  DecodeAuthorizationResponse,
 } from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
@@ -833,7 +833,7 @@ export class AbstraxionAuth {
           cache: "no-store",
         });
         const data: GrantsResponse = await res.json();
-        if (data.grants.length === 0) {
+        if (!data.grants || data.grants.length === 0) {
           console.warn("No grants found.");
           return false;
         }
