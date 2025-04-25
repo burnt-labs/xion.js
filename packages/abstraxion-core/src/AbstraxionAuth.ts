@@ -1,7 +1,14 @@
-import { Coin, GasPrice } from "@cosmjs/stargate";
+import {
+  Coin,
+  createProtobufRpcClient,
+  GasPrice,
+  QueryClient,
+} from "@cosmjs/stargate";
 import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
+import { QueryClientImpl as AuthzQueryClient } from "cosmjs-types/cosmos/authz/v1beta1/query";
+import { getRpcClient } from "./utils";
 import {
   AcceptedMessageKeysFilter,
   AcceptedMessagesFilter,
@@ -793,18 +800,18 @@ export class AbstraxionAuth {
   }
 
   /**
-   * Fetch grants issued to a grantee from a granter.
+   * Fetch grants issued to a grantee from a granter using ABCI query.
    *
    * @param {string} grantee - The address of the grantee.
    * @param {string} granter - The address of the granter.
-   * @param {string} [customRestUrl] - Optional custom REST URL to use for fetching grants.
+   * @param {string} [customRpcUrl] - Optional custom RPC URL to use for fetching grants.
    * @returns {Promise<GrantsResponse>} A Promise that resolves to the grants response.
    * @throws {Error} If the grantee or granter address is invalid, or if there's an error fetching grants.
    */
   async fetchGrants(
     grantee: string,
     granter: string,
-    customRestUrl?: string,
+    customRpcUrl?: string,
   ): Promise<GrantsResponse> {
     if (!grantee) {
       throw new Error("Grantee address is required");
@@ -813,40 +820,54 @@ export class AbstraxionAuth {
       throw new Error("Granter address is required");
     }
 
-    // Get the REST URL from the parameter, instance, or fetch from RPC
-    const restUrl =
-      customRestUrl ||
-      this.restUrl ||
-      (this.rpcUrl ? (await fetchConfig(this.rpcUrl)).restUrl : undefined);
+    // Get the RPC URL from the parameter or instance
+    const rpcUrl = customRpcUrl || this.rpcUrl;
 
-    if (!restUrl) {
+    if (!rpcUrl) {
       throw new Error(
-        "REST URL is required. Configure the instance or provide a custom REST URL.",
+        "RPC URL is required. Configure the instance or provide a custom RPC URL.",
       );
     }
 
-    const baseUrl = `${restUrl}/cosmos/authz/v1beta1/grants`;
-    const url = new URL(baseUrl);
-    const params = new URLSearchParams({
-      grantee,
-      granter,
-    });
-    url.search = params.toString();
-
     try {
-      const res = await fetch(url, {
-        cache: "no-store",
+      // Connect to the RPC endpoint using the factory function
+      const rpcClient = await getRpcClient(rpcUrl);
+      const queryClient = new QueryClient(rpcClient);
+      const protobufRpcClient = createProtobufRpcClient(queryClient);
+
+      // Create the authz query client
+      const authzClient = new AuthzQueryClient(protobufRpcClient);
+
+      // Query grants using the authz client
+      const response = await authzClient.Grants({
+        grantee,
+        granter,
+        msgTypeUrl: "", // Empty string to get all grants
       });
 
-      if (!res.ok) {
-        throw new Error(`Failed to fetch grants: ${res.statusText}`);
-      }
+      console.log("Response:", response);
 
-      const data: GrantsResponse = await res.json();
-      return data;
+      // Convert the response to the expected GrantsResponse format
+      const grantsResponse: GrantsResponse = {
+        grants: response.grants.map((grant) => ({
+          granter: granter,
+          grantee: grantee,
+          authorization: grant.authorization,
+          expiration: grant.expiration?.toString() || "",
+        })),
+        pagination: {
+          next_key: response.pagination?.nextKey?.toString() || null,
+          total: response.pagination?.total.toString() || "0",
+        },
+      };
+
+      return grantsResponse;
     } catch (error) {
       console.error("Error fetching grants:", error);
       throw error;
+    } finally {
+      // Close the Tendermint client connection
+      // No need to explicitly close the connection as it will be garbage collected
     }
   }
 

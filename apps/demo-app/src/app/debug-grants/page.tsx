@@ -2,7 +2,6 @@
 import { useState } from "react";
 import {
   abstraxionAuth,
-  DecodeAuthorizationResponse,
   Grant,
   GrantsResponse,
   TreasuryGrantConfig,
@@ -53,7 +52,9 @@ export default function DebugGrantsPage(): JSX.Element {
       }
 
       // Configure the RPC URL and treasury based on selected network
-      const { rpc: rpcUrl, rest: restUrl } = isMainnet ? mainnetChainInfo : testnetChainInfo;
+      const { rpc: rpcUrl, rest: restUrl } = isMainnet
+        ? mainnetChainInfo
+        : testnetChainInfo;
       abstraxionAuth.configureAbstraxionInstance(
         rpcUrl,
         restUrl,
@@ -70,7 +71,7 @@ export default function DebugGrantsPage(): JSX.Element {
         grantsResponse = await abstraxionAuth.fetchGrants(
           grantee,
           granter,
-          restUrl,
+          rpcUrl,
         );
 
         // Save chain grants
@@ -258,7 +259,7 @@ export default function DebugGrantsPage(): JSX.Element {
 
         {/* Display Chain Grants */}
         {chainGrants.length > 0 ? (
-          <div className="mt-4 rounded border border-gray-300 p-4 bg-gray-800">
+          <div className="mt-4 rounded border border-gray-300 bg-gray-800 p-4">
             <h2 className="mb-2 text-xl font-bold text-white">
               Actual Grants (from Chain)
             </h2>
@@ -268,7 +269,7 @@ export default function DebugGrantsPage(): JSX.Element {
                   key={index}
                   className="mb-4 rounded bg-gray-700 p-4 text-white"
                 >
-                  <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="mb-2 grid grid-cols-2 gap-2">
                     <div>
                       <p className="font-bold text-blue-300">Grant Type:</p>
                       <p>{grant.authorization["@type"]}</p>
@@ -279,79 +280,128 @@ export default function DebugGrantsPage(): JSX.Element {
                     </div>
                   </div>
 
-                  {grant.authorization["@type"] === "/cosmwasm.wasm.v1.ContractExecutionAuthorization" && (
+                  {grant.authorization["@type"] ===
+                    "/cosmwasm.wasm.v1.ContractExecutionAuthorization" && (
                     <div className="mt-2">
-                      <p className="font-bold text-blue-300">Contract Grants:</p>
-                      {grant.authorization.grants.map((contractGrant: any, grantIndex: number) => (
-                        <div key={grantIndex} className="ml-4 mt-2 p-2 bg-gray-600 rounded">
-                          <p><span className="font-bold">Contract:</span> {contractGrant.contract}</p>
-                          {contractGrant.limit && (
-                            <div className="ml-4">
-                              <p><span className="font-bold">Limit Type:</span> {contractGrant.limit["@type"]}</p>
-                              {contractGrant.limit.remaining && (
-                                <p><span className="font-bold">Remaining Calls:</span> {contractGrant.limit.remaining}</p>
-                              )}
-                              {contractGrant.limit.calls_remaining && (
-                                <p><span className="font-bold">Remaining Calls:</span> {contractGrant.limit.calls_remaining}</p>
-                              )}
-                              {contractGrant.limit.amounts && (
-                                <div>
-                                  <p><span className="font-bold">Amounts:</span></p>
-                                  <ul className="list-disc ml-6">
-                                    {contractGrant.limit.amounts.map((amount: any, amountIndex: number) => (
-                                      <li key={amountIndex}>{amount.amount} {amount.denom}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {contractGrant.filter && (
-                            <div className="ml-4">
-                              <p><span className="font-bold">Filter Type:</span> {contractGrant.filter["@type"]}</p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      <p className="font-bold text-blue-300">
+                        Contract Grants:
+                      </p>
+                      {grant.authorization.grants.map(
+                        (contractGrant: any, grantIndex: number) => (
+                          <div
+                            key={grantIndex}
+                            className="ml-4 mt-2 rounded bg-gray-600 p-2"
+                          >
+                            <p>
+                              <span className="font-bold">Contract:</span>{" "}
+                              {contractGrant.contract}
+                            </p>
+                            {contractGrant.limit && (
+                              <div className="ml-4">
+                                <p>
+                                  <span className="font-bold">Limit Type:</span>{" "}
+                                  {contractGrant.limit["@type"]}
+                                </p>
+                                {contractGrant.limit.remaining && (
+                                  <p>
+                                    <span className="font-bold">
+                                      Remaining Calls:
+                                    </span>{" "}
+                                    {contractGrant.limit.remaining}
+                                  </p>
+                                )}
+                                {contractGrant.limit.calls_remaining && (
+                                  <p>
+                                    <span className="font-bold">
+                                      Remaining Calls:
+                                    </span>{" "}
+                                    {contractGrant.limit.calls_remaining}
+                                  </p>
+                                )}
+                                {contractGrant.limit.amounts && (
+                                  <div>
+                                    <p>
+                                      <span className="font-bold">
+                                        Amounts:
+                                      </span>
+                                    </p>
+                                    <ul className="ml-6 list-disc">
+                                      {contractGrant.limit.amounts.map(
+                                        (amount: any, amountIndex: number) => (
+                                          <li key={amountIndex}>
+                                            {amount.amount} {amount.denom}
+                                          </li>
+                                        ),
+                                      )}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {contractGrant.filter && (
+                              <div className="ml-4">
+                                <p>
+                                  <span className="font-bold">
+                                    Filter Type:
+                                  </span>{" "}
+                                  {contractGrant.filter["@type"]}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ),
+                      )}
                     </div>
                   )}
 
-                  {grant.authorization["@type"] === "/cosmos.bank.v1beta1.SendAuthorization" && (
+                  {grant.authorization["@type"] ===
+                    "/cosmos.bank.v1beta1.SendAuthorization" && (
                     <div className="mt-2">
                       <p className="font-bold text-blue-300">Spend Limits:</p>
-                      <ul className="list-disc ml-6">
-                        {grant.authorization.spend_limit.map((limit: any, limitIndex: number) => (
-                          <li key={limitIndex}>{limit.amount} {limit.denom}</li>
-                        ))}
+                      <ul className="ml-6 list-disc">
+                        {grant.authorization.spend_limit.map(
+                          (limit: any, limitIndex: number) => (
+                            <li key={limitIndex}>
+                              {limit.amount} {limit.denom}
+                            </li>
+                          ),
+                        )}
                       </ul>
                     </div>
                   )}
 
-                  {grant.authorization["@type"] === "/cosmos.authz.v1beta1.GenericAuthorization" && (
+                  {grant.authorization["@type"] ===
+                    "/cosmos.authz.v1beta1.GenericAuthorization" && (
                     <div className="mt-2">
                       <p className="font-bold text-blue-300">Message Type:</p>
                       <p>{grant.authorization.msg}</p>
                     </div>
                   )}
 
-                  {grant.authorization["@type"] === "/cosmos.staking.v1beta1.StakeAuthorization" && (
+                  {grant.authorization["@type"] ===
+                    "/cosmos.staking.v1beta1.StakeAuthorization" && (
                     <div className="mt-2">
-                      <p className="font-bold text-blue-300">Authorization Type:</p>
+                      <p className="font-bold text-blue-300">
+                        Authorization Type:
+                      </p>
                       <p>{grant.authorization.authorization_type}</p>
                       {grant.authorization.max_tokens && (
                         <div>
                           <p className="font-bold text-blue-300">Max Tokens:</p>
-                          <p>{grant.authorization.max_tokens.amount} {grant.authorization.max_tokens.denom}</p>
+                          <p>
+                            {grant.authorization.max_tokens.amount}{" "}
+                            {grant.authorization.max_tokens.denom}
+                          </p>
                         </div>
                       )}
                     </div>
                   )}
 
                   <details className="mt-3">
-                    <summary className="cursor-pointer text-blue-400 font-bold">
+                    <summary className="cursor-pointer font-bold text-blue-400">
                       Full Authorization Details
                     </summary>
-                    <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-xs bg-gray-900 p-2 rounded">
+                    <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded bg-gray-900 p-2 text-xs">
                       {JSON.stringify(grant.authorization, null, 2)}
                     </pre>
                   </details>
@@ -360,14 +410,15 @@ export default function DebugGrantsPage(): JSX.Element {
             </div>
           </div>
         ) : (
-          <div className="mt-4 rounded border border-gray-300 p-4 bg-gray-800">
+          <div className="mt-4 rounded border border-gray-300 bg-gray-800 p-4">
             <h2 className="mb-2 text-xl font-bold text-white">
               Actual Grants (from Chain)
             </h2>
             <div className="p-4 text-center text-white">
               <p className="text-lg">No grants found</p>
-              <p className="text-sm text-gray-400 mt-2">
-                There are no grants between the specified grantee and granter addresses
+              <p className="mt-2 text-sm text-gray-400">
+                There are no grants between the specified grantee and granter
+                addresses
               </p>
             </div>
           </div>
@@ -422,7 +473,6 @@ export default function DebugGrantsPage(): JSX.Element {
             </div>
           </div>
         )}
-
       </div>
     </main>
   );
