@@ -94,6 +94,8 @@ export default function Page(): JSX.Element {
       await login();
     } catch (error) {
       console.error("There's been an error loggin in");
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
