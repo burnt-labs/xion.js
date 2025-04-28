@@ -3,10 +3,9 @@
  */
 import { TextDecoder, TextEncoder } from "text-encoding";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { AbstraxionAuth } from "../src/AbstraxionAuth";
+import { AbstraxionAuth, isLimitValid } from "../src/AbstraxionAuth";
 import {
   mockAccountAddress,
-  mockContractAddress,
   mockGrantsResponse,
   mockGrantsResponseForTreasury,
   mockLegacyConfig,
@@ -179,21 +178,6 @@ describe("AbstraxionAuth", () => {
         {
           address: mockAccountAddress,
           amounts: [{ denom: "uxion", amount: "1000000" }],
-        },
-      ];
-
-      const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
-      expect(result).toBe(false);
-    });
-
-    it("should return false when legacy config grants do not match on-chain grants - grant contract spend limit change", () => {
-      configureAbstraxionAuthInstance(abstraxionAuth);
-
-      abstraxionAuth.grantContracts = [
-        {
-          address: mockContractAddress,
-          amounts: [{ denom: "uxion", amount: "2000000" }],
         },
       ];
 
@@ -750,63 +734,57 @@ describe("AbstraxionAuth", () => {
         grants: [
           {
             authorization: {
-              type: "cosmos-sdk/SendAuthorization",
-              value: {
-                spend_limit: [
-                  {
-                    denom:
-                      "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
-                    amount: "9999999999999",
-                  },
-                  {
-                    denom: "uxion",
-                    amount: "9999999999999",
-                  },
-                ],
-                allow_list: [
-                  "xion1f9tum2nrh79u4naayylnte2jvpvpuczuv47v8wydapfe9h2llz2sahf7jc",
-                ],
-              },
+              "@type": "/cosmos.bank.v1beta1.SendAuthorization",
+              spend_limit: [
+                {
+                  denom:
+                    "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
+                  amount: "10000000000000",
+                },
+                {
+                  denom: "uxion",
+                  amount: "9999999999999",
+                },
+              ],
+              allow_list: [
+                "xion1f9tum2nrh79u4naayylnte2jvpvpuczuv47v8wydapfe9h2llz2sahf7jc",
+              ],
             },
             expiration: "2025-07-24T01:14:04Z",
           },
           {
             authorization: {
-              type: "wasm/ContractExecutionAuthorization",
-              value: {
-                grants: [
-                  {
-                    contract:
-                      "xion1f9tum2nrh79u4naayylnte2jvpvpuczuv47v8wydapfe9h2llz2sahf7jc",
-                    limit: {
-                      type: "wasm/CombinedLimit",
-                      value: {
-                        calls_remaining: "10000000000",
-                        amounts: [
-                          {
-                            denom:
-                              "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
-                            amount: "10000000000000",
-                          },
-                          {
-                            denom: "uxion",
-                            amount: "10000000000000",
-                          },
-                        ],
+              "@type": "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+              grants: [
+                {
+                  contract:
+                    "xion1f9tum2nrh79u4naayylnte2jvpvpuczuv47v8wydapfe9h2llz2sahf7jc",
+                  limit: {
+                    "@type": "/cosmwasm.wasm.v1.CombinedLimit",
+                    calls_remaining: "10000000000",
+                    amounts: [
+                      {
+                        denom:
+                          "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
+                        amount: "10000000000000",
                       },
-                    },
-                    filter: {
-                      type: "wasm/AllowAllMessagesFilter",
-                      value: {},
-                    },
+                      {
+                        denom: "uxion",
+                        amount: "10000000000000",
+                      },
+                    ],
                   },
-                ],
-              },
+                  filter: {
+                    "@type": "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+                  },
+                },
+              ],
             },
             expiration: "2025-07-24T01:14:04Z",
           },
         ],
         pagination: {
+          next_key: null,
           total: "2",
         },
       };
@@ -862,6 +840,75 @@ describe("AbstraxionAuth", () => {
 
       // We expect the poll to return false when no grants are found
       expect(result).toBe(true);
+    });
+  });
+
+  describe("isLimitValid", () => {
+    it("should return true when chain spend limit is less than expected", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "800" },
+        { denom: "atom", amount: "300" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(true);
+    });
+
+    it("should return true when chain spend limit is equal to expected", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(true);
+    });
+
+    it("should return false when chain spend limit is greater than expected", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "1200" }, // Greater than expected
+        { denom: "atom", amount: "500" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(false);
+    });
+
+    it("should return false when chain spend limit has unexpected denominations", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "800" },
+        { denom: "btc", amount: "300" }, // Unexpected denomination
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(false);
+    });
+
+    it("should return false when expected spend limit is undefined", () => {
+      const expectedSpendLimit = undefined;
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "800" },
+        { denom: "atom", amount: "300" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(false);
     });
   });
 });

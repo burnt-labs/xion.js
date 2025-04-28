@@ -29,6 +29,39 @@ const formatCoinArray = (coins: Coin[] = []) => {
   return coins.map((coin) => `${coin.amount} ${coin.denom}`).join(", ");
 };
 
+/**
+ * Generic function that validates if a chain limit is less than or equal to an expected limit.
+ * This is used to validate that on-chain limits have not increased beyond what was authorized.
+ *
+ * @template T - Type with denom and amount properties
+ * @param {T[] | undefined} expectedLimit - The expected limit from the decoded authorization
+ * @param {T[]} chainLimit - The actual limit from the chain
+ * @returns {boolean} - Returns true if the chain limit is less than or equal to the expected limit
+ */
+export const isLimitValid = <T extends { denom: string; amount: string }>(
+  expectedLimit: T[] | undefined,
+  chainLimit: T[],
+): boolean => {
+  if (!expectedLimit) return false;
+
+  // Create a map of denom -> amount from the expected limit
+  const expectedLimits = new Map<string, bigint>();
+  for (const item of expectedLimit) {
+    expectedLimits.set(item.denom, BigInt(item.amount));
+  }
+
+  // Check each chain limit against the expected limit
+  for (const item of chainLimit) {
+    const expectedAmount = expectedLimits.get(item.denom);
+    if (expectedAmount === undefined) return false; // Unexpected denom
+
+    // Chain amount should be less than or equal to expected amount
+    if (BigInt(item.amount) > expectedAmount) return false;
+  }
+
+  return true;
+};
+
 export class AbstraxionAuth {
   // Config
   private rpcUrl?: string;
@@ -384,11 +417,7 @@ export class AbstraxionAuth {
               grant.authorization.grants.some(
                 (authGrant: GrantAuthorization) =>
                   authGrant.limit.amounts &&
-                  authGrant.limit.amounts.every(
-                    (limit: SpendLimit, index: number) =>
-                      limit.denom === amounts[index].denom &&
-                      limit.amount === amounts[index].amount,
-                  ),
+                  isLimitValid(amounts, authGrant.limit.amounts),
               ),
             )
           : true;
@@ -449,11 +478,8 @@ export class AbstraxionAuth {
 
       return this.bank?.every((bankEntry) =>
         bankGrants.some((grant) =>
-          grant.authorization.spend_limit.some(
-            (limit: SpendLimit) =>
-              limit.denom === bankEntry.denom &&
-              limit.amount === bankEntry.amount,
-          ),
+          // Check if any spend_limit in the grant matches the expected limit
+          isLimitValid([bankEntry], grant.authorization.spend_limit),
         ),
       );
     };
@@ -484,7 +510,7 @@ export class AbstraxionAuth {
     if (typeUrl === "/cosmos.bank.v1beta1.SendAuthorization") {
       const authorization = SendAuthorization.decode(decodedValue);
       return {
-        spendLimit: formatCoinArray(authorization.spendLimit),
+        spendLimit: authorization.spendLimit,
         allowList: authorization.allowList,
       };
     }
@@ -493,9 +519,7 @@ export class AbstraxionAuth {
       const authorization = StakeAuthorization.decode(decodedValue);
       return {
         authorizationType: authorization.authorizationType.toString(),
-        maxTokens: authorization.maxTokens
-          ? `${authorization.maxTokens.amount} ${authorization.maxTokens.denom}`
-          : undefined,
+        maxTokens: authorization.maxTokens,
         allowList: authorization.allowList?.address,
         denyList: authorization.denyList?.address,
       };
@@ -507,11 +531,11 @@ export class AbstraxionAuth {
       const contracts = authorization.grants.map((grant) => {
         let limitType: string | undefined;
         let maxCalls: string | undefined;
-        let maxFunds: { denom: string; amount: string }[] | undefined;
+        let maxFunds: Coin[] | undefined;
         let combinedLimits:
           | {
               maxCalls: string;
-              maxFunds: { denom: string; amount: string }[];
+              maxFunds: Coin[];
             }
           | undefined;
         let filter = grant.filter
@@ -677,8 +701,10 @@ export class AbstraxionAuth {
               return (
                 matchingChainGrant.limit?.["@type"] ===
                   "/cosmwasm.wasm.v1.MaxFundsLimit" &&
-                JSON.stringify(decodedGrant.maxFunds) ===
-                  JSON.stringify(matchingChainGrant.limit.amounts)
+                isLimitValid(
+                  decodedGrant.maxFunds,
+                  matchingChainGrant.limit.amounts,
+                )
               );
 
             case "CombinedLimit":
@@ -687,8 +713,10 @@ export class AbstraxionAuth {
                   "/cosmwasm.wasm.v1.CombinedLimit" &&
                 decodedGrant.combinedLimits?.maxCalls ===
                   matchingChainGrant.limit.calls_remaining &&
-                JSON.stringify(decodedGrant.combinedLimits?.maxFunds) ===
-                  JSON.stringify(matchingChainGrant.limit.amounts)
+                isLimitValid(
+                  decodedGrant.combinedLimits?.maxFunds,
+                  matchingChainGrant.limit.amounts,
+                )
               );
 
             default:
@@ -757,8 +785,10 @@ export class AbstraxionAuth {
 
         if (chainAuthType === "/cosmos.bank.v1beta1.SendAuthorization") {
           return (
-            decodedAuthorization?.spendLimit ===
-              formatCoinArray(chainAuthorization.spend_limit) &&
+            isLimitValid(
+              decodedAuthorization?.spendLimit,
+              chainAuthorization.spend_limit,
+            ) &&
             JSON.stringify(decodedAuthorization?.allowList) ===
               JSON.stringify(chainAuthorization.allow_list)
           );
