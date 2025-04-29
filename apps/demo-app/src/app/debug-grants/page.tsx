@@ -10,6 +10,11 @@ import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";
 import { mainnetChainInfo, testnetChainInfo } from "@burnt-labs/constants";
+import {
+  decodeAuthorization,
+  DecodeAuthorizationResponse,
+  fetchChainGrantsABCI,
+} from "@burnt-labs/abstraxion-core";
 
 export default function DebugGrantsPage(): JSX.Element {
   // General state hooks
@@ -68,11 +73,7 @@ export default function DebugGrantsPage(): JSX.Element {
       // Fetch grants using the AbstraxionAuth instance
       let grantsResponse: GrantsResponse;
       try {
-        grantsResponse = await abstraxionAuth.fetchGrants(
-          grantee,
-          granter,
-          rpcUrl,
-        );
+        grantsResponse = await fetchChainGrantsABCI(grantee, granter, rpcUrl);
 
         // Save chain grants
         setChainGrants(grantsResponse.grants);
@@ -111,7 +112,7 @@ export default function DebugGrantsPage(): JSX.Element {
           configs.push(grantConfigResponse);
 
           // Decode the authorization
-          const decodedAuth = abstraxionAuth.decodeAuthorization(
+          const decodedAuth = decodeAuthorization(
             grantConfigResponse.authorization.type_url,
             grantConfigResponse.authorization.value,
           );

@@ -55,6 +55,7 @@ export type ContractGrantDescription =
       amounts: SpendLimit[];
     };
 
+// TODO: Is this the manufactored interface we want to stick with?
 export interface DecodeAuthorizationResponse {
   msg?: string;
   spendLimit?: string;
