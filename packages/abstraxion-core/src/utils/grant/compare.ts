@@ -9,6 +9,39 @@ import type { DecodeAuthorizationResponse } from "@/types";
 import { decodeAuthorization } from "@/utils/grant/decoding";
 
 /**
+ * Generic function that validates if a chain limit is less than or equal to an expected limit.
+ * This is used to validate that on-chain limits have not increased beyond what was authorized.
+ *
+ * @template T - Type with denom and amount properties
+ * @param {T[] | undefined} expectedLimit - The expected limit from the decoded authorization
+ * @param {T[]} chainLimit - The actual limit from the chain
+ * @returns {boolean} - Returns true if the chain limit is less than or equal to the expected limit
+ */
+export const isLimitValid = <T extends { denom: string; amount: string }>(
+  expectedLimit: T[] | undefined,
+  chainLimit: T[] | undefined,
+): boolean => {
+  if (!expectedLimit || !chainLimit) return false; // Check for undefined chainLimit
+
+  // Create a map of denom -> amount from the expected limit
+  const expectedLimits = new Map<string, bigint>();
+  for (const item of expectedLimit) {
+    expectedLimits.set(item.denom, BigInt(item.amount));
+  }
+
+  // Check each chain limit against the expected limit
+  for (const item of chainLimit) {
+    const expectedAmount = expectedLimits.get(item.denom);
+    if (expectedAmount === undefined) return false; // Unexpected denom
+
+    // Chain amount should be less than or equal to expected amount
+    if (BigInt(item.amount) > expectedAmount) return false;
+  }
+
+  return true;
+};
+
+/**
  * Validates that decoded contract execution authorizations match the on-chain authorizations.
  * @param {DecodeAuthorizationResponse | null} treasuryAuth - The decoded authorization from treasury
  *        containing contract grants with their limits and filters
@@ -24,8 +57,12 @@ const validateContractExecution = (
   const treasuryGrants = treasuryAuth?.contracts || [];
   const chainGrants = chainAuth?.contracts || [];
 
+  console.log("treasuryAuth: ", treasuryAuth);
+  console.log("chainAuth: ", chainAuth);
+
   return treasuryGrants.every((treasuryGrant) => {
     const matchingChainGrants = chainGrants.filter((chainGrant) => {
+      console.log(chainGrant.contract, treasuryGrant.contract);
       // Basic contract match
       if (chainGrant.contract !== treasuryGrant.contract) {
         return false;
@@ -102,8 +139,7 @@ const validateContractExecution = (
         case "MaxFunds":
           return (
             matchingChainGrant.limitType === "MaxFunds" &&
-            JSON.stringify(treasuryGrant.maxFunds) ===
-              JSON.stringify(matchingChainGrant.maxFunds)
+            isLimitValid(treasuryGrant.maxFunds, matchingChainGrant.maxFunds)
           );
 
         case "CombinedLimit":
@@ -111,8 +147,10 @@ const validateContractExecution = (
             matchingChainGrant.limitType === "CombinedLimit" &&
             treasuryGrant.combinedLimits?.maxCalls ===
               matchingChainGrant.combinedLimits?.maxCalls &&
-            JSON.stringify(treasuryGrant.combinedLimits?.maxFunds) ===
-              JSON.stringify(matchingChainGrant.combinedLimits?.maxFunds)
+            isLimitValid(
+              treasuryGrant.combinedLimits?.maxFunds,
+              matchingChainGrant.combinedLimits?.maxFunds,
+            )
           );
 
         default:
@@ -169,8 +207,10 @@ export function compareChainGrantsToTreasuryGrants(
 
       if (chainAuthType === "/cosmos.bank.v1beta1.SendAuthorization") {
         return (
-          decodedTreasuryAuthorization?.spendLimit ===
-            decodedGrantAuthorization.spendLimit &&
+          isLimitValid(
+            decodedTreasuryAuthorization?.spendLimit,
+            decodedGrantAuthorization.spendLimit,
+          ) &&
           JSON.stringify(decodedTreasuryAuthorization?.allowList) ===
             JSON.stringify(decodedGrantAuthorization.allowList)
         );
@@ -242,11 +282,7 @@ export const compareContractGrants = (
           grant.authorization.grants.some(
             (authGrant: GrantAuthorization) =>
               authGrant.limit.amounts &&
-              authGrant.limit.amounts.every(
-                (limit: SpendLimit, index: number) =>
-                  limit.denom === amounts[index].denom &&
-                  limit.amount === amounts[index].amount,
-              ),
+              isLimitValid(amounts, authGrant.limit.amounts),
           ),
         )
       : true;
@@ -322,10 +358,7 @@ export const compareBankGrants = (
 
   return bank?.every((bankEntry) =>
     bankGrants.some((grant) =>
-      grant.authorization.spend_limit.some(
-        (limit: SpendLimit) =>
-          limit.denom === bankEntry.denom && limit.amount === bankEntry.amount,
-      ),
+      isLimitValid([bankEntry], grant.authorization.spend_limit),
     ),
   );
 };

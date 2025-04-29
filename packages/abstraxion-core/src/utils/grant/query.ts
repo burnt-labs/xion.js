@@ -63,7 +63,6 @@ export const fetchChainGrantsABCI = async (
   granter?: string,
   rpcUrl?: string,
 ): Promise<GrantsResponse> => {
-  console.log(grantee, granter);
   if (!grantee) {
     throw new Error("Grantee address is required");
   }

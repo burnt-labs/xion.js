@@ -1,4 +1,5 @@
 import { toByteArray } from "base64-js";
+import type { Coin } from "@cosmjs/amino";
 import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
@@ -11,7 +12,6 @@ import {
   MaxFundsLimit,
 } from "cosmjs-types/cosmwasm/wasm/v1/authz";
 import { DecodeAuthorizationResponse } from "@/types";
-import { formatCoinArray } from ".";
 
 // @TODO: Lock into a returned interface because dev portal uses something very similar, except dev portal sticks to cosmjs as much as possible
 // I like dev portal approach better so refactor codebase as needed
@@ -40,7 +40,7 @@ export const decodeAuthorization = (
   if (typeUrl === "/cosmos.bank.v1beta1.SendAuthorization") {
     const authorization = SendAuthorization.decode(processedAuthorizationValue);
     return {
-      spendLimit: formatCoinArray(authorization.spendLimit),
+      spendLimit: authorization.spendLimit,
       allowList: authorization.allowList,
     };
   }
@@ -51,9 +51,7 @@ export const decodeAuthorization = (
     );
     return {
       authorizationType: authorization.authorizationType.toString(),
-      maxTokens: authorization.maxTokens
-        ? `${authorization.maxTokens.amount} ${authorization.maxTokens.denom}`
-        : undefined,
+      maxTokens: authorization.maxTokens,
       allowList: authorization.allowList?.address,
       denyList: authorization.denyList?.address,
     };
@@ -67,7 +65,7 @@ export const decodeAuthorization = (
     const contracts = authorization.grants.map((grant) => {
       let limitType: string | undefined;
       let maxCalls: string | undefined;
-      let maxFunds: { denom: string; amount: string }[] | undefined;
+      let maxFunds: Coin[] | undefined;
       let combinedLimits:
         | {
             maxCalls: string;
