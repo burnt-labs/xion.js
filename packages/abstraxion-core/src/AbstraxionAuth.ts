@@ -19,6 +19,39 @@ import {
   compareBankGrants,
 } from "@/utils/grant";
 
+/**
+ * Generic function that validates if a chain limit is less than or equal to an expected limit.
+ * This is used to validate that on-chain limits have not increased beyond what was authorized.
+ *
+ * @template T - Type with denom and amount properties
+ * @param {T[] | undefined} expectedLimit - The expected limit from the decoded authorization
+ * @param {T[]} chainLimit - The actual limit from the chain
+ * @returns {boolean} - Returns true if the chain limit is less than or equal to the expected limit
+ */
+export const isLimitValid = <T extends { denom: string; amount: string }>(
+  expectedLimit: T[] | undefined,
+  chainLimit: T[],
+): boolean => {
+  if (!expectedLimit) return false;
+
+  // Create a map of denom -> amount from the expected limit
+  const expectedLimits = new Map<string, bigint>();
+  for (const item of expectedLimit) {
+    expectedLimits.set(item.denom, BigInt(item.amount));
+  }
+
+  // Check each chain limit against the expected limit
+  for (const item of chainLimit) {
+    const expectedAmount = expectedLimits.get(item.denom);
+    if (expectedAmount === undefined) return false; // Unexpected denom
+
+    // Chain amount should be less than or equal to expected amount
+    if (BigInt(item.amount) > expectedAmount) return false;
+  }
+
+  return true;
+};
+
 export class AbstraxionAuth {
   // Config
   private rpcUrl?: string;
@@ -344,7 +377,7 @@ export class AbstraxionAuth {
    */
   compareGrantsToLegacyConfig(grantsResponse: GrantsResponse): boolean {
     const { grants } = grantsResponse;
-
+    
     return (
       compareContractGrants(grants, this.grantContracts) &&
       compareStakeGrants(grants, this.stake) &&

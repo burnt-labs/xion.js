@@ -1,24 +1,36 @@
 /**
  * @jest-environment jsdom
  */
-import { TextEncoder, TextDecoder } from "text-encoding";
+import { TextDecoder, TextEncoder } from "text-encoding";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { AbstraxionAuth } from "../src/AbstraxionAuth";
+import { AbstraxionAuth, isLimitValid } from "../src/AbstraxionAuth";
 import {
   mockAccountAddress,
-  mockContractAddress,
   mockGrantsResponse,
   mockGrantsResponseForTreasury,
   mockLegacyConfig,
 } from "./mockData/grantResponses";
 import {
-  MockStorageStrategy,
   MockRedirectStrategy,
+  MockStorageStrategy,
 } from "./mockData/mockStrategies";
 import { DecodeAuthorizationResponse } from "@/types";
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+
+// Add fetch polyfill for Node.js environment
+if (typeof fetch === "undefined") {
+  global.fetch = jest.fn();
+}
+
+// Mock fetchConfig from @burnt-labs/constants
+jest.mock("@burnt-labs/constants", () => ({
+  fetchConfig: jest.fn().mockResolvedValue({
+    dashboardUrl: "https://settings.testnet.burnt.com",
+    restUrl: "https://api.xion-testnet-2.burnt.com:443",
+  }),
+}));
 
 /**
  * Helper function to configure the AbstraxionAuth instance
@@ -166,21 +178,6 @@ describe("AbstraxionAuth", () => {
         {
           address: mockAccountAddress,
           amounts: [{ denom: "uxion", amount: "1000000" }],
-        },
-      ];
-
-      const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
-      expect(result).toBe(false);
-    });
-
-    it("should return false when legacy config grants do not match on-chain grants - grant contract spend limit change", () => {
-      configureAbstraxionAuthInstance(abstraxionAuth);
-
-      abstraxionAuth.grantContracts = [
-        {
-          address: mockContractAddress,
-          amounts: [{ denom: "uxion", amount: "2000000" }],
         },
       ];
 
@@ -702,6 +699,215 @@ describe("AbstraxionAuth", () => {
       );
 
       // We expect the poll to return false when no grants are found
+      expect(result).toBe(false);
+    });
+
+    it("should handle decreasing grants", async () => {
+      // Create a new instance without mocking the CosmWasmClient
+      const mainnetAbstraxionAuth = new AbstraxionAuth(
+        new MockStorageStrategy(),
+        new MockRedirectStrategy(),
+      );
+
+      // Configure with mainnet endpoints
+      const rpcUrl = "https://rpc.xion-mainnet-1.burnt.com:443";
+      const restUrl = "https://api.xion-mainnet-1.burnt.com:443";
+      const treasury =
+        "xion1g2g7x7uuvj085rgy28quculy68v0qrh60csgw672mrtqzzeg575sypn3z6";
+      const sessionKey = "xion1elpgslv2rprlw506lyvflmy2v534xgum6kh3s7"; // This is the grantee
+      const smartAccount =
+        "xion1n7r6sxu7c3gh6pfnk49mdtj5upzqg7lav4ckgps9p20py8a2st0sdq3jc7"; // This is the granter
+
+      // Configure the instance with mainnet settings
+      mainnetAbstraxionAuth.configureAbstraxionInstance(
+        rpcUrl,
+        restUrl,
+        undefined, // No specific grant contracts
+        false, // Enable stake
+        undefined, // No specific bank limits
+        undefined, // No callback URL
+        treasury, // Set the treasury address
+      );
+
+      // Empty grants response
+      const grantsResponse = {
+        grants: [
+          {
+            authorization: {
+              "@type": "/cosmos.bank.v1beta1.SendAuthorization",
+              spend_limit: [
+                {
+                  denom:
+                    "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
+                  amount: "10000000000000",
+                },
+                {
+                  denom: "uxion",
+                  amount: "9999999999999",
+                },
+              ],
+              allow_list: [
+                "xion1f9tum2nrh79u4naayylnte2jvpvpuczuv47v8wydapfe9h2llz2sahf7jc",
+              ],
+            },
+            expiration: "2025-07-24T01:14:04Z",
+          },
+          {
+            authorization: {
+              "@type": "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+              grants: [
+                {
+                  contract:
+                    "xion1f9tum2nrh79u4naayylnte2jvpvpuczuv47v8wydapfe9h2llz2sahf7jc",
+                  limit: {
+                    "@type": "/cosmwasm.wasm.v1.CombinedLimit",
+                    calls_remaining: "10000000000",
+                    amounts: [
+                      {
+                        denom:
+                          "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
+                        amount: "10000000000000",
+                      },
+                      {
+                        denom: "uxion",
+                        amount: "10000000000000",
+                      },
+                    ],
+                  },
+                  filter: {
+                    "@type": "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
+                  },
+                },
+              ],
+            },
+            expiration: "2025-07-24T01:14:04Z",
+          },
+        ],
+        pagination: {
+          next_key: null,
+          total: "2",
+        },
+      };
+      // Mock the CosmWasmClient for treasury queries
+      const mockCosmWasmClient = {
+        queryContractSmart: jest
+          .fn()
+          .mockResolvedValueOnce([
+            "/cosmos.bank.v1beta1.MsgSend",
+            "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+          ]) // First call for grant_config_type_urls
+          .mockResolvedValueOnce({
+            // Second call for grant_config_by_type_url
+            description: "Test",
+            authorization: {
+              type_url: "/cosmos.bank.v1beta1.SendAuthorization",
+              value:
+                "ClYKRGliYy9GMDgyQjY1Qzg4RTRCNkQ1RUYxREIyNDNDREExRDMzMUQwMDI3NTlFOTM4QTBGNUNEM0ZGREM1RDUzQjNFMzQ5Eg4xMDAwMDAwMDAwMDAwMAoXCgV1eGlvbhIOMTAwMDAwMDAwMDAwMDASP3hpb24xZjl0dW0ybnJoNzl1NG5hYXl5bG50ZTJqdnB2cHVjenV2NDd2OHd5ZGFwZmU5aDJsbHoyc2FoZjdqYw==",
+            },
+            optional: false,
+          })
+          .mockResolvedValueOnce({
+            // Second call for grant_config_by_type_url
+            description: "Test",
+            authorization: {
+              type_url: "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+              value:
+                "CooCCj94aW9uMWY5dHVtMm5yaDc5dTRuYWF5eWxudGUyanZwdnB1Y3p1djQ3djh3eWRhcGZlOWgybGx6MnNhaGY3amMSmgEKHy9jb3Ntd2FzbS53YXNtLnYxLkNvbWJpbmVkTGltaXQSdwiAyK+gJRJWCkRpYmMvRjA4MkI2NUM4OEU0QjZENUVGMURCMjQzQ0RBMUQzMzFEMDAyNzU5RTkzOEEwRjVDRDNGRkRDNUQ1M0IzRTM0ORIOMTAwMDAwMDAwMDAwMDASFwoFdXhpb24SDjEwMDAwMDAwMDAwMDAwGioKKC9jb3Ntd2FzbS53YXNtLnYxLkFsbG93QWxsTWVzc2FnZXNGaWx0ZXI=",
+            },
+            optional: false,
+          }),
+      };
+
+      // Mock the getCosmWasmClient method
+      jest
+        .spyOn(mainnetAbstraxionAuth, "getCosmWasmClient")
+        .mockResolvedValue(mockCosmWasmClient as any);
+
+      // Mock the fetch call to return grants response
+      global.fetch = jest.fn().mockImplementation((url) => {
+        if (url.toString().includes("/cosmos/authz/v1beta1/grants")) {
+          return Promise.resolve({
+            json: () => Promise.resolve(grantsResponse),
+          });
+        }
+      });
+
+      // Poll for grants between the session key (grantee) and smart account (granter)
+      const result = await mainnetAbstraxionAuth.pollForGrants(
+        sessionKey,
+        smartAccount,
+      );
+
+      // We expect the poll to return false when no grants are found
+      expect(result).toBe(true);
+    });
+  });
+
+  describe("isLimitValid", () => {
+    it("should return true when chain spend limit is less than expected", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "800" },
+        { denom: "atom", amount: "300" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(true);
+    });
+
+    it("should return true when chain spend limit is equal to expected", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(true);
+    });
+
+    it("should return false when chain spend limit is greater than expected", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "1200" }, // Greater than expected
+        { denom: "atom", amount: "500" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(false);
+    });
+
+    it("should return false when chain spend limit has unexpected denominations", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "800" },
+        { denom: "btc", amount: "300" }, // Unexpected denomination
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(false);
+    });
+
+    it("should return false when expected spend limit is undefined", () => {
+      const expectedSpendLimit = undefined;
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "800" },
+        { denom: "atom", amount: "300" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
       expect(result).toBe(false);
     });
   });

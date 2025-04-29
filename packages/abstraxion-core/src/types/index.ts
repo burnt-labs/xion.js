@@ -1,3 +1,5 @@
+import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin";
+
 export interface GrantsResponse {
   grants: Grant[];
   pagination: Pagination;
@@ -58,19 +60,19 @@ export type ContractGrantDescription =
 // TODO: Is this the manufactored interface we want to stick with?
 export interface DecodeAuthorizationResponse {
   msg?: string;
-  spendLimit?: string;
+  spendLimit?: Coin[];
   allowList?: string[];
   authorizationType?: string;
-  maxTokens?: string;
+  maxTokens?: Coin;
   denyList?: string[];
   contracts?: {
     contract: string;
     limitType?: string;
     maxCalls?: string;
-    maxFunds?: { denom: string; amount: string }[];
+    maxFunds?: Coin[];
     combinedLimits?: {
       maxCalls: string;
-      maxFunds: { denom: string; amount: string }[];
+      maxFunds: Coin[];
     };
     filter?: {
       typeUrl: string;
