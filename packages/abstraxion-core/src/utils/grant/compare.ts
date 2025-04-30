@@ -15,7 +15,7 @@ import { decodeAuthorization } from "@/utils/grant/decoding";
  *
  * @template T - Type with denom and amount properties
  * @param {T[] | undefined} expectedLimit - The expected limit from the decoded authorization
- * @param {T[]} chainLimit - The actual limit from the chain
+ * @param {T[] | undefined} chainLimit - The actual limit from the chain
  * @returns {boolean} - Returns true if the chain limit is less than or equal to the expected limit
  */
 export const isLimitValid = <T extends { denom: string; amount: string }>(
