@@ -12,8 +12,8 @@ import Link from "next/link";
 import { mainnetChainInfo, testnetChainInfo } from "@burnt-labs/constants";
 import {
   decodeAuthorization,
-  DecodeAuthorizationResponse,
   fetchChainGrantsABCI,
+  DecodedReadableAuthorization,
 } from "@burnt-labs/abstraxion-core";
 
 export default function DebugGrantsPage(): JSX.Element {
@@ -34,7 +34,7 @@ export default function DebugGrantsPage(): JSX.Element {
     TreasuryGrantConfig[]
   >([]);
   const [decodedTreasuryGrants, setDecodedTreasuryGrants] = useState<
-    (DecodeAuthorizationResponse | null)[]
+    (DecodedReadableAuthorization | null)[]
   >([]);
 
   async function compareGrants(): Promise<void> {
@@ -100,7 +100,7 @@ export default function DebugGrantsPage(): JSX.Element {
 
         // Fetch each grant configuration
         const configs: TreasuryGrantConfig[] = [];
-        const decodedConfigs: (DecodeAuthorizationResponse | null)[] = [];
+        const decodedConfigs: (DecodedReadableAuthorization | null)[] = [];
 
         for (const typeUrl of treasuryGrantUrlsResponse) {
           const queryByMsg = {

@@ -1,4 +1,12 @@
+import {
+  AUTHORIZATION_TYPES,
+  CONTRACT_EXEC_FILTER_TYPES,
+  CONTRACT_EXEC_LIMIT_TYPES,
+} from "@/utils/grant/constants";
+import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
+import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin";
+import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 
 export interface GrantsResponse {
   grants: Grant[];
@@ -57,30 +65,6 @@ export type ContractGrantDescription =
       amounts: SpendLimit[];
     };
 
-// TODO: Is this the manufactored interface we want to stick with?
-export interface DecodeAuthorizationResponse {
-  msg?: string;
-  spendLimit?: Coin[];
-  allowList?: string[];
-  authorizationType?: string;
-  maxTokens?: Coin;
-  denyList?: string[];
-  contracts?: {
-    contract: string;
-    limitType?: string;
-    maxCalls?: string;
-    maxFunds?: Coin[];
-    combinedLimits?: {
-      maxCalls: string;
-      maxFunds: Coin[];
-    };
-    filter?: {
-      typeUrl: string;
-      keys?: string[];
-      messages?: Uint8Array[];
-    };
-  }[];
-}
 export interface AminoSignDoc {
   chain_id: string;
   account_number: string;
@@ -97,4 +81,28 @@ export interface AminoSignDoc {
     };
   }[];
   memo: string;
+}
+
+export interface DecodedExecuteContracts {
+  address: string;
+  limitType?: CONTRACT_EXEC_LIMIT_TYPES;
+  maxCalls?: string;
+  maxFunds?: Coin[];
+  filterType?: CONTRACT_EXEC_FILTER_TYPES;
+  messages?: Uint8Array[];
+  keys?: string[];
+}
+
+export interface HumanContractExecAuth {
+  grants: DecodedExecuteContracts[];
+}
+
+export interface DecodedReadableAuthorization {
+  type: AUTHORIZATION_TYPES;
+  data:
+    | GenericAuthorization
+    | SendAuthorization
+    | StakeAuthorization
+    | HumanContractExecAuth
+    | null;
 }

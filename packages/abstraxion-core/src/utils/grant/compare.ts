@@ -1,13 +1,21 @@
-import type {
-  ContractGrantDescription,
-  Grant,
-  GrantAuthorization,
-  GrantsResponse,
-  SpendLimit,
-  TreasuryGrantConfig,
+import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
+import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
+import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
+import {
+  type ContractGrantDescription,
+  type Grant,
+  type GrantAuthorization,
+  type GrantsResponse,
+  type HumanContractExecAuth,
+  type SpendLimit,
+  type TreasuryGrantConfig,
 } from "@/types";
-import type { DecodeAuthorizationResponse } from "@/types";
+import type { DecodedReadableAuthorization } from "@/types";
 import { decodeAuthorization } from "@/utils/grant/decoding";
+import {
+  AUTHORIZATION_TYPES,
+  CONTRACT_EXEC_LIMIT_TYPES,
+} from "@/utils/grant/constants";
 
 /**
  * Generic function that validates if a chain limit is less than or equal to an expected limit.
@@ -44,41 +52,53 @@ export const isLimitValid = <T extends { denom: string; amount: string }>(
 
 /**
  * Validates that decoded contract execution authorizations match the on-chain authorizations.
- * @param {DecodeAuthorizationResponse | null} treasuryAuth - The decoded authorization from treasury
+ * @param {DecodeAuthorizationResponse} treasuryAuth - The decoded authorization from treasury
  *        containing contract grants with their limits and filters
- * @param {DecodeAuthorizationResponse | null} chainAuth - The decoded on-chain authorization to validate against, containing
+ * @param {DecodeAuthorizationResponse} chainAuth - The decoded on-chain authorization to validate against, containing
  *        grants with their respective limits and filters
  * @returns {boolean} Returns true if all contract execution authorizations match,
  *         false if any discrepancy is found
  */
 export const validateContractExecution = (
-  treasuryAuth: DecodeAuthorizationResponse | null,
-  chainAuth: DecodeAuthorizationResponse | null,
+  treasuryAuth: DecodedReadableAuthorization,
+  chainAuth: DecodedReadableAuthorization,
 ): boolean => {
-  const treasuryGrants = treasuryAuth?.contracts || [];
-  const chainGrants = chainAuth?.contracts || [];
+  // Safe way to make sure type assertion doesn't break things
+  const treasuryGrants =
+    treasuryAuth &&
+    treasuryAuth.data &&
+    (treasuryAuth.data as HumanContractExecAuth).grants
+      ? (treasuryAuth.data as HumanContractExecAuth).grants
+      : [];
+
+  const chainGrants =
+    chainAuth &&
+    chainAuth.data &&
+    (chainAuth.data as HumanContractExecAuth).grants
+      ? (chainAuth.data as HumanContractExecAuth).grants
+      : [];
 
   return treasuryGrants.every((treasuryGrant) => {
     const matchingChainGrants = chainGrants.filter((chainGrant) => {
       // Basic contract match
-      if (chainGrant.contract !== treasuryGrant.contract) {
+      if (chainGrant.address !== treasuryGrant.address) {
         return false;
       }
 
       // Filter validation
-      if (treasuryGrant.filter) {
-        if (!chainGrant.filter) {
+      if (treasuryGrant.filterType) {
+        if (!chainGrant.filterType) {
           return false;
         }
 
-        // Check type URL
-        if (chainGrant.filter.typeUrl !== treasuryGrant.filter.typeUrl) {
+        // Check filter type URL
+        if (chainGrant.filterType !== treasuryGrant.filterType) {
           return false;
         }
 
         // Check keys array
-        const decodedTreasuryKeys = treasuryGrant.filter.keys || [];
-        const decodedChainKeys = chainGrant.filter.keys || [];
+        const decodedTreasuryKeys = treasuryGrant.keys || [];
+        const decodedChainKeys = chainGrant.keys || [];
         if (decodedTreasuryKeys.length !== decodedChainKeys.length) {
           return false;
         }
@@ -91,8 +111,8 @@ export const validateContractExecution = (
         }
 
         // Check messages array
-        const decodedTreasuryMessages = treasuryGrant.filter.messages || [];
-        const decodedChainMessages = chainGrant.filter.messages || [];
+        const decodedTreasuryMessages = treasuryGrant.messages || [];
+        const decodedChainMessages = chainGrant.messages || [];
         if (decodedTreasuryMessages.length !== decodedChainMessages.length) {
           return false;
         }
@@ -113,7 +133,7 @@ export const validateContractExecution = (
         if (!messagesMatch) {
           return false;
         }
-      } else if (chainGrant.filter) {
+      } else if (chainGrant.filterType) {
         return false;
       }
 
@@ -125,29 +145,29 @@ export const validateContractExecution = (
       return false;
     }
 
+    //   @TODO: MaxCalls gets decremented on each exec
     const limitMatches = matchingChainGrants.some((matchingChainGrant) => {
       switch (treasuryGrant.limitType) {
-        case "MaxCalls":
+        case CONTRACT_EXEC_LIMIT_TYPES.MAX_CALLS:
           return (
-            matchingChainGrant.limitType === "MaxCalls" &&
+            matchingChainGrant.limitType ===
+              CONTRACT_EXEC_LIMIT_TYPES.MAX_CALLS &&
             treasuryGrant.maxCalls === matchingChainGrant.maxCalls
           );
 
-        case "MaxFunds":
+        case CONTRACT_EXEC_LIMIT_TYPES.MAX_FUNDS:
           return (
-            matchingChainGrant.limitType === "MaxFunds" &&
+            matchingChainGrant.limitType ===
+              CONTRACT_EXEC_LIMIT_TYPES.MAX_FUNDS &&
             isLimitValid(treasuryGrant.maxFunds, matchingChainGrant.maxFunds)
           );
 
-        case "CombinedLimit":
+        case CONTRACT_EXEC_LIMIT_TYPES.COMBINED_LIMIT:
           return (
-            matchingChainGrant.limitType === "CombinedLimit" &&
-            treasuryGrant.combinedLimits?.maxCalls ===
-              matchingChainGrant.combinedLimits?.maxCalls &&
-            isLimitValid(
-              treasuryGrant.combinedLimits?.maxFunds,
-              matchingChainGrant.combinedLimits?.maxFunds,
-            )
+            matchingChainGrant.limitType ===
+              CONTRACT_EXEC_LIMIT_TYPES.COMBINED_LIMIT &&
+            treasuryGrant?.maxCalls === matchingChainGrant?.maxCalls &&
+            isLimitValid(treasuryGrant?.maxFunds, matchingChainGrant?.maxFunds)
           );
 
         default:
@@ -184,7 +204,7 @@ export function compareChainGrantsToTreasuryGrants(
       if (!isTypeMatch) return false;
 
       // ABCI responses come in Any type so need to be decoded just as treasury auths do
-      // @TODO: If planning on supporting multiple query solutions, this will have to accomodate
+      // If planning on supporting multiple query solutions, this will have to accomodate
       // Example. REST query returns decoded auth, but with an undesirable interface
       const decodedGrantAuthorization = decodeAuthorization(
         chainAuthType,
@@ -196,39 +216,46 @@ export function compareChainGrantsToTreasuryGrants(
         return false;
       }
 
-      if (chainAuthType === "/cosmos.authz.v1beta1.GenericAuthorization") {
+      if (chainAuthType === AUTHORIZATION_TYPES.GENERIC) {
         return (
-          decodedGrantAuthorization.msg === decodedTreasuryAuthorization?.msg
+          (decodedGrantAuthorization.data as GenericAuthorization).msg ===
+          (decodedTreasuryAuthorization.data as GenericAuthorization)?.msg
         );
       }
 
-      if (chainAuthType === "/cosmos.bank.v1beta1.SendAuthorization") {
+      if (chainAuthType === AUTHORIZATION_TYPES.SEND) {
         return (
           isLimitValid(
-            decodedTreasuryAuthorization?.spendLimit,
-            decodedGrantAuthorization.spendLimit,
+            (decodedGrantAuthorization.data as SendAuthorization).spendLimit,
+            (decodedTreasuryAuthorization.data as SendAuthorization).spendLimit,
           ) &&
-          JSON.stringify(decodedTreasuryAuthorization?.allowList) ===
-            JSON.stringify(decodedGrantAuthorization.allowList)
+          JSON.stringify(
+            (decodedTreasuryAuthorization.data as SendAuthorization).allowList,
+          ) ===
+            JSON.stringify(
+              (decodedGrantAuthorization.data as SendAuthorization).allowList,
+            )
         );
       }
 
-      if (chainAuthType === "/cosmos.staking.v1beta1.StakeAuthorization") {
+      if (chainAuthType === AUTHORIZATION_TYPES.STAKE) {
+        const treasuryStakeAuth =
+          decodedTreasuryAuthorization.data as StakeAuthorization;
+        const grantStakeAuth =
+          decodedGrantAuthorization.data as StakeAuthorization;
+
         return (
-          decodedTreasuryAuthorization?.authorizationType ===
-            decodedGrantAuthorization.authorizationType &&
-          decodedTreasuryAuthorization?.maxTokens ===
-            decodedGrantAuthorization.maxTokens &&
-          JSON.stringify(decodedTreasuryAuthorization?.allowList) ===
-            JSON.stringify(decodedGrantAuthorization.allowList) &&
-          JSON.stringify(decodedTreasuryAuthorization?.denyList) ===
-            JSON.stringify(decodedGrantAuthorization.denyList)
+          treasuryStakeAuth.authorizationType ===
+            grantStakeAuth.authorizationType &&
+          treasuryStakeAuth.maxTokens === grantStakeAuth.maxTokens &&
+          JSON.stringify(treasuryStakeAuth.allowList) ===
+            JSON.stringify(grantStakeAuth.allowList) &&
+          JSON.stringify(treasuryStakeAuth.denyList) ===
+            JSON.stringify(grantStakeAuth.denyList)
         );
       }
 
-      if (
-        chainAuthType === "/cosmwasm.wasm.v1.ContractExecutionAuthorization"
-      ) {
+      if (chainAuthType === AUTHORIZATION_TYPES.CONTRACT_EXECUTION) {
         return validateContractExecution(
           decodedTreasuryAuthorization,
           decodedGrantAuthorization,
