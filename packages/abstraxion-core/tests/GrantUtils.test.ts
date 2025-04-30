@@ -9,15 +9,6 @@ import {
 import { decodeAuthorization } from "@/utils/grant/decoding";
 import { DecodeAuthorizationResponse, GrantsResponse } from "@/types";
 
-// Add fetch polyfill for Node.js environment
-if (typeof fetch === "undefined") {
-  global.fetch = jest.fn();
-}
-
-jest.mock("@/utils/rpcClient", () => ({
-  getRpcClient: jest.fn().mockResolvedValue({}),
-}));
-
 describe("Grant Comparison Utilities", () => {
   describe("isLimitValid", () => {
     it("should return true when chain spend limit is less than expected", () => {
