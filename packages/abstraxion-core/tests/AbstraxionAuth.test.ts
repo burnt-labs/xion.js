@@ -7,14 +7,12 @@ import { AbstraxionAuth } from "../src/AbstraxionAuth";
 import {
   mockAccountAddress,
   mockGrantsResponse,
-  mockGrantsResponseForTreasury,
   mockLegacyConfig,
 } from "./mockData/grantResponses";
 import {
   MockRedirectStrategy,
   MockStorageStrategy,
 } from "./mockData/mockStrategies";
-import { DecodeAuthorizationResponse } from "@/types";
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
