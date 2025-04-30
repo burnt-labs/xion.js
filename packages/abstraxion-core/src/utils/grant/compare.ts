@@ -111,8 +111,8 @@ export const validateContractExecution = (
         }
 
         // Check messages array
-        const decodedTreasuryMessages = treasuryGrant.messages || [];
-        const decodedChainMessages = chainGrant.messages || [];
+        const decodedTreasuryMessages: Uint8Array[] = treasuryGrant.messages || [];
+        const decodedChainMessages: Uint8Array[] = chainGrant.messages || [];
         if (decodedTreasuryMessages.length !== decodedChainMessages.length) {
           return false;
         }
