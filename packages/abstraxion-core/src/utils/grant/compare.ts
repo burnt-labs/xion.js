@@ -4,6 +4,7 @@ import type {
   GrantAuthorization,
   GrantsResponse,
   SpendLimit,
+  TreasuryGrantConfig,
 } from "@/types";
 import type { DecodeAuthorizationResponse } from "@/types";
 import { decodeAuthorization } from "@/utils/grant/decoding";
@@ -50,19 +51,15 @@ export const isLimitValid = <T extends { denom: string; amount: string }>(
  * @returns {boolean} Returns true if all contract execution authorizations match,
  *         false if any discrepancy is found
  */
-const validateContractExecution = (
+export const validateContractExecution = (
   treasuryAuth: DecodeAuthorizationResponse | null,
   chainAuth: DecodeAuthorizationResponse | null,
 ): boolean => {
   const treasuryGrants = treasuryAuth?.contracts || [];
   const chainGrants = chainAuth?.contracts || [];
 
-  console.log("treasuryAuth: ", treasuryAuth);
-  console.log("chainAuth: ", chainAuth);
-
   return treasuryGrants.every((treasuryGrant) => {
     const matchingChainGrants = chainGrants.filter((chainGrant) => {
-      console.log(chainGrant.contract, treasuryGrant.contract);
       // Basic contract match
       if (chainGrant.contract !== treasuryGrant.contract) {
         return false;
@@ -166,12 +163,12 @@ const validateContractExecution = (
  * Compares treasury grant configurations with the grants on-chain to ensure they match.
  *
  * @param {GrantsResponse} grantsResponse - The grants currently existing on-chain.
- * @param {any[]} treasuryGrantConfigs - The treasury grant configurations to compare against.
+ * @param {TreasuryGrantConfig[]} treasuryGrantConfigs - The treasury grant configurations to compare against.
  * @returns {boolean} - Returns `true` if all treasury grants match chain grants; otherwise, `false`.
  */
 export function compareChainGrantsToTreasuryGrants(
   grantsResponse: GrantsResponse,
-  treasuryGrantConfigs: any[],
+  treasuryGrantConfigs: TreasuryGrantConfig[],
 ): boolean {
   return treasuryGrantConfigs.every((treasuryConfig) => {
     const decodedTreasuryAuthorization = decodeAuthorization(
