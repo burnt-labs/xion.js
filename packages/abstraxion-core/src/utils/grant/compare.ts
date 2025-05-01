@@ -151,15 +151,13 @@ export const validateContractExecution = (
       switch (treasuryGrant.limitType) {
         case ContractExecLimitTypes.MaxCalls:
           return (
-            matchingChainGrant.limitType ===
-              ContractExecLimitTypes.MaxCalls &&
+            matchingChainGrant.limitType === ContractExecLimitTypes.MaxCalls &&
             treasuryGrant.maxCalls === matchingChainGrant.maxCalls
           );
 
         case ContractExecLimitTypes.MaxFunds:
           return (
-            matchingChainGrant.limitType ===
-              ContractExecLimitTypes.MaxFunds &&
+            matchingChainGrant.limitType === ContractExecLimitTypes.MaxFunds &&
             isLimitValid(treasuryGrant.maxFunds, matchingChainGrant.maxFunds)
           );
 
