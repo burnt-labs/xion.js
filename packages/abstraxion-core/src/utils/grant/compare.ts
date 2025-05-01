@@ -13,8 +13,8 @@ import {
 import type { DecodedReadableAuthorization } from "@/types";
 import { decodeAuthorization } from "@/utils/grant/decoding";
 import {
-  AUTHORIZATION_TYPES,
-  CONTRACT_EXEC_LIMIT_TYPES,
+  AuthorizationTypes,
+  ContractExecLimitTypes,
 } from "@/utils/grant/constants";
 
 /**
@@ -149,24 +149,24 @@ export const validateContractExecution = (
     //   @TODO: MaxCalls gets decremented on each exec
     const limitMatches = matchingChainGrants.some((matchingChainGrant) => {
       switch (treasuryGrant.limitType) {
-        case CONTRACT_EXEC_LIMIT_TYPES.MAX_CALLS:
+        case ContractExecLimitTypes.MaxCalls:
           return (
             matchingChainGrant.limitType ===
-              CONTRACT_EXEC_LIMIT_TYPES.MAX_CALLS &&
+              ContractExecLimitTypes.MaxCalls &&
             treasuryGrant.maxCalls === matchingChainGrant.maxCalls
           );
 
-        case CONTRACT_EXEC_LIMIT_TYPES.MAX_FUNDS:
+        case ContractExecLimitTypes.MaxFunds:
           return (
             matchingChainGrant.limitType ===
-              CONTRACT_EXEC_LIMIT_TYPES.MAX_FUNDS &&
+              ContractExecLimitTypes.MaxFunds &&
             isLimitValid(treasuryGrant.maxFunds, matchingChainGrant.maxFunds)
           );
 
-        case CONTRACT_EXEC_LIMIT_TYPES.COMBINED_LIMIT:
+        case ContractExecLimitTypes.CombinedLimit:
           return (
             matchingChainGrant.limitType ===
-              CONTRACT_EXEC_LIMIT_TYPES.COMBINED_LIMIT &&
+              ContractExecLimitTypes.CombinedLimit &&
             treasuryGrant?.maxCalls === matchingChainGrant?.maxCalls &&
             isLimitValid(treasuryGrant?.maxFunds, matchingChainGrant?.maxFunds)
           );
@@ -217,14 +217,14 @@ export function compareChainGrantsToTreasuryGrants(
         return false;
       }
 
-      if (chainAuthType === AUTHORIZATION_TYPES.GENERIC) {
+      if (chainAuthType === AuthorizationTypes.Generic) {
         return (
           (decodedGrantAuthorization.data as GenericAuthorization).msg ===
           (decodedTreasuryAuthorization.data as GenericAuthorization)?.msg
         );
       }
 
-      if (chainAuthType === AUTHORIZATION_TYPES.SEND) {
+      if (chainAuthType === AuthorizationTypes.Send) {
         return (
           isLimitValid(
             (decodedGrantAuthorization.data as SendAuthorization).spendLimit,
@@ -239,7 +239,7 @@ export function compareChainGrantsToTreasuryGrants(
         );
       }
 
-      if (chainAuthType === AUTHORIZATION_TYPES.STAKE) {
+      if (chainAuthType === AuthorizationTypes.Stake) {
         const treasuryStakeAuth =
           decodedTreasuryAuthorization.data as StakeAuthorization;
         const grantStakeAuth =
@@ -256,7 +256,7 @@ export function compareChainGrantsToTreasuryGrants(
         );
       }
 
-      if (chainAuthType === AUTHORIZATION_TYPES.CONTRACT_EXECUTION) {
+      if (chainAuthType === AuthorizationTypes.ContractExecution) {
         return validateContractExecution(
           decodedTreasuryAuthorization,
           decodedGrantAuthorization,

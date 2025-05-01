@@ -8,9 +8,9 @@ import {
 } from "@/utils/grant/compare";
 import { decodeAuthorization } from "@/utils/grant/decoding";
 import {
-  AUTHORIZATION_TYPES,
-  CONTRACT_EXEC_FILTER_TYPES,
-  CONTRACT_EXEC_LIMIT_TYPES,
+  AuthorizationTypes,
+  ContractExecFilterTypes,
+  ContractExecLimitTypes,
 } from "@/utils/grant/constants";
 import { DecodedReadableAuthorization, GrantsResponse } from "@/types";
 
@@ -207,7 +207,6 @@ describe("Grant Decoding Utilities", () => {
               "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka",
             limitType: "/cosmwasm.wasm.v1.MaxCallsLimit",
             maxCalls: "255",
-            maxFunds: [],
             filterType: "/cosmwasm.wasm.v1.AllowAllMessagesFilter",
           },
         ],
@@ -226,14 +225,14 @@ describe("Grant Decoding Utilities", () => {
 describe("validateContractExecution", () => {
   it("should return true when decoded grants match the chain grants", () => {
     const treasuryAuth: DecodedReadableAuthorization = {
-      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AUTHORIZATION_TYPES,
+      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AuthorizationTypes,
       data: {
         grants: [
           {
             address:
               "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
             limitType:
-              "/cosmwasm.wasm.v1.CombinedLimit" as CONTRACT_EXEC_LIMIT_TYPES,
+              "/cosmwasm.wasm.v1.CombinedLimit" as ContractExecLimitTypes,
             maxCalls: "1000",
             maxFunds: [
               {
@@ -243,13 +242,13 @@ describe("validateContractExecution", () => {
               },
             ],
             filterType:
-              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as CONTRACT_EXEC_FILTER_TYPES,
+              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as ContractExecFilterTypes,
           },
           {
             address:
               "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
             limitType:
-              "/cosmwasm.wasm.v1.CombinedLimit" as CONTRACT_EXEC_LIMIT_TYPES,
+              "/cosmwasm.wasm.v1.CombinedLimit" as ContractExecLimitTypes,
             maxCalls: "1000",
             maxFunds: [
               {
@@ -258,21 +257,21 @@ describe("validateContractExecution", () => {
               },
             ],
             filterType:
-              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as CONTRACT_EXEC_FILTER_TYPES,
+              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as ContractExecFilterTypes,
           },
         ],
       },
     };
 
     const chainAuth: DecodedReadableAuthorization = {
-      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AUTHORIZATION_TYPES,
+      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AuthorizationTypes,
       data: {
         grants: [
           {
             address:
               "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
             limitType:
-              "/cosmwasm.wasm.v1.CombinedLimit" as CONTRACT_EXEC_LIMIT_TYPES,
+              "/cosmwasm.wasm.v1.CombinedLimit" as ContractExecLimitTypes,
             maxCalls: "1000",
             maxFunds: [
               {
@@ -282,13 +281,13 @@ describe("validateContractExecution", () => {
               },
             ],
             filterType:
-              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as CONTRACT_EXEC_FILTER_TYPES,
+              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as ContractExecFilterTypes,
           },
           {
             address:
               "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
             limitType:
-              "/cosmwasm.wasm.v1.CombinedLimit" as CONTRACT_EXEC_LIMIT_TYPES,
+              "/cosmwasm.wasm.v1.CombinedLimit" as ContractExecLimitTypes,
             maxCalls: "1000",
             maxFunds: [
               {
@@ -297,7 +296,7 @@ describe("validateContractExecution", () => {
               },
             ],
             filterType:
-              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as CONTRACT_EXEC_FILTER_TYPES,
+              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as ContractExecFilterTypes,
           },
         ],
       },
@@ -310,14 +309,14 @@ describe("validateContractExecution", () => {
 
   it("should return false when decoded grants do not match the chain grants", () => {
     const treasuryAuth: DecodedReadableAuthorization = {
-      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AUTHORIZATION_TYPES,
+      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AuthorizationTypes,
       data: {
         grants: [
           {
             address:
               "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
             limitType:
-              "/cosmwasm.wasm.v1.CombinedLimit" as CONTRACT_EXEC_LIMIT_TYPES,
+              "/cosmwasm.wasm.v1.CombinedLimit" as ContractExecLimitTypes,
             maxCalls: "10",
             maxFunds: [
               {
@@ -326,7 +325,7 @@ describe("validateContractExecution", () => {
               },
             ],
             filterType:
-              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as CONTRACT_EXEC_FILTER_TYPES,
+              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as ContractExecFilterTypes,
             messages: [],
             keys: [],
           },
@@ -335,14 +334,14 @@ describe("validateContractExecution", () => {
     };
 
     const chainAuth: DecodedReadableAuthorization = {
-      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AUTHORIZATION_TYPES,
+      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AuthorizationTypes,
       data: {
         grants: [
           {
             address:
               "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
             limitType:
-              "/cosmwasm.wasm.v1.CombinedLimit" as CONTRACT_EXEC_LIMIT_TYPES,
+              "/cosmwasm.wasm.v1.CombinedLimit" as ContractExecLimitTypes,
             maxCalls: "1000",
             maxFunds: [
               {
@@ -352,7 +351,7 @@ describe("validateContractExecution", () => {
               },
             ],
             filterType:
-              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as CONTRACT_EXEC_FILTER_TYPES,
+              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as ContractExecFilterTypes,
             messages: [],
             keys: [],
           },

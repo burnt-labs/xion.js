@@ -1,7 +1,7 @@
 import {
-  AUTHORIZATION_TYPES,
-  CONTRACT_EXEC_FILTER_TYPES,
-  CONTRACT_EXEC_LIMIT_TYPES,
+  AuthorizationTypes,
+  ContractExecFilterTypes,
+  ContractExecLimitTypes,
 } from "@/utils/grant/constants";
 import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
@@ -85,10 +85,10 @@ export interface AminoSignDoc {
 
 export interface DecodedExecuteContracts {
   address: string;
-  limitType?: CONTRACT_EXEC_LIMIT_TYPES;
+  limitType?: ContractExecLimitTypes;
   maxCalls?: string;
   maxFunds?: Coin[];
-  filterType?: CONTRACT_EXEC_FILTER_TYPES;
+  filterType?: ContractExecFilterTypes;
   messages?: Uint8Array[];
   keys?: string[];
 }
@@ -98,7 +98,7 @@ export interface HumanContractExecAuth {
 }
 
 export interface DecodedReadableAuthorization {
-  type: AUTHORIZATION_TYPES;
+  type: AuthorizationTypes;
   data:
     | GenericAuthorization
     | SendAuthorization

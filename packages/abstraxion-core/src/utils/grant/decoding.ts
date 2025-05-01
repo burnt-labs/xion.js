@@ -13,9 +13,9 @@ import {
 } from "cosmjs-types/cosmwasm/wasm/v1/authz";
 import type { DecodedReadableAuthorization } from "@/types";
 import {
-  AUTHORIZATION_TYPES,
-  CONTRACT_EXEC_FILTER_TYPES,
-  CONTRACT_EXEC_LIMIT_TYPES,
+  AuthorizationTypes,
+  ContractExecFilterTypes,
+  ContractExecLimitTypes,
 } from "@/utils/grant/constants";
 
 /**
@@ -33,53 +33,53 @@ export const decodeAuthorization = (
     typeof value === "string" ? toByteArray(value) : value;
 
   switch (typeUrl) {
-    case AUTHORIZATION_TYPES.GENERIC:
+    case AuthorizationTypes.Generic:
       return {
-        type: AUTHORIZATION_TYPES.GENERIC,
+        type: AuthorizationTypes.Generic,
         data: GenericAuthorization.decode(processedAuthorizationValue),
       };
 
-    case AUTHORIZATION_TYPES.SEND:
+    case AuthorizationTypes.Send:
       return {
-        type: AUTHORIZATION_TYPES.SEND,
+        type: AuthorizationTypes.Send,
         data: SendAuthorization.decode(processedAuthorizationValue),
       };
 
-    case AUTHORIZATION_TYPES.STAKE:
+    case AuthorizationTypes.Stake:
       return {
-        type: AUTHORIZATION_TYPES.STAKE,
+        type: AuthorizationTypes.Stake,
         data: StakeAuthorization.decode(processedAuthorizationValue),
       };
 
-    case AUTHORIZATION_TYPES.CONTRACT_EXECUTION: {
+    case AuthorizationTypes.ContractExecution: {
       const authorization = ContractExecutionAuthorization.decode(
         processedAuthorizationValue,
       );
 
-      let limitType: CONTRACT_EXEC_LIMIT_TYPES | undefined;
+      let limitType: ContractExecLimitTypes | undefined;
       let maxCalls: string | undefined;
       let maxFunds: Coin[] | undefined;
 
-      let filterType: CONTRACT_EXEC_FILTER_TYPES | undefined;
+      let filterType: ContractExecFilterTypes | undefined;
       let messages: Uint8Array[] | undefined;
       let keys: string[] | undefined;
 
       const grants = authorization.grants.map((grant) => {
         if (grant.limit) {
           switch (grant.limit.typeUrl) {
-            case CONTRACT_EXEC_LIMIT_TYPES.MAX_CALLS:
-              limitType = CONTRACT_EXEC_LIMIT_TYPES.MAX_CALLS;
+            case ContractExecLimitTypes.MaxCalls:
+              limitType = ContractExecLimitTypes.MaxCalls;
               maxCalls = MaxCallsLimit.decode(
                 grant.limit.value,
               ).remaining.toString();
               break;
-            case CONTRACT_EXEC_LIMIT_TYPES.MAX_FUNDS:
-              limitType = CONTRACT_EXEC_LIMIT_TYPES.MAX_FUNDS;
+            case ContractExecLimitTypes.MaxFunds:
+              limitType = ContractExecLimitTypes.MaxFunds;
               maxFunds = MaxFundsLimit.decode(grant.limit.value).amounts;
               break;
-            case CONTRACT_EXEC_LIMIT_TYPES.COMBINED_LIMIT: {
+            case ContractExecLimitTypes.CombinedLimit: {
               const combined = CombinedLimit.decode(grant.limit.value);
-              limitType = CONTRACT_EXEC_LIMIT_TYPES.COMBINED_LIMIT;
+              limitType = ContractExecLimitTypes.CombinedLimit;
               maxCalls = combined.callsRemaining.toString();
               maxFunds = combined.amounts;
               break;
@@ -90,18 +90,18 @@ export const decodeAuthorization = (
 
         if (grant.filter) {
           switch (grant.filter.typeUrl) {
-            case CONTRACT_EXEC_FILTER_TYPES.ACCEPTED_KEYS:
-              filterType = CONTRACT_EXEC_FILTER_TYPES.ACCEPTED_KEYS;
+            case ContractExecFilterTypes.AcceptedKeys:
+              filterType = ContractExecFilterTypes.AcceptedKeys;
               keys = AcceptedMessageKeysFilter.decode(grant.filter.value).keys;
               break;
-            case CONTRACT_EXEC_FILTER_TYPES.ACCEPTED_MESSAGES:
-              filterType = CONTRACT_EXEC_FILTER_TYPES.ACCEPTED_MESSAGES;
+            case ContractExecFilterTypes.AcceptedMessages:
+              filterType = ContractExecFilterTypes.AcceptedMessages;
               messages = AcceptedMessagesFilter.decode(
                 grant.filter.value,
               ).messages;
               break;
-            case CONTRACT_EXEC_FILTER_TYPES.ALLOW_ALL:
-              filterType = CONTRACT_EXEC_FILTER_TYPES.ALLOW_ALL;
+            case ContractExecFilterTypes.AllowAll:
+              filterType = ContractExecFilterTypes.AllowAll;
               break;
             // @TODO: Add default error case
           }
@@ -109,18 +109,18 @@ export const decodeAuthorization = (
 
         return {
           address: grant.contract,
-          limitType: limitType,
-          maxCalls: maxCalls || "",
-          maxFunds: maxFunds || [],
-          filterType: filterType,
+          limitType,
+          maxCalls,
+          maxFunds,
+          filterType,
           messages,
           keys,
         };
       });
-      return { type: AUTHORIZATION_TYPES.CONTRACT_EXECUTION, data: { grants } };
+      return { type: AuthorizationTypes.ContractExecution, data: { grants } };
     }
 
     default:
-      return { type: AUTHORIZATION_TYPES.UNSUPPORTED, data: null };
+      return { type: AuthorizationTypes.Unsupported, data: null };
   }
 };
