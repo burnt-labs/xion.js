@@ -224,8 +224,8 @@ export function compareChainGrantsToTreasuryGrants(
       if (chainAuthType === AuthorizationTypes.Send) {
         return (
           isLimitValid(
-            (decodedGrantAuthorization.data as SendAuthorization).spendLimit,
             (decodedTreasuryAuthorization.data as SendAuthorization).spendLimit,
+            (decodedGrantAuthorization.data as SendAuthorization).spendLimit,
           ) &&
           JSON.stringify(
             (decodedTreasuryAuthorization.data as SendAuthorization).allowList,
