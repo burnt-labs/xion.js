@@ -142,7 +142,6 @@ export const validateContractExecution = (
     });
 
     if (matchingChainGrants.length === 0) {
-      console.warn("no matching chain grants");
       return false;
     }
 
