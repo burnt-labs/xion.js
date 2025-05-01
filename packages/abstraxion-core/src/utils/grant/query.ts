@@ -45,7 +45,6 @@ export const getTreasuryContractConfigsByTypeUrl = async (
     treasuryGrantConfigs.push(grantConfigResponse);
   }
 
-  // @TODO: Should normalization happen here?
   return treasuryGrantConfigs;
 };
 

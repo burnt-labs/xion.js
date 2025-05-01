@@ -84,7 +84,6 @@ export const decodeAuthorization = (
               maxFunds = combined.amounts;
               break;
             }
-            // @TODO: Add default error case
           }
         }
 
@@ -103,7 +102,6 @@ export const decodeAuthorization = (
             case ContractExecFilterTypes.AllowAll:
               filterType = ContractExecFilterTypes.AllowAll;
               break;
-            // @TODO: Add default error case
           }
         }
 
