@@ -142,13 +142,13 @@ export const validateContractExecution = (
       return false;
     }
 
-    //   @TODO: MaxCalls gets decremented on each exec
     const limitMatches = matchingChainGrants.some((matchingChainGrant) => {
       switch (treasuryGrant.limitType) {
         case ContractExecLimitTypes.MaxCalls:
           return (
             matchingChainGrant.limitType === ContractExecLimitTypes.MaxCalls &&
-            treasuryGrant.maxCalls === matchingChainGrant.maxCalls
+            Number(matchingChainGrant.maxCalls) <=
+              Number(treasuryGrant.maxCalls)
           );
 
         case ContractExecLimitTypes.MaxFunds:
@@ -161,7 +161,8 @@ export const validateContractExecution = (
           return (
             matchingChainGrant.limitType ===
               ContractExecLimitTypes.CombinedLimit &&
-            treasuryGrant?.maxCalls === matchingChainGrant?.maxCalls &&
+            Number(matchingChainGrant?.maxCalls) <=
+              Number(treasuryGrant?.maxCalls) &&
             isLimitValid(treasuryGrant?.maxFunds, matchingChainGrant?.maxFunds)
           );
 

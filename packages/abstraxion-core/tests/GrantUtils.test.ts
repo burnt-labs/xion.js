@@ -452,4 +452,56 @@ describe("validateContractExecution", () => {
 
     expect(result).toBe(false);
   });
+
+  it("should return true when chain maxCalls is less than treasury maxCalls", () => {
+    const treasuryAuth: DecodedReadableAuthorization = {
+      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AuthorizationTypes,
+      data: {
+        grants: [
+          {
+            address:
+              "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
+            limitType:
+              "/cosmwasm.wasm.v1.CombinedLimit" as ContractExecLimitTypes,
+            maxCalls: "10",
+            maxFunds: [
+              {
+                denom: "uxion",
+                amount: "1000000",
+              },
+            ],
+            filterType:
+              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as ContractExecFilterTypes,
+          },
+        ],
+      },
+    };
+
+    const chainAuth: DecodedReadableAuthorization = {
+      type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization" as AuthorizationTypes,
+      data: {
+        grants: [
+          {
+            address:
+              "xion1h30469h4au9thlakd5j9yf0vn2cdcuwx3krhljrjvdgtjqcjuxvq6wvm5k",
+            limitType:
+              "/cosmwasm.wasm.v1.CombinedLimit" as ContractExecLimitTypes,
+            maxCalls: "5", // Less than treasury's maxCalls
+            maxFunds: [
+              {
+                denom: "uxion",
+                amount: "1000000",
+              },
+            ],
+            filterType:
+              "/cosmwasm.wasm.v1.AllowAllMessagesFilter" as ContractExecFilterTypes,
+          },
+        ],
+      },
+    };
+
+    const result = validateContractExecution(treasuryAuth, chainAuth);
+
+    expect(result).toBe(true);
+  });
 });
