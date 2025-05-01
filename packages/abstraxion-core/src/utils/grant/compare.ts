@@ -5,13 +5,10 @@ import {
   type ContractGrantDescription,
   type Grant,
   type GrantAuthorization,
-  type GrantsResponse,
   type HumanContractExecAuth,
   type SpendLimit,
-  type TreasuryGrantConfig,
 } from "@/types";
 import type { DecodedReadableAuthorization } from "@/types";
-import { decodeAuthorization } from "@/utils/grant/decoding";
 import {
   AuthorizationTypes,
   ContractExecLimitTypes,
@@ -180,67 +177,44 @@ export const validateContractExecution = (
 /**
  * Compares treasury grant configurations with the grants on-chain to ensure they match.
  *
- * @param {GrantsResponse} grantsResponse - The grants currently existing on-chain.
- * @param {TreasuryGrantConfig[]} treasuryGrantConfigs - The treasury grant configurations to compare against.
+ * @param {DecodedReadableAuthorization[]} decodedChainConfigs - The decoded grants currently existing on-chain.
+ * @param {DecodedReadableAuthorization[]} decodedTreasuryConfigs - The decoded treasury grant configurations to compare against.
  * @returns {boolean} - Returns `true` if all treasury grants match chain grants; otherwise, `false`.
  */
 export function compareChainGrantsToTreasuryGrants(
-  grantsResponse: GrantsResponse,
-  treasuryGrantConfigs: TreasuryGrantConfig[],
+  decodedChainConfigs: DecodedReadableAuthorization[],
+  decodedTreasuryConfigs: DecodedReadableAuthorization[],
 ): boolean {
-  return treasuryGrantConfigs.every((treasuryConfig) => {
-    const decodedTreasuryAuthorization = decodeAuthorization(
-      treasuryConfig.authorization.type_url,
-      treasuryConfig.authorization.value,
-    );
-
-    return grantsResponse.grants.find((grant) => {
-      const chainAuthType = grant.authorization.typeUrl;
-      const isTypeMatch =
-        chainAuthType === treasuryConfig.authorization.type_url;
+  return decodedTreasuryConfigs.every((treasuryConfig) => {
+    return decodedChainConfigs.find((chainConfig) => {
+      const chainAuthType = chainConfig.type;
+      const isTypeMatch = chainAuthType === treasuryConfig.type;
 
       if (!isTypeMatch) return false;
 
-      // ABCI responses come in Any type so need to be decoded just as treasury auths do
-      // If planning on supporting multiple query solutions, this will have to accomodate
-      // Example. REST query returns decoded auth, but with an undesirable interface
-      const decodedGrantAuthorization = decodeAuthorization(
-        chainAuthType,
-        grant.authorization.value,
-      );
-
-      //   @TODO: Do we want to invalidate here?
-      if (!decodedGrantAuthorization) {
-        return false;
-      }
-
       if (chainAuthType === AuthorizationTypes.Generic) {
         return (
-          (decodedGrantAuthorization.data as GenericAuthorization).msg ===
-          (decodedTreasuryAuthorization.data as GenericAuthorization)?.msg
+          (chainConfig.data as GenericAuthorization).msg ===
+          (treasuryConfig.data as GenericAuthorization)?.msg
         );
       }
 
       if (chainAuthType === AuthorizationTypes.Send) {
         return (
           isLimitValid(
-            (decodedTreasuryAuthorization.data as SendAuthorization).spendLimit,
-            (decodedGrantAuthorization.data as SendAuthorization).spendLimit,
+            (treasuryConfig.data as SendAuthorization).spendLimit,
+            (chainConfig.data as SendAuthorization).spendLimit,
           ) &&
           JSON.stringify(
-            (decodedTreasuryAuthorization.data as SendAuthorization).allowList,
+            (treasuryConfig.data as SendAuthorization).allowList,
           ) ===
-            JSON.stringify(
-              (decodedGrantAuthorization.data as SendAuthorization).allowList,
-            )
+            JSON.stringify((chainConfig.data as SendAuthorization).allowList)
         );
       }
 
       if (chainAuthType === AuthorizationTypes.Stake) {
-        const treasuryStakeAuth =
-          decodedTreasuryAuthorization.data as StakeAuthorization;
-        const grantStakeAuth =
-          decodedGrantAuthorization.data as StakeAuthorization;
+        const treasuryStakeAuth = treasuryConfig.data as StakeAuthorization;
+        const grantStakeAuth = chainConfig.data as StakeAuthorization;
 
         return (
           treasuryStakeAuth.authorizationType ===
@@ -254,10 +228,7 @@ export function compareChainGrantsToTreasuryGrants(
       }
 
       if (chainAuthType === AuthorizationTypes.ContractExecution) {
-        return validateContractExecution(
-          decodedTreasuryAuthorization,
-          decodedGrantAuthorization,
-        );
+        return validateContractExecution(treasuryConfig, chainConfig);
       }
 
       return false;

@@ -86,80 +86,169 @@ describe("Grant Comparison Utilities", () => {
 
   describe("compareChainGrantsToTreasuryGrants", () => {
     it("should return true when all grants match", () => {
-      const grantsResponse: GrantsResponse = {
-        grants: [
-          {
-            authorization: {
-              typeUrl: "/cosmos.authz.v1beta1.GenericAuthorization",
-              value: [
-                10, 40, 47, 99, 111, 115, 109, 119, 97, 115, 109, 46, 119, 97,
-                115, 109, 46, 118, 49, 46, 77, 115, 103, 73, 110, 115, 116, 97,
-                110, 116, 105, 97, 116, 101, 67, 111, 110, 116, 114, 97, 99,
-                116,
-              ],
-            },
-            expiration: "2025-07-29T23:51:14.000Z",
-            grantee: "xion1j4emdffrkt322wm9jgqd43dttv33u4unrd6lw2",
-            granter:
-              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
-          },
-        ],
-        pagination: { next_key: null, total: "1" },
-      };
-
-      const treasuryGrantConfigs = [
+      const decodedChainConfigs: DecodedReadableAuthorization[] = [
         {
-          description: "Test Grant",
-          authorization: {
-            type_url: "/cosmos.authz.v1beta1.GenericAuthorization",
-            value: "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN0",
+          type: "/cosmos.bank.v1beta1.SendAuthorization" as AuthorizationTypes,
+          data: {
+            spendLimit: [
+              {
+                denom: "uxion",
+                amount: "1000",
+              },
+            ],
+            allowList: [
+              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
+            ],
           },
-          optional: false,
+        },
+      ];
+
+      const decodedTreasuryConfigs: DecodedReadableAuthorization[] = [
+        {
+          type: "/cosmos.bank.v1beta1.SendAuthorization" as AuthorizationTypes,
+          data: {
+            spendLimit: [
+              {
+                denom: "uxion",
+                amount: "1000",
+              },
+            ],
+            allowList: [
+              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
+            ],
+          },
         },
       ];
       expect(
         compareChainGrantsToTreasuryGrants(
-          grantsResponse,
-          treasuryGrantConfigs,
+          decodedChainConfigs,
+          decodedTreasuryConfigs,
         ),
       ).toBe(true);
     });
 
-    it("should return false when grants do not match", () => {
-      const grantsResponse: GrantsResponse = {
-        grants: [
-          {
-            authorization: {
-              typeUrl: "/cosmos.authz.v1beta1.GenericAuthorization",
-              value: [
-                10, 40, 47, 99, 111, 115, 109, 119, 97, 115, 109, 46, 119, 97,
-                115, 109, 46, 118, 49, 46, 77, 115, 103, 73, 110, 115, 116, 97,
-                110, 116, 105, 97, 116, 101, 67, 111, 110, 116, 114, 97, 99,
-                116,
-              ],
-            },
-            expiration: "2025-07-29T23:51:14.000Z",
-            grantee: "xion1j4emdffrkt322wm9jgqd43dttv33u4unrd6lw2",
-            granter:
-              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
-          },
-        ],
-        pagination: { next_key: null, total: "1" },
-      };
-      const treasuryGrantConfigs = [
+    it("should return false when grants don't match", () => {
+      const decodedChainConfigs: DecodedReadableAuthorization[] = [
         {
-          description: "Test Grant",
-          authorization: {
-            type_url: "/cosmos.authz.v1beta1.GenericAuthorization",
-            value: "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN9",
+          type: "/cosmos.bank.v1beta1.SendAuthorization" as AuthorizationTypes,
+          data: {
+            spendLimit: [
+              {
+                denom: "uxion",
+                amount: "1000",
+              },
+            ],
+            allowList: [
+              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
+            ],
           },
-          optional: false,
+        },
+      ];
+
+      const decodedTreasuryConfigs: DecodedReadableAuthorization[] = [
+        {
+          type: "/cosmos.bank.v1beta1.SendAuthorization" as AuthorizationTypes,
+          data: {
+            spendLimit: [
+              {
+                denom: "ibc/1000",
+                amount: "1000",
+              },
+            ],
+            allowList: [
+              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
+            ],
+          },
         },
       ];
       expect(
         compareChainGrantsToTreasuryGrants(
-          grantsResponse,
-          treasuryGrantConfigs,
+          decodedChainConfigs,
+          decodedTreasuryConfigs,
+        ),
+      ).toBe(false);
+    });
+
+    it("should return true when on chain SpendLimit is <= treasury SpendLimit on SendAuthorizations", () => {
+      const decodedChainConfigs: DecodedReadableAuthorization[] = [
+        {
+          type: "/cosmos.bank.v1beta1.SendAuthorization" as AuthorizationTypes,
+          data: {
+            spendLimit: [
+              {
+                denom: "uxion",
+                amount: "999",
+              },
+            ],
+            allowList: [
+              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
+            ],
+          },
+        },
+      ];
+
+      const decodedTreasuryConfigs: DecodedReadableAuthorization[] = [
+        {
+          type: "/cosmos.bank.v1beta1.SendAuthorization" as AuthorizationTypes,
+          data: {
+            spendLimit: [
+              {
+                denom: "uxion",
+                amount: "1000",
+              },
+            ],
+            allowList: [
+              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
+            ],
+          },
+        },
+      ];
+      expect(
+        compareChainGrantsToTreasuryGrants(
+          decodedChainConfigs,
+          decodedTreasuryConfigs,
+        ),
+      ).toBe(true);
+    });
+
+    it("should return false when on chain SpendLimit is > treasury SpendLimit on SendAuthorizations", () => {
+      const decodedChainConfigs: DecodedReadableAuthorization[] = [
+        {
+          type: "/cosmos.bank.v1beta1.SendAuthorization" as AuthorizationTypes,
+          data: {
+            spendLimit: [
+              {
+                denom: "uxion",
+                amount: "1001",
+              },
+            ],
+            allowList: [
+              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
+            ],
+          },
+        },
+      ];
+
+      const decodedTreasuryConfigs: DecodedReadableAuthorization[] = [
+        {
+          type: "/cosmos.bank.v1beta1.SendAuthorization" as AuthorizationTypes,
+          data: {
+            spendLimit: [
+              {
+                denom: "uxion",
+                amount: "1000",
+              },
+            ],
+            allowList: [
+              "xion1f7c3cd26s8veq9rp94t7ysreacz4aemeh0tl0wcmysljgrm6qapqu6jh5x",
+            ],
+          },
+        },
+      ];
+      expect(
+        compareChainGrantsToTreasuryGrants(
+          decodedChainConfigs,
+          decodedTreasuryConfigs,
         ),
       ).toBe(false);
     });

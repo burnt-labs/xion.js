@@ -3,6 +3,7 @@ import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { fetchConfig } from "@burnt-labs/constants";
 import type {
   ContractGrantDescription,
+  DecodedReadableAuthorization,
   GrantsResponse,
   SpendLimit,
 } from "@/types";
@@ -17,6 +18,7 @@ import {
   compareContractGrants,
   compareStakeGrants,
   compareBankGrants,
+  decodeAuthorization,
 } from "@/utils/grant";
 
 export class AbstraxionAuth {
@@ -379,9 +381,25 @@ export class AbstraxionAuth {
       treasuryTypeUrls,
     );
 
+    const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
+      treasuryGrantConfigs.map((treasuryGrantConfig) => {
+        return decodeAuthorization(
+          treasuryGrantConfig.authorization.type_url,
+          treasuryGrantConfig.authorization.value,
+        );
+      });
+
+    const decodedChainConfigs: DecodedReadableAuthorization[] =
+      grantsResponse.grants.map((grantResponse) => {
+        return decodeAuthorization(
+          grantResponse.authorization.typeUrl,
+          grantResponse.authorization.value,
+        );
+      });
+
     return compareChainGrantsToTreasuryGrants(
-      grantsResponse,
-      treasuryGrantConfigs,
+      decodedChainConfigs,
+      decodedTreasuryConfigs,
     );
   }
 
