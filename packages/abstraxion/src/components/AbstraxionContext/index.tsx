@@ -153,6 +153,15 @@ export function AbstraxionContextProvider({
     }
   }
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("granted") === "true") {
+      login().catch((error) => {
+        console.error("Failed to finish login:", error);
+      });
+    }
+  }, []);
+
   const logout = useCallback(() => {
     setIsConnected(false);
     setAbstraxionAccount(undefined);
