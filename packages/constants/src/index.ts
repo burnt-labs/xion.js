@@ -114,19 +114,16 @@ const REST_URLS = {
 };
 
 export async function fetchConfig(rpcUrl: string) {
-  try {
-    const fetchReq = await fetch(`${rpcUrl}/status`);
-    if (!fetchReq.ok) {
-      throw new Error("Something went wrong querying RPC");
-    }
-
-    const data: RpcStatusResponse = await fetchReq.json();
-    const lookup = data.result.node_info.network;
-    const dashboardUrl = DASHBOARD_URLS[lookup as keyof typeof DASHBOARD_URLS];
-    const restUrl = REST_URLS[lookup as keyof typeof REST_URLS];
-    if (!dashboardUrl || !restUrl) throw new Error("Network not found.");
-    return { dashboardUrl, restUrl };
-  } catch (error) {
-    throw error;
+  const fetchReq = await fetch(`${rpcUrl}/status`);
+  if (!fetchReq.ok) {
+    throw new Error("Something went wrong querying RPC");
   }
+
+  const data = (await fetchReq.json()) as RpcStatusResponse;
+  const networkId = data.result.node_info.network;
+
+  const dashboardUrl = DASHBOARD_URLS[networkId as keyof typeof DASHBOARD_URLS];
+  const restUrl = REST_URLS[networkId as keyof typeof REST_URLS];
+  if (!dashboardUrl || !restUrl) throw new Error("Network not found.");
+  return { dashboardUrl, restUrl, networkId };
 }
