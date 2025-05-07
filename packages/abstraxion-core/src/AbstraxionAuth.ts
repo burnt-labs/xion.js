@@ -11,15 +11,16 @@ import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 import type { RedirectStrategy, StorageStrategy } from "./types/strategyTypes";
 import {
-  fetchChainGrantsABCI,
-  getTreasuryContractConfigsByTypeUrl,
-  getTreasuryContractTypeUrls,
+  compareBankGrants,
   compareChainGrantsToTreasuryGrants,
   compareContractGrants,
   compareStakeGrants,
-  compareBankGrants,
   decodeAuthorization,
+  fetchChainGrantsABCI,
+  getTreasuryContractConfigsByTypeUrl,
+  getTreasuryContractTypeUrls,
 } from "@/utils/grant";
+import { getRpcClient } from "@/utils";
 
 export class AbstraxionAuth {
   // Config
@@ -270,7 +271,8 @@ export class AbstraxionAuth {
         throw new Error("Configuration not initialized");
       }
 
-      const cosmwasmClient = await CosmWasmClient.connect(this.rpcUrl || "");
+      const rpcClient = await getRpcClient(this.rpcUrl || "");
+      const cosmwasmClient = await CosmWasmClient.create(rpcClient);
 
       this.cosmwasmQueryClient = cosmwasmClient;
       return cosmwasmClient;
