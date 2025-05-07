@@ -7,8 +7,8 @@
 - **RPC Configuration:**
   - Added caching to RPC config fetches, reducing redundant network requests.
 - **Treasury Grant Data:**
-  - Introduced caching and a new function to fetch treasury grant data directly from the indexer.
+  - Introduced caching and a new function to fetch treasury grant data directly from the DaoDao indexer.
   - Unified and simplified the treasury grant config API with improved fallback mechanisms.
 - **Refactoring:**
-  - Replaced direct CosmWasmClient usage with a modular RPC client utility.
+  - Replaced direct CosmWasmClient usage with a modular RPC client utility to eliminate RPC `status` calls on startup.
   - Cleaned up and reorganized imports for better code clarity.
