@@ -1,6 +1,5 @@
 import { GasPrice } from "@cosmjs/stargate";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { fetchConfig } from "@burnt-labs/constants";
 import type {
   ContractGrantDescription,
   DecodedReadableAuthorization,
@@ -17,10 +16,9 @@ import {
   compareStakeGrants,
   decodeAuthorization,
   fetchChainGrantsABCI,
-  getTreasuryContractConfigsByTypeUrl,
-  getTreasuryContractTypeUrls,
+  getTreasuryGrantConfigs,
 } from "@/utils/grant";
-import { getRpcClient } from "@/utils";
+import { fetchConfig, getRpcClient } from "@/utils";
 
 export class AbstraxionAuth {
   // Config
@@ -373,14 +371,15 @@ export class AbstraxionAuth {
     const cosmwasmClient =
       this.cosmwasmQueryClient || (await this.getCosmWasmClient());
 
-    const treasuryTypeUrls = await getTreasuryContractTypeUrls(
+    if (!this.rpcUrl) {
+      throw new Error("RPC URL is required to determine the network ID");
+    }
+
+    // Use the new combined function to get treasury grant configs directly
+    const treasuryGrantConfigs = await getTreasuryGrantConfigs(
       cosmwasmClient,
       this.treasury,
-    );
-    const treasuryGrantConfigs = await getTreasuryContractConfigsByTypeUrl(
-      cosmwasmClient,
-      this.treasury,
-      treasuryTypeUrls,
+      this.rpcUrl,
     );
 
     const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
