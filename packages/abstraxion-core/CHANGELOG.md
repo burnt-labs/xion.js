@@ -1,5 +1,13 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.57
+
+### Minor Changes
+
+- [#288](https://github.com/burnt-labs/xion.js/pull/288) [`c8d253c`](https://github.com/burnt-labs/xion.js/commit/c8d253cef6dd5e1ecfb7c1a217d5a4c3e67eb8ba) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix issue where we weren't accounting for values that decrement
+
+- [#290](https://github.com/burnt-labs/xion.js/pull/290) [`0005d94`](https://github.com/burnt-labs/xion.js/commit/0005d94c254a64d712fa25e981364386c5c5dcd3) Thanks [@BurntVal](https://github.com/BurntVal)! - consolidate grant utility functions & improve grant decoding logic
+
 ## 1.0.0-alpha.56
 
 ### Patch Changes
