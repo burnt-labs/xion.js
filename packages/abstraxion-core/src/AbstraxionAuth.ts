@@ -41,6 +41,7 @@ export class AbstraxionAuth {
   private isLoginInProgress = false;
   isLoggedIn = false;
   authStateChangeSubscribers: ((isLoggedIn: boolean) => void)[] = [];
+  private isAuthenticating = false;
 
   /**
    * Creates an instance of the AbstraxionAuth class.
@@ -485,7 +486,14 @@ export class AbstraxionAuth {
    * @returns {Promise<void>} - Resolves if authentication is successful or logs out the user otherwise.
    */
   async authenticate(): Promise<void> {
+    // Guard against concurrent authentication attempts
+    if (this.isAuthenticating) {
+      console.debug('Authentication already in progress');
+      return;
+    }
+
     try {
+      this.isAuthenticating = true;
       const keypair = await this.getLocalKeypair();
       const granter = await this.getGranter();
 
@@ -511,6 +519,8 @@ export class AbstraxionAuth {
     } catch (error) {
       console.error("Error during authentication:", error);
       await this.logout();
+    } finally {
+      this.isAuthenticating = false;
     }
   }
 
