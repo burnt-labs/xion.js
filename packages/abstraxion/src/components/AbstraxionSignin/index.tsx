@@ -6,7 +6,7 @@ import { abstraxionAuth } from "../Abstraxion";
 import { Loading } from "../Loading";
 
 export function AbstraxionSignin(): JSX.Element {
-  const { isConnecting, setShowModal, setIsConnecting, setAbstraxionError } =
+  const { isConnecting, setShowModal, setAbstraxionError, login } =
     useContext(AbstraxionContext);
 
   const isMounted = useRef(false);
@@ -18,16 +18,11 @@ export function AbstraxionSignin(): JSX.Element {
   useEffect(() => {
     async function onStartup() {
       try {
-        if (!abstraxionAuth) {
-          throw new Error("abstraxion-core not initialized");
-        }
-        setIsConnecting(true);
-        await abstraxionAuth.login();
+        await login();
       } catch (error) {
         console.warn("Something went wrong: ", error);
         setAbstraxionError((error as Error).message);
       } finally {
-        setIsConnecting(false);
         setShowModal(false);
       }
     }
