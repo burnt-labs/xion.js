@@ -1,6 +1,10 @@
 import "./styles.css";
 
-export { Abstraxion, AbstraxionProvider } from "./components/Abstraxion";
+export {
+  Abstraxion,
+  AbstraxionProvider,
+  abstraxionAuth,
+} from "./components/Abstraxion";
 export {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
@@ -9,4 +13,10 @@ export {
 } from "./hooks";
 
 export type { ContractGrantDescription } from "./components/AbstraxionContext";
-export type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+export type {
+  GranteeSignerClient,
+  GrantsResponse,
+  Grant,
+  TreasuryGrantConfig,
+  SpendLimit,
+} from "@burnt-labs/abstraxion-core";
