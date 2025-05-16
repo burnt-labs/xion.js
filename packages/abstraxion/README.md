@@ -12,7 +12,7 @@ npm i @burnt-labs/abstraxion
 
 ## Basic Usage
 
-Find an implementation demo here: [abstraxion demo](../../apps/demo-app)
+Get started [here](https://quickstart.dev.testnet.burnt.com/)
 
 First, wrap your app in the `AbstraxionProvider` at the top level with the appropriate config
 
