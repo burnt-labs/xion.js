@@ -10,9 +10,17 @@ Run the following:
 npm i @burnt-labs/abstraxion
 ```
 
-## Basic Usage
+## Xion Quick Start Integration
 
-Find an implementation demo here: [abstraxion demo](../../apps/demo-app)
+If you're new to Xion blockchain development, we recommend using our Quick Start tool before integrating Abstraxion into your custom project.
+
+Visit [quickstart.dev.testnet.burnt.com](https://quickstart.dev.testnet.burnt.com) to deploy the necessary contracts (UserMap and treasury) with a single click, and automatically generate the environment variables required for Abstraxion integration.
+
+This tool eliminates the complexity of manual contract deployment and configuration, allowing you to start building with Abstraxion immediately. The deployed contracts provide gasless transactions and data storage capabilities essential for most dApps.
+
+For full documentation on the Quick Start approach, see our [Zero to dApp in 5 Minutes](https://docs.burnt.com/xion/developers/xion-quick-start/zero-to-dapp-in-5-minutes/launch-a-user-map-dapp-on-xion-in-5-minutes) guide.
+
+## Basic Usage
 
 First, wrap your app in the `AbstraxionProvider` at the top level with the appropriate config
 
