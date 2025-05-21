@@ -27,6 +27,8 @@ export interface AbstraxionContextProps {
   showModal: boolean;
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
   setGranterAddress: React.Dispatch<React.SetStateAction<string>>;
+  grantsChanged?: boolean; // Added grantsChanged
+  setGrantsChanged?: React.Dispatch<React.SetStateAction<boolean>>; // Added setGrantsChanged
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
   setDashboardUrl: React.Dispatch<React.SetStateAction<string>>;
@@ -53,6 +55,7 @@ export function AbstraxionContextProvider({
   callbackUrl,
   treasury,
   gasPrice,
+  enableLogoutOnGrantChange = false, // Added enableLogoutOnGrantChange with default
 }: {
   children: ReactNode;
   contracts?: ContractGrantDescription[];
@@ -64,6 +67,7 @@ export function AbstraxionContextProvider({
   callbackUrl?: string;
   treasury?: string;
   gasPrice?: string;
+  enableLogoutOnGrantChange?: boolean; // Prop type
 }): JSX.Element {
   const [abstraxionError, setAbstraxionError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -74,6 +78,7 @@ export function AbstraxionContextProvider({
   >(undefined);
   const [granterAddress, setGranterAddress] = useState("");
   const [dashboardUrl, setDashboardUrl] = useState("");
+  const [grantsChanged, setGrantsChanged] = useState(false); // Added grantsChanged state
   let gasPriceDefault: GasPrice;
   const { gasPrice: gasPriceConstant } = xionGasValues;
   if (rpcUrl.includes("mainnet")) {
@@ -91,8 +96,9 @@ export function AbstraxionContextProvider({
       bank,
       callbackUrl,
       treasury,
+      enableLogoutOnGrantChange, // Pass to configure method
     );
-  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl, treasury]);
+  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl, treasury, enableLogoutOnGrantChange]);
 
   useEffect(() => {
     configureInstance();
@@ -107,14 +113,23 @@ export function AbstraxionContextProvider({
 
   useEffect(() => {
     const unsubscribe = abstraxionAuth.subscribeToAuthStateChange(
-      async (newState: boolean) => {
-        if (newState !== isConnected) {
-          setIsConnected(newState);
-          if (newState) {
+      async (newIsConnected: boolean, newGrantsChanged?: boolean) => {
+        if (newIsConnected !== isConnected) {
+          setIsConnected(newIsConnected);
+          if (newIsConnected) {
             const account = await abstraxionAuth.getLocalKeypair();
             const granterAddress = await abstraxionAuth.getGranter();
             setAbstraxionAccount(account);
             setGranterAddress(granterAddress);
+          }
+        }
+        // Handle grantsChanged status
+        if (newGrantsChanged !== undefined) {
+          if (isConnecting && newGrantsChanged) {
+            // If login is in progress and grants changed, ensure context reflects false.
+            setGrantsChanged(false);
+          } else {
+            setGrantsChanged(newGrantsChanged);
           }
         }
       },
@@ -123,7 +138,7 @@ export function AbstraxionContextProvider({
     return () => {
       unsubscribe?.();
     };
-  }, [isConnected, abstraxionAuth]);
+  }, [isConnected, isConnecting, abstraxionAuth]);
 
   const persistAuthenticateState = useCallback(async () => {
     await abstraxionAuth.authenticate();
@@ -144,6 +159,7 @@ export function AbstraxionContextProvider({
     setIsConnected(false);
     setAbstraxionAccount(undefined);
     setGranterAddress("");
+    setGrantsChanged(false); // Reset grantsChanged on logout
     abstraxionAuth?.logout();
   }, [abstraxionAuth]);
 
@@ -172,6 +188,8 @@ export function AbstraxionContextProvider({
         treasury,
         logout,
         gasPrice: gasPrice ? GasPrice.fromString(gasPrice) : gasPriceDefault,
+        grantsChanged,
+        setGrantsChanged,
       }}
     >
       {children}

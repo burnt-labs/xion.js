@@ -30,6 +30,7 @@ export class AbstraxionAuth {
   bank?: SpendLimit[];
   callbackUrl?: string;
   treasury?: string;
+  private enableLogoutOnGrantChange: boolean = false; // Added enableLogoutOnGrantChange
 
   // Signer
   private client?: GranteeSignerClient;
@@ -41,7 +42,8 @@ export class AbstraxionAuth {
   // State
   private isLoginInProgress = false;
   isLoggedIn = false;
-  authStateChangeSubscribers: ((isLoggedIn: boolean) => void)[] = [];
+  private _grantsChanged: boolean = false; // Added _grantsChanged flag
+  authStateChangeSubscribers: ((isLoggedIn: boolean, grantsChanged?: boolean) => void)[] = [];
 
   /**
    * Creates an instance of the AbstraxionAuth class.
@@ -80,6 +82,7 @@ export class AbstraxionAuth {
     bank?: SpendLimit[],
     callbackUrl?: string,
     treasury?: string,
+    enableLogoutOnGrantChange?: boolean, // Added enableLogoutOnGrantChange
   ) {
     this.rpcUrl = rpc;
     this.restUrl = restUrl;
@@ -88,6 +91,7 @@ export class AbstraxionAuth {
     this.bank = bank;
     this.callbackUrl = callbackUrl;
     this.treasury = treasury;
+    this.enableLogoutOnGrantChange = enableLogoutOnGrantChange || false; // Set with default
   }
 
   /**
@@ -102,7 +106,7 @@ export class AbstraxionAuth {
    * @returns {function} - A function that, when called, removes the subscription to authentication state changes.
    *                      This function should be invoked to clean up the subscription when no longer needed.
    */
-  subscribeToAuthStateChange(callback: (isLoggedIn: boolean) => void) {
+  subscribeToAuthStateChange(callback: (isLoggedIn: boolean, grantsChanged?: boolean) => void) {
     this.authStateChangeSubscribers.push(callback);
     return () => {
       const index = this.authStateChangeSubscribers.indexOf(callback);
@@ -116,10 +120,13 @@ export class AbstraxionAuth {
    * Triggers a change in authentication state and notifies all subscribers.
    *
    * @param {boolean} isLoggedIn - The new authentication state, indicating whether the user is logged in.
+   * @param {boolean} [grantsDidChange] - Optional. The new state of grants changed.
    */
-  private triggerAuthStateChange(isLoggedIn: boolean): void {
+  private triggerAuthStateChange(isLoggedIn: boolean, grantsDidChange?: boolean): void {
     this.isLoggedIn = isLoggedIn;
-    this.authStateChangeSubscribers.forEach((callback) => callback(isLoggedIn));
+    // If grantsDidChange is not explicitly passed, use the current _grantsChanged state
+    const grantsChangedStatus = grantsDidChange === undefined ? this._grantsChanged : grantsDidChange;
+    this.authStateChangeSubscribers.forEach((callback) => callback(isLoggedIn, grantsChangedStatus));
   }
 
   /**
@@ -414,7 +421,9 @@ export class AbstraxionAuth {
   async pollForGrants(
     grantee: string,
     granter: string | null,
-  ): Promise<boolean> {
+  ): Promise<{ isGrantValid: boolean; grantsHaveChanged: boolean }> {
+    // TODO: Verify that fetchChainGrantsABCI fetches all necessary grant types
+    // (send, message execute, delegate, redelegate, unbond, authz).
     if (!this.rpcUrl) {
       throw new Error("AbstraxionAuth needs to be configured.");
     }
@@ -427,31 +436,55 @@ export class AbstraxionAuth {
 
     const maxRetries = 5;
     let retries = 0;
+    let previousGrantsSnapshot: string | null = null; // Store previous grants snapshot
 
     while (retries < maxRetries) {
       try {
         const data = await fetchChainGrantsABCI(grantee, granter, this.rpcUrl);
+        const currentGrantsSnapshot = JSON.stringify(data.grants.sort()); // Create a snapshot of current grants
+
+        let grantsHaveChanged = false;
+        if (previousGrantsSnapshot && previousGrantsSnapshot !== currentGrantsSnapshot) {
+          grantsHaveChanged = true;
+        }
+        previousGrantsSnapshot = currentGrantsSnapshot; // Update snapshot for next poll iteration (if any)
+
 
         if (data.grants.length === 0) {
           console.warn("No grants found.");
-          return false;
+          // If there were previous grants, but now there are none, then grants have changed.
+          return { isGrantValid: false, grantsHaveChanged: previousGrantsSnapshot !== JSON.stringify([]) };
         }
 
         // Check expiration for each grant
         const currentTime = new Date().toISOString();
-        const validGrant = data.grants.some((grant) => {
+        const isGrantValid = data.grants.some((grant) => {
           const { expiration } = grant;
           return !expiration || expiration > currentTime;
         });
 
-        let isValid: boolean;
+        let grantsMatchConfig: boolean;
         if (this.treasury) {
-          isValid = await this.compareGrantsToTreasury(data);
+          // Comprehensive comparison: checks if on-chain grants exactly match treasury configuration
+          // This now needs to ensure no unexpected grants exist and all configured grants are present.
+          grantsMatchConfig = await this.compareGrantsToTreasury(data);
         } else {
-          isValid = this.compareGrantsToLegacyConfig(data);
+          // Comprehensive comparison: checks if on-chain grants exactly match legacy configuration
+          grantsMatchConfig = this.compareGrantsToLegacyConfig(data);
         }
 
-        return validGrant && isValid;
+        // If grants are valid and match the configuration, but the snapshot shows a change,
+        // it means some other grant (not configured) was added/removed/changed.
+        if (isGrantValid && grantsMatchConfig && grantsHaveChanged) {
+            // This condition implies that the configured grants are still valid and present,
+            // but some other (unexpected) grant activity has occurred.
+            // Depending on strictness, this could also be grantsHaveChanged = true.
+            // For now, if configured grants are fine, we consider it as "not changed" in terms of configuration.
+            // The consumer can use _grantsChanged to decide further action.
+        }
+
+
+        return { isGrantValid: isGrantValid && grantsMatchConfig, grantsHaveChanged };
       } catch (error) {
         console.warn("Error fetching grants: ", error);
         const delay = Math.pow(2, retries) * 1000;
@@ -460,7 +493,7 @@ export class AbstraxionAuth {
       }
     }
     console.error("Max retries exceeded, giving up.");
-    return false;
+    return { isGrantValid: false, grantsHaveChanged: previousGrantsSnapshot !== null && previousGrantsSnapshot !== JSON.stringify([]) };
   }
 
   /**
@@ -472,7 +505,8 @@ export class AbstraxionAuth {
       this.storageStrategy.removeItem("xion-authz-granter-account"),
     ]);
     this.abstractAccount = undefined;
-    this.triggerAuthStateChange(false);
+    this._grantsChanged = false; // Reset _grantsChanged flag
+    this.triggerAuthStateChange(false, false); // Pass false for grantsChanged on logout
   }
 
   /**
@@ -497,11 +531,24 @@ export class AbstraxionAuth {
       const keypairAddress = accounts[0].address;
 
       // Check for existing grants with an expiration check
-      const isGrantValid = await this.pollForGrants(keypairAddress, granter);
+      const { isGrantValid, grantsHaveChanged } = await this.pollForGrants(keypairAddress, granter);
+      this._grantsChanged = grantsHaveChanged;
+
+      if (this._grantsChanged && this.enableLogoutOnGrantChange) {
+        console.warn(
+          "Grants have changed and enableLogoutOnGrantChange is true, logging out.",
+        );
+        await this.logout();
+        return;
+      }
 
       if (isGrantValid) {
         this.abstractAccount = keypair;
-        this.triggerAuthStateChange(true);
+        // Pass the current state of _grantsChanged. If logout happened due to grant change,
+        // this won't be reached. If grants are valid and didn't change, _grantsChanged is false.
+        // If grants are valid but some non-critical change occurred (and enableLogoutOnGrantChange is false),
+        // then _grantsChanged might be true here.
+        this.triggerAuthStateChange(true, this._grantsChanged);
       } else {
         throw new Error(
           "Grants expired, no longer valid, or not found. Logging out.",
@@ -540,14 +587,21 @@ export class AbstraxionAuth {
       if (keypair && granter) {
         const accounts = await keypair.getAccounts();
         const keypairAddress = accounts[0].address;
-        const pollSuccess = await this.pollForGrants(keypairAddress, granter);
-        if (!pollSuccess) {
-          throw new Error("Poll was unsuccessful. Please try again");
+        const { isGrantValid, grantsHaveChanged } = await this.pollForGrants(keypairAddress, granter);
+        
+        if (!isGrantValid) {
+          // If grants are not valid even after polling, then something is wrong.
+          // This could be due to expiration, or mismatch with configuration.
+          // We might need to decide if _grantsChanged should be set here based on grantsHaveChanged
+          // For now, if not valid, we throw, which will lead to logout in authenticate or newKeypairFlow.
+          this._grantsChanged = grantsHaveChanged; // Update based on the poll
+          throw new Error("Poll was unsuccessful or grants are invalid. Please try again");
         }
 
         this.setGranter(granter);
         this.abstractAccount = keypair;
-        this.triggerAuthStateChange(true);
+        this._grantsChanged = false; // Reset _grantsChanged flag on successful login
+        this.triggerAuthStateChange(true, false); // Pass false for grantsChanged on successful login
 
         if (typeof window !== "undefined") {
           const currentUrl = new URL(window.location.href);

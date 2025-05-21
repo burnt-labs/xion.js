@@ -619,4 +619,273 @@ describe("AbstraxionAuth", () => {
   //     expect(result).toBe(true);
   //   });
   // });
+
+  describe("pollForGrants", () => {
+    let fetchChainGrantsABCIMock: jest.SpyInstance;
+
+    beforeEach(() => {
+      configureAbstraxionAuthInstance(abstraxionAuth);
+      // Mock fetchChainGrantsABCI for pollForGrants tests
+      fetchChainGrantsABCIMock = jest.spyOn(
+        require("../src/utils/grant/query"), // Adjust path as necessary
+        "fetchChainGrantsABCI",
+      );
+    });
+
+    afterEach(() => {
+      fetchChainGrantsABCIMock.mockRestore();
+    });
+
+    it("should return valid and unchanged when grants match config and snapshot", async () => {
+      fetchChainGrantsABCIMock.mockResolvedValue(mockGrantsResponse); // First call
+      fetchChainGrantsABCIMock.mockResolvedValue(mockGrantsResponse); // Second call (same snapshot)
+
+      // Initial poll to set the snapshot
+      await abstraxionAuth.pollForGrants("grantee", "granter");
+      // Second poll to compare against the snapshot
+      const result = await abstraxionAuth.pollForGrants("grantee", "granter");
+
+      expect(result.isGrantValid).toBe(true);
+      expect(result.grantsHaveChanged).toBe(false);
+      expect(fetchChainGrantsABCIMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("should return valid and changed when grants match config but snapshot differs", async () => {
+      const initialGrants = { ...mockGrantsResponse };
+      const updatedGrants = {
+        ...mockGrantsResponse,
+        grants: [
+          ...mockGrantsResponse.grants,
+          {
+            // A new, valid grant that still matches overall config type if broadly checked
+            granter: "granter",
+            grantee: "grantee",
+            authorization: {
+              "@type": "/cosmos.bank.v1beta1.SendAuthorization",
+              spend_limit: [{ denom: "newcoin", amount: "50" }],
+            },
+            expiration: new Date(Date.now() + 3600 * 1000).toISOString(),
+          },
+        ],
+      };
+      // Mock compareGrantsToLegacyConfig to return true for both sets of grants to isolate snapshot logic
+      jest.spyOn(abstraxionAuth, "compareGrantsToLegacyConfig")
+          .mockReturnValueOnce(true) // For initialGrants
+          .mockReturnValueOnce(true); // For updatedGrants
+
+      fetchChainGrantsABCIMock.mockResolvedValueOnce(initialGrants);
+      fetchChainGrantsABCIMock.mockResolvedValueOnce(updatedGrants);
+
+
+      await abstraxionAuth.pollForGrants("grantee", "granter"); // Sets initial snapshot
+      const result = await abstraxionAuth.pollForGrants("grantee", "granter"); // Polls with new data
+
+      expect(result.isGrantValid).toBe(true); // Still valid based on config
+      expect(result.grantsHaveChanged).toBe(true);
+    });
+
+    it("should return invalid when grants are expired", async () => {
+      const expiredGrants = {
+        ...mockGrantsResponse,
+        grants: mockGrantsResponse.grants.map((grant) => ({
+          ...grant,
+          expiration: new Date(Date.now() - 3600 * 1000).toISOString(), // Expired
+        })),
+      };
+      fetchChainGrantsABCIMock.mockResolvedValue(expiredGrants);
+
+      const result = await abstraxionAuth.pollForGrants("grantee", "granter");
+      expect(result.isGrantValid).toBe(false);
+      // grantsHaveChanged depends on previous snapshot, for this test it's the first poll
+      // so if previous was null, and now we have grants (even if expired), it's a change.
+      expect(result.grantsHaveChanged).toBe(true);
+    });
+
+    it("should use compareGrantsToTreasury when treasury is set", async () => {
+      abstraxionAuth.treasury = "treasuryAddress";
+      const compareGrantsToTreasuryMock = jest
+        .spyOn(abstraxionAuth, "compareGrantsToTreasury")
+        .mockResolvedValue(true);
+      fetchChainGrantsABCIMock.mockResolvedValue(mockGrantsResponse);
+
+      await abstraxionAuth.pollForGrants("grantee", "granter");
+      expect(compareGrantsToTreasuryMock).toHaveBeenCalled();
+      compareGrantsToTreasuryMock.mockRestore();
+    });
+  });
+
+  describe("authenticate", () => {
+    let pollForGrantsMock: jest.SpyInstance;
+    let logoutMock: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Mock getLocalKeypair and getGranter to simulate a logged-in state
+      jest
+        .spyOn(abstraxionAuth, "getLocalKeypair")
+        .mockResolvedValue({ getAccounts: () => Promise.resolve([{ address: "testAccount" }]) } as any);
+      jest.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("testGranter");
+
+      pollForGrantsMock = jest.spyOn(abstraxionAuth, "pollForGrants");
+      logoutMock = jest.spyOn(abstraxionAuth, "logout").mockResolvedValue();
+    });
+
+    afterEach(() => {
+      pollForGrantsMock.mockRestore();
+      logoutMock.mockRestore();
+      jest.restoreAllMocks(); // Restores all spied methods
+    });
+
+    it("should set _grantsChanged to false and not logout if grants are valid and unchanged", async () => {
+      pollForGrantsMock.mockResolvedValue({
+        isGrantValid: true,
+        grantsHaveChanged: false,
+      });
+      configureAbstraxionAuthInstance(abstraxionAuth); // Basic config
+
+      await abstraxionAuth.authenticate();
+
+      expect(abstraxionAuth["_grantsChanged"]).toBe(false);
+      expect(logoutMock).not.toHaveBeenCalled();
+    });
+
+    it("should set _grantsChanged to true and logout if grants changed and enableLogoutOnGrantChange is true", async () => {
+      pollForGrantsMock.mockResolvedValue({
+        isGrantValid: true,
+        grantsHaveChanged: true,
+      });
+      // Configure with enableLogoutOnGrantChange = true
+      abstraxionAuth.configureAbstraxionInstance( "rpc", "rest", [], false, [], undefined, undefined, true );
+
+
+      await abstraxionAuth.authenticate();
+
+      expect(abstraxionAuth["_grantsChanged"]).toBe(true);
+      expect(logoutMock).toHaveBeenCalled();
+    });
+
+    it("should set _grantsChanged to true and not logout if grants changed and enableLogoutOnGrantChange is false", async () => {
+      pollForGrantsMock.mockResolvedValue({
+        isGrantValid: true,
+        grantsHaveChanged: true,
+      });
+      // Configure with enableLogoutOnGrantChange = false
+      abstraxionAuth.configureAbstraxionInstance( "rpc", "rest", [], false, [], undefined, undefined, false );
+
+
+      await abstraxionAuth.authenticate();
+
+      expect(abstraxionAuth["_grantsChanged"]).toBe(true);
+      expect(logoutMock).not.toHaveBeenCalled();
+    });
+
+    it("should logout if grants are invalid, regardless of enableLogoutOnGrantChange", async () => {
+      pollForGrantsMock.mockResolvedValue({
+        isGrantValid: false,
+        grantsHaveChanged: false, // or true, doesn't matter
+      });
+      // Configure with enableLogoutOnGrantChange = false (should still logout)
+       abstraxionAuth.configureAbstraxionInstance( "rpc", "rest", [], false, [], undefined, undefined, false );
+
+      await abstraxionAuth.authenticate();
+      expect(logoutMock).toHaveBeenCalled();
+
+      logoutMock.mockClear(); // Clear mock for next part of test
+
+      // Configure with enableLogoutOnGrantChange = true (should also logout)
+      abstraxionAuth.configureAbstraxionInstance( "rpc", "rest", [], false, [], undefined, undefined, true );
+
+      await abstraxionAuth.authenticate();
+      expect(logoutMock).toHaveBeenCalled();
+    });
+  });
+
+  describe("login", () => {
+     beforeEach(() => {
+      // Ensure a clean state for abstraxionAuth before each test
+      mockStorage = new MockStorageStrategy();
+      mockRedirect = new MockRedirectStrategy();
+      abstraxionAuth = new AbstraxionAuth(mockStorage, mockRedirect);
+      configureAbstraxionAuthInstance(abstraxionAuth);
+    });
+    it("should reset _grantsChanged to false after successful login", async () => {
+      jest.spyOn(abstraxionAuth, "getLocalKeypair")
+        .mockResolvedValue({ getAccounts: () => Promise.resolve([{ address: "testAccount" }]) } as any);
+      jest.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("testGranter");
+      jest.spyOn(abstraxionAuth, "pollForGrants")
+        .mockResolvedValue({ isGrantValid: true, grantsHaveChanged: false }); // Simulate successful poll
+
+      // Set _grantsChanged to true before login to check if it's reset
+      abstraxionAuth["_grantsChanged"] = true;
+
+      await abstraxionAuth.login();
+
+      expect(abstraxionAuth["_grantsChanged"]).toBe(false);
+       jest.restoreAllMocks();
+    });
+  });
+
+  describe("logout", () => {
+    it("should reset _grantsChanged to false", async () => {
+      // Set _grantsChanged to true before logout
+      abstraxionAuth["_grantsChanged"] = true;
+
+      await abstraxionAuth.logout();
+
+      expect(abstraxionAuth["_grantsChanged"]).toBe(false);
+    });
+  });
+
+  describe("triggerAuthStateChange", () => {
+    let authStateChangeSubscriberMock: jest.Mock;
+
+    beforeEach(() => {
+      authStateChangeSubscriberMock = jest.fn();
+      abstraxionAuth.subscribeToAuthStateChange(authStateChangeSubscriberMock);
+       // Mock getLocalKeypair and getGranter for authenticate/login paths
+      jest.spyOn(abstraxionAuth, "getLocalKeypair")
+        .mockResolvedValue({ getAccounts: () => Promise.resolve([{ address: "testAccount" }]) } as any);
+      jest.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("testGranter");
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it("should be called with correct grantsChanged status from authenticate (true)", async () => {
+      jest.spyOn(abstraxionAuth, "pollForGrants")
+        .mockResolvedValue({ isGrantValid: true, grantsHaveChanged: true });
+      // Configure with enableLogoutOnGrantChange = false so it doesn't logout immediately
+      abstraxionAuth.configureAbstraxionInstance( "rpc", "rest", [], false, [], undefined, undefined, false );
+
+
+      await abstraxionAuth.authenticate();
+      // _grantsChanged becomes true from poll, passed to triggerAuthStateChange
+      expect(authStateChangeSubscriberMock).toHaveBeenCalledWith(true, true);
+    });
+
+     it("should be called with correct grantsChanged status from authenticate (false)", async () => {
+      jest.spyOn(abstraxionAuth, "pollForGrants")
+        .mockResolvedValue({ isGrantValid: true, grantsHaveChanged: false });
+      configureAbstraxionAuthInstance(abstraxionAuth);
+
+
+      await abstraxionAuth.authenticate();
+      // _grantsChanged becomes false from poll, passed to triggerAuthStateChange
+      expect(authStateChangeSubscriberMock).toHaveBeenCalledWith(true, false);
+    });
+
+    it("should be called with grantsChanged=false from login", async () => {
+      jest.spyOn(abstraxionAuth, "pollForGrants")
+        .mockResolvedValue({ isGrantValid: true, grantsHaveChanged: false }); // grantsHaveChanged could be true initially, but login resets it
+      configureAbstraxionAuthInstance(abstraxionAuth);
+
+      await abstraxionAuth.login();
+      expect(authStateChangeSubscriberMock).toHaveBeenCalledWith(true, false);
+    });
+
+    it("should be called with grantsChanged=false from logout", async () => {
+      await abstraxionAuth.logout();
+      expect(authStateChangeSubscriberMock).toHaveBeenCalledWith(false, false);
+    });
+  });
 });

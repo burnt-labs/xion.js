@@ -186,8 +186,14 @@ export function compareChainGrantsToTreasuryGrants(
   decodedChainConfigs: DecodedReadableAuthorization[],
   decodedTreasuryConfigs: DecodedReadableAuthorization[],
 ): boolean {
+  // Number of grants must match
+  if (decodedChainConfigs.length !== decodedTreasuryConfigs.length) {
+    return false;
+  }
+
   return decodedTreasuryConfigs.every((treasuryConfig) => {
-    return decodedChainConfigs.find((chainConfig) => {
+    // For each treasury config, find an exactly matching chain config
+    return decodedChainConfigs.some((chainConfig) => {
       const chainAuthType = chainConfig.type;
       const isTypeMatch = chainAuthType === treasuryConfig.type;
 
@@ -239,6 +245,11 @@ export function compareChainGrantsToTreasuryGrants(
 
 //   =============================== Legacy Config Utils ============================
 
+// Helper function to count specific types of grants
+const countGrantsOfType = (grants: Grant[], typeUrl: string): number => {
+  return grants.filter(grant => grant.authorization["@type"] === typeUrl).length;
+};
+
 /**
  * Compares on-chain contract grants to ensure they match the specified grant contracts.
  *
@@ -250,36 +261,43 @@ export const compareContractGrants = (
   grants: Grant[],
   grantContracts?: ContractGrantDescription[],
 ): boolean => {
-  if (!grantContracts) {
-    return true;
-  }
-  const contractGrants = grants.filter(
+  const onChainContractGrants = grants.filter(
     (grant) =>
       grant.authorization["@type"] ===
       "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
   );
 
-  return grantContracts.every((contract) => {
-    const address = typeof contract === "string" ? contract : contract.address;
-    const amounts = typeof contract === "object" ? contract.amounts : [];
+  // If grantContracts is not provided or empty, there should be no on-chain contract grants of this type.
+  if (!grantContracts || grantContracts.length === 0) {
+    return onChainContractGrants.length === 0;
+  }
 
-    const matchingGrants = contractGrants.filter((grant) =>
-      grant.authorization.grants.some(
-        (grant: GrantAuthorization) => grant.contract === address,
-      ),
-    );
+  // Number of on-chain contract grants must match the number of configured grantContracts.
+  if (onChainContractGrants.length !== grantContracts.length) {
+    return false;
+  }
 
-    if (!matchingGrants.length) return false;
+  // Every configured contract grant must find an exact match on-chain.
+  return grantContracts.every((contractConfig) => {
+    const address = typeof contractConfig === "string" ? contractConfig : contractConfig.address;
+    const amounts = typeof contractConfig === "object" ? contractConfig.amounts : [];
 
-    return amounts.length
-      ? matchingGrants.some((grant) =>
-          grant.authorization.grants.some(
-            (authGrant: GrantAuthorization) =>
-              authGrant.limit.amounts &&
-              isLimitValid(amounts, authGrant.limit.amounts),
-          ),
-        )
-      : true;
+    return onChainContractGrants.some((chainGrant) => {
+      // Check if any of the authorization grants within the chainGrant match the configured contract.
+      return chainGrant.authorization.grants.some(
+        (authGrant: GrantAuthorization) => {
+          if (authGrant.contract !== address) {
+            return false;
+          }
+          // If amounts are configured, they must be valid against the chain grant's limit.
+          if (amounts.length > 0) {
+            return authGrant.limit?.amounts && isLimitValid(amounts, authGrant.limit.amounts);
+          }
+          // If no amounts are configured, the presence of the contract grant is enough.
+          return true;
+        }
+      );
+    });
   });
 };
 
@@ -294,40 +312,53 @@ export const compareStakeGrants = (
   grants: Grant[],
   stake?: boolean,
 ): boolean => {
-  if (!stake) {
-    return true;
-  }
+  const genericAuthType = "/cosmos.authz.v1beta1.GenericAuthorization";
+  const stakeAuthType = "/cosmos.staking.v1beta1.StakeAuthorization";
 
-  const stakeGrants = grants.filter((grant) =>
-    [
-      "/cosmos.staking.v1beta1.StakeAuthorization",
-      "/cosmos.authz.v1beta1.GenericAuthorization",
-    ].includes(grant.authorization["@type"]),
+  const onChainStakeAuthGrants = grants.filter(
+    (grant) => grant.authorization["@type"] === stakeAuthType,
+  );
+  const onChainGenericStakeGrants = grants.filter(
+    (grant) =>
+      grant.authorization["@type"] === genericAuthType &&
+      (grant.authorization.msg === "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward" ||
+        grant.authorization.msg === "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation"),
   );
 
-  const expectedStakeTypes = [
+  if (!stake) {
+    // If stake is not configured, there should be no stake-related grants on-chain.
+    return onChainStakeAuthGrants.length === 0 && onChainGenericStakeGrants.length === 0;
+  }
+
+  const expectedStakeAuthTypes = [
     "AUTHORIZATION_TYPE_DELEGATE",
     "AUTHORIZATION_TYPE_UNDELEGATE",
     "AUTHORIZATION_TYPE_REDELEGATE",
+  ];
+  const expectedGenericStakeMsgTypes = [
     "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
     "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation",
   ];
 
-  const stakeTypesGranted = stakeGrants.map((grant) => {
-    if (
-      grant.authorization["@type"] ===
-      "/cosmos.staking.v1beta1.StakeAuthorization"
-    ) {
-      return grant.authorization.authorization_type;
-    } else if (
-      grant.authorization["@type"] ===
-      "/cosmos.authz.v1beta1.GenericAuthorization"
-    ) {
-      return grant.authorization.msg;
-    }
-  });
+  // Check StakeAuthorization grants
+  if (onChainStakeAuthGrants.length !== expectedStakeAuthTypes.length) {
+    return false;
+  }
+  const actualStakeAuthTypes = onChainStakeAuthGrants.map(g => g.authorization.authorization_type).sort();
+  if (!expectedStakeAuthTypes.every(expectedType => actualStakeAuthTypes.includes(expectedType))) {
+    return false;
+  }
 
-  return expectedStakeTypes.every((type) => stakeTypesGranted.includes(type));
+  // Check GenericAuthorization grants for staking related messages
+  if (onChainGenericStakeGrants.length !== expectedGenericStakeMsgTypes.length) {
+    return false;
+  }
+  const actualGenericStakeMsgTypes = onChainGenericStakeGrants.map(g => g.authorization.msg).sort();
+  if (!expectedGenericStakeMsgTypes.every(expectedType => actualGenericStakeMsgTypes.includes(expectedType))) {
+    return false;
+  }
+
+  return true;
 };
 
 /**
@@ -341,18 +372,39 @@ export const compareBankGrants = (
   grants: Grant[],
   bank?: SpendLimit[],
 ): boolean => {
-  if (!bank) {
-    return true;
-  }
-
-  const bankGrants = grants.filter(
-    (grant) =>
-      grant.authorization["@type"] === "/cosmos.bank.v1beta1.SendAuthorization",
+  const sendAuthType = "/cosmos.bank.v1beta1.SendAuthorization";
+  const onChainBankGrants = grants.filter(
+    (grant) => grant.authorization["@type"] === sendAuthType,
   );
 
-  return bank?.every((bankEntry) =>
-    bankGrants.some((grant) =>
-      isLimitValid([bankEntry], grant.authorization.spend_limit),
-    ),
+  // If bank is not configured or empty, there should be no on-chain bank grants of this type.
+  if (!bank || bank.length === 0) {
+    return onChainBankGrants.length === 0;
+  }
+
+  // Number of on-chain bank grants must match the number of configured bank SpendLimits.
+  if (onChainBankGrants.length !== bank.length) {
+    return false;
+  }
+
+  // Every configured bank SpendLimit must find an exact match on-chain.
+  return bank.every((bankEntry) =>
+    onChainBankGrants.some((chainGrant) =>
+      // Ensure the spend_limit array in chainGrant matches the bankEntry.
+      // isLimitValid expects arrays, so we wrap bankEntry.
+      // For an exact match, the spend_limit arrays should be of the same length
+      // and each element in bankEntry should be validated by an element in spend_limit.
+      // A stricter check might involve ensuring spend_limit has only one entry matching bankEntry if bankEntry itself is a single limit.
+      // For now, we use isLimitValid which checks if chain limits are <= expected.
+      // To be more strict, we should check for equality in amounts and denoms.
+      // Let's refine isLimitValid or add a new helper for exact limit matching if needed.
+      // For now, assuming isLimitValid is sufficient if the lengths also match.
+      chainGrant.authorization.spend_limit &&
+      chainGrant.authorization.spend_limit.length === 1 && // Assuming each bank SpendLimit config corresponds to one spend_limit entry in a grant
+      isLimitValid([bankEntry], chainGrant.authorization.spend_limit) &&
+      // Add a check for exact amount match, as isLimitValid checks for <=
+      chainGrant.authorization.spend_limit[0].denom === bankEntry.denom &&
+      chainGrant.authorization.spend_limit[0].amount === bankEntry.amount
+    )
   );
 };
