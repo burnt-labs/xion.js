@@ -33,12 +33,13 @@ export const getTreasuryContractTypeUrls = async (
 export const getTreasuryContractConfigsByTypeUrl = async (
   client: CosmWasmClient,
   treasuryAddress: string,
+  account: string,
   typeUrls: string[],
 ): Promise<TreasuryGrantConfig[]> => {
   const treasuryGrantConfigs: TreasuryGrantConfig[] = [];
   for (const typeUrl of typeUrls) {
     const queryByMsg = {
-      grant_config_by_type_url: { msg_type_url: typeUrl },
+      grant_config_by_type_url: { msg_type_url: typeUrl, account_address: account },
     };
     const grantConfigResponse: TreasuryGrantConfig =
       await client.queryContractSmart(treasuryAddress, queryByMsg);
