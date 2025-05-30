@@ -363,9 +363,13 @@ export class AbstraxionAuth {
    */
   async compareGrantsToTreasury(
     grantsResponse: GrantsResponse,
+    granter: string | null
   ): Promise<boolean> {
     if (!this.treasury) {
       throw new Error("Missing treasury");
+    }
+    if (!granter) {
+      throw new Error("Missing granter");
     }
 
     const cosmwasmClient =
@@ -378,6 +382,7 @@ export class AbstraxionAuth {
     const treasuryGrantConfigs = await getTreasuryContractConfigsByTypeUrl(
       cosmwasmClient,
       this.treasury,
+      granter,
       treasuryTypeUrls,
     );
 
@@ -446,7 +451,7 @@ export class AbstraxionAuth {
 
         let isValid: boolean;
         if (this.treasury) {
-          isValid = await this.compareGrantsToTreasury(data);
+          isValid = await this.compareGrantsToTreasury(data, granter);
         } else {
           isValid = this.compareGrantsToLegacyConfig(data);
         }
