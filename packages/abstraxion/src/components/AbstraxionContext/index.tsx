@@ -31,7 +31,6 @@ export interface AbstraxionContextProps {
   dashboardUrl?: string;
   setDashboardUrl: React.Dispatch<React.SetStateAction<string>>;
   rpcUrl: string;
-  restUrl: string;
   stake?: boolean;
   bank?: SpendLimit[];
   treasury?: string;
@@ -47,7 +46,6 @@ export function AbstraxionContextProvider({
   children,
   contracts,
   rpcUrl = testnetChainInfo.rpc,
-  restUrl = testnetChainInfo.rest,
   stake = false,
   bank,
   callbackUrl,
@@ -58,7 +56,6 @@ export function AbstraxionContextProvider({
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
   rpcUrl?: string;
-  restUrl?: string;
   stake?: boolean;
   bank?: SpendLimit[];
   callbackUrl?: string;
@@ -85,14 +82,13 @@ export function AbstraxionContextProvider({
   const configureInstance = useCallback(() => {
     abstraxionAuth.configureAbstraxionInstance(
       rpcUrl,
-      restUrl || "",
       contracts,
       stake,
       bank,
       callbackUrl,
       treasury,
     );
-  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl, treasury]);
+  }, [rpcUrl, contracts, stake, bank, callbackUrl, treasury]);
 
   useEffect(() => {
     configureInstance();
@@ -166,7 +162,6 @@ export function AbstraxionContextProvider({
         dashboardUrl,
         setDashboardUrl,
         rpcUrl,
-        restUrl,
         stake,
         bank,
         treasury,
