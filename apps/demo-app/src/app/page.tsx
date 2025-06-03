@@ -2,10 +2,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  Abstraxion,
   useAbstraxionAccount,
   useAbstraxionSigningClient,
-  useModal,
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
@@ -16,14 +14,11 @@ type InstantiateResultOrUndefined = InstantiateResult | undefined;
 
 export default function Page(): JSX.Element {
   // Abstraxion hooks
-  const { data: account } = useAbstraxionAccount();
-  const { client, signArb, logout } = useAbstraxionSigningClient();
+  const { data: account, login, logout, isConnecting } = useAbstraxionAccount();
+  const { client, signArb } = useAbstraxionSigningClient();
 
   // General state hooks
-  const [, setShowModal]: [
-    boolean,
-    React.Dispatch<React.SetStateAction<boolean>>,
-  ] = useModal();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [instantiateResult, setInstantiateResult] =
     useState<InstantiateResultOrUndefined>(undefined);
@@ -93,6 +88,30 @@ export default function Page(): JSX.Element {
     }
   }
 
+  const handleLogin = async () => {
+    try {
+      setIsLoggingIn(true);
+      await login();
+    } catch (error) {
+      console.error("There's been an error loggin in");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  if (isLoggingIn) {
+    return (
+      <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
+        <div className="rounded border border-white/20 p-6 text-center">
+          <p className="font-bold">You are being redirected...</p>
+          <p className="text-sm">
+            Use custom UI to render loading state with your own branding
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
       <h1 className="text-2xl font-bold tracking-tighter text-white">
@@ -100,13 +119,14 @@ export default function Page(): JSX.Element {
       </h1>
       <Button
         fullWidth
-        onClick={() => {
-          setShowModal(true);
-        }}
+        onClick={handleLogin}
         structure="base"
+        disabled={isConnecting}
       >
         {account.bech32Address ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
+        ) : isConnecting ? (
+          "LOADING..."
         ) : (
           "CONNECT"
         )}
@@ -138,11 +158,6 @@ export default function Page(): JSX.Element {
           {signArb ? <SignArb /> : null}
         </>
       ) : null}
-      <Abstraxion
-        onClose={() => {
-          setShowModal(false);
-        }}
-      />
       {instantiateResult ? (
         <div className="flex flex-col rounded border-2 border-black p-2 dark:border-white">
           <div className="mt-2">

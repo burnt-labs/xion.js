@@ -1,5 +1,16 @@
 # demo-app
 
+## 1.1.0-alpha.49
+
+### Minor Changes
+
+- [#287](https://github.com/burnt-labs/xion.js/pull/287) [`7b4de39`](https://github.com/burnt-labs/xion.js/commit/7b4de39fdd4880824b7a30fe22b071534e9aaabe) Thanks [@BurntVal](https://github.com/BurntVal)! - Implement new UI-less path for Abstraxion use. See demo-app for usage
+
+### Patch Changes
+
+- Updated dependencies [[`9a6b001`](https://github.com/burnt-labs/xion.js/commit/9a6b001d8ee5e65ecfc18587bd0706e7c9d2eb5e), [`7b4de39`](https://github.com/burnt-labs/xion.js/commit/7b4de39fdd4880824b7a30fe22b071534e9aaabe)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.64
+
 ## 1.1.0-alpha.48
 
 ### Patch Changes

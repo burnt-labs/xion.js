@@ -36,6 +36,7 @@ export interface AbstraxionContextProps {
   treasury?: string;
   gasPrice: GasPrice;
   logout: () => void;
+  login: () => Promise<void>;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -136,6 +137,27 @@ export function AbstraxionContextProvider({
     persistAuthenticateState,
   ]);
 
+  async function login() {
+    try {
+      setIsConnecting(true);
+      await abstraxionAuth.login();
+    } catch (error) {
+      console.log(error);
+      throw error; // Re-throw to allow handling by the caller
+    } finally {
+      setIsConnecting(false);
+    }
+  }
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("granted") === "true") {
+      login().catch((error) => {
+        console.error("Failed to finish login:", error);
+      });
+    }
+  }, []);
+
   const logout = useCallback(() => {
     setIsConnected(false);
     setAbstraxionAccount(undefined);
@@ -165,6 +187,7 @@ export function AbstraxionContextProvider({
         stake,
         bank,
         treasury,
+        login,
         logout,
         gasPrice: gasPrice ? GasPrice.fromString(gasPrice) : gasPriceDefault,
       }}
