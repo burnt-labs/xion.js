@@ -71,7 +71,6 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
 export interface AbstraxionConfig {
   contracts?: ContractGrantDescription[];
   rpcUrl?: string;
-  restUrl?: string;
   stake?: boolean;
   bank?: SpendLimit[];
   callbackUrl?: string;
@@ -90,7 +89,6 @@ export function AbstraxionProvider({
     <AbstraxionContextProvider
       contracts={config.contracts}
       rpcUrl={config.rpcUrl}
-      restUrl={config.restUrl}
       stake={config.stake}
       bank={config.bank}
       callbackUrl={config.callbackUrl}

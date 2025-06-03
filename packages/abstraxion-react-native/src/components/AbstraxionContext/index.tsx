@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
 import { testnetChainInfo, xionGasValues } from "@burnt-labs/constants";
 import { GasPrice } from "@cosmjs/stargate";
-import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
-import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
+import {
+  AbstraxionAuth,
+  SignArbSecp256k1HdWallet,
+} from "@burnt-labs/abstraxion-core";
 import {
   ReactNativeRedirectStrategy,
   ReactNativeStorageStrategy,
@@ -38,7 +39,6 @@ export interface AbstraxionContextProps {
   dashboardUrl?: string;
   setDashboardUrl: React.Dispatch<React.SetStateAction<string>>;
   rpcUrl: string;
-  restUrl: string;
   stake?: boolean;
   bank?: SpendLimit[];
   treasury?: string;
@@ -50,7 +50,6 @@ export interface AbstraxionContextProps {
 export interface AbstraxionConfig {
   contracts?: ContractGrantDescription[];
   rpcUrl?: string;
-  restUrl?: string;
   stake?: boolean;
   bank?: SpendLimit[];
   callbackUrl?: string;
@@ -63,7 +62,6 @@ export function AbstraxionProvider({
   config: {
     contracts,
     rpcUrl = testnetChainInfo.rpc,
-    restUrl = testnetChainInfo.rest,
     stake = false,
     bank,
     callbackUrl,
@@ -93,14 +91,13 @@ export function AbstraxionProvider({
   const configureInstance = useCallback(() => {
     abstraxionAuth.configureAbstraxionInstance(
       rpcUrl,
-      restUrl || "",
       contracts,
       stake,
       bank,
       callbackUrl,
       treasury,
     );
-  }, [rpcUrl, restUrl, contracts, stake, bank, callbackUrl, treasury]);
+  }, [rpcUrl, contracts, stake, bank, callbackUrl, treasury]);
 
   useEffect(() => {
     configureInstance();
@@ -177,7 +174,6 @@ export function AbstraxionProvider({
         dashboardUrl,
         setDashboardUrl,
         rpcUrl,
-        restUrl,
         stake,
         bank,
         treasury,
