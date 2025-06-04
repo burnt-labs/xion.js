@@ -14,7 +14,7 @@ type InstantiateResultOrUndefined = InstantiateResult | undefined;
 
 export default function Page(): JSX.Element {
   // Abstraxion hooks
-  const { data: account, login, logout, isConnecting } = useAbstraxionAccount();
+  const abstraxionAccount = useAbstraxionAccount();
   const { client, signArb } = useAbstraxionSigningClient();
 
   // General state hooks
@@ -50,11 +50,11 @@ export default function Page(): JSX.Element {
             value: "Cg8KBXV4aW9uEgY1MDAwMDA=",
           },
         },
-        admin: account.bech32Address,
+        admin: abstraxionAccount.data.bech32Address,
       };
 
       const instantiateRes = await client?.instantiate(
-        account.bech32Address,
+        abstraxionAccount.data.bech32Address,
         33,
         msg,
         "instantiate on expo demo",
@@ -91,7 +91,7 @@ export default function Page(): JSX.Element {
   const handleLogin = async () => {
     try {
       setIsLoggingIn(true);
-      await login();
+      await abstraxionAccount.login();
     } catch (error) {
       console.error("There's been an error loggin in");
     } finally {
@@ -121,11 +121,11 @@ export default function Page(): JSX.Element {
         fullWidth
         onClick={handleLogin}
         structure="base"
-        disabled={isConnecting}
+        disabled={abstraxionAccount.isConnecting}
       >
-        {account.bech32Address ? (
+        {abstraxionAccount.data.bech32Address ? (
           <div className="flex items-center justify-center">VIEW ACCOUNT</div>
-        ) : isConnecting ? (
+        ) : abstraxionAccount.isConnecting ? (
           "LOADING..."
         ) : (
           "CONNECT"
@@ -143,12 +143,12 @@ export default function Page(): JSX.Element {
           >
             {loading ? "LOADING..." : "Instantiate Sample Treasury"}
           </Button>
-          {logout ? (
+          {abstraxionAccount.logout ? (
             <Button
               disabled={loading}
               fullWidth
               onClick={() => {
-                logout();
+                abstraxionAccount.logout();
               }}
               structure="base"
             >
