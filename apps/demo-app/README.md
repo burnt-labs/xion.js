@@ -41,16 +41,37 @@ This app is configured to deploy to Cloudflare Workers using OpenNext.js.
 
 ### Environment Variables
 
-Create a `.dev.vars` file for local development (this file is gitignored):
+Next.js and Cloudflare Workers handle environment variables differently:
+
+#### Build-time Environment Variables (Next.js)
+
+For variables needed during the build process (e.g., `NEXT_PUBLIC_*` variables):
+- Create a `.env.local` file in the app root
+- These variables are embedded into the build at compile time
+- Public variables must be prefixed with `NEXT_PUBLIC_`
 
 ```env
-NEXTJS_ENV=development
-# Add any other environment variables here
+# .env.local
+NEXT_PUBLIC_API_URL=https://api.example.com
+NEXT_PUBLIC_APP_NAME=Xion Demo
 ```
 
-For production, set environment variables in the Cloudflare dashboard:
-1. Go to Workers & Pages > your worker > Settings > Variables
-2. Add your environment variables
+#### Runtime Environment Variables (Cloudflare Workers)
+
+For variables accessed at runtime in your worker:
+
+**Local Development** - Create a `.dev.vars` file (this file is gitignored):
+```env
+# .dev.vars
+DATABASE_URL=your-database-url
+API_KEY=your-secret-key
+```
+
+**Important Notes:**
+- Build-time vars (`NEXT_PUBLIC_*`) are baked into the client bundle
+- Runtime vars in `.dev.vars` are only available server-side
+- Never expose secrets in `NEXT_PUBLIC_*` variables
+- The `worker-configuration.d.ts` file provides TypeScript types for runtime env vars
 
 ### Available Scripts
 
