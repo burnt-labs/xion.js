@@ -7,6 +7,7 @@ import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
+import { TransferAuthorization } from "cosmjs-types/ibc/applications/transfer/v1/authz";
 
 export interface GrantsResponse {
   grants: Grant[];
@@ -102,6 +103,7 @@ export interface DecodedReadableAuthorization {
   data:
     | GenericAuthorization
     | SendAuthorization
+    | TransferAuthorization
     | StakeAuthorization
     | HumanContractExecAuth
     | null;
