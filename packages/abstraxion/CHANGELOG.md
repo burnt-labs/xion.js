@@ -1,5 +1,12 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.65
+
+### Patch Changes
+
+- Updated dependencies [[`b38363b`](https://github.com/burnt-labs/xion.js/commit/b38363b7f180e9240abf89ee4e64ca3475d07e7a)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.58
+
 ## 1.0.0-alpha.64
 
 ### Minor Changes
