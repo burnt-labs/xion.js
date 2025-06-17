@@ -1,5 +1,16 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.59
+
+### Minor Changes
+
+- [#296](https://github.com/burnt-labs/xion.js/pull/296) [`82e2876`](https://github.com/burnt-labs/xion.js/commit/82e28763ca97805cc6d24b0402af2a2b28f56bf1) Thanks [@justinbarry](https://github.com/justinbarry)! - Remove rest_url param from provider
+
+### Patch Changes
+
+- Updated dependencies [[`82e2876`](https://github.com/burnt-labs/xion.js/commit/82e28763ca97805cc6d24b0402af2a2b28f56bf1)]:
+  - @burnt-labs/constants@0.1.0-alpha.18
+
 ## 1.0.0-alpha.58
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.18
+
+### Minor Changes
+
+- [#296](https://github.com/burnt-labs/xion.js/pull/296) [`82e2876`](https://github.com/burnt-labs/xion.js/commit/82e28763ca97805cc6d24b0402af2a2b28f56bf1) Thanks [@justinbarry](https://github.com/justinbarry)! - Remove rest_url param from provider
+
 ## 0.1.0-alpha.17
 
 ### Patch Changes
