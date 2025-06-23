@@ -37,3 +37,16 @@ dist/
 
 # pnpm CI cache
 .pnpm-store
+
+# cloudflare workers
+.wrangler/
+.dev.vars
+
+# open-next build output
+.open-next/
+
+# typescript build info
+*.tsbuildinfo
+
+# cloudflare env types
+cloudflare-env.d.ts
