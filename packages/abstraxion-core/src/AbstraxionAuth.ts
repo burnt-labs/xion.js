@@ -11,20 +11,19 @@ import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 import type { RedirectStrategy, StorageStrategy } from "./types/strategyTypes";
 import {
-  fetchChainGrantsABCI,
-  getTreasuryContractConfigsByTypeUrl,
-  getTreasuryContractTypeUrls,
+  compareBankGrants,
   compareChainGrantsToTreasuryGrants,
   compareContractGrants,
   compareStakeGrants,
-  compareBankGrants,
   decodeAuthorization,
+  fetchChainGrantsABCI,
+  getTreasuryContractConfigsByTypeUrl,
+  getTreasuryContractTypeUrls,
 } from "@/utils/grant";
 
 export class AbstraxionAuth {
   // Config
   private rpcUrl?: string;
-  private restUrl?: string;
   grantContracts?: ContractGrantDescription[];
   stake?: boolean;
   bank?: SpendLimit[];
@@ -65,7 +64,6 @@ export class AbstraxionAuth {
    * Updates AbstraxionAuth instance with user config
    *
    * @param {string} rpc - The RPC URL used for communication with the blockchain.
-   * @param {string} [restUrl] - The REST URL used for additional communication.
    * @param {ContractGrantDescription[]} [grantContracts] - Contracts for granting permissions.
    * @param {boolean} [stake] - Indicates whether staking is enabled.
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
@@ -74,7 +72,6 @@ export class AbstraxionAuth {
    */
   configureAbstraxionInstance(
     rpc: string,
-    restUrl?: string,
     grantContracts?: ContractGrantDescription[],
     stake?: boolean,
     bank?: SpendLimit[],
@@ -82,7 +79,6 @@ export class AbstraxionAuth {
     treasury?: string,
   ) {
     this.rpcUrl = rpc;
-    this.restUrl = restUrl;
     this.grantContracts = grantContracts;
     this.stake = stake;
     this.bank = bank;

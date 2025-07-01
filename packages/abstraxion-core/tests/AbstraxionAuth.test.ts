@@ -26,7 +26,6 @@ if (typeof fetch === "undefined") {
 jest.mock("@burnt-labs/constants", () => ({
   fetchConfig: jest.fn().mockResolvedValue({
     dashboardUrl: "https://settings.testnet.burnt.com",
-    restUrl: "https://api.xion-testnet-2.burnt.com:443",
   }),
 }));
 
@@ -35,14 +34,12 @@ jest.mock("@burnt-labs/constants", () => ({
  */
 const configureAbstraxionAuthInstance = (abstraxionAuth: AbstraxionAuth) => {
   const rpcUrl = "https://testnet-rpc.xion-api.com:443";
-  const restUrl = "https://testnet-api.xion-api.com:443";
   const grantContracts = mockLegacyConfig.grantContracts;
   const stake = true;
   const bank = mockLegacyConfig.bank;
 
   abstraxionAuth.configureAbstraxionInstance(
     rpcUrl,
-    restUrl,
     grantContracts,
     stake,
     bank,

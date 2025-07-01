@@ -107,12 +107,6 @@ const DASHBOARD_URLS = {
   "xion-testnet-2": "https://auth.testnet.burnt.com",
 };
 
-const REST_URLS = {
-  "xion-mainnet-1": "https://api.xion-mainnet-1.burnt.com:443",
-  "xion-testnet-1": "https://api.xion-testnet-1.burnt.com:443",
-  "xion-testnet-2": "https://api.xion-testnet-2.burnt.com:443",
-};
-
 export async function fetchConfig(rpcUrl: string) {
   try {
     const fetchReq = await fetch(`${rpcUrl}/status`);
@@ -123,9 +117,8 @@ export async function fetchConfig(rpcUrl: string) {
     const data: RpcStatusResponse = await fetchReq.json();
     const lookup = data.result.node_info.network;
     const dashboardUrl = DASHBOARD_URLS[lookup as keyof typeof DASHBOARD_URLS];
-    const restUrl = REST_URLS[lookup as keyof typeof REST_URLS];
-    if (!dashboardUrl || !restUrl) throw new Error("Network not found.");
-    return { dashboardUrl, restUrl };
+    if (!dashboardUrl) throw new Error("Network not found.");
+    return { dashboardUrl };
   } catch (error) {
     throw error;
   }

@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.58
+
+### Minor Changes
+
+- [#299](https://github.com/burnt-labs/xion.js/pull/299) [`b38363b`](https://github.com/burnt-labs/xion.js/commit/b38363b7f180e9240abf89ee4e64ca3475d07e7a) Thanks [@BurntVal](https://github.com/BurntVal)! - Add ibc transfer authorization logic to exported utils
+
 ## 1.0.0-alpha.57
 
 ### Minor Changes
