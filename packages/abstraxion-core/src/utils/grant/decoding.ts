@@ -3,6 +3,7 @@ import type { Coin } from "@cosmjs/amino";
 import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
+import { TransferAuthorization } from "cosmjs-types/ibc/applications/transfer/v1/authz";
 import {
   AcceptedMessageKeysFilter,
   AcceptedMessagesFilter,
@@ -43,6 +44,12 @@ export const decodeAuthorization = (
       return {
         type: AuthorizationTypes.Send,
         data: SendAuthorization.decode(processedAuthorizationValue),
+      };
+
+    case AuthorizationTypes.IbcTransfer:
+      return {
+        type: AuthorizationTypes.IbcTransfer,
+        data: TransferAuthorization.decode(processedAuthorizationValue),
       };
 
     case AuthorizationTypes.Stake:
