@@ -25,17 +25,11 @@ export default function DefaultUIPage(): JSX.Element {
         This example uses the legacy Abstraxion modal UI for wallet connection.
         Click the button below to open the modal.
       </p>
-      
+
       <div className="w-full space-y-4">
-        <Button
-          fullWidth
-          onClick={() => setShowModal(true)}
-          structure="base"
-        >
+        <Button fullWidth onClick={() => setShowModal(true)} structure="base">
           {account.bech32Address ? (
-            <div className="flex items-center justify-center">
-              VIEW ACCOUNT
-            </div>
+            <div className="flex items-center justify-center">VIEW ACCOUNT</div>
           ) : (
             "CONNECT WITH ABSTRAXION MODAL"
           )}
@@ -52,7 +46,7 @@ export default function DefaultUIPage(): JSX.Element {
                 Client: {client ? "Connected" : "Not connected"}
               </p>
             </div>
-            
+
             <Button
               fullWidth
               onClick={() => {
@@ -72,7 +66,10 @@ export default function DefaultUIPage(): JSX.Element {
         }}
       />
 
-      <Link href="/" className="mt-4 inline-block text-sm text-gray-400 underline hover:text-gray-300">
+      <Link
+        href="/"
+        className="mt-4 inline-block text-sm text-gray-400 underline hover:text-gray-300"
+      >
         ← Back to examples
       </Link>
     </main>

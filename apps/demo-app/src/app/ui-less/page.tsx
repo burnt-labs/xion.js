@@ -46,10 +46,11 @@ export default function UILessPage(): JSX.Element {
         Custom UI Abstraxion Example
       </h1>
       <p className="text-center text-gray-400">
-        This example demonstrates using Abstraxion with a custom UI instead of the default modal.
-        The login flow redirects to an external page and returns to the app.
+        This example demonstrates using Abstraxion with a custom UI instead of
+        the default modal. The login flow redirects to an external page and
+        returns to the app.
       </p>
-      
+
       <div className="w-full space-y-4">
         <Button
           fullWidth
@@ -79,19 +80,18 @@ export default function UILessPage(): JSX.Element {
                 Client: {client ? "Connected" : "Not connected"}
               </p>
             </div>
-            
-            <Button
-              fullWidth
-              onClick={() => logout()}
-              structure="outlined"
-            >
+
+            <Button fullWidth onClick={() => logout()} structure="outlined">
               DISCONNECT
             </Button>
           </>
         )}
       </div>
 
-      <Link href="/" className="mt-4 inline-block text-sm text-gray-400 underline hover:text-gray-300">
+      <Link
+        href="/"
+        className="mt-4 inline-block text-sm text-gray-400 underline hover:text-gray-300"
+      >
         ← Back to examples
       </Link>
     </main>
