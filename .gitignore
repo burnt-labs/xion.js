@@ -47,6 +47,3 @@ dist/
 
 # typescript build info
 *.tsbuildinfo
-
-# cloudflare env types
-# cloudflare-env.d.ts - not ignored per PR review
