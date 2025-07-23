@@ -46,6 +46,7 @@ Next.js and Cloudflare Workers handle environment variables differently:
 #### Build-time Environment Variables (Next.js)
 
 For variables needed during the build process (e.g., `NEXT_PUBLIC_*` variables):
+
 - Create a `.env.local` file in the app root
 - These variables are embedded into the build at compile time
 - Public variables must be prefixed with `NEXT_PUBLIC_`
@@ -61,6 +62,7 @@ NEXT_PUBLIC_APP_NAME=Xion Demo
 For variables accessed at runtime in your worker:
 
 **Local Development** - Create a `.dev.vars` file (this file is gitignored):
+
 ```env
 # .dev.vars
 DATABASE_URL=your-database-url
@@ -68,6 +70,7 @@ API_KEY=your-secret-key
 ```
 
 **Important Notes:**
+
 - Build-time vars (`NEXT_PUBLIC_*`) are baked into the client bundle
 - Runtime vars in `.dev.vars` are only available server-side
 - Never expose secrets in `NEXT_PUBLIC_*` variables
@@ -93,9 +96,11 @@ pnpm cf-typegen
 ### Deployment Process
 
 1. **Preview locally** (recommended before deploying):
+
    ```bash
    pnpm preview
    ```
+
    This builds the app and runs it using Wrangler's local runtime.
 
 2. **Deploy to production**:
