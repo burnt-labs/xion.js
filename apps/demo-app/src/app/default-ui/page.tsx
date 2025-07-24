@@ -10,6 +10,7 @@ import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import "@burnt-labs/abstraxion/dist/index.css";
 import Link from "next/link";
+import { GrantChangeNotification } from "../../components/GrantChangeNotification";
 
 export default function DefaultUIPage(): JSX.Element {
   const { data: account } = useAbstraxionAccount();
@@ -72,6 +73,9 @@ export default function DefaultUIPage(): JSX.Element {
       >
         ← Back to examples
       </Link>
+
+      {/* Grant Change Notification */}
+      <GrantChangeNotification />
     </main>
   );
 }

@@ -20,6 +20,11 @@ export default function Page(): JSX.Element {
             LEGACY UI EXAMPLE
           </Button>
         </Link>
+        <Link href="/grant-change-demo">
+          <Button fullWidth structure="outlined">
+            GRANT CHANGE DEMO
+          </Button>
+        </Link>
       </div>
     </main>
   );
