@@ -107,7 +107,9 @@ const DASHBOARD_URLS = {
   "xion-testnet-2": "https://auth.testnet.burnt.com",
 };
 
-export async function fetchConfig(rpcUrl: string) {
+export async function fetchConfig(
+  rpcUrl: string,
+): Promise<{ dashboardUrl: string }> {
   try {
     const fetchReq = await fetch(`${rpcUrl}/status`);
     if (!fetchReq.ok) {

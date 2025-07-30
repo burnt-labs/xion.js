@@ -9,13 +9,20 @@ export interface AbstraxionAccountState {
   data: AbstraxionAccount;
   isConnected: boolean;
   isConnecting: boolean;
+  grantsChanged: boolean;
   login: () => Promise<void>;
   logout: () => void;
 }
 
 export const useAbstraxionAccount = (): AbstraxionAccountState => {
-  const { isConnected, granterAddress, isConnecting, login, logout } =
-    useContext(AbstraxionContext);
+  const {
+    isConnected,
+    granterAddress,
+    isConnecting,
+    grantsChanged,
+    login,
+    logout,
+  } = useContext(AbstraxionContext);
 
   return {
     data: {
@@ -23,6 +30,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     },
     isConnected,
     isConnecting,
+    grantsChanged,
     login,
     logout,
   };

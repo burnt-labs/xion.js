@@ -76,6 +76,7 @@ export interface AbstraxionConfig {
   callbackUrl?: string;
   treasury?: string;
   gasPrice?: string;
+  enableLogoutOnGrantChange?: boolean;
 }
 
 export function AbstraxionProvider({
@@ -94,6 +95,7 @@ export function AbstraxionProvider({
       callbackUrl={config.callbackUrl}
       treasury={config.treasury}
       gasPrice={config.gasPrice}
+      enableLogoutOnGrantChange={config.enableLogoutOnGrantChange}
     >
       {children}
     </AbstraxionContextProvider>

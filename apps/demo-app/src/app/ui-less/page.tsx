@@ -7,6 +7,7 @@ import {
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";
+import { GrantChangeNotification } from "../../components/GrantChangeNotification";
 
 export default function UILessPage(): JSX.Element {
   const { data: account, login, logout, isConnecting } = useAbstraxionAccount();
@@ -94,6 +95,9 @@ export default function UILessPage(): JSX.Element {
       >
         ← Back to examples
       </Link>
+
+      {/* Grant Change Notification */}
+      <GrantChangeNotification />
     </main>
   );
 }

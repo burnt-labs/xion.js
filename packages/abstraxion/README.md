@@ -62,6 +62,7 @@ const legacyConfig = {
 // New treasury contract config
 const treasuryConfig = {
   treasury: "xion17ah4x9te3sttpy2vj5x6hv4xvc0td526nu0msf7mt3kydqj4qs2s9jhe90", // Example XION treasury contract
+  autoLogoutOnGrantChange: false, // Disable auto logout for custom handling
   // Optional params to activate mainnet config
   // rpcUrl: "https://rpc.xion-mainnet-1.burnt.com:443",
   // restUrl: "https://api.xion-mainnet-1.burnt.com:443",
@@ -103,10 +104,90 @@ export default function Home() {
 
 ```
 
+## Security Features
+
+### Auto Logout on Grant Changes
+
+Abstraxion includes an optional security feature that automatically logs out users when treasury contract grant configurations change between app sessions. This prevents users from operating with outdated or incorrect permissions.
+
+#### Configuration
+
+Auto logout is enabled by default. To disable it for custom handling, set `autoLogoutOnGrantChange: false`:
+
+```tsx
+const treasuryConfig = {
+  treasury: "xion17ah4x9te3sttpy2vj5x6hv4xvc0td526nu0msf7mt3kydqj4qs2s9jhe90",
+  autoLogoutOnGrantChange: false, // Disable auto logout for custom handling
+  gasPrice: "0.001uxion",
+};
+```
+
+#### Detecting Grant Changes
+
+Access the `grantsChanged` property from the `useAbstraxionAccount` hook to implement custom handling:
+
+```tsx
+import { useAbstraxionAccount } from "@burnt-labs/abstraxion";
+import { useEffect } from "react";
+
+const MyComponent = () => {
+  const {
+    data: account,
+    grantsChanged,
+    isConnected,
+    login,
+  } = useAbstraxionAccount();
+
+  useEffect(() => {
+    if (grantsChanged && !isConnected) {
+      // Handle grant changes with custom UX
+      alert(
+        "The app's permissions have been updated. Please reconnect to continue.",
+      );
+    }
+  }, [grantsChanged, isConnected]);
+
+  return (
+    <div>
+      {grantsChanged && !isConnected && (
+        <div
+          style={{
+            color: "orange",
+            padding: "10px",
+            border: "1px solid orange",
+          }}
+        >
+          Permissions have changed. Please reconnect.
+          <button onClick={login}>Reconnect</button>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+#### How It Works
+
+- **Startup Validation**: When the app starts, Abstraxion compares current on-chain grants with the expected treasury configuration
+- **Automatic Logout**: If `autoLogoutOnGrantChange` is enabled (default) and changes are detected, users are automatically logged out
+- **Developer Control**: The `grantsChanged` property allows developers to implement custom notifications and handling
+- **Session Safety**: The feature only triggers during app startup, not during active login processes
+
+## Hook Usage
+
 Finally, call the exported hooks to serve your functionality needs:
 
-```
-const { data: account } = useAbstraxionAccount();
+```tsx
+// Basic account information and grant status
+const {
+  data: account,
+  grantsChanged,
+  isConnected,
+  login,
+  logout,
+} = useAbstraxionAccount();
+
+// Signing client for transactions
 const { client } = useAbstraxionSigningClient();
 ```
 
