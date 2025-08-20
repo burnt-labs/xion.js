@@ -66,11 +66,11 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
     return GranteeSignerClient.createWithSigner(tmClient, signer, options);
   }
 
-  public static async createWithSigner(
+  public static createWithSigner(
     cometClient: CometClient,
     signer: OfflineSigner,
     options: SigningCosmWasmClientOptions & GranteeSignerOptions,
-  ): Promise<GranteeSignerClient> {
+  ): GranteeSignerClient {
     return new GranteeSignerClient(cometClient, signer, options);
   }
 
