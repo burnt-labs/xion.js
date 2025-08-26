@@ -42,6 +42,7 @@ export interface AbstraxionContextProps {
   stake?: boolean;
   bank?: SpendLimit[];
   treasury?: string;
+  indexerUrl?: string;
   gasPrice: GasPrice;
   logout: () => void;
   login: () => Promise<void>;
@@ -54,6 +55,7 @@ export interface AbstraxionConfig {
   bank?: SpendLimit[];
   callbackUrl?: string;
   treasury?: string;
+  indexerUrl?: string;
   gasPrice?: string;
 }
 
@@ -66,6 +68,7 @@ export function AbstraxionProvider({
     bank,
     callbackUrl,
     treasury,
+    indexerUrl,
     gasPrice,
   },
 }: {
@@ -96,8 +99,9 @@ export function AbstraxionProvider({
       bank,
       callbackUrl,
       treasury,
+      indexerUrl,
     );
-  }, [rpcUrl, contracts, stake, bank, callbackUrl, treasury]);
+  }, [rpcUrl, contracts, stake, bank, callbackUrl, treasury, indexerUrl]);
 
   useEffect(() => {
     configureInstance();
@@ -177,6 +181,7 @@ export function AbstraxionProvider({
         stake,
         bank,
         treasury,
+        indexerUrl,
         logout,
         login,
         gasPrice: gasPrice ? GasPrice.fromString(gasPrice) : gasPriceDefault,

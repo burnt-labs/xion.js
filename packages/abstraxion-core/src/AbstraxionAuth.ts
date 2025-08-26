@@ -1,11 +1,11 @@
 import { GasPrice } from "@cosmjs/stargate";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { fetchConfig } from "@burnt-labs/constants";
 import type {
   ContractGrantDescription,
   DecodedReadableAuthorization,
   GrantsResponse,
   SpendLimit,
+  TreasuryGrantConfig,
 } from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
@@ -17,9 +17,9 @@ import {
   compareStakeGrants,
   decodeAuthorization,
   fetchChainGrantsABCI,
-  getTreasuryContractConfigsByTypeUrl,
-  getTreasuryContractTypeUrls,
+  getTreasuryGrantConfigs,
 } from "@/utils/grant";
+import { fetchConfig, getRpcClient } from "@/utils";
 
 export class AbstraxionAuth {
   // Config
@@ -29,6 +29,7 @@ export class AbstraxionAuth {
   bank?: SpendLimit[];
   callbackUrl?: string;
   treasury?: string;
+  indexerUrl?: string;
 
   // Signer
   private client?: GranteeSignerClient;
@@ -41,6 +42,7 @@ export class AbstraxionAuth {
   private isLoginInProgress = false;
   isLoggedIn = false;
   authStateChangeSubscribers: ((isLoggedIn: boolean) => void)[] = [];
+  private authenticationPromise?: Promise<void>;
 
   /**
    * Creates an instance of the AbstraxionAuth class.
@@ -69,6 +71,7 @@ export class AbstraxionAuth {
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
    * @param {string} treasury - treasury contract instance address
+   * @param {string} indexerUrl - custom indexer URL to use instead of default
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -77,6 +80,7 @@ export class AbstraxionAuth {
     bank?: SpendLimit[],
     callbackUrl?: string,
     treasury?: string,
+    indexerUrl?: string,
   ) {
     this.rpcUrl = rpc;
     this.grantContracts = grantContracts;
@@ -84,6 +88,7 @@ export class AbstraxionAuth {
     this.bank = bank;
     this.callbackUrl = callbackUrl;
     this.treasury = treasury;
+    this.indexerUrl = indexerUrl;
   }
 
   /**
@@ -266,7 +271,8 @@ export class AbstraxionAuth {
         throw new Error("Configuration not initialized");
       }
 
-      const cosmwasmClient = await CosmWasmClient.connect(this.rpcUrl || "");
+      const rpcClient = await getRpcClient(this.rpcUrl || "");
+      const cosmwasmClient = await CosmWasmClient.create(rpcClient);
 
       this.cosmwasmQueryClient = cosmwasmClient;
       return cosmwasmClient;
@@ -367,16 +373,51 @@ export class AbstraxionAuth {
     const cosmwasmClient =
       this.cosmwasmQueryClient || (await this.getCosmWasmClient());
 
-    const treasuryTypeUrls = await getTreasuryContractTypeUrls(
+    if (!this.rpcUrl) {
+      throw new Error("RPC URL is required to determine the network ID");
+    }
+
+    // Use the new combined function to get treasury grant configs directly
+    const treasuryGrantConfigs = await getTreasuryGrantConfigs(
       cosmwasmClient,
       this.treasury,
-    );
-    const treasuryGrantConfigs = await getTreasuryContractConfigsByTypeUrl(
-      cosmwasmClient,
-      this.treasury,
-      treasuryTypeUrls,
+      this.rpcUrl,
+      this.indexerUrl,
     );
 
+    const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
+      treasuryGrantConfigs.map((treasuryGrantConfig) => {
+        return decodeAuthorization(
+          treasuryGrantConfig.authorization.type_url,
+          treasuryGrantConfig.authorization.value,
+        );
+      });
+
+    const decodedChainConfigs: DecodedReadableAuthorization[] =
+      grantsResponse.grants.map((grantResponse) => {
+        return decodeAuthorization(
+          grantResponse.authorization.typeUrl,
+          grantResponse.authorization.value,
+        );
+      });
+
+    return compareChainGrantsToTreasuryGrants(
+      decodedChainConfigs,
+      decodedTreasuryConfigs,
+    );
+  }
+
+  /**
+   * Compares pre-fetched treasury grant configurations with the grants on-chain to ensure they match.
+   *
+   * @param {GrantsResponse} grantsResponse - The grants currently existing on-chain.
+   * @param {TreasuryGrantConfig[]} treasuryGrantConfigs - Pre-fetched treasury grant configurations.
+   * @returns {Promise<boolean>} - Returns a promise that resolves to `true` if all treasury grants match chain grants; otherwise, `false`.
+   */
+  async compareGrantsToTreasuryWithConfigs(
+    grantsResponse: GrantsResponse,
+    treasuryGrantConfigs: TreasuryGrantConfig[],
+  ): Promise<boolean> {
     const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
       treasuryGrantConfigs.map((treasuryGrantConfig) => {
         return decodeAuthorization(
@@ -426,7 +467,30 @@ export class AbstraxionAuth {
 
     while (retries < maxRetries) {
       try {
-        const data = await fetchChainGrantsABCI(grantee, granter, this.rpcUrl);
+        let data: GrantsResponse;
+        let treasuryGrantConfigs: TreasuryGrantConfig[] | undefined;
+
+        // If treasury mode, fetch both chain grants and treasury configs in parallel
+        if (this.treasury) {
+          const cosmwasmClient =
+            this.cosmwasmQueryClient || (await this.getCosmWasmClient());
+
+          const [chainGrantsResponse, treasuryConfigs] = await Promise.all([
+            fetchChainGrantsABCI(grantee, granter, this.rpcUrl),
+            getTreasuryGrantConfigs(
+              cosmwasmClient,
+              this.treasury,
+              this.rpcUrl,
+              this.indexerUrl,
+            ),
+          ]);
+
+          data = chainGrantsResponse;
+          treasuryGrantConfigs = treasuryConfigs;
+        } else {
+          // Legacy mode - only fetch chain grants
+          data = await fetchChainGrantsABCI(grantee, granter, this.rpcUrl);
+        }
 
         if (data.grants.length === 0) {
           console.warn("No grants found.");
@@ -441,8 +505,11 @@ export class AbstraxionAuth {
         });
 
         let isValid: boolean;
-        if (this.treasury) {
-          isValid = await this.compareGrantsToTreasury(data);
+        if (this.treasury && treasuryGrantConfigs) {
+          isValid = await this.compareGrantsToTreasuryWithConfigs(
+            data,
+            treasuryGrantConfigs,
+          );
         } else {
           isValid = this.compareGrantsToLegacyConfig(data);
         }
@@ -480,6 +547,27 @@ export class AbstraxionAuth {
    * @returns {Promise<void>} - Resolves if authentication is successful or logs out the user otherwise.
    */
   async authenticate(): Promise<void> {
+    // If authentication is already in progress, return the existing promise
+    if (this.authenticationPromise) {
+      console.debug(
+        "Authentication already in progress, waiting for completion",
+      );
+      return this.authenticationPromise;
+    }
+
+    // Create a new authentication promise
+    this.authenticationPromise = this._performAuthentication().finally(() => {
+      // Clear the promise when done, regardless of success or failure
+      this.authenticationPromise = undefined;
+    });
+
+    return this.authenticationPromise;
+  }
+
+  /**
+   * Internal method that performs the actual authentication logic
+   */
+  private async _performAuthentication(): Promise<void> {
     try {
       const keypair = await this.getLocalKeypair();
       const granter = await this.getGranter();

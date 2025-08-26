@@ -36,3 +36,4 @@ export function makeADR36AminoSignDoc(
 
 export { customAccountFromAny } from "./accountParser";
 export { getRpcClient } from "./rpcClient";
+export { fetchConfig, clearConfigCache } from "./configUtils";

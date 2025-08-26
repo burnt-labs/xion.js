@@ -2,50 +2,232 @@ import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { createProtobufRpcClient, QueryClient } from "@cosmjs/stargate";
 import { QueryClientImpl as AuthzQueryClient } from "cosmjs-types/cosmos/authz/v1beta1/query";
 import type { GrantsResponse, TreasuryGrantConfig } from "@/types";
-import { getRpcClient } from "@/utils/rpcClient";
+import { fetchConfig, getRpcClient } from "@/utils";
+import { CacheManager } from "@/utils/cache/CacheManager";
+import {
+  IndexerError,
+  IndexerNetworkError,
+  IndexerResponseError,
+  TreasuryConfigError,
+} from "./errors";
+import { validateTreasuryIndexerResponse } from "./validation";
 
 /**
- * Retrieves the type URLs for the treasury contract.
+ * Interface representing the response from the treasury indexer
+ * The response is now a direct record of type URLs to TreasuryGrantConfig objects
+ */
+type TreasuryIndexerResponse = Record<string, TreasuryGrantConfig>;
+
+// Cache TTL in milliseconds (10 minutes for treasury data)
+const TREASURY_CACHE_TTL = 10 * 60 * 1000;
+
+// Create a singleton cache manager for treasury data
+const treasuryCacheManager = new CacheManager<TreasuryIndexerResponse>({
+  ttl: TREASURY_CACHE_TTL,
+  debugLabel: "treasury data",
+});
+
+/**
+ * Fetches treasury data from the indexer
+ * Results are memoized by treasuryAddress and rpcUrl to prevent duplicate requests
  *
- * @param {CosmWasmClient} client - The CosmWasm client to interact with the blockchain.
+ * @param {string} treasuryAddress - The address of the treasury contract
+ * @param {string} rpcUrl - The RPC URL used to determine the network ID
+ * @param {string} [customIndexerUrl] - Optional custom indexer URL to use instead of default
+ * @returns {Promise<TreasuryIndexerResponse>} - A promise that resolves to the treasury data
+ */
+export const fetchTreasuryDataFromIndexer = async (
+  treasuryAddress: string,
+  rpcUrl: string,
+  customIndexerUrl?: string,
+): Promise<TreasuryIndexerResponse> => {
+  // Create a cache key using treasuryAddress and rpcUrl
+  const cacheKey = `${treasuryAddress}:${rpcUrl}`;
+
+  return treasuryCacheManager.get(cacheKey, async () => {
+    // Get the network ID from the fetchConfig function
+    const { networkId } = await fetchConfig(rpcUrl);
+
+    // Use custom indexer URL if provided, otherwise use default
+    const indexerBaseUrl =
+      customIndexerUrl || "https://daodaoindexer.burnt.com";
+    const indexerUrl = `${indexerBaseUrl}/${networkId}/contract/${treasuryAddress}/xion/treasury/grantConfigs`;
+
+    try {
+      // Check if fetch is available (it might not be in test environments)
+      if (typeof fetch === "undefined") {
+        throw new IndexerNetworkError("Fetch API not available", indexerUrl);
+      }
+
+      console.debug(
+        `Fetching treasury data from indexer for ${treasuryAddress}`,
+      );
+      const response = await fetch(indexerUrl);
+      if (!response.ok) {
+        throw new IndexerResponseError(
+          `Failed to fetch treasury data: ${response.statusText}`,
+          response.status,
+          indexerUrl,
+        );
+      }
+
+      // The response is now directly a record of type URLs to TreasuryGrantConfig objects
+      const rawData = await response.json();
+      const grantConfigsData = validateTreasuryIndexerResponse(rawData);
+      return grantConfigsData;
+    } catch (error) {
+      // Log specific error types differently
+      if (error instanceof IndexerError) {
+        console.warn(`Indexer error for ${treasuryAddress}: ${error.message}`, {
+          statusCode: error.statusCode,
+          indexerUrl: error.indexerUrl,
+        });
+      } else {
+        console.error("Error fetching treasury data from indexer:", error);
+      }
+      // Don't cache errors - re-throw to prevent caching
+      // This allows the fallback mechanism to work in the calling functions
+      throw error; // Re-throw to prevent caching of failed requests
+    }
+  });
+};
+
+/**
+ * Manually clear the treasury data cache
+ */
+export const clearTreasuryCache = (): void => {
+  treasuryCacheManager.clear();
+};
+
+/**
+ * Get the treasury cache manager instance (useful for testing)
+ */
+export function getTreasuryCacheManager(): CacheManager<TreasuryIndexerResponse> {
+  return treasuryCacheManager;
+}
+
+/**
+ * Retrieves the treasury grant configurations directly from the indexer.
+ * This function combines the functionality of getTreasuryContractTypeUrls and getTreasuryContractConfigsByTypeUrl.
+ *
+ * @param {CosmWasmClient} client - The CosmWasm client (used for fallback if indexer fails).
  * @param {string} treasuryAddress - The address of the treasury contract.
+ * @param {string} [rpcUrl] - The RPC URL used to determine the network ID.
+ * @param {string} [indexerUrl] - Optional custom indexer URL to use instead of default.
+ * @returns {Promise<TreasuryGrantConfig[]>} - A promise that resolves to an array of TreasuryGrantConfig objects.
+ */
+export const getTreasuryGrantConfigs = async (
+  client: CosmWasmClient,
+  treasuryAddress: string,
+  rpcUrl?: string,
+  indexerUrl?: string,
+): Promise<TreasuryGrantConfig[]> => {
+  try {
+    if (!rpcUrl) {
+      throw new TreasuryConfigError(
+        "RPC URL is required to determine the network ID",
+      );
+    }
+    const treasuryData = await fetchTreasuryDataFromIndexer(
+      treasuryAddress,
+      rpcUrl,
+      indexerUrl,
+    );
+    const treasuryGrantConfigs: TreasuryGrantConfig[] = [];
+
+    // Convert the response object to an array of TreasuryGrantConfig objects
+    for (const typeUrl of Object.keys(treasuryData)) {
+      if (treasuryData[typeUrl]) {
+        treasuryGrantConfigs.push(treasuryData[typeUrl]);
+      }
+    }
+
+    return treasuryGrantConfigs;
+  } catch (error) {
+    console.error("Error getting treasury grant configs from indexer:", error);
+    // Fallback to the original implementation if the indexer fails
+    try {
+      // First get the type URLs
+      const queryTreasuryContractMsg = { grant_config_type_urls: {} };
+      const typeUrls: string[] = await client.queryContractSmart(
+        treasuryAddress,
+        queryTreasuryContractMsg,
+      );
+
+      // Then get the grant configs for each type URL
+      const treasuryGrantConfigs: TreasuryGrantConfig[] = [];
+      for (const typeUrl of typeUrls) {
+        const queryByMsg = {
+          grant_config_by_type_url: { msg_type_url: typeUrl },
+        };
+        const grantConfigResponse: TreasuryGrantConfig =
+          await client.queryContractSmart(treasuryAddress, queryByMsg);
+        treasuryGrantConfigs.push(grantConfigResponse);
+      }
+
+      return treasuryGrantConfigs;
+    } catch (fallbackError) {
+      console.error("Fallback also failed:", fallbackError);
+      return [];
+    }
+  }
+};
+
+/**
+ * Retrieves the type URLs for the treasury contract using the indexer.
+ * @deprecated Use getTreasuryGrantConfigs instead.
+ *
+ * @param {CosmWasmClient} client - The CosmWasm client (not used with indexer but kept for API compatibility).
+ * @param {string} treasuryAddress - The address of the treasury contract.
+ * @param {string} [rpcUrl] - The RPC URL used to determine the network ID.
  * @returns {Promise<string[]>} - A promise that resolves to an array of type URLs.
  */
 export const getTreasuryContractTypeUrls = async (
   client: CosmWasmClient,
   treasuryAddress: string,
+  rpcUrl?: string,
+  indexerUrl?: string,
 ): Promise<string[]> => {
-  const queryTreasuryContractMsg = { grant_config_type_urls: {} };
-  return await client.queryContractSmart(
+  // Simply delegate to the new unified function
+  const configs = await getTreasuryGrantConfigs(
+    client,
     treasuryAddress,
-    queryTreasuryContractMsg,
+    rpcUrl,
+    indexerUrl,
   );
+  return configs.map((config) => config.authorization.type_url);
 };
 
 /**
- * Retrieves the treasury grant configurations by type URL.
+ * Retrieves the treasury grant configurations by type URL using the indexer.
+ * @deprecated Use getTreasuryGrantConfigs instead.
  *
- * @param {CosmWasmClient} client - The CosmWasm client to interact with the blockchain.
+ * @param {CosmWasmClient} client - The CosmWasm client (not used with indexer but kept for API compatibility).
  * @param {string} treasuryAddress - The address of the treasury contract.
  * @param {string[]} typeUrls - An array of type URLs to query.
+ * @param {string} [rpcUrl] - The RPC URL used to determine the network ID.
  * @returns {Promise<TreasuryGrantConfig[]>} - A promise that resolves to an array of TreasuryGrantConfig objects.
  */
 export const getTreasuryContractConfigsByTypeUrl = async (
   client: CosmWasmClient,
   treasuryAddress: string,
   typeUrls: string[],
+  rpcUrl?: string,
+  indexerUrl?: string,
 ): Promise<TreasuryGrantConfig[]> => {
-  const treasuryGrantConfigs: TreasuryGrantConfig[] = [];
-  for (const typeUrl of typeUrls) {
-    const queryByMsg = {
-      grant_config_by_type_url: { msg_type_url: typeUrl },
-    };
-    const grantConfigResponse: TreasuryGrantConfig =
-      await client.queryContractSmart(treasuryAddress, queryByMsg);
-    treasuryGrantConfigs.push(grantConfigResponse);
-  }
+  // Get all configs using the unified function
+  const allConfigs = await getTreasuryGrantConfigs(
+    client,
+    treasuryAddress,
+    rpcUrl,
+    indexerUrl,
+  );
 
-  return treasuryGrantConfigs;
+  // Filter to only the requested type URLs
+  const typeUrlSet = new Set(typeUrls);
+  return allConfigs.filter((config) =>
+    typeUrlSet.has(config.authorization.type_url),
+  );
 };
 
 /**
