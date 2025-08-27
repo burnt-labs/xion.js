@@ -47,6 +47,12 @@ export class MockRedirectStrategy implements RedirectStrategy {
     this.redirectCallback = undefined;
   }
 
+  async cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
+    paramsToRemove.forEach((param) => {
+      this.urlParams.delete(param);
+    });
+  }
+
   // Helper methods for testing
   setUrlParameter(param: string, value: string): void {
     this.urlParams.set(param, value);

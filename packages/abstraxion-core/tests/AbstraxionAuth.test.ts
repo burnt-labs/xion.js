@@ -616,4 +616,60 @@ describe("AbstraxionAuth", () => {
   //     expect(result).toBe(true);
   //   });
   // });
+
+  describe("URL parameter cleaning", () => {
+    it("should clean URL parameters after successful login", async () => {
+      configureAbstraxionAuthInstance(abstraxionAuth);
+
+      // Mock successful login scenario with existing keypair and granter
+      const mockKeypair = {
+        getAccounts: () => Promise.resolve([{ address: "testAddress" }]),
+      } as any;
+
+      jest
+        .spyOn(abstraxionAuth, "getLocalKeypair")
+        .mockResolvedValue(mockKeypair);
+      jest.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("testGranter");
+      jest.spyOn(abstraxionAuth, "pollForGrants").mockResolvedValue(true);
+      jest.spyOn(abstraxionAuth, "setGranter").mockResolvedValue();
+      jest.spyOn(abstraxionAuth, "triggerAuthStateChange").mockImplementation();
+
+      // Mock the redirect strategy's cleanUrlParameters method
+      const cleanUrlParametersMock = jest
+        .spyOn(abstraxionAuth["redirectStrategy"], "cleanUrlParameters")
+        .mockResolvedValue();
+
+      await abstraxionAuth.login();
+
+      // Verify that cleanUrlParameters was called with the correct parameters
+      expect(cleanUrlParametersMock).toHaveBeenCalledWith([
+        "granted",
+        "granter",
+      ]);
+    });
+
+    it("should not clean URL parameters when login fails", async () => {
+      configureAbstraxionAuthInstance(abstraxionAuth);
+
+      // Mock failed login scenario
+      jest
+        .spyOn(abstraxionAuth, "getLocalKeypair")
+        .mockResolvedValue(undefined);
+      jest.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("");
+      jest
+        .spyOn(abstraxionAuth, "generateAndStoreTempAccount")
+        .mockResolvedValue();
+      jest.spyOn(abstraxionAuth, "redirectToDashboard").mockResolvedValue();
+
+      // Mock the redirect strategy's cleanUrlParameters method
+      const cleanUrlParametersMock = jest
+        .spyOn(abstraxionAuth["redirectStrategy"], "cleanUrlParameters")
+        .mockResolvedValue();
+
+      await abstraxionAuth.login();
+
+      // Verify that cleanUrlParameters was not called
+      expect(cleanUrlParametersMock).not.toHaveBeenCalled();
+    });
+  });
 });
