@@ -34,4 +34,15 @@ export class BrowserRedirectStrategy implements RedirectStrategy {
     const searchParams = new URLSearchParams(window.location.search);
     return Promise.resolve(searchParams.get(param));
   }
+
+  async cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
+    if (typeof window === "undefined") return Promise.resolve();
+
+    const currentUrl = new URL(window.location.href);
+    paramsToRemove.forEach((param) => {
+      currentUrl.searchParams.delete(param);
+    });
+    history.pushState({}, "", currentUrl.href);
+    return Promise.resolve();
+  }
 }

@@ -87,4 +87,12 @@ export class ReactNativeRedirectStrategy implements RedirectStrategy {
       return null;
     }
   }
+
+  async cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
+    // In React Native, URL parameters are typically handled by the deep linking system
+    // and don't persist in the same way as browser URLs. This method is a no-op
+    // for React Native environments as the parameters are already processed by the
+    // deep linking callback and don't need manual cleanup.
+    return Promise.resolve();
+  }
 }
