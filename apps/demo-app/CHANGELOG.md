@@ -1,5 +1,26 @@
 # demo-app
 
+## 1.1.0-alpha.51
+
+### Minor Changes
+
+- [#303](https://github.com/burnt-labs/xion.js/pull/303) [`15451b1`](https://github.com/burnt-labs/xion.js/commit/15451b19b56f222b78fbd0e46546ecbdc8922eb1) Thanks [@justinbarry](https://github.com/justinbarry)! - Add custom UI and legacy UI examples to demo app
+
+  - Added custom UI example showing how to use Abstraxion without the default modal
+  - Added legacy UI example demonstrating the traditional modal approach
+  - Updated main page to serve as navigation between the two examples
+  - Custom UI provides full control over loading states and user experience
+  - Legacy UI uses the built-in Abstraxion modal component
+
+- [#298](https://github.com/burnt-labs/xion.js/pull/298) [`0427bb6`](https://github.com/burnt-labs/xion.js/commit/0427bb6cd3364d696ca1d9485ee71054ab7ec211) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix cloudfront worker deploy
+
+### Patch Changes
+
+- Updated dependencies [[`82e2876`](https://github.com/burnt-labs/xion.js/commit/82e28763ca97805cc6d24b0402af2a2b28f56bf1), [`e88eca8`](https://github.com/burnt-labs/xion.js/commit/e88eca8d15714d9c0e266f9fccc009610e9f353c), [`fa64a3f`](https://github.com/burnt-labs/xion.js/commit/fa64a3f3811c4d175c272d526f93b88ad564c975)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.59
+  - @burnt-labs/abstraxion@1.0.0-alpha.66
+  - @burnt-labs/constants@0.1.0-alpha.18
+
 ## 1.1.0-alpha.50
 
 ### Patch Changes

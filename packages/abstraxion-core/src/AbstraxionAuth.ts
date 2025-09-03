@@ -633,12 +633,11 @@ export class AbstraxionAuth {
         this.abstractAccount = keypair;
         this.triggerAuthStateChange(true);
 
-        if (typeof window !== "undefined") {
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.delete("granted");
-          currentUrl.searchParams.delete("granter");
-          history.pushState({}, "", currentUrl.href);
-        }
+        // Clean URL parameters after successful authentication
+        await this.redirectStrategy.cleanUrlParameters?.([
+          "granted",
+          "granter",
+        ]);
       } else {
         // If there isn't an existing keypair, or there isn't a granter in either this.storageStrategy or the url params, we want to start from scratch
         // Generate new keypair and redirect to dashboard
