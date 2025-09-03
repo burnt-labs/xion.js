@@ -5,7 +5,6 @@
 ### Minor Changes
 
 - [#303](https://github.com/burnt-labs/xion.js/pull/303) [`15451b1`](https://github.com/burnt-labs/xion.js/commit/15451b19b56f222b78fbd0e46546ecbdc8922eb1) Thanks [@justinbarry](https://github.com/justinbarry)! - Add custom UI and legacy UI examples to demo app
-
   - Added custom UI example showing how to use Abstraxion without the default modal
   - Added legacy UI example demonstrating the traditional modal approach
   - Updated main page to serve as navigation between the two examples
