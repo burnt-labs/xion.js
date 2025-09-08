@@ -52,7 +52,7 @@
     "jose": "^5.1.3"
   },
   "peerDependencies": {
-    "react-native-quick-crypto": "*",
-    "react-native-get-random-values": "*"
+    "react-native-quick-crypto": "^0.7.0",
+    "react-native-get-random-values": "^1.11.0"
   }
 }
