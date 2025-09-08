@@ -235,36 +235,33 @@ export class SignArbSecp256k1HdWallet {
     switch (configuration.algorithm) {
       case "argon2id": {
         // React Native detection
-        const isReactNative =
+        if (
           typeof global !== "undefined" &&
-          global.navigator?.product === "ReactNative";
-
-        if (isReactNative) {
+          global.navigator?.product === "ReactNative"
+        ) {
           // Use injected crypto implementation
           const quickCrypto = (global as any).quickCrypto;
-
-          if (quickCrypto && quickCrypto.pbkdf2) {
-            return new Promise((resolve, reject) => {
-              quickCrypto.pbkdf2(
-                password,
-                cosmjsSalt,
-                100000,
-                configuration.params.outputLength,
-                "sha256",
-                (err: any, key: any) => {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resolve(key);
-                  }
-                },
-              );
-            });
-          } else {
+          if (!quickCrypto?.pbkdf2)
             throw new Error(
               "quickCrypto not available globally, please install react-native-quick-crypto",
             );
-          }
+
+          return new Promise((resolve, reject) => {
+            quickCrypto.pbkdf2(
+              password,
+              cosmjsSalt,
+              100000,
+              configuration.params.outputLength,
+              "sha256",
+              (err: any, key: any) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve(key);
+                }
+              },
+            );
+          });
         }
 
         // CosmJS Argon2id
