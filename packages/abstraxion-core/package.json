@@ -38,17 +38,21 @@
   },
   "dependencies": {
     "@burnt-labs/constants": "workspace:*",
-    "@cosmjs/amino": "^0.33.1",
-    "@cosmjs/cosmwasm-stargate": "^0.33.1",
-    "@cosmjs/crypto": "^0.33.1",
-    "@cosmjs/encoding": "^0.33.1",
-    "@cosmjs/math": "^0.33.1",
-    "@cosmjs/proto-signing": "^0.33.1",
-    "@cosmjs/stargate": "^0.33.1",
-    "@cosmjs/tendermint-rpc": "^0.33.1",
-    "@cosmjs/utils": "^0.33.1",
+    "@cosmjs/amino": "^0.36.0",
+    "@cosmjs/cosmwasm-stargate": "^0.36.0",
+    "@cosmjs/crypto": "^0.36.0",
+    "@cosmjs/encoding": "^0.36.0",
+    "@cosmjs/math": "^0.36.0",
+    "@cosmjs/proto-signing": "^0.36.0",
+    "@cosmjs/stargate": "^0.36.0",
+    "@cosmjs/tendermint-rpc": "^0.36.0",
+    "@cosmjs/utils": "^0.36.0",
     "base64-js": "^1.5.1",
     "cosmjs-types": "^0.9.0",
     "jose": "^5.1.3"
+  },
+  "peerDependencies": {
+    "react-native-quick-crypto": "^0.7.0",
+    "react-native-get-random-values": "^1.11.0"
   }
 }
