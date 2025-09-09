@@ -1,5 +1,53 @@
 # @burnt-labs/abstraxion-react-native
 
+## 1.0.0-alpha.8
+
+### Major Changes
+
+- [#305](https://github.com/burnt-labs/xion.js/pull/305) [`1fe18d9`](https://github.com/burnt-labs/xion.js/commit/1fe18d970666b0c448427fda55d5e7764059174b) Thanks [@BurntVal](https://github.com/BurntVal)! - # Breaking Changes
+
+  ## React Native Crypto Setup Required
+
+  ### What Changed
+  - Added React Native support with `quickCrypto` fallback for KDF operations
+  - Made `executeKdf` method static in `SignArbSecp256k1HdWallet`
+  - Made `createWithSigner` method synchronous (removed async/await)
+
+  ### Migration Guide
+
+  #### For React Native Apps
+
+  You must now install and configure crypto dependencies:
+
+  ```bash
+  npm install react-native-get-random-values react-native-quick-crypto
+  ```
+
+  Add this to your app's entry point (before any Abstraxion imports):
+
+  ```typescript
+  import "react-native-get-random-values";
+  import crypto from "react-native-quick-crypto";
+
+  // Set up global crypto for React Native
+  if (
+    typeof global !== "undefined" &&
+    global.navigator?.product === "ReactNative"
+  ) {
+    global.quickCrypto = crypto;
+  }
+  ```
+
+  #### For Web Apps
+
+  No changes required - existing functionality remains the same.
+
+### Patch Changes
+
+- Updated dependencies [[`1fe18d9`](https://github.com/burnt-labs/xion.js/commit/1fe18d970666b0c448427fda55d5e7764059174b)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.60
+  - @burnt-labs/constants@0.1.0-alpha.19
+
 ## 1.0.0-alpha.7
 
 ### Minor Changes
