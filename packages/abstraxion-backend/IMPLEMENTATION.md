@@ -94,15 +94,15 @@ src/
 
 ```typescript
 interface SessionKeyInfo {
-  userId: string;                    // User ID
-  sessionKeyAddress: string;         // Session key address
-  sessionKeyMaterial: string;        // Encrypted private key material
-  sessionKeyExpiry: number;          // Expiry timestamp
+  userId: string; // User ID
+  sessionKeyAddress: string; // Session key address
+  sessionKeyMaterial: string; // Encrypted private key material
+  sessionKeyExpiry: number; // Expiry timestamp
   sessionPermissions: SessionPermission[]; // Permission list
-  sessionState: SessionState;        // Session state
-  metaAccountAddress: string;        // Meta account address
-  createdAt: number;                 // Creation time
-  updatedAt: number;                 // Last update time
+  sessionState: SessionState; // Session state
+  metaAccountAddress: string; // Meta account address
+  createdAt: number; // Creation time
+  updatedAt: number; // Last update time
 }
 ```
 
@@ -110,11 +110,11 @@ interface SessionKeyInfo {
 
 ```typescript
 interface Permissions {
-  contracts?: string[];              // Allowed contract addresses
+  contracts?: string[]; // Allowed contract addresses
   bank?: Array<{ denom: string; amount: string }>; // Bank transfer limits
-  stake?: boolean;                   // Staking permissions
-  treasury?: string;                 // Treasury contract address
-  expiry?: number;                   // Permission expiry time
+  stake?: boolean; // Staking permissions
+  treasury?: string; // Treasury contract address
+  expiry?: number; // Permission expiry time
 }
 ```
 
@@ -123,23 +123,26 @@ interface Permissions {
 ### Basic Usage
 
 ```typescript
-import { createAbstraxionBackend, BaseDatabaseAdapter } from '@burnt-labs/abstraxion-backend';
+import {
+  createAbstraxionBackend,
+  BaseDatabaseAdapter,
+} from "@burnt-labs/abstraxion-backend";
 
 class MyDatabaseAdapter extends BaseDatabaseAdapter {
   // Implement all abstract methods
 }
 
 const backend = createAbstraxionBackend({
-  rpcUrl: 'https://rpc.xion-testnet-1.burnt.com',
-  dashboardUrl: 'https://settings.testnet.burnt.com',
-  encryptionKey: 'your-base64-encoded-key',
+  rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+  dashboardUrl: "https://settings.testnet.burnt.com",
+  encryptionKey: "your-base64-encoded-key",
   databaseAdapter: new MyDatabaseAdapter(),
 });
 
 // Initiate connection
-const connection = await backend.connectInit('user123', {
-  contracts: ['xion1contract1...'],
-  bank: [{ denom: 'uxion', amount: '1000000' }],
+const connection = await backend.connectInit("user123", {
+  contracts: ["xion1contract1..."],
+  bank: [{ denom: "uxion", amount: "1000000" }],
   stake: true,
 });
 ```
@@ -147,8 +150,11 @@ const connection = await backend.connectInit('user123', {
 ### Express.js Integration
 
 ```typescript
-app.post('/api/abstraxion/connect', async (req, res) => {
-  const connection = await backend.connectInit(req.userId, req.body.permissions);
+app.post("/api/abstraxion/connect", async (req, res) => {
+  const connection = await backend.connectInit(
+    req.userId,
+    req.body.permissions,
+  );
   res.json({ success: true, data: connection });
 });
 ```

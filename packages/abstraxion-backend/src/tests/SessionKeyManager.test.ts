@@ -1,9 +1,14 @@
-import { SessionKeyManager } from '../session-key/SessionKeyManager';
-import { TestDatabaseAdapter } from './TestDatabaseAdapter';
-import { EncryptionService } from '../encryption';
-import { SessionState, AuditAction, SessionKeyInfo, AuditEvent } from '../types';
+import { SessionKeyManager } from "../session-key/SessionKeyManager";
+import { TestDatabaseAdapter } from "./TestDatabaseAdapter";
+import { EncryptionService } from "../encryption";
+import {
+  SessionState,
+  AuditAction,
+  SessionKeyInfo,
+  AuditEvent,
+} from "../types";
 
-describe('SessionKeyManager', () => {
+describe("SessionKeyManager", () => {
   let sessionKeyManager: SessionKeyManager;
   let databaseAdapter: TestDatabaseAdapter;
 
@@ -21,26 +26,26 @@ describe('SessionKeyManager', () => {
     await databaseAdapter.close();
   });
 
-  describe('storeSessionKey', () => {
-    it('should store session key with encrypted private key', async () => {
-      const userId = 'user123';
+  describe("storeSessionKey", () => {
+    it("should store session key with encrypted private key", async () => {
+      const userId = "user123";
       const sessionKey = {
-        address: 'xion1testaddress',
-        privateKey: 'test-private-key',
-        publicKey: 'test-public-key',
+        address: "xion1testaddress",
+        privateKey: "test-private-key",
+        publicKey: "test-public-key",
       };
       const permissions = {
-        contracts: ['xion1contract1'],
-        bank: [{ denom: 'uxion', amount: '1000000' }],
+        contracts: ["xion1contract1"],
+        bank: [{ denom: "uxion", amount: "1000000" }],
         stake: true,
       };
-      const metaAccountAddress = 'xion1metaaccount';
+      const metaAccountAddress = "xion1metaaccount";
 
       await sessionKeyManager.storeSessionKey(
         userId,
         sessionKey,
         permissions,
-        metaAccountAddress
+        metaAccountAddress,
       );
 
       const stored = await databaseAdapter.getSessionKey(userId);
@@ -53,24 +58,24 @@ describe('SessionKeyManager', () => {
     });
   });
 
-  describe('getSessionKey', () => {
-    it('should retrieve and decrypt session key', async () => {
-      const userId = 'user123';
+  describe("getSessionKey", () => {
+    it("should retrieve and decrypt session key", async () => {
+      const userId = "user123";
       const sessionKey = {
-        address: 'xion1testaddress',
-        privateKey: 'test-private-key',
-        publicKey: 'test-public-key',
+        address: "xion1testaddress",
+        privateKey: "test-private-key",
+        publicKey: "test-public-key",
       };
       const permissions = {
-        contracts: ['xion1contract1'],
+        contracts: ["xion1contract1"],
       };
-      const metaAccountAddress = 'xion1metaaccount';
+      const metaAccountAddress = "xion1metaaccount";
 
       await sessionKeyManager.storeSessionKey(
         userId,
         sessionKey,
         permissions,
-        metaAccountAddress
+        metaAccountAddress,
       );
 
       const retrieved = await sessionKeyManager.getSessionKey(userId);
@@ -79,17 +84,17 @@ describe('SessionKeyManager', () => {
       expect(retrieved!.privateKey).toBe(sessionKey.privateKey);
     });
 
-    it('should return null for non-existent user', async () => {
-      const retrieved = await sessionKeyManager.getSessionKey('nonexistent');
+    it("should return null for non-existent user", async () => {
+      const retrieved = await sessionKeyManager.getSessionKey("nonexistent");
       expect(retrieved).toBeNull();
     });
 
-    it('should throw error for expired session key', async () => {
-      const userId = 'user123';
+    it("should throw error for expired session key", async () => {
+      const userId = "user123";
       const sessionKey = {
-        address: 'xion1testaddress',
-        privateKey: 'test-private-key',
-        publicKey: 'test-public-key',
+        address: "xion1testaddress",
+        privateKey: "test-private-key",
+        publicKey: "test-public-key",
       };
 
       // Store with past expiry time
@@ -97,52 +102,54 @@ describe('SessionKeyManager', () => {
       const sessionKeyInfo = {
         userId,
         sessionKeyAddress: sessionKey.address,
-        sessionKeyMaterial: 'encrypted-key',
+        sessionKeyMaterial: "encrypted-key",
         sessionKeyExpiry: pastTime,
         sessionPermissions: [],
         sessionState: SessionState.ACTIVE,
-        metaAccountAddress: 'xion1metaaccount',
+        metaAccountAddress: "xion1metaaccount",
         createdAt: pastTime,
         updatedAt: pastTime,
       };
 
       await databaseAdapter.storeSessionKey(sessionKeyInfo);
 
-      await expect(sessionKeyManager.getSessionKey(userId)).rejects.toThrow('Session key expired');
+      await expect(sessionKeyManager.getSessionKey(userId)).rejects.toThrow(
+        "Session key expired",
+      );
     });
   });
 
-  describe('validateSessionKey', () => {
-    it('should return true for valid session key', async () => {
-      const userId = 'user123';
+  describe("validateSessionKey", () => {
+    it("should return true for valid session key", async () => {
+      const userId = "user123";
       const sessionKey = {
-        address: 'xion1testaddress',
-        privateKey: 'test-private-key',
-        publicKey: 'test-public-key',
+        address: "xion1testaddress",
+        privateKey: "test-private-key",
+        publicKey: "test-public-key",
       };
 
       await sessionKeyManager.storeSessionKey(
         userId,
         sessionKey,
         {},
-        'xion1metaaccount'
+        "xion1metaaccount",
       );
 
       const isValid = await sessionKeyManager.validateSessionKey(userId);
       expect(isValid).toBe(true);
     });
 
-    it('should return false for expired session key', async () => {
-      const userId = 'user123';
+    it("should return false for expired session key", async () => {
+      const userId = "user123";
       const pastTime = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
       const sessionKeyInfo = {
         userId,
-        sessionKeyAddress: 'xion1testaddress',
-        sessionKeyMaterial: 'encrypted-key',
+        sessionKeyAddress: "xion1testaddress",
+        sessionKeyMaterial: "encrypted-key",
         sessionKeyExpiry: pastTime,
         sessionPermissions: [],
         sessionState: SessionState.ACTIVE,
-        metaAccountAddress: 'xion1metaaccount',
+        metaAccountAddress: "xion1metaaccount",
         createdAt: pastTime,
         updatedAt: pastTime,
       };
@@ -153,26 +160,26 @@ describe('SessionKeyManager', () => {
       expect(isValid).toBe(false);
     });
 
-    it('should return false for non-existent user', async () => {
-      const isValid = await sessionKeyManager.validateSessionKey('nonexistent');
+    it("should return false for non-existent user", async () => {
+      const isValid = await sessionKeyManager.validateSessionKey("nonexistent");
       expect(isValid).toBe(false);
     });
   });
 
-  describe('revokeSessionKey', () => {
-    it('should revoke and delete session key', async () => {
-      const userId = 'user123';
+  describe("revokeSessionKey", () => {
+    it("should revoke and delete session key", async () => {
+      const userId = "user123";
       const sessionKey = {
-        address: 'xion1testaddress',
-        privateKey: 'test-private-key',
-        publicKey: 'test-public-key',
+        address: "xion1testaddress",
+        privateKey: "test-private-key",
+        publicKey: "test-public-key",
       };
 
       await sessionKeyManager.storeSessionKey(
         userId,
         sessionKey,
         {},
-        'xion1metaaccount'
+        "xion1metaaccount",
       );
 
       await sessionKeyManager.revokeSessionKey(userId);
@@ -182,13 +189,13 @@ describe('SessionKeyManager', () => {
     });
   });
 
-  describe('refreshIfNeeded', () => {
-    it('should refresh session key when near expiry', async () => {
-      const userId = 'user123';
+  describe("refreshIfNeeded", () => {
+    it("should refresh session key when near expiry", async () => {
+      const userId = "user123";
       const sessionKey = {
-        address: 'xion1testaddress',
-        privateKey: 'test-private-key',
-        publicKey: 'test-public-key',
+        address: "xion1testaddress",
+        privateKey: "test-private-key",
+        publicKey: "test-public-key",
       };
 
       // Store with near expiry time (30 minutes from now)
@@ -196,11 +203,11 @@ describe('SessionKeyManager', () => {
       const sessionKeyInfo = {
         userId,
         sessionKeyAddress: sessionKey.address,
-        sessionKeyMaterial: 'encrypted-key',
+        sessionKeyMaterial: "encrypted-key",
         sessionKeyExpiry: nearExpiryTime,
         sessionPermissions: [],
         sessionState: SessionState.ACTIVE,
-        metaAccountAddress: 'xion1metaaccount',
+        metaAccountAddress: "xion1metaaccount",
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
@@ -212,19 +219,19 @@ describe('SessionKeyManager', () => {
       expect(refreshed!.address).not.toBe(sessionKey.address); // Should be new address
     });
 
-    it('should not refresh session key when not near expiry', async () => {
-      const userId = 'user123';
+    it("should not refresh session key when not near expiry", async () => {
+      const userId = "user123";
       const sessionKey = {
-        address: 'xion1testaddress',
-        privateKey: 'test-private-key',
-        publicKey: 'test-public-key',
+        address: "xion1testaddress",
+        privateKey: "test-private-key",
+        publicKey: "test-public-key",
       };
 
       await sessionKeyManager.storeSessionKey(
         userId,
         sessionKey,
         {},
-        'xion1metaaccount'
+        "xion1metaaccount",
       );
 
       const refreshed = await sessionKeyManager.refreshIfNeeded(userId);
@@ -233,20 +240,20 @@ describe('SessionKeyManager', () => {
     });
   });
 
-  describe('audit logging', () => {
-    it('should log audit events when enabled', async () => {
-      const userId = 'user123';
+  describe("audit logging", () => {
+    it("should log audit events when enabled", async () => {
+      const userId = "user123";
       const sessionKey = {
-        address: 'xion1testaddress',
-        privateKey: 'test-private-key',
-        publicKey: 'test-public-key',
+        address: "xion1testaddress",
+        privateKey: "test-private-key",
+        publicKey: "test-public-key",
       };
 
       await sessionKeyManager.storeSessionKey(
         userId,
         sessionKey,
         {},
-        'xion1metaaccount'
+        "xion1metaaccount",
       );
 
       const auditLogs = await databaseAdapter.getAuditLogs(userId);

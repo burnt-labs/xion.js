@@ -76,9 +76,12 @@ export interface DatabaseAdapter {
   // Session key operations
   storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void>;
   getSessionKey(userId: string): Promise<SessionKeyInfo | null>;
-  updateSessionKey(userId: string, updates: Partial<SessionKeyInfo>): Promise<void>;
+  updateSessionKey(
+    userId: string,
+    updates: Partial<SessionKeyInfo>,
+  ): Promise<void>;
   deleteSessionKey(userId: string): Promise<void>;
-  
+
   // Audit logging
   logAuditEvent(event: AuditEvent): Promise<void>;
   getAuditLogs(userId: string, limit?: number): Promise<AuditEvent[]>;
@@ -130,7 +133,7 @@ export class AbstraxionBackendError extends Error {
   constructor(
     message: string,
     public code: string,
-    public statusCode: number = 500
+    public statusCode: number = 500,
   ) {
     super(message);
     this.name = "AbstraxionBackendError";
@@ -145,13 +148,21 @@ export class UserIdRequiredError extends AbstraxionBackendError {
 
 export class SessionKeyNotFoundError extends AbstraxionBackendError {
   constructor(userId: string) {
-    super(`Session key not found for user: ${userId}`, "SESSION_KEY_NOT_FOUND", 404);
+    super(
+      `Session key not found for user: ${userId}`,
+      "SESSION_KEY_NOT_FOUND",
+      404,
+    );
   }
 }
 
 export class SessionKeyExpiredError extends AbstraxionBackendError {
   constructor(userId: string) {
-    super(`Session key expired for user: ${userId}`, "SESSION_KEY_EXPIRED", 401);
+    super(
+      `Session key expired for user: ${userId}`,
+      "SESSION_KEY_EXPIRED",
+      401,
+    );
   }
 }
 

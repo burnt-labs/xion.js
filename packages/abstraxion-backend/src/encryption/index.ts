@@ -1,11 +1,11 @@
-import { createCipheriv, createDecipheriv, randomBytes, scrypt } from 'crypto';
-import { promisify } from 'util';
-import { EncryptionError } from '../types';
+import { createCipheriv, createDecipheriv, randomBytes, scrypt } from "crypto";
+import { promisify } from "util";
+import { EncryptionError } from "../types";
 
 const scryptAsync = promisify(scrypt);
 
 export class EncryptionService {
-  private readonly algorithm = 'aes-256-gcm';
+  private readonly algorithm = "aes-256-gcm";
   private readonly keyLength = 32; // 256 bits
   private readonly ivLength = 16; // 128 bits
   private readonly tagLength = 16; // 128 bits
@@ -13,7 +13,7 @@ export class EncryptionService {
 
   constructor(private readonly masterKey: string) {
     if (!masterKey) {
-      throw new EncryptionError('Master encryption key is required');
+      throw new EncryptionError("Master encryption key is required");
     }
   }
 
@@ -34,8 +34,8 @@ export class EncryptionService {
       cipher.setAAD(salt); // Use salt as additional authenticated data
 
       // Encrypt the session key
-      let encrypted = cipher.update(sessionKey, 'utf8', 'hex');
-      encrypted += cipher.final('hex');
+      let encrypted = cipher.update(sessionKey, "utf8", "hex");
+      encrypted += cipher.final("hex");
 
       // Get authentication tag
       const tag = cipher.getAuthTag();
@@ -45,12 +45,14 @@ export class EncryptionService {
         salt,
         iv,
         tag,
-        Buffer.from(encrypted, 'hex')
+        Buffer.from(encrypted, "hex"),
       ]);
 
-      return combined.toString('base64');
+      return combined.toString("base64");
     } catch (error) {
-      throw new EncryptionError(`Failed to encrypt session key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new EncryptionError(
+        `Failed to encrypt session key: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
@@ -60,16 +62,21 @@ export class EncryptionService {
   async decryptSessionKey(encryptedData: string): Promise<string> {
     try {
       // Decode base64
-      const combined = Buffer.from(encryptedData, 'base64');
+      const combined = Buffer.from(encryptedData, "base64");
 
       // Extract components
       const salt = combined.subarray(0, this.saltLength);
-      const iv = combined.subarray(this.saltLength, this.saltLength + this.ivLength);
+      const iv = combined.subarray(
+        this.saltLength,
+        this.saltLength + this.ivLength,
+      );
       const tag = combined.subarray(
         this.saltLength + this.ivLength,
-        this.saltLength + this.ivLength + this.tagLength
+        this.saltLength + this.ivLength + this.tagLength,
       );
-      const encrypted = combined.subarray(this.saltLength + this.ivLength + this.tagLength);
+      const encrypted = combined.subarray(
+        this.saltLength + this.ivLength + this.tagLength,
+      );
 
       // Derive key from master key and salt
       const key = await this.deriveKey(this.masterKey, salt);
@@ -80,12 +87,14 @@ export class EncryptionService {
       decipher.setAuthTag(tag);
 
       // Decrypt the session key
-      let decrypted = decipher.update(encrypted, undefined, 'utf8');
-      decrypted += decipher.final('utf8');
+      let decrypted = decipher.update(encrypted, undefined, "utf8");
+      decrypted += decipher.final("utf8");
 
       return decrypted;
     } catch (error) {
-      throw new EncryptionError(`Failed to decrypt session key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new EncryptionError(
+        `Failed to decrypt session key: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
@@ -93,7 +102,7 @@ export class EncryptionService {
    * Generate a new encryption key
    */
   static generateEncryptionKey(): string {
-    return randomBytes(32).toString('base64');
+    return randomBytes(32).toString("base64");
   }
 
   /**
@@ -101,10 +110,16 @@ export class EncryptionService {
    */
   private async deriveKey(masterKey: string, salt: Buffer): Promise<Buffer> {
     try {
-      const key = await scryptAsync(masterKey, salt, this.keyLength) as Buffer;
+      const key = (await scryptAsync(
+        masterKey,
+        salt,
+        this.keyLength,
+      )) as Buffer;
       return key;
     } catch (error) {
-      throw new EncryptionError(`Failed to derive key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new EncryptionError(
+        `Failed to derive key: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
@@ -113,7 +128,7 @@ export class EncryptionService {
    */
   static validateEncryptionKey(key: string): boolean {
     try {
-      const decoded = Buffer.from(key, 'base64');
+      const decoded = Buffer.from(key, "base64");
       return decoded.length === 32; // 256 bits
     } catch {
       return false;

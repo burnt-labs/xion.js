@@ -20,17 +20,21 @@ npm install @burnt-labs/abstraxion-backend
 ## Quick Start
 
 ```typescript
-import { 
-  AbstraxionBackend, 
-  BaseDatabaseAdapter, 
-  createAbstraxionBackend 
-} from '@burnt-labs/abstraxion-backend';
+import {
+  AbstraxionBackend,
+  BaseDatabaseAdapter,
+  createAbstraxionBackend,
+} from "@burnt-labs/abstraxion-backend";
 
 // Create your own database adapter
 class MyDatabaseAdapter extends BaseDatabaseAdapter {
   // Implement all abstract methods
-  async storeSessionKey(sessionKeyInfo) { /* your implementation */ }
-  async getSessionKey(userId) { /* your implementation */ }
+  async storeSessionKey(sessionKeyInfo) {
+    /* your implementation */
+  }
+  async getSessionKey(userId) {
+    /* your implementation */
+  }
   // ... other methods
 }
 
@@ -38,20 +42,20 @@ const databaseAdapter = new MyDatabaseAdapter();
 
 // Create backend instance
 const backend = createAbstraxionBackend({
-  rpcUrl: 'https://rpc.xion-testnet-1.burnt.com',
-  dashboardUrl: 'https://settings.testnet.burnt.com',
-  encryptionKey: 'your-base64-encoded-32-byte-key',
+  rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+  dashboardUrl: "https://settings.testnet.burnt.com",
+  encryptionKey: "your-base64-encoded-32-byte-key",
   databaseAdapter,
 });
 
 // Initiate connection
-const connection = await backend.connectInit('user123', {
-  contracts: ['xion1contract1...'],
-  bank: [{ denom: 'uxion', amount: '1000000' }],
+const connection = await backend.connectInit("user123", {
+  contracts: ["xion1contract1..."],
+  bank: [{ denom: "uxion", amount: "1000000" }],
   stake: true,
 });
 
-console.log('Authorization URL:', connection.authorizationUrl);
+console.log("Authorization URL:", connection.authorizationUrl);
 ```
 
 ## Architecture
@@ -80,11 +84,11 @@ console.log('Authorization URL:', connection.authorizationUrl);
 Initiate wallet connection flow.
 
 ```typescript
-const response = await backend.connectInit('user123', {
-  contracts: ['xion1contract1...'],
-  bank: [{ denom: 'uxion', amount: '1000000' }],
+const response = await backend.connectInit("user123", {
+  contracts: ["xion1contract1..."],
+  bank: [{ denom: "uxion", amount: "1000000" }],
   stake: true,
-  treasury: 'xion1treasury...',
+  treasury: "xion1treasury...",
 });
 ```
 
@@ -94,9 +98,9 @@ Handle authorization callback from dashboard.
 
 ```typescript
 const response = await backend.handleCallback({
-  code: 'auth_code_from_dashboard',
-  state: 'state_parameter',
-  userId: 'user123',
+  code: "auth_code_from_dashboard",
+  state: "state_parameter",
+  userId: "user123",
 });
 ```
 
@@ -105,10 +109,10 @@ const response = await backend.handleCallback({
 Check connection status and get wallet information.
 
 ```typescript
-const status = await backend.checkStatus('user123');
+const status = await backend.checkStatus("user123");
 if (status.connected) {
-  console.log('Wallet Address:', status.sessionKeyAddress);
-  console.log('Meta Account:', status.metaAccountAddress);
+  console.log("Wallet Address:", status.sessionKeyAddress);
+  console.log("Meta Account:", status.metaAccountAddress);
 }
 ```
 
@@ -117,7 +121,7 @@ if (status.connected) {
 Disconnect and revoke session key.
 
 ```typescript
-const result = await backend.disconnect('user123');
+const result = await backend.disconnect("user123");
 ```
 
 ### SessionKeyManager
@@ -147,7 +151,11 @@ Refresh session key if near expiry.
 Each project needs to implement their own database adapter by extending `BaseDatabaseAdapter`:
 
 ```typescript
-import { BaseDatabaseAdapter, SessionKeyInfo, AuditEvent } from '@burnt-labs/abstraxion-backend';
+import {
+  BaseDatabaseAdapter,
+  SessionKeyInfo,
+  AuditEvent,
+} from "@burnt-labs/abstraxion-backend";
 
 class MyDatabaseAdapter extends BaseDatabaseAdapter {
   async storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void> {
@@ -158,7 +166,10 @@ class MyDatabaseAdapter extends BaseDatabaseAdapter {
     // Your implementation here
   }
 
-  async updateSessionKey(userId: string, updates: Partial<SessionKeyInfo>): Promise<void> {
+  async updateSessionKey(
+    userId: string,
+    updates: Partial<SessionKeyInfo>,
+  ): Promise<void> {
     // Your implementation here
   }
 
@@ -189,7 +200,7 @@ class MyDatabaseAdapter extends BaseDatabaseAdapter {
 #### MongoDB Example
 
 ```typescript
-import { MongoClient } from 'mongodb';
+import { MongoClient } from "mongodb";
 
 class MongoDatabaseAdapter extends BaseDatabaseAdapter {
   private sessionKeyCollection: any;
@@ -197,15 +208,19 @@ class MongoDatabaseAdapter extends BaseDatabaseAdapter {
 
   constructor(mongoClient: MongoClient, databaseName: string) {
     super();
-    this.sessionKeyCollection = mongoClient.db(databaseName).collection('sessionKeys');
-    this.auditLogCollection = mongoClient.db(databaseName).collection('auditLogs');
+    this.sessionKeyCollection = mongoClient
+      .db(databaseName)
+      .collection("sessionKeys");
+    this.auditLogCollection = mongoClient
+      .db(databaseName)
+      .collection("auditLogs");
   }
 
   async storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void> {
     await this.sessionKeyCollection.replaceOne(
       { userId: sessionKeyInfo.userId },
       sessionKeyInfo,
-      { upsert: true }
+      { upsert: true },
     );
   }
 
@@ -216,7 +231,7 @@ class MongoDatabaseAdapter extends BaseDatabaseAdapter {
 #### PostgreSQL Example
 
 ```typescript
-import { Pool } from 'pg';
+import { Pool } from "pg";
 
 class PostgresDatabaseAdapter extends BaseDatabaseAdapter {
   constructor(private pool: Pool) {
@@ -240,13 +255,13 @@ class PostgresDatabaseAdapter extends BaseDatabaseAdapter {
 
 ```typescript
 interface AbstraxionBackendConfig {
-  rpcUrl: string;                    // XION RPC endpoint
-  dashboardUrl: string;              // Dashboard URL for authorization
-  encryptionKey: string;             // Base64-encoded 32-byte AES key
-  databaseAdapter: DatabaseAdapter;  // Database adapter instance
-  sessionKeyExpiryMs?: number;       // Session key expiry (default: 24h)
-  refreshThresholdMs?: number;       // Refresh threshold (default: 1h)
-  enableAuditLogging?: boolean;      // Enable audit logging (default: true)
+  rpcUrl: string; // XION RPC endpoint
+  dashboardUrl: string; // Dashboard URL for authorization
+  encryptionKey: string; // Base64-encoded 32-byte AES key
+  databaseAdapter: DatabaseAdapter; // Database adapter instance
+  sessionKeyExpiryMs?: number; // Session key expiry (default: 24h)
+  refreshThresholdMs?: number; // Refresh threshold (default: 1h)
+  enableAuditLogging?: boolean; // Enable audit logging (default: true)
 }
 ```
 
@@ -257,10 +272,10 @@ interface AbstraxionBackendConfig {
 Generate a secure encryption key:
 
 ```typescript
-import { EncryptionService } from '@burnt-labs/abstraxion-backend';
+import { EncryptionService } from "@burnt-labs/abstraxion-backend";
 
 const encryptionKey = EncryptionService.generateEncryptionKey();
-console.log('Store this key securely:', encryptionKey);
+console.log("Store this key securely:", encryptionKey);
 ```
 
 ### Environment Variables
@@ -315,16 +330,16 @@ CREATE TABLE audit_logs (
 ## Error Handling
 
 ```typescript
-import { 
+import {
   AbstraxionBackendError,
   SessionKeyNotFoundError,
   SessionKeyExpiredError,
   InvalidStateError,
-  EncryptionError
-} from '@burnt-labs/abstraxion-backend';
+  EncryptionError,
+} from "@burnt-labs/abstraxion-backend";
 
 try {
-  await backend.connectInit('user123');
+  await backend.connectInit("user123");
 } catch (error) {
   if (error instanceof SessionKeyNotFoundError) {
     // Handle session key not found

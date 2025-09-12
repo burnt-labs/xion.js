@@ -1,13 +1,9 @@
-import { 
-  DatabaseAdapter, 
-  SessionKeyInfo, 
-  AuditEvent 
-} from '../types';
+import { DatabaseAdapter, SessionKeyInfo, AuditEvent } from "../types";
 
 /**
  * Abstract base class for database adapters
  * Provides common functionality and ensures consistent interface
- * 
+ *
  * Each project should implement their own concrete database adapter
  * by extending this base class and implementing all abstract methods.
  */
@@ -25,7 +21,10 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
   /**
    * Update session key information
    */
-  abstract updateSessionKey(userId: string, updates: Partial<SessionKeyInfo>): Promise<void>;
+  abstract updateSessionKey(
+    userId: string,
+    updates: Partial<SessionKeyInfo>,
+  ): Promise<void>;
 
   /**
    * Delete session key information

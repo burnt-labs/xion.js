@@ -1,5 +1,5 @@
-import { BaseDatabaseAdapter } from '../adapters/DatabaseAdapter';
-import { SessionKeyInfo, AuditEvent } from '../types';
+import { BaseDatabaseAdapter } from "../adapters/DatabaseAdapter";
+import { SessionKeyInfo, AuditEvent } from "../types";
 
 /**
  * Test database adapter for unit testing
@@ -17,7 +17,10 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
     return this.sessionKeys.get(userId) || null;
   }
 
-  async updateSessionKey(userId: string, updates: Partial<SessionKeyInfo>): Promise<void> {
+  async updateSessionKey(
+    userId: string,
+    updates: Partial<SessionKeyInfo>,
+  ): Promise<void> {
     const existing = this.sessionKeys.get(userId);
     if (existing) {
       const updated = { ...existing, ...updates, updatedAt: Date.now() };
@@ -35,9 +38,9 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
 
   async getAuditLogs(userId: string, limit?: number): Promise<AuditEvent[]> {
     const userLogs = this.auditLogs
-      .filter(log => log.userId === userId)
+      .filter((log) => log.userId === userId)
       .sort((a, b) => b.timestamp - a.timestamp);
-    
+
     return limit ? userLogs.slice(0, limit) : userLogs;
   }
 

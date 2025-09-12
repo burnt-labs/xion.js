@@ -1,6 +1,6 @@
-import { randomBytes } from 'crypto';
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { 
+import { randomBytes } from "crypto";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import {
   AbstraxionBackendConfig,
   ConnectionInitResponse,
   CallbackRequest,
@@ -13,24 +13,39 @@ import {
   SessionKeyNotFoundError,
   UnknownError,
   AbstraxionBackendError,
-  UserIdRequiredError
-} from '../types';
-import { SessionKeyManager } from '../session-key/SessionKeyManager';
+  UserIdRequiredError,
+} from "../types";
+import { SessionKeyManager } from "../session-key/SessionKeyManager";
 
 export class AbstraxionBackend {
   private readonly sessionKeyManager: SessionKeyManager;
-  private readonly stateStore: Map<string, { userId: string; timestamp: number }> = new Map();
+  private readonly stateStore: Map<
+    string,
+    { userId: string; timestamp: number }
+  > = new Map();
 
   constructor(private readonly config: AbstraxionBackendConfig) {
     // Validate configuration
     if (!config.encryptionKey) {
-      throw new AbstraxionBackendError('Encryption key is required', 'ENCRYPTION_KEY_REQUIRED', 400);
+      throw new AbstraxionBackendError(
+        "Encryption key is required",
+        "ENCRYPTION_KEY_REQUIRED",
+        400,
+      );
     }
     if (!config.databaseAdapter) {
-      throw new AbstraxionBackendError('Database adapter is required', 'DATABASE_ADAPTER_REQUIRED', 400);
+      throw new AbstraxionBackendError(
+        "Database adapter is required",
+        "DATABASE_ADAPTER_REQUIRED",
+        400,
+      );
     }
     if (!config.dashboardUrl) {
-      throw new AbstraxionBackendError('Dashboard URL is required', 'DASHBOARD_URL_REQUIRED', 400);
+      throw new AbstraxionBackendError(
+        "Dashboard URL is required",
+        "DASHBOARD_URL_REQUIRED",
+        400,
+      );
     }
 
     this.sessionKeyManager = new SessionKeyManager(config.databaseAdapter, {
@@ -45,7 +60,10 @@ export class AbstraxionBackend {
    * Initiate wallet connection flow
    * Generate or receive session key address and return authorization URL
    */
-  async connectInit(userId: string, permissions?: Permissions): Promise<ConnectionInitResponse> {
+  async connectInit(
+    userId: string,
+    permissions?: Permissions,
+  ): Promise<ConnectionInitResponse> {
     // Validate input parameters
     if (!userId) {
       throw new UserIdRequiredError();
@@ -54,10 +72,10 @@ export class AbstraxionBackend {
     try {
       // Generate session key
       const sessionKey = await this.generateSessionKey();
-      
+
       // Generate OAuth state parameter for security
-      const state = randomBytes(32).toString('hex');
-      
+      const state = randomBytes(32).toString("hex");
+
       // Store state with user ID and timestamp
       this.stateStore.set(state, {
         userId,
@@ -68,7 +86,11 @@ export class AbstraxionBackend {
       this.cleanupExpiredStates();
 
       // Build authorization URL
-      const authorizationUrl = this.buildAuthorizationUrl(sessionKey.address, state, permissions);
+      const authorizationUrl = this.buildAuthorizationUrl(
+        sessionKey.address,
+        state,
+        permissions,
+      );
 
       return {
         sessionKeyAddress: sessionKey.address,
@@ -79,7 +101,9 @@ export class AbstraxionBackend {
       if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(`Failed to initiate connection: ${error instanceof Error ? error.message : String(error)}`);
+      throw new UnknownError(
+        `Failed to initiate connection: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -93,10 +117,18 @@ export class AbstraxionBackend {
       throw new UserIdRequiredError();
     }
     if (!request.code) {
-      throw new AbstraxionBackendError('Authorization code is required', 'AUTHORIZATION_CODE_REQUIRED', 400);
+      throw new AbstraxionBackendError(
+        "Authorization code is required",
+        "AUTHORIZATION_CODE_REQUIRED",
+        400,
+      );
     }
     if (!request.state) {
-      throw new AbstraxionBackendError('State parameter is required', 'STATE_REQUIRED', 400);
+      throw new AbstraxionBackendError(
+        "State parameter is required",
+        "STATE_REQUIRED",
+        400,
+      );
     }
 
     try {
@@ -122,17 +154,15 @@ export class AbstraxionBackend {
       this.stateStore.delete(request.state);
 
       // Exchange authorization code for session key and permissions
-      const { sessionKey, permissions, metaAccountAddress } = await this.exchangeCodeForSessionKey(
-        request.code,
-        request.state
-      );
+      const { sessionKey, permissions, metaAccountAddress } =
+        await this.exchangeCodeForSessionKey(request.code, request.state);
 
       // Store session key with permissions
       await this.sessionKeyManager.storeSessionKey(
         request.userId,
         sessionKey,
         permissions,
-        metaAccountAddress
+        metaAccountAddress,
       );
 
       return {
@@ -161,7 +191,7 @@ export class AbstraxionBackend {
 
     try {
       await this.sessionKeyManager.revokeSessionKey(userId);
-      
+
       return {
         success: true,
       };
@@ -184,8 +214,9 @@ export class AbstraxionBackend {
     }
 
     try {
-      const sessionKeyInfo = await this.sessionKeyManager.getSessionKeyInfo(userId);
-      
+      const sessionKeyInfo =
+        await this.sessionKeyManager.getSessionKeyInfo(userId);
+
       if (!sessionKeyInfo) {
         return {
           connected: false,
@@ -194,7 +225,7 @@ export class AbstraxionBackend {
 
       // Check if session key is valid
       const isValid = await this.sessionKeyManager.validateSessionKey(userId);
-      
+
       if (!isValid) {
         return {
           connected: false,
@@ -202,7 +233,9 @@ export class AbstraxionBackend {
       }
 
       // Convert session permissions back to permissions format
-      const permissions = this.sessionPermissionsToPermissions(sessionKeyInfo.sessionPermissions);
+      const permissions = this.sessionPermissionsToPermissions(
+        sessionKeyInfo.sessionPermissions,
+      );
 
       return {
         connected: true,
@@ -214,7 +247,10 @@ export class AbstraxionBackend {
       };
     } catch (error) {
       // Log error for debugging but don't expose it to client
-      console.error('Error checking status:', error instanceof Error ? error.message : String(error));
+      console.error(
+        "Error checking status:",
+        error instanceof Error ? error.message : String(error),
+      );
       return {
         connected: false,
       };
@@ -255,7 +291,9 @@ export class AbstraxionBackend {
       if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(`Failed to refresh session key: ${error instanceof Error ? error.message : String(error)}`);
+      throw new UnknownError(
+        `Failed to refresh session key: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -266,10 +304,10 @@ export class AbstraxionBackend {
     try {
       // Generate 12-word mnemonic
       const mnemonic = await this.generateMnemonic();
-      
+
       // Create wallet from mnemonic
       const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-        prefix: 'xion',
+        prefix: "xion",
         hdPaths: [{ account: 0, change: 0, addressIndex: 0 }] as any,
       });
 
@@ -279,15 +317,17 @@ export class AbstraxionBackend {
 
       return {
         address: account.address,
-        privateKey: '', // Will be extracted from wallet when needed
-        publicKey: Buffer.from(account.pubkey).toString('base64'),
+        privateKey: "", // Will be extracted from wallet when needed
+        publicKey: Buffer.from(account.pubkey).toString("base64"),
         mnemonic,
       };
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(`Failed to generate session key: ${error instanceof Error ? error.message : String(error)}`);
+      throw new UnknownError(
+        `Failed to generate session key: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -297,7 +337,7 @@ export class AbstraxionBackend {
   private async generateMnemonic(): Promise<string> {
     // Generate 128 bits of entropy (16 bytes)
     const entropy = randomBytes(16);
-    
+
     // Convert to mnemonic (this is a simplified version)
     // In production, use a proper BIP39 implementation
     const words = [];
@@ -305,8 +345,8 @@ export class AbstraxionBackend {
       const wordIndex = entropy[i] % 2048; // BIP39 wordlist has 2048 words
       words.push(wordIndex.toString());
     }
-    
-    return words.join(' ');
+
+    return words.join(" ");
   }
 
   /**
@@ -315,31 +355,34 @@ export class AbstraxionBackend {
   private buildAuthorizationUrl(
     sessionKeyAddress: string,
     state: string,
-    permissions?: Permissions
+    permissions?: Permissions,
   ): string {
     const url = new URL(this.config.dashboardUrl);
-    
+
     // Add required parameters
-    url.searchParams.set('grantee', sessionKeyAddress);
-    url.searchParams.set('state', state);
-    url.searchParams.set('redirect_uri', this.getCallbackUrl());
-    
+    url.searchParams.set("grantee", sessionKeyAddress);
+    url.searchParams.set("state", state);
+    url.searchParams.set("redirect_uri", this.getCallbackUrl());
+
     // Add optional permissions
     if (permissions) {
       if (permissions.contracts) {
-        url.searchParams.set('contracts', JSON.stringify(permissions.contracts));
+        url.searchParams.set(
+          "contracts",
+          JSON.stringify(permissions.contracts),
+        );
       }
       if (permissions.bank) {
-        url.searchParams.set('bank', JSON.stringify(permissions.bank));
+        url.searchParams.set("bank", JSON.stringify(permissions.bank));
       }
       if (permissions.stake) {
-        url.searchParams.set('stake', 'true');
+        url.searchParams.set("stake", "true");
       }
       if (permissions.treasury) {
-        url.searchParams.set('treasury', permissions.treasury);
+        url.searchParams.set("treasury", permissions.treasury);
       }
     }
-    
+
     return url.toString();
   }
 
@@ -349,12 +392,16 @@ export class AbstraxionBackend {
    */
   private async exchangeCodeForSessionKey(
     code: string,
-    state: string
-  ): Promise<{ sessionKey: SessionKey; permissions: Permissions; metaAccountAddress: string }> {
+    state: string,
+  ): Promise<{
+    sessionKey: SessionKey;
+    permissions: Permissions;
+    metaAccountAddress: string;
+  }> {
     // This is a placeholder implementation
     // In production, this would call the dashboard API to exchange the code
     // for the actual session key and permissions
-    
+
     // For now, return mock data
     const sessionKey = await this.generateSessionKey();
     const permissions: Permissions = {
@@ -362,8 +409,8 @@ export class AbstraxionBackend {
       bank: [],
       stake: false,
     };
-    const metaAccountAddress = 'xion1mockmetaaccountaddress';
-    
+    const metaAccountAddress = "xion1mockmetaaccountaddress";
+
     return {
       sessionKey,
       permissions,
@@ -375,25 +422,25 @@ export class AbstraxionBackend {
    * Convert session permissions back to permissions format
    */
   private sessionPermissionsToPermissions(
-    sessionPermissions: Array<{ type: string; data: string }>
+    sessionPermissions: Array<{ type: string; data: string }>,
   ): Permissions {
     const permissions: Permissions = {};
 
     for (const perm of sessionPermissions) {
       switch (perm.type) {
-        case 'contracts':
+        case "contracts":
           permissions.contracts = JSON.parse(perm.data);
           break;
-        case 'bank':
+        case "bank":
           permissions.bank = JSON.parse(perm.data);
           break;
-        case 'stake':
-          permissions.stake = perm.data === 'true';
+        case "stake":
+          permissions.stake = perm.data === "true";
           break;
-        case 'treasury':
+        case "treasury":
           permissions.treasury = perm.data;
           break;
-        case 'expiry':
+        case "expiry":
           permissions.expiry = parseInt(perm.data, 10);
           break;
       }
