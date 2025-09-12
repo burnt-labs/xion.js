@@ -293,15 +293,9 @@ export class SessionKeyManager {
    */
   private async generateSessionKey(): Promise<SessionKey> {
     try {
-      // Generate 12-word mnemonic
-      const mnemonic = await this.generateMnemonic();
+      // Generate wallet directly with default HD path
+      const wallet = await DirectSecp256k1HdWallet.generate(12, { prefix: 'xion' });
       
-      // Create wallet from mnemonic
-      const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-        prefix: 'xion',
-        hdPaths: [{ account: 0, change: 0, addressIndex: 0 }] as any,
-      });
-
       // Get account info
       const accounts = await wallet.getAccounts();
       const account = accounts[0];
@@ -310,7 +304,7 @@ export class SessionKeyManager {
         address: account.address,
         privateKey: '', // Will be extracted from wallet when needed
         publicKey: Buffer.from(account.pubkey).toString('base64'),
-        mnemonic,
+        mnemonic: wallet.mnemonic,
       };
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
@@ -318,24 +312,6 @@ export class SessionKeyManager {
       }
       throw new UnknownError(`Failed to generate session key: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }
-
-  /**
-   * Generate a secure mnemonic
-   */
-  private async generateMnemonic(): Promise<string> {
-    // Generate 128 bits of entropy (16 bytes)
-    const entropy = randomBytes(16);
-    
-    // Convert to mnemonic (this is a simplified version)
-    // In production, use a proper BIP39 implementation
-    const words = [];
-    for (let i = 0; i < 12; i++) {
-      const wordIndex = entropy[i] % 2048; // BIP39 wordlist has 2048 words
-      words.push(wordIndex.toString());
-    }
-    
-    return words.join(' ');
   }
 
   /**
@@ -360,7 +336,6 @@ export class SessionKeyManager {
     } catch (error) {
       // Log error but don't throw to avoid breaking the main flow
       console.error('Failed to mark session key as expired:', error);
-      // Could optionally throw a TreasuryError here if needed
     }
   }
 
@@ -433,7 +408,6 @@ export class SessionKeyManager {
     } catch (error) {
       // Log error but don't throw to avoid breaking the main flow
       console.error('Failed to log audit event:', error);
-      // Could optionally throw a TreasuryError here if needed
     }
   }
 }
