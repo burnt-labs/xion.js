@@ -16,11 +16,9 @@ import {
   UserIdRequiredError
 } from '../types';
 import { SessionKeyManager } from '../session-key/SessionKeyManager';
-import { EncryptionService } from '../encryption';
 
 export class AbstraxionBackend {
   private readonly sessionKeyManager: SessionKeyManager;
-  private readonly encryptionService: EncryptionService;
   private readonly stateStore: Map<string, { userId: string; timestamp: number }> = new Map();
 
   constructor(private readonly config: AbstraxionBackendConfig) {
@@ -41,7 +39,6 @@ export class AbstraxionBackend {
       refreshThresholdMs: config.refreshThresholdMs,
       enableAuditLogging: config.enableAuditLogging,
     });
-    this.encryptionService = new EncryptionService(config.encryptionKey);
   }
 
   /**
