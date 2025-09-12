@@ -1,6 +1,6 @@
 import { AbstraxionBackend } from "../endpoints/AbstraxionBackend";
 import { AbstraxionBackendConfig, DatabaseAdapter } from "../types";
-import { EncryptionService } from "../encryption";
+import { EncryptionService } from "../services/EncryptionService";
 
 /**
  * Factory function to create AbstraxionBackend instance with validation

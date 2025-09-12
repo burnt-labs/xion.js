@@ -1,6 +1,6 @@
-import { SessionKeyManager } from "../session-key/SessionKeyManager";
+import { SessionKeyManager } from "../services/SessionKeyManager";
 import { TestDatabaseAdapter } from "./TestDatabaseAdapter";
-import { EncryptionService } from "../encryption";
+import { EncryptionService } from "../services/EncryptionService";
 import {
   SessionState,
   AuditAction,

@@ -21,7 +21,7 @@ import {
   AuthorizationCodeRequiredError,
   StateRequiredError,
 } from "../types";
-import { SessionKeyManager } from "../session-key/SessionKeyManager";
+import { SessionKeyManager } from "../services/SessionKeyManager";
 
 export class AbstraxionBackend {
   private readonly sessionKeyManager: SessionKeyManager;

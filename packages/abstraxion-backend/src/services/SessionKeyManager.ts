@@ -17,7 +17,7 @@ import {
   SessionKeyRevocationError,
   SessionKeyRefreshError,
 } from "../types";
-import { EncryptionService } from "../encryption";
+import { EncryptionService } from "./EncryptionService";
 
 export class SessionKeyManager {
   private readonly encryptionService: EncryptionService;

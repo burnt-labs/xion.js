@@ -1,4 +1,4 @@
-import { EncryptionService } from "../encryption";
+import { EncryptionService } from "../services/EncryptionService";
 import { EncryptionError } from "../types";
 
 describe("EncryptionService", () => {
