@@ -18,7 +18,10 @@
     "lint": "eslint src/",
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@burnt-labs/abstraxion-core": "workspace:*",
@@ -37,7 +40,10 @@
   "devDependencies": {
     "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
+    "@types/express": "^4.17.21",
     "@types/jest": "^29.5.3",
+    "@types/node": "^20.10.0",
+    "express": "^4.18.2",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "rimraf": "^5.0.5",
