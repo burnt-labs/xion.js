@@ -8,8 +8,10 @@ import {
   DatabaseAdapter,
   AuditAction,
   AuditEvent,
-  SessionKeyNotFoundError,
-  SessionKeyExpiredError
+  UnknownError,
+  SessionKeyExpiredError,
+  AbstraxionBackendError,
+  UserIdRequiredError
 } from '../types';
 import { EncryptionService } from '../encryption';
 
@@ -41,6 +43,11 @@ export class SessionKeyManager {
     permissions: Permissions,
     metaAccountAddress: string
   ): Promise<void> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       // Encrypt the private key
       const encryptedPrivateKey = await this.encryptionService.encryptSessionKey(sessionKey.privateKey);
@@ -73,7 +80,10 @@ export class SessionKeyManager {
         expiryTime,
       });
     } catch (error) {
-      throw new Error(`Failed to store session key: ${error.message}`);
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new UnknownError(`Failed to store session key: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -81,6 +91,11 @@ export class SessionKeyManager {
    * Retrieve and decrypt active session key
    */
   async getSessionKey(userId: string): Promise<SessionKey | null> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       const sessionKeyInfo = await this.databaseAdapter.getSessionKey(userId);
       
@@ -115,10 +130,10 @@ export class SessionKeyManager {
         publicKey: '', // Will be derived from private key when needed
       };
     } catch (error) {
-      if (error instanceof SessionKeyExpiredError) {
+      if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new Error(`Failed to get session key: ${error.message}`);
+      throw new UnknownError(`Failed to get session key: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -126,6 +141,11 @@ export class SessionKeyManager {
    * Check expiry and validity
    */
   async validateSessionKey(userId: string): Promise<boolean> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       const sessionKeyInfo = await this.databaseAdapter.getSessionKey(userId);
       
@@ -150,6 +170,11 @@ export class SessionKeyManager {
    * Revoke/delete session key
    */
   async revokeSessionKey(userId: string): Promise<void> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       const sessionKeyInfo = await this.databaseAdapter.getSessionKey(userId);
       
@@ -169,7 +194,10 @@ export class SessionKeyManager {
       // Delete from database
       await this.databaseAdapter.deleteSessionKey(userId);
     } catch (error) {
-      throw new Error(`Failed to revoke session key: ${error.message}`);
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new UnknownError(`Failed to revoke session key: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -177,6 +205,11 @@ export class SessionKeyManager {
    * Refresh if near expiry
    */
   async refreshIfNeeded(userId: string): Promise<SessionKey | null> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       const sessionKeyInfo = await this.databaseAdapter.getSessionKey(userId);
       
@@ -220,7 +253,10 @@ export class SessionKeyManager {
       // Return existing session key
       return await this.getSessionKey(userId);
     } catch (error) {
-      throw new Error(`Failed to refresh session key: ${error.message}`);
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new UnknownError(`Failed to refresh session key: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -228,6 +264,11 @@ export class SessionKeyManager {
    * Get session key info without decrypting
    */
   async getSessionKeyInfo(userId: string): Promise<SessionKeyInfo | null> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       const sessionKeyInfo = await this.databaseAdapter.getSessionKey(userId);
       
@@ -258,7 +299,7 @@ export class SessionKeyManager {
       // Create wallet from mnemonic
       const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
         prefix: 'xion',
-        hdPaths: [{ account: 0, change: 0, addressIndex: 0 }],
+        hdPaths: [{ account: 0, change: 0, addressIndex: 0 }] as any,
       });
 
       // Get account info
@@ -272,7 +313,10 @@ export class SessionKeyManager {
         mnemonic,
       };
     } catch (error) {
-      throw new Error(`Failed to generate session key: ${error.message}`);
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new UnknownError(`Failed to generate session key: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -314,8 +358,9 @@ export class SessionKeyManager {
       // Log audit event
       await this.logAuditEvent(userId, AuditAction.SESSION_KEY_EXPIRED, {});
     } catch (error) {
-      // Log error but don't throw
+      // Log error but don't throw to avoid breaking the main flow
       console.error('Failed to mark session key as expired:', error);
+      // Could optionally throw a TreasuryError here if needed
     }
   }
 
@@ -386,8 +431,9 @@ export class SessionKeyManager {
 
       await this.databaseAdapter.logAuditEvent(auditEvent);
     } catch (error) {
-      // Log error but don't throw
+      // Log error but don't throw to avoid breaking the main flow
       console.error('Failed to log audit event:', error);
+      // Could optionally throw a TreasuryError here if needed
     }
   }
 }

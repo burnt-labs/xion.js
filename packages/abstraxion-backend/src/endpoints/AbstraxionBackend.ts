@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { 
   AbstraxionBackendConfig,
   ConnectionInitResponse,
@@ -8,9 +9,11 @@ import {
   DisconnectResponse,
   Permissions,
   SessionKey,
-  SessionState,
   InvalidStateError,
-  SessionKeyNotFoundError
+  SessionKeyNotFoundError,
+  UnknownError,
+  AbstraxionBackendError,
+  UserIdRequiredError
 } from '../types';
 import { SessionKeyManager } from '../session-key/SessionKeyManager';
 import { EncryptionService } from '../encryption';
@@ -21,6 +24,17 @@ export class AbstraxionBackend {
   private readonly stateStore: Map<string, { userId: string; timestamp: number }> = new Map();
 
   constructor(private readonly config: AbstraxionBackendConfig) {
+    // Validate configuration
+    if (!config.encryptionKey) {
+      throw new AbstraxionBackendError('Encryption key is required', 'ENCRYPTION_KEY_REQUIRED', 400);
+    }
+    if (!config.databaseAdapter) {
+      throw new AbstraxionBackendError('Database adapter is required', 'DATABASE_ADAPTER_REQUIRED', 400);
+    }
+    if (!config.dashboardUrl) {
+      throw new AbstraxionBackendError('Dashboard URL is required', 'DASHBOARD_URL_REQUIRED', 400);
+    }
+
     this.sessionKeyManager = new SessionKeyManager(config.databaseAdapter, {
       encryptionKey: config.encryptionKey,
       sessionKeyExpiryMs: config.sessionKeyExpiryMs,
@@ -35,6 +49,11 @@ export class AbstraxionBackend {
    * Generate or receive session key address and return authorization URL
    */
   async connectInit(userId: string, permissions?: Permissions): Promise<ConnectionInitResponse> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       // Generate session key
       const sessionKey = await this.generateSessionKey();
@@ -60,7 +79,10 @@ export class AbstraxionBackend {
         state,
       };
     } catch (error) {
-      throw new Error(`Failed to initiate connection: ${error.message}`);
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new UnknownError(`Failed to initiate connection: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -69,6 +91,17 @@ export class AbstraxionBackend {
    * Store session key with permissions and associate with user account
    */
   async handleCallback(request: CallbackRequest): Promise<CallbackResponse> {
+    // Validate input parameters
+    if (!request.userId) {
+      throw new UserIdRequiredError();
+    }
+    if (!request.code) {
+      throw new AbstraxionBackendError('Authorization code is required', 'AUTHORIZATION_CODE_REQUIRED', 400);
+    }
+    if (!request.state) {
+      throw new AbstraxionBackendError('State parameter is required', 'STATE_REQUIRED', 400);
+    }
+
     try {
       // Validate state parameter
       const stateData = this.stateStore.get(request.state);
@@ -114,7 +147,7 @@ export class AbstraxionBackend {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -124,6 +157,11 @@ export class AbstraxionBackend {
    * Cleanup database entries
    */
   async disconnect(userId: string): Promise<DisconnectResponse> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       await this.sessionKeyManager.revokeSessionKey(userId);
       
@@ -133,7 +171,7 @@ export class AbstraxionBackend {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -143,6 +181,11 @@ export class AbstraxionBackend {
    * Return wallet address and permissions
    */
   async checkStatus(userId: string): Promise<StatusResponse> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       const sessionKeyInfo = await this.sessionKeyManager.getSessionKeyInfo(userId);
       
@@ -173,6 +216,8 @@ export class AbstraxionBackend {
         state: sessionKeyInfo.sessionState,
       };
     } catch (error) {
+      // Log error for debugging but don't expose it to client
+      console.error('Error checking status:', error instanceof Error ? error.message : String(error));
       return {
         connected: false,
       };
@@ -183,6 +228,11 @@ export class AbstraxionBackend {
    * Get session key for signing operations
    */
   async getSessionKeyForSigning(userId: string): Promise<SessionKey | null> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       return await this.sessionKeyManager.getSessionKey(userId);
     } catch (error) {
@@ -197,10 +247,18 @@ export class AbstraxionBackend {
    * Refresh session key if needed
    */
   async refreshSessionKey(userId: string): Promise<SessionKey | null> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
     try {
       return await this.sessionKeyManager.refreshIfNeeded(userId);
     } catch (error) {
-      throw new Error(`Failed to refresh session key: ${error.message}`);
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new UnknownError(`Failed to refresh session key: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -213,10 +271,9 @@ export class AbstraxionBackend {
       const mnemonic = await this.generateMnemonic();
       
       // Create wallet from mnemonic
-      const { DirectSecp256k1HdWallet } = await import('@cosmjs/proto-signing');
       const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
         prefix: 'xion',
-        hdPaths: [{ account: 0, change: 0, addressIndex: 0 }],
+        hdPaths: [{ account: 0, change: 0, addressIndex: 0 }] as any,
       });
 
       // Get account info
@@ -230,7 +287,10 @@ export class AbstraxionBackend {
         mnemonic,
       };
     } catch (error) {
-      throw new Error(`Failed to generate session key: ${error.message}`);
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new UnknownError(`Failed to generate session key: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

@@ -119,6 +119,13 @@ export interface AbstraxionBackendConfig {
 }
 
 // Error types
+export class UnknownError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UnknownError";
+  }
+}
+
 export class AbstraxionBackendError extends Error {
   constructor(
     message: string,
@@ -127,6 +134,12 @@ export class AbstraxionBackendError extends Error {
   ) {
     super(message);
     this.name = "AbstraxionBackendError";
+  }
+}
+
+export class UserIdRequiredError extends AbstraxionBackendError {
+  constructor() {
+    super("User ID is required", "USER_ID_REQUIRED", 400);
   }
 }
 
