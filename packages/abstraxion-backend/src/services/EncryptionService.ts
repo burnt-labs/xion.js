@@ -1,5 +1,10 @@
-import { createCipheriv, createDecipheriv, randomBytes, scrypt } from "crypto";
-import { promisify } from "util";
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  scrypt,
+} from "node:crypto";
+import { promisify } from "node:util";
 import { EncryptionError } from "../types";
 
 const scryptAsync = promisify(scrypt);

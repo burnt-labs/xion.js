@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import {
   SessionKeyInfo,

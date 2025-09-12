@@ -1,5 +1,4 @@
-import { randomBytes } from "crypto";
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { randomBytes } from "node:crypto";
 import NodeCache from "node-cache";
 import {
   AbstraxionBackendConfig,
