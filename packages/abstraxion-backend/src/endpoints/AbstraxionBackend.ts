@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import NodeCache from "node-cache";
 import {
   AbstraxionBackendConfig,
   ConnectionInitResponse,
@@ -14,39 +15,36 @@ import {
   UnknownError,
   AbstraxionBackendError,
   UserIdRequiredError,
+  EncryptionKeyRequiredError,
+  DatabaseAdapterRequiredError,
+  DashboardUrlRequiredError,
+  AuthorizationCodeRequiredError,
+  StateRequiredError,
 } from "../types";
 import { SessionKeyManager } from "../session-key/SessionKeyManager";
 
 export class AbstraxionBackend {
   private readonly sessionKeyManager: SessionKeyManager;
-  private readonly stateStore: Map<
-    string,
-    { userId: string; timestamp: number }
-  > = new Map();
+  private readonly stateStore: NodeCache;
 
   constructor(private readonly config: AbstraxionBackendConfig) {
     // Validate configuration
     if (!config.encryptionKey) {
-      throw new AbstraxionBackendError(
-        "Encryption key is required",
-        "ENCRYPTION_KEY_REQUIRED",
-        400,
-      );
+      throw new EncryptionKeyRequiredError();
     }
     if (!config.databaseAdapter) {
-      throw new AbstraxionBackendError(
-        "Database adapter is required",
-        "DATABASE_ADAPTER_REQUIRED",
-        400,
-      );
+      throw new DatabaseAdapterRequiredError();
     }
     if (!config.dashboardUrl) {
-      throw new AbstraxionBackendError(
-        "Dashboard URL is required",
-        "DASHBOARD_URL_REQUIRED",
-        400,
-      );
+      throw new DashboardUrlRequiredError();
     }
+
+    // Initialize node-cache with 10 minutes TTL and automatic cleanup
+    this.stateStore = new NodeCache({
+      stdTTL: 600, // 10 minutes in seconds
+      checkperiod: 60, // Check for expired keys every minute
+      useClones: false, // Don't clone objects for better performance
+    });
 
     this.sessionKeyManager = new SessionKeyManager(config.databaseAdapter, {
       encryptionKey: config.encryptionKey,
@@ -71,19 +69,17 @@ export class AbstraxionBackend {
 
     try {
       // Generate session key
-      const sessionKey = await this.generateSessionKey();
+      const sessionKey = await this.sessionKeyManager.generateSessionKey();
 
       // Generate OAuth state parameter for security
       const state = randomBytes(32).toString("hex");
 
       // Store state with user ID and timestamp
+      // node-cache will automatically handle TTL, no need for manual cleanup
       this.stateStore.set(state, {
         userId,
         timestamp: Date.now(),
       });
-
-      // Clean up expired states (older than 10 minutes)
-      this.cleanupExpiredStates();
 
       // Build authorization URL
       const authorizationUrl = this.buildAuthorizationUrl(
@@ -117,31 +113,19 @@ export class AbstraxionBackend {
       throw new UserIdRequiredError();
     }
     if (!request.code) {
-      throw new AbstraxionBackendError(
-        "Authorization code is required",
-        "AUTHORIZATION_CODE_REQUIRED",
-        400,
-      );
+      throw new AuthorizationCodeRequiredError();
     }
     if (!request.state) {
-      throw new AbstraxionBackendError(
-        "State parameter is required",
-        "STATE_REQUIRED",
-        400,
-      );
+      throw new StateRequiredError();
     }
 
     try {
       // Validate state parameter
-      const stateData = this.stateStore.get(request.state);
+      const stateData = this.stateStore.get<{
+        userId: string;
+        timestamp: number;
+      }>(request.state);
       if (!stateData) {
-        throw new InvalidStateError(request.state);
-      }
-
-      // Check if state is not too old (10 minutes)
-      const stateAge = Date.now() - stateData.timestamp;
-      if (stateAge > 10 * 60 * 1000) {
-        this.stateStore.delete(request.state);
         throw new InvalidStateError(request.state);
       }
 
@@ -151,7 +135,7 @@ export class AbstraxionBackend {
       }
 
       // Clean up used state
-      this.stateStore.delete(request.state);
+      this.stateStore.del(request.state);
 
       // Exchange authorization code for session key and permissions
       const { sessionKey, permissions, metaAccountAddress } =
@@ -298,58 +282,6 @@ export class AbstraxionBackend {
   }
 
   /**
-   * Generate a new session key
-   */
-  private async generateSessionKey(): Promise<SessionKey> {
-    try {
-      // Generate 12-word mnemonic
-      const mnemonic = await this.generateMnemonic();
-
-      // Create wallet from mnemonic
-      const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-        prefix: "xion",
-        hdPaths: [{ account: 0, change: 0, addressIndex: 0 }] as any,
-      });
-
-      // Get account info
-      const accounts = await wallet.getAccounts();
-      const account = accounts[0];
-
-      return {
-        address: account.address,
-        privateKey: "", // Will be extracted from wallet when needed
-        publicKey: Buffer.from(account.pubkey).toString("base64"),
-        mnemonic,
-      };
-    } catch (error) {
-      if (error instanceof AbstraxionBackendError) {
-        throw error;
-      }
-      throw new UnknownError(
-        `Failed to generate session key: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  /**
-   * Generate a secure mnemonic
-   */
-  private async generateMnemonic(): Promise<string> {
-    // Generate 128 bits of entropy (16 bytes)
-    const entropy = randomBytes(16);
-
-    // Convert to mnemonic (this is a simplified version)
-    // In production, use a proper BIP39 implementation
-    const words = [];
-    for (let i = 0; i < 12; i++) {
-      const wordIndex = entropy[i] % 2048; // BIP39 wordlist has 2048 words
-      words.push(wordIndex.toString());
-    }
-
-    return words.join(" ");
-  }
-
-  /**
    * Build authorization URL for dashboard
    */
   private buildAuthorizationUrl(
@@ -403,7 +335,7 @@ export class AbstraxionBackend {
     // for the actual session key and permissions
 
     // For now, return mock data
-    const sessionKey = await this.generateSessionKey();
+    const sessionKey = await this.sessionKeyManager.generateSessionKey();
     const permissions: Permissions = {
       contracts: [],
       bank: [],
@@ -458,16 +390,29 @@ export class AbstraxionBackend {
   }
 
   /**
-   * Clean up expired states
+   * Get cache statistics
    */
-  private cleanupExpiredStates(): void {
-    const now = Date.now();
-    const maxAge = 10 * 60 * 1000; // 10 minutes
+  getCacheStats(): {
+    keys: number;
+    hits: number;
+    misses: number;
+    ksize: number;
+    vsize: number;
+  } {
+    return this.stateStore.getStats();
+  }
 
-    for (const [state, data] of this.stateStore.entries()) {
-      if (now - data.timestamp > maxAge) {
-        this.stateStore.delete(state);
-      }
-    }
+  /**
+   * Clear all cached states
+   */
+  clearCache(): void {
+    this.stateStore.flushAll();
+  }
+
+  /**
+   * Close the cache and cleanup resources
+   */
+  close(): void {
+    this.stateStore.close();
   }
 }

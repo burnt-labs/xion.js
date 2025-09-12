@@ -8,10 +8,14 @@ import {
   DatabaseAdapter,
   AuditAction,
   AuditEvent,
-  UnknownError,
   SessionKeyExpiredError,
   AbstraxionBackendError,
   UserIdRequiredError,
+  SessionKeyGenerationError,
+  SessionKeyStorageError,
+  SessionKeyRetrievalError,
+  SessionKeyRevocationError,
+  SessionKeyRefreshError,
 } from "../types";
 import { EncryptionService } from "../encryption";
 
@@ -84,8 +88,8 @@ export class SessionKeyManager {
       if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(
-        `Failed to store session key: ${error instanceof Error ? error.message : String(error)}`,
+      throw new SessionKeyStorageError(
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -137,8 +141,8 @@ export class SessionKeyManager {
       if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(
-        `Failed to get session key: ${error instanceof Error ? error.message : String(error)}`,
+      throw new SessionKeyRetrievalError(
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -203,8 +207,8 @@ export class SessionKeyManager {
       if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(
-        `Failed to revoke session key: ${error instanceof Error ? error.message : String(error)}`,
+      throw new SessionKeyRevocationError(
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -265,8 +269,8 @@ export class SessionKeyManager {
       if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(
-        `Failed to refresh session key: ${error instanceof Error ? error.message : String(error)}`,
+      throw new SessionKeyRefreshError(
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -302,7 +306,7 @@ export class SessionKeyManager {
   /**
    * Generate a new session key
    */
-  private async generateSessionKey(): Promise<SessionKey> {
+  async generateSessionKey(): Promise<SessionKey> {
     try {
       // Generate wallet directly with default HD path
       const wallet = await DirectSecp256k1HdWallet.generate(12, {
@@ -323,8 +327,8 @@ export class SessionKeyManager {
       if (error instanceof AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(
-        `Failed to generate session key: ${error instanceof Error ? error.message : String(error)}`,
+      throw new SessionKeyGenerationError(
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -350,7 +354,10 @@ export class SessionKeyManager {
       await this.logAuditEvent(userId, AuditAction.SESSION_KEY_EXPIRED, {});
     } catch (error) {
       // Log error but don't throw to avoid breaking the main flow
-      console.error("Failed to mark session key as expired:", error);
+      console.error(
+        "Failed to mark session key as expired:",
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
@@ -424,7 +431,10 @@ export class SessionKeyManager {
       await this.databaseAdapter.logAuditEvent(auditEvent);
     } catch (error) {
       // Log error but don't throw to avoid breaking the main flow
-      console.error("Failed to log audit event:", error);
+      console.error(
+        "Failed to log audit event:",
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 }

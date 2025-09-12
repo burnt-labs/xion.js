@@ -1,3 +1,5 @@
+export * from "./errors";
+
 export enum SessionState {
   PENDING = "PENDING",
   ACTIVE = "ACTIVE",
@@ -119,61 +121,4 @@ export interface AbstraxionBackendConfig {
   sessionKeyExpiryMs?: number; // Default: 24 hours
   refreshThresholdMs?: number; // Default: 1 hour before expiry
   enableAuditLogging?: boolean; // Default: true
-}
-
-// Error types
-export class UnknownError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "UnknownError";
-  }
-}
-
-export class AbstraxionBackendError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public statusCode: number = 500,
-  ) {
-    super(message);
-    this.name = "AbstraxionBackendError";
-  }
-}
-
-export class UserIdRequiredError extends AbstraxionBackendError {
-  constructor() {
-    super("User ID is required", "USER_ID_REQUIRED", 400);
-  }
-}
-
-export class SessionKeyNotFoundError extends AbstraxionBackendError {
-  constructor(userId: string) {
-    super(
-      `Session key not found for user: ${userId}`,
-      "SESSION_KEY_NOT_FOUND",
-      404,
-    );
-  }
-}
-
-export class SessionKeyExpiredError extends AbstraxionBackendError {
-  constructor(userId: string) {
-    super(
-      `Session key expired for user: ${userId}`,
-      "SESSION_KEY_EXPIRED",
-      401,
-    );
-  }
-}
-
-export class InvalidStateError extends AbstraxionBackendError {
-  constructor(state: string) {
-    super(`Invalid state parameter: ${state}`, "INVALID_STATE", 400);
-  }
-}
-
-export class EncryptionError extends AbstraxionBackendError {
-  constructor(message: string) {
-    super(`Encryption error: ${message}`, "ENCRYPTION_ERROR", 500);
-  }
 }
