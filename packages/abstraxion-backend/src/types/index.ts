@@ -7,17 +7,12 @@ export enum SessionState {
   REVOKED = "REVOKED",
 }
 
-export interface SessionPermission {
-  type: string;
-  data: string;
-}
-
 export interface SessionKeyInfo {
   userId: string; // user id
   sessionKeyAddress: string; // address of this session key
   sessionKeyMaterial: string; // encrypted private key for the session key
-  sessionKeyExpiry: number; // timestamp of when the session key expires
-  sessionPermissions: SessionPermission[]; // permission flags for the session
+  sessionKeyExpiry: Date; // timestamp of when the session key expires
+  sessionPermissions: Permissions; // permission flags for the session
   sessionState: SessionState; // state of the session
   metaAccountAddress: string; // address of the meta account
   createdAt: number; // timestamp when the session was created
@@ -76,13 +71,34 @@ export interface DisconnectResponse {
 // Database adapter interfaces
 export interface DatabaseAdapter {
   // Session key operations
+  // Store a session key
   storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void>;
+  // Get a session key by user ID
   getSessionKey(userId: string): Promise<SessionKeyInfo | null>;
-  updateSessionKey(
+  // Get the active session key for a user
+  getActiveSessionKey(userId: string): Promise<SessionKeyInfo | null>;
+  // Revoke a specific session key by userId and sessionKeyAddress
+  revokeSessionKey(userId: string, sessionKeyAddress: string): Promise<void>;
+  // Revoke all active session keys for a user
+  revokeActiveSessionKeys(userId: string): Promise<void>;
+
+  // Add a new pending session key
+  addNewPendingSessionKey(
     userId: string,
-    updates: Partial<SessionKeyInfo>,
+    updates: Pick<
+      SessionKeyInfo,
+      "sessionKeyAddress" | "sessionKeyMaterial" | "sessionKeyExpiry"
+    >,
   ): Promise<void>;
-  deleteSessionKey(userId: string): Promise<void>;
+
+  // Update a session key with specific parameters (userId + sessionKeyAddress are required)
+  updateSessionKeyWithParams(
+    userId: string,
+    sessionKeyAddress: string,
+    sessionPermissions: Permissions,
+    sessionState: SessionState,
+    metaAccountAddress: string,
+  ): Promise<void>;
 
   // Audit logging
   logAuditEvent(event: AuditEvent): Promise<void>;
@@ -93,7 +109,7 @@ export interface AuditEvent {
   id: string;
   userId: string;
   action: AuditAction;
-  timestamp: number;
+  timestamp: Date;
   details: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;

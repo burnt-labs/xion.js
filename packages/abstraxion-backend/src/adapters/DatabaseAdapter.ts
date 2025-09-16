@@ -1,4 +1,10 @@
-import { DatabaseAdapter, SessionKeyInfo, AuditEvent } from "../types";
+import {
+  DatabaseAdapter,
+  SessionKeyInfo,
+  AuditEvent,
+  Permissions,
+  SessionState,
+} from "../types";
 
 /**
  * Abstract base class for database adapters
@@ -19,17 +25,44 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
   abstract getSessionKey(userId: string): Promise<SessionKeyInfo | null>;
 
   /**
-   * Update session key information
+   * Get the active session key for a user
    */
-  abstract updateSessionKey(
+  abstract getActiveSessionKey(userId: string): Promise<SessionKeyInfo | null>;
+
+  /**
+   * Add new pending session key
+   */
+  abstract addNewPendingSessionKey(
     userId: string,
-    updates: Partial<SessionKeyInfo>,
+    updates: Pick<
+      SessionKeyInfo,
+      "sessionKeyAddress" | "sessionKeyMaterial" | "sessionKeyExpiry"
+    >,
   ): Promise<void>;
 
   /**
-   * Delete session key information
+   * Update session key with specific parameters (userId + sessionKeyAddress are required)
    */
-  abstract deleteSessionKey(userId: string): Promise<void>;
+  abstract updateSessionKeyWithParams(
+    userId: string,
+    sessionKeyAddress: string,
+    sessionPermissions: Permissions,
+    sessionState: SessionState,
+    metaAccountAddress: string,
+  ): Promise<void>;
+
+  /**
+   * Revoke a specific session key by userId and sessionKeyAddress
+   */
+  abstract revokeSessionKey(
+    userId: string,
+    sessionKeyAddress: string,
+  ): Promise<void>;
+
+  /**
+   * Revoke all active session keys for a user
+   */
+  abstract revokeActiveSessionKeys(userId: string): Promise<void>;
 
   /**
    * Log audit event

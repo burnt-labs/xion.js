@@ -53,37 +53,111 @@ export class SessionKeyManager {
     }
 
     try {
+      // Check existing session key
+      const existingSessionKey =
+        await this.databaseAdapter.getSessionKey(userId);
+
       // Encrypt the private key
       const encryptedPrivateKey =
         await this.encryptionService.encryptSessionKey(sessionKey.privateKey);
 
       // Calculate expiry time
       const now = Date.now();
-      const expiryTime = now + this.sessionKeyExpiryMs;
+      const expiryTime = new Date(now + this.sessionKeyExpiryMs);
 
-      // Create session key info
-      const sessionKeyInfo: SessionKeyInfo = {
-        userId,
-        sessionKeyAddress: sessionKey.address,
-        sessionKeyMaterial: encryptedPrivateKey,
-        sessionKeyExpiry: expiryTime,
-        sessionPermissions: this.permissionsToSessionPermissions(permissions),
-        sessionState: SessionState.ACTIVE,
-        metaAccountAddress,
-        createdAt: now,
-        updatedAt: now,
-      };
+      if (!existingSessionKey || this.isExpired(existingSessionKey)) {
+        // No existing session key or expired, create new one as ACTIVE
+        const sessionKeyInfo: SessionKeyInfo = {
+          userId,
+          sessionKeyAddress: sessionKey.address,
+          sessionKeyMaterial: encryptedPrivateKey,
+          sessionKeyExpiry: expiryTime,
+          sessionPermissions: permissions,
+          sessionState: SessionState.ACTIVE,
+          metaAccountAddress,
+          createdAt: now,
+          updatedAt: now,
+        };
 
-      // Store in database
-      await this.databaseAdapter.storeSessionKey(sessionKeyInfo);
+        // Store in database
+        await this.databaseAdapter.storeSessionKey(sessionKeyInfo);
 
-      // Log audit event
-      await this.logAuditEvent(userId, AuditAction.SESSION_KEY_CREATED, {
-        sessionKeyAddress: sessionKey.address,
-        metaAccountAddress,
-        permissions,
-        expiryTime,
-      });
+        // Log audit event
+        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_CREATED, {
+          sessionKeyAddress: sessionKey.address,
+          metaAccountAddress,
+          permissions,
+          expiryTime,
+        });
+      } else if (existingSessionKey.sessionState === SessionState.PENDING) {
+        // Update existing PENDING session key
+        await this.databaseAdapter.updateSessionKeyWithParams(
+          userId,
+          sessionKey.address,
+          permissions,
+          SessionState.ACTIVE,
+          metaAccountAddress,
+        );
+
+        // Update the encrypted material and expiry
+        // First update the session key with new parameters
+        await this.databaseAdapter.updateSessionKeyWithParams(
+          userId,
+          sessionKey.address,
+          permissions,
+          SessionState.ACTIVE,
+          metaAccountAddress,
+        );
+
+        // Then update the material and expiry by replacing the session key
+        const updatedSessionKeyInfo: SessionKeyInfo = {
+          userId,
+          sessionKeyAddress: sessionKey.address,
+          sessionKeyMaterial: encryptedPrivateKey,
+          sessionKeyExpiry: expiryTime,
+          sessionPermissions: permissions,
+          sessionState: SessionState.ACTIVE,
+          metaAccountAddress,
+          createdAt: existingSessionKey.createdAt,
+          updatedAt: now,
+        };
+
+        await this.databaseAdapter.storeSessionKey(updatedSessionKeyInfo);
+
+        // Log audit event
+        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_CREATED, {
+          sessionKeyAddress: sessionKey.address,
+          metaAccountAddress,
+          permissions,
+          expiryTime,
+          previousState: SessionState.PENDING,
+        });
+      } else {
+        // Existing active session key, replace it
+        const sessionKeyInfo: SessionKeyInfo = {
+          userId,
+          sessionKeyAddress: sessionKey.address,
+          sessionKeyMaterial: encryptedPrivateKey,
+          sessionKeyExpiry: expiryTime,
+          sessionPermissions: permissions,
+          sessionState: SessionState.ACTIVE,
+          metaAccountAddress,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        // Store in database (this will replace the existing one)
+        await this.databaseAdapter.storeSessionKey(sessionKeyInfo);
+
+        // Log audit event
+        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_CREATED, {
+          sessionKeyAddress: sessionKey.address,
+          metaAccountAddress,
+          permissions,
+          expiryTime,
+          replacedExisting: true,
+        });
+      }
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
         throw error;
@@ -177,24 +251,27 @@ export class SessionKeyManager {
   }
 
   /**
-   * Revoke/delete session key
+   * Revoke/delete specific session key
    */
-  async revokeSessionKey(userId: string): Promise<void> {
+  async revokeSessionKey(
+    userId: string,
+    sessionKeyAddress: string,
+  ): Promise<void> {
     // Validate input parameters
     if (!userId) {
       throw new UserIdRequiredError();
+    }
+    if (!sessionKeyAddress) {
+      throw new Error("Session key address is required");
     }
 
     try {
       const sessionKeyInfo = await this.databaseAdapter.getSessionKey(userId);
 
-      if (sessionKeyInfo) {
-        // Update state to revoked
-        await this.databaseAdapter.updateSessionKey(userId, {
-          sessionState: SessionState.REVOKED,
-          updatedAt: Date.now(),
-        });
-
+      if (
+        sessionKeyInfo &&
+        sessionKeyInfo.sessionKeyAddress === sessionKeyAddress
+      ) {
         // Log audit event
         await this.logAuditEvent(userId, AuditAction.SESSION_KEY_REVOKED, {
           sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
@@ -202,7 +279,41 @@ export class SessionKeyManager {
       }
 
       // Delete from database
-      await this.databaseAdapter.deleteSessionKey(userId);
+      await this.databaseAdapter.revokeSessionKey(userId, sessionKeyAddress);
+    } catch (error) {
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new SessionKeyRevocationError(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  /**
+   * Revoke all active session keys for a user
+   */
+  async revokeActiveSessionKeys(userId: string): Promise<void> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
+    try {
+      // Get active session keys before revoking
+      const activeSessionKeys =
+        await this.databaseAdapter.getActiveSessionKey(userId);
+
+      if (activeSessionKeys) {
+        // Log audit event
+        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_REVOKED, {
+          sessionKeyAddress: activeSessionKeys.sessionKeyAddress,
+          reason: "All active session keys revoked",
+        });
+      }
+
+      // Delete all active session keys from database
+      await this.databaseAdapter.revokeActiveSessionKeys(userId);
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
         throw error;
@@ -230,7 +341,8 @@ export class SessionKeyManager {
       }
 
       // Check if near expiry
-      const timeUntilExpiry = sessionKeyInfo.sessionKeyExpiry - Date.now();
+      const timeUntilExpiry =
+        sessionKeyInfo.sessionKeyExpiry.getTime() - Date.now();
 
       if (timeUntilExpiry <= this.refreshThresholdMs) {
         // Generate new session key
@@ -246,12 +358,21 @@ export class SessionKeyManager {
         const now = Date.now();
         const newExpiryTime = now + this.sessionKeyExpiryMs;
 
-        await this.databaseAdapter.updateSessionKey(userId, {
+        // Create updated session key info
+        const updatedSessionKeyInfo: SessionKeyInfo = {
+          userId,
           sessionKeyAddress: newSessionKey.address,
           sessionKeyMaterial: encryptedPrivateKey,
-          sessionKeyExpiry: newExpiryTime,
+          sessionKeyExpiry: new Date(newExpiryTime),
+          sessionPermissions: sessionKeyInfo.sessionPermissions,
+          sessionState: SessionState.ACTIVE,
+          metaAccountAddress: sessionKeyInfo.metaAccountAddress,
+          createdAt: sessionKeyInfo.createdAt,
           updatedAt: now,
-        });
+        };
+
+        // Replace the session key
+        await this.databaseAdapter.storeSessionKey(updatedSessionKeyInfo);
 
         // Log audit event
         await this.logAuditEvent(userId, AuditAction.SESSION_KEY_REFRESHED, {
@@ -334,10 +455,56 @@ export class SessionKeyManager {
   }
 
   /**
+   * Create a new pending session key
+   */
+  async createPendingSessionKey(
+    userId: string,
+    sessionKey: SessionKey,
+    metaAccountAddress: string,
+  ): Promise<void> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
+    try {
+      // Encrypt the private key
+      const encryptedPrivateKey =
+        await this.encryptionService.encryptSessionKey(sessionKey.privateKey);
+
+      // Calculate expiry time
+      const now = Date.now();
+      const expiryTime = new Date(now + this.sessionKeyExpiryMs);
+
+      // Create pending session key
+      await this.databaseAdapter.addNewPendingSessionKey(userId, {
+        sessionKeyAddress: sessionKey.address,
+        sessionKeyMaterial: encryptedPrivateKey,
+        sessionKeyExpiry: expiryTime,
+      });
+
+      // Log audit event
+      await this.logAuditEvent(userId, AuditAction.SESSION_KEY_CREATED, {
+        sessionKeyAddress: sessionKey.address,
+        metaAccountAddress,
+        state: SessionState.PENDING,
+        expiryTime,
+      });
+    } catch (error) {
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new SessionKeyStorageError(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  /**
    * Check if session key is expired
    */
   private isExpired(sessionKeyInfo: SessionKeyInfo): boolean {
-    return Date.now() > sessionKeyInfo.sessionKeyExpiry;
+    return Date.now() > sessionKeyInfo.sessionKeyExpiry.getTime();
   }
 
   /**
@@ -345,13 +512,22 @@ export class SessionKeyManager {
    */
   private async markAsExpired(userId: string): Promise<void> {
     try {
-      await this.databaseAdapter.updateSessionKey(userId, {
-        sessionState: SessionState.EXPIRED,
-        updatedAt: Date.now(),
-      });
+      const sessionKeyInfo = await this.databaseAdapter.getSessionKey(userId);
 
-      // Log audit event
-      await this.logAuditEvent(userId, AuditAction.SESSION_KEY_EXPIRED, {});
+      if (sessionKeyInfo) {
+        await this.databaseAdapter.updateSessionKeyWithParams(
+          userId,
+          sessionKeyInfo.sessionKeyAddress,
+          sessionKeyInfo.sessionPermissions,
+          SessionState.EXPIRED,
+          sessionKeyInfo.metaAccountAddress,
+        );
+
+        // Log audit event
+        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_EXPIRED, {
+          sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
+        });
+      }
     } catch (error) {
       // Log error but don't throw to avoid breaking the main flow
       console.error(
@@ -359,52 +535,6 @@ export class SessionKeyManager {
         error instanceof Error ? error.message : String(error),
       );
     }
-  }
-
-  /**
-   * Convert permissions to session permissions format
-   */
-  private permissionsToSessionPermissions(
-    permissions: Permissions,
-  ): Array<{ type: string; data: string }> {
-    const sessionPermissions = [];
-
-    if (permissions.contracts) {
-      sessionPermissions.push({
-        type: "contracts",
-        data: JSON.stringify(permissions.contracts),
-      });
-    }
-
-    if (permissions.bank) {
-      sessionPermissions.push({
-        type: "bank",
-        data: JSON.stringify(permissions.bank),
-      });
-    }
-
-    if (permissions.stake) {
-      sessionPermissions.push({
-        type: "stake",
-        data: "true",
-      });
-    }
-
-    if (permissions.treasury) {
-      sessionPermissions.push({
-        type: "treasury",
-        data: permissions.treasury,
-      });
-    }
-
-    if (permissions.expiry) {
-      sessionPermissions.push({
-        type: "expiry",
-        data: permissions.expiry.toString(),
-      });
-    }
-
-    return sessionPermissions;
   }
 
   /**
@@ -424,7 +554,7 @@ export class SessionKeyManager {
         id: randomBytes(16).toString("hex"),
         userId,
         action,
-        timestamp: Date.now(),
+        timestamp: new Date(),
         details,
       };
 

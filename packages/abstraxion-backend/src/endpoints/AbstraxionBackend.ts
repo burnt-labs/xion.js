@@ -173,7 +173,16 @@ export class AbstraxionBackend {
     }
 
     try {
-      await this.sessionKeyManager.revokeSessionKey(userId);
+      // Get session key info first
+      const sessionKeyInfo =
+        await this.sessionKeyManager.getSessionKeyInfo(userId);
+
+      if (sessionKeyInfo) {
+        await this.sessionKeyManager.revokeSessionKey(
+          userId,
+          sessionKeyInfo.sessionKeyAddress,
+        );
+      }
 
       return {
         success: true,
@@ -215,17 +224,12 @@ export class AbstraxionBackend {
         };
       }
 
-      // Convert session permissions back to permissions format
-      const permissions = this.sessionPermissionsToPermissions(
-        sessionKeyInfo.sessionPermissions,
-      );
-
       return {
         connected: true,
         sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
         metaAccountAddress: sessionKeyInfo.metaAccountAddress,
-        permissions,
-        expiresAt: sessionKeyInfo.sessionKeyExpiry,
+        permissions: sessionKeyInfo.sessionPermissions,
+        expiresAt: sessionKeyInfo.sessionKeyExpiry.getTime(),
         state: sessionKeyInfo.sessionState,
       };
     } catch (error) {
@@ -347,37 +351,6 @@ export class AbstraxionBackend {
       permissions,
       metaAccountAddress,
     };
-  }
-
-  /**
-   * Convert session permissions back to permissions format
-   */
-  private sessionPermissionsToPermissions(
-    sessionPermissions: Array<{ type: string; data: string }>,
-  ): Permissions {
-    const permissions: Permissions = {};
-
-    for (const perm of sessionPermissions) {
-      switch (perm.type) {
-        case "contracts":
-          permissions.contracts = JSON.parse(perm.data);
-          break;
-        case "bank":
-          permissions.bank = JSON.parse(perm.data);
-          break;
-        case "stake":
-          permissions.stake = perm.data === "true";
-          break;
-        case "treasury":
-          permissions.treasury = perm.data;
-          break;
-        case "expiry":
-          permissions.expiry = parseInt(perm.data, 10);
-          break;
-      }
-    }
-
-    return permissions;
   }
 
   /**

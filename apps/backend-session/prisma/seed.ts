@@ -37,12 +37,15 @@ async function main() {
   console.log(`✅ Created ${users.length} users`);
 
   // Create sample session keys (for testing purposes)
-  const now = Date.now();
-  const oneDayFromNow = now + 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
   const sessionKeys = await Promise.all([
     prisma.sessionKey.upsert({
-      where: { userId: users[0].id },
+      where: {
+        userId: users[0].id,
+        sessionKeyAddress: "xion1alice-session-key-address",
+      },
       update: {},
       create: {
         userId: users[0].id,
@@ -59,12 +62,13 @@ async function main() {
         ]),
         sessionState: "ACTIVE",
         metaAccountAddress: "xion1alice-meta-account",
-        createdAt: now,
-        updatedAt: now,
       },
     }),
     prisma.sessionKey.upsert({
-      where: { userId: users[1].id },
+      where: {
+        userId: users[1].id,
+        sessionKeyAddress: "xion1bob-session-key-address",
+      },
       update: {},
       create: {
         userId: users[1].id,
@@ -81,8 +85,6 @@ async function main() {
         ]),
         sessionState: "ACTIVE",
         metaAccountAddress: "xion1bob-meta-account",
-        createdAt: now,
-        updatedAt: now,
       },
     }),
   ]);
@@ -108,7 +110,7 @@ async function main() {
       data: {
         userId: users[1].id,
         action: "CONNECTION_INITIATED",
-        timestamp: now - 60000, // 1 minute ago
+        timestamp: new Date(now.getTime() - 60000), // 1 minute ago
         details: JSON.stringify({
           sessionKeyAddress: "xion1bob-session-key-address",
           authorizationUrl:

@@ -36,7 +36,7 @@ export class KeyRotationManager {
    */
   private static async checkAndRotateKeys(): Promise<void> {
     try {
-      const now = Date.now();
+      const now = new Date();
       const refreshThreshold = parseInt(
         process.env.REFRESH_THRESHOLD_MS || "3600000",
       ); // 1 hour
@@ -47,7 +47,7 @@ export class KeyRotationManager {
           sessionState: "ACTIVE",
           sessionKeyExpiry: {
             gte: now, // Not expired yet
-            lte: now + refreshThreshold, // Within refresh threshold
+            lte: new Date(now.getTime() + refreshThreshold), // Within refresh threshold
           },
         },
       });
@@ -96,7 +96,7 @@ export class KeyRotationManager {
    * Clean up expired session keys
    */
   private static async cleanupExpiredKeys(): Promise<void> {
-    const now = Date.now();
+    const now = new Date();
 
     const expiredKeys = await prisma.sessionKey.findMany({
       where: {
@@ -151,7 +151,7 @@ export class KeyRotationManager {
     keysNeedingRotation: number;
     expiredKeys: number;
   }> {
-    const now = Date.now();
+    const now = new Date();
     const refreshThreshold = parseInt(
       process.env.REFRESH_THRESHOLD_MS || "3600000",
     );
@@ -166,7 +166,7 @@ export class KeyRotationManager {
             sessionState: "ACTIVE",
             sessionKeyExpiry: {
               gte: now,
-              lte: now + refreshThreshold,
+              lte: new Date(now.getTime() + refreshThreshold),
             },
           },
         }),

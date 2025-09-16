@@ -28,7 +28,7 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
     }
   }
 
-  async deleteSessionKey(userId: string): Promise<void> {
+  async revokeSessionKey(userId: string): Promise<void> {
     this.sessionKeys.delete(userId);
   }
 

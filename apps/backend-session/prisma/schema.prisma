@@ -22,6 +22,8 @@ model User {
   sessionKeys SessionKey[]
   auditLogs   AuditLog[]
 
+  @@index([username])
+  @@index([email])
   @@map("users")
 }
 
@@ -31,7 +33,7 @@ model SessionKey {
 
   sessionKeyAddress  String @unique
   sessionKeyMaterial String // encrypted private key
-  sessionKeyExpiry   Int // timestamp
+  sessionKeyExpiry   DateTime // timestamp
   sessionPermissions String @default("{}") // JSON string of permissions
   sessionState       String @default("PENDING") // PENDING, ACTIVE, EXPIRED, REVOKED
   metaAccountAddress String
@@ -42,6 +44,11 @@ model SessionKey {
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, sessionKeyAddress])
+  @@index([userId, sessionState])
+  @@index([userId, sessionKeyExpiry])
+  @@index([userId, metaAccountAddress])
+  @@index([metaAccountAddress])
   @@map("session_keys")
 }
 
@@ -49,13 +56,15 @@ model AuditLog {
   id        String  @id @default(cuid())
   userId    String
   action    String // AuditAction enum values
-  timestamp Int // timestamp
   details   String // JSON string
   ipAddress String?
   userAgent String?
+  timestamp DateTime
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, timestamp])
+  @@index([action])
   @@map("audit_logs")
 }

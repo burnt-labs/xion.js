@@ -173,7 +173,7 @@ class MyDatabaseAdapter extends BaseDatabaseAdapter {
     // Your implementation here
   }
 
-  async deleteSessionKey(userId: string): Promise<void> {
+  async revokeSessionKey(userId: string): Promise<void> {
     // Your implementation here
   }
 
