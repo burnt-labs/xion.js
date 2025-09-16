@@ -1,5 +1,6 @@
 ---
 "@burnt-labs/abstraxion-backend": minor
+"@burnt-labs/tailwind-config": patch
 ---
 
 Backend adaptation improvements
