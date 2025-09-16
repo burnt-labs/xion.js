@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(cuid())
+  username String  @unique
+  email    String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sessionKeys SessionKey[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+model SessionKey {
+  id     String @id @default(cuid())
+  userId String
+
+  sessionKeyAddress  String @unique
+  sessionKeyMaterial String // encrypted private key
+  sessionKeyExpiry   Int // timestamp
+  sessionPermissions String @default("{}") // JSON string of permissions
+  sessionState       String @default("PENDING") // PENDING, ACTIVE, EXPIRED, REVOKED
+  metaAccountAddress String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session_keys")
+}
+
+model AuditLog {
+  id        String  @id @default(cuid())
+  userId    String
+  action    String // AuditAction enum values
+  timestamp Int // timestamp
+  details   String // JSON string
+  ipAddress String?
+  userAgent String?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
