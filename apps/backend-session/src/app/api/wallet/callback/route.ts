@@ -1,49 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getAbstraxionBackend } from "@/lib/abstraxion-backend";
 import { callbackSchema } from "@/lib/validation";
-import { prisma } from "@/lib/database";
-import { checkStrictRateLimit } from "@/lib/rate-limit";
+import { createWalletApiWrapper } from "@/lib/api-wrapper";
+import { ApiContext } from "@/lib/api-middleware";
+import { ApiException } from "@/lib/api-response";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
-  try {
-    // Apply rate limiting
-    const ip =
-      request.headers.get("x-forwarded-for") ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
-    const rateLimit = await checkStrictRateLimit(ip);
-
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Too many requests from this IP, please try again later.",
-        },
-        { status: 429 },
-      );
-    }
-
-    const body = await request.json();
-    const validatedData = callbackSchema.parse(body);
-
-    const { code, state, username } = validatedData;
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { username },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "User not found",
-        },
-        { status: 404 },
-      );
-    }
+export const POST = createWalletApiWrapper(
+  async (context: ApiContext & { validatedData: any; user: any }) => {
+    const { validatedData, user } = context;
+    const { code, state } = validatedData;
 
     // Get AbstraxionBackend instance
     const abstraxionBackend = getAbstraxionBackend();
@@ -56,38 +23,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error,
-        },
-        { status: 400 },
+      throw new ApiException(
+        result.error || "Callback failed",
+        400,
+        "CALLBACK_FAILED",
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    console.error("Callback error:", error);
-
-    if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message,
-        },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Internal server error",
-      },
-      { status: 500 },
-    );
-  }
-}
+    return result;
+  },
+  {
+    schema: callbackSchema,
+    schemaType: "body",
+    rateLimit: "strict",
+    allowedMethods: ["POST"],
+  },
+);
