@@ -19,7 +19,12 @@ describe("Wallet API", () => {
   });
 
   describe("POST /api/wallet/connect", () => {
-    it("should create a user and initiate wallet connection", async () => {
+    it("should initiate wallet connection for existing user", async () => {
+      // First create a user
+      const user = await prisma.user.create({
+        data: { username: "testuser" },
+      });
+
       const request = new NextRequest(
         "http://localhost:3000/api/wallet/connect",
         {
@@ -46,12 +51,6 @@ describe("Wallet API", () => {
       expect(data.data).toHaveProperty("sessionKeyAddress");
       expect(data.data).toHaveProperty("authorizationUrl");
       expect(data.data).toHaveProperty("state");
-
-      // Verify user was created
-      const user = await prisma.user.findUnique({
-        where: { username: "testuser" },
-      });
-      expect(user).toBeTruthy();
     });
   });
 
