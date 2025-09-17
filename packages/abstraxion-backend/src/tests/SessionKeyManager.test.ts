@@ -98,7 +98,7 @@ describe("SessionKeyManager", () => {
       };
 
       // Store with past expiry time
-      const pastTime = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
+      const pastTime = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25 hours ago
       const sessionKeyInfo = {
         userId,
         sessionKeyAddress: sessionKey.address,
@@ -141,7 +141,7 @@ describe("SessionKeyManager", () => {
 
     it("should return false for expired session key", async () => {
       const userId = "user123";
-      const pastTime = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
+      const pastTime = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25 hours ago
       const sessionKeyInfo = {
         userId,
         sessionKeyAddress: "xion1testaddress",
@@ -182,7 +182,7 @@ describe("SessionKeyManager", () => {
         "xion1metaaccount",
       );
 
-      await sessionKeyManager.revokeSessionKey(userId);
+      await sessionKeyManager.revokeSessionKey(userId, sessionKey.address);
 
       const retrieved = await sessionKeyManager.getSessionKey(userId);
       expect(retrieved).toBeNull();
@@ -199,7 +199,7 @@ describe("SessionKeyManager", () => {
       };
 
       // Store with near expiry time (30 minutes from now)
-      const nearExpiryTime = Date.now() + 30 * 60 * 1000;
+      const nearExpiryTime = new Date(Date.now() + 30 * 60 * 1000);
       const sessionKeyInfo = {
         userId,
         sessionKeyAddress: sessionKey.address,
@@ -208,8 +208,8 @@ describe("SessionKeyManager", () => {
         sessionPermissions: [],
         sessionState: SessionState.ACTIVE,
         metaAccountAddress: "xion1metaaccount",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       await databaseAdapter.storeSessionKey(sessionKeyInfo);
