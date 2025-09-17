@@ -15,8 +15,8 @@ export interface SessionKeyInfo {
   sessionPermissions: Permissions; // permission flags for the session
   sessionState: SessionState; // state of the session
   metaAccountAddress: string; // address of the meta account
-  createdAt: number; // timestamp when the session was created
-  updatedAt: number; // timestamp when the session was last updated
+  createdAt?: Date; // timestamp of when the session key was created
+  updatedAt?: Date; // timestamp of when the session key was last updated
 }
 
 export interface SessionKey {
@@ -71,16 +71,17 @@ export interface DisconnectResponse {
 // Database adapter interfaces
 export interface DatabaseAdapter {
   // Session key operations
-  // Store a session key
-  storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void>;
-  // Get a session key by user ID
-  getSessionKey(userId: string): Promise<SessionKeyInfo | null>;
-  // Get the active session key for a user
-  getActiveSessionKey(userId: string): Promise<SessionKeyInfo | null>;
+  // Get the last session key for a user
+  getLastSessionKey(userId: string): Promise<SessionKeyInfo | null>;
+  // Get the active session keys for a user
+  getActiveSessionKeys(userId: string): Promise<SessionKeyInfo[]>;
   // Revoke a specific session key by userId and sessionKeyAddress
-  revokeSessionKey(userId: string, sessionKeyAddress: string): Promise<void>;
+  revokeSessionKey(userId: string, sessionKeyAddress: string): Promise<boolean>;
   // Revoke all active session keys for a user
   revokeActiveSessionKeys(userId: string): Promise<void>;
+
+  // Store a session key
+  storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void>;
 
   // Add a new pending session key
   addNewPendingSessionKey(
@@ -95,9 +96,12 @@ export interface DatabaseAdapter {
   updateSessionKeyWithParams(
     userId: string,
     sessionKeyAddress: string,
-    sessionPermissions: Permissions,
-    sessionState: SessionState,
-    metaAccountAddress: string,
+    updates: Partial<
+      Pick<
+        SessionKeyInfo,
+        "sessionState" | "sessionPermissions" | "metaAccountAddress"
+      >
+    >,
   ): Promise<void>;
 
   // Audit logging
@@ -118,7 +122,6 @@ export interface AuditEvent {
 export enum AuditAction {
   SESSION_KEY_CREATED = "SESSION_KEY_CREATED",
   SESSION_KEY_ACCESSED = "SESSION_KEY_ACCESSED",
-  SESSION_KEY_REFRESHED = "SESSION_KEY_REFRESHED",
   SESSION_KEY_REVOKED = "SESSION_KEY_REVOKED",
   SESSION_KEY_EXPIRED = "SESSION_KEY_EXPIRED",
   PERMISSIONS_GRANTED = "PERMISSIONS_GRANTED",

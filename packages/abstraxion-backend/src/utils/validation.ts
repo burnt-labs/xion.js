@@ -1,9 +1,4 @@
-import {
-  SessionKeyInfo,
-  Permissions,
-  SessionState,
-  SessionPermission,
-} from "../types";
+import { SessionKeyInfo, Permissions, SessionState } from "../types";
 
 /**
  * Validate session key info object
@@ -51,20 +46,6 @@ export function validateSessionKeyInfo(
     return false;
   }
 
-  if (
-    typeof sessionKeyInfo.createdAt !== "number" ||
-    sessionKeyInfo.createdAt <= 0
-  ) {
-    return false;
-  }
-
-  if (
-    typeof sessionKeyInfo.updatedAt !== "number" ||
-    sessionKeyInfo.updatedAt <= 0
-  ) {
-    return false;
-  }
-
   return true;
 }
 
@@ -92,23 +73,6 @@ export function validatePermissions(permissions: Permissions): boolean {
     permissions.expiry &&
     (typeof permissions.expiry !== "number" || permissions.expiry <= 0)
   ) {
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Validate session permission object
- */
-export function validateSessionPermission(
-  permission: SessionPermission,
-): boolean {
-  if (!permission.type || typeof permission.type !== "string") {
-    return false;
-  }
-
-  if (!permission.data || typeof permission.data !== "string") {
     return false;
   }
 

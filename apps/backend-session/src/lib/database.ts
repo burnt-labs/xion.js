@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import {
   BaseDatabaseAdapter,
   SessionKeyInfo,
   AuditEvent,
-  AuditAction,
-  SessionState,
   Permissions,
+  SessionState,
+  AuditAction,
 } from "@burnt-labs/abstraxion-backend";
 
 const globalForPrisma = globalThis as unknown as {
@@ -19,6 +19,24 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
   constructor(private prisma: PrismaClient) {
     super();
+  }
+
+  private parseSessionKeyInfo(
+    sessionKeyInfo: Prisma.SessionKeyGetPayload<{}>,
+  ): SessionKeyInfo {
+    return {
+      userId: sessionKeyInfo.userId,
+      sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
+      sessionKeyMaterial: sessionKeyInfo.sessionKeyMaterial,
+      sessionKeyExpiry: sessionKeyInfo.sessionKeyExpiry,
+      sessionPermissions: JSON.parse(
+        sessionKeyInfo.sessionPermissions,
+      ) as Permissions,
+      sessionState: sessionKeyInfo.sessionState as SessionState,
+      metaAccountAddress: sessionKeyInfo.metaAccountAddress,
+      createdAt: sessionKeyInfo.createdAt,
+      updatedAt: sessionKeyInfo.updatedAt,
+    };
   }
 
   async storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void> {
@@ -37,76 +55,64 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
         sessionPermissions: JSON.stringify(sessionKeyInfo.sessionPermissions),
         sessionState: sessionKeyInfo.sessionState,
         metaAccountAddress: sessionKeyInfo.metaAccountAddress,
-        createdAt: new Date(sessionKeyInfo.createdAt),
-        updatedAt: new Date(sessionKeyInfo.updatedAt),
       },
     });
   }
 
-  async getSessionKey(userId: string): Promise<SessionKeyInfo | null> {
+  async getLastSessionKey(userId: string): Promise<SessionKeyInfo | null> {
     const sessionKey = await this.prisma.sessionKey.findFirst({
       where: { userId },
+      orderBy: { createdAt: "desc" },
     });
 
     if (!sessionKey) {
       return null;
     }
 
-    return {
-      userId: sessionKey.userId,
-      sessionKeyAddress: sessionKey.sessionKeyAddress,
-      sessionKeyMaterial: sessionKey.sessionKeyMaterial,
-      sessionKeyExpiry: sessionKey.sessionKeyExpiry,
-      sessionPermissions: JSON.parse(sessionKey.sessionPermissions),
-      sessionState: sessionKey.sessionState as SessionState,
-      metaAccountAddress: sessionKey.metaAccountAddress,
-      createdAt: sessionKey.createdAt.getTime(),
-      updatedAt: sessionKey.updatedAt.getTime(),
-    };
+    return this.parseSessionKeyInfo(sessionKey);
   }
 
-  async getActiveSessionKey(userId: string): Promise<SessionKeyInfo | null> {
-    const sessionKey = await this.prisma.sessionKey.findFirst({
+  async getActiveSessionKeys(userId: string): Promise<SessionKeyInfo[]> {
+    const sessionKeys = await this.prisma.sessionKey.findMany({
       where: {
         userId,
         sessionState: SessionState.ACTIVE,
       },
     });
 
-    if (!sessionKey) {
-      return null;
+    if (!sessionKeys) {
+      return [];
     }
 
-    return {
-      userId: sessionKey.userId,
-      sessionKeyAddress: sessionKey.sessionKeyAddress,
-      sessionKeyMaterial: sessionKey.sessionKeyMaterial,
-      sessionKeyExpiry: sessionKey.sessionKeyExpiry,
-      sessionPermissions: JSON.parse(sessionKey.sessionPermissions),
-      sessionState: sessionKey.sessionState as SessionState,
-      metaAccountAddress: sessionKey.metaAccountAddress,
-      createdAt: sessionKey.createdAt.getTime(),
-      updatedAt: sessionKey.updatedAt.getTime(),
-    };
+    return sessionKeys.map((sessionKey) =>
+      this.parseSessionKeyInfo(sessionKey),
+    );
   }
 
   async revokeSessionKey(
     userId: string,
     sessionKeyAddress: string,
-  ): Promise<void> {
-    await this.prisma.sessionKey.deleteMany({
+  ): Promise<boolean> {
+    const result = await this.prisma.sessionKey.update({
       where: {
         userId,
         sessionKeyAddress,
       },
+      data: {
+        sessionState: SessionState.REVOKED,
+      },
     });
+    return result !== null;
   }
 
   async revokeActiveSessionKeys(userId: string): Promise<void> {
-    await this.prisma.sessionKey.deleteMany({
+    await this.prisma.sessionKey.updateMany({
       where: {
         userId,
         sessionState: SessionState.ACTIVE,
+      },
+      data: {
+        sessionState: SessionState.REVOKED,
       },
     });
   }
@@ -118,11 +124,6 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
       "sessionKeyAddress" | "sessionKeyMaterial" | "sessionKeyExpiry"
     >,
   ): Promise<void> {
-    // First, delete any existing session key for this user
-    await this.prisma.sessionKey.deleteMany({
-      where: { userId },
-    });
-
     // Then create the new pending session key
     await this.prisma.sessionKey.create({
       data: {
@@ -142,21 +143,32 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
   async updateSessionKeyWithParams(
     userId: string,
     sessionKeyAddress: string,
-    sessionPermissions: Permissions,
-    sessionState: SessionState,
-    metaAccountAddress: string,
+    updates: Partial<
+      Pick<
+        SessionKeyInfo,
+        "sessionState" | "sessionPermissions" | "metaAccountAddress"
+      >
+    >,
   ): Promise<void> {
-    await this.prisma.sessionKey.updateMany({
+    const updateData: Prisma.SessionKeyUpdateInput = {};
+    if (updates.sessionPermissions) {
+      updateData.sessionPermissions = JSON.stringify(
+        updates.sessionPermissions,
+      );
+    }
+    if (updates.sessionState) {
+      updateData.sessionState = updates.sessionState;
+    }
+    if (updates.metaAccountAddress) {
+      updateData.metaAccountAddress = updates.metaAccountAddress;
+    }
+
+    await this.prisma.sessionKey.update({
       where: {
         userId,
         sessionKeyAddress,
       },
-      data: {
-        sessionPermissions: JSON.stringify(sessionPermissions),
-        sessionState,
-        metaAccountAddress,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     });
   }
 

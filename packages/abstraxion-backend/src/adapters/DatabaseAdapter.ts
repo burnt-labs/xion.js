@@ -15,19 +15,19 @@ import {
  */
 export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
   /**
-   * Store session key information
-   */
-  abstract storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void>;
-
-  /**
    * Get session key information by user ID
    */
-  abstract getSessionKey(userId: string): Promise<SessionKeyInfo | null>;
+  abstract getLastSessionKey(userId: string): Promise<SessionKeyInfo | null>;
 
   /**
    * Get the active session key for a user
    */
-  abstract getActiveSessionKey(userId: string): Promise<SessionKeyInfo | null>;
+  abstract getActiveSessionKeys(userId: string): Promise<SessionKeyInfo[]>;
+
+  /**
+   * Store session key information
+   */
+  abstract storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void>;
 
   /**
    * Add new pending session key
@@ -46,9 +46,12 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
   abstract updateSessionKeyWithParams(
     userId: string,
     sessionKeyAddress: string,
-    sessionPermissions: Permissions,
-    sessionState: SessionState,
-    metaAccountAddress: string,
+    updates: Partial<
+      Pick<
+        SessionKeyInfo,
+        "sessionState" | "sessionPermissions" | "metaAccountAddress"
+      >
+    >,
   ): Promise<void>;
 
   /**
@@ -57,7 +60,7 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
   abstract revokeSessionKey(
     userId: string,
     sessionKeyAddress: string,
-  ): Promise<void>;
+  ): Promise<boolean>;
 
   /**
    * Revoke all active session keys for a user
