@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
 import { NextRequest } from "next/server";
 import { POST as connectHandler } from "@/app/api/wallet/connect/route";
-import { POST as callbackHandler } from "@/app/api/wallet/callback/route";
 import { prisma } from "@/lib/database";
 import { SessionState } from "@burnt-labs/abstraxion-backend";
+import { getAbstraxionBackend } from "@/lib/abstraxion-backend";
 
 describe("Wallet API", () => {
   beforeEach(async () => {
@@ -62,9 +61,8 @@ describe("Wallet API", () => {
       });
 
       // Get SessionKeyManager instance
-      const sessionKeyManager = (
-        await import("@/lib/abstraxion-backend")
-      ).getAbstraxionBackend().sessionKeyManager;
+      const backend = getAbstraxionBackend();
+      const sessionKeyManager = backend.sessionKeyManager;
       const sessionKey = await sessionKeyManager.generateSessionKey();
 
       // Create pending session key
@@ -114,9 +112,7 @@ describe("Wallet API", () => {
       });
 
       // Get SessionKeyManager instance
-      const sessionKeyManager = (
-        await import("@/lib/abstraxion-backend")
-      ).getAbstraxionBackend().sessionKeyManager;
+      const sessionKeyManager = getAbstraxionBackend().sessionKeyManager;
       const sessionKey = await sessionKeyManager.generateSessionKey();
 
       const permissions = {

@@ -431,7 +431,7 @@ export class SessionKeyManager {
   /**
    * Create a new pending session key
    */
-  private async createPendingSessionKey(
+  async createPendingSessionKey(
     userId: string,
     sessionKey: SessionKey,
     metaAccountAddress: string,

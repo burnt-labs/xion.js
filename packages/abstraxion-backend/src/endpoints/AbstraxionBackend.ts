@@ -23,7 +23,7 @@ import {
 import { SessionKeyManager } from "../services/SessionKeyManager";
 
 export class AbstraxionBackend {
-  private readonly sessionKeyManager: SessionKeyManager;
+  public readonly sessionKeyManager: SessionKeyManager;
   private readonly stateStore: NodeCache;
 
   constructor(private readonly config: AbstraxionBackendConfig) {
