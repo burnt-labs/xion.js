@@ -8,6 +8,8 @@ import {
   AuditAction,
 } from "@burnt-labs/abstraxion-backend";
 
+process.env.DATABASE_URL = process.env.DATABASE_URL || "file:./dev.db";
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
