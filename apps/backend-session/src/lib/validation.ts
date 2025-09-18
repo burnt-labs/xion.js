@@ -21,9 +21,8 @@ export const connectWalletSchema = z.object({
 });
 
 export const callbackSchema = z.object({
-  code: z.string().min(1, "Authorization code is required"),
-  state: z.string().min(1, "State parameter is required"),
-  username: z.string().min(1, "Username is required"),
+  granted: z.boolean(),
+  granter: z.string(),
 });
 
 export const disconnectSchema = z.object({

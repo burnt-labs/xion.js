@@ -1,6 +1,6 @@
 # @burnt-labs/abstraxion-backend
 
-Backend implementation of Abstraxion for XION blockchain, providing secure session key management and wallet connection functionality.
+Backend implementation of Abstraxion for XION blockchain, providing secure session key management and wallet connection functionality that integrates seamlessly with the frontend SDK.
 
 ## Features
 
@@ -20,19 +20,15 @@ npm install @burnt-labs/abstraxion-backend
 ## Quick Start
 
 ```typescript
-import {
-  AbstraxionBackend,
-  BaseDatabaseAdapter,
-  createAbstraxionBackend,
-} from "@burnt-labs/abstraxion-backend";
+import { AbstraxionBackend, DatabaseAdapter } from "@burnt-labs/abstraxion-backend";
 
 // Create your own database adapter
-class MyDatabaseAdapter extends BaseDatabaseAdapter {
-  // Implement all abstract methods
+class MyDatabaseAdapter implements DatabaseAdapter {
+  // Implement all required methods
   async storeSessionKey(sessionKeyInfo) {
     /* your implementation */
   }
-  async getSessionKey(userId) {
+  async getLastSessionKey(userId) {
     /* your implementation */
   }
   // ... other methods
@@ -41,9 +37,11 @@ class MyDatabaseAdapter extends BaseDatabaseAdapter {
 const databaseAdapter = new MyDatabaseAdapter();
 
 // Create backend instance
-const backend = createAbstraxionBackend({
+const backend = new AbstraxionBackend({
   rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
-  dashboardUrl: "https://settings.testnet.burnt.com",
+  dashboardUrl: "https://dashboard.xion.burnt.com",
+  redirectUrl: "https://myapp.com/callback", // Where frontend SDK redirects after auth
+  treasury: "xion1treasury123...", // Treasury contract address
   encryptionKey: "your-base64-encoded-32-byte-key",
   databaseAdapter,
 });

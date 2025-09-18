@@ -17,8 +17,10 @@ import {
   EncryptionKeyRequiredError,
   DatabaseAdapterRequiredError,
   DashboardUrlRequiredError,
-  AuthorizationCodeRequiredError,
+  RedirectUrlRequiredError,
+  TreasuryRequiredError,
   StateRequiredError,
+  GranterRequiredError,
 } from "../types";
 import { SessionKeyManager } from "../services/SessionKeyManager";
 
@@ -34,8 +36,14 @@ export class AbstraxionBackend {
     if (!config.databaseAdapter) {
       throw new DatabaseAdapterRequiredError();
     }
+    if (!config.redirectUrl) {
+      throw new RedirectUrlRequiredError();
+    }
     if (!config.dashboardUrl) {
       throw new DashboardUrlRequiredError();
+    }
+    if (!config.treasury) {
+      throw new TreasuryRequiredError();
     }
 
     // Initialize node-cache with 10 minutes TTL and automatic cleanup
@@ -55,7 +63,7 @@ export class AbstraxionBackend {
 
   /**
    * Initiate wallet connection flow
-   * Generate or receive session key address and return authorization URL
+   * Generate session key and return authorization URL
    */
   async connectInit(
     userId: string,
@@ -73,12 +81,26 @@ export class AbstraxionBackend {
       // Generate OAuth state parameter for security
       const state = randomBytes(32).toString("hex");
 
-      // Store state with user ID and timestamp
+      // Store state with user ID, timestamp, session key address, and permissions
       // node-cache will automatically handle TTL, no need for manual cleanup
       this.stateStore.set(state, {
         userId,
         timestamp: Date.now(),
+        sessionKeyAddress: sessionKey.address,
+        permissions: permissions || {
+          contracts: [],
+          bank: [],
+          stake: false,
+          treasury: this.config.treasury,
+        },
       });
+
+      // Store the session key temporarily (as PENDING) for later retrieval
+      await this.sessionKeyManager.createPendingSessionKey(
+        userId,
+        sessionKey,
+        "", // metaAccountAddress will be set during callback
+      );
 
       // Build authorization URL
       const authorizationUrl = this.buildAuthorizationUrl(
@@ -103,16 +125,16 @@ export class AbstraxionBackend {
   }
 
   /**
-   * Handle authorization callback
-   * Store session key with permissions and associate with user account
+   * Handle authorization callback from frontend SDK
+   * Process the granted/granter parameters and store session key
    */
   async handleCallback(request: CallbackRequest): Promise<CallbackResponse> {
     // Validate input parameters
     if (!request.userId) {
       throw new UserIdRequiredError();
     }
-    if (!request.code) {
-      throw new AuthorizationCodeRequiredError();
+    if (!request.granter) {
+      throw new GranterRequiredError();
     }
     if (!request.state) {
       throw new StateRequiredError();
@@ -123,6 +145,8 @@ export class AbstraxionBackend {
       const stateData = this.stateStore.get<{
         userId: string;
         timestamp: number;
+        sessionKeyAddress: string;
+        permissions?: Permissions;
       }>(request.state);
       if (!stateData) {
         throw new InvalidStateError(request.state);
@@ -133,25 +157,55 @@ export class AbstraxionBackend {
         throw new InvalidStateError(request.state);
       }
 
+      // Check if authorization was granted
+      if (!request.granted) {
+        // Clean up used state
+        this.stateStore.del(request.state);
+        return {
+          success: false,
+          error: "Authorization was not granted by user",
+        };
+      }
+
       // Clean up used state
       this.stateStore.del(request.state);
 
-      // Exchange authorization code for session key and permissions
-      const { sessionKey, permissions, metaAccountAddress } =
-        await this.exchangeCodeForSessionKey(request.code, request.state);
+      // Get the session key info that was stored during connectInit
+      const sessionKeyInfo = await this.sessionKeyManager.getSessionKeyInfo(
+        request.userId,
+      );
+      if (!sessionKeyInfo) {
+        throw new Error("Session key not found for user");
+      }
 
-      // Store session key with permissions
+      // Decrypt the session key
+      const sessionKey = await this.sessionKeyManager.getSessionKey(
+        request.userId,
+      );
+      if (!sessionKey) {
+        throw new Error("Failed to decrypt session key");
+      }
+
+      // Create permissions from the stored state or default permissions
+      const permissions: Permissions = stateData.permissions || {
+        contracts: [],
+        bank: [],
+        stake: false,
+        treasury: this.config.treasury,
+      };
+
+      // Store session key with permissions and granter address
       await this.sessionKeyManager.storeSessionKey(
         request.userId,
         sessionKey,
         permissions,
-        metaAccountAddress,
+        request.granter, // Use granter as metaAccountAddress
       );
 
       return {
         success: true,
         sessionKeyAddress: sessionKey.address,
-        metaAccountAddress,
+        metaAccountAddress: request.granter,
         permissions,
       };
     } catch (error) {
@@ -286,6 +340,7 @@ export class AbstraxionBackend {
 
   /**
    * Build authorization URL for dashboard
+   * This matches the frontend SDK's configureUrlAndRedirect method
    */
   private buildAuthorizationUrl(
     sessionKeyAddress: string,
@@ -294,12 +349,14 @@ export class AbstraxionBackend {
   ): string {
     const url = new URL(this.config.dashboardUrl);
 
-    // Add required parameters
+    // Add required parameters (matching frontend SDK)
     url.searchParams.set("grantee", sessionKeyAddress);
-    url.searchParams.set("state", state);
-    url.searchParams.set("redirect_uri", this.getCallbackUrl());
+    url.searchParams.set("redirect_uri", this.config.redirectUrl);
 
-    // Add optional permissions
+    // Add treasury parameter (required by frontend SDK)
+    url.searchParams.set("treasury", this.config.treasury);
+
+    // Add optional permissions (matching frontend SDK format)
     if (permissions) {
       if (permissions.contracts) {
         url.searchParams.set(
@@ -313,52 +370,17 @@ export class AbstraxionBackend {
       if (permissions.stake) {
         url.searchParams.set("stake", "true");
       }
-      if (permissions.treasury) {
-        url.searchParams.set("treasury", permissions.treasury);
-      }
     }
 
     return url.toString();
   }
 
   /**
-   * Exchange authorization code for session key and permissions
-   * This would typically involve calling the dashboard API
-   */
-  private async exchangeCodeForSessionKey(
-    code: string,
-    state: string,
-  ): Promise<{
-    sessionKey: SessionKey;
-    permissions: Permissions;
-    metaAccountAddress: string;
-  }> {
-    // This is a placeholder implementation
-    // In production, this would call the dashboard API to exchange the code
-    // for the actual session key and permissions
-
-    // For now, return mock data
-    const sessionKey = await this.sessionKeyManager.generateSessionKey();
-    const permissions: Permissions = {
-      contracts: [],
-      bank: [],
-      stake: false,
-    };
-    const metaAccountAddress = "xion1mockmetaaccountaddress";
-
-    return {
-      sessionKey,
-      permissions,
-      metaAccountAddress,
-    };
-  }
-
-  /**
    * Get callback URL for OAuth flow
+   * This is the URL that the frontend SDK will redirect to after authorization
    */
   private getCallbackUrl(): string {
-    // This should be configured based on your application
-    return `${this.config.dashboardUrl}/callback`;
+    return this.config.redirectUrl;
   }
 
   /**

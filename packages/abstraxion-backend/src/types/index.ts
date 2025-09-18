@@ -27,7 +27,10 @@ export interface SessionKey {
 }
 
 export interface Permissions {
-  contracts?: string[]; // allowed contract addresses
+  contracts?: Array<
+    | string
+    | { address: string; amounts: Array<{ denom: string; amount: string }> }
+  >; // contract grants
   bank?: Array<{ denom: string; amount: string }>; // spending limits
   stake?: boolean; // staking permissions
   treasury?: string; // treasury contract address
@@ -41,9 +44,10 @@ export interface ConnectionInitResponse {
 }
 
 export interface CallbackRequest {
-  code: string;
-  state: string;
+  granted: boolean;
+  granter: string;
   userId: string;
+  state: string;
 }
 
 export interface CallbackResponse {
@@ -135,6 +139,8 @@ export enum AuditAction {
 export interface AbstraxionBackendConfig {
   rpcUrl: string;
   dashboardUrl: string;
+  redirectUrl: string; // URL to redirect to after connection
+  treasury: string; // treasury contract address
   encryptionKey: string; // Base64 encoded AES-256 key
   databaseAdapter: DatabaseAdapter;
   sessionKeyExpiryMs?: number; // Default: 24 hours

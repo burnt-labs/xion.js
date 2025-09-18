@@ -78,9 +78,15 @@ export class DashboardUrlRequiredError extends ConfigurationError {
   }
 }
 
-export class AuthorizationCodeRequiredError extends AbstraxionBackendError {
+export class RedirectUrlRequiredError extends ConfigurationError {
   constructor() {
-    super("Authorization code is required", "AUTHORIZATION_CODE_REQUIRED", 400);
+    super("Redirect URL is required", "REDIRECT_URL_REQUIRED");
+  }
+}
+
+export class TreasuryRequiredError extends ConfigurationError {
+  constructor() {
+    super("Treasury is required", "TREASURY_REQUIRED");
   }
 }
 
@@ -157,5 +163,11 @@ export class SessionKeyExpirationError extends AbstraxionBackendError {
       "SESSION_KEY_EXPIRATION_ERROR",
       500,
     );
+  }
+}
+
+export class GranterRequiredError extends AbstraxionBackendError {
+  constructor() {
+    super("Granter address is required", "GRANTER_REQUIRED", 400);
   }
 }
