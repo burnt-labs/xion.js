@@ -1,12 +1,7 @@
 import { SessionKeyManager } from "../services/SessionKeyManager";
 import { TestDatabaseAdapter } from "./TestDatabaseAdapter";
 import { EncryptionService } from "../services/EncryptionService";
-import {
-  SessionState,
-  AuditAction,
-  SessionKeyInfo,
-  AuditEvent,
-} from "../types";
+import { SessionState, AuditAction } from "../types";
 
 describe("SessionKeyManager", () => {
   let sessionKeyManager: SessionKeyManager;

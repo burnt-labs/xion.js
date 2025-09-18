@@ -38,7 +38,7 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
       sessionKeyAddress: updates.sessionKeyAddress,
       sessionKeyMaterial: updates.sessionKeyMaterial,
       sessionKeyExpiry: updates.sessionKeyExpiry,
-      sessionPermissions: [],
+      sessionPermissions: {},
       sessionState: SessionState.PENDING,
       metaAccountAddress: "",
       createdAt: new Date(),
