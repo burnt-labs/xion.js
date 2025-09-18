@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
@@ -9,9 +9,35 @@ import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";
 
 export default function UILessPage(): JSX.Element {
-  const { data: account, login, logout, isConnecting } = useAbstraxionAccount();
+  // Direct consumption - no intermediate state
+  const { data: account, login, logout, isConnecting, isConnected } = useAbstraxionAccount();
   const { client } = useAbstraxionSigningClient();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showUI, setShowUI] = useState(false);
+
+  // After isConnecting resolves to false, wait 1s then show UI
+  useEffect(() => {
+    if (!isConnecting && !isLoggingIn) {
+      const timer = setTimeout(() => {
+        setShowUI(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowUI(false);
+    }
+  }, [isConnecting, isLoggingIn]);
+
+  // Debug logging to understand state transitions - Shows a race condition between isconnecting and isconnected and account address
+  useEffect(() => {
+    console.log('AUTH STATE:', {
+      isConnecting,
+      isConnected,
+      account,
+      hasAccount: !!account?.bech32Address,
+      accountAddress: account?.bech32Address,
+      isLoggingIn,
+    });
+  }, [isConnecting, isConnected, account, isLoggingIn]);
 
   const handleLogin = async () => {
     try {
@@ -24,21 +50,8 @@ export default function UILessPage(): JSX.Element {
     }
   };
 
-  if (isLoggingIn) {
-    return (
-      <main className="m-auto flex min-h-screen max-w-xs flex-col items-center justify-center gap-4 p-4">
-        <div className="rounded border border-white/20 p-6 text-center">
-          <p className="font-bold">You are being redirected...</p>
-          <p className="text-sm">
-            This is a custom loading UI - you can style this however you want!
-          </p>
-          <div className="mt-4">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  // Show loading until timer completes and we're ready to show UI
+  const shouldShowLoading = !showUI;
 
   return (
     <main className="m-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 p-4">
@@ -51,42 +64,58 @@ export default function UILessPage(): JSX.Element {
         returns to the app.
       </p>
 
-      <div className="w-full space-y-4">
-        <Button
-          fullWidth
-          onClick={handleLogin}
-          structure="base"
-          disabled={isConnecting}
-        >
-          {account.bech32Address ? (
-            <div className="flex items-center justify-center">
-              Connected: {account.bech32Address.slice(0, 10)}...
+      {shouldShowLoading ? (
+        <div className="w-full flex justify-center">
+          <div className="rounded border border-white/20 p-6 text-center">
+            <p className="font-bold">
+              {isConnecting || isLoggingIn ? "Completing authentication..." : "Loading..."}
+            </p>
+            <p className="text-sm">
+              {isConnecting || isLoggingIn ? "Processing your login..." : "Please wait..."}
+            </p>
+            <div className="mt-4">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
             </div>
-          ) : isConnecting ? (
-            "LOADING..."
-          ) : (
-            "CONNECT WALLET"
+          </div>
+        </div>
+      ) : (
+        <div className="w-full space-y-4">
+          <Button
+            fullWidth
+            onClick={handleLogin}
+            structure="base"
+            disabled={isLoggingIn}
+          >
+            {isConnected && account?.bech32Address ? (
+              <div className="flex items-center justify-center">
+                Connected: {account.bech32Address.slice(0, 10)}...
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                "CONNECT WALLET"
+              </div>
+            )}
+          </Button>
+
+          {isConnected && account?.bech32Address && (
+            <>
+              <div className="rounded border border-white/20 p-4">
+                <h3 className="mb-2 font-semibold">Account Info</h3>
+                <p className="text-sm text-gray-400">
+                  Address: {account?.bech32Address}
+                </p>
+                <p className="text-sm text-gray-400">
+                  Client: {client ? "Connected" : "Not connected"}
+                </p>
+              </div>
+
+              <Button fullWidth onClick={() => logout()} structure="outlined">
+                DISCONNECT
+              </Button>
+            </>
           )}
-        </Button>
-
-        {account.bech32Address && (
-          <>
-            <div className="rounded border border-white/20 p-4">
-              <h3 className="mb-2 font-semibold">Account Info</h3>
-              <p className="text-sm text-gray-400">
-                Address: {account.bech32Address}
-              </p>
-              <p className="text-sm text-gray-400">
-                Client: {client ? "Connected" : "Not connected"}
-              </p>
-            </div>
-
-            <Button fullWidth onClick={() => logout()} structure="outlined">
-              DISCONNECT
-            </Button>
-          </>
-        )}
-      </div>
+        </div>
+      )}
 
       <Link
         href="/"
