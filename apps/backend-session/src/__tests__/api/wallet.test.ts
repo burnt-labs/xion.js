@@ -9,6 +9,17 @@ import { getAbstraxionBackend } from "@/lib/abstraxion-backend";
 import { prisma } from "@/lib/database";
 import { execSync } from "child_process";
 
+// ensure all environment variables are set
+if (!process.env.XION_RPC_URL) {
+  process.env.XION_RPC_URL = "https://rpc.xion-testnet.burnt.com";
+}
+if (!process.env.XION_DASHBOARD_URL) {
+  process.env.XION_DASHBOARD_URL = "https://dashboard.xion-testnet.burnt.com";
+}
+if (!process.env.ENCRYPTION_KEY) {
+  process.env.ENCRYPTION_KEY = "your-base64-encoded-aes-256-key-here";
+}
+
 describe("Wallet API", () => {
   beforeAll(async () => {
     // Setup test database using Prisma commands
