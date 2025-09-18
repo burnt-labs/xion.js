@@ -41,7 +41,7 @@ export const POST = createApiWrapper(
     schemaType: "body",
     rateLimit: "normal",
     allowedMethods: ["POST"],
-  }
+  },
 );
 ```
 
@@ -63,7 +63,7 @@ export const POST = createWalletApiWrapper(
     schemaType: "body",
     rateLimit: "strict",
     allowedMethods: ["POST"],
-  }
+  },
 );
 ```
 
@@ -79,7 +79,7 @@ export const GET = createHealthApiWrapper(
   },
   {
     allowedMethods: ["GET"],
-  }
+  },
 );
 ```
 
@@ -92,7 +92,9 @@ All API responses follow this structure:
 ```json
 {
   "success": true,
-  "data": { /* your data */ },
+  "data": {
+    /* your data */
+  },
   "message": "Optional message",
   "timestamp": "2024-01-01T00:00:00.000Z"
 }

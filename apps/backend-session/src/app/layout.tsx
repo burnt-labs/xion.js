@@ -1,12 +1,13 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Backend Session - XION Wallet Connection',
-  description: 'Backend API for XION wallet connection management with session keys',
+  title: "Backend Session - XION Wallet Connection",
+  description:
+    "Backend API for XION wallet connection management with session keys",
 };
 
 export default function RootLayout({

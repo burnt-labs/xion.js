@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@burnt-labs/ui';
-import { Input } from '@burnt-labs/ui';
+import { useState, useEffect } from "react";
+import { Button } from "@burnt-labs/ui";
+import { Input } from "@burnt-labs/ui";
 
 interface WalletStatus {
   connected: boolean;
@@ -20,7 +20,7 @@ interface WalletStatus {
 }
 
 export default function HomePage() {
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [walletStatus, setWalletStatus] = useState<WalletStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ export default function HomePage() {
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    const savedUsername = localStorage.getItem('username');
+    const savedUsername = localStorage.getItem("username");
     if (savedUsername) {
       setUsername(savedUsername);
       setIsLoggedIn(true);
@@ -38,35 +38,37 @@ export default function HomePage() {
 
   const handleLogin = () => {
     if (!username.trim()) {
-      setError('Please enter a username');
+      setError("Please enter a username");
       return;
     }
     setIsLoggedIn(true);
-    localStorage.setItem('username', username);
+    localStorage.setItem("username", username);
     checkWalletStatus(username);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    setUsername('');
+    setUsername("");
     setWalletStatus(null);
-    localStorage.removeItem('username');
+    localStorage.removeItem("username");
   };
 
   const checkWalletStatus = async (user: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/wallet/status?username=${encodeURIComponent(user)}`);
+      const response = await fetch(
+        `/api/wallet/status?username=${encodeURIComponent(user)}`,
+      );
       const data = await response.json();
-      
+
       if (data.success) {
         setWalletStatus(data.data);
       } else {
-        setError(data.error || 'Failed to check wallet status');
+        setError(data.error || "Failed to check wallet status");
       }
     } catch (err) {
-      setError('Network error while checking wallet status');
+      setError("Network error while checking wallet status");
     } finally {
       setLoading(false);
     }
@@ -74,14 +76,14 @@ export default function HomePage() {
 
   const handleConnect = async () => {
     if (!username) return;
-    
+
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/wallet/connect', {
-        method: 'POST',
+      const response = await fetch("/api/wallet/connect", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           username,
@@ -92,9 +94,9 @@ export default function HomePage() {
           },
         }),
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         // In a real implementation, you would redirect to the authorization URL
         // For demo purposes, we'll just show the URL
@@ -104,10 +106,10 @@ export default function HomePage() {
           checkWalletStatus(username);
         }, 2000);
       } else {
-        setError(data.error || 'Failed to initiate wallet connection');
+        setError(data.error || "Failed to initiate wallet connection");
       }
     } catch (err) {
-      setError('Network error while connecting wallet');
+      setError("Network error while connecting wallet");
     } finally {
       setLoading(false);
     }
@@ -115,40 +117,40 @@ export default function HomePage() {
 
   const handleDisconnect = async () => {
     if (!username) return;
-    
+
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/wallet/disconnect', {
-        method: 'DELETE',
+      const response = await fetch("/api/wallet/disconnect", {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username }),
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setWalletStatus(null);
       } else {
-        setError(data.error || 'Failed to disconnect wallet');
+        setError(data.error || "Failed to disconnect wallet");
       }
     } catch (err) {
-      setError('Network error while disconnecting wallet');
+      setError("Network error while disconnecting wallet");
     } finally {
       setLoading(false);
     }
   };
 
   const formatTimestamp = (timestamp?: number) => {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) return "N/A";
     return new Date(timestamp).toLocaleString();
   };
 
-  const formatPermissions = (permissions?: WalletStatus['permissions']) => {
-    if (!permissions) return 'None';
-    
+  const formatPermissions = (permissions?: WalletStatus["permissions"]) => {
+    if (!permissions) return "None";
+
     const parts: string[] = [];
     if (permissions.contracts && permissions.contracts.length > 0) {
       parts.push(`Contracts: ${permissions.contracts.length}`);
@@ -157,27 +159,30 @@ export default function HomePage() {
       parts.push(`Bank: ${permissions.bank.length} limits`);
     }
     if (permissions.stake) {
-      parts.push('Staking enabled');
+      parts.push("Staking enabled");
     }
     if (permissions.treasury) {
       parts.push(`Treasury: ${permissions.treasury}`);
     }
-    
-    return parts.length > 0 ? parts.join(', ') : 'None';
+
+    return parts.length > 0 ? parts.join(", ") : "None";
   };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">
+      <div className="mx-auto max-w-4xl px-4">
+        <div className="rounded-lg bg-white p-6 shadow-lg">
+          <h1 className="mb-8 text-3xl font-bold text-gray-900">
             XION Backend Session Management
           </h1>
-          
+
           {!isLoggedIn ? (
             <div className="space-y-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="username"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
                   Username
                 </label>
                 <Input
@@ -195,7 +200,7 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
                     Welcome, {username}
@@ -204,69 +209,81 @@ export default function HomePage() {
                     Manage your XION wallet connection
                   </p>
                 </div>
-                <Button onClick={handleLogout}>
-                  Logout
-                </Button>
+                <Button onClick={handleLogout}>Logout</Button>
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                <div className="rounded-md border border-red-200 bg-red-50 p-4">
                   <p className="text-red-800">{error}</p>
                 </div>
               )}
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <div className="rounded-lg bg-gray-50 p-4">
+                <h3 className="mb-4 text-lg font-medium text-gray-900">
                   Wallet Connection Status
                 </h3>
-                
+
                 {loading ? (
                   <p className="text-gray-600">Loading...</p>
                 ) : walletStatus ? (
                   <div className="space-y-3">
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-700 w-32">Status:</span>
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        walletStatus.connected 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {walletStatus.connected ? 'Connected' : 'Disconnected'}
+                      <span className="w-32 font-medium text-gray-700">
+                        Status:
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-1 text-sm ${
+                          walletStatus.connected
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {walletStatus.connected ? "Connected" : "Disconnected"}
                       </span>
                     </div>
-                    
+
                     {walletStatus.connected && (
                       <>
                         <div className="flex items-center">
-                          <span className="font-medium text-gray-700 w-32">Session Key:</span>
+                          <span className="w-32 font-medium text-gray-700">
+                            Session Key:
+                          </span>
                           <span className="font-mono text-sm text-gray-600">
                             {walletStatus.sessionKeyAddress}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center">
-                          <span className="font-medium text-gray-700 w-32">Meta Account:</span>
+                          <span className="w-32 font-medium text-gray-700">
+                            Meta Account:
+                          </span>
                           <span className="font-mono text-sm text-gray-600">
                             {walletStatus.metaAccountAddress}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center">
-                          <span className="font-medium text-gray-700 w-32">Expires:</span>
+                          <span className="w-32 font-medium text-gray-700">
+                            Expires:
+                          </span>
                           <span className="text-sm text-gray-600">
                             {formatTimestamp(walletStatus.expiresAt)}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center">
-                          <span className="font-medium text-gray-700 w-32">State:</span>
+                          <span className="w-32 font-medium text-gray-700">
+                            State:
+                          </span>
                           <span className="text-sm text-gray-600">
-                            {walletStatus.state || 'N/A'}
+                            {walletStatus.state || "N/A"}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-start">
-                          <span className="font-medium text-gray-700 w-32">Permissions:</span>
+                          <span className="w-32 font-medium text-gray-700">
+                            Permissions:
+                          </span>
                           <span className="text-sm text-gray-600">
                             {formatPermissions(walletStatus.permissions)}
                           </span>
@@ -280,24 +297,26 @@ export default function HomePage() {
               </div>
 
               <div className="flex space-x-4">
-                <Button 
-                  onClick={handleConnect} 
+                <Button
+                  onClick={handleConnect}
                   disabled={loading || walletStatus?.connected}
                   className="flex-1"
                 >
-                  {walletStatus?.connected ? 'Already Connected' : 'Connect Wallet'}
+                  {walletStatus?.connected
+                    ? "Already Connected"
+                    : "Connect Wallet"}
                 </Button>
-                
-                <Button 
-                  onClick={handleDisconnect} 
+
+                <Button
+                  onClick={handleDisconnect}
                   disabled={loading || !walletStatus?.connected}
                   className="flex-1"
                 >
                   Disconnect Wallet
                 </Button>
-                
-                <Button 
-                  onClick={() => checkWalletStatus(username)} 
+
+                <Button
+                  onClick={() => checkWalletStatus(username)}
                   disabled={loading}
                 >
                   Refresh Status
