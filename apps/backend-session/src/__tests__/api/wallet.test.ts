@@ -1,10 +1,25 @@
+// Ensure we're using the test database
+process.env.DATABASE_URL = "file:./test.db";
+
 import { NextRequest } from "next/server";
 import { POST as connectHandler } from "@/app/api/wallet/connect/route";
-import { prisma } from "@/lib/database";
 import { SessionState } from "@burnt-labs/abstraxion-backend";
 import { getAbstraxionBackend } from "@/lib/abstraxion-backend";
+import { prisma } from "@/lib/database";
+import { execSync } from "child_process";
 
 describe("Wallet API", () => {
+  beforeAll(async () => {
+    // Setup test database using Prisma commands
+    try {
+      execSync("npx prisma generate", { stdio: "pipe" });
+      execSync("npx prisma db push --force-reset", { stdio: "pipe" });
+    } catch (error) {
+      console.error("Failed to setup test database:", error);
+      throw error;
+    }
+  });
+
   beforeEach(async () => {
     // Clean up database before each test
     await prisma.sessionKey.deleteMany();
@@ -15,6 +30,21 @@ describe("Wallet API", () => {
     // Clean up after each test
     await prisma.sessionKey.deleteMany();
     await prisma.user.deleteMany();
+  });
+
+  afterAll(async () => {
+    // Close Prisma connection
+    await prisma.$disconnect();
+
+    // Clean up test database
+    try {
+      const fs = require("fs");
+      if (fs.existsSync("./test.db")) {
+        fs.unlinkSync("./test.db");
+      }
+    } catch (error) {
+      console.error("Failed to cleanup test database:", error);
+    }
   });
 
   describe("POST /api/wallet/connect", () => {
