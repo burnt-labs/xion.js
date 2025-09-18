@@ -1,5 +1,6 @@
 // Ensure we're using the test database
-process.env.DATABASE_URL = "file:./test.db";
+const testDBUrl = "file:./test.db";
+process.env.DATABASE_URL = testDBUrl;
 
 import { NextRequest } from "next/server";
 import { POST as connectHandler } from "@/app/api/wallet/connect/route";
@@ -12,8 +13,14 @@ describe("Wallet API", () => {
   beforeAll(async () => {
     // Setup test database using Prisma commands
     try {
-      execSync("npx prisma generate", { stdio: "pipe" });
-      execSync("npx prisma db push --force-reset", { stdio: "pipe" });
+      execSync("npx prisma generate", {
+        stdio: "pipe",
+        env: { ...process.env, DATABASE_URL: testDBUrl },
+      });
+      execSync("npx prisma db push --force-reset", {
+        stdio: "pipe",
+        env: { ...process.env, DATABASE_URL: testDBUrl },
+      });
     } catch (error) {
       console.error("Failed to setup test database:", error);
       throw error;
