@@ -20,7 +20,10 @@ npm install @burnt-labs/abstraxion-backend
 ## Quick Start
 
 ```typescript
-import { AbstraxionBackend, DatabaseAdapter } from "@burnt-labs/abstraxion-backend";
+import {
+  AbstraxionBackend,
+  DatabaseAdapter,
+} from "@burnt-labs/abstraxion-backend";
 
 // Create your own database adapter
 class MyDatabaseAdapter implements DatabaseAdapter {
