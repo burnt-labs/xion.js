@@ -19,6 +19,12 @@ if (!process.env.XION_DASHBOARD_URL) {
 if (!process.env.ENCRYPTION_KEY) {
   process.env.ENCRYPTION_KEY = "your-base64-encoded-aes-256-key-here";
 }
+if (!process.env.XION_REDIRECT_URL) {
+  process.env.XION_REDIRECT_URL = "http://localhost:3000/api/wallet/callback";
+}
+if (!process.env.XION_TREASURY) {
+  process.env.XION_TREASURY = "xion1treasury123...";
+}
 
 describe("Wallet API", () => {
   beforeAll(async () => {
