@@ -10,14 +10,15 @@ export const dynamic = "force-dynamic";
 export const POST = createWalletApiWrapper(
   async (context: ApiContext & { validatedData: any; user: any }) => {
     const { validatedData, user } = context;
-    const { code, state } = validatedData;
+    const { granted, granter, state } = validatedData;
 
     // Get AbstraxionBackend instance
     const abstraxionBackend = getAbstraxionBackend();
 
     // Handle callback
     const result = await abstraxionBackend.handleCallback({
-      code,
+      granted,
+      granter,
       state,
       userId: user.id,
     });

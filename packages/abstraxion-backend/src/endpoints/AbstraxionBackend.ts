@@ -9,19 +9,8 @@ import {
   DisconnectResponse,
   Permissions,
   SessionKey,
-  InvalidStateError,
-  SessionKeyNotFoundError,
-  UnknownError,
-  AbstraxionBackendError,
-  UserIdRequiredError,
-  EncryptionKeyRequiredError,
-  DatabaseAdapterRequiredError,
-  DashboardUrlRequiredError,
-  RedirectUrlRequiredError,
-  TreasuryRequiredError,
-  StateRequiredError,
-  GranterRequiredError,
 } from "../types";
+import * as e from "../types/errors";
 import { SessionKeyManager } from "../services/SessionKeyManager";
 
 export class AbstraxionBackend {
@@ -31,19 +20,19 @@ export class AbstraxionBackend {
   constructor(private readonly config: AbstraxionBackendConfig) {
     // Validate configuration
     if (!config.encryptionKey) {
-      throw new EncryptionKeyRequiredError();
+      throw new e.EncryptionKeyRequiredError();
     }
     if (!config.databaseAdapter) {
-      throw new DatabaseAdapterRequiredError();
+      throw new e.DatabaseAdapterRequiredError();
     }
     if (!config.redirectUrl) {
-      throw new RedirectUrlRequiredError();
+      throw new e.RedirectUrlRequiredError();
     }
     if (!config.dashboardUrl) {
-      throw new DashboardUrlRequiredError();
+      throw new e.DashboardUrlRequiredError();
     }
     if (!config.treasury) {
-      throw new TreasuryRequiredError();
+      throw new e.TreasuryRequiredError();
     }
 
     // Initialize node-cache with 10 minutes TTL and automatic cleanup
@@ -71,7 +60,7 @@ export class AbstraxionBackend {
   ): Promise<ConnectionInitResponse> {
     // Validate input parameters
     if (!userId) {
-      throw new UserIdRequiredError();
+      throw new e.UserIdRequiredError();
     }
 
     try {
@@ -115,10 +104,10 @@ export class AbstraxionBackend {
         state,
       };
     } catch (error) {
-      if (error instanceof AbstraxionBackendError) {
+      if (error instanceof e.AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(
+      throw new e.UnknownError(
         `Failed to initiate connection: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -131,13 +120,13 @@ export class AbstraxionBackend {
   async handleCallback(request: CallbackRequest): Promise<CallbackResponse> {
     // Validate input parameters
     if (!request.userId) {
-      throw new UserIdRequiredError();
+      throw new e.UserIdRequiredError();
     }
     if (!request.granter) {
-      throw new GranterRequiredError();
+      throw new e.GranterRequiredError();
     }
     if (!request.state) {
-      throw new StateRequiredError();
+      throw new e.StateRequiredError();
     }
 
     try {
@@ -149,12 +138,12 @@ export class AbstraxionBackend {
         permissions?: Permissions;
       }>(request.state);
       if (!stateData) {
-        throw new InvalidStateError(request.state);
+        throw new e.InvalidStateError(request.state);
       }
 
       // Verify user ID matches
       if (stateData.userId !== request.userId) {
-        throw new InvalidStateError(request.state);
+        throw new e.InvalidStateError(request.state);
       }
 
       // Check if authorization was granted
@@ -175,7 +164,7 @@ export class AbstraxionBackend {
         request.userId,
       );
       if (!sessionKeyInfo) {
-        throw new Error("Session key not found for user");
+        throw new e.SessionKeyNotFoundError("Session key not found for user");
       }
 
       // Decrypt the session key
@@ -183,7 +172,7 @@ export class AbstraxionBackend {
         request.userId,
       );
       if (!sessionKey) {
-        throw new Error("Failed to decrypt session key");
+        throw new e.SessionKeyNotFoundError("Session key not found for user");
       }
 
       // Create permissions from the stored state or default permissions
@@ -223,7 +212,7 @@ export class AbstraxionBackend {
   async disconnect(userId: string): Promise<DisconnectResponse> {
     // Validate input parameters
     if (!userId) {
-      throw new UserIdRequiredError();
+      throw new e.UserIdRequiredError();
     }
 
     try {
@@ -256,7 +245,7 @@ export class AbstraxionBackend {
   async checkStatus(userId: string): Promise<StatusResponse> {
     // Validate input parameters
     if (!userId) {
-      throw new UserIdRequiredError();
+      throw new e.UserIdRequiredError();
     }
 
     try {
@@ -304,13 +293,13 @@ export class AbstraxionBackend {
   async getSessionKeyForSigning(userId: string): Promise<SessionKey | null> {
     // Validate input parameters
     if (!userId) {
-      throw new UserIdRequiredError();
+      throw new e.UserIdRequiredError();
     }
 
     try {
       return await this.sessionKeyManager.getSessionKey(userId);
     } catch (error) {
-      if (error instanceof SessionKeyNotFoundError) {
+      if (error instanceof e.SessionKeyNotFoundError) {
         return null;
       }
       throw error;
@@ -323,16 +312,16 @@ export class AbstraxionBackend {
   async refreshSessionKey(userId: string): Promise<SessionKey | null> {
     // Validate input parameters
     if (!userId) {
-      throw new UserIdRequiredError();
+      throw new e.UserIdRequiredError();
     }
 
     try {
       return await this.sessionKeyManager.refreshIfNeeded(userId);
     } catch (error) {
-      if (error instanceof AbstraxionBackendError) {
+      if (error instanceof e.AbstraxionBackendError) {
         throw error;
       }
-      throw new UnknownError(
+      throw new e.UnknownError(
         `Failed to refresh session key: ${error instanceof Error ? error.message : String(error)}`,
       );
     }

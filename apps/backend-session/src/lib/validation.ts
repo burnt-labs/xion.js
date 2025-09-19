@@ -23,6 +23,7 @@ export const connectWalletSchema = z.object({
 export const callbackSchema = z.object({
   granted: z.boolean(),
   granter: z.string(),
+  state: z.string(),
 });
 
 export const disconnectSchema = z.object({

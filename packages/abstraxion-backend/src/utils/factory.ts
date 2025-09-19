@@ -8,9 +8,6 @@ import { EncryptionService } from "../services/EncryptionService";
 export function createAbstraxionBackend(
   config: AbstraxionBackendConfig,
 ): AbstraxionBackend {
-  // Validate required configuration
-  validateConfig(config);
-
   // Validate encryption key
   if (!EncryptionService.validateEncryptionKey(config.encryptionKey)) {
     throw new Error(
@@ -18,19 +15,20 @@ export function createAbstraxionBackend(
     );
   }
 
-  return new AbstraxionBackend(config);
-}
-
-/**
- * Validate configuration object
- */
-function validateConfig(config: AbstraxionBackendConfig): void {
   if (!config.rpcUrl) {
     throw new Error("RPC URL is required");
   }
 
   if (!config.dashboardUrl) {
     throw new Error("Dashboard URL is required");
+  }
+
+  if (!config.redirectUrl) {
+    throw new Error("Redirect URL is required");
+  }
+
+  if (!config.treasury) {
+    throw new Error("Treasury is required");
   }
 
   if (!config.encryptionKey) {
@@ -70,22 +68,27 @@ function validateConfig(config: AbstraxionBackendConfig): void {
   ) {
     throw new Error("Refresh threshold must be less than session key expiry");
   }
+  return new AbstraxionBackend(config);
 }
 
 /**
  * Create a default configuration with sensible defaults
  */
 export function createDefaultConfig(
-  rpcUrl: string,
-  dashboardUrl: string,
+  treasury: string,
   encryptionKey: string,
   databaseAdapter: DatabaseAdapter,
+  redirectUrl: string,
+  rpcUrl?: string,
+  dashboardUrl?: string,
 ): AbstraxionBackendConfig {
   return {
-    rpcUrl,
-    dashboardUrl,
+    treasury,
     encryptionKey,
     databaseAdapter,
+    redirectUrl,
+    rpcUrl: rpcUrl || "https://rpc.xion-testnet.burnt.com",
+    dashboardUrl: dashboardUrl || "https://dashboard.xion-testnet.burnt.com",
     sessionKeyExpiryMs: 24 * 60 * 60 * 1000, // 24 hours
     refreshThresholdMs: 60 * 60 * 1000, // 1 hour
     enableAuditLogging: true,
