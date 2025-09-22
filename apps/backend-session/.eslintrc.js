@@ -4,6 +4,7 @@ module.exports = {
   rules: {
     "no-console": ["error", { allow: ["warn", "error"] }],
     "no-alert": "off",
+    "import/no-default-export": "off",
   },
   env: {
     node: true,
@@ -13,4 +14,5 @@ module.exports = {
     ecmaVersion: 2022,
     sourceType: "module",
   },
+  ignorePatterns: ["node_modules/", "dist/", ".next/"],
 };

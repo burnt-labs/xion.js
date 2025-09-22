@@ -215,6 +215,49 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
     }
   }
 
+  async storeKVPair(userId: string, key: string, value: string): Promise<void> {
+    await this.prisma.kVStore.upsert({
+      where: {
+        userId_key: {
+          userId,
+          key,
+        },
+      },
+      update: {
+        value,
+      },
+      create: {
+        userId,
+        key,
+        value,
+      },
+    });
+  }
+
+  async getKVPair(userId: string, key: string): Promise<string | null> {
+    const kvPair = await this.prisma.kVStore.findUnique({
+      where: {
+        userId_key: {
+          userId,
+          key,
+        },
+      },
+    });
+
+    return kvPair?.value || null;
+  }
+
+  async removeKVPair(userId: string, key: string): Promise<void> {
+    await this.prisma.kVStore.delete({
+      where: {
+        userId_key: {
+          userId,
+          key,
+        },
+      },
+    });
+  }
+
   async close(): Promise<void> {
     await this.prisma.$disconnect();
   }
