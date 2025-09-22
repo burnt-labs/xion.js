@@ -86,7 +86,6 @@ export interface DatabaseAdapter {
 
   // Store a session key
   storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void>;
-
   // Add a new pending session key
   addNewPendingSessionKey(
     userId: string,
@@ -107,6 +106,13 @@ export interface DatabaseAdapter {
       >
     >,
   ): Promise<void>;
+
+  // Store KV pair based on userId and key
+  storeKVPair(userId: string, key: string, value: string): Promise<void>;
+  // Get KV pair based on userId and key
+  getKVPair(userId: string, key: string): Promise<string | null>;
+  // Remove KV pair based on userId and key
+  removeKVPair(userId: string, key: string): Promise<void>;
 
   // Audit logging
   logAuditEvent(event: AuditEvent): Promise<void>;

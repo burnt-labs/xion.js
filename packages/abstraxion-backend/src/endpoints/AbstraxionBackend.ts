@@ -1,5 +1,7 @@
 import { randomBytes } from "node:crypto";
 import NodeCache from "node-cache";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
 import {
   AbstraxionBackendConfig,
   ConnectionInitResponse,
@@ -12,6 +14,10 @@ import {
 } from "../types";
 import * as e from "../types/errors";
 import { SessionKeyManager } from "../services/SessionKeyManager";
+import {
+  DatabaseRedirectStrategy,
+  DatabaseStorageStrategy,
+} from "../adapters/AbstraxionStategies";
 
 export class AbstraxionBackend {
   public readonly sessionKeyManager: SessionKeyManager;
@@ -238,6 +244,17 @@ export class AbstraxionBackend {
     }
   }
 
+  async createAbstraxionBackendAuth(
+    userId: string,
+    request: IncomingMessage,
+    response: ServerResponse,
+  ): Promise<AbstraxionAuth> {
+    return new AbstraxionAuth(
+      new DatabaseStorageStrategy(userId, this.config.databaseAdapter),
+      new DatabaseRedirectStrategy(request, response),
+    );
+  }
+
   /**
    * Check connection status
    * Return wallet address and permissions
@@ -284,25 +301,6 @@ export class AbstraxionBackend {
       return {
         connected: false,
       };
-    }
-  }
-
-  /**
-   * Get session key for signing operations
-   */
-  async getSessionKeyForSigning(userId: string): Promise<SessionKey | null> {
-    // Validate input parameters
-    if (!userId) {
-      throw new e.UserIdRequiredError();
-    }
-
-    try {
-      return await this.sessionKeyManager.getSessionKey(userId);
-    } catch (error) {
-      if (error instanceof e.SessionKeyNotFoundError) {
-        return null;
-      }
-      throw error;
     }
   }
 
@@ -362,14 +360,6 @@ export class AbstraxionBackend {
     }
 
     return url.toString();
-  }
-
-  /**
-   * Get callback URL for OAuth flow
-   * This is the URL that the frontend SDK will redirect to after authorization
-   */
-  private getCallbackUrl(): string {
-    return this.config.redirectUrl;
   }
 
   /**

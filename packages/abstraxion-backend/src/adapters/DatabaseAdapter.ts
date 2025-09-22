@@ -67,6 +67,19 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
    */
   abstract revokeActiveSessionKeys(userId: string): Promise<void>;
 
+  // Store KV pair based on userId and key
+  abstract storeKVPair(
+    userId: string,
+    key: string,
+    value: string,
+  ): Promise<void>;
+
+  // Get KV pair based on userId and key
+  abstract getKVPair(userId: string, key: string): Promise<string | null>;
+
+  // Remove KV pair based on userId and key
+  abstract removeKVPair(userId: string, key: string): Promise<void>;
+
   /**
    * Log audit event
    */
