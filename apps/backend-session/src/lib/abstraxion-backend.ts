@@ -15,9 +15,6 @@ export function getAbstraxionBackend(): AbstraxionBackend {
   if (!process.env.XION_RPC_URL) {
     throw new Error("XION_RPC_URL is not set");
   }
-  if (!process.env.XION_DASHBOARD_URL) {
-    throw new Error("XION_DASHBOARD_URL is not set");
-  }
   if (!process.env.XION_REDIRECT_URL) {
     throw new Error("XION_REDIRECT_URL is not set");
   }
@@ -32,7 +29,6 @@ export function getAbstraxionBackend(): AbstraxionBackend {
 
   const config = {
     rpcUrl: process.env.XION_RPC_URL!,
-    dashboardUrl: process.env.XION_DASHBOARD_URL!,
     redirectUrl: process.env.XION_REDIRECT_URL!,
     treasury: process.env.XION_TREASURY!,
     encryptionKey: process.env.ENCRYPTION_KEY!,

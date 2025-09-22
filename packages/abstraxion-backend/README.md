@@ -41,7 +41,7 @@ const databaseAdapter = new MyDatabaseAdapter();
 
 // Create backend instance
 const backend = new AbstraxionBackend({
-  rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+  rpcUrl: "https://rpc.xion-testnet-2.burnt.com",
   dashboardUrl: "https://dashboard.xion.burnt.com",
   redirectUrl: "https://myapp.com/callback", // Where frontend SDK redirects after auth
   treasury: "xion1treasury123...", // Treasury contract address
@@ -284,7 +284,6 @@ console.log("Store this key securely:", encryptionKey);
 ```bash
 # Required
 ABSTRAXION_RPC_URL=https://rpc.xion-testnet-1.burnt.com
-ABSTRAXION_DASHBOARD_URL=https://settings.testnet.burnt.com
 ABSTRAXION_ENCRYPTION_KEY=your-base64-encoded-key
 
 # Optional

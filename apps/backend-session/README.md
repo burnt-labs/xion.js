@@ -161,8 +161,7 @@ Create a `.env` file in the project root:
 DATABASE_URL="file:./dev.db"
 
 # XION Configuration
-XION_RPC_URL="https://rpc.xion-testnet.burnt.com"
-XION_DASHBOARD_URL="https://dashboard.xion-testnet.burnt.com"
+XION_RPC_URL="https://rpc.xion-testnet-2.burnt.com/"
 
 # Security
 ENCRYPTION_KEY="your-base64-encoded-aes-256-key-here"

@@ -77,7 +77,7 @@ export function createDefaultConfig(
     encryptionKey,
     databaseAdapter,
     redirectUrl,
-    rpcUrl: rpcUrl || "https://rpc.xion-testnet.burnt.com",
+    rpcUrl: rpcUrl || "https://rpc.xion-testnet-2.burnt.com/",
     sessionKeyExpiryMs: 24 * 60 * 60 * 1000, // 24 hours
     refreshThresholdMs: 60 * 60 * 1000, // 1 hour
     enableAuditLogging: true,

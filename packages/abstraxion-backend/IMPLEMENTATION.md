@@ -133,8 +133,7 @@ class MyDatabaseAdapter extends BaseDatabaseAdapter {
 }
 
 const backend = createAbstraxionBackend({
-  rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
-  dashboardUrl: "https://settings.testnet.burnt.com",
+  rpcUrl: "https://rpc.xion-testnet-2.burnt.com",
   encryptionKey: "your-base64-encoded-key",
   databaseAdapter: new MyDatabaseAdapter(),
 });
