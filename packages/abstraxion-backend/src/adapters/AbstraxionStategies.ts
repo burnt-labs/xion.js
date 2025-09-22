@@ -8,19 +8,23 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 export class DatabaseStorageStrategy implements StorageStrategy {
   constructor(
     private userId: string,
+    private granter: string,
     private db: DatabaseAdapter,
   ) {}
 
   async getItem(key: string): Promise<string | null> {
-    return this.db.getKVPair(this.userId, key);
+    const uid = `${this.userId}-${this.granter}`;
+    return this.db.getKVPair(uid, key);
   }
 
   async setItem(key: string, value: string): Promise<void> {
-    this.db.storeKVPair(this.userId, key, value);
+    const uid = `${this.userId}-${this.granter}`;
+    this.db.storeKVPair(uid, key, value);
   }
 
   async removeItem(key: string): Promise<void> {
-    this.db.removeKVPair(this.userId, key);
+    const uid = `${this.userId}-${this.granter}`;
+    this.db.removeKVPair(uid, key);
   }
 }
 

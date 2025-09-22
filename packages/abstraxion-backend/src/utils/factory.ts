@@ -19,10 +19,6 @@ export function createAbstraxionBackend(
     throw new Error("RPC URL is required");
   }
 
-  if (!config.dashboardUrl) {
-    throw new Error("Dashboard URL is required");
-  }
-
   if (!config.redirectUrl) {
     throw new Error("Redirect URL is required");
   }
@@ -44,12 +40,6 @@ export function createAbstraxionBackend(
     new URL(config.rpcUrl);
   } catch {
     throw new Error("Invalid RPC URL format");
-  }
-
-  try {
-    new URL(config.dashboardUrl);
-  } catch {
-    throw new Error("Invalid dashboard URL format");
   }
 
   // Validate optional configuration
@@ -88,7 +78,6 @@ export function createDefaultConfig(
     databaseAdapter,
     redirectUrl,
     rpcUrl: rpcUrl || "https://rpc.xion-testnet.burnt.com",
-    dashboardUrl: dashboardUrl || "https://dashboard.xion-testnet.burnt.com",
     sessionKeyExpiryMs: 24 * 60 * 60 * 1000, // 24 hours
     refreshThresholdMs: 60 * 60 * 1000, // 1 hour
     enableAuditLogging: true,

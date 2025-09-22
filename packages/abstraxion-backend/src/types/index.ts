@@ -144,7 +144,6 @@ export enum AuditAction {
 // Configuration interfaces
 export interface AbstraxionBackendConfig {
   rpcUrl: string;
-  dashboardUrl: string;
   redirectUrl: string; // URL to redirect to after connection
   treasury: string; // treasury contract address
   encryptionKey: string; // Base64 encoded AES-256 key

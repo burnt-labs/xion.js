@@ -18,6 +18,7 @@ import {
   DatabaseRedirectStrategy,
   DatabaseStorageStrategy,
 } from "../adapters/AbstraxionStategies";
+import { fetchConfig } from "@burnt-labs/constants";
 
 export class AbstraxionBackend {
   public readonly sessionKeyManager: SessionKeyManager;
@@ -33,9 +34,6 @@ export class AbstraxionBackend {
     }
     if (!config.redirectUrl) {
       throw new e.RedirectUrlRequiredError();
-    }
-    if (!config.dashboardUrl) {
-      throw new e.DashboardUrlRequiredError();
     }
     if (!config.treasury) {
       throw new e.TreasuryRequiredError();
@@ -98,7 +96,7 @@ export class AbstraxionBackend {
       );
 
       // Build authorization URL
-      const authorizationUrl = this.buildAuthorizationUrl(
+      const authorizationUrl = await this.buildAuthorizationUrl(
         sessionKey.address,
         state,
         permissions,
@@ -246,11 +244,12 @@ export class AbstraxionBackend {
 
   async createAbstraxionBackendAuth(
     userId: string,
+    granter: string,
     request: IncomingMessage,
     response: ServerResponse,
   ): Promise<AbstraxionAuth> {
     return new AbstraxionAuth(
-      new DatabaseStorageStrategy(userId, this.config.databaseAdapter),
+      new DatabaseStorageStrategy(userId, granter, this.config.databaseAdapter),
       new DatabaseRedirectStrategy(request, response),
     );
   }
@@ -329,12 +328,13 @@ export class AbstraxionBackend {
    * Build authorization URL for dashboard
    * This matches the frontend SDK's configureUrlAndRedirect method
    */
-  private buildAuthorizationUrl(
+  private async buildAuthorizationUrl(
     sessionKeyAddress: string,
     state: string,
     permissions?: Permissions,
-  ): string {
-    const url = new URL(this.config.dashboardUrl);
+  ): Promise<string> {
+    const { dashboardUrl } = await fetchConfig(this.config.rpcUrl);
+    const url = new URL(dashboardUrl);
 
     // Add required parameters (matching frontend SDK)
     url.searchParams.set("grantee", sessionKeyAddress);

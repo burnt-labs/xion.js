@@ -72,12 +72,6 @@ export class DatabaseAdapterRequiredError extends ConfigurationError {
   }
 }
 
-export class DashboardUrlRequiredError extends ConfigurationError {
-  constructor() {
-    super("Dashboard URL is required", "DASHBOARD_URL_REQUIRED");
-  }
-}
-
 export class RedirectUrlRequiredError extends ConfigurationError {
   constructor() {
     super("Redirect URL is required", "REDIRECT_URL_REQUIRED");
