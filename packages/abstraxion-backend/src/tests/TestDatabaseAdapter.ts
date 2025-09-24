@@ -7,12 +7,22 @@ import { SessionKeyInfo, AuditEvent, SessionState } from "../types";
  */
 export class TestDatabaseAdapter extends BaseDatabaseAdapter {
   private sessionKeys: Map<string, SessionKeyInfo[]> = new Map();
-  private kvPairs: Map<string, string> = new Map();
   private auditLogs: AuditEvent[] = [];
 
   async getLastSessionKey(userId: string): Promise<SessionKeyInfo | null> {
     const userKeys = this.sessionKeys.get(userId) || [];
     return userKeys.length > 0 ? userKeys[userKeys.length - 1] : null;
+  }
+
+  async getSessionKey(
+    userId: string,
+    sessionKeyAddress: string,
+  ): Promise<SessionKeyInfo | null> {
+    const userKeys = this.sessionKeys.get(userId) || [];
+    return (
+      userKeys.find((key) => key.sessionKeyAddress === sessionKeyAddress) ||
+      null
+    );
   }
 
   async getActiveSessionKeys(userId: string): Promise<SessionKeyInfo[]> {
@@ -127,18 +137,5 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
   async close(): Promise<void> {
     this.sessionKeys.clear();
     this.auditLogs = [];
-  }
-
-  // Helper methods for testing
-  async storeKVPair(userId: string, key: string, value: string): Promise<void> {
-    this.kvPairs.set(`${userId}-${key}`, value);
-  }
-
-  async getKVPair(userId: string, key: string): Promise<string | null> {
-    return this.kvPairs.get(`${userId}-${key}`) || null;
-  }
-
-  async removeKVPair(userId: string, key: string): Promise<void> {
-    this.kvPairs.delete(`${userId}-${key}`);
   }
 }

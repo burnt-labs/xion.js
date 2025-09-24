@@ -333,7 +333,7 @@ CREATE TABLE audit_logs (
 import {
   AbstraxionBackendError,
   SessionKeyNotFoundError,
-  SessionKeyExpiredError,
+  SessionKeyInvalidError,
   InvalidStateError,
   EncryptionError,
 } from "@burnt-labs/abstraxion-backend";
@@ -343,7 +343,7 @@ try {
 } catch (error) {
   if (error instanceof SessionKeyNotFoundError) {
     // Handle session key not found
-  } else if (error instanceof SessionKeyExpiredError) {
+  } else if (error instanceof SessionKeyInvalidError) {
     // Handle expired session key
   } else if (error instanceof InvalidStateError) {
     // Handle invalid OAuth state

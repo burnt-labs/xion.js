@@ -19,10 +19,9 @@ export interface SessionKeyInfo {
   updatedAt?: Date; // timestamp of when the session key was last updated
 }
 
-export interface SessionKey {
+export interface XionKeypair {
   address: string;
-  privateKey: string; // unencrypted private key
-  publicKey: string;
+  serializedKeypair: string; // encoded serialized keypair
   mnemonic?: string; // optional mnemonic for key derivation
 }
 
@@ -74,9 +73,13 @@ export interface DisconnectResponse {
 
 // Database adapter interfaces
 export interface DatabaseAdapter {
-  // Session key operations
   // Get the last session key for a user
   getLastSessionKey(userId: string): Promise<SessionKeyInfo | null>;
+  // Get the session key for a user by sessionKeyAddress
+  getSessionKey(
+    userId: string,
+    sessionKeyAddress: string,
+  ): Promise<SessionKeyInfo | null>;
   // Get the active session keys for a user
   getActiveSessionKeys(userId: string): Promise<SessionKeyInfo[]>;
   // Revoke a specific session key by userId and sessionKeyAddress
@@ -108,13 +111,6 @@ export interface DatabaseAdapter {
       >
     >,
   ): Promise<void>;
-
-  // Store KV pair based on userId and key
-  storeKVPair(userId: string, key: string, value: string): Promise<void>;
-  // Get KV pair based on userId and key
-  getKVPair(userId: string, key: string): Promise<string | null>;
-  // Remove KV pair based on userId and key
-  removeKVPair(userId: string, key: string): Promise<void>;
 
   // Audit logging
   logAuditEvent(event: AuditEvent): Promise<void>;

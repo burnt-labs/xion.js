@@ -22,6 +22,14 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
   ): Promise<SessionKeyInfo | null>;
 
   /**
+   * Get the session key for a user by sessionKeyAddress
+   */
+  public abstract getSessionKey(
+    userId: string,
+    sessionKeyAddress: string,
+  ): Promise<SessionKeyInfo | null>;
+
+  /**
    * Get the active session key for a user
    */
   public abstract getActiveSessionKeys(
@@ -69,22 +77,6 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
       >
     >,
   ): Promise<void>;
-
-  // Store KV pair based on userId and key
-  public abstract storeKVPair(
-    userId: string,
-    key: string,
-    value: string,
-  ): Promise<void>;
-
-  // Get KV pair based on userId and key
-  public abstract getKVPair(
-    userId: string,
-    key: string,
-  ): Promise<string | null>;
-
-  // Remove KV pair based on userId and key
-  public abstract removeKVPair(userId: string, key: string): Promise<void>;
 
   /**
    * Log audit event

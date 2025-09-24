@@ -1,14 +1,13 @@
 import { randomBytes } from "node:crypto";
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
 import {
   SessionKeyInfo,
-  SessionKey,
+  XionKeypair,
   Permissions,
   SessionState,
   DatabaseAdapter,
   AuditAction,
   AuditEvent,
-  SessionKeyExpiredError,
   AbstraxionBackendError,
   UserIdRequiredError,
   SessionKeyGenerationError,
@@ -16,11 +15,13 @@ import {
   SessionKeyRetrievalError,
   SessionKeyRevocationError,
   SessionKeyRefreshError,
+  SessionKeyNotFoundError,
+  SessionKeyInvalidError,
 } from "../types";
 import { EncryptionService } from "./EncryptionService";
 
 export class SessionKeyManager {
-  private readonly encryptionService: EncryptionService;
+  public readonly encryptionService: EncryptionService;
   private readonly sessionKeyExpiryMs: number;
   private readonly refreshThresholdMs: number;
 
@@ -39,9 +40,9 @@ export class SessionKeyManager {
   }
 
   /**
-   * Retrieve and decrypt active session key
+   * Get session key info without decrypting
    */
-  async getSessionKey(userId: string): Promise<SessionKey | null> {
+  async getLastSessionKeyInfo(userId: string): Promise<SessionKeyInfo | null> {
     // Validate input parameters
     if (!userId) {
       throw new UserIdRequiredError();
@@ -55,15 +56,31 @@ export class SessionKeyManager {
         return null;
       }
 
-      // Check if session key is expired
+      // Check if expired
       if (this.isExpired(sessionKeyInfo)) {
-        await this.markAsExpired(userId);
-        throw new SessionKeyExpiredError(userId);
+        await this.markAsExpired(sessionKeyInfo);
+        return null;
       }
 
-      // Check if session key is active
-      if (sessionKeyInfo.sessionState !== SessionState.ACTIVE) {
-        return null;
+      return sessionKeyInfo;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Retrieve and decrypt active session key
+   */
+  async getSessionKeypair(
+    user: string | SessionKeyInfo,
+  ): Promise<SignArbSecp256k1HdWallet> {
+    try {
+      const sessionKeyInfo =
+        typeof user === "string"
+          ? await this.getLastSessionKeyInfo(user)
+          : user;
+      if (!sessionKeyInfo) {
+        throw new SessionKeyNotFoundError("Session key not found for user");
       }
 
       // Decrypt the private key
@@ -73,15 +90,18 @@ export class SessionKeyManager {
         );
 
       // Log audit event
-      await this.logAuditEvent(userId, AuditAction.SESSION_KEY_ACCESSED, {
-        sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
-      });
+      await this.logAuditEvent(
+        sessionKeyInfo.userId,
+        AuditAction.SESSION_KEY_ACCESSED,
+        {
+          sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
+        },
+      );
 
-      return {
-        address: sessionKeyInfo.sessionKeyAddress,
-        privateKey: decryptedPrivateKey,
-        publicKey: "", // Will be derived from private key when needed
-      };
+      return SignArbSecp256k1HdWallet.deserialize(
+        decryptedPrivateKey,
+        "abstraxion",
+      );
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
         throw error;
@@ -93,111 +113,19 @@ export class SessionKeyManager {
   }
 
   /**
-   * Store encrypted session key with permissions
-   */
-  async storeSessionKey(
-    userId: string,
-    sessionKey: SessionKey,
-    permissions: Permissions,
-    metaAccountAddress: string,
-  ): Promise<void> {
-    // Validate input parameters
-    if (!userId) {
-      throw new UserIdRequiredError();
-    }
-
-    try {
-      // Check existing session key
-      const existingSessionKey =
-        await this.databaseAdapter.getLastSessionKey(userId);
-
-      // Encrypt the private key
-      const encryptedPrivateKey =
-        await this.encryptionService.encryptSessionKey(sessionKey.privateKey);
-
-      // Calculate expiry time
-      const now = Date.now();
-      const expiryTime = new Date(now + this.sessionKeyExpiryMs);
-
-      if (existingSessionKey?.sessionState === SessionState.ACTIVE) {
-        // update permissions (do not update meta account address)
-        await this.databaseAdapter.updateSessionKeyWithParams(
-          userId,
-          sessionKey.address,
-          {
-            sessionPermissions: permissions,
-          },
-        );
-
-        // Log audit event
-        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_UPDATED, {
-          sessionKeyAddress: sessionKey.address,
-          permissions,
-        });
-      } else if (existingSessionKey?.sessionState === SessionState.PENDING) {
-        // Update existing PENDING session key
-        await this.databaseAdapter.updateSessionKeyWithParams(
-          userId,
-          sessionKey.address,
-          {
-            sessionState: SessionState.ACTIVE,
-            metaAccountAddress,
-            sessionPermissions: permissions,
-          },
-        );
-
-        // Log audit event
-        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_UPDATED, {
-          sessionKeyAddress: sessionKey.address,
-          metaAccountAddress,
-          permissions,
-          previousState: SessionState.PENDING,
-        });
-      } else {
-        // No existing session key or expired or revoked, create new one as ACTIVE
-        await this.databaseAdapter.addNewSessionKey(
-          userId,
-          {
-            sessionKeyAddress: sessionKey.address,
-            sessionKeyMaterial: encryptedPrivateKey,
-            sessionKeyExpiry: expiryTime,
-          },
-          {
-            sessionPermissions: permissions,
-            metaAccountAddress,
-          },
-        );
-
-        // Log audit event
-        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_CREATED, {
-          sessionKeyAddress: sessionKey.address,
-          metaAccountAddress,
-          permissions,
-          expiryTime,
-        });
-      }
-    } catch (error) {
-      if (error instanceof AbstraxionBackendError) {
-        throw error;
-      }
-      throw new SessionKeyStorageError(
-        error instanceof Error ? error.message : String(error),
-      );
-    }
-  }
-
-  /**
    * Check expiry and validity
    */
-  async validateSessionKey(userId: string): Promise<boolean> {
+  async validateSessionKey(user: string | SessionKeyInfo): Promise<boolean> {
     // Validate input parameters
-    if (!userId) {
+    if (!user) {
       throw new UserIdRequiredError();
     }
 
     try {
       const sessionKeyInfo =
-        await this.databaseAdapter.getLastSessionKey(userId);
+        typeof user === "string"
+          ? await this.getLastSessionKeyInfo(user)
+          : user;
 
       if (!sessionKeyInfo) {
         return false;
@@ -205,7 +133,7 @@ export class SessionKeyManager {
 
       // Check if expired
       if (this.isExpired(sessionKeyInfo)) {
-        await this.markAsExpired(userId);
+        await this.markAsExpired(sessionKeyInfo);
         return false;
       }
 
@@ -269,7 +197,7 @@ export class SessionKeyManager {
       const activeSessionKeys =
         await this.databaseAdapter.getActiveSessionKeys(userId);
 
-      if (activeSessionKeys) {
+      if (activeSessionKeys && activeSessionKeys.length > 0) {
         for (const key of activeSessionKeys) {
           // Log audit event
           await this.logAuditEvent(userId, AuditAction.SESSION_KEY_REVOKED, {
@@ -277,10 +205,10 @@ export class SessionKeyManager {
             reason: "All active session keys revoked",
           });
         }
-      }
 
-      // Delete all active session keys from database
-      await this.databaseAdapter.revokeActiveSessionKeys(userId);
+        // Delete all active session keys from database
+        await this.databaseAdapter.revokeActiveSessionKeys(userId);
+      }
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
         throw error;
@@ -294,7 +222,7 @@ export class SessionKeyManager {
   /**
    * Refresh if near expiry
    */
-  async refreshIfNeeded(userId: string): Promise<SessionKey | null> {
+  async refreshIfNeeded(userId: string): Promise<XionKeypair | null> {
     // Validate input parameters
     if (!userId) {
       throw new UserIdRequiredError();
@@ -314,17 +242,18 @@ export class SessionKeyManager {
 
       if (timeUntilExpiry <= this.refreshThresholdMs) {
         // Generate new session key
-        const newSessionKey = await this.generateSessionKey();
-        this.createPendingSessionKey(
-          userId,
-          newSessionKey,
-          sessionKeyInfo.metaAccountAddress,
-        );
+        const newSessionKey = await this.generateSessionKeypair();
+        this.createPendingSessionKey(userId, newSessionKey);
         return newSessionKey;
       }
 
       // Return existing session key
-      return await this.getSessionKey(userId);
+      return {
+        address: sessionKeyInfo.sessionKeyAddress,
+        serializedKeypair: await this.encryptionService.decryptSessionKey(
+          sessionKeyInfo.sessionKeyMaterial,
+        ),
+      };
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
         throw error;
@@ -336,53 +265,22 @@ export class SessionKeyManager {
   }
 
   /**
-   * Get session key info without decrypting
-   */
-  async getSessionKeyInfo(userId: string): Promise<SessionKeyInfo | null> {
-    // Validate input parameters
-    if (!userId) {
-      throw new UserIdRequiredError();
-    }
-
-    try {
-      const sessionKeyInfo =
-        await this.databaseAdapter.getLastSessionKey(userId);
-
-      if (!sessionKeyInfo) {
-        return null;
-      }
-
-      // Check if expired
-      if (this.isExpired(sessionKeyInfo)) {
-        await this.markAsExpired(userId);
-        return null;
-      }
-
-      return sessionKeyInfo;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  /**
    * Generate a new session key
    */
-  async generateSessionKey(): Promise<SessionKey> {
+  async generateSessionKeypair(): Promise<XionKeypair> {
     try {
-      // Generate wallet directly with default HD path
-      const wallet = await DirectSecp256k1HdWallet.generate(12, {
+      const keypair = await SignArbSecp256k1HdWallet.generate(12, {
         prefix: "xion",
       });
+      const serializedKeypair = await keypair.serialize("abstraxion");
 
       // Get account info
-      const accounts = await wallet.getAccounts();
+      const accounts = await keypair.getAccounts();
       const account = accounts[0];
 
       return {
         address: account.address,
-        privateKey: "", // Will be extracted from wallet when needed
-        publicKey: Buffer.from(account.pubkey).toString("base64"),
-        mnemonic: wallet.mnemonic,
+        serializedKeypair,
       };
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
@@ -399,8 +297,7 @@ export class SessionKeyManager {
    */
   async createPendingSessionKey(
     userId: string,
-    sessionKey: SessionKey,
-    metaAccountAddress: string,
+    sessionKey: XionKeypair,
   ): Promise<void> {
     // Validate input parameters
     if (!userId) {
@@ -410,7 +307,9 @@ export class SessionKeyManager {
     try {
       // Encrypt the private key
       const encryptedPrivateKey =
-        await this.encryptionService.encryptSessionKey(sessionKey.privateKey);
+        await this.encryptionService.encryptSessionKey(
+          sessionKey.serializedKeypair,
+        );
 
       // Calculate expiry time
       const now = Date.now();
@@ -426,7 +325,6 @@ export class SessionKeyManager {
       // Log audit event
       await this.logAuditEvent(userId, AuditAction.SESSION_KEY_CREATED, {
         sessionKeyAddress: sessionKey.address,
-        metaAccountAddress,
         state: SessionState.PENDING,
         expiryTime,
       });
@@ -441,34 +339,108 @@ export class SessionKeyManager {
   }
 
   /**
+   * Store encrypted session key with permissions
+   */
+  async storeGrantedSessionKey(
+    userId: string,
+    sessionAddress: string,
+    granterAddress: string,
+    permissions?: Permissions,
+  ): Promise<void> {
+    // Validate input parameters
+    if (!userId) {
+      throw new UserIdRequiredError();
+    }
+
+    try {
+      // Check existing session key
+      const existingSessionKey = await this.databaseAdapter.getSessionKey(
+        userId,
+        sessionAddress,
+      );
+
+      if (!existingSessionKey) {
+        throw new SessionKeyNotFoundError(
+          `Session key not found for user: ${userId}, session address: ${sessionAddress}`,
+        );
+      }
+
+      if (existingSessionKey.sessionState === SessionState.PENDING) {
+        // Update existing PENDING session key
+        await this.databaseAdapter.updateSessionKeyWithParams(
+          userId,
+          sessionAddress,
+          {
+            sessionState: SessionState.ACTIVE,
+            metaAccountAddress: granterAddress,
+            sessionPermissions: permissions,
+          },
+        );
+
+        // Log audit event
+        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_UPDATED, {
+          sessionKeyAddress: sessionAddress,
+          metaAccountAddress: granterAddress,
+          permissions,
+          previousState: SessionState.PENDING,
+        });
+      } else {
+        throw new SessionKeyInvalidError(
+          `Session key invalid for user: ${userId}, it should be pending instead of ${existingSessionKey.sessionState}`,
+        );
+      }
+    } catch (error) {
+      if (error instanceof AbstraxionBackendError) {
+        throw error;
+      }
+      throw new SessionKeyStorageError(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  /**
    * Check if session key is expired
    */
-  private isExpired(sessionKeyInfo: SessionKeyInfo): boolean {
-    return Date.now() > sessionKeyInfo.sessionKeyExpiry.getTime();
+  public isExpired(sessionKeyInfo: SessionKeyInfo): boolean {
+    return (
+      (sessionKeyInfo.sessionState === SessionState.ACTIVE &&
+        Date.now() > sessionKeyInfo.sessionKeyExpiry.getTime()) ||
+      sessionKeyInfo.sessionState === SessionState.EXPIRED
+    );
+  }
+
+  /**
+   * Check if session key is active
+   */
+  public isActive(sessionKeyInfo: SessionKeyInfo): boolean {
+    return (
+      sessionKeyInfo.sessionState === SessionState.ACTIVE &&
+      Date.now() <= sessionKeyInfo.sessionKeyExpiry.getTime()
+    );
   }
 
   /**
    * Mark session key as expired
    */
-  private async markAsExpired(userId: string): Promise<void> {
+  private async markAsExpired(sessionKeyInfo: SessionKeyInfo): Promise<void> {
     try {
-      const sessionKeyInfo =
-        await this.databaseAdapter.getLastSessionKey(userId);
+      await this.databaseAdapter.updateSessionKeyWithParams(
+        sessionKeyInfo.userId,
+        sessionKeyInfo.sessionKeyAddress,
+        {
+          sessionState: SessionState.EXPIRED,
+        },
+      );
 
-      if (sessionKeyInfo) {
-        await this.databaseAdapter.updateSessionKeyWithParams(
-          userId,
-          sessionKeyInfo.sessionKeyAddress,
-          {
-            sessionState: SessionState.EXPIRED,
-          },
-        );
-
-        // Log audit event
-        await this.logAuditEvent(userId, AuditAction.SESSION_KEY_EXPIRED, {
+      // Log audit event
+      await this.logAuditEvent(
+        sessionKeyInfo.userId,
+        AuditAction.SESSION_KEY_EXPIRED,
+        {
           sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
-        });
-      }
+        },
+      );
     } catch (error) {
       // Log error but don't throw to avoid breaking the main flow
       console.error(

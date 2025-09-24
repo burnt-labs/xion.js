@@ -32,11 +32,11 @@ export class SessionKeyNotFoundError extends AbstraxionBackendError {
   }
 }
 
-export class SessionKeyExpiredError extends AbstraxionBackendError {
+export class SessionKeyInvalidError extends AbstraxionBackendError {
   constructor(userId: string) {
     super(
-      `Session key expired for user: ${userId}`,
-      "SESSION_KEY_EXPIRED",
+      `Session key invalid for user: ${userId}`,
+      "SESSION_KEY_INVALID",
       401,
     );
   }
@@ -163,5 +163,17 @@ export class SessionKeyExpirationError extends AbstraxionBackendError {
 export class GranterRequiredError extends AbstraxionBackendError {
   constructor() {
     super("Granter address is required", "GRANTER_REQUIRED", 400);
+  }
+}
+
+export class InvalidStorageKeyError extends AbstraxionBackendError {
+  constructor(key: string) {
+    super(`Invalid storage key: ${key}`, "INVALID_STORAGE_KEY", 400);
+  }
+}
+
+export class InvalidMethodError extends AbstraxionBackendError {
+  constructor(method: string) {
+    super(`Invalid method: ${method}`, "INVALID_METHOD", 400);
   }
 }

@@ -10,7 +10,7 @@ import {
   StatusResponse,
   DisconnectResponse,
   Permissions,
-  SessionKey,
+  XionKeypair,
 } from "../types";
 import * as e from "../types/errors";
 import { SessionKeyManager } from "../services/SessionKeyManager";
@@ -69,7 +69,7 @@ export class AbstraxionBackend {
 
     try {
       // Generate session key
-      const sessionKey = await this.sessionKeyManager.generateSessionKey();
+      const sessionKey = await this.sessionKeyManager.generateSessionKeypair();
 
       // Generate OAuth state parameter for security
       const state = randomBytes(32).toString("hex");
@@ -89,11 +89,7 @@ export class AbstraxionBackend {
       });
 
       // Store the session key temporarily (as PENDING) for later retrieval
-      await this.sessionKeyManager.createPendingSessionKey(
-        userId,
-        sessionKey,
-        "", // metaAccountAddress will be set during callback
-      );
+      await this.sessionKeyManager.createPendingSessionKey(userId, sessionKey);
 
       // Build authorization URL
       const authorizationUrl = await this.buildAuthorizationUrl(
@@ -164,18 +160,10 @@ export class AbstraxionBackend {
       this.stateStore.del(request.state);
 
       // Get the session key info that was stored during connectInit
-      const sessionKeyInfo = await this.sessionKeyManager.getSessionKeyInfo(
+      const sessionKeyInfo = await this.sessionKeyManager.getLastSessionKeyInfo(
         request.userId,
       );
       if (!sessionKeyInfo) {
-        throw new e.SessionKeyNotFoundError("Session key not found for user");
-      }
-
-      // Decrypt the session key
-      const sessionKey = await this.sessionKeyManager.getSessionKey(
-        request.userId,
-      );
-      if (!sessionKey) {
         throw new e.SessionKeyNotFoundError("Session key not found for user");
       }
 
@@ -188,16 +176,16 @@ export class AbstraxionBackend {
       };
 
       // Store session key with permissions and granter address
-      await this.sessionKeyManager.storeSessionKey(
+      await this.sessionKeyManager.storeGrantedSessionKey(
         request.userId,
-        sessionKey,
-        permissions,
+        sessionKeyInfo.sessionKeyAddress,
         request.granter, // Use granter as metaAccountAddress
+        permissions,
       );
 
       return {
         success: true,
-        sessionKeyAddress: sessionKey.address,
+        sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
         metaAccountAddress: request.granter,
         permissions,
       };
@@ -222,7 +210,7 @@ export class AbstraxionBackend {
     try {
       // Get session key info first
       const sessionKeyInfo =
-        await this.sessionKeyManager.getSessionKeyInfo(userId);
+        await this.sessionKeyManager.getLastSessionKeyInfo(userId);
 
       if (sessionKeyInfo) {
         await this.sessionKeyManager.revokeSessionKey(
@@ -244,13 +232,12 @@ export class AbstraxionBackend {
 
   async createAbstraxionBackendAuth(
     userId: string,
-    granter: string,
     request: IncomingMessage,
-    response: ServerResponse,
+    onDirectMethod?: (url: string) => Promise<void>,
   ): Promise<AbstraxionAuth> {
     return new AbstraxionAuth(
-      new DatabaseStorageStrategy(userId, granter, this.config.databaseAdapter),
-      new DatabaseRedirectStrategy(request, response),
+      new DatabaseStorageStrategy(userId, this.sessionKeyManager),
+      new DatabaseRedirectStrategy(request, onDirectMethod),
     );
   }
 
@@ -266,7 +253,7 @@ export class AbstraxionBackend {
 
     try {
       const sessionKeyInfo =
-        await this.sessionKeyManager.getSessionKeyInfo(userId);
+        await this.sessionKeyManager.getLastSessionKeyInfo(userId);
 
       if (!sessionKeyInfo) {
         return {
@@ -306,7 +293,7 @@ export class AbstraxionBackend {
   /**
    * Refresh session key if needed
    */
-  async refreshSessionKey(userId: string): Promise<SessionKey | null> {
+  async refreshSessionKey(userId: string): Promise<XionKeypair | null> {
     // Validate input parameters
     if (!userId) {
       throw new e.UserIdRequiredError();
