@@ -230,15 +230,25 @@ export class AbstraxionBackend {
     }
   }
 
-  async createAbstraxionBackendAuth(
+  async startAbstraxionBackendAuth(
     userId: string,
     request: IncomingMessage,
-    onDirectMethod?: (url: string) => Promise<void>,
+    onRedirectMethod?: (url: string) => Promise<void>,
   ): Promise<AbstraxionAuth> {
-    return new AbstraxionAuth(
+    const activeSessionKey =
+      await this.sessionKeyManager.getLastSessionKeyInfo(userId);
+    if (
+      !activeSessionKey ||
+      !this.sessionKeyManager.isActive(activeSessionKey)
+    ) {
+      throw new e.SessionKeyNotFoundError("Session key not found for user");
+    }
+    const authz = new AbstraxionAuth(
       new DatabaseStorageStrategy(userId, this.sessionKeyManager),
-      new DatabaseRedirectStrategy(request, onDirectMethod),
+      new DatabaseRedirectStrategy(request, onRedirectMethod),
     );
+    await authz.login();
+    return authz;
   }
 
   /**
@@ -322,6 +332,9 @@ export class AbstraxionBackend {
   ): Promise<string> {
     const { dashboardUrl } = await fetchConfig(this.config.rpcUrl);
     const url = new URL(dashboardUrl);
+
+    // Add state parameter
+    url.searchParams.set("state", state);
 
     // Add required parameters (matching frontend SDK)
     url.searchParams.set("grantee", sessionKeyAddress);

@@ -10,7 +10,7 @@ import {
   SessionKeyInvalidError,
   SessionKeyNotFoundError,
 } from "../types/errors";
-import { SessionState } from "@/types";
+import { SessionState } from "../types";
 
 export class DatabaseStorageStrategy implements StorageStrategy {
   constructor(
@@ -39,7 +39,7 @@ export class DatabaseStorageStrategy implements StorageStrategy {
       throw new InvalidStorageKeyError(`${key}@getItem`);
     }
     const sessionKeyInfo = await this.skManager.getLastSessionKeyInfo(uid);
-    if (!sessionKeyInfo) {
+    if (!sessionKeyInfo || !this.skManager.isActive(sessionKeyInfo)) {
       throw new SessionKeyNotFoundError(uid);
     }
 
@@ -103,10 +103,13 @@ export class DatabaseStorageStrategy implements StorageStrategy {
   }
 }
 
+/**
+ * This strategy is just for backend compatibility with AbstraxionAuth
+ */
 export class DatabaseRedirectStrategy implements RedirectStrategy {
   constructor(
     private request: IncomingMessage,
-    private onDirectMethod?: (url: string) => Promise<void>,
+    private onRedirectMethod?: (url: string) => Promise<void>,
   ) {}
 
   async getCurrentUrl(): Promise<string> {
@@ -116,7 +119,7 @@ export class DatabaseRedirectStrategy implements RedirectStrategy {
   }
 
   async redirect(url: string): Promise<void> {
-    await this.onDirectMethod?.(url);
+    await this.onRedirectMethod?.(url);
   }
 
   async getUrlParameter(param: string): Promise<string | null> {
@@ -126,13 +129,9 @@ export class DatabaseRedirectStrategy implements RedirectStrategy {
     return url.searchParams.get(param);
   }
 
-  async cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
-    if (!this.request.url) return;
-
-    const url = this.getUrl();
-    paramsToRemove.forEach((param) => url.searchParams.delete(param));
-
-    await this.redirect(url.toString());
+  async cleanUrlParameters(_paramsToRemove: string[]): Promise<void> {
+    // DO NOTHING
+    return Promise.resolve();
   }
 
   private getUrl(): URL {
