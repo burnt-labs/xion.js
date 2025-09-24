@@ -84,14 +84,16 @@ export interface DatabaseAdapter {
   // Revoke all active session keys for a user
   revokeActiveSessionKeys(userId: string): Promise<void>;
 
-  // Store a session key
-  storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void>;
   // Add a new pending session key
-  addNewPendingSessionKey(
+  addNewSessionKey(
     userId: string,
     updates: Pick<
       SessionKeyInfo,
       "sessionKeyAddress" | "sessionKeyMaterial" | "sessionKeyExpiry"
+    >,
+    activeState?: Pick<
+      SessionKeyInfo,
+      "metaAccountAddress" | "sessionPermissions"
     >,
   ): Promise<void>;
 
@@ -131,6 +133,7 @@ export interface AuditEvent {
 
 export enum AuditAction {
   SESSION_KEY_CREATED = "SESSION_KEY_CREATED",
+  SESSION_KEY_UPDATED = "SESSION_KEY_UPDATED",
   SESSION_KEY_ACCESSED = "SESSION_KEY_ACCESSED",
   SESSION_KEY_REVOKED = "SESSION_KEY_REVOKED",
   SESSION_KEY_EXPIRED = "SESSION_KEY_EXPIRED",

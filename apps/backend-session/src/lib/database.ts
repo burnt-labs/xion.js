@@ -39,26 +39,6 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
     };
   }
 
-  async storeSessionKey(sessionKeyInfo: SessionKeyInfo): Promise<void> {
-    // First, delete any existing session key for this user
-    await this.prisma.sessionKey.deleteMany({
-      where: { userId: sessionKeyInfo.userId },
-    });
-
-    // Then create the new session key
-    await this.prisma.sessionKey.create({
-      data: {
-        userId: sessionKeyInfo.userId,
-        sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
-        sessionKeyMaterial: sessionKeyInfo.sessionKeyMaterial,
-        sessionKeyExpiry: sessionKeyInfo.sessionKeyExpiry,
-        sessionPermissions: JSON.stringify(sessionKeyInfo.sessionPermissions),
-        sessionState: sessionKeyInfo.sessionState,
-        metaAccountAddress: sessionKeyInfo.metaAccountAddress,
-      },
-    });
-  }
-
   async getLastSessionKey(userId: string): Promise<SessionKeyInfo | null> {
     const sessionKey = await this.prisma.sessionKey.findFirst({
       where: { userId },
@@ -117,26 +97,40 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
     });
   }
 
-  async addNewPendingSessionKey(
+  async addNewSessionKey(
     userId: string,
     updates: Pick<
       SessionKeyInfo,
       "sessionKeyAddress" | "sessionKeyMaterial" | "sessionKeyExpiry"
     >,
+    activeState?: Pick<
+      SessionKeyInfo,
+      "metaAccountAddress" | "sessionPermissions"
+    >,
   ): Promise<void> {
+    const updateData: Prisma.SessionKeyCreateInput = {
+      user: {
+        connect: {
+          id: userId,
+        },
+      },
+      sessionKeyAddress: updates.sessionKeyAddress,
+      sessionKeyMaterial: updates.sessionKeyMaterial,
+      sessionKeyExpiry: updates.sessionKeyExpiry,
+      sessionState: SessionState.PENDING,
+      sessionPermissions: JSON.stringify({}), // Empty permissions for pending state
+      metaAccountAddress: "", // Will be set when activated
+    };
+    if (activeState) {
+      updateData.sessionState = SessionState.ACTIVE;
+      updateData.metaAccountAddress = activeState.metaAccountAddress;
+      updateData.sessionPermissions = JSON.stringify(
+        activeState.sessionPermissions,
+      );
+    }
     // Then create the new pending session key
     await this.prisma.sessionKey.create({
-      data: {
-        userId,
-        sessionKeyAddress: updates.sessionKeyAddress,
-        sessionKeyMaterial: updates.sessionKeyMaterial,
-        sessionKeyExpiry: updates.sessionKeyExpiry,
-        sessionState: SessionState.PENDING,
-        sessionPermissions: JSON.stringify({}), // Empty permissions for pending state
-        metaAccountAddress: "", // Will be set when activated
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
+      data: updateData,
     });
   }
 

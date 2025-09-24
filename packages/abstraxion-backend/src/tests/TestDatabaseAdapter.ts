@@ -7,6 +7,7 @@ import { SessionKeyInfo, AuditEvent, SessionState } from "../types";
  */
 export class TestDatabaseAdapter extends BaseDatabaseAdapter {
   private sessionKeys: Map<string, SessionKeyInfo[]> = new Map();
+  private kvPairs: Map<string, string> = new Map();
   private auditLogs: AuditEvent[] = [];
 
   async getLastSessionKey(userId: string): Promise<SessionKeyInfo | null> {
@@ -25,11 +26,15 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
     this.sessionKeys.set(sessionKeyInfo.userId, userKeys);
   }
 
-  async addNewPendingSessionKey(
+  async addNewSessionKey(
     userId: string,
     updates: Pick<
       SessionKeyInfo,
       "sessionKeyAddress" | "sessionKeyMaterial" | "sessionKeyExpiry"
+    >,
+    activeState?: Pick<
+      SessionKeyInfo,
+      "metaAccountAddress" | "sessionPermissions"
     >,
   ): Promise<void> {
     const userKeys = this.sessionKeys.get(userId) || [];
@@ -44,6 +49,11 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    if (activeState) {
+      newKey.sessionState = SessionState.ACTIVE;
+      newKey.metaAccountAddress = activeState.metaAccountAddress;
+      newKey.sessionPermissions = activeState.sessionPermissions;
+    }
     userKeys.push(newKey);
     this.sessionKeys.set(userId, userKeys);
   }
@@ -120,20 +130,15 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
   }
 
   // Helper methods for testing
-  async getSessionKey(userId: string): Promise<SessionKeyInfo | null> {
-    return this.getLastSessionKey(userId);
+  async storeKVPair(userId: string, key: string, value: string): Promise<void> {
+    this.kvPairs.set(`${userId}-${key}`, value);
   }
 
-  async updateSessionKey(
-    userId: string,
-    updates: Partial<SessionKeyInfo>,
-  ): Promise<void> {
-    const userKeys = this.sessionKeys.get(userId) || [];
-    if (userKeys.length > 0) {
-      const lastKey = userKeys[userKeys.length - 1];
-      const updated = { ...lastKey, ...updates, updatedAt: new Date() };
-      userKeys[userKeys.length - 1] = updated;
-      this.sessionKeys.set(userId, userKeys);
-    }
+  async getKVPair(userId: string, key: string): Promise<string | null> {
+    return this.kvPairs.get(`${userId}-${key}`) || null;
+  }
+
+  async removeKVPair(userId: string, key: string): Promise<void> {
+    this.kvPairs.delete(`${userId}-${key}`);
   }
 }
