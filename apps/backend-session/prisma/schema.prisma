@@ -21,7 +21,6 @@ model User {
   // Relations
   sessionKeys SessionKey[]
   auditLogs   AuditLog[]
-  kvStore     KVStore[]
 
   @@index([username])
   @@index([email])
@@ -69,18 +68,3 @@ model AuditLog {
   @@index([action])
   @@map("audit_logs")
 }
-
-model KVStore {
-  id     String @id @default(cuid())
-  userId String
-  key    String
-  value  String
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, key])
-  @@index([userId])
-  @@map("kv_store")
-}
-
