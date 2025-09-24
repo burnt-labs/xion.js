@@ -52,6 +52,24 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
     return this.parseSessionKeyInfo(sessionKey);
   }
 
+  async getSessionKey(
+    userId: string,
+    sessionKeyAddress: string,
+  ): Promise<SessionKeyInfo | null> {
+    const sessionKey = await this.prisma.sessionKey.findUnique({
+      where: {
+        userId,
+        sessionKeyAddress,
+      },
+    });
+
+    if (!sessionKey) {
+      return null;
+    }
+
+    return this.parseSessionKeyInfo(sessionKey);
+  }
+
   async getActiveSessionKeys(userId: string): Promise<SessionKeyInfo[]> {
     const sessionKeys = await this.prisma.sessionKey.findMany({
       where: {
@@ -207,49 +225,6 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
     } catch {
       return false;
     }
-  }
-
-  async storeKVPair(userId: string, key: string, value: string): Promise<void> {
-    await this.prisma.kVStore.upsert({
-      where: {
-        userId_key: {
-          userId,
-          key,
-        },
-      },
-      update: {
-        value,
-      },
-      create: {
-        userId,
-        key,
-        value,
-      },
-    });
-  }
-
-  async getKVPair(userId: string, key: string): Promise<string | null> {
-    const kvPair = await this.prisma.kVStore.findUnique({
-      where: {
-        userId_key: {
-          userId,
-          key,
-        },
-      },
-    });
-
-    return kvPair?.value || null;
-  }
-
-  async removeKVPair(userId: string, key: string): Promise<void> {
-    await this.prisma.kVStore.delete({
-      where: {
-        userId_key: {
-          userId,
-          key,
-        },
-      },
-    });
   }
 
   async close(): Promise<void> {

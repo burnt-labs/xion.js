@@ -31,7 +31,8 @@ describe("Wallet API", () => {
         stdio: "pipe",
         env: { ...process.env, DATABASE_URL: testDBUrl },
       });
-      execSync("npx prisma db push --force-reset", {
+      // Use db push without force-reset to avoid Prisma's AI safety check
+      execSync("npx prisma db push", {
         stdio: "pipe",
         env: { ...process.env, DATABASE_URL: testDBUrl },
       });
@@ -44,12 +45,14 @@ describe("Wallet API", () => {
   beforeEach(async () => {
     // Clean up database before each test
     await prisma.sessionKey.deleteMany();
+    await prisma.auditLog.deleteMany();
     await prisma.user.deleteMany();
   });
 
   afterEach(async () => {
     // Clean up after each test
     await prisma.sessionKey.deleteMany();
+    await prisma.auditLog.deleteMany();
     await prisma.user.deleteMany();
   });
 
@@ -114,14 +117,10 @@ describe("Wallet API", () => {
       // Get SessionKeyManager instance
       const backend = getAbstraxionBackend();
       const sessionKeyManager = backend.sessionKeyManager;
-      const sessionKey = await sessionKeyManager.generateSessionKey();
+      const sessionKey = await sessionKeyManager.generateSessionKeypair();
 
-      // Create pending session key
-      await sessionKeyManager.createPendingSessionKey(
-        user.id,
-        sessionKey,
-        "meta-account-address",
-      );
+      // Create pending session key (new API only takes userId and sessionKey)
+      await sessionKeyManager.createPendingSessionKey(user.id, sessionKey);
 
       // Verify session key is in PENDING state
       const pendingSessionKey = await prisma.sessionKey.findFirst({
@@ -131,18 +130,18 @@ describe("Wallet API", () => {
       expect(pendingSessionKey?.sessionState).toBe(SessionState.PENDING);
       expect(pendingSessionKey?.sessionPermissions).toBe("{}");
 
-      // Now test storeSessionKey with permissions - should update PENDING to ACTIVE
+      // Now test storeGrantedSessionKey with permissions - should update PENDING to ACTIVE
       const permissions = {
         contracts: ["contract1"],
         bank: [{ denom: "uxion", amount: "1000" }],
         stake: true,
       };
 
-      await sessionKeyManager.storeSessionKey(
+      await sessionKeyManager.storeGrantedSessionKey(
         user.id,
-        sessionKey,
-        permissions,
+        sessionKey.address,
         "meta-account-address",
+        permissions,
       );
 
       // Verify session key is now ACTIVE with permissions
@@ -156,7 +155,7 @@ describe("Wallet API", () => {
       );
     });
 
-    it("should create new ACTIVE session key when no existing session key", async () => {
+    it("should create new PENDING session key and then activate it", async () => {
       // First create a user
       const user = await prisma.user.create({
         data: { username: "testuser2" },
@@ -164,7 +163,17 @@ describe("Wallet API", () => {
 
       // Get SessionKeyManager instance
       const sessionKeyManager = getAbstraxionBackend().sessionKeyManager;
-      const sessionKey = await sessionKeyManager.generateSessionKey();
+      const sessionKey = await sessionKeyManager.generateSessionKeypair();
+
+      // Create pending session key
+      await sessionKeyManager.createPendingSessionKey(user.id, sessionKey);
+
+      // Verify session key is PENDING
+      const pendingSessionKey = await prisma.sessionKey.findFirst({
+        where: { userId: user.id },
+      });
+      expect(pendingSessionKey).toBeTruthy();
+      expect(pendingSessionKey?.sessionState).toBe(SessionState.PENDING);
 
       const permissions = {
         contracts: ["contract2"],
@@ -172,15 +181,15 @@ describe("Wallet API", () => {
         stake: false,
       };
 
-      // Store session key directly - should create as ACTIVE
-      await sessionKeyManager.storeSessionKey(
+      // Activate the session key with permissions
+      await sessionKeyManager.storeGrantedSessionKey(
         user.id,
-        sessionKey,
-        permissions,
+        sessionKey.address,
         "meta-account-address-2",
+        permissions,
       );
 
-      // Verify session key is ACTIVE with permissions
+      // Verify session key is now ACTIVE with permissions
       const activeSessionKey = await prisma.sessionKey.findFirst({
         where: { userId: user.id },
       });
