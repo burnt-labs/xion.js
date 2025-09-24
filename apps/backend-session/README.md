@@ -280,7 +280,6 @@ src/
 ├── lib/
 │   ├── abstraxion-backend.ts # AbstraxionBackend integration
 │   ├── database.ts          # Database adapter
-│   ├── key-rotation.ts      # Key rotation manager
 │   ├── rate-limit.ts        # Rate limiting
 │   ├── security.ts          # Security utilities
 │   └── validation.ts        # Request validation
