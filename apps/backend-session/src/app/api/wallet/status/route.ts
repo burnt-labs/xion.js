@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getAbstraxionBackend } from "@/lib/abstraxion-backend";
+import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
 import { statusSchema } from "@/lib/validation";
 import { createWalletApiWrapper } from "@/lib/api-wrapper";
 import { ApiContext } from "@/lib/api-middleware";

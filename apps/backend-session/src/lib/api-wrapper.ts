@@ -86,7 +86,7 @@ export function createWalletApiWrapper<T = any>(
       // Find user if username is provided
       let user: any = null;
       if (validatedData?.username) {
-        const { prisma } = await import("@/lib/database");
+        const { prisma } = await import("@/lib/xion/database");
         user = await prisma.user.findUnique({
           where: { username: validatedData.username },
         });
@@ -144,7 +144,7 @@ export async function getUserFromRequest(
     throw new ApiException("Username is required", 400, "MISSING_USERNAME");
   }
 
-  const { prisma } = await import("@/lib/database");
+  const { prisma } = await import("@/lib/xion/database");
   const user = await prisma.user.findUnique({
     where: { username },
   });
@@ -160,7 +160,7 @@ export async function getUserFromRequest(
  * Helper function to create or get user
  */
 export async function createOrGetUser(username: string): Promise<any> {
-  const { prisma } = await import("@/lib/database");
+  const { prisma } = await import("@/lib/xion/database");
 
   let user = await prisma.user.findUnique({
     where: { username },

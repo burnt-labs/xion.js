@@ -1,4 +1,4 @@
-import { SecurityManager } from "@/lib/security";
+import { SecurityManager } from "@/lib/xion/security";
 
 describe("SecurityManager", () => {
   const testKey = "test-encryption-key-32-chars-long!";

@@ -5,8 +5,8 @@ process.env.DATABASE_URL = testDBUrl;
 import { NextRequest } from "next/server";
 import { POST as connectHandler } from "@/app/api/wallet/connect/route";
 import { SessionState } from "@burnt-labs/abstraxion-backend";
-import { getAbstraxionBackend } from "@/lib/abstraxion-backend";
-import { prisma } from "@/lib/database";
+import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
+import { prisma } from "@/lib/xion/database";
 import { execSync } from "child_process";
 
 // ensure all environment variables are set

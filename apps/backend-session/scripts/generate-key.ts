@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { SecurityManager } from "../src/lib/security";
+import { SecurityManager } from "../src/lib/xion/security";
 
 console.log("🔑 Generating encryption key...");
 

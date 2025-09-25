@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/database";
+import { prisma } from "@/lib/xion/database";
 import { createHealthApiWrapper } from "@/lib/api-wrapper";
 import { ApiContext } from "@/lib/api-middleware";
 
