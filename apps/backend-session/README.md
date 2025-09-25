@@ -119,6 +119,22 @@ Check connection status and return wallet information.
 }
 ```
 
+### GET /api/health
+
+Health check endpoint to verify service status and database connectivity.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "database": "connected"
+  }
+}
+```
+
 ## Database Schema
 
 ### User
@@ -162,12 +178,15 @@ DATABASE_URL="file:./dev.db"
 
 # XION Configuration
 XION_RPC_URL="https://rpc.xion-testnet-2.burnt.com/"
+XION_REST_URL="https://api.xion-testnet-2.burnt.com/"
+XION_REDIRECT_URL="http://localhost:3000/api/wallet/callback"
+XION_TREASURY="xion1..."
 
 # Security
 ENCRYPTION_KEY="your-base64-encoded-aes-256-key-here"
 
 # Session Configuration
-SESSION_KEY_EXPIRY_MS=86400000
+SESSION_KEY_EXPIRY_MS=864000000 # 10 days
 REFRESH_THRESHOLD_MS=3600000
 
 # Rate Limiting
@@ -183,35 +202,44 @@ RATE_LIMIT_MAX_REQUESTS=100
    pnpm install
    ```
 
-2. **Set up Environment Variables**
+2. **Quick Setup (Recommended)**
 
    ```bash
+   chmod +x scripts/setup.sh
+   ./scripts/setup.sh
+   ```
+
+   This script will:
+   - Create `.env` file from template
+   - Generate encryption key
+   - Install dependencies
+   - Set up database
+   - Seed with sample data
+
+3. **Manual Setup (Alternative)**
+
+   ```bash
+   # Set up Environment Variables
    cp env.example .env
    # Edit .env with your configuration
-   ```
 
-3. **Generate Encryption Key**
-
-   ```bash
+   # Generate Encryption Key
    pnpm run generate-key
-   ```
 
-4. **Set up Database**
-
-   ```bash
+   # Set up Database
    pnpm run db:build
    pnpm run db:push
    pnpm run db:seed
    ```
 
-5. **Start Development Server**
+4. **Start Development Server**
 
    ```bash
    pnpm run dev
    ```
 
-6. **Open Application**
-   Navigate to `http://localhost:3002`
+5. **Open Application**
+   Navigate to `http://localhost:3000`
 
 ## Scripts
 
@@ -253,6 +281,14 @@ RATE_LIMIT_MAX_REQUESTS=100
 - IP address and user agent tracking
 - Detailed event logging with timestamps
 
+### API Middleware
+
+- Centralized API middleware for common functionality
+- Request validation using Zod schemas
+- Standardized error handling and response formatting
+- Rate limiting with configurable strictness levels
+- User authentication and authorization helpers
+
 ## Testing
 
 The project includes comprehensive tests for:
@@ -273,12 +309,17 @@ pnpm run test
 ```text
 src/
 ├── app/
-│   ├── api/wallet/          # API endpoints
+│   ├── api/
+│   │   ├── health/          # Health check endpoint
+│   │   └── wallet/          # Wallet API endpoints
 │   ├── globals.css          # Global styles
 │   ├── layout.tsx           # Root layout
 │   └── page.tsx             # Main page
 ├── lib/
 │   ├── abstraxion-backend.ts # AbstraxionBackend integration
+│   ├── api-middleware.ts    # API middleware utilities
+│   ├── api-response.ts      # Standardized API responses
+│   ├── api-wrapper.ts       # API wrapper functions
 │   ├── database.ts          # Database adapter
 │   ├── rate-limit.ts        # Rate limiting
 │   ├── security.ts          # Security utilities
@@ -291,9 +332,13 @@ src/
 - **NextJS 14**: React framework
 - **Prisma**: Database ORM
 - **@burnt-labs/abstraxion-backend**: XION backend library
+- **@burnt-labs/abstraxion-core**: XION core utilities
+- **@burnt-labs/constants**: Shared constants
+- **@burnt-labs/ui**: UI component library
 - **Zod**: Schema validation
 - **Rate Limiter Flexible**: Rate limiting
 - **Jest**: Testing framework
+- **tsx**: TypeScript execution for scripts
 
 ## License
 
