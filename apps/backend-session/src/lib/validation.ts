@@ -18,10 +18,11 @@ export const connectWalletSchema = z.object({
       expiry: z.number().optional(),
     })
     .optional(),
+  grantedRedirectUrl: z.string().url().optional(),
 });
 
 export const callbackSchema = z.object({
-  granted: z.boolean(),
+  granted: z.string().transform((val) => val === "true"),
   granter: z.string(),
   state: z.string(),
 });

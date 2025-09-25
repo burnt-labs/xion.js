@@ -1,15 +1,18 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAbstraxionBackend } from "@/lib/abstraxion-backend";
 import { callbackSchema } from "@/lib/validation";
-import { createWalletApiWrapper } from "@/lib/api-wrapper";
+import {
+  createWalletApiWrapper,
+  handleRedirectResponse,
+} from "@/lib/api-wrapper";
 import { ApiContext } from "@/lib/api-middleware";
 import { ApiException } from "@/lib/api-response";
 
 export const dynamic = "force-dynamic";
 
-export const POST = createWalletApiWrapper(
+export const GET = createWalletApiWrapper(
   async (context: ApiContext & { validatedData: any; user: any }) => {
-    const { validatedData, user } = context;
+    const { validatedData } = context;
     const { granted, granter, state } = validatedData;
 
     // Get AbstraxionBackend instance
@@ -20,7 +23,6 @@ export const POST = createWalletApiWrapper(
       granted,
       granter,
       state,
-      userId: user.id,
     });
 
     if (!result.success) {
@@ -31,12 +33,13 @@ export const POST = createWalletApiWrapper(
       );
     }
 
-    return result;
+    // Use the generic redirect handler
+    return handleRedirectResponse(result, result.grantedRedirectUrl);
   },
   {
     schema: callbackSchema,
-    schemaType: "body",
+    schemaType: "query",
     rateLimit: "strict",
-    allowedMethods: ["POST"],
+    allowedMethods: ["GET"],
   },
 );

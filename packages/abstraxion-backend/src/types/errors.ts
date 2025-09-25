@@ -160,6 +160,12 @@ export class SessionKeyExpirationError extends AbstraxionBackendError {
   }
 }
 
+export class GrantedFailedError extends AbstraxionBackendError {
+  constructor() {
+    super("Authorization was not granted by user", "GRANTED_FAILED", 400);
+  }
+}
+
 export class GranterRequiredError extends AbstraxionBackendError {
   constructor() {
     super("Granter address is required", "GRANTER_REQUIRED", 400);

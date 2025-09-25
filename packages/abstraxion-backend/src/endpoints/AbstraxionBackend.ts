@@ -61,6 +61,7 @@ export class AbstraxionBackend {
   async connectInit(
     userId: string,
     permissions?: Permissions,
+    grantedRedirectUrl?: string,
   ): Promise<ConnectionInitResponse> {
     // Validate input parameters
     if (!userId) {
@@ -74,18 +75,21 @@ export class AbstraxionBackend {
       // Generate OAuth state parameter for security
       const state = randomBytes(32).toString("hex");
 
+      const permissionsToStore: Permissions = {
+        contracts: permissions?.contracts || [],
+        bank: permissions?.bank || [],
+        stake: permissions?.stake || false,
+        treasury: this.config.treasury,
+      };
+
       // Store state with user ID, timestamp, session key address, and permissions
       // node-cache will automatically handle TTL, no need for manual cleanup
       this.stateStore.set(state, {
         userId,
         timestamp: Date.now(),
         sessionKeyAddress: sessionKey.address,
-        permissions: permissions || {
-          contracts: [],
-          bank: [],
-          stake: false,
-          treasury: this.config.treasury,
-        },
+        grantedRedirectUrl: grantedRedirectUrl,
+        permissions: permissionsToStore,
       });
 
       // Store the session key temporarily (as PENDING) for later retrieval
@@ -95,7 +99,7 @@ export class AbstraxionBackend {
       const authorizationUrl = await this.buildAuthorizationUrl(
         sessionKey.address,
         state,
-        permissions,
+        permissionsToStore,
       );
 
       return {
@@ -118,15 +122,11 @@ export class AbstraxionBackend {
    * Process the granted/granter parameters and store session key
    */
   async handleCallback(request: CallbackRequest): Promise<CallbackResponse> {
-    // Validate input parameters
-    if (!request.userId) {
-      throw new e.UserIdRequiredError();
+    if (!request.state) {
+      throw new e.StateRequiredError();
     }
     if (!request.granter) {
       throw new e.GranterRequiredError();
-    }
-    if (!request.state) {
-      throw new e.StateRequiredError();
     }
 
     try {
@@ -135,14 +135,10 @@ export class AbstraxionBackend {
         userId: string;
         timestamp: number;
         sessionKeyAddress: string;
+        grantedRedirectUrl?: string;
         permissions?: Permissions;
       }>(request.state);
       if (!stateData) {
-        throw new e.InvalidStateError(request.state);
-      }
-
-      // Verify user ID matches
-      if (stateData.userId !== request.userId) {
         throw new e.InvalidStateError(request.state);
       }
 
@@ -161,7 +157,7 @@ export class AbstraxionBackend {
 
       // Get the session key info that was stored during connectInit
       const sessionKeyInfo = await this.sessionKeyManager.getLastSessionKeyInfo(
-        request.userId,
+        stateData.userId,
       );
       if (!sessionKeyInfo) {
         throw new e.SessionKeyNotFoundError("Session key not found for user");
@@ -177,7 +173,7 @@ export class AbstraxionBackend {
 
       // Store session key with permissions and granter address
       await this.sessionKeyManager.storeGrantedSessionKey(
-        request.userId,
+        stateData.userId,
         sessionKeyInfo.sessionKeyAddress,
         request.granter, // Use granter as metaAccountAddress
         permissions,
@@ -186,6 +182,7 @@ export class AbstraxionBackend {
       return {
         success: true,
         sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
+        grantedRedirectUrl: stateData.grantedRedirectUrl,
         metaAccountAddress: request.granter,
         permissions,
       };

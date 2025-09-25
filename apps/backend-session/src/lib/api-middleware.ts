@@ -116,6 +116,11 @@ export async function handleApiRequest<T>(
     try {
       const result = await handler(context);
 
+      // If the result is already a NextResponse, return it directly
+      if (result instanceof NextResponse) {
+        return result;
+      }
+
       return NextResponse.json({
         success: true,
         data: result,

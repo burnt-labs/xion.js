@@ -9,13 +9,17 @@ export const dynamic = "force-dynamic";
 export const POST = createWalletApiWrapper(
   async (context: ApiContext & { validatedData: any; user: any }) => {
     const { validatedData, user } = context;
-    const { permissions } = validatedData;
+    const { permissions, grantedRedirectUrl } = validatedData;
 
     // Get AbstraxionBackend instance
     const abstraxionBackend = getAbstraxionBackend();
 
     // Initiate wallet connection
-    const result = await abstraxionBackend.connectInit(user.id, permissions);
+    const result = await abstraxionBackend.connectInit(
+      user.id,
+      permissions,
+      grantedRedirectUrl,
+    );
 
     return result;
   },

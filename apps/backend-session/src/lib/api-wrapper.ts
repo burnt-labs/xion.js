@@ -81,7 +81,7 @@ export function createWalletApiWrapper<T = any>(
 ) {
   return createApiWrapper(
     async (context) => {
-      const { request, validatedData } = context;
+      const { validatedData } = context;
 
       // Find user if username is provided
       let user: any = null;
@@ -173,4 +173,18 @@ export async function createOrGetUser(username: string): Promise<any> {
   }
 
   return user;
+}
+
+/**
+ * Helper function to handle redirect logic
+ * Returns NextResponse.redirect if redirectUrl is provided, otherwise returns JSON response
+ */
+export function handleRedirectResponse(
+  data: any,
+  redirectUrl?: string,
+): NextResponse {
+  if (redirectUrl) {
+    return NextResponse.redirect(redirectUrl);
+  }
+  return NextResponse.json(data);
 }

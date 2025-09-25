@@ -43,18 +43,18 @@ export interface ConnectionInitResponse {
 }
 
 export interface CallbackRequest {
+  state: string;
   granted: boolean;
   granter: string;
-  userId: string;
-  state: string;
 }
 
 export interface CallbackResponse {
   success: boolean;
+  error?: string;
   sessionKeyAddress?: string;
   metaAccountAddress?: string;
   permissions?: Permissions;
-  error?: string;
+  grantedRedirectUrl?: string;
 }
 
 export interface StatusResponse {

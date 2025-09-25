@@ -31,11 +31,11 @@ model SessionKey {
   id     String @id @default(cuid())
   userId String
 
-  sessionKeyAddress  String @unique
+  sessionKeyAddress  String   @unique
   sessionKeyMaterial String // encrypted private key
   sessionKeyExpiry   DateTime // timestamp
-  sessionPermissions String @default("{}") // JSON string of permissions
-  sessionState       String @default("PENDING") // PENDING, ACTIVE, EXPIRED, REVOKED
+  sessionPermissions String   @default("{}") // JSON string of permissions
+  sessionState       String   @default("PENDING") // PENDING, ACTIVE, EXPIRED, REVOKED
   metaAccountAddress String
 
   createdAt DateTime @default(now())
@@ -53,7 +53,7 @@ model SessionKey {
 }
 
 model AuditLog {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   action    String // AuditAction enum values
   details   String // JSON string
