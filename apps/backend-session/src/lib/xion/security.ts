@@ -62,7 +62,7 @@ export class SecurityManager {
   /**
    * Generate secure random string
    */
-  static generateSecureRandom(length: number = 32): string {
+  static generateSecureRandom(length = 32): string {
     return randomBytes(length).toString("hex");
   }
 
@@ -109,7 +109,7 @@ export class SecurityManager {
    */
   static generateSecureString(
     length: number,
-    charset: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+    charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
   ): string {
     let result = "";
     for (let i = 0; i < length; i++) {

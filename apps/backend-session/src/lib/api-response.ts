@@ -18,7 +18,7 @@ export class ApiException extends Error {
   public status: number;
   public code?: string;
 
-  constructor(message: string, status: number = 400, code?: string) {
+  constructor(message: string, status = 400, code?: string) {
     super(message);
     this.name = "ApiException";
     this.status = status;
@@ -32,7 +32,7 @@ export class ApiException extends Error {
 export function createSuccessResponse<T>(
   data: T,
   message?: string,
-  status: number = 200,
+  status = 200,
 ): NextResponse<ApiResponse<T>> {
   const response: ApiResponse<T> = {
     success: true,
@@ -97,7 +97,7 @@ export function createRateLimitResponse(): NextResponse<ApiResponse> {
  * Create a validation error response
  */
 export function createValidationErrorResponse(
-  message: string = "Validation failed",
+  message = "Validation failed",
 ): NextResponse<ApiResponse> {
   return createErrorResponse(message, 400, "VALIDATION_ERROR");
 }
@@ -106,7 +106,7 @@ export function createValidationErrorResponse(
  * Create a not found error response
  */
 export function createNotFoundResponse(
-  resource: string = "Resource",
+  resource = "Resource",
 ): NextResponse<ApiResponse> {
   return createErrorResponse(`${resource} not found`, 404, "NOT_FOUND");
 }
@@ -115,7 +115,7 @@ export function createNotFoundResponse(
  * Create an internal server error response
  */
 export function createInternalErrorResponse(
-  message: string = "Internal server error",
+  message = "Internal server error",
 ): NextResponse<ApiResponse> {
   return createErrorResponse(message, 500, "INTERNAL_ERROR");
 }

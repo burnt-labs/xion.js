@@ -75,7 +75,10 @@ describe("Wallet API", () => {
     it("should initiate wallet connection for existing user", async () => {
       // First create a user
       const user = await prisma.user.create({
-        data: { username: "testuser" },
+        data: {
+          username: "testuser",
+          password: "hashedpassword123",
+        },
       });
 
       const request = new NextRequest(
@@ -111,7 +114,10 @@ describe("Wallet API", () => {
     it("should create PENDING session key and then update to ACTIVE", async () => {
       // First create a user
       const user = await prisma.user.create({
-        data: { username: "testuser" },
+        data: {
+          username: "testuser",
+          password: "hashedpassword123",
+        },
       });
 
       // Get SessionKeyManager instance
@@ -158,7 +164,10 @@ describe("Wallet API", () => {
     it("should create new PENDING session key and then activate it", async () => {
       // First create a user
       const user = await prisma.user.create({
-        data: { username: "testuser2" },
+        data: {
+          username: "testuser2",
+          password: "hashedpassword123",
+        },
       });
 
       // Get SessionKeyManager instance

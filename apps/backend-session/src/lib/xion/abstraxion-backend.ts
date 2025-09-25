@@ -1,6 +1,5 @@
 import { AbstraxionBackend } from "@burnt-labs/abstraxion-backend";
-import { PrismaDatabaseAdapter } from "./database";
-import { prisma } from "./database";
+import { PrismaDatabaseAdapter, prisma } from "./database";
 
 const globalForAbstraxion = globalThis as unknown as {
   abstraxionBackend: AbstraxionBackend | undefined;
@@ -28,10 +27,10 @@ export function getAbstraxionBackend(): AbstraxionBackend {
   const databaseAdapter = new PrismaDatabaseAdapter(prisma);
 
   const config = {
-    rpcUrl: process.env.XION_RPC_URL!,
-    redirectUrl: process.env.XION_REDIRECT_URL!,
-    treasury: process.env.XION_TREASURY!,
-    encryptionKey: process.env.ENCRYPTION_KEY!,
+    rpcUrl: process.env.XION_RPC_URL,
+    redirectUrl: process.env.XION_REDIRECT_URL,
+    treasury: process.env.XION_TREASURY,
+    encryptionKey: process.env.ENCRYPTION_KEY,
     databaseAdapter,
     sessionKeyExpiryMs: parseInt(
       process.env.SESSION_KEY_EXPIRY_MS || "86400000",

@@ -1,15 +1,18 @@
-import { NextRequest } from "next/server";
 import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
 import { connectWalletSchema } from "@/lib/validation";
-import { createWalletApiWrapper } from "@/lib/api-wrapper";
-import { ApiContext } from "@/lib/api-middleware";
+import { createApiWrapper } from "@/lib/api-wrapper";
+import { requireAuth } from "@/lib/auth-middleware";
 
 export const dynamic = "force-dynamic";
 
-export const POST = createWalletApiWrapper(
-  async (context: ApiContext & { validatedData: any; user: any }) => {
-    const { validatedData, user } = context;
+export const POST = createApiWrapper(
+  async (context) => {
+    const { validatedData } = context;
     const { permissions, grantedRedirectUrl } = validatedData;
+
+    // Get authenticated user from session
+    const authContext = await requireAuth(context.request);
+    const { user } = authContext;
 
     // Get AbstraxionBackend instance
     const abstraxionBackend = getAbstraxionBackend();

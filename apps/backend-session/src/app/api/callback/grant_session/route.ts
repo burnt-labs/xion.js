@@ -1,17 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
 import { callbackSchema } from "@/lib/validation";
-import {
-  createWalletApiWrapper,
-  handleRedirectResponse,
-} from "@/lib/api-wrapper";
-import type { ApiContext } from "@/lib/api-middleware";
+import { createApiWrapper, handleRedirectResponse } from "@/lib/api-wrapper";
 import { ApiException } from "@/lib/api-response";
 
 export const dynamic = "force-dynamic";
 
-export const GET = createWalletApiWrapper(
-  async (context: ApiContext & { validatedData: any; user: any }) => {
+export const GET = createApiWrapper(
+  async (context) => {
     const { validatedData } = context;
     const { granted, granter, state } = validatedData;
 

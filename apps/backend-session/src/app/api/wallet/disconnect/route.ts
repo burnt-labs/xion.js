@@ -1,15 +1,15 @@
-import { NextRequest } from "next/server";
 import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
-import { disconnectSchema } from "@/lib/validation";
-import { createWalletApiWrapper } from "@/lib/api-wrapper";
-import { ApiContext } from "@/lib/api-middleware";
+import { createApiWrapper } from "@/lib/api-wrapper";
+import { requireAuth } from "@/lib/auth-middleware";
 import { ApiException } from "@/lib/api-response";
 
 export const dynamic = "force-dynamic";
 
-export const DELETE = createWalletApiWrapper(
-  async (context: ApiContext & { validatedData: any; user: any }) => {
-    const { user } = context;
+export const DELETE = createApiWrapper(
+  async (context) => {
+    // Get authenticated user from session
+    const authContext = await requireAuth(context.request);
+    const { user } = authContext;
 
     // Get AbstraxionBackend instance
     const abstraxionBackend = getAbstraxionBackend();
@@ -28,8 +28,6 @@ export const DELETE = createWalletApiWrapper(
     return result;
   },
   {
-    schema: disconnectSchema,
-    schemaType: "body",
     rateLimit: "normal",
     allowedMethods: ["DELETE"],
   },

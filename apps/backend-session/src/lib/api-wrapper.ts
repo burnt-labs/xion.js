@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { handleApiRequest, ApiContext } from "@/lib/api-middleware";
+import type { ApiContext } from "@/lib/api-middleware";
+import { handleApiRequest } from "@/lib/api-middleware";
 import { ApiException } from "@/lib/api-response";
 
 export interface ApiWrapperOptions {
@@ -25,7 +27,7 @@ export function createApiWrapper<T = any>(
         const { request, ip } = context;
 
         // Validate request data if schema is provided
-        let validatedData: any = undefined;
+        let validatedData: any;
 
         if (options.schema) {
           try {
@@ -158,21 +160,10 @@ export async function getUserFromRequest(
 
 /**
  * Helper function to create or get user
+ * @deprecated This function is no longer used since authentication is required
  */
 export async function createOrGetUser(username: string): Promise<any> {
-  const { prisma } = await import("@/lib/xion/database");
-
-  let user = await prisma.user.findUnique({
-    where: { username },
-  });
-
-  if (!user) {
-    user = await prisma.user.create({
-      data: { username },
-    });
-  }
-
-  return user;
+  throw new Error("createOrGetUser is deprecated. Use authentication instead.");
 }
 
 /**

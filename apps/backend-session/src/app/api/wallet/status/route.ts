@@ -1,14 +1,14 @@
-import { NextRequest } from "next/server";
 import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
-import { statusSchema } from "@/lib/validation";
-import { createWalletApiWrapper } from "@/lib/api-wrapper";
-import { ApiContext } from "@/lib/api-middleware";
+import { createApiWrapper } from "@/lib/api-wrapper";
+import { requireAuth } from "@/lib/auth-middleware";
 
 export const dynamic = "force-dynamic";
 
-export const GET = createWalletApiWrapper(
-  async (context: ApiContext & { validatedData: any; user: any }) => {
-    const { user } = context;
+export const GET = createApiWrapper(
+  async (context) => {
+    // Get authenticated user from session
+    const authContext = await requireAuth(context.request);
+    const { user } = authContext;
 
     // Get AbstraxionBackend instance
     const abstraxionBackend = getAbstraxionBackend();
@@ -19,8 +19,6 @@ export const GET = createWalletApiWrapper(
     return result;
   },
   {
-    schema: statusSchema,
-    schemaType: "query",
     rateLimit: "normal",
     allowedMethods: ["GET"],
   },

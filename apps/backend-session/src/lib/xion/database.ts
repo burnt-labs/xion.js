@@ -1,11 +1,13 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
-import {
-  BaseDatabaseAdapter,
+import type {
   SessionKeyInfo,
   AuditEvent,
   Permissions,
-  SessionState,
   AuditAction,
+} from "@burnt-labs/abstraxion-backend";
+import {
+  BaseDatabaseAdapter,
+  SessionState,
 } from "@burnt-labs/abstraxion-backend";
 
 const globalForPrisma = globalThis as unknown as {
@@ -197,10 +199,7 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
     });
   }
 
-  async getAuditLogs(
-    userId: string,
-    limit: number = 50,
-  ): Promise<AuditEvent[]> {
+  async getAuditLogs(userId: string, limit = 50): Promise<AuditEvent[]> {
     const logs = await this.prisma.auditLog.findMany({
       where: { userId },
       orderBy: { timestamp: "desc" },

@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const connectWalletSchema = z.object({
-  username: z.string().min(1, "Username is required"),
   permissions: z
     .object({
       contracts: z.array(z.string()).optional(),
