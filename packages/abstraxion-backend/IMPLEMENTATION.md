@@ -140,7 +140,7 @@ interface SessionKeyInfo {
 ```typescript
 enum SessionState {
   PENDING = "PENDING",
-  ACTIVE = "ACTIVE", 
+  ACTIVE = "ACTIVE",
   EXPIRED = "EXPIRED",
   REVOKED = "REVOKED",
 }
@@ -190,7 +190,7 @@ interface AuditEvent {
 ```typescript
 enum AuditAction {
   SESSION_KEY_CREATED = "SESSION_KEY_CREATED",
-  SESSION_KEY_UPDATED = "SESSION_KEY_UPDATED", 
+  SESSION_KEY_UPDATED = "SESSION_KEY_UPDATED",
   SESSION_KEY_ACCESSED = "SESSION_KEY_ACCESSED",
   SESSION_KEY_REVOKED = "SESSION_KEY_REVOKED",
   SESSION_KEY_EXPIRED = "SESSION_KEY_EXPIRED",
@@ -215,17 +215,43 @@ import {
 
 class MyDatabaseAdapter extends BaseDatabaseAdapter {
   // Implement all abstract methods
-  async getLastSessionKey(userId: string) { /* implementation */ }
-  async getSessionKey(userId: string, sessionKeyAddress: string) { /* implementation */ }
-  async getActiveSessionKeys(userId: string) { /* implementation */ }
-  async revokeSessionKey(userId: string, sessionKeyAddress: string) { /* implementation */ }
-  async revokeActiveSessionKeys(userId: string) { /* implementation */ }
-  async addNewSessionKey(userId: string, updates: any, activeState?: any) { /* implementation */ }
-  async updateSessionKeyWithParams(userId: string, sessionKeyAddress: string, updates: any) { /* implementation */ }
-  async logAuditEvent(event: any) { /* implementation */ }
-  async getAuditLogs(userId: string, limit?: number) { /* implementation */ }
-  async healthCheck() { /* implementation */ }
-  async close() { /* implementation */ }
+  async getLastSessionKey(userId: string) {
+    /* implementation */
+  }
+  async getSessionKey(userId: string, sessionKeyAddress: string) {
+    /* implementation */
+  }
+  async getActiveSessionKeys(userId: string) {
+    /* implementation */
+  }
+  async revokeSessionKey(userId: string, sessionKeyAddress: string) {
+    /* implementation */
+  }
+  async revokeActiveSessionKeys(userId: string) {
+    /* implementation */
+  }
+  async addNewSessionKey(userId: string, updates: any, activeState?: any) {
+    /* implementation */
+  }
+  async updateSessionKeyWithParams(
+    userId: string,
+    sessionKeyAddress: string,
+    updates: any,
+  ) {
+    /* implementation */
+  }
+  async logAuditEvent(event: any) {
+    /* implementation */
+  }
+  async getAuditLogs(userId: string, limit?: number) {
+    /* implementation */
+  }
+  async healthCheck() {
+    /* implementation */
+  }
+  async close() {
+    /* implementation */
+  }
 }
 
 const databaseAdapter = new MyDatabaseAdapter();
@@ -298,7 +324,8 @@ app.get("/api/abstraxion/callback", async (req, res) => {
 
 ```typescript
 // Get session key info
-const sessionKeyInfo = await backend.sessionKeyManager.getLastSessionKeyInfo("user123");
+const sessionKeyInfo =
+  await backend.sessionKeyManager.getLastSessionKeyInfo("user123");
 
 // Validate session key
 const isValid = await backend.sessionKeyManager.validateSessionKey("user123");
@@ -307,7 +334,10 @@ const isValid = await backend.sessionKeyManager.validateSessionKey("user123");
 const keypair = await backend.sessionKeyManager.getSessionKeypair("user123");
 
 // Revoke specific session key
-await backend.sessionKeyManager.revokeSessionKey("user123", "xion1sessionkey...");
+await backend.sessionKeyManager.revokeSessionKey(
+  "user123",
+  "xion1sessionkey...",
+);
 
 // Revoke all active session keys
 await backend.sessionKeyManager.revokeActiveSessionKeys("user123");
