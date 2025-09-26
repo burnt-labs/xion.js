@@ -31,6 +31,53 @@ describe("AbstraxionStrategies", () => {
       storageStrategy = new DatabaseStorageStrategy(userId, sessionKeyManager);
     });
 
+    describe("constructor", () => {
+      it("should create instance with valid parameters", () => {
+        expect(storageStrategy).toBeDefined();
+        expect(storageStrategy).toBeInstanceOf(DatabaseStorageStrategy);
+      });
+
+      it("should handle different userId formats", () => {
+        const numericUserId = "123456";
+        const uuidUserId = "550e8400-e29b-41d4-a716-446655440000";
+        const specialCharUserId = "user@domain.com";
+
+        const numericStrategy = new DatabaseStorageStrategy(
+          numericUserId,
+          sessionKeyManager,
+        );
+        const uuidStrategy = new DatabaseStorageStrategy(
+          uuidUserId,
+          sessionKeyManager,
+        );
+        const specialCharStrategy = new DatabaseStorageStrategy(
+          specialCharUserId,
+          sessionKeyManager,
+        );
+
+        expect(numericStrategy).toBeDefined();
+        expect(uuidStrategy).toBeDefined();
+        expect(specialCharStrategy).toBeDefined();
+      });
+
+      it("should handle empty string userId", () => {
+        const emptyUserIdStrategy = new DatabaseStorageStrategy(
+          "",
+          sessionKeyManager,
+        );
+        expect(emptyUserIdStrategy).toBeDefined();
+      });
+
+      it("should handle very long userId", () => {
+        const longUserId = "a".repeat(1000);
+        const longUserIdStrategy = new DatabaseStorageStrategy(
+          longUserId,
+          sessionKeyManager,
+        );
+        expect(longUserIdStrategy).toBeDefined();
+      });
+    });
+
     afterEach(async () => {
       await databaseAdapter.close();
     });
@@ -69,7 +116,7 @@ describe("AbstraxionStrategies", () => {
         );
 
         const result = await storageStrategy.getItem("xion-authz-temp-account");
-        expect(result).toBe(sessionKey.address);
+        expect(result).toBe(sessionKey.serializedKeypair);
       });
 
       it("should throw InvalidStorageKeyError for invalid key", async () => {
@@ -128,6 +175,45 @@ describe("AbstraxionStrategies", () => {
           storageStrategy.getItem("xion-authz-granter-account"),
         ).rejects.toThrow(SessionKeyNotFoundError);
       });
+
+      it("should throw InvalidStorageKeyError for empty string key", async () => {
+        await expect(storageStrategy.getItem("")).rejects.toThrow(
+          InvalidStorageKeyError,
+        );
+        await expect(storageStrategy.getItem("")).rejects.toThrow(
+          "Invalid storage key: @getItem",
+        );
+      });
+
+      it("should throw InvalidStorageKeyError for null key", async () => {
+        await expect(storageStrategy.getItem(null as any)).rejects.toThrow(
+          InvalidStorageKeyError,
+        );
+      });
+
+      it("should throw InvalidStorageKeyError for undefined key", async () => {
+        await expect(storageStrategy.getItem(undefined as any)).rejects.toThrow(
+          InvalidStorageKeyError,
+        );
+      });
+
+      it("should handle session key with empty metaAccountAddress", async () => {
+        // Create a pending session key first
+        const sessionKey = await sessionKeyManager.generateSessionKeypair();
+        await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
+
+        // Store granted session key with empty metaAccountAddress
+        await sessionKeyManager.storeGrantedSessionKey(
+          userId,
+          sessionKey.address,
+          "", // empty granter address
+        );
+
+        const result = await storageStrategy.getItem(
+          "xion-authz-granter-account",
+        );
+        expect(result).toBe("");
+      });
     });
 
     describe("setItem", () => {
@@ -165,18 +251,16 @@ describe("AbstraxionStrategies", () => {
         expect(sessionKeyInfo!.sessionState).toBe(SessionState.ACTIVE);
       });
 
-      it("should throw SessionKeyInvalidError when trying to set granter account without pending session key", async () => {
+      it("should skip setting granter account when no pending session key exists", async () => {
         const granterAddress = "xion1granter123";
 
+        // Should not throw error, just skip silently
         await expect(
           storageStrategy.setItem("xion-authz-granter-account", granterAddress),
-        ).rejects.toThrow(SessionKeyInvalidError);
-        await expect(
-          storageStrategy.setItem("xion-authz-granter-account", granterAddress),
-        ).rejects.toThrow("Session key is not in PENDING state");
+        ).resolves.not.toThrow();
       });
 
-      it("should throw SessionKeyInvalidError when trying to set granter account with non-pending session key", async () => {
+      it("should skip setting granter account when session key is not in pending state", async () => {
         // Create and activate a session key
         const sessionKey = await sessionKeyManager.generateSessionKeypair();
         await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
@@ -188,9 +272,32 @@ describe("AbstraxionStrategies", () => {
 
         const granterAddress = "xion1granter456";
 
+        // Should not throw error, just skip silently
         await expect(
           storageStrategy.setItem("xion-authz-granter-account", granterAddress),
-        ).rejects.toThrow(SessionKeyInvalidError);
+        ).resolves.not.toThrow();
+
+        // Verify the original granter address is unchanged
+        const sessionKeyInfo = await sessionKeyManager.getLastSessionKeyInfo(userId);
+        expect(sessionKeyInfo!.metaAccountAddress).toBe("xion1granter123");
+      });
+
+      it("should successfully set granter account when session key is in pending state", async () => {
+        // Create a pending session key
+        const sessionKey = await sessionKeyManager.generateSessionKeypair();
+        await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
+
+        const granterAddress = "xion1granter123";
+
+        // Should work normally when session key is in PENDING state
+        await expect(
+          storageStrategy.setItem("xion-authz-granter-account", granterAddress),
+        ).resolves.not.toThrow();
+
+        // Verify the granter address is set and session key is now active
+        const sessionKeyInfo = await sessionKeyManager.getLastSessionKeyInfo(userId);
+        expect(sessionKeyInfo!.metaAccountAddress).toBe(granterAddress);
+        expect(sessionKeyInfo!.sessionState).toBe(SessionState.ACTIVE);
       });
 
       it("should throw InvalidStorageKeyError for invalid key", async () => {
@@ -211,6 +318,84 @@ describe("AbstraxionStrategies", () => {
             invalidSerializedKeypair,
           ),
         ).rejects.toThrow();
+      });
+
+      it("should throw InvalidStorageKeyError for empty string key", async () => {
+        await expect(storageStrategy.setItem("", "value")).rejects.toThrow(
+          InvalidStorageKeyError,
+        );
+        await expect(storageStrategy.setItem("", "value")).rejects.toThrow(
+          "Invalid storage key: @setItem",
+        );
+      });
+
+      it("should throw InvalidStorageKeyError for null key", async () => {
+        await expect(
+          storageStrategy.setItem(null as any, "value"),
+        ).rejects.toThrow(InvalidStorageKeyError);
+      });
+
+      it("should throw InvalidStorageKeyError for undefined key", async () => {
+        await expect(
+          storageStrategy.setItem(undefined as any, "value"),
+        ).rejects.toThrow(InvalidStorageKeyError);
+      });
+
+      it("should handle empty string value for temp account", async () => {
+        await expect(
+          storageStrategy.setItem("xion-authz-temp-account", ""),
+        ).rejects.toThrow();
+      });
+
+      it("should handle empty string value for granter account", async () => {
+        // Create a pending session key first
+        const sessionKey = await sessionKeyManager.generateSessionKeypair();
+        await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
+
+        // Should not throw error for empty granter address
+        await expect(
+          storageStrategy.setItem("xion-authz-granter-account", ""),
+        ).resolves.not.toThrow();
+
+        const sessionKeyInfo =
+          await sessionKeyManager.getLastSessionKeyInfo(userId);
+        expect(sessionKeyInfo!.metaAccountAddress).toBe("");
+      });
+
+      it("should handle very long serialized keypair", async () => {
+        // Generate a valid keypair and then create a very long string
+        const sessionKey = await sessionKeyManager.generateSessionKeypair();
+        const longKeypair = sessionKey.serializedKeypair + "x".repeat(10000);
+
+        await expect(
+          storageStrategy.setItem("xion-authz-temp-account", longKeypair),
+        ).rejects.toThrow();
+      });
+
+      it("should handle concurrent setItem operations", async () => {
+        const sessionKey1 = await sessionKeyManager.generateSessionKeypair();
+        const sessionKey2 = await sessionKeyManager.generateSessionKeypair();
+
+        // Create two storage strategies for the same user
+        const storageStrategy2 = new DatabaseStorageStrategy(
+          userId,
+          sessionKeyManager,
+        );
+
+        // Try to set temp accounts concurrently
+        const promises = [
+          storageStrategy.setItem(
+            "xion-authz-temp-account",
+            sessionKey1.serializedKeypair,
+          ),
+          storageStrategy2.setItem(
+            "xion-authz-temp-account",
+            sessionKey2.serializedKeypair,
+          ),
+        ];
+
+        // Both should complete without throwing (last one wins)
+        await expect(Promise.all(promises)).resolves.not.toThrow();
       });
     });
 
@@ -265,6 +450,66 @@ describe("AbstraxionStrategies", () => {
         await expect(
           storageStrategy.removeItem("xion-authz-temp-account"),
         ).resolves.not.toThrow();
+      });
+
+      it("should throw InvalidStorageKeyError for empty string key", async () => {
+        await expect(storageStrategy.removeItem("")).rejects.toThrow(
+          InvalidStorageKeyError,
+        );
+        await expect(storageStrategy.removeItem("")).rejects.toThrow(
+          "Invalid storage key: @removeItem",
+        );
+      });
+
+      it("should throw InvalidStorageKeyError for null key", async () => {
+        await expect(storageStrategy.removeItem(null as any)).rejects.toThrow(
+          InvalidStorageKeyError,
+        );
+      });
+
+      it("should throw InvalidStorageKeyError for undefined key", async () => {
+        await expect(
+          storageStrategy.removeItem(undefined as any),
+        ).rejects.toThrow(InvalidStorageKeyError);
+      });
+
+      it("should handle removal with different user IDs", async () => {
+        const differentUserId = "different-user-456";
+        const differentStorageStrategy = new DatabaseStorageStrategy(
+          differentUserId,
+          sessionKeyManager,
+        );
+
+        // Should not throw error even if no session keys exist for different user
+        await expect(
+          differentStorageStrategy.removeItem("xion-authz-temp-account"),
+        ).resolves.not.toThrow();
+      });
+
+      it("should handle concurrent removeItem operations", async () => {
+        // Create and activate a session key
+        const sessionKey = await sessionKeyManager.generateSessionKeypair();
+        await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
+        await sessionKeyManager.storeGrantedSessionKey(
+          userId,
+          sessionKey.address,
+          "xion1granter123",
+        );
+
+        // Create two storage strategies for the same user
+        const storageStrategy2 = new DatabaseStorageStrategy(
+          userId,
+          sessionKeyManager,
+        );
+
+        // Try to remove items concurrently
+        const promises = [
+          storageStrategy.removeItem("xion-authz-temp-account"),
+          storageStrategy2.removeItem("xion-authz-granter-account"),
+        ];
+
+        // Both should complete without throwing
+        await expect(Promise.all(promises)).resolves.not.toThrow();
       });
     });
   });
@@ -415,6 +660,87 @@ describe("AbstraxionStrategies", () => {
         expect(url.searchParams.get("param")).toBe("value");
       });
     });
+
+    describe("constructor edge cases", () => {
+      it("should create instance without onRedirectMethod", () => {
+        const strategyWithoutMethod = new DatabaseRedirectStrategy(mockRequest);
+        expect(strategyWithoutMethod).toBeDefined();
+      });
+
+      it("should handle request with minimal headers", () => {
+        const minimalRequest = {
+          url: "/test",
+          headers: {},
+        } as unknown as IncomingMessage;
+        const strategy = new DatabaseRedirectStrategy(minimalRequest);
+        expect(strategy).toBeDefined();
+      });
+
+      it("should handle request with null headers", () => {
+        const nullHeadersRequest = {
+          url: "/test",
+          headers: null,
+        } as unknown as IncomingMessage;
+        const strategy = new DatabaseRedirectStrategy(nullHeadersRequest);
+        expect(strategy).toBeDefined();
+      });
+    });
+
+    describe("getCurrentUrl edge cases", () => {
+      it("should handle request with undefined url", async () => {
+        mockRequest.url = undefined;
+        const url = await redirectStrategy.getCurrentUrl();
+        expect(url).toBe("https://example.comundefined");
+      });
+
+      it("should handle request with null url", async () => {
+        mockRequest.url = null as any;
+        const url = await redirectStrategy.getCurrentUrl();
+        expect(url).toBe("https://example.comnull");
+      });
+
+      it("should handle request with empty string url", async () => {
+        mockRequest.url = "";
+        const url = await redirectStrategy.getCurrentUrl();
+        expect(url).toBe("https://example.com");
+      });
+
+      it("should handle request with only host header", async () => {
+        mockRequest.headers = { host: "api.example.com" };
+        mockRequest.url = "/v1/test";
+        const url = await redirectStrategy.getCurrentUrl();
+        expect(url).toBe("http://api.example.com/v1/test");
+      });
+    });
+
+    describe("getUrlParameter edge cases", () => {
+      it("should handle parameter with special characters", async () => {
+        mockRequest.url =
+          "/test?special=value%20with%20spaces&encoded=test%2Bvalue";
+        const paramValue = await redirectStrategy.getUrlParameter("special");
+        expect(paramValue).toBe("value with spaces");
+      });
+
+      it("should handle parameter with empty value", async () => {
+        mockRequest.url = "/test?empty=&normal=value";
+        const emptyValue = await redirectStrategy.getUrlParameter("empty");
+        const normalValue = await redirectStrategy.getUrlParameter("normal");
+        expect(emptyValue).toBe("");
+        expect(normalValue).toBe("value");
+      });
+
+      it("should handle multiple parameters with same name", async () => {
+        mockRequest.url = "/test?param=first&param=second";
+        const paramValue = await redirectStrategy.getUrlParameter("param");
+        expect(paramValue).toBe("first"); // URLSearchParams.get returns first value
+      });
+
+      it("should handle URL with fragment", async () => {
+        mockRequest.url = "/test?param=value#fragment";
+        const paramValue = await redirectStrategy.getUrlParameter("param");
+        expect(paramValue).toBe("value");
+      });
+    });
   });
 
   describe("Integration tests", () => {
@@ -461,7 +787,7 @@ describe("AbstraxionStrategies", () => {
         "xion-authz-granter-account",
       );
 
-      expect(retrievedTempAccount).toBe(sessionKey.address);
+      expect(retrievedTempAccount).toBe(sessionKey.serializedKeypair);
       expect(retrievedGranterAccount).toBe(granterAddress);
 
       // 4. Remove both accounts
@@ -506,7 +832,7 @@ describe("AbstraxionStrategies", () => {
         "xion-authz-granter-account",
       );
 
-      expect(retrievedTempAccount).toBe(sessionKey2.address);
+      expect(retrievedTempAccount).toBe(sessionKey2.serializedKeypair);
       expect(retrievedGranterAccount).toBe("xion1granter2");
     });
   });

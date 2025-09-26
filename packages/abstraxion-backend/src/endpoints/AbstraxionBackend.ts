@@ -244,6 +244,7 @@ export class AbstraxionBackend {
       new DatabaseStorageStrategy(userId, this.sessionKeyManager),
       new DatabaseRedirectStrategy(request, onRedirectMethod),
     );
+    authz.configureAbstraxionInstance(this.config.rpcUrl);
     await authz.login();
     return authz;
   }

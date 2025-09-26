@@ -47,7 +47,9 @@ export class DatabaseStorageStrategy implements StorageStrategy {
       case "xion-authz-granter-account":
         return sessionKeyInfo.metaAccountAddress;
       case "xion-authz-temp-account":
-        return sessionKeyInfo.sessionKeyAddress;
+        return await this.skManager.encryptionService.decryptSessionKey(
+          sessionKeyInfo.sessionKeyMaterial,
+        );
       default:
         throw new InvalidStorageKeyError(`${key}@getItem`);
     }
@@ -80,9 +82,8 @@ export class DatabaseStorageStrategy implements StorageStrategy {
             value,
           );
         } else {
-          throw new SessionKeyInvalidError(
-            `Session key is not in PENDING state`,
-          );
+          // Skip this step if the session key is not in PENDING state
+          // It can be set by other means, e.g. storeGrantedSessionKey
         }
         break;
       default:
