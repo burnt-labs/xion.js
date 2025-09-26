@@ -314,31 +314,6 @@ export default function ProfilePage() {
 
                   {walletStatus.connected ? (
                     <div className="space-y-4">
-                      {/* Session Key */}
-                      <div className="rounded-lg bg-white/5 p-4">
-                        <div className="mb-2 flex items-center">
-                          <svg
-                            className="mr-2 h-4 w-4 text-purple-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                            />
-                          </svg>
-                          <span className="text-sm font-medium text-slate-300">
-                            Session Account
-                          </span>
-                        </div>
-                        <p className="break-all font-mono text-sm text-slate-200">
-                          {walletStatus.sessionKeyAddress}
-                        </p>
-                      </div>
-
                       {/* Meta Account */}
                       <div className="rounded-lg bg-white/5 p-4">
                         <div className="mb-2 flex items-center">
@@ -356,11 +331,36 @@ export default function ProfilePage() {
                             />
                           </svg>
                           <span className="text-sm font-medium text-slate-300">
-                            Meta Account
+                            Connected Meta Account
                           </span>
                         </div>
                         <p className="break-all font-mono text-sm text-slate-200">
                           {walletStatus.metaAccountAddress}
+                        </p>
+                      </div>
+
+                      {/* Session Key */}
+                      <div className="rounded-lg bg-white/5 p-4">
+                        <div className="mb-2 flex items-center">
+                          <svg
+                            className="mr-2 h-4 w-4 text-purple-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                            />
+                          </svg>
+                          <span className="text-sm font-medium text-slate-300">
+                            Session Account (Stored in server)
+                          </span>
+                        </div>
+                        <p className="break-all font-mono text-sm text-slate-200">
+                          {walletStatus.sessionKeyAddress}
                         </p>
                       </div>
 
