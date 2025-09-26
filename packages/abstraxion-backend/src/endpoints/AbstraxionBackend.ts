@@ -1,0 +1,389 @@
+import { randomBytes } from "node:crypto";
+import NodeCache from "node-cache";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
+import {
+  AbstraxionBackendConfig,
+  ConnectionInitResponse,
+  CallbackRequest,
+  CallbackResponse,
+  StatusResponse,
+  DisconnectResponse,
+  Permissions,
+  XionKeypair,
+} from "../types";
+import * as e from "../types/errors";
+import { SessionKeyManager } from "../services/SessionKeyManager";
+import {
+  DatabaseRedirectStrategy,
+  DatabaseStorageStrategy,
+} from "../adapters/AbstraxionStategies";
+import { fetchConfig } from "@burnt-labs/constants";
+
+export class AbstraxionBackend {
+  public readonly sessionKeyManager: SessionKeyManager;
+  private readonly stateStore: NodeCache;
+
+  constructor(private readonly config: AbstraxionBackendConfig) {
+    // Validate configuration
+    if (!config.encryptionKey) {
+      throw new e.EncryptionKeyRequiredError();
+    }
+    if (!config.databaseAdapter) {
+      throw new e.DatabaseAdapterRequiredError();
+    }
+    if (!config.redirectUrl) {
+      throw new e.RedirectUrlRequiredError();
+    }
+    if (!config.treasury) {
+      throw new e.TreasuryRequiredError();
+    }
+
+    // Initialize node-cache with 10 minutes TTL and automatic cleanup
+    this.stateStore = new NodeCache({
+      stdTTL: 600, // 10 minutes in seconds
+      checkperiod: 60, // Check for expired keys every minute
+      useClones: false, // Don't clone objects for better performance
+    });
+
+    this.sessionKeyManager = new SessionKeyManager(config.databaseAdapter, {
+      encryptionKey: config.encryptionKey,
+      sessionKeyExpiryMs: config.sessionKeyExpiryMs,
+      refreshThresholdMs: config.refreshThresholdMs,
+      enableAuditLogging: config.enableAuditLogging,
+    });
+  }
+
+  /**
+   * Initiate wallet connection flow
+   * Generate session key and return authorization URL
+   */
+  async connectInit(
+    userId: string,
+    permissions?: Permissions,
+    grantedRedirectUrl?: string,
+  ): Promise<ConnectionInitResponse> {
+    // Validate input parameters
+    if (!userId) {
+      throw new e.UserIdRequiredError();
+    }
+
+    try {
+      // Generate session key
+      const sessionKey = await this.sessionKeyManager.generateSessionKeypair();
+
+      // Generate OAuth state parameter for security
+      const state = randomBytes(32).toString("hex");
+
+      const permissionsToStore: Permissions = {
+        contracts: permissions?.contracts || [],
+        bank: permissions?.bank || [],
+        stake: permissions?.stake || false,
+        treasury: this.config.treasury,
+      };
+
+      // Store state with user ID, timestamp, session key address, and permissions
+      // node-cache will automatically handle TTL, no need for manual cleanup
+      this.stateStore.set(state, {
+        userId,
+        timestamp: Date.now(),
+        sessionKeyAddress: sessionKey.address,
+        grantedRedirectUrl: grantedRedirectUrl,
+        permissions: permissionsToStore,
+      });
+
+      // Store the session key temporarily (as PENDING) for later retrieval
+      await this.sessionKeyManager.createPendingSessionKey(userId, sessionKey);
+
+      // Build authorization URL
+      const authorizationUrl = await this.buildAuthorizationUrl(
+        sessionKey.address,
+        state,
+        permissionsToStore,
+      );
+
+      return {
+        sessionKeyAddress: sessionKey.address,
+        authorizationUrl,
+        state,
+      };
+    } catch (error) {
+      if (error instanceof e.AbstraxionBackendError) {
+        throw error;
+      }
+      throw new e.UnknownError(
+        `Failed to initiate connection: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Handle authorization callback from frontend SDK
+   * Process the granted/granter parameters and store session key
+   */
+  async handleCallback(request: CallbackRequest): Promise<CallbackResponse> {
+    if (!request.state) {
+      throw new e.StateRequiredError();
+    }
+    if (!request.granter) {
+      throw new e.GranterRequiredError();
+    }
+
+    try {
+      // Validate state parameter
+      const stateData = this.stateStore.get<{
+        userId: string;
+        timestamp: number;
+        sessionKeyAddress: string;
+        grantedRedirectUrl?: string;
+        permissions?: Permissions;
+      }>(request.state);
+      if (!stateData) {
+        throw new e.InvalidStateError(request.state);
+      }
+
+      // Check if authorization was granted
+      if (!request.granted) {
+        // Clean up used state
+        this.stateStore.del(request.state);
+        return {
+          success: false,
+          error: "Authorization was not granted by user",
+        };
+      }
+
+      // Clean up used state
+      this.stateStore.del(request.state);
+
+      // Get the session key info that was stored during connectInit
+      const sessionKeyInfo = await this.sessionKeyManager.getLastSessionKeyInfo(
+        stateData.userId,
+      );
+      if (!sessionKeyInfo) {
+        throw new e.SessionKeyNotFoundError("Session key not found for user");
+      }
+
+      // Create permissions from the stored state or default permissions
+      const permissions: Permissions = stateData.permissions || {
+        contracts: [],
+        bank: [],
+        stake: false,
+        treasury: this.config.treasury,
+      };
+
+      // Store session key with permissions and granter address
+      await this.sessionKeyManager.storeGrantedSessionKey(
+        stateData.userId,
+        sessionKeyInfo.sessionKeyAddress,
+        request.granter, // Use granter as metaAccountAddress
+        permissions,
+      );
+
+      return {
+        success: true,
+        sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
+        grantedRedirectUrl: stateData.grantedRedirectUrl,
+        metaAccountAddress: request.granter,
+        permissions,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  /**
+   * Disconnect and revoke session key
+   * Cleanup database entries
+   */
+  async disconnect(userId: string): Promise<DisconnectResponse> {
+    // Validate input parameters
+    if (!userId) {
+      throw new e.UserIdRequiredError();
+    }
+
+    try {
+      // Get session key info first
+      const sessionKeyInfo =
+        await this.sessionKeyManager.getLastSessionKeyInfo(userId);
+
+      if (sessionKeyInfo) {
+        await this.sessionKeyManager.revokeSessionKey(
+          userId,
+          sessionKeyInfo.sessionKeyAddress,
+        );
+      }
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  async startAbstraxionBackendAuth(
+    userId: string,
+    request: IncomingMessage,
+    onRedirectMethod?: (url: string) => Promise<void>,
+  ): Promise<AbstraxionAuth> {
+    const activeSessionKey =
+      await this.sessionKeyManager.getLastSessionKeyInfo(userId);
+    if (
+      !activeSessionKey ||
+      !this.sessionKeyManager.isActive(activeSessionKey)
+    ) {
+      throw new e.SessionKeyNotFoundError("Session key not found for user");
+    }
+    const authz = new AbstraxionAuth(
+      new DatabaseStorageStrategy(userId, this.sessionKeyManager),
+      new DatabaseRedirectStrategy(request, onRedirectMethod),
+    );
+    authz.configureAbstraxionInstance(this.config.rpcUrl);
+    await authz.login();
+    return authz;
+  }
+
+  /**
+   * Check connection status
+   * Return wallet address and permissions
+   */
+  async checkStatus(userId: string): Promise<StatusResponse> {
+    // Validate input parameters
+    if (!userId) {
+      throw new e.UserIdRequiredError();
+    }
+
+    try {
+      const sessionKeyInfo =
+        await this.sessionKeyManager.getLastSessionKeyInfo(userId);
+
+      if (!sessionKeyInfo) {
+        return {
+          connected: false,
+        };
+      }
+
+      // Check if session key is valid
+      const isValid = await this.sessionKeyManager.validateSessionKey(userId);
+
+      if (!isValid) {
+        return {
+          connected: false,
+        };
+      }
+
+      return {
+        connected: true,
+        sessionKeyAddress: sessionKeyInfo.sessionKeyAddress,
+        metaAccountAddress: sessionKeyInfo.metaAccountAddress,
+        permissions: sessionKeyInfo.sessionPermissions,
+        expiresAt: sessionKeyInfo.sessionKeyExpiry.getTime(),
+        state: sessionKeyInfo.sessionState,
+      };
+    } catch (error) {
+      // Log error for debugging but don't expose it to client
+      console.error(
+        "Error checking status:",
+        error instanceof Error ? error.message : String(error),
+      );
+      return {
+        connected: false,
+      };
+    }
+  }
+
+  /**
+   * Refresh session key if needed
+   */
+  async refreshSessionKey(userId: string): Promise<XionKeypair | null> {
+    // Validate input parameters
+    if (!userId) {
+      throw new e.UserIdRequiredError();
+    }
+
+    try {
+      return await this.sessionKeyManager.refreshIfNeeded(userId);
+    } catch (error) {
+      if (error instanceof e.AbstraxionBackendError) {
+        throw error;
+      }
+      throw new e.UnknownError(
+        `Failed to refresh session key: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Build authorization URL for dashboard
+   * This matches the frontend SDK's configureUrlAndRedirect method
+   */
+  private async buildAuthorizationUrl(
+    sessionKeyAddress: string,
+    state: string,
+    permissions?: Permissions,
+  ): Promise<string> {
+    const { dashboardUrl } = await fetchConfig(this.config.rpcUrl);
+    const url = new URL(dashboardUrl);
+
+    // Add state parameter
+    url.searchParams.set("state", state);
+
+    // Add required parameters (matching frontend SDK)
+    url.searchParams.set("grantee", sessionKeyAddress);
+    url.searchParams.set("redirect_uri", this.config.redirectUrl);
+
+    // Add treasury parameter (required by frontend SDK)
+    url.searchParams.set("treasury", this.config.treasury);
+
+    // Add optional permissions (matching frontend SDK format)
+    if (permissions) {
+      if (permissions.contracts) {
+        url.searchParams.set(
+          "contracts",
+          JSON.stringify(permissions.contracts),
+        );
+      }
+      if (permissions.bank) {
+        url.searchParams.set("bank", JSON.stringify(permissions.bank));
+      }
+      if (permissions.stake) {
+        url.searchParams.set("stake", "true");
+      }
+    }
+
+    return url.toString();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): {
+    keys: number;
+    hits: number;
+    misses: number;
+    ksize: number;
+    vsize: number;
+  } {
+    return this.stateStore.getStats();
+  }
+
+  /**
+   * Clear all cached states
+   */
+  clearCache(): void {
+    this.stateStore.flushAll();
+  }
+
+  /**
+   * Close the cache and cleanup resources
+   */
+  close(): void {
+    this.stateStore.close();
+  }
+}
