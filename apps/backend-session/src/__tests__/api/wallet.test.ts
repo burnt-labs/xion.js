@@ -8,6 +8,21 @@ import { SessionState } from "@burnt-labs/abstraxion-backend";
 import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
 import { prisma } from "@/lib/xion/database";
 import { execSync } from "child_process";
+import {
+  setupAuthMocks,
+  cleanupAuthMocks,
+  createMockRequest,
+} from "../../test-utils/auth";
+
+// Mock the auth middleware
+jest.mock("@/lib/auth-middleware", () => ({
+  requireAuth: jest.fn(),
+}));
+
+// Mock NextAuth
+jest.mock("next-auth", () => ({
+  getServerSession: jest.fn(),
+}));
 
 // ensure all environment variables are set
 if (!process.env.XION_RPC_URL) {
@@ -17,7 +32,8 @@ if (!process.env.ENCRYPTION_KEY) {
   process.env.ENCRYPTION_KEY = "your-base64-encoded-aes-256-key-here";
 }
 if (!process.env.XION_REDIRECT_URL) {
-  process.env.XION_REDIRECT_URL = "http://localhost:3000/api/wallet/callback";
+  process.env.XION_REDIRECT_URL =
+    "http://localhost:3000/api/callback/grant_session";
 }
 if (!process.env.XION_TREASURY) {
   process.env.XION_TREASURY = "xion1treasury123...";
@@ -43,6 +59,9 @@ describe("Wallet API", () => {
   });
 
   beforeEach(async () => {
+    // Setup auth mocks
+    setupAuthMocks();
+
     // Clean up database before each test
     await prisma.sessionKey.deleteMany();
     await prisma.auditLog.deleteMany();
@@ -50,6 +69,9 @@ describe("Wallet API", () => {
   });
 
   afterEach(async () => {
+    // Clean up auth mocks
+    cleanupAuthMocks();
+
     // Clean up after each test
     await prisma.sessionKey.deleteMany();
     await prisma.auditLog.deleteMany();
@@ -81,21 +103,25 @@ describe("Wallet API", () => {
         },
       });
 
-      const request = new NextRequest(
+      // Mock the requireAuth function to return our test user
+      const { requireAuth } = require("@/lib/auth-middleware");
+      requireAuth.mockResolvedValue({
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        },
+      });
+
+      const request = createMockRequest(
         "http://localhost:3000/api/wallet/connect",
+        "POST",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+          permissions: {
+            contracts: ["contract1", "contract2"],
+            bank: [{ denom: "uxion", amount: "1000" }],
+            stake: true,
           },
-          body: JSON.stringify({
-            username: "testuser",
-            permissions: {
-              contracts: ["contract1", "contract2"],
-              bank: [{ denom: "uxion", amount: "1000" }],
-              stake: true,
-            },
-          }),
         },
       );
 
