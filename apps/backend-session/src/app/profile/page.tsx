@@ -5,20 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 
-interface WalletStatus {
-  connected: boolean;
-  sessionKeyAddress?: string;
-  metaAccountAddress?: string;
-  permissions?: {
-    contracts?: string[];
-    bank?: { denom: string; amount: string }[];
-    stake?: boolean;
-    treasury?: string;
-    expiry?: number;
-  };
-  expiresAt?: number;
-  state?: string;
-}
+import WalletComponent from "@/components/WalletComponent";
+import { WalletStatus } from "@/types/frontend";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -461,6 +449,14 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* Wallet Component - only show if wallet is connected */}
+            {walletStatus?.connected && walletStatus.metaAccountAddress && (
+              <WalletComponent
+                account={walletStatus}
+                onRefresh={checkWalletStatus}
+              />
+            )}
 
             {/* Action buttons */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

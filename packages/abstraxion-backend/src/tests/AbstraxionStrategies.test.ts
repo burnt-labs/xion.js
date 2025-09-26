@@ -278,7 +278,8 @@ describe("AbstraxionStrategies", () => {
         ).resolves.not.toThrow();
 
         // Verify the original granter address is unchanged
-        const sessionKeyInfo = await sessionKeyManager.getLastSessionKeyInfo(userId);
+        const sessionKeyInfo =
+          await sessionKeyManager.getLastSessionKeyInfo(userId);
         expect(sessionKeyInfo!.metaAccountAddress).toBe("xion1granter123");
       });
 
@@ -295,7 +296,8 @@ describe("AbstraxionStrategies", () => {
         ).resolves.not.toThrow();
 
         // Verify the granter address is set and session key is now active
-        const sessionKeyInfo = await sessionKeyManager.getLastSessionKeyInfo(userId);
+        const sessionKeyInfo =
+          await sessionKeyManager.getLastSessionKeyInfo(userId);
         expect(sessionKeyInfo!.metaAccountAddress).toBe(granterAddress);
         expect(sessionKeyInfo!.sessionState).toBe(SessionState.ACTIVE);
       });

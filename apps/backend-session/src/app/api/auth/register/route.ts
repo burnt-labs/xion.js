@@ -47,7 +47,6 @@ export const POST = createStandardApiHandler(
     });
 
     return {
-      success: true,
       message: "User registered successfully",
       user,
     };

@@ -16,7 +16,6 @@ export const POST = createStandardApiHandler(
     }
 
     return {
-      success: true,
       message: "Login successful",
       user: session.user,
     };
