@@ -4,7 +4,7 @@ A NextJS application that provides backend API services for managing XION wallet
 
 ## Features
 
-- **Wallet Connection Management**: Initiate, handle callbacks, and manage wallet connections
+- **Wallet Connection Management**: Initiate and manage wallet connections
 - **Session Key Management**: Secure generation, storage, and rotation of session keys
 - **Database Integration**: Prisma-based database with SQLite for development
 - **Security**: Encryption of sensitive data, rate limiting, and audit logging
@@ -41,33 +41,6 @@ Initiate wallet connection flow and generate session key.
     "sessionKeyAddress": "string",
     "authorizationUrl": "string",
     "state": "string"
-  }
-}
-```
-
-### POST /api/wallet/callback
-
-Handle authorization callback and store session key.
-
-**Request Body:**
-
-```json
-{
-  "code": "string",
-  "state": "string",
-  "username": "string"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "sessionKeyAddress": "string",
-    "metaAccountAddress": "string",
-    "permissions": {}
   }
 }
 ```

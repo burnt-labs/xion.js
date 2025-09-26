@@ -1,5 +1,5 @@
 import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
-import { callbackSchema } from "@/lib/validation";
+import { grantSessionCallbackSchema } from "@/lib/validation";
 import { createApiWrapper, handleRedirectResponse } from "@/lib/api-wrapper";
 import { ApiException } from "@/lib/api-response";
 
@@ -32,7 +32,7 @@ export const GET = createApiWrapper(
     return handleRedirectResponse(result, result.grantedRedirectUrl);
   },
   {
-    schema: callbackSchema,
+    schema: grantSessionCallbackSchema,
     schemaType: "query",
     rateLimit: "strict",
     allowedMethods: ["GET"],
