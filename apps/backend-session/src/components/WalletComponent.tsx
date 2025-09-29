@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@burnt-labs/ui";
 import TransferComponent from "./TransferComponent";
 import {
@@ -39,10 +39,16 @@ export default function WalletComponent({
     fetchWalletData();
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     fetchWalletData();
     onRefresh?.();
-  };
+  }, [onRefresh]);
+
+  const handleTransferComplete = useCallback((transactionHash: string) => {
+    console.log("Transfer completed:", transactionHash);
+    // Refresh wallet data after successful transfer
+    fetchWalletData();
+  }, []);
 
   const formatAmount = (amount: string, decimals: number = 6) => {
     const num = parseFloat(amount);
@@ -280,13 +286,7 @@ export default function WalletComponent({
         </div>
 
         {/* Transfer Component */}
-        <TransferComponent
-          onTransferComplete={(transactionHash) => {
-            console.log("Transfer completed:", transactionHash);
-            // Refresh wallet data after successful transfer
-            fetchWalletData();
-          }}
-        />
+        <TransferComponent onTransferComplete={handleTransferComplete} />
       </div>
     </div>
   );

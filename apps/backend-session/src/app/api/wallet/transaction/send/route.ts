@@ -34,12 +34,9 @@ export const POST = createApiWrapper(
         user.id,
         context.request as any,
       );
-      const metaAccountAddress = await abstraxionAuth.getGranter();
-      if (status.metaAccountAddress !== metaAccountAddress) {
-        throw new Error("Meta account address mismatch");
-      }
-
-      const signer = await abstraxionAuth.getSigner();
+      const signer = await abstraxionAuth.getSigner(
+        abstraxionBackend.gasPriceDefault,
+      );
 
       // Convert amount to micro units
       const amountNum = parseFloat(amount);
@@ -48,7 +45,7 @@ export const POST = createApiWrapper(
 
       // Create the bank send message
       const msgSend: MsgSend = {
-        fromAddress: metaAccountAddress,
+        fromAddress: status.metaAccountAddress,
         toAddress: to,
         amount: [
           {
@@ -60,7 +57,7 @@ export const POST = createApiWrapper(
 
       // Sign and broadcast the transaction
       const result = await signer.signAndBroadcast(
-        metaAccountAddress,
+        status.metaAccountAddress,
         [
           {
             typeUrl: "/cosmos.bank.v1beta1.MsgSend",

@@ -132,10 +132,12 @@ export default function ProfilePage() {
     return parts.length > 0 ? parts.join(", ") : "None";
   };
 
-  const renderDetailedPermissions = (permissions?: WalletStatus["permissions"]) => {
+  const renderDetailedPermissions = (
+    permissions?: WalletStatus["permissions"],
+  ) => {
     if (!permissions) {
       return (
-        <div className="text-slate-400 text-sm">No permissions granted</div>
+        <div className="text-sm text-slate-400">No permissions granted</div>
       );
     }
 
@@ -172,7 +174,9 @@ export default function ProfilePage() {
                         <span className="font-mono text-sm text-slate-200">
                           {contract}
                         </span>
-                        <span className="text-xs text-slate-400">Full Access</span>
+                        <span className="text-xs text-slate-400">
+                          Full Access
+                        </span>
                       </div>
                     ) : (
                       <div>
@@ -184,20 +188,43 @@ export default function ProfilePage() {
                             Limited Access
                           </span>
                         </div>
-                        {(contract as { address: string; amounts?: Array<{ denom: string; amount: string }> }).amounts && 
-                         (contract as { address: string; amounts?: Array<{ denom: string; amount: string }> }).amounts!.length > 0 && (
-                          <div className="ml-4 space-y-1">
-                            <div className="text-xs text-slate-400">Spending Limits:</div>
-                            {(contract as { address: string; amounts: Array<{ denom: string; amount: string }> }).amounts.map((amount, amountIndex) => (
-                              <div
-                                key={amountIndex}
-                                className="text-xs text-slate-300"
-                              >
-                                {amount.amount} {amount.denom}
+                        {(
+                          contract as {
+                            address: string;
+                            amounts?: Array<{ denom: string; amount: string }>;
+                          }
+                        ).amounts &&
+                          (
+                            contract as {
+                              address: string;
+                              amounts?: Array<{
+                                denom: string;
+                                amount: string;
+                              }>;
+                            }
+                          ).amounts!.length > 0 && (
+                            <div className="ml-4 space-y-1">
+                              <div className="text-xs text-slate-400">
+                                Spending Limits:
                               </div>
-                            ))}
-                          </div>
-                        )}
+                              {(
+                                contract as {
+                                  address: string;
+                                  amounts: Array<{
+                                    denom: string;
+                                    amount: string;
+                                  }>;
+                                }
+                              ).amounts.map((amount, amountIndex) => (
+                                <div
+                                  key={amountIndex}
+                                  className="text-xs text-slate-300"
+                                >
+                                  {amount.amount} {amount.denom}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
@@ -237,7 +264,9 @@ export default function ProfilePage() {
                   <span className="font-mono text-sm text-slate-200">
                     {limit.amount} {limit.denom}
                   </span>
-                  <span className="text-xs text-slate-400">Per Transaction</span>
+                  <span className="text-xs text-slate-400">
+                    Per Transaction
+                  </span>
                 </div>
               ))}
             </div>
@@ -338,7 +367,7 @@ export default function ProfilePage() {
           !permissions.bank?.length &&
           !permissions.stake &&
           !permissions.treasury && (
-            <div className="text-center text-slate-400 text-sm">
+            <div className="text-center text-sm text-slate-400">
               No specific permissions granted
             </div>
           )}

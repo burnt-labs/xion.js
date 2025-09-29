@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "@burnt-labs/ui";
 import { TransferComponentProps, TokenDenom } from "@/types/frontend";
+import { useNotification } from "@/contexts/NotificationContext";
 
 export default function TransferComponent({
   onTransferComplete,
@@ -12,6 +13,7 @@ export default function TransferComponent({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { addNotification } = useNotification();
 
   const handleTransfer = async () => {
     // Validate inputs
@@ -48,14 +50,27 @@ export default function TransferComponent({
         setSuccess(
           `Transaction sent successfully! Hash: ${data.data.transactionHash}`,
         );
+        addNotification({
+          message: "Transaction sent successfully!",
+          transactionHash: data.data.transactionHash,
+          type: "success",
+        });
         setToAddress("");
         setAmount("");
         onTransferComplete?.(data.data.transactionHash);
       } else {
         setError(data.error || "Failed to send transaction");
+        addNotification({
+          message: data.error || "Failed to send transaction",
+          type: "error",
+        });
       }
     } catch (err) {
       setError("Network error while sending transaction");
+      addNotification({
+        message: "Network error while sending transaction",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
