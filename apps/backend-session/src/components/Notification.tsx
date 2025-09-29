@@ -114,18 +114,18 @@ export default function Notification({
             <p className="text-sm font-medium">{message}</p>
             {transactionHash && (
               <div className="mt-2">
-                <p className="text-xs opacity-75 mb-1">Transaction Hash:</p>
+                <p className="mb-1 text-xs opacity-75">Transaction Hash:</p>
                 <div className="flex items-center space-x-2">
-                  <code className="text-xs bg-black/20 px-2 py-1 rounded font-mono break-all">
+                  <code className="break-all rounded bg-black/20 px-2 py-1 font-mono text-xs">
                     {transactionHash}
                   </code>
                   <Button
                     structure="outlined"
-                    className="text-xs px-2 py-1 h-auto bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    className="h-auto border-white/20 bg-white/10 px-2 py-1 text-xs text-white hover:bg-white/20"
                     onClick={() => {
                       window.open(
                         `https://www.mintscan.io/xion-testnet/tx/${transactionHash}`,
-                        "_blank"
+                        "_blank",
                       );
                     }}
                   >
@@ -137,7 +137,7 @@ export default function Notification({
           </div>
           <button
             onClick={handleClose}
-            className="ml-2 text-white/60 hover:text-white/80 transition-colors"
+            className="ml-2 text-white/60 transition-colors hover:text-white/80"
           >
             <svg
               className="h-4 w-4"
