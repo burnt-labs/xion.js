@@ -7,7 +7,6 @@ import type { IncomingMessage } from "node:http";
 import { SessionKeyManager } from "../services";
 import {
   InvalidStorageKeyError,
-  SessionKeyInvalidError,
   SessionKeyNotFoundError,
 } from "../types/errors";
 import { SessionState } from "../types";

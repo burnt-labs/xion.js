@@ -1,7 +1,13 @@
 import { randomBytes } from "node:crypto";
 import NodeCache from "node-cache";
-import type { IncomingMessage, ServerResponse } from "node:http";
-import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
+import type { IncomingMessage } from "node:http";
+import { GasPrice } from "@cosmjs/stargate";
+import {
+  AbstraxionAuth,
+  ContractGrantDescription,
+  SpendLimit,
+} from "@burnt-labs/abstraxion-core";
+import { fetchConfig, xionGasValues } from "@burnt-labs/constants";
 import {
   AbstraxionBackendConfig,
   ConnectionInitResponse,
@@ -18,11 +24,11 @@ import {
   DatabaseRedirectStrategy,
   DatabaseStorageStrategy,
 } from "../adapters/AbstraxionStategies";
-import { fetchConfig } from "@burnt-labs/constants";
 
 export class AbstraxionBackend {
   public readonly sessionKeyManager: SessionKeyManager;
-  private readonly stateStore: NodeCache;
+  private readonly _stateStore: NodeCache;
+  private readonly _gasPriceDefault: GasPrice;
 
   constructor(private readonly config: AbstraxionBackendConfig) {
     // Validate configuration
@@ -38,9 +44,21 @@ export class AbstraxionBackend {
     if (!config.treasury) {
       throw new e.TreasuryRequiredError();
     }
+    if (!config.rpcUrl) {
+      throw new e.RpcUrlRequiredError();
+    }
+
+    let gasPriceDefault: GasPrice;
+    const { gasPrice: gasPriceConstant } = xionGasValues;
+    if (config.rpcUrl.includes("mainnet")) {
+      gasPriceDefault = GasPrice.fromString(gasPriceConstant);
+    } else {
+      gasPriceDefault = GasPrice.fromString("0.001uxion");
+    }
+    this._gasPriceDefault = gasPriceDefault;
 
     // Initialize node-cache with 10 minutes TTL and automatic cleanup
-    this.stateStore = new NodeCache({
+    this._stateStore = new NodeCache({
       stdTTL: 600, // 10 minutes in seconds
       checkperiod: 60, // Check for expired keys every minute
       useClones: false, // Don't clone objects for better performance
@@ -52,6 +70,13 @@ export class AbstraxionBackend {
       refreshThresholdMs: config.refreshThresholdMs,
       enableAuditLogging: config.enableAuditLogging,
     });
+  }
+
+  /**
+   * Get the default gas price
+   */
+  public get gasPriceDefault(): GasPrice {
+    return this._gasPriceDefault;
   }
 
   /**
@@ -84,7 +109,7 @@ export class AbstraxionBackend {
 
       // Store state with user ID, timestamp, session key address, and permissions
       // node-cache will automatically handle TTL, no need for manual cleanup
-      this.stateStore.set(state, {
+      this._stateStore.set(state, {
         userId,
         timestamp: Date.now(),
         sessionKeyAddress: sessionKey.address,
@@ -131,7 +156,7 @@ export class AbstraxionBackend {
 
     try {
       // Validate state parameter
-      const stateData = this.stateStore.get<{
+      const stateData = this._stateStore.get<{
         userId: string;
         timestamp: number;
         sessionKeyAddress: string;
@@ -145,7 +170,7 @@ export class AbstraxionBackend {
       // Check if authorization was granted
       if (!request.granted) {
         // Clean up used state
-        this.stateStore.del(request.state);
+        this._stateStore.del(request.state);
         return {
           success: false,
           error: "Authorization was not granted by user",
@@ -153,7 +178,7 @@ export class AbstraxionBackend {
       }
 
       // Clean up used state
-      this.stateStore.del(request.state);
+      this._stateStore.del(request.state);
 
       // Get the session key info that was stored during connectInit
       const sessionKeyInfo = await this.sessionKeyManager.getLastSessionKeyInfo(
@@ -230,7 +255,13 @@ export class AbstraxionBackend {
   async startAbstraxionBackendAuth(
     userId: string,
     request: IncomingMessage,
-    onRedirectMethod?: (url: string) => Promise<void>,
+    options?: {
+      contracts?: ContractGrantDescription[];
+      bank?: SpendLimit[];
+      indexerUrl?: string;
+      stake?: boolean;
+      onRedirectMethod?: (url: string) => Promise<void>;
+    },
   ): Promise<AbstraxionAuth> {
     const activeSessionKey =
       await this.sessionKeyManager.getLastSessionKeyInfo(userId);
@@ -242,9 +273,18 @@ export class AbstraxionBackend {
     }
     const authz = new AbstraxionAuth(
       new DatabaseStorageStrategy(userId, this.sessionKeyManager),
-      new DatabaseRedirectStrategy(request, onRedirectMethod),
+      new DatabaseRedirectStrategy(request, options?.onRedirectMethod),
     );
-    authz.configureAbstraxionInstance(this.config.rpcUrl);
+    // Configure AbstraxionAuth instance
+    authz.configureAbstraxionInstance(
+      this.config.rpcUrl,
+      options?.contracts,
+      options?.stake,
+      options?.bank,
+      this.config.redirectUrl,
+      this.config.treasury,
+      options?.indexerUrl,
+    );
     await authz.login();
     return authz;
   }
@@ -370,20 +410,20 @@ export class AbstraxionBackend {
     ksize: number;
     vsize: number;
   } {
-    return this.stateStore.getStats();
+    return this._stateStore.getStats();
   }
 
   /**
    * Clear all cached states
    */
   clearCache(): void {
-    this.stateStore.flushAll();
+    this._stateStore.flushAll();
   }
 
   /**
    * Close the cache and cleanup resources
    */
   close(): void {
-    this.stateStore.close();
+    this._stateStore.close();
   }
 }
