@@ -207,7 +207,7 @@ export class AbstraxionAuth {
   /**
    * Get GranteeSignerClient for the temp keypair.
    */
-  async getSigner(): Promise<GranteeSignerClient> {
+  async getSigner(gasPrice?: GasPrice): Promise<GranteeSignerClient> {
     try {
       if (this.client) {
         return this.client;
@@ -240,7 +240,7 @@ export class AbstraxionAuth {
         this.rpcUrl,
         this.abstractAccount,
         {
-          gasPrice: GasPrice.fromString("0uxion"),
+          gasPrice: gasPrice || GasPrice.fromString("0uxion"),
           granterAddress,
           granteeAddress,
           treasuryAddress: this.treasury,
