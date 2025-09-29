@@ -6,7 +6,10 @@ export interface WalletStatus {
   sessionKeyAddress?: string;
   metaAccountAddress?: string;
   permissions?: {
-    contracts?: string[];
+    contracts?: Array<
+      | string
+      | { address: string; amounts: Array<{ denom: string; amount: string }> }
+    >;
     bank?: { denom: string; amount: string }[];
     stake?: boolean;
     treasury?: string;

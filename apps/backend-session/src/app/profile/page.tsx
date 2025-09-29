@@ -132,6 +132,220 @@ export default function ProfilePage() {
     return parts.length > 0 ? parts.join(", ") : "None";
   };
 
+  const renderDetailedPermissions = (permissions?: WalletStatus["permissions"]) => {
+    if (!permissions) {
+      return (
+        <div className="text-slate-400 text-sm">No permissions granted</div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {/* Contracts */}
+        {permissions.contracts && permissions.contracts.length > 0 && (
+          <div className="rounded-lg bg-white/5 p-4">
+            <div className="mb-3 flex items-center">
+              <svg
+                className="mr-2 h-4 w-4 text-blue-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                />
+              </svg>
+              <span className="text-sm font-medium text-slate-300">
+                Contract Permissions ({permissions.contracts.length})
+              </span>
+            </div>
+            <div className="space-y-2">
+              {permissions.contracts.map((contract, index) => {
+                const isStringContract = typeof contract === "string";
+                return (
+                  <div key={index} className="rounded bg-white/5 p-3">
+                    {isStringContract ? (
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-sm text-slate-200">
+                          {contract}
+                        </span>
+                        <span className="text-xs text-slate-400">Full Access</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="font-mono text-sm text-slate-200">
+                            {(contract as { address: string }).address}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            Limited Access
+                          </span>
+                        </div>
+                        {(contract as { address: string; amounts?: Array<{ denom: string; amount: string }> }).amounts && 
+                         (contract as { address: string; amounts?: Array<{ denom: string; amount: string }> }).amounts!.length > 0 && (
+                          <div className="ml-4 space-y-1">
+                            <div className="text-xs text-slate-400">Spending Limits:</div>
+                            {(contract as { address: string; amounts: Array<{ denom: string; amount: string }> }).amounts.map((amount, amountIndex) => (
+                              <div
+                                key={amountIndex}
+                                className="text-xs text-slate-300"
+                              >
+                                {amount.amount} {amount.denom}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Bank Permissions */}
+        {permissions.bank && permissions.bank.length > 0 && (
+          <div className="rounded-lg bg-white/5 p-4">
+            <div className="mb-3 flex items-center">
+              <svg
+                className="mr-2 h-4 w-4 text-green-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                />
+              </svg>
+              <span className="text-sm font-medium text-slate-300">
+                Bank Spending Limits ({permissions.bank.length})
+              </span>
+            </div>
+            <div className="space-y-2">
+              {permissions.bank.map((limit, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between rounded bg-white/5 p-3"
+                >
+                  <span className="font-mono text-sm text-slate-200">
+                    {limit.amount} {limit.denom}
+                  </span>
+                  <span className="text-xs text-slate-400">Per Transaction</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Staking Permission */}
+        {permissions.stake && (
+          <div className="rounded-lg bg-white/5 p-4">
+            <div className="flex items-center">
+              <svg
+                className="mr-2 h-4 w-4 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                />
+              </svg>
+              <span className="text-sm font-medium text-slate-300">
+                Staking Permission
+              </span>
+              <span className="ml-2 rounded-full bg-green-500/20 px-2 py-1 text-xs text-green-300">
+                Enabled
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              Can stake and unstake tokens on your behalf
+            </p>
+          </div>
+        )}
+
+        {/* Treasury Permission */}
+        {permissions.treasury && (
+          <div className="rounded-lg bg-white/5 p-4">
+            <div className="mb-2 flex items-center">
+              <svg
+                className="mr-2 h-4 w-4 text-yellow-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                />
+              </svg>
+              <span className="text-sm font-medium text-slate-300">
+                Treasury Access
+              </span>
+            </div>
+            <div className="rounded bg-white/5 p-3">
+              <span className="font-mono text-sm text-slate-200">
+                {permissions.treasury}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              Can interact with treasury contract
+            </p>
+          </div>
+        )}
+
+        {/* Permission Expiry */}
+        {permissions.expiry && (
+          <div className="rounded-lg bg-white/5 p-4">
+            <div className="flex items-center">
+              <svg
+                className="mr-2 h-4 w-4 text-orange-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                />
+              </svg>
+              <span className="text-sm font-medium text-slate-300">
+                Permission Expiry
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-slate-200">
+              {formatTimestamp(permissions.expiry)}
+            </p>
+          </div>
+        )}
+
+        {/* No permissions message */}
+        {!permissions.contracts?.length &&
+          !permissions.bank?.length &&
+          !permissions.stake &&
+          !permissions.treasury && (
+            <div className="text-center text-slate-400 text-sm">
+              No specific permissions granted
+            </div>
+          )}
+      </div>
+    );
+  };
+
   // Show loading while checking authentication
   if (status === "loading") {
     return (
@@ -403,9 +617,9 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* Permissions */}
+                      {/* Detailed Permissions */}
                       <div className="rounded-lg bg-white/5 p-4">
-                        <div className="mb-2 flex items-center">
+                        <div className="mb-4 flex items-center">
                           <svg
                             className="mr-2 h-4 w-4 text-green-400"
                             fill="none"
@@ -420,12 +634,10 @@ export default function ProfilePage() {
                             />
                           </svg>
                           <span className="text-sm font-medium text-slate-300">
-                            Permissions
+                            Detailed Permissions
                           </span>
                         </div>
-                        <p className="text-sm text-slate-200">
-                          {formatPermissions(walletStatus.permissions)}
-                        </p>
+                        {renderDetailedPermissions(walletStatus.permissions)}
                       </div>
                     </div>
                   ) : null}
