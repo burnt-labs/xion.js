@@ -10,9 +10,9 @@ export type SpendLimit = { denom: string; amount: string };
 export type ContractGrantDescription =
   | string
   | {
-    address: string;
-    amounts: SpendLimit[];
-  };
+      address: string;
+      amounts: SpendLimit[];
+    };
 
 export interface AbstraxionContextProps {
   isConnected: boolean;
