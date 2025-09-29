@@ -12,12 +12,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
-      "env": [
-        ".env.production.local",
-        ".env.local",
-        ".env.production",
-        ".env"
-      ]
+      "env": [".env.production.local", ".env.local", ".env.production", ".env"]
     },
     "test": {
       "env": [".env.test.local", ".env.test", ".env"]
