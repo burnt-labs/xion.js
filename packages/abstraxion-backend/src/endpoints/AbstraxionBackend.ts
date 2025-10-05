@@ -23,6 +23,7 @@ import { SessionKeyManager } from "../services/SessionKeyManager";
 import {
   DatabaseRedirectStrategy,
   DatabaseStorageStrategy,
+  InMemoryDummyRedirectStrategy,
 } from "../adapters/AbstraxionStategies";
 
 export class AbstraxionBackend {
@@ -196,6 +197,24 @@ export class AbstraxionBackend {
         treasury: this.config.treasury,
       };
 
+      // Call authz to validate the grants
+      const authz = this._createRawAbstraxionAuthz(stateData.userId);
+      // Don't use login method here, because the granter is not set yet
+      const keypair = await authz.getLocalKeypair();
+      if (!keypair) {
+        throw new e.EncryptionKeyRequiredError();
+      }
+
+      const accounts = await keypair.getAccounts();
+      const keypairAddress = accounts[0].address;
+      const pollSuccess = await authz.pollForGrants(
+        keypairAddress,
+        request.granter,
+      );
+      if (!pollSuccess) {
+        throw new e.GrantedFailedError();
+      }
+
       // Store session key with permissions and granter address
       await this.sessionKeyManager.storeGrantedSessionKey(
         stateData.userId,
@@ -222,6 +241,8 @@ export class AbstraxionBackend {
   /**
    * Disconnect and revoke session key
    * Cleanup database entries
+   * @param userId User ID
+   * @returns DisconnectResponse
    */
   async disconnect(userId: string): Promise<DisconnectResponse> {
     // Validate input parameters
@@ -252,9 +273,16 @@ export class AbstraxionBackend {
     }
   }
 
+  /**
+   * Start Abstraxion backend authentication
+   * @param userId User ID
+   * @param request IncomingMessage (optional)
+   * @param options Options
+   * @returns AbstraxionAuth
+   */
   async startAbstraxionBackendAuth(
     userId: string,
-    request: IncomingMessage,
+    request?: IncomingMessage,
     options?: {
       contracts?: ContractGrantDescription[];
       bank?: SpendLimit[];
@@ -271,9 +299,27 @@ export class AbstraxionBackend {
     ) {
       throw new e.SessionKeyNotFoundError("Session key not found for user");
     }
+    const authz = this._createRawAbstraxionAuthz(userId, request, options);
+    await authz.login();
+    return authz;
+  }
+
+  private _createRawAbstraxionAuthz(
+    userId: string,
+    request?: IncomingMessage,
+    options?: {
+      contracts?: ContractGrantDescription[];
+      bank?: SpendLimit[];
+      indexerUrl?: string;
+      stake?: boolean;
+      onRedirectMethod?: (url: string) => Promise<void>;
+    },
+  ): AbstraxionAuth {
     const authz = new AbstraxionAuth(
       new DatabaseStorageStrategy(userId, this.sessionKeyManager),
-      new DatabaseRedirectStrategy(request, options?.onRedirectMethod),
+      request
+        ? new DatabaseRedirectStrategy(request, options?.onRedirectMethod)
+        : new InMemoryDummyRedirectStrategy(),
     );
     // Configure AbstraxionAuth instance
     authz.configureAbstraxionInstance(
@@ -285,13 +331,14 @@ export class AbstraxionBackend {
       this.config.treasury,
       options?.indexerUrl,
     );
-    await authz.login();
     return authz;
   }
 
   /**
    * Check connection status
    * Return wallet address and permissions
+   * @param userId User ID
+   * @returns StatusResponse
    */
   async checkStatus(userId: string): Promise<StatusResponse> {
     // Validate input parameters

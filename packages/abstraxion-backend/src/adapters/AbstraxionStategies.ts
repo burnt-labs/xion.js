@@ -142,3 +142,33 @@ export class DatabaseRedirectStrategy implements RedirectStrategy {
     );
   }
 }
+
+export class InMemoryDummyRedirectStrategy implements RedirectStrategy {
+  async getCurrentUrl(): Promise<string> {
+    return "/";
+  }
+
+  async redirect(url: string): Promise<void> {
+    throw new Error(
+      "InMemoryDummyRedirectStrategy.redirect is not implemented",
+    );
+  }
+
+  async getUrlParameter(param: string): Promise<string | null> {
+    return null;
+  }
+
+  async cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
+    return;
+  }
+
+  async onRedirectComplete(
+    _callback: (params: { granter?: string | null }) => void,
+  ): Promise<void> {
+    return;
+  }
+
+  async removeRedirectHandler(): Promise<void> {
+    return;
+  }
+}

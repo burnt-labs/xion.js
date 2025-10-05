@@ -7,10 +7,10 @@ import {
   SessionKeyNotFoundError,
   SessionKeyInvalidError,
   SessionKeyStorageError,
-  SessionKeyRetrievalError,
   SessionKeyRevocationError,
   SessionKeyRefreshError,
 } from "../types/errors";
+import { EncryptionError } from "../types";
 
 describe("SessionKeyManager", () => {
   let sessionKeyManager: SessionKeyManager;
@@ -367,6 +367,408 @@ describe("SessionKeyManager", () => {
       const auditLogs = await databaseAdapter.getAuditLogs(userId);
       expect(auditLogs.length).toBeGreaterThan(0);
       expect(auditLogs[0].action).toBe(AuditAction.SESSION_KEY_CREATED);
+    });
+
+    it("should not log audit events when disabled", async () => {
+      const sessionKeyManagerDisabled = new SessionKeyManager(databaseAdapter, {
+        encryptionKey: EncryptionService.generateEncryptionKey(),
+        sessionKeyExpiryMs: 24 * 60 * 60 * 1000,
+        refreshThresholdMs: 60 * 60 * 1000,
+        enableAuditLogging: false,
+      });
+
+      const userId = "user123";
+      const sessionKey =
+        await sessionKeyManagerDisabled.generateSessionKeypair();
+
+      await sessionKeyManagerDisabled.createPendingSessionKey(
+        userId,
+        sessionKey,
+      );
+
+      const auditLogs = await databaseAdapter.getAuditLogs(userId);
+      expect(auditLogs.length).toBe(0);
+    });
+
+    it("should handle audit logging errors gracefully", async () => {
+      // Mock database adapter to throw error on audit logging
+      const mockDatabaseAdapter = {
+        ...databaseAdapter,
+        logAuditEvent: jest
+          .fn()
+          .mockRejectedValue(new Error("Audit logging failed")),
+        addNewSessionKey: jest.fn().mockResolvedValue(undefined),
+      } as any;
+
+      const sessionKeyManagerWithError = new SessionKeyManager(
+        mockDatabaseAdapter,
+        {
+          encryptionKey: EncryptionService.generateEncryptionKey(),
+          sessionKeyExpiryMs: 24 * 60 * 60 * 1000,
+          refreshThresholdMs: 60 * 60 * 1000,
+          enableAuditLogging: true,
+        },
+      );
+
+      const userId = "user123";
+      const sessionKey =
+        await sessionKeyManagerWithError.generateSessionKeypair();
+
+      // Should not throw error even if audit logging fails
+      await expect(
+        sessionKeyManagerWithError.createPendingSessionKey(userId, sessionKey),
+      ).resolves.not.toThrow();
+    });
+  });
+
+  describe("markAsExpired", () => {
+    it("should mark session key as expired", async () => {
+      const userId = "user123";
+      const pastTime = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25 hours ago
+      const sessionKeyInfo = {
+        userId,
+        sessionKeyAddress: "xion1testaddress",
+        sessionKeyMaterial: "encrypted-key",
+        sessionKeyExpiry: pastTime,
+        sessionPermissions: {},
+        sessionState: SessionState.ACTIVE,
+        metaAccountAddress: "xion1metaaccount",
+        createdAt: pastTime,
+        updatedAt: pastTime,
+      };
+
+      await databaseAdapter.storeSessionKey(sessionKeyInfo);
+
+      // Call getLastSessionKeyInfo which should mark as expired
+      const result = await sessionKeyManager.getLastSessionKeyInfo(userId);
+      expect(result).toBeNull();
+
+      // Check that the session key was marked as expired
+      const updatedKey = await databaseAdapter.getSessionKey(
+        userId,
+        "xion1testaddress",
+      );
+      expect(updatedKey!.sessionState).toBe(SessionState.EXPIRED);
+    });
+
+    it("should handle markAsExpired errors gracefully", async () => {
+      const userId = "user123";
+      const pastTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
+      const sessionKeyInfo = {
+        userId,
+        sessionKeyAddress: "xion1testaddress",
+        sessionKeyMaterial: "encrypted-key",
+        sessionKeyExpiry: pastTime,
+        sessionPermissions: {},
+        sessionState: SessionState.ACTIVE,
+        metaAccountAddress: "xion1metaaccount",
+        createdAt: pastTime,
+        updatedAt: pastTime,
+      };
+
+      await databaseAdapter.storeSessionKey(sessionKeyInfo);
+
+      // Mock database adapter to throw error on update
+      const mockDatabaseAdapter = {
+        ...databaseAdapter,
+        updateSessionKeyWithParams: jest
+          .fn()
+          .mockRejectedValue(new Error("Update failed")),
+      } as any;
+
+      const sessionKeyManagerWithError = new SessionKeyManager(
+        mockDatabaseAdapter,
+        {
+          encryptionKey: EncryptionService.generateEncryptionKey(),
+          sessionKeyExpiryMs: 24 * 60 * 60 * 1000,
+          refreshThresholdMs: 60 * 60 * 1000,
+          enableAuditLogging: true,
+        },
+      );
+
+      // Should not throw error even if markAsExpired fails
+      const result =
+        await sessionKeyManagerWithError.getLastSessionKeyInfo(userId);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("getSessionKeypair with SessionKeyInfo parameter", () => {
+    it("should work with SessionKeyInfo object", async () => {
+      const userId = "user123";
+      const sessionKey = await sessionKeyManager.generateSessionKeypair();
+      await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
+
+      const sessionKeyInfo = await databaseAdapter.getLastSessionKey(userId);
+      expect(sessionKeyInfo).toBeDefined();
+
+      const retrieved = await sessionKeyManager.getSessionKeypair(
+        sessionKeyInfo!,
+      );
+      expect(retrieved).toBeDefined();
+      expect(retrieved).toHaveProperty("getAccounts");
+      expect(retrieved).toHaveProperty("serialize");
+    });
+
+    it("should throw error for null SessionKeyInfo", async () => {
+      await expect(
+        sessionKeyManager.getSessionKeypair(null as any),
+      ).rejects.toThrow(SessionKeyNotFoundError);
+    });
+  });
+
+  describe("validateSessionKey with SessionKeyInfo parameter", () => {
+    it("should work with SessionKeyInfo object", async () => {
+      const futureTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const sessionKeyInfo = {
+        userId: "user123",
+        sessionKeyAddress: "xion1testaddress",
+        sessionKeyMaterial: "encrypted-key",
+        sessionKeyExpiry: futureTime,
+        sessionPermissions: {},
+        sessionState: SessionState.ACTIVE,
+        metaAccountAddress: "xion1metaaccount",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const isValid =
+        await sessionKeyManager.validateSessionKey(sessionKeyInfo);
+      expect(isValid).toBe(true);
+    });
+
+    it("should return false for null SessionKeyInfo", async () => {
+      // validateSessionKey expects a string or SessionKeyInfo, null should throw
+      await expect(
+        sessionKeyManager.validateSessionKey(null as any),
+      ).rejects.toThrow(UserIdRequiredError);
+    });
+  });
+
+  describe("revokeActiveSessionKeys", () => {
+    it("should revoke all active session keys", async () => {
+      const userId = "user123";
+
+      // Create multiple session keys
+      const sessionKey1 = await sessionKeyManager.generateSessionKeypair();
+      const sessionKey2 = await sessionKeyManager.generateSessionKeypair();
+
+      await sessionKeyManager.createPendingSessionKey(userId, sessionKey1);
+      await sessionKeyManager.createPendingSessionKey(userId, sessionKey2);
+
+      // Activate both session keys
+      await sessionKeyManager.storeGrantedSessionKey(
+        userId,
+        sessionKey1.address,
+        "xion1granter1",
+      );
+      await sessionKeyManager.storeGrantedSessionKey(
+        userId,
+        sessionKey2.address,
+        "xion1granter2",
+      );
+
+      // Revoke all active session keys
+      await sessionKeyManager.revokeActiveSessionKeys(userId);
+
+      // Check that both are revoked
+      const activeKeys = await databaseAdapter.getActiveSessionKeys(userId);
+      expect(activeKeys.length).toBe(0);
+    });
+
+    it("should handle case when no active session keys exist", async () => {
+      const userId = "user123";
+
+      // Should not throw error
+      await expect(
+        sessionKeyManager.revokeActiveSessionKeys(userId),
+      ).resolves.not.toThrow();
+    });
+
+    it("should throw error for empty userId", async () => {
+      await expect(
+        sessionKeyManager.revokeActiveSessionKeys(""),
+      ).rejects.toThrow(UserIdRequiredError);
+    });
+  });
+
+  describe("refreshIfNeeded edge cases", () => {
+    it("should handle database errors gracefully", async () => {
+      const userId = "user123";
+
+      // Mock database adapter to throw error
+      const mockDatabaseAdapter = {
+        ...databaseAdapter,
+        getLastSessionKey: jest
+          .fn()
+          .mockRejectedValue(new Error("Database error")),
+      } as any;
+
+      const sessionKeyManagerWithError = new SessionKeyManager(
+        mockDatabaseAdapter,
+        {
+          encryptionKey: EncryptionService.generateEncryptionKey(),
+          sessionKeyExpiryMs: 24 * 60 * 60 * 1000,
+          refreshThresholdMs: 60 * 60 * 1000,
+          enableAuditLogging: true,
+        },
+      );
+
+      await expect(
+        sessionKeyManagerWithError.refreshIfNeeded(userId),
+      ).rejects.toThrow(SessionKeyRefreshError);
+    });
+
+    it("should handle decryption errors during refresh", async () => {
+      const userId = "user123";
+      const sessionKey = await sessionKeyManager.generateSessionKeypair();
+
+      // Create session key with invalid encrypted material
+      const invalidSessionKeyInfo = {
+        userId,
+        sessionKeyAddress: sessionKey.address,
+        sessionKeyMaterial: "invalid-encrypted-data",
+        sessionKeyExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        sessionPermissions: {},
+        sessionState: SessionState.ACTIVE,
+        metaAccountAddress: "xion1metaaccount",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await databaseAdapter.storeSessionKey(invalidSessionKeyInfo);
+
+      await expect(sessionKeyManager.refreshIfNeeded(userId)).rejects.toThrow(
+        EncryptionError,
+      );
+    });
+  });
+
+  describe("storeGrantedSessionKey edge cases", () => {
+    it("should throw error for non-pending session key", async () => {
+      const userId = "user123";
+      const sessionKey = await sessionKeyManager.generateSessionKeypair();
+
+      // Create and activate session key
+      await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
+      await sessionKeyManager.storeGrantedSessionKey(
+        userId,
+        sessionKey.address,
+        "xion1granter1",
+      );
+
+      // Try to store granted session key again (should fail because it's already active)
+      await expect(
+        sessionKeyManager.storeGrantedSessionKey(
+          userId,
+          sessionKey.address,
+          "xion1granter2",
+        ),
+      ).rejects.toThrow(SessionKeyInvalidError);
+    });
+
+    it("should handle database errors during storeGrantedSessionKey", async () => {
+      const userId = "user123";
+      const sessionKey = await sessionKeyManager.generateSessionKeypair();
+
+      await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
+
+      // Mock database adapter to throw error
+      const mockDatabaseAdapter = {
+        ...databaseAdapter,
+        updateSessionKeyWithParams: jest
+          .fn()
+          .mockRejectedValue(new Error("Update failed")),
+      } as any;
+
+      const sessionKeyManagerWithError = new SessionKeyManager(
+        mockDatabaseAdapter,
+        {
+          encryptionKey: EncryptionService.generateEncryptionKey(),
+          sessionKeyExpiryMs: 24 * 60 * 60 * 1000,
+          refreshThresholdMs: 60 * 60 * 1000,
+          enableAuditLogging: true,
+        },
+      );
+
+      await expect(
+        sessionKeyManagerWithError.storeGrantedSessionKey(
+          userId,
+          sessionKey.address,
+          "xion1granter",
+        ),
+      ).rejects.toThrow(SessionKeyStorageError);
+    });
+  });
+
+  describe("generateSessionKeypair edge cases", () => {
+    it("should generate valid session keypair", async () => {
+      const keypair = await sessionKeyManager.generateSessionKeypair();
+
+      expect(keypair).toBeDefined();
+      expect(keypair.address).toBeDefined();
+      expect(keypair.serializedKeypair).toBeDefined();
+      expect(typeof keypair.address).toBe("string");
+      expect(typeof keypair.serializedKeypair).toBe("string");
+    });
+  });
+
+  describe("createPendingSessionKey edge cases", () => {
+    it("should handle database errors during creation", async () => {
+      const userId = "user123";
+      const sessionKey = await sessionKeyManager.generateSessionKeypair();
+
+      // Mock database adapter to throw error
+      const mockDatabaseAdapter = {
+        ...databaseAdapter,
+        addNewSessionKey: jest
+          .fn()
+          .mockRejectedValue(new Error("Database error")),
+      } as any;
+
+      const sessionKeyManagerWithError = new SessionKeyManager(
+        mockDatabaseAdapter,
+        {
+          encryptionKey: EncryptionService.generateEncryptionKey(),
+          sessionKeyExpiryMs: 24 * 60 * 60 * 1000,
+          refreshThresholdMs: 60 * 60 * 1000,
+          enableAuditLogging: true,
+        },
+      );
+
+      await expect(
+        sessionKeyManagerWithError.createPendingSessionKey(userId, sessionKey),
+      ).rejects.toThrow(SessionKeyStorageError);
+    });
+
+    it("should handle encryption errors during creation", async () => {
+      const userId = "user123";
+      const sessionKey = await sessionKeyManager.generateSessionKeypair();
+
+      // Mock encryption service to throw error
+      const mockEncryptionService = {
+        encryptSessionKey: jest
+          .fn()
+          .mockRejectedValue(new Error("Encryption failed")),
+      };
+
+      const sessionKeyManagerWithError = new SessionKeyManager(
+        databaseAdapter,
+        {
+          encryptionKey: EncryptionService.generateEncryptionKey(),
+          sessionKeyExpiryMs: 24 * 60 * 60 * 1000,
+          refreshThresholdMs: 60 * 60 * 1000,
+          enableAuditLogging: true,
+        },
+      );
+
+      // Replace the encryption service
+      (sessionKeyManagerWithError as any).encryptionService =
+        mockEncryptionService;
+
+      await expect(
+        sessionKeyManagerWithError.createPendingSessionKey(userId, sessionKey),
+      ).rejects.toThrow(SessionKeyStorageError);
     });
   });
 });

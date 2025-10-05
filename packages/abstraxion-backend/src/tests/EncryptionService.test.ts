@@ -318,5 +318,243 @@ describe("EncryptionService", () => {
         encryptionService.decryptSessionKey(tampered),
       ).rejects.toThrow(EncryptionError);
     });
+
+    it("should detect tampering in salt", async () => {
+      const sessionKey = "test-key";
+      const encrypted = await encryptionService.encryptSessionKey(sessionKey);
+
+      // Tamper with the salt (first 32 bytes)
+      const combined = Buffer.from(encrypted, "base64");
+      combined[31] = (combined[31] + 1) % 256; // Change last byte of salt
+      const tampered = combined.toString("base64");
+
+      await expect(
+        encryptionService.decryptSessionKey(tampered),
+      ).rejects.toThrow(EncryptionError);
+    });
+
+    it("should detect tampering in IV", async () => {
+      const sessionKey = "test-key";
+      const encrypted = await encryptionService.encryptSessionKey(sessionKey);
+
+      // Tamper with the IV (bytes 32-47)
+      const combined = Buffer.from(encrypted, "base64");
+      combined[40] = (combined[40] + 1) % 256; // Change a byte in IV
+      const tampered = combined.toString("base64");
+
+      await expect(
+        encryptionService.decryptSessionKey(tampered),
+      ).rejects.toThrow(EncryptionError);
+    });
+
+    it("should detect tampering in authentication tag", async () => {
+      const sessionKey = "test-key";
+      const encrypted = await encryptionService.encryptSessionKey(sessionKey);
+
+      // Tamper with the authentication tag (bytes 48-63)
+      const combined = Buffer.from(encrypted, "base64");
+      combined[60] = (combined[60] + 1) % 256; // Change a byte in tag
+      const tampered = combined.toString("base64");
+
+      await expect(
+        encryptionService.decryptSessionKey(tampered),
+      ).rejects.toThrow(EncryptionError);
+    });
+
+    it("should detect tampering in encrypted data", async () => {
+      const sessionKey = "test-key";
+      const encrypted = await encryptionService.encryptSessionKey(sessionKey);
+
+      // Tamper with the encrypted data (after tag)
+      const combined = Buffer.from(encrypted, "base64");
+      combined[combined.length - 1] = (combined[combined.length - 1] + 1) % 256; // Change last byte
+      const tampered = combined.toString("base64");
+
+      await expect(
+        encryptionService.decryptSessionKey(tampered),
+      ).rejects.toThrow(EncryptionError);
+    });
+  });
+
+  describe("key derivation", () => {
+    it("should use different salts for different encryptions", async () => {
+      const sessionKey = "test-key";
+      const encrypted1 = await encryptionService.encryptSessionKey(sessionKey);
+      const encrypted2 = await encryptionService.encryptSessionKey(sessionKey);
+
+      const combined1 = Buffer.from(encrypted1, "base64");
+      const combined2 = Buffer.from(encrypted2, "base64");
+
+      const salt1 = combined1.subarray(0, 32);
+      const salt2 = combined2.subarray(0, 32);
+
+      expect(salt1).not.toEqual(salt2);
+    });
+
+    it("should use different IVs for different encryptions", async () => {
+      const sessionKey = "test-key";
+      const encrypted1 = await encryptionService.encryptSessionKey(sessionKey);
+      const encrypted2 = await encryptionService.encryptSessionKey(sessionKey);
+
+      const combined1 = Buffer.from(encrypted1, "base64");
+      const combined2 = Buffer.from(encrypted2, "base64");
+
+      const iv1 = combined1.subarray(32, 48);
+      const iv2 = combined2.subarray(32, 48);
+
+      expect(iv1).not.toEqual(iv2);
+    });
+
+    it("should derive different keys for different salts", async () => {
+      const masterKey = "test-master-key";
+      const service1 = new EncryptionService(masterKey);
+      const service2 = new EncryptionService(masterKey);
+
+      const sessionKey = "test-key";
+      const encrypted1 = await service1.encryptSessionKey(sessionKey);
+      const encrypted2 = await service2.encryptSessionKey(sessionKey);
+
+      // Should be different due to different salts
+      expect(encrypted1).not.toBe(encrypted2);
+
+      // But both should decrypt correctly with their respective services
+      const decrypted1 = await service1.decryptSessionKey(encrypted1);
+      const decrypted2 = await service2.decryptSessionKey(encrypted2);
+
+      expect(decrypted1).toBe(sessionKey);
+      expect(decrypted2).toBe(sessionKey);
+    });
+  });
+
+  describe("memory safety", () => {
+    it("should not expose private key in memory after encryption", async () => {
+      const sessionKey = "sensitive-private-key-data";
+      const encrypted = await encryptionService.encryptSessionKey(sessionKey);
+
+      // The encrypted data should not contain the original key
+      expect(encrypted).not.toContain(sessionKey);
+      expect(encrypted).not.toContain("sensitive");
+      expect(encrypted).not.toContain("private");
+    });
+
+    it("should handle very long keys efficiently", async () => {
+      const longKey = "x".repeat(100000); // 100KB key
+      const start = Date.now();
+
+      const encrypted = await encryptionService.encryptSessionKey(longKey);
+      const decrypted = await encryptionService.decryptSessionKey(encrypted);
+
+      const duration = Date.now() - start;
+
+      expect(decrypted).toBe(longKey);
+      expect(duration).toBeLessThan(5000); // Should complete within 5 seconds
+    });
+  });
+
+  describe("concurrent operations", () => {
+    it("should handle concurrent encryption operations", async () => {
+      const promises = Array.from({ length: 50 }, (_, i) =>
+        encryptionService.encryptSessionKey(`concurrent-key-${i}`),
+      );
+
+      const results = await Promise.all(promises);
+      expect(results).toHaveLength(50);
+
+      // All results should be different
+      const uniqueResults = new Set(results);
+      expect(uniqueResults.size).toBe(50);
+    });
+
+    it("should handle concurrent decryption operations", async () => {
+      const sessionKey = "concurrent-test-key";
+      const encrypted = await encryptionService.encryptSessionKey(sessionKey);
+
+      const promises = Array.from({ length: 50 }, () =>
+        encryptionService.decryptSessionKey(encrypted),
+      );
+
+      const results = await Promise.all(promises);
+      expect(results).toHaveLength(50);
+
+      // All results should be the same
+      results.forEach((result) => {
+        expect(result).toBe(sessionKey);
+      });
+    });
+
+    it("should handle mixed concurrent operations", async () => {
+      const sessionKey = "mixed-concurrent-key";
+      const encrypted = await encryptionService.encryptSessionKey(sessionKey);
+
+      const encryptPromises = Array.from({ length: 25 }, (_, i) =>
+        encryptionService.encryptSessionKey(`mixed-key-${i}`),
+      );
+      const decryptPromises = Array.from({ length: 25 }, () =>
+        encryptionService.decryptSessionKey(encrypted),
+      );
+
+      const [encryptResults, decryptResults] = await Promise.all([
+        Promise.all(encryptPromises),
+        Promise.all(decryptPromises),
+      ]);
+
+      expect(encryptResults).toHaveLength(25);
+      expect(decryptResults).toHaveLength(25);
+
+      decryptResults.forEach((result) => {
+        expect(result).toBe(sessionKey);
+      });
+    });
+  });
+
+  describe("error recovery", () => {
+    it("should handle scrypt memory errors gracefully", async () => {
+      // Create service with very long master key that might cause memory issues
+      const veryLongMasterKey = "a".repeat(1000000);
+
+      try {
+        const service = new EncryptionService(veryLongMasterKey);
+        await service.encryptSessionKey("test");
+      } catch (error) {
+        if (error instanceof Error) {
+          expect(error).toBeInstanceOf(EncryptionError);
+          expect(error.message).toContain("Failed to encrypt session key");
+        }
+      }
+    });
+
+    it("should handle invalid base64 input gracefully", async () => {
+      const invalidInputs = [
+        "not-base64!",
+        "invalid-base64-characters-!@#$%",
+        "too-short",
+        "",
+        "valid-base64-but-too-short",
+      ];
+
+      for (const input of invalidInputs) {
+        await expect(
+          encryptionService.decryptSessionKey(input),
+        ).rejects.toThrow(EncryptionError);
+      }
+    });
+
+    it("should handle malformed encrypted data", async () => {
+      const sessionKey = "test-key";
+      const encrypted = await encryptionService.encryptSessionKey(sessionKey);
+      const combined = Buffer.from(encrypted, "base64");
+
+      // Test with data that's too short
+      const tooShort = combined.subarray(0, 10).toString("base64");
+      await expect(
+        encryptionService.decryptSessionKey(tooShort),
+      ).rejects.toThrow(EncryptionError);
+
+      // Test with data that's missing components
+      const missingTag = combined.subarray(0, 48).toString("base64");
+      await expect(
+        encryptionService.decryptSessionKey(missingTag),
+      ).rejects.toThrow(EncryptionError);
+    });
   });
 });

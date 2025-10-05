@@ -9,7 +9,6 @@ import { EncryptionService } from "../services/EncryptionService";
 import { SessionState } from "../types";
 import {
   InvalidStorageKeyError,
-  SessionKeyInvalidError,
   SessionKeyNotFoundError,
 } from "../types/errors";
 
