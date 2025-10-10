@@ -1,0 +1,174 @@
+import {
+  SignArbSecp256k1HdWallet,
+  type RedirectStrategy,
+  type StorageStrategy,
+} from "@burnt-labs/abstraxion-core";
+import type { IncomingMessage } from "node:http";
+import { SessionKeyManager } from "../services";
+import {
+  InvalidStorageKeyError,
+  SessionKeyNotFoundError,
+} from "../types/errors";
+import { SessionState } from "../types";
+
+export class DatabaseStorageStrategy implements StorageStrategy {
+  constructor(
+    private userId: string,
+    private skManager: SessionKeyManager,
+  ) {}
+
+  /**
+   * Get the item from the database
+   * @param key - the key to get
+   * @returns
+   */
+  async getItem(key: string): Promise<string | null> {
+    /**
+     * Current there are two key are in use:
+     * 1. xion-authz-granter-account
+     * 2. xion-authz-temp-account
+     *
+     * Granter account is stored in the database and temp account is stored in db by SessionKeyManager.
+     */
+    const uid = `${this.userId}`;
+    if (
+      key !== "xion-authz-granter-account" &&
+      key !== "xion-authz-temp-account"
+    ) {
+      throw new InvalidStorageKeyError(`${key}@getItem`);
+    }
+    const sessionKeyInfo = await this.skManager.getLastSessionKeyInfo(uid);
+    if (!sessionKeyInfo || !this.skManager.isActive(sessionKeyInfo)) {
+      throw new SessionKeyNotFoundError(uid);
+    }
+
+    switch (key) {
+      case "xion-authz-granter-account":
+        return sessionKeyInfo.metaAccountAddress;
+      case "xion-authz-temp-account":
+        return await this.skManager.encryptionService.decryptSessionKey(
+          sessionKeyInfo.sessionKeyMaterial,
+        );
+      default:
+        throw new InvalidStorageKeyError(`${key}@getItem`);
+    }
+  }
+
+  async setItem(key: string, value: string): Promise<void> {
+    switch (key) {
+      case "xion-authz-temp-account":
+        const keypair = await SignArbSecp256k1HdWallet.deserialize(
+          value,
+          "abstraxion",
+        );
+        const accounts = await keypair.getAccounts();
+        await this.skManager.createPendingSessionKey(this.userId, {
+          address: accounts[0].address,
+          serializedKeypair: value,
+        });
+        break;
+      case "xion-authz-granter-account":
+        const lastSessionKeyInfo = await this.skManager.getLastSessionKeyInfo(
+          this.userId,
+        );
+        if (
+          lastSessionKeyInfo &&
+          lastSessionKeyInfo.sessionState === SessionState.PENDING
+        ) {
+          await this.skManager.storeGrantedSessionKey(
+            this.userId,
+            lastSessionKeyInfo.sessionKeyAddress,
+            value,
+          );
+        } else {
+          // Skip this step if the session key is not in PENDING state
+          // It can be set by other means, e.g. storeGrantedSessionKey
+        }
+        break;
+      default:
+        throw new InvalidStorageKeyError(`${key}@setItem`);
+    }
+  }
+
+  async removeItem(key: string): Promise<void> {
+    const uid = `${this.userId}`;
+    switch (key) {
+      case "xion-authz-temp-account":
+      case "xion-authz-granter-account":
+        await this.skManager.revokeActiveSessionKeys(uid);
+        break;
+      default:
+        throw new InvalidStorageKeyError(`${key}@removeItem`);
+    }
+  }
+}
+
+/**
+ * This strategy is just for backend compatibility with AbstraxionAuth
+ */
+export class DatabaseRedirectStrategy implements RedirectStrategy {
+  constructor(
+    private request: IncomingMessage,
+    private onRedirectMethod?: (url: string) => Promise<void>,
+  ) {}
+
+  async getCurrentUrl(): Promise<string> {
+    const protocol = this.request.headers["x-forwarded-proto"] || "http";
+    const host = this.request.headers.host || "localhost";
+    return `${protocol}://${host}${this.request.url}`;
+  }
+
+  async redirect(url: string): Promise<void> {
+    await this.onRedirectMethod?.(url);
+  }
+
+  async getUrlParameter(param: string): Promise<string | null> {
+    if (!this.request.url) return null;
+
+    const url = this.getUrl();
+    return url.searchParams.get(param);
+  }
+
+  async cleanUrlParameters(_paramsToRemove: string[]): Promise<void> {
+    // DO NOTHING
+    return Promise.resolve();
+  }
+
+  private getUrl(): URL {
+    const protocol = this.request.headers["x-forwarded-proto"] || "http";
+    return new URL(
+      this.request.url || "/",
+      `${protocol}://${this.request.headers.host}`,
+    );
+  }
+}
+
+export class InMemoryDummyRedirectStrategy implements RedirectStrategy {
+  async getCurrentUrl(): Promise<string> {
+    return "/";
+  }
+
+  async redirect(url: string): Promise<void> {
+    throw new Error(
+      "InMemoryDummyRedirectStrategy.redirect is not implemented",
+    );
+  }
+
+  async getUrlParameter(param: string): Promise<string | null> {
+    return null;
+  }
+
+  async cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
+    return;
+  }
+
+  async onRedirectComplete(
+    _callback: (params: { granter?: string | null }) => void,
+  ): Promise<void> {
+    return;
+  }
+
+  async removeRedirectHandler(): Promise<void> {
+    return;
+  }
+}
