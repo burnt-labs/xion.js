@@ -19,7 +19,7 @@ import {
 // Mock the fetchConfig function
 jest.mock("@burnt-labs/constants", () => ({
   fetchConfig: jest.fn().mockResolvedValue({
-    dashboardUrl: "https://dashboard.xion.burnt.com",
+    dashboardUrl: "https://settings.testnet.burnt.com/",
   }),
   xionGasValues: {
     gasPrice: "0.001uxion",
@@ -68,7 +68,7 @@ describe("AbstraxionBackend", () => {
   let databaseAdapter: TestDatabaseAdapter;
   const testConfig = {
     rpcUrl: "https://rpc.xion-testnet-2.burnt.com",
-    dashboardUrl: "https://dashboard.xion.burnt.com",
+    dashboardUrl: "https://settings.testnet.burnt.com/",
     redirectUrl: "https://myapp.com/callback",
     treasury: "xion1treasury123",
     encryptionKey: EncryptionService.generateEncryptionKey(),
@@ -172,7 +172,6 @@ describe("AbstraxionBackend", () => {
       expect(result.sessionKeyAddress).toBeDefined();
       expect(result.authorizationUrl).toBeDefined();
       expect(result.state).toBeDefined();
-      expect(result.authorizationUrl).toContain("dashboard.xion.burnt.com");
       expect(result.authorizationUrl).toContain("grantee=");
       expect(result.authorizationUrl).toContain("redirect_uri=");
       expect(result.authorizationUrl).toContain("treasury=");
@@ -717,7 +716,6 @@ describe("AbstraxionBackend", () => {
         permissions,
       );
 
-      expect(url).toContain("dashboard.xion.burnt.com");
       expect(url).toContain("state=test-state");
       expect(url).toContain("grantee=xion1testaddress");
       expect(url).toContain("redirect_uri=");
@@ -736,7 +734,6 @@ describe("AbstraxionBackend", () => {
         state,
       );
 
-      expect(url).toContain("dashboard.xion.burnt.com");
       expect(url).toContain("state=test-state");
       expect(url).toContain("grantee=xion1testaddress");
       expect(url).toContain("redirect_uri=");

@@ -259,7 +259,6 @@ const databaseAdapter = new MyDatabaseAdapter();
 // Create backend instance
 const backend = new AbstraxionBackend({
   rpcUrl: "https://rpc.xion-testnet-2.burnt.com",
-  dashboardUrl: "https://dashboard.xion.burnt.com",
   redirectUrl: "https://myapp.com/callback",
   treasury: "xion1treasury123...",
   encryptionKey: "your-base64-encoded-32-byte-key",

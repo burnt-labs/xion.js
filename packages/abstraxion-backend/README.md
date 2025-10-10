@@ -42,7 +42,6 @@ const databaseAdapter = new MyDatabaseAdapter();
 // Create backend instance
 const backend = new AbstraxionBackend({
   rpcUrl: "https://rpc.xion-testnet-2.burnt.com",
-  dashboardUrl: "https://dashboard.xion.burnt.com",
   redirectUrl: "https://myapp.com/callback", // Where frontend SDK redirects after auth
   treasury: "xion1treasury123...", // Treasury contract address
   encryptionKey: "your-base64-encoded-32-byte-key",
@@ -257,7 +256,6 @@ class PostgresDatabaseAdapter extends BaseDatabaseAdapter {
 ```typescript
 interface AbstraxionBackendConfig {
   rpcUrl: string; // XION RPC endpoint
-  dashboardUrl: string; // Dashboard URL for authorization
   encryptionKey: string; // Base64-encoded 32-byte AES key
   databaseAdapter: DatabaseAdapter; // Database adapter instance
   sessionKeyExpiryMs?: number; // Session key expiry (default: 24h)
