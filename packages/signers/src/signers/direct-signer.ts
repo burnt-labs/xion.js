@@ -1,17 +1,12 @@
 import {
   DirectSignResponse,
-  OfflineDirectSigner,
   makeSignBytes,
+  OfflineDirectSigner,
 } from "@cosmjs/proto-signing";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { AAccountData, AASigner } from "../interfaces/AASigner";
-import { getAAccounts } from "./utils";
+import { AAAlgo, AAccountData, AASigner } from "../interfaces";
 import { StdSignature } from "@cosmjs/amino";
 
-/**
- * @deprecated This type is deprecated and will no longer be maintained.
- * Please contact the Burnt Labs team for alternative solutions.
- */
 export type SignArbitraryFn = (
   chainId: string,
   signer: string,
@@ -19,9 +14,6 @@ export type SignArbitraryFn = (
 ) => Promise<StdSignature>;
 
 /**
- * @deprecated This class is deprecated and will no longer be maintained.
- * Please contact the Burnt Labs team for alternative solutions.
- *
  * This class is an implementation of the AASigner interface using the DirectSecp256k1HdWallet
  * or any other signer that implements the AASigner interface
  * This class use would generally be with a wallet since it's method of signing is the same as the
@@ -34,24 +26,13 @@ export type SignArbitraryFn = (
  * @implements AASigner
  */
 export class AADirectSigner extends AASigner {
-  signer: OfflineDirectSigner;
-  accountAuthenticatorIndex: number;
-  indexerUrl: string;
-  signArbFn: SignArbitraryFn;
-
   constructor(
-    initializedSigner: OfflineDirectSigner,
+    public signer: Pick<OfflineDirectSigner, "getAccounts">,
     abstractAccount: string,
-    accountAuthenticatorIndex: number,
-    signArbFn: SignArbitraryFn,
-    indexerUrl?: string,
+    public accountAuthenticatorIndex: number,
+    public signArbFn: SignArbitraryFn,
   ) {
     super(abstractAccount);
-    this.signer = initializedSigner;
-    this.accountAuthenticatorIndex = accountAuthenticatorIndex;
-    this.signArbFn = signArbFn;
-    this.indexerUrl =
-      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
   }
 
   async signDirect(
@@ -77,20 +58,27 @@ export class AADirectSigner extends AASigner {
   }
 
   async getAccounts(): Promise<readonly AAccountData[]> {
+    if (this.abstractAccount === undefined) {
+      return [];
+    }
+
     const accounts = await this.signer.getAccounts();
     if (accounts.length === 0) {
       return [];
+    } else if (accounts.length > 1) {
+      // @TODO How to handle this case?
+      console.log("Signer returned more than 1 account");
     }
-    if (this.abstractAccount === undefined) {
-      // we treat this class a a normal signer not an AA signer
-      return accounts.map((account) => {
-        return {
-          ...account,
-          authenticatorId: 0,
-          accountAddress: account.address,
-        };
-      });
-    }
-    return await getAAccounts(accounts, this.abstractAccount, this.indexerUrl);
+
+    return [
+      {
+        address: this.abstractAccount,
+        algo: "secp256k1", // we don't really care about this
+        pubkey: new Uint8Array(),
+        authenticatorId: this.accountAuthenticatorIndex,
+        accountAddress: accounts[0].address,
+        aaalgo: AAAlgo.Secp256K1,
+      },
+    ];
   }
 }

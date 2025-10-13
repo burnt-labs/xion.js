@@ -3,30 +3,21 @@ import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { sha256 } from "@cosmjs/crypto";
 import { AAccountData, AASigner } from "../interfaces/AASigner";
 import { AAAlgo } from "../interfaces/smartAccount";
-import { getAuthenticatorIdByAuthenticatorIndex } from "./utils";
 
-/**
- * @deprecated This class is deprecated and will no longer be maintained.
- * Please contact the Burnt Labs team for alternative solutions.
- */
 export class AbstractAccountJWTSigner extends AASigner {
   // requires a session token already created
   sessionToken: string | undefined;
   accountAuthenticatorIndex: number;
-  indexerUrl: string;
   apiUrl: string;
   constructor(
     abstractAccount: string,
     accountAuthenticatorIndex: number,
     sessionToken?: string,
-    indexerUrl?: string,
     apiUrl?: string,
   ) {
     super(abstractAccount);
     this.sessionToken = sessionToken;
     this.accountAuthenticatorIndex = accountAuthenticatorIndex;
-    this.indexerUrl =
-      indexerUrl || "https://api.subquery.network/sq/burnt-labs/xion-indexer";
     this.apiUrl = apiUrl || "https://aa.xion-testnet-1.burnt.com";
   }
 
@@ -44,11 +35,7 @@ export class AbstractAccountJWTSigner extends AASigner {
         address: this.abstractAccount,
         algo: "secp256k1", // we don't really care about this
         pubkey: new Uint8Array(),
-        authenticatorId: await getAuthenticatorIdByAuthenticatorIndex(
-          this.abstractAccount,
-          this.accountAuthenticatorIndex,
-          this.indexerUrl,
-        ),
+        authenticatorId: this.accountAuthenticatorIndex,
         accountAddress: this.abstractAccount,
         aaalgo: AAAlgo.JWT,
       },
@@ -110,13 +97,17 @@ export class AbstractAccountJWTSigner extends AASigner {
    * property of the session claims property to the hash of the passed msg
    * @param signerAddress
    * @param message Arbitrary message to be signed
+   * @param customToken Custom JWT token to be used for signing
    * @returns
    */
-  async signDirectArb(message: string): Promise<{ signature: string }> {
+  async signDirectArb(
+    message: string,
+    customToken?: string,
+  ): Promise<{ signature: string }> {
     if (this.sessionToken === undefined) {
       throw new Error("stytch session token is undefined");
     }
-    const hashSignBytes = sha256(Buffer.from(message, "utf-8"));
+    const hashSignBytes = new Uint8Array(Buffer.from(message, "utf-8"));
     const hashedMessage = Buffer.from(hashSignBytes).toString("base64");
 
     const authResponse = await fetch(
@@ -127,7 +118,7 @@ export class AbstractAccountJWTSigner extends AASigner {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          session_token: this.sessionToken,
+          session_token: customToken || this.sessionToken,
           session_duration_minutes: 60 * 24 * 30,
           session_custom_claims: {
             transaction_hash: hashedMessage,
@@ -143,10 +134,9 @@ export class AbstractAccountJWTSigner extends AASigner {
     const authResponseData = await authResponse.json();
 
     return {
-      signature: Buffer.from(
-        authResponseData.data.session_jwt,
-        "utf-8",
-      ).toString("base64"),
+      signature: Buffer.from(authResponseData.data.session_jwt).toString(
+        "base64",
+      ),
     };
   }
 }
