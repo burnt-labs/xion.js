@@ -4,7 +4,7 @@
  */
 
 import { Buffer } from "buffer";
-import { WalletAccountError, getErrorMessageForUI } from "./errors";
+import { WalletAccountError, getErrorMessageForUI } from "./errors/WalletAccountError";
 
 /**
  * Gets Secp256k1 public key from Cosmos wallets (Keplr/Leap/OKX)
@@ -153,9 +153,10 @@ export async function signWithSecp256k1Wallet(
       );
     }
 
-    // Convert base64 signature to hex
-    const signatureBytes = Buffer.from(response.signature, "base64");
-    const signatureHex = signatureBytes.toString("hex");
+    // Convert signature to hex (response.signature is a Uint8Array)
+    const signatureHex = Array.from(response.signature as Uint8Array)
+      .map((b: number) => b.toString(16).padStart(2, "0"))
+      .join("");
 
     return signatureHex;
   } catch (error) {

@@ -3,6 +3,15 @@ import type {
   PeriodicAllowance,
 } from "cosmjs-types/cosmos/feegrant/v1beta1/feegrant";
 
+export type SpendLimit = { denom: string; amount: string };
+
+export type ContractGrantDescription =
+  | string
+  | {
+      address: string;
+      amounts: SpendLimit[];
+    };
+
 export interface BaseAllowance {
   "@type": string;
 }

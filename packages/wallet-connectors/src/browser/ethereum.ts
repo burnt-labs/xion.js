@@ -3,7 +3,7 @@
  * Extracted from dashboard utils/wallet-utils.ts
  */
 
-import { WalletAccountError, getErrorMessageForUI } from "./errors";
+import { WalletAccountError, getErrorMessageForUI } from "./errors/WalletAccountError";
 
 /**
  * Gets Ethereum wallet address from MetaMask

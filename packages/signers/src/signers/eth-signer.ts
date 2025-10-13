@@ -49,10 +49,14 @@ export class AAEthSigner extends AASigner {
     const signBytesHex = "0x" + encodeHex(signBytes);
     const signature = await this.personalSign(signBytesHex);
 
+    const matches = signature.match(/[\da-f]{2}/gi);
+    if (!matches) {
+      throw new Error("Invalid signature format");
+    }
     const byteArray = new Uint8Array(
-      signature.match(/[\da-f]{2}/gi).map((hex) => parseInt(hex, 16)),
+      matches.map((hex) => parseInt(hex, 16)),
     );
-    const base64String = btoa(String.fromCharCode.apply(null, byteArray));
+    const base64String = btoa(String.fromCharCode(...Array.from(byteArray)));
 
     return {
       signed: signDoc,

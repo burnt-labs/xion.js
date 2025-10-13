@@ -4,7 +4,7 @@ import { sha256 } from "@cosmjs/crypto";
 import { get } from "@github/webauthn-json/browser-ponyfill";
 import { AAccountData, AASigner } from "../interfaces/AASigner";
 import { AAAlgo } from "../interfaces";
-import { registeredCredentials } from "../../utils/webauthn-utils";
+import { registeredCredentials } from "./utils/webauthn-utils";
 
 /**
  * This class is an implementation of the AASigner interface using WebAuthn.

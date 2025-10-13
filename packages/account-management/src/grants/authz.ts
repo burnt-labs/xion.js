@@ -1,5 +1,5 @@
-import { SelectedSmartAccount } from "../indexer-strategies/types";
-import { ContractGrantDescription } from "../components/AbstraxionGrant/generateContractGrant";
+import { SelectedSmartAccount } from "../types/authenticator";
+import { ContractGrantDescription } from "../types/grants";
 
 /**
  * Checks if any of the contract grant configurations are the current smart account (granter)

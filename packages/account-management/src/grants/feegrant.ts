@@ -5,7 +5,7 @@ import {
   AllowanceResponse,
   ContractsAllowance,
   MultiAnyAllowance,
-} from "../types/allowance-types";
+} from "../types/grants";
 
 function isAllowedMsgAllowance(
   allowance: Allowance,

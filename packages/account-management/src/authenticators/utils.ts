@@ -1,5 +1,4 @@
-import { Authenticator } from "../indexer-strategies/types";
-import { SmartAccountWithCodeId } from "../indexer-strategies/types";
+import { Authenticator, SmartAccountWithCodeId } from "../types/authenticator";
 
 /**
  * Checks if an authenticator already exists in the list

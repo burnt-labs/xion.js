@@ -10,6 +10,8 @@
 
 // Placeholder - copy types from dashboard
 
+import { WalletType } from "./wallet";
+
 export interface PrepareSignatureRequest {
   wallet_type: WalletType;
   address?: string; // Required for EthWallet

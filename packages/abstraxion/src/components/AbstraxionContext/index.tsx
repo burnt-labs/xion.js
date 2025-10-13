@@ -4,6 +4,8 @@ import { testnetChainInfo, xionGasValues } from "@burnt-labs/constants";
 import { GasPrice } from "@cosmjs/stargate";
 import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
 import { abstraxionAuth } from "../Abstraxion";
+import { useWalletAuth, type WalletAuthState } from "../../hooks/useWalletAuth";
+import type { WalletAuthConfig } from "../Abstraxion";
 
 export type SpendLimit = { denom: string; amount: string };
 
@@ -41,6 +43,10 @@ export interface AbstraxionContextProps {
   gasPrice: GasPrice;
   logout: () => void;
   login: () => Promise<void>;
+
+  // NEW: Wallet authentication state
+  walletAuthMode: 'redirect' | 'direct' | 'local';
+  walletAuthState: WalletAuthState | null;
 }
 
 export const AbstraxionContext = createContext<AbstraxionContextProps>(
@@ -57,6 +63,7 @@ export function AbstraxionContextProvider({
   treasury,
   indexerUrl,
   gasPrice,
+  walletAuth,
 }: {
   children: ReactNode;
   contracts?: ContractGrantDescription[];
@@ -68,6 +75,7 @@ export function AbstraxionContextProvider({
   treasury?: string;
   indexerUrl?: string;
   gasPrice?: string;
+  walletAuth?: WalletAuthConfig;
 }): JSX.Element {
   // Initialize all loading states as false for consistent hydration, then detect OAuth in useEffect
   const [isConnected, setIsConnected] = useState(false);
@@ -90,6 +98,24 @@ export function AbstraxionContextProvider({
   } else {
     gasPriceDefault = GasPrice.fromString("0.001uxion");
   }
+
+  // Determine wallet auth mode
+  const walletAuthMode = walletAuth?.mode || 'redirect';
+
+  // Initialize wallet auth hook only for direct/local modes
+  const walletAuthState = useWalletAuth({
+    config: walletAuth || {},
+    onSuccess: (smartAccountAddress, walletInfo) => {
+      // Direct mode connection successful
+      setGranterAddress(smartAccountAddress);
+      setIsConnected(true);
+      setShowModal(false);
+    },
+    onError: (error) => {
+      setAbstraxionError(error);
+      setIsConnecting(false);
+    },
+  });
 
   const configureInstance = useCallback(() => {
     abstraxionAuth.configureAbstraxionInstance(
@@ -205,10 +231,25 @@ export function AbstraxionContextProvider({
 
     try {
       await abstraxionAuth.login();
+    try {
+      setIsConnecting(true);
+
+      // Check wallet auth mode
+      if (walletAuthMode === 'redirect') {
+        // Existing OAuth flow via dashboard redirect
+        await abstraxionAuth.login();
+      } else {
+        // Direct or local mode - show modal with wallet selection
+        setShowModal(true);
+        setIsConnecting(false); // Reset since wallet selection is async
+      }
     } catch (error) {
       throw error; // Re-throw to allow handling by the caller
     } finally {
       // Keep isLoggingIn true until auth state change sets isConnecting (only for manual login)
+      if (walletAuthMode === 'redirect') {
+        setIsConnecting(false);
+      }
     }
   }
 
@@ -237,8 +278,14 @@ export function AbstraxionContextProvider({
     setIsInitializing(false);
     setIsConnecting(false);
     setIsReturningFromAuth(false);
+
+    // Clear wallet auth state if in direct mode
+    if (walletAuthMode !== 'redirect') {
+      walletAuthState.disconnect();
+    }
+
     abstraxionAuth?.logout();
-  }, [abstraxionAuth]);
+  }, [abstraxionAuth, walletAuthMode, walletAuthState]);
 
   return (
     <AbstraxionContext.Provider
@@ -269,6 +316,8 @@ export function AbstraxionContextProvider({
         login,
         logout,
         gasPrice: gasPrice ? GasPrice.fromString(gasPrice) : gasPriceDefault,
+        walletAuthMode,
+        walletAuthState,
       }}
     >
       {children}

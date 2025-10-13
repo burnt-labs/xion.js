@@ -25,6 +25,7 @@
     "@cosmjs/stargate": "^0.36.0",
     "@cosmjs/tendermint-rpc": "^0.36.0",
     "@cosmjs/utils": "^0.36.0",
+    "@github/webauthn-json": "^2.1.1",
     "@protobuf-ts/runtime": "^2.9.4",
     "bech32": "^2.0.0",
     "buffer": "^6.0.3",

@@ -10,6 +10,7 @@ import {
 import { ErrorDisplay } from "../ErrorDisplay";
 import { AbstraxionSignin } from "../AbstraxionSignin";
 import { Connected } from "@/src/components/Connected/Connected.tsx";
+import { WalletSelect } from "../WalletSelect";
 import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
 import {
   BrowserRedirectStrategy,
@@ -32,6 +33,7 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
     isConnected,
     showModal,
     setShowModal,
+    walletAuthMode,
   } = useContext(AbstraxionContext);
 
   const closeOnEscKey = useCallback(
@@ -53,19 +55,66 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
 
   if (!showModal) return null;
 
+  // Determine what to show based on auth mode and connection state
+  const renderContent = () => {
+    if (abstraxionError) {
+      return <ErrorDisplay />;
+    }
+
+    if (abstraxionAccount || isConnected) {
+      return <Connected onClose={onClose} />;
+    }
+
+    // Not connected - show signin flow
+    if (walletAuthMode === 'redirect') {
+      // Existing OAuth flow via dashboard
+      return <AbstraxionSignin />;
+    } else {
+      // Direct mode - show wallet selection
+      return <WalletSelect />;
+    }
+  };
+
   return (
     <Dialog onOpenChange={onClose} open={showModal}>
       <DialogContent>
-        {abstraxionError ? (
-          <ErrorDisplay />
-        ) : abstraxionAccount || isConnected ? (
-          <Connected onClose={onClose} />
-        ) : !abstraxionAccount ? (
-          <AbstraxionSignin />
-        ) : null}
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );
+}
+
+/**
+ * Custom signer interface for Turnkey, Privy, etc.
+ */
+export interface CustomSigner {
+  type: 'Secp256K1' | 'EthWallet';
+  sign: (message: string) => Promise<string>;
+  getPubkey?: () => Promise<string>;  // For Secp256K1
+  getAddress?: () => Promise<string>; // For EthWallet
+}
+
+/**
+ * Wallet authentication configuration
+ */
+export interface WalletAuthConfig {
+  /** Authentication mode: redirect (default), direct (in-app), or local (no AA API) */
+  mode?: 'redirect' | 'direct' | 'local';
+
+  /** Custom AA API URL (for direct mode) */
+  aaApiUrl?: string;
+
+  /** Custom signer (Turnkey, Privy, etc.) */
+  customSigner?: CustomSigner;
+
+  /** Local mode configuration (for building transactions without AA API) */
+  localConfig?: {
+    codeId: number;
+    checksum: string;
+    feeGranter: string;
+    workerAddress?: string;
+    addressPrefix?: string;
+  };
 }
 
 export interface AbstraxionConfig {
@@ -76,6 +125,9 @@ export interface AbstraxionConfig {
   callbackUrl?: string;
   treasury?: string;
   gasPrice?: string;
+
+  /** NEW: Wallet authentication configuration */
+  walletAuth?: WalletAuthConfig;
 }
 
 export function AbstraxionProvider({
@@ -94,6 +146,7 @@ export function AbstraxionProvider({
       callbackUrl={config.callbackUrl}
       treasury={config.treasury}
       gasPrice={config.gasPrice}
+      walletAuth={config.walletAuth}
     >
       {children}
     </AbstraxionContextProvider>

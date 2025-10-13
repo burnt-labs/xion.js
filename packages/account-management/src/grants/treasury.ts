@@ -3,8 +3,7 @@ import type {
   GeneratedAuthzGrantMessage,
   GrantConfigByTypeUrl,
   GrantConfigTypeUrlsResponse,
-} from "../types/treasury-types";
-import type { AAClient } from "../signers";
+} from "../types/treasury";
 
 /**
  * Utility function to construct authz grant message
@@ -52,14 +51,14 @@ const constructGrantMessage = (
 /**
  * Queries the DAPP treasury contract to construct authz grant messages
  * @param {string} contractAddress - The address for the deployed treasury contract instance
- * @param {AAClient} client - Client to query RPC
+ * @param {any} client - Client to query RPC (must have queryContractSmart method)
  * @param {string} granter - The granter address
  * @param {string} grantee - The grantee address
  * @returns {GeneratedAuthzGrantMessage[]} - Array of authz grant messages to pass into tx
  */
 export const generateTreasuryGrants = async (
   contractAddress: string,
-  client: AAClient,
+  client: any, // AAClient from @burnt-labs/signers
   granter: string,
   grantee: string,
 ): Promise<GeneratedAuthzGrantMessage[]> => {
