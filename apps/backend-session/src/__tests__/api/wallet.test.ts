@@ -36,7 +36,8 @@ if (!process.env.XION_REDIRECT_URL) {
     "http://localhost:3000/api/callback/grant_session";
 }
 if (!process.env.XION_TREASURY) {
-  process.env.XION_TREASURY = "xion1treasury123...";
+  process.env.XION_TREASURY =
+    "xion1mj4a2t3365q0059w6ln9kkeyyj0fjlpdt0gea0vxd79epstkq4gshxqnmp";
 }
 
 describe("Wallet API", () => {
