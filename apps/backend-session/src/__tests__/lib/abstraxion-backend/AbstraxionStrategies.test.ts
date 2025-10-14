@@ -2,15 +2,15 @@ import { IncomingMessage } from "node:http";
 import {
   DatabaseStorageStrategy,
   DatabaseRedirectStrategy,
-} from "../adapters/AbstraxionStategies";
-import { SessionKeyManager } from "../services/SessionKeyManager";
-import { TestDatabaseAdapter } from "./TestDatabaseAdapter";
-import { EncryptionService } from "../services/EncryptionService";
-import { SessionState } from "../types";
+} from "../../../lib/xion/backend/adapters/AbstraxionStategies";
+import { SessionKeyManager } from "../../../lib/xion/backend/services/SessionKeyManager";
+import { TestDatabaseAdapter } from "../../../lib/xion/backend/adapters/TestDatabaseAdapter";
+import { EncryptionService } from "../../../lib/xion/backend/services/EncryptionService";
+import { SessionState } from "../../../lib/xion/backend/types";
 import {
   InvalidStorageKeyError,
   SessionKeyNotFoundError,
-} from "../types/errors";
+} from "../../../lib/xion/backend/types/errors";
 
 describe("AbstraxionStrategies", () => {
   describe("DatabaseStorageStrategy", () => {

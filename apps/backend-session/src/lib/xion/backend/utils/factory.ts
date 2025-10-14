@@ -1,4 +1,4 @@
-import { AbstraxionBackend } from "../endpoints/AbstraxionBackend";
+import { AbstraxionBackend } from "../AbstraxionBackend";
 import { AbstraxionBackendConfig, DatabaseAdapter } from "../types";
 import { EncryptionService } from "../services/EncryptionService";
 
@@ -59,27 +59,4 @@ export function createAbstraxionBackend(
     throw new Error("Refresh threshold must be less than session key expiry");
   }
   return new AbstraxionBackend(config);
-}
-
-/**
- * Create a default configuration with sensible defaults
- */
-export function createDefaultConfig(
-  treasury: string,
-  encryptionKey: string,
-  databaseAdapter: DatabaseAdapter,
-  redirectUrl: string,
-  rpcUrl?: string,
-  dashboardUrl?: string,
-): AbstraxionBackendConfig {
-  return {
-    treasury,
-    encryptionKey,
-    databaseAdapter,
-    redirectUrl,
-    rpcUrl: rpcUrl || "https://rpc.xion-testnet-2.burnt.com/",
-    sessionKeyExpiryMs: 24 * 60 * 60 * 1000, // 24 hours
-    refreshThresholdMs: 60 * 60 * 1000, // 1 hour
-    enableAuditLogging: true,
-  };
 }

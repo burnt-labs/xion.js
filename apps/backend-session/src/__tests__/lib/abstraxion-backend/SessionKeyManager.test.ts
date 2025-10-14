@@ -1,7 +1,11 @@
-import { SessionKeyManager } from "../services/SessionKeyManager";
-import { TestDatabaseAdapter } from "./TestDatabaseAdapter";
-import { EncryptionService } from "../services/EncryptionService";
-import { SessionState, AuditAction, XionKeypair } from "../types";
+import { SessionKeyManager } from "../../../lib/xion/backend/services/SessionKeyManager";
+import { TestDatabaseAdapter } from "../../../lib/xion/backend/adapters/TestDatabaseAdapter";
+import { EncryptionService } from "../../../lib/xion/backend/services/EncryptionService";
+import {
+  SessionState,
+  AuditAction,
+  XionKeypair,
+} from "../../../lib/xion/backend/types";
 import {
   UserIdRequiredError,
   SessionKeyNotFoundError,
@@ -9,8 +13,8 @@ import {
   SessionKeyStorageError,
   SessionKeyRevocationError,
   SessionKeyRefreshError,
-} from "../types/errors";
-import { EncryptionError } from "../types";
+} from "../../../lib/xion/backend/types/errors";
+import { EncryptionError } from "../../../lib/xion/backend/types";
 
 describe("SessionKeyManager", () => {
   let sessionKeyManager: SessionKeyManager;

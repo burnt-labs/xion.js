@@ -1,5 +1,5 @@
 import { randomBytes, pbkdf2Sync } from "node:crypto";
-import { EncryptionService } from "@burnt-labs/abstraxion-backend";
+import { EncryptionService } from "@/lib/xion/backend";
 
 export class SecurityManager {
   private static encryptionService: EncryptionService | null = null;

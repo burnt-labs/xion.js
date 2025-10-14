@@ -1,4 +1,4 @@
-import { BaseDatabaseAdapter } from "../adapters/DatabaseAdapter";
+import { BaseDatabaseAdapter } from "./DatabaseAdapter";
 import { SessionKeyInfo, AuditEvent, SessionState } from "../types";
 
 /**

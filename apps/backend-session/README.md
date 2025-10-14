@@ -304,7 +304,7 @@ src/
 
 - **NextJS 14**: React framework
 - **Prisma**: Database ORM
-- **@burnt-labs/abstraxion-backend**: XION backend library
+- **@/lib/xion/backend**: XION backend library
 - **@burnt-labs/abstraxion-core**: XION core utilities
 - **@burnt-labs/constants**: Shared constants
 - **@burnt-labs/ui**: UI component library

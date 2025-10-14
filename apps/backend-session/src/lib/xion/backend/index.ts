@@ -1,10 +1,10 @@
-// Main exports
-export { AbstraxionBackend } from "./endpoints/AbstraxionBackend";
-export { SessionKeyManager } from "./services/SessionKeyManager";
-export { EncryptionService } from "./services/EncryptionService";
-
 // Database adapters
 export { BaseDatabaseAdapter } from "./adapters/DatabaseAdapter";
+
+// Main exports
+export { SessionKeyManager } from "./services/SessionKeyManager";
+export { EncryptionService } from "./services/EncryptionService";
+export { AbstraxionBackend } from "./AbstraxionBackend";
 
 // Types and interfaces
 export * from "./types";

@@ -17,14 +17,14 @@ import {
   DisconnectResponse,
   Permissions,
   XionKeypair,
-} from "../types";
-import * as e from "../types/errors";
-import { SessionKeyManager } from "../services/SessionKeyManager";
+} from "./types";
+import * as e from "./types/errors";
+import { SessionKeyManager } from "./services/SessionKeyManager";
 import {
   DatabaseRedirectStrategy,
   DatabaseStorageStrategy,
   InMemoryDummyRedirectStrategy,
-} from "../adapters/AbstraxionStategies";
+} from "./adapters/AbstraxionStategies";
 
 export class AbstraxionBackend {
   public readonly sessionKeyManager: SessionKeyManager;

@@ -1,5 +1,5 @@
-import { EncryptionService } from "../services/EncryptionService";
-import { EncryptionError } from "../types";
+import { EncryptionService } from "../../../lib/xion/backend/services/EncryptionService";
+import { EncryptionError } from "../../../lib/xion/backend/types";
 
 describe("EncryptionService", () => {
   let encryptionService: EncryptionService;

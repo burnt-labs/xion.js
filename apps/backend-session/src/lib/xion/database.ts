@@ -4,11 +4,8 @@ import type {
   AuditEvent,
   Permissions,
   AuditAction,
-} from "@burnt-labs/abstraxion-backend";
-import {
-  BaseDatabaseAdapter,
-  SessionState,
-} from "@burnt-labs/abstraxion-backend";
+} from "@/lib/xion/backend";
+import { BaseDatabaseAdapter, SessionState } from "@/lib/xion/backend";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

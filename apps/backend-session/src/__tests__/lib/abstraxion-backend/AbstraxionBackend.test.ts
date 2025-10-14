@@ -1,8 +1,8 @@
 import { IncomingMessage } from "node:http";
-import { AbstraxionBackend } from "../endpoints/AbstraxionBackend";
-import { TestDatabaseAdapter } from "./TestDatabaseAdapter";
-import { EncryptionService } from "../services/EncryptionService";
-import { SessionState } from "../types";
+import { AbstraxionBackend } from "../../../lib/xion/backend/AbstraxionBackend";
+import { TestDatabaseAdapter } from "../../../lib/xion/backend/adapters/TestDatabaseAdapter";
+import { EncryptionService } from "../../../lib/xion/backend/services/EncryptionService";
+import { SessionState } from "../../../lib/xion/backend/types";
 import {
   EncryptionKeyRequiredError,
   DatabaseAdapterRequiredError,
@@ -14,7 +14,7 @@ import {
   GranterRequiredError,
   InvalidStateError,
   SessionKeyNotFoundError,
-} from "../types/errors";
+} from "../../../lib/xion/backend/types/errors";
 
 // Mock the fetchConfig function
 jest.mock("@burnt-labs/constants", () => ({

@@ -1,4 +1,4 @@
-import { AbstraxionBackend } from "@burnt-labs/abstraxion-backend";
+import { AbstraxionBackend, createAbstraxionBackend } from "@/lib/xion/backend";
 import { PrismaDatabaseAdapter, prisma } from "./database";
 
 const globalForAbstraxion = globalThis as unknown as {
@@ -39,6 +39,6 @@ export function getAbstraxionBackend(): AbstraxionBackend {
     enableAuditLogging: true,
   };
 
-  globalForAbstraxion.abstraxionBackend = new AbstraxionBackend(config);
+  globalForAbstraxion.abstraxionBackend = createAbstraxionBackend(config);
   return globalForAbstraxion.abstraxionBackend;
 }
