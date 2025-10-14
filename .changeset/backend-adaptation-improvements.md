@@ -1,5 +1,4 @@
 ---
-"@burnt-labs/abstraxion-backend": minor
 "@burnt-labs/abstraxion-core": minor
 "@burnt-labs/tailwind-config": patch
 ---
@@ -10,7 +9,7 @@ Core changes:
 
 - Added gas price configuration to the AbstraxionAuth's getSigner method
 
-Backend changes:
+Backend Session Demo:
 
 - Added comprehensive error handling system with custom error classes
 - Enhanced session key management with improved validation and refresh logic
