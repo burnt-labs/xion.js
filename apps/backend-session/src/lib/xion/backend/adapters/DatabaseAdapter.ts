@@ -73,7 +73,10 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
     updates: Partial<
       Pick<
         SessionKeyInfo,
-        "sessionState" | "sessionPermissions" | "metaAccountAddress"
+        | "sessionState"
+        | "sessionPermissions"
+        | "metaAccountAddress"
+        | "sessionKeyExpiry"
       >
     >,
   ): Promise<void>;

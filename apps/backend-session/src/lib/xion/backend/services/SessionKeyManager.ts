@@ -243,7 +243,7 @@ export class SessionKeyManager {
       if (timeUntilExpiry <= this.refreshThresholdMs) {
         // Generate new session key
         const newSessionKey = await this.generateSessionKeypair();
-        this.createPendingSessionKey(userId, newSessionKey);
+        await this.createPendingSessionKey(userId, newSessionKey);
         return newSessionKey;
       }
 

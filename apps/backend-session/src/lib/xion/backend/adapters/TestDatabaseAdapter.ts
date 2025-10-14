@@ -74,7 +74,10 @@ export class TestDatabaseAdapter extends BaseDatabaseAdapter {
     updates: Partial<
       Pick<
         SessionKeyInfo,
-        "sessionState" | "sessionPermissions" | "metaAccountAddress"
+        | "sessionState"
+        | "sessionPermissions"
+        | "metaAccountAddress"
+        | "sessionKeyExpiry"
       >
     >,
   ): Promise<void> {

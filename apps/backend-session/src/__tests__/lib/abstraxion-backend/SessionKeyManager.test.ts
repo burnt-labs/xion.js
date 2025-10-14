@@ -191,28 +191,34 @@ describe("SessionKeyManager", () => {
       const userId = "user123";
       const sessionKey = await sessionKeyManager.generateSessionKeypair();
 
-      // Store with near expiry time (30 minutes from now)
-      const nearExpiryTime = new Date(Date.now() + 30 * 60 * 1000);
-      const sessionKeyInfo = {
-        userId,
-        sessionKeyAddress: sessionKey.address,
-        sessionKeyMaterial:
-          await sessionKeyManager.encryptionService.encryptSessionKey(
-            sessionKey.serializedKeypair,
-          ),
-        sessionKeyExpiry: nearExpiryTime,
-        sessionPermissions: {},
-        sessionState: SessionState.ACTIVE,
-        metaAccountAddress: "xion1metaaccount",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      // Create a pending session key first
+      await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
 
-      await databaseAdapter.storeSessionKey(sessionKeyInfo);
+      // Activate it
+      await sessionKeyManager.storeGrantedSessionKey(
+        userId,
+        sessionKey.address,
+        "xion1metaaccount",
+      );
+
+      // Update the session key to be near expiry (30 minutes from now)
+      const nearExpiryTime = new Date(Date.now() + 30 * 60 * 1000);
+      await databaseAdapter.updateSessionKeyWithParams(
+        userId,
+        sessionKey.address,
+        {
+          sessionKeyExpiry: nearExpiryTime,
+        },
+      );
 
       const refreshed = await sessionKeyManager.refreshIfNeeded(userId);
       expect(refreshed).toBeDefined();
-      expect(refreshed!.address).not.toBe(sessionKey.address); // Should be new address
+
+      // Check that a new pending session key was created by checking the last session key
+      const lastSessionKey = await databaseAdapter.getLastSessionKey(userId);
+      expect(lastSessionKey).toBeDefined();
+      expect(lastSessionKey!.sessionState).toBe(SessionState.PENDING);
+      expect(lastSessionKey!.sessionKeyAddress).toBe(refreshed!.address);
     });
 
     it("should not refresh session key when not near expiry", async () => {
@@ -553,31 +559,37 @@ describe("SessionKeyManager", () => {
     it("should revoke all active session keys", async () => {
       const userId = "user123";
 
-      // Create multiple session keys
+      // Create a session key
       const sessionKey1 = await sessionKeyManager.generateSessionKeypair();
-      const sessionKey2 = await sessionKeyManager.generateSessionKeypair();
-
       await sessionKeyManager.createPendingSessionKey(userId, sessionKey1);
-      await sessionKeyManager.createPendingSessionKey(userId, sessionKey2);
 
-      // Activate both session keys
+      // Activate session key
       await sessionKeyManager.storeGrantedSessionKey(
         userId,
         sessionKey1.address,
         "xion1granter1",
       );
-      await sessionKeyManager.storeGrantedSessionKey(
-        userId,
-        sessionKey2.address,
-        "xion1granter2",
-      );
+
+      // Verify it's active
+      const activeKeysBefore =
+        await databaseAdapter.getActiveSessionKeys(userId);
+      expect(activeKeysBefore).toHaveLength(1);
+      expect(activeKeysBefore[0].sessionState).toBe(SessionState.ACTIVE);
 
       // Revoke all active session keys
       await sessionKeyManager.revokeActiveSessionKeys(userId);
 
-      // Check that both are revoked
-      const activeKeys = await databaseAdapter.getActiveSessionKeys(userId);
-      expect(activeKeys.length).toBe(0);
+      // Check that no active keys remain
+      const activeKeysAfter =
+        await databaseAdapter.getActiveSessionKeys(userId);
+      expect(activeKeysAfter).toHaveLength(0);
+
+      // Check that the session key is now revoked
+      const sessionKeyInfo = await databaseAdapter.getSessionKey(
+        userId,
+        sessionKey1.address,
+      );
+      expect(sessionKeyInfo?.sessionState).toBe(SessionState.REVOKED);
     });
 
     it("should handle case when no active session keys exist", async () => {

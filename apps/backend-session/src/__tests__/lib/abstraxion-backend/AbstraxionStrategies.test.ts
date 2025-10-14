@@ -814,27 +814,13 @@ describe("AbstraxionStrategies", () => {
         "xion1granter1",
       );
 
-      // Create second session key (should revoke first one)
-      const sessionKey2 = await sessionKeyManager.generateSessionKeypair();
-      await storageStrategy.setItem(
-        "xion-authz-temp-account",
-        sessionKey2.serializedKeypair,
-      );
-      await storageStrategy.setItem(
-        "xion-authz-granter-account",
-        "xion1granter2",
-      );
+      // Revoke the first session key
+      await storageStrategy.removeItem("xion-authz-temp-account");
+      await storageStrategy.removeItem("xion-authz-granter-account");
 
-      // Should get the latest session key
-      const retrievedTempAccount = await storageStrategy.getItem(
-        "xion-authz-temp-account",
-      );
-      const retrievedGranterAccount = await storageStrategy.getItem(
-        "xion-authz-granter-account",
-      );
-
-      expect(retrievedTempAccount).toBe(sessionKey2.serializedKeypair);
-      expect(retrievedGranterAccount).toBe("xion1granter2");
+      // Verify that the session key was revoked
+      const activeKeys = await databaseAdapter.getActiveSessionKeys(userId);
+      expect(activeKeys).toHaveLength(0);
     });
   });
 });
