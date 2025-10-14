@@ -13,6 +13,7 @@ import {
   cleanupAuthMocks,
   createMockRequest,
 } from "../../test-utils/auth";
+import { EncryptionService } from "@/lib/xion/backend/services/EncryptionService";
 
 // Mock the auth middleware
 jest.mock("@/lib/auth-middleware", () => ({
@@ -29,7 +30,7 @@ if (!process.env.XION_RPC_URL) {
   process.env.XION_RPC_URL = "https://rpc.xion-testnet-2.burnt.com/";
 }
 if (!process.env.ENCRYPTION_KEY) {
-  process.env.ENCRYPTION_KEY = "your-base64-encoded-aes-256-key-here";
+  process.env.ENCRYPTION_KEY = EncryptionService.generateEncryptionKey();
 }
 if (!process.env.XION_REDIRECT_URL) {
   process.env.XION_REDIRECT_URL =
