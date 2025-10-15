@@ -7,6 +7,7 @@ import type { IncomingMessage } from "node:http";
 import { SessionKeyManager } from "../services";
 import {
   InvalidStorageKeyError,
+  SessionKeyExpirationError,
   SessionKeyNotFoundError,
 } from "../types/errors";
 import { SessionState } from "../types";
@@ -38,12 +39,15 @@ export class DatabaseStorageStrategy implements StorageStrategy {
       throw new InvalidStorageKeyError(`${key}@getItem`);
     }
     const sessionKeyInfo = await this.skManager.getLastSessionKeyInfo(uid);
-    if (!sessionKeyInfo || !this.skManager.isActive(sessionKeyInfo)) {
+    if (!sessionKeyInfo) {
       throw new SessionKeyNotFoundError(uid);
     }
 
     switch (key) {
       case "xion-authz-granter-account":
+        if (!this.skManager.isActive(sessionKeyInfo)) {
+          throw new SessionKeyExpirationError(uid);
+        }
         return sessionKeyInfo.metaAccountAddress;
       case "xion-authz-temp-account":
         return await this.skManager.encryptionService.decryptSessionKey(

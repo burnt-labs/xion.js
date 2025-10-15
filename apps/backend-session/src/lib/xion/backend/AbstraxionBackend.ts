@@ -197,16 +197,18 @@ export class AbstraxionBackend {
         treasury: this.config.treasury,
       };
 
-      // Call authz to validate the grants
-      const authz = this._createRawAbstraxionAuthz(stateData.userId);
       // Don't use login method here, because the granter is not set yet
-      const keypair = await authz.getLocalKeypair();
+      const keypair =
+        await this.sessionKeyManager.getSessionKeypair(sessionKeyInfo);
       if (!keypair) {
         throw new e.EncryptionKeyRequiredError();
       }
 
       const accounts = await keypair.getAccounts();
       const keypairAddress = accounts[0].address;
+
+      // Call authz to validate the grants
+      const authz = this._createRawAbstraxionAuthz(stateData.userId);
       const pollSuccess = await authz.pollForGrants(
         keypairAddress,
         request.granter,
