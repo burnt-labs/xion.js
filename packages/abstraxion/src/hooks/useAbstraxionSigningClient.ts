@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from "react";
+import { GasPrice } from "@cosmjs/stargate";
 import { testnetChainInfo } from "@burnt-labs/constants";
 import {
   GranteeSignerClient,
@@ -57,7 +58,7 @@ export const useAbstraxionSigningClient = (): {
           rpcUrl || testnetChainInfo.rpc,
           abstraxionAccount,
           {
-            gasPrice,
+            gasPrice: GasPrice.fromString(gasPrice),
             granterAddress,
             granteeAddress,
             treasuryAddress: treasury,

@@ -18,7 +18,11 @@ export * from "./authenticators";
 export * from "./grants";
 
 // Query utilities
-export * from "./queries";
+// TODO: queries were moved to dashboard - remove if not needed
+// export * from "./queries";
+
+// Indexer strategies
+export * from "./indexer";
 
 // Types
 export * from "./types";

@@ -1,4 +1,3 @@
-lockfileVersion: '6.0'
 lockfileVersion: "9.0"
 
 settings:
@@ -124,7 +123,14 @@ importers:
       "@burnt-labs/abstraxion-core":
         specifier: workspace:*
         version: link:../abstraxion-core
+<<<<<<< HEAD
       "@burnt-labs/constants":
+=======
+      '@burnt-labs/account-management':
+        specifier: workspace:*
+        version: link:../account-management
+      '@burnt-labs/constants':
+>>>>>>> 2181b3a (Dev status - Working demo app for wallet direct mode, packages still need a ton more cleanup, demi app needs through check on, need to make more general utillities around the signing behaviour, need to add ed25119 signing method, need to fix the window.... calling for wallets, persitency for sessions works but local signer method with turnkey is still funky.)
         specifier: workspace:*
         version: link:../constants
       '@burnt-labs/signers':
@@ -133,9 +139,6 @@ importers:
       '@burnt-labs/ui':
         specifier: workspace:*
         version: link:../ui
-      '@burnt-labs/wallet-connectors':
-        specifier: workspace:*
-        version: link:../wallet-connectors
       '@cosmjs/amino':
         specifier: ^0.36.0
         version: 0.36.0
@@ -412,6 +415,9 @@ importers:
       '@cosmjs/cosmwasm-stargate':
         specifier: ^0.36.0
         version: 0.36.0
+      '@cosmjs/proto-signing':
+        specifier: ^0.36.0
+        version: 0.36.0
       '@cosmjs/stargate':
         specifier: ^0.36.0
         version: 0.36.0
@@ -640,49 +646,6 @@ importers:
       tailwindcss:
         specifier: ^3.2.4
         version: 3.4.17
-      tsup:
-        specifier: ^6.0.1
-        version: 6.7.0(postcss@8.5.6)(ts-node@10.9.2)(typescript@5.9.2)
-      typescript:
-        specifier: ^5.2.2
-        version: 5.9.2
-
-  packages/wallet-connectors:
-    dependencies:
-      '@burnt-labs/signers':
-        specifier: workspace:*
-        version: link:../signers
-      '@cosmjs/amino':
-        specifier: ^0.36.0
-        version: 0.36.0
-      '@cosmjs/crypto':
-        specifier: ^0.36.0
-        version: 0.36.0
-      '@cosmjs/encoding':
-        specifier: ^0.36.0
-        version: 0.36.0
-      '@cosmjs/proto-signing':
-        specifier: ^0.36.0
-        version: 0.36.0
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
-    devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-      '@types/node':
-        specifier: ^20.0.0
-        version: 20.19.16
-      eslint:
-        specifier: ^8.48.0
-        version: 8.57.1
-      rimraf:
-        specifier: ^5.0.5
-        version: 5.0.10
       tsup:
         specifier: ^6.0.1
         version: 6.7.0(postcss@8.5.6)(ts-node@10.9.2)(typescript@5.9.2)

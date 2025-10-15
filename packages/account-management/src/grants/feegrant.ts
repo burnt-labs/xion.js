@@ -10,19 +10,19 @@ import {
 function isAllowedMsgAllowance(
   allowance: Allowance,
 ): allowance is AllowedMsgAllowance {
-  return allowance["@type"] === "/cosmos.feegrant.v1beta1.AllowedMsgAllowance";
+  return (allowance as any)["@type"] === "/cosmos.feegrant.v1beta1.AllowedMsgAllowance";
 }
 
 function isContractsAllowance(
   allowance: Allowance,
 ): allowance is ContractsAllowance {
-  return allowance["@type"] === "/xion.v1.ContractsAllowance";
+  return (allowance as any)["@type"] === "/xion.v1.ContractsAllowance";
 }
 
 function isMultiAnyAllowance(
   allowance: Allowance,
 ): allowance is MultiAnyAllowance {
-  return allowance["@type"] === "/xion.v1.MultiAnyAllowance";
+  return (allowance as any)["@type"] === "/xion.v1.MultiAnyAllowance";
 }
 
 /**

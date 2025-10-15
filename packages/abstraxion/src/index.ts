@@ -5,6 +5,14 @@ export {
   AbstraxionProvider,
   abstraxionAuth,
 } from "./components/Abstraxion";
+export type {
+  AbstraxionConfig,
+  CustomSigner,
+  WalletAuthConfig,
+  WalletConnectionMethods,
+  GenericWalletConfig,
+  SigningMethod,
+} from "./components/Abstraxion";
 export {
   useAbstraxionAccount,
   useAbstraxionSigningClient,

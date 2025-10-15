@@ -11,11 +11,24 @@ export default function Page(): JSX.Element {
       </h1>
       <div className="flex w-full flex-col gap-2">
         <Link href="/loading-states">
+          <Button fullWidth structure="base">
+            LOADING STATES
+          </Button>
+        </Link>
+        <Link href="/direct-mode">
+          <Button fullWidth structure="base">
+            DIRECT MODE
+          </Button>
+        </Link>
+        <Link href="/ui-less">
           <Button fullWidth structure="outlined">
             Connect with Abstraxion
           </Button>
         </Link>
       </div>
+      <p className="text-center text-xs text-gray-500 mt-4">
+        <strong>Direct Mode</strong> allows wallet connections without dashboard redirect
+      </p>
     </main>
   );
 }
