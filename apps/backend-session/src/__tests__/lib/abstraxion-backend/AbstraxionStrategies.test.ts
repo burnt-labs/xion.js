@@ -10,6 +10,7 @@ import { SessionState } from "../../../lib/xion/backend/types";
 import {
   InvalidStorageKeyError,
   SessionKeyNotFoundError,
+  SessionKeyExpirationError,
 } from "../../../lib/xion/backend/types/errors";
 
 describe("AbstraxionStrategies", () => {
@@ -136,14 +137,14 @@ describe("AbstraxionStrategies", () => {
         ).rejects.toThrow(`Session key not found for user: ${userId}`);
       });
 
-      it("should throw SessionKeyNotFoundError when session key is not active", async () => {
+      it("should throw SessionKeyExpirationError when session key is not active", async () => {
         // Create a pending session key (not active)
         const sessionKey = await sessionKeyManager.generateSessionKeypair();
         await sessionKeyManager.createPendingSessionKey(userId, sessionKey);
 
         await expect(
           storageStrategy.getItem("xion-authz-granter-account"),
-        ).rejects.toThrow(SessionKeyNotFoundError);
+        ).rejects.toThrow(SessionKeyExpirationError);
       });
 
       it("should throw SessionKeyNotFoundError when session key is expired", async () => {
