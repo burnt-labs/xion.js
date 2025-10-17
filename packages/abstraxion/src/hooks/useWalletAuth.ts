@@ -118,11 +118,11 @@ export function useWalletAuth({
   const [error, setError] = useState<string | null>(null);
 
   // Default to testnet AA API URL (matching dashboard .env.testnet)
-  const aaApiUrl = config.aaApiUrl || 'http://localhost:8787';
+  const aaApiUrl = config.aaApiUrl || '';
 
   // Default indexer configuration (testnet Numia)
-  const indexerUrl = config.indexer?.url || 'https://xion-testnet-2.numia.xyz/v3/';
-  const indexerToken = config.indexer?.authToken || 'sk_d5ba275e7f8c41968385d2aab4d00f7e';
+  const indexerUrl = config.indexer?.url || '';
+  const indexerToken = config.indexer?.authToken || '';
 
   // Initialize indexer strategy
   const indexer = new NumiaIndexerStrategy(indexerUrl, indexerToken);
