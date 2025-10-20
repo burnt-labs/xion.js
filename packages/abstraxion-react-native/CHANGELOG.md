@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-react-native
 
+## 1.0.0-alpha.9
+
+### Minor Changes
+
+- [#315](https://github.com/burnt-labs/xion.js/pull/315) [`7fe0b61`](https://github.com/burnt-labs/xion.js/commit/7fe0b61c85be9961fa7358362507699fa398abb5) Thanks [@BurntVal](https://github.com/BurntVal)! - Improve loading logic and returned values for abstraxion-react-native
+
 ## 1.0.0-alpha.8
 
 ### Major Changes
