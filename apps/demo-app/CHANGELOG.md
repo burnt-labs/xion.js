@@ -1,5 +1,18 @@
 # demo-app
 
+## 1.1.0-alpha.53
+
+### Minor Changes
+
+- [#310](https://github.com/burnt-labs/xion.js/pull/310) [`9a659c3`](https://github.com/burnt-labs/xion.js/commit/9a659c3fe80bba10f76370c42f1c0b3574e7018d) Thanks [@ertemann](https://github.com/ertemann)! - remove demo app of legacy modal
+
+- [#310](https://github.com/burnt-labs/xion.js/pull/310) [`9a659c3`](https://github.com/burnt-labs/xion.js/commit/9a659c3fe80bba10f76370c42f1c0b3574e7018d) Thanks [@ertemann](https://github.com/ertemann)! - Solve race conditions useAbstraxionAccount loading states
+
+### Patch Changes
+
+- Updated dependencies [[`9a659c3`](https://github.com/burnt-labs/xion.js/commit/9a659c3fe80bba10f76370c42f1c0b3574e7018d), [`9a659c3`](https://github.com/burnt-labs/xion.js/commit/9a659c3fe80bba10f76370c42f1c0b3574e7018d)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.68
+
 ## 1.1.0-alpha.52
 
 ### Minor Changes
