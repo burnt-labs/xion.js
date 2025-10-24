@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import type { WalletConnectionMethods, GenericWalletConfig } from "@burnt-labs/abstraxion";
 import { KeplrLogo } from "./icons/KeplrLogo";
-import { LeapLogo } from "./icons/LeapLogo";
 import { OKXLogo } from "./icons/OKXLogo";
 import { MetamaskLogo } from "./icons/MetamaskLogo";
 
@@ -62,8 +61,6 @@ export function WalletModal({
         return <MetamaskLogo className="w-6 h-6" />;
       case "Keplr":
         return <KeplrLogo className="w-6 h-6" />;
-      case "Leap":
-        return <LeapLogo className="w-6 h-6" />;
       case "OKX":
         return <OKXLogo className="w-6 h-6" />;
       default:
