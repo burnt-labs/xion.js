@@ -9,7 +9,7 @@ export type {
   AbstraxionConfig,
   CustomSigner,
   WalletAuthConfig,
-  WalletConnectionMethods,
+  WalletSelectionRenderProps,
   GenericWalletConfig,
   SigningMethod,
 } from "./components/Abstraxion";

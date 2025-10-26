@@ -100,6 +100,10 @@ export function AbstraxionContextProvider({
   const [granterAddress, setGranterAddress] = useState("");
   const [dashboardUrl, setDashboardUrl] = useState("");
 
+  // Wallet selection modal state (for renderWalletSelection)
+  const [showWalletSelectionModal, setShowWalletSelectionModal] = useState(false);
+  const [walletSelectionError, setWalletSelectionError] = useState<string | null>(null);
+
   // Determine wallet auth mode
   const walletAuthMode = walletAuth?.mode || 'redirect';
 
@@ -178,6 +182,37 @@ export function AbstraxionContextProvider({
       setIsConnecting(false);
     },
   });
+
+  // Auto-close wallet selection modal when connected
+  useEffect(() => {
+    if (isConnected && showWalletSelectionModal) {
+      setShowWalletSelectionModal(false);
+      setWalletSelectionError(null);
+    }
+  }, [isConnected, showWalletSelectionModal]);
+
+  // Handle wallet connection from custom UI
+  const handleWalletConnect = useCallback(async (walletName: string) => {
+    if (!walletAuth?.wallets) {
+      setWalletSelectionError('No wallets configured');
+      return;
+    }
+
+    const walletConfig = walletAuth.wallets.find(w => w.name === walletName);
+    if (!walletConfig) {
+      setWalletSelectionError(`Wallet ${walletName} not found in configuration`);
+      return;
+    }
+
+    try {
+      setWalletSelectionError(null);
+      await walletAuthState.connectWallet(walletConfig, chainId);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to connect wallet';
+      setWalletSelectionError(errorMessage);
+      console.error('[AbstraxionContext] Wallet connection error:', error);
+    }
+  }, [walletAuth?.wallets, walletAuthState, chainId]);
 
   const configureInstance = useCallback(() => {
     // Only configure abstraxionAuth for redirect mode
@@ -390,11 +425,15 @@ export function AbstraxionContextProvider({
         await walletAuthState.connectWithCustomSigner();
 
         setIsConnecting(false);
+      } else if (walletAuth?.renderWalletSelection) {
+        // Direct or local mode with custom wallet selection UI
+        // Show the wallet selection modal
+        console.log('[AbstraxionContext] Showing wallet selection modal');
+        setShowWalletSelectionModal(true);
+        setIsConnecting(false);
       } else {
-        // Direct or local mode without custom signer - handle wallet selection based on strategy
-        const strategy = walletAuth?.walletSelectionStrategy || 'auto';
-
-        // Default wallets for auto mode (MetaMask + Keplr)
+        // Direct or local mode without custom UI - auto-connect to first available wallet
+        console.log('[AbstraxionContext] Auto-connecting to first available wallet');
         const defaultWallets: import('../Abstraxion').GenericWalletConfig[] = [
           { name: 'MetaMask', windowKey: 'ethereum', signingMethod: 'ethereum' },
           { name: 'Keplr', windowKey: 'keplr', signingMethod: 'cosmos' },
@@ -402,33 +441,18 @@ export function AbstraxionContextProvider({
 
         const wallets = walletAuth?.wallets || defaultWallets;
 
-        if (strategy === 'auto') {
-          // Auto mode: try wallets in order until one connects
-          setIsConnecting(true);
-          for (const walletConfig of wallets) {
-            try {
-              await walletAuthState.connectWallet(walletConfig, chainId);
-              // If we get here, connection succeeded
-              break;
-            } catch (error) {
-              // Try next wallet
-              continue;
-            }
+        setIsConnecting(true);
+        for (const walletConfig of wallets) {
+          try {
+            await walletAuthState.connectWallet(walletConfig, chainId);
+            // If we get here, connection succeeded
+            break;
+          } catch (error) {
+            // Try next wallet
+            continue;
           }
-          setIsConnecting(false);
-        } else if (strategy === 'custom' && walletAuth?.onWalletSelectionRequired) {
-          // Custom mode: call user's callback with connection methods
-          walletAuth.onWalletSelectionRequired({
-            connectWallet: (walletConfig, chainId) => walletAuthState.connectWallet(walletConfig, chainId),
-            isConnecting: walletAuthState.isConnecting,
-            error: walletAuthState.error,
-          });
-          setIsConnecting(false);
-        } else {
-          // No valid strategy - this should not happen
-          setAbstraxionError('No wallet selection strategy configured');
-          setIsConnecting(false);
         }
+        setIsConnecting(false);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -521,6 +545,24 @@ export function AbstraxionContextProvider({
       }}
     >
       {children}
+
+      {/* Render custom wallet selection UI if provided */}
+      {walletAuth?.renderWalletSelection && (
+        <>
+          {console.log('[AbstraxionContext] Rendering wallet selection UI, isOpen:', showWalletSelectionModal)}
+          {walletAuth.renderWalletSelection({
+            isOpen: showWalletSelectionModal,
+            onClose: () => {
+              setShowWalletSelectionModal(false);
+              setWalletSelectionError(null);
+            },
+            wallets: walletAuth.wallets || [],
+            connect: handleWalletConnect,
+            isConnecting: walletAuthState.isConnecting,
+            error: walletSelectionError || walletAuthState.error,
+          })}
+        </>
+      )}
     </AbstraxionContext.Provider>
   );
 }

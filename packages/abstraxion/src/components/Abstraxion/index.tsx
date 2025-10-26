@@ -120,13 +120,26 @@ export interface GenericWalletConfig {
 }
 
 /**
- * Wallet connection methods passed to custom UI
+ * Props passed to custom wallet selection UI render function
+ * This provides everything needed to render a custom wallet modal with zero boilerplate
  */
-export interface WalletConnectionMethods {
-  /** Connect to any wallet using generic config */
-  connectWallet: (walletConfig: GenericWalletConfig, chainId?: string) => Promise<void>;
+export interface WalletSelectionRenderProps {
+  /** Whether the wallet selection modal should be shown */
+  isOpen: boolean;
 
+  /** Function to close the modal */
+  onClose: () => void;
+
+  /** List of available wallets from config */
+  wallets: GenericWalletConfig[];
+
+  /** Connect to a wallet by name - handles all connection logic internally */
+  connect: (walletName: string) => Promise<void>;
+
+  /** Whether a wallet connection is in progress */
   isConnecting: boolean;
+
+  /** Error message if connection failed, null otherwise */
   error: string | null;
 }
 
@@ -159,20 +172,9 @@ export interface WalletAuthConfig {
   };
 
   /**
-   * Wallet selection strategy:
-   * - 'auto' (default): Automatically try wallets in the order specified by wallets array
-   * - 'custom': Call onWalletSelectionRequired callback to let user provide custom UI
-   */
-  walletSelectionStrategy?: 'auto' | 'custom';
-
-  /**
-   * List of wallets to use (for auto mode) or display (for custom mode)
+   * List of wallets to support
    *
-   * Default for auto mode:
-   * - MetaMask (ethereum)
-   * - Keplr (cosmos)
-   *
-   * Example custom wallets:
+   * Example:
    * [
    *   { name: "Keplr", windowKey: "keplr", signingMethod: "cosmos" },
    *   { name: "Leap", windowKey: "leap", signingMethod: "cosmos" },
@@ -183,11 +185,23 @@ export interface WalletAuthConfig {
   wallets?: GenericWalletConfig[];
 
   /**
-   * Custom wallet selection UI callback
-   * Called when user needs to select a wallet
-   * Receives connection methods to call when user selects a wallet
+   * Custom wallet selection UI render function
+   * If provided, this will be called when the user needs to select a wallet
+   * All state management and auto-close logic is handled internally
+   *
+   * Example:
+   * renderWalletSelection: ({ isOpen, onClose, wallets, connect, isConnecting, error }) => (
+   *   <MyWalletModal
+   *     isOpen={isOpen}
+   *     onClose={onClose}
+   *     wallets={wallets}
+   *     onConnect={connect}
+   *     loading={isConnecting}
+   *     error={error}
+   *   />
+   * )
    */
-  onWalletSelectionRequired?: (methods: WalletConnectionMethods) => void;
+  renderWalletSelection?: (props: WalletSelectionRenderProps) => React.ReactNode;
 }
 
 export interface AbstraxionConfig {

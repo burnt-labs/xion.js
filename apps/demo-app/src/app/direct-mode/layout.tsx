@@ -1,10 +1,8 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import {
   AbstraxionProvider,
   type AbstraxionConfig,
-  type WalletConnectionMethods,
-  useAbstraxionAccount,
 } from "@burnt-labs/abstraxion";
 import { WalletModal } from "../../components/WalletModal";
 
@@ -13,9 +11,6 @@ export default function DirectModeLayout({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
-  const [showWalletModal, setShowWalletModal] = useState(false);
-  const [walletMethods, setWalletMethods] = useState<WalletConnectionMethods | null>(null);
-
   // Direct mode configuration with treasury contract
   const directModeConfig: AbstraxionConfig = useMemo(() => ({
     // REQUIRED: Chain ID
@@ -44,7 +39,8 @@ export default function DirectModeLayout({
       aaApiUrl: process.env.NEXT_PUBLIC_AA_API_URL,
 
       // Indexer configuration for account lookup (optional but recommended)
-      ...(process.env.NEXT_PUBLIC_INDEXER_URL && {
+      // Only include if BOTH url and authToken are provided
+      ...(process.env.NEXT_PUBLIC_INDEXER_URL && process.env.NEXT_PUBLIC_INDEXER_TOKEN && {
         indexer: {
           url: process.env.NEXT_PUBLIC_INDEXER_URL,
           authToken: process.env.NEXT_PUBLIC_INDEXER_TOKEN,
@@ -61,10 +57,7 @@ export default function DirectModeLayout({
         },
       }),
 
-      // Use custom strategy to show our custom wallet modal
-      walletSelectionStrategy: "custom" as const,
-
-      // Define wallets to support in the custom modal
+      // Define wallets to support
       // You can add any Ethereum or Cosmos wallet by specifying its window key!
       wallets: [
         { name: "MetaMask", windowKey: "ethereum", signingMethod: "ethereum" },
@@ -78,59 +71,23 @@ export default function DirectModeLayout({
         // { name: "Compass", windowKey: "compass", signingMethod: "cosmos" },
       ],
 
-      // Custom wallet selection callback - shows our modal
-      onWalletSelectionRequired: (methods) => {
-        setWalletMethods(methods);
-        setShowWalletModal(true);
-      },
+      // Custom wallet selection UI - all state management and auto-close is handled internally!
+      renderWalletSelection: ({ isOpen, onClose, wallets, connect, isConnecting, error }) => (
+        <WalletModal
+          isOpen={isOpen}
+          onClose={onClose}
+          wallets={wallets}
+          onConnect={connect}
+          loading={isConnecting}
+          error={error}
+        />
+      ),
     },
   }), []);
 
   return (
     <AbstraxionProvider config={directModeConfig}>
-      <ModalHandler
-        showWalletModal={showWalletModal}
-        setShowWalletModal={setShowWalletModal}
-        walletMethods={walletMethods}
-      >
-        {children}
-      </ModalHandler>
-    </AbstraxionProvider>
-  );
-}
-
-// Component inside provider that can access context to close modal on connection
-function ModalHandler({
-  children,
-  showWalletModal,
-  setShowWalletModal,
-  walletMethods,
-}: {
-  children: React.ReactNode;
-  showWalletModal: boolean;
-  setShowWalletModal: (show: boolean) => void;
-  walletMethods: WalletConnectionMethods | null;
-}) {
-  const { isConnected } = useAbstraxionAccount();
-
-  // Close modal when connection succeeds
-  useEffect(() => {
-    if (isConnected && showWalletModal) {
-      setShowWalletModal(false);
-    }
-  }, [isConnected, showWalletModal, setShowWalletModal]);
-
-  return (
-    <>
       {children}
-
-      {/* Custom Wallet Selection Modal */}
-      <WalletModal
-        isOpen={showWalletModal}
-        onClose={() => setShowWalletModal(false)}
-        connectionMethods={walletMethods}
-        chainId="xion-testnet-1"
-      />
-    </>
+    </AbstraxionProvider>
   );
 }

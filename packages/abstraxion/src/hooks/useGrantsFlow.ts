@@ -11,6 +11,7 @@ import {
   CompositeTreasuryStrategy,
   DaoDaoTreasuryStrategy,
   generateTreasuryGrants as generateTreasuryGrantMessages,
+  isContractGrantConfigValid,
 } from "@burnt-labs/account-management";
 import { AADirectSigner, AAEthSigner, AAClient } from "@burnt-labs/signers";
 import { abstraxionAuth } from "../components/Abstraxion";
@@ -128,6 +129,20 @@ export function useGrantsFlow({
     try {
       setIsCreatingGrants(true);
       setGrantsError(null);
+
+      // Validate contract grant configurations before proceeding
+      if (contracts && contracts.length > 0) {
+        const isValid = isContractGrantConfigValid(
+          contracts,
+          { id: smartAccountAddress } as any
+        );
+
+        if (!isValid) {
+          throw new Error(
+            'Invalid contract grant configuration: Contract address cannot be the same as the granter account'
+          );
+        }
+      }
 
       // 1. Generate temp keypair and get grantee address
       const tempKeypair = await abstraxionAuth.generateAndStoreTempAccount();

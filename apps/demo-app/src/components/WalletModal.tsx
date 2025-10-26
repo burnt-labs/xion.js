@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { WalletConnectionMethods, GenericWalletConfig } from "@burnt-labs/abstraxion";
+import type { GenericWalletConfig } from "@burnt-labs/abstraxion";
 import { KeplrLogo } from "./icons/KeplrLogo";
 import { OKXLogo } from "./icons/OKXLogo";
 import { MetamaskLogo } from "./icons/MetamaskLogo";
@@ -9,34 +9,19 @@ import { MetamaskLogo } from "./icons/MetamaskLogo";
 interface WalletModalProps {
   isOpen: boolean;
   onClose: () => void;
-  connectionMethods: WalletConnectionMethods | null;
-  chainId: string;
+  wallets: GenericWalletConfig[];
+  onConnect: (walletName: string) => Promise<void>;
+  loading: boolean;
+  error: string | null;
 }
-
-// Define wallet configurations using the generic interface
-const WALLET_CONFIGS: GenericWalletConfig[] = [
-  {
-    name: "MetaMask",
-    windowKey: "ethereum",
-    signingMethod: "ethereum",
-  },
-  {
-    name: "Keplr",
-    windowKey: "keplr",
-    signingMethod: "cosmos",
-  },
-  {
-    name: "OKX",
-    windowKey: "okxwallet.keplr",
-    signingMethod: "cosmos",
-  },
-];
 
 export function WalletModal({
   isOpen,
   onClose,
-  connectionMethods,
-  chainId,
+  wallets,
+  onConnect,
+  loading,
+  error,
 }: WalletModalProps) {
   // Close on Escape key
   useEffect(() => {
@@ -50,9 +35,7 @@ export function WalletModal({
     }
   }, [isOpen, onClose]);
 
-  if (!isOpen || !connectionMethods) return null;
-
-  const { connectWallet, isConnecting, error } = connectionMethods;
+  if (!isOpen) return null;
 
   // Map wallet configs to logos
   const getWalletLogo = (walletName: string) => {
@@ -122,15 +105,15 @@ export function WalletModal({
             </div>
           )}
 
-          {/* Wallet Buttons - Now using generic connectWallet */}
+          {/* Wallet Buttons */}
           <div className="space-y-3">
-            {WALLET_CONFIGS.map((wallet) => (
+            {wallets.map((wallet) => (
               <WalletButton
                 key={wallet.name}
                 icon={getWalletLogo(wallet.name)}
                 name={wallet.name}
-                onClick={() => connectWallet(wallet, chainId)}
-                disabled={isConnecting}
+                onClick={() => onConnect(wallet.name)}
+                disabled={loading}
               />
             ))}
           </div>
