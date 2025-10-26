@@ -17,7 +17,7 @@ interface NumiaSmartAccountResp {
   authenticators: NumiaAuthenticatorResp[];
 }
 
-export class NumiaIndexerStrategy implements IndexerStrategy {
+export class NumiaAccountStrategy implements IndexerStrategy {
   private baseURL: string;
 
   constructor(

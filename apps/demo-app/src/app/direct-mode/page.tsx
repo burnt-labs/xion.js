@@ -10,7 +10,14 @@ import "@burnt-labs/abstraxion/dist/index.css";
 import Link from "next/link";
 
 export default function DirectModePage(): JSX.Element {
-  const { data: account, login } = useAbstraxionAccount();
+  const {
+    data: account,
+    login,
+    isConnected,
+    isConnecting,
+    isInitializing,
+    isLoading
+  } = useAbstraxionAccount();
   const { client, logout } = useAbstraxionSigningClient();
 
   // Send transaction state
@@ -54,6 +61,40 @@ export default function DirectModePage(): JSX.Element {
 
   return (
     <main className="m-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 p-4">
+      {/* Initialization Loading Overlay */}
+      {isInitializing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 max-w-sm rounded-lg border border-purple-500/30 bg-purple-500/10 p-6 text-center backdrop-blur-md">
+            <div className="mb-4">
+              <div className="mx-auto flex h-12 w-12 animate-pulse items-center justify-center rounded-full border-4 border-purple-500/30 bg-purple-500/20">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-purple-400 border-r-transparent"></div>
+              </div>
+            </div>
+            <p className="font-bold text-purple-400">Initializing</p>
+            <p className="mt-2 text-sm text-gray-400">
+              Checking for existing session...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Wallet Connection Loading Overlay */}
+      {isConnecting && !isInitializing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 max-w-sm rounded-lg border border-blue-500/30 bg-blue-500/10 p-6 text-center backdrop-blur-md">
+            <div className="mb-4">
+              <div className="mx-auto flex h-12 w-12 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/30 bg-blue-500/20">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-400 border-r-transparent"></div>
+              </div>
+            </div>
+            <p className="font-bold text-blue-400">Connecting Wallet</p>
+            <p className="mt-2 text-sm text-gray-400">
+              Please approve the connection in your wallet
+            </p>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold tracking-tighter text-white">
         Direct Mode Abstraxion Example
       </h1>
@@ -65,8 +106,22 @@ export default function DirectModePage(): JSX.Element {
 
       <div className="w-full space-y-4">
         {!account.bech32Address && (
-          <Button fullWidth onClick={() => login()} structure="base">
-            CONNECT WALLET (DIRECT MODE)
+          <Button
+            fullWidth
+            onClick={() => login()}
+            structure="base"
+            disabled={isLoading || isConnecting}
+          >
+            {isLoading || isConnecting ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></div>
+                <span>
+                  {isConnecting ? "CONNECTING..." : "LOADING..."}
+                </span>
+              </div>
+            ) : (
+              "CONNECT WALLET (DIRECT MODE)"
+            )}
           </Button>
         )}
 

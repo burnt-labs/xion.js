@@ -7,7 +7,10 @@ import { useState, useCallback } from "react";
 import { GasPrice } from "@cosmjs/stargate";
 import {
   buildGrantMessages,
-  generateTreasuryGrants,
+  DirectQueryTreasuryStrategy,
+  CompositeTreasuryStrategy,
+  DaoDaoTreasuryStrategy,
+  generateTreasuryGrants as generateTreasuryGrantMessages,
 } from "@burnt-labs/account-management";
 import { AADirectSigner, AAEthSigner, AAClient } from "@burnt-labs/signers";
 import { abstraxionAuth } from "../components/Abstraxion";
@@ -36,6 +39,7 @@ interface UseGrantsFlowProps {
   stake?: boolean;
   treasury?: string;
   feeGranter?: string; // Address that will pay transaction fees
+  daodaoIndexerUrl?: string; // Optional DaoDao indexer URL for fast treasury queries
 }
 
 interface GrantsFlowState {
@@ -46,6 +50,50 @@ interface GrantsFlowState {
     walletInfo: WalletConnectionInfo,
     chainId: string,
   ) => Promise<void>;
+}
+
+/**
+ * Generate grant messages from treasury contract using composite strategy
+ * Tries DaoDao indexer first, falls back to direct RPC query
+ */
+async function generateTreasuryGrants(
+  treasuryAddress: string,
+  client: any, // CosmWasmClient or AAClient
+  granter: string,
+  grantee: string,
+  daodaoIndexerUrl?: string,
+): Promise<any[]> {
+  // Create composite treasury strategy with fallback chain
+  const strategies = [];
+
+  // Add DaoDao indexer strategy if URL provided (fast)
+  if (daodaoIndexerUrl) {
+    strategies.push(new DaoDaoTreasuryStrategy({
+      indexerUrl: daodaoIndexerUrl,
+    }));
+  }
+
+  // Always add direct query strategy as fallback (reliable)
+  strategies.push(new DirectQueryTreasuryStrategy());
+
+  const treasuryStrategy = new CompositeTreasuryStrategy(...strategies);
+
+  // Generate grant messages from treasury contract
+  // Default expiration: 3 months from now
+  const threeMonthsFromNow = BigInt(
+    Math.floor(
+      new Date(new Date().setMonth(new Date().getMonth() + 3)).getTime() / 1000,
+    ),
+  );
+
+  return generateTreasuryGrantMessages(
+    treasuryAddress,
+    client,
+    granter,
+    grantee,
+    treasuryStrategy,
+    threeMonthsFromNow,
+  );
 }
 
 /**
@@ -67,6 +115,7 @@ export function useGrantsFlow({
   stake,
   treasury,
   feeGranter,
+  daodaoIndexerUrl,
 }: UseGrantsFlowProps): GrantsFlowState {
   const [isCreatingGrants, setIsCreatingGrants] = useState(false);
   const [grantsError, setGrantsError] = useState<string | null>(null);
@@ -101,6 +150,7 @@ export function useGrantsFlow({
             queryClient,
             smartAccountAddress,
             granteeAddress,
+            daodaoIndexerUrl,
           );
 
           needsDeployFeeGrant = true; // Treasury mode requires deploy_fee_grant
@@ -110,6 +160,7 @@ export function useGrantsFlow({
         }
       }
 
+      // TODO: Verify if this is the correct fallback approach
       // Fall back to manual grant building if treasury query failed or not configured
       if (grantMessages.length === 0) {
         const oneYearFromNow = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
@@ -226,12 +277,19 @@ export function useGrantsFlow({
         messagesToSign,
         'Create grants for abstraxion',
       );
+      
+      // Parse gas price from config (e.g., "0.001uxion" -> { amount: 0.001, denom: "uxion" })
+      const gasPriceMatch = gasPrice.match(/^([\d.]+)(.+)$/);
+      if (!gasPriceMatch) {
+        throw new Error(`Invalid gas price format: ${gasPrice}. Expected format: "0.001uxion"`);
+      }
+      const gasPriceNum = parseFloat(gasPriceMatch[1]);
+      const denom = gasPriceMatch[2];
 
       // Calculate fee based on simulated gas with generous buffer
       // Using higher multiplier to account for fee market fluctuations
-      const gasPriceNum = rpcUrl.includes('mainnet') ? 0.025 : 0.001;
       const calculatedFee = {
-        amount: [{ denom: 'uxion', amount: String(Math.ceil(simmedGas * gasPriceNum * 2)) }], // 2x buffer on amount
+        amount: [{ denom, amount: String(Math.ceil(simmedGas * gasPriceNum * 2)) }], // 2x buffer on amount
         gas: String(Math.ceil(simmedGas * 1.6)), // 60% buffer on gas limit
       };
 
@@ -265,7 +323,7 @@ export function useGrantsFlow({
     } finally {
       setIsCreatingGrants(false);
     }
-  }, [rpcUrl, contracts, bank, stake, treasury]);
+  }, [rpcUrl, contracts, bank, stake, treasury, daodaoIndexerUrl]);
 
   return {
     isCreatingGrants,

@@ -3,6 +3,7 @@
  * Extracted from dashboard utils/query-treasury-contract.ts
  */
 
+import { decodeAuthorization } from "@burnt-labs/abstraxion-core";
 import type { TreasuryStrategy } from "../types/treasury";
 import type { PermissionDescription } from "./format-permissions";
 import { generatePermissionDescriptions } from "./format-permissions";
@@ -13,22 +14,6 @@ export interface TreasuryContractResponse {
     display_url: string;
     redirect_url: string;
     icon_url: string;
-  };
-}
-
-/**
- * Decodes an authorization from base64-encoded protobuf
- * This is a placeholder - should import from abstraxion-core or implement here
- */
-function decodeAuthorization(
-  typeUrl: string,
-  value: string,
-): { type: string; data: any } {
-  // TODO: Implement proper decoding or import from abstraxion-core
-  // For now, return a basic structure
-  return {
-    type: typeUrl,
-    data: null,
   };
 }
 

@@ -142,8 +142,8 @@ export interface WalletAuthConfig {
 
   /** Indexer configuration for querying existing accounts */
   indexer?: {
-    url?: string;
-    authToken?: string;
+    url: string;
+    authToken: string;
   };
 
   /** Custom signer (Turnkey, Privy, etc.) */
@@ -154,8 +154,8 @@ export interface WalletAuthConfig {
     codeId: number;
     checksum: string;
     feeGranter: string;
+    addressPrefix: string;
     workerAddress?: string;
-    addressPrefix?: string;
   };
 
   /**

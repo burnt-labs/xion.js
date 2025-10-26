@@ -22,34 +22,49 @@ export default function DirectModeLayout({
     chainId: "xion-testnet-2",
 
     // REQUIRED: RPC URL for blockchain connection
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://rpc.xion-testnet-2.burnt.com:443",
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL!,
 
     // REQUIRED: REST API endpoint
-    restUrl: process.env.NEXT_PUBLIC_REST_URL || "https://api.xion-testnet-2.burnt.com",
+    restUrl: process.env.NEXT_PUBLIC_REST_URL!,
 
     // REQUIRED: Gas price
-    gasPrice: "0.001uxion",
+    gasPrice: process.env.NEXT_PUBLIC_GAS_PRICE || "0.001uxion",
 
     // Treasury contract address (optional - for dynamic grant configs)
     treasury: process.env.NEXT_PUBLIC_TREASURY_ADDRESS,
 
     // Fee granter address (optional - pays transaction fees for grant creation)
-    // Must match the FEE_GRANTER_ADDRESS used by your AA API
-    feeGranter:
-      process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS ||
-      "xion10y5pzqs0jn89zpm6va625v6xzsqjkm293efwq8",
+    feeGranter: process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS,
 
     // Enable direct mode for in-app wallet connections
     walletAuth: {
       mode: "direct" as const,
 
       // Point to local AA API for development
-      aaApiUrl: "http://localhost:8787",
+      aaApiUrl: process.env.NEXT_PUBLIC_AA_API_URL,
+
+      // Indexer configuration for account lookup (optional but recommended)
+      ...(process.env.NEXT_PUBLIC_INDEXER_URL && {
+        indexer: {
+          url: process.env.NEXT_PUBLIC_INDEXER_URL,
+          authToken: process.env.NEXT_PUBLIC_INDEXER_TOKEN,
+        },
+      }),
+
+      // Local configuration for RPC fallback (required for direct chain queries)
+      ...(process.env.NEXT_PUBLIC_CHECKSUM && process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS && {
+        localConfig: {
+          codeId: Number(process.env.NEXT_PUBLIC_CODE_ID) || 1,
+          checksum: process.env.NEXT_PUBLIC_CHECKSUM,
+          feeGranter: process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS,
+          addressPrefix: process.env.NEXT_PUBLIC_ADDRESS_PREFIX || "xion",
+        },
+      }),
 
       // Use custom strategy to show our custom wallet modal
       walletSelectionStrategy: "custom" as const,
 
-      // Define wallets to support (optional - defaults to MetaMask + Keplr for auto mode)
+      // Define wallets to support in the custom modal
       // You can add any Ethereum or Cosmos wallet by specifying its window key!
       wallets: [
         { name: "MetaMask", windowKey: "ethereum", signingMethod: "ethereum" },

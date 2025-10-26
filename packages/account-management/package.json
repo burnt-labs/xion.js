@@ -15,6 +15,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@burnt-labs/abstraxion-core": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
     "@cosmjs/cosmwasm-stargate": "^0.36.0",
     "@cosmjs/proto-signing": "^0.36.0",

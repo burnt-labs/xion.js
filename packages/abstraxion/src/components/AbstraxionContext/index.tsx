@@ -324,6 +324,7 @@ export function AbstraxionContextProvider({
     }
 
     async function restoreDirectModeSession() {
+      console.log('[AbstraxionContext] Checking for existing session keys in direct mode...');
       try {
         // Check if session keypair exists
         const storedKeypair = await abstraxionAuth.getLocalKeypair();
@@ -331,22 +332,31 @@ export function AbstraxionContextProvider({
 
         // No session to restore - this is normal on first visit
         if (!storedKeypair || !storedGranter) {
+          console.log('[AbstraxionContext] No existing session found (first visit or logged out)');
+          setIsInitializing(false);
           return;
         }
+
+        console.log('[AbstraxionContext] Found stored session, verifying grants on-chain...');
+        console.log('[AbstraxionContext] → Stored granter address:', storedGranter);
 
         // Verify grants still exist on-chain via authenticate
         await abstraxionAuth.authenticate();
 
         // If we get here, grants are valid
+        console.log('[AbstraxionContext] ✅ Session restored successfully!');
         setAbstraxionAccount(storedKeypair);
         setGranterAddress(storedGranter);
         setIsConnected(true);
+        setIsInitializing(false);
       } catch (error) {
         // Session expired or invalid - clear it silently
+        console.log('[AbstraxionContext] ⚠️ Session expired or invalid, clearing stored session');
         localStorage.removeItem('xion-authz-granter-account');
         localStorage.removeItem('xion-authz-temp-account');
         localStorage.removeItem('loginType');
         localStorage.removeItem('loginAuthenticator');
+        setIsInitializing(false);
       }
     }
 

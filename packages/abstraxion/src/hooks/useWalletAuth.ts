@@ -12,10 +12,13 @@
 
 import { useState, useCallback } from "react";
 import { Buffer } from "buffer";
-import { sha256 } from "@cosmjs/crypto";
-import { instantiate2Address } from "@cosmjs/cosmwasm-stargate";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { NumiaIndexerStrategy, type Authenticator } from "@burnt-labs/account-management";
+import {
+  NumiaAccountStrategy,
+  EmptyAccountStrategy,
+  CompositeAccountStrategy,
+  RpcAccountStrategy,
+  type Authenticator,
+} from "@burnt-labs/account-management";
 import type { WalletAuthConfig } from "../components/Abstraxion";
 
 /**
@@ -118,14 +121,36 @@ export function useWalletAuth({
   const [error, setError] = useState<string | null>(null);
 
   // Default to testnet AA API URL (matching dashboard .env.testnet)
-  const aaApiUrl = config.aaApiUrl || '';
+  const aaApiUrl = config.aaApiUrl;
 
-  // Default indexer configuration (testnet Numia)
-  const indexerUrl = config.indexer?.url || '';
-  const indexerToken = config.indexer?.authToken || '';
+  // Initialize composite account query strategy with proper fallback chain:
+  // 1. Try Numia indexer API (fast, requires indexer to be available)
+  // 2. Fallback to direct RPC query (slower but reliable, only needs RPC endpoint)
+  // 3. Final fallback to empty (creates new account)
+  const strategies = [];
 
-  // Initialize indexer strategy
-  const indexer = new NumiaIndexerStrategy(indexerUrl, indexerToken);
+  // Add indexer strategy if configured
+  if (config.indexer) {
+    console.log('[useWalletAuth] Using Numia indexer strategy:', config.indexer.url);
+    strategies.push(new NumiaAccountStrategy(config.indexer.url, config.indexer.authToken));
+  }
+
+  // Add RPC strategy if config is available (recommended for production)
+  if (config.localConfig) {
+    console.log('[useWalletAuth] Using RPC fallback strategy with checksum:', config.localConfig.checksum.slice(0, 10) + '...');
+    strategies.push(new RpcAccountStrategy({
+      rpcUrl,
+      checksum: config.localConfig.checksum,
+      creator: config.localConfig.feeGranter,
+      prefix: config.localConfig.addressPrefix,
+      codeId: config.localConfig.codeId,
+    }));
+  }
+
+  // Always add empty strategy as final fallback
+  strategies.push(new EmptyAccountStrategy());
+
+  const accountStrategy = new CompositeAccountStrategy(...strategies);
 
   /**
    * Check if account exists by querying the indexer
@@ -135,7 +160,7 @@ export function useWalletAuth({
     authenticator: string,
   ): Promise<{ exists: boolean; accounts: any[] }> => {
     try {
-      const accounts = await indexer.fetchSmartAccounts(authenticator);
+      const accounts = await accountStrategy.fetchSmartAccounts(authenticator);
 
       return {
         exists: accounts.length > 0,
@@ -148,7 +173,7 @@ export function useWalletAuth({
         accounts: [],
       };
     }
-  }, [indexer]);
+  }, [accountStrategy]);
 
   /**
    * Call AA API /prepare endpoint
@@ -213,10 +238,17 @@ export function useWalletAuth({
       setWalletAddress(ethAddress);
 
       // 2. Check if account already exists (authenticator is eth address for EthWallet)
+      console.log(`[useWalletAuth] Checking if account exists for authenticator: ${ethAddress}`);
       const { exists, accounts } = await checkAccountExistsByAuthenticator(ethAddress);
 
       if (exists && accounts.length > 0) {
         // Account already exists, use the first one
+        console.log(`[useWalletAuth] ✅ Found existing account on-chain: ${accounts[0].id}`);
+        console.log(`[useWalletAuth] Account details:`, {
+          smartAccount: accounts[0].id,
+          codeId: accounts[0].codeId,
+          authenticators: accounts[0].authenticators.length
+        });
         const existingAccount = accounts[0];
         setSmartAccountAddress(existingAccount.id);
         setCodeId(existingAccount.codeId);
@@ -242,16 +274,21 @@ export function useWalletAuth({
       }
 
       // 3. Account doesn't exist, create it
+      console.log(`[useWalletAuth] 🆕 No existing account found, creating new account via AA API`);
+
       // Call backend prepare endpoint
+      console.log(`[useWalletAuth] → Calling AA API /prepare endpoint`);
       const { message_to_sign, salt, metadata } = await callPrepare({
         wallet_type: 'EthWallet',
         address: ethAddress,
       });
 
       // 4. Get user signature
+      console.log(`[useWalletAuth] → Requesting signature from wallet`);
       const signature = await signWithEthWallet(message_to_sign, ethAddress);
 
       // 5. Create account
+      console.log(`[useWalletAuth] → Calling AA API /create endpoint`);
       const result = await createWalletAccount({
         wallet_type: 'EthWallet',
         address: ethAddress,
@@ -259,6 +296,8 @@ export function useWalletAuth({
         salt,
         message: JSON.stringify(metadata),
       });
+
+      console.log(`[useWalletAuth] ✅ Successfully created new account: ${result.account_address}`);
 
       // 6. Store results
       setSmartAccountAddress(result.account_address);
@@ -407,10 +446,17 @@ export function useWalletAuth({
         const pubkeyBase64 = Buffer.from(pubkeyHex, 'hex').toString('base64');
 
         // Check if account exists
+        console.log(`[useWalletAuth] Checking if account exists for authenticator (pubkey base64): ${pubkeyBase64.substring(0, 20)}...`);
         const { exists, accounts } = await checkAccountExistsByAuthenticator(pubkeyBase64);
 
         if (exists && accounts.length > 0) {
           // Account exists
+          console.log(`[useWalletAuth] ✅ Found existing account on-chain: ${accounts[0].id}`);
+          console.log(`[useWalletAuth] Account details:`, {
+            smartAccount: accounts[0].id,
+            codeId: accounts[0].codeId,
+            authenticators: accounts[0].authenticators.length
+          });
           const existingAccount = accounts[0];
           setSmartAccountAddress(existingAccount.id);
           setCodeId(existingAccount.codeId);
@@ -436,12 +482,16 @@ export function useWalletAuth({
         }
 
         // Create new account
+        console.log(`[useWalletAuth] 🆕 No existing account found, creating new account via AA API`);
+
+        console.log(`[useWalletAuth] → Calling AA API /prepare endpoint`);
         const { message_to_sign, salt, metadata } = await callPrepare({
           wallet_type: 'Secp256K1',
           pubkey: pubkeyHex,
         });
 
         // Sign with wallet
+        console.log(`[useWalletAuth] → Requesting signature from ${walletConfig.name} wallet`);
         const response = await wallet.signArbitrary(chainId, cosmosWalletAddress, message_to_sign);
         if (!response || !response.signature) {
           throw new Error(`Failed to get signature from ${walletConfig.name}`);
@@ -454,6 +504,7 @@ export function useWalletAuth({
         const signatureBytes = Buffer.from(signatureBase64, 'base64');
         const signatureHex = signatureBytes.toString('hex');
 
+        console.log(`[useWalletAuth] → Calling AA API /create endpoint`);
         const result = await createWalletAccount({
           wallet_type: 'Secp256K1',
           pubkey: pubkeyHex,
@@ -461,6 +512,8 @@ export function useWalletAuth({
           salt,
           message: JSON.stringify(metadata),
         });
+
+        console.log(`[useWalletAuth] ✅ Successfully created new account: ${result.account_address}`);
 
         setSmartAccountAddress(result.account_address);
         setCodeId(result.code_id);

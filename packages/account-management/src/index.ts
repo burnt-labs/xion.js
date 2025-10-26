@@ -4,25 +4,20 @@
  * Smart account management utilities for XION blockchain
  *
  * This package provides utilities for:
+ * - Finding existing smart accounts (accounts/)
  * - Managing authenticators (add, remove, validate)
- * - Fee grant validation
- * - Authz grant generation
- * - Treasury contract interaction
- * - Smart account queries
+ * - Building grant messages (grants/)
+ * - Querying treasury contracts (grants/strategies/)
  */
 
 // Authenticator utilities
 export * from "./authenticators";
 
-// Grant utilities
+// Grant utilities (includes treasury strategies)
 export * from "./grants";
 
-// Query utilities
-// TODO: queries were moved to dashboard - remove if not needed
-// export * from "./queries";
-
-// Indexer strategies
-export * from "./indexer";
+// Account query strategies
+export * from "./accounts";
 
 // Types
 export * from "./types";

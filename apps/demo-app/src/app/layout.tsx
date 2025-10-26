@@ -11,7 +11,7 @@ const treasuryConfig = {
   treasury: process.env.NEXT_PUBLIC_TREASURY_ADDRESS,
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://rpc.xion-testnet-2.burnt.com:443",
   restUrl: process.env.NEXT_PUBLIC_REST_URL || "https://api.xion-testnet-2.burnt.com",
-  gasPrice: "0.001uxion",
+  gasPrice: process.env.NEXT_PUBLIC_GAS_PRICE || "0.001uxion",
 };
 
 export default function RootLayout({
