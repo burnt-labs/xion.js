@@ -145,8 +145,11 @@ export function useGrantsFlow({
       }
 
       // 1. Generate temp keypair and get grantee address
+      console.log('[useGrantsFlow] 🔑 Generating new session keypair...');
       const tempKeypair = await abstraxionAuth.generateAndStoreTempAccount();
       const granteeAddress = await abstraxionAuth.getKeypairAddress();
+      console.log('[useGrantsFlow] → Session key (grantee) address:', granteeAddress);
+      console.log('[useGrantsFlow] → Granter (smart account) address:', smartAccountAddress);
 
       // 2. Build grant messages - query treasury contract or use manual configs
       let grantMessages: any[] = [];
@@ -154,6 +157,8 @@ export function useGrantsFlow({
 
       if (treasury) {
         // Query treasury contract for grant configurations (matching dashboard flow)
+        console.log('[useGrantsFlow] 📋 Querying treasury contract for grant configurations...');
+        console.log('[useGrantsFlow] → Treasury address:', treasury);
         try {
           // First, create a basic CosmWasmClient to query the treasury contract
           const { CosmWasmClient } = await import('@cosmjs/cosmwasm-stargate');
@@ -168,9 +173,11 @@ export function useGrantsFlow({
             daodaoIndexerUrl,
           );
 
+          console.log('[useGrantsFlow] ✅ Treasury returned', grantMessages.length, 'grant messages');
           needsDeployFeeGrant = true; // Treasury mode requires deploy_fee_grant
         } catch (error) {
-          console.error('Failed to query treasury contract:', error);
+          console.error('[useGrantsFlow] ⚠️ Failed to query treasury contract:', error);
+          console.log('[useGrantsFlow] → Falling back to manual grant configs');
           // Fall back to manual configs
         }
       }
@@ -268,6 +275,7 @@ export function useGrantsFlow({
       const messagesToSign = [...grantMessages];
 
       if (needsDeployFeeGrant && treasury) {
+        console.log('[useGrantsFlow] 💰 Adding deploy_fee_grant message to treasury contract');
         const deployFeeGrantMsg = {
           deploy_fee_grant: {
             authz_granter: smartAccountAddress,
@@ -286,12 +294,20 @@ export function useGrantsFlow({
         });
       }
 
+      console.log('[useGrantsFlow] 📝 Total messages to sign:', messagesToSign.length);
+      console.log('[useGrantsFlow] → Grant messages:', grantMessages.length);
+      if (needsDeployFeeGrant) {
+        console.log('[useGrantsFlow] → Deploy fee grant message: 1');
+      }
+
       // 6. Simulate transaction to get gas estimate
+      console.log('[useGrantsFlow] ⚙️ Simulating transaction to estimate gas...');
       const simmedGas = await client.simulate(
         smartAccountAddress,
         messagesToSign,
         'Create grants for abstraxion',
       );
+      console.log('[useGrantsFlow] → Estimated gas:', simmedGas);
       
       // Parse gas price from config (e.g., "0.001uxion" -> { amount: 0.001, denom: "uxion" })
       const gasPriceMatch = gasPrice.match(/^([\d.]+)(.+)$/);
@@ -316,7 +332,15 @@ export function useGrantsFlow({
           }
         : calculatedFee;
 
+      console.log('[useGrantsFlow] 💳 Fee configuration:');
+      console.log('[useGrantsFlow] → Gas limit:', feeToUse.gas);
+      console.log('[useGrantsFlow] → Fee amount:', feeToUse.amount);
+      if (feeGranter) {
+        console.log('[useGrantsFlow] → Fee granter:', feeGranter);
+      }
+
       // 7. Sign and broadcast grant transaction
+      console.log('[useGrantsFlow] ✍️ Signing and broadcasting transaction...');
       const result = await client.signAndBroadcast(
         smartAccountAddress,
         messagesToSign,
@@ -324,12 +348,22 @@ export function useGrantsFlow({
         'Create grants for abstraxion',
       );
 
+      console.log('[useGrantsFlow] ✅ Transaction broadcast successful!');
+      console.log('[useGrantsFlow] → Transaction hash:', result.transactionHash);
+      console.log('[useGrantsFlow] → Height:', result.height);
+
       // 8. Store granter address (using storage directly since setGranter is private)
+      console.log('[useGrantsFlow] 💾 Storing granter address in localStorage');
       localStorage.setItem('xion-authz-granter-account', smartAccountAddress);
 
-      // 9. Set abstract account and authenticate (verify grants exist on-chain)
+      // 9. Set abstract account and trigger auth state (skip verification since we just created grants)
+      console.log('[useGrantsFlow] 🔐 Setting session keypair and triggering auth state...');
       abstraxionAuth.abstractAccount = tempKeypair;
-      await abstraxionAuth.authenticate();
+      // Skip authenticate() to avoid redundant grant verification query
+      // We just successfully created the grants, so we know they exist
+      // Just trigger the auth state change directly
+      abstraxionAuth['triggerAuthStateChange'](true);
+      console.log('[useGrantsFlow] ✅ Session established successfully!');
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to create grants';
       setGrantsError(errorMessage);

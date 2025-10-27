@@ -3,6 +3,8 @@ import { useMemo } from "react";
 import {
   AbstraxionProvider,
   type AbstraxionConfig,
+  type BrowserWalletAuthentication,
+  BUILT_IN_WALLETS,
 } from "@burnt-labs/abstraxion";
 import { WalletModal } from "../../components/WalletModal";
 
@@ -11,7 +13,7 @@ export default function DirectModeLayout({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
-  // Direct mode configuration with treasury contract
+  // Browser wallet authentication configuration
   const directModeConfig: AbstraxionConfig = useMemo(() => ({
     // REQUIRED: Chain ID
     chainId: "xion-testnet-2",
@@ -31,63 +33,48 @@ export default function DirectModeLayout({
     // Fee granter address (optional - pays transaction fees for grant creation)
     feeGranter: process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS,
 
-    // Enable direct mode for in-app wallet connections
-    walletAuth: {
-      mode: "direct" as const,
+    // Indexer configuration for account lookup (optional but recommended)
+    // Only include if BOTH url and authToken are provided
+    ...(process.env.NEXT_PUBLIC_INDEXER_URL && process.env.NEXT_PUBLIC_INDEXER_TOKEN && {
+      indexer: {
+        url: process.env.NEXT_PUBLIC_INDEXER_URL,
+        authToken: process.env.NEXT_PUBLIC_INDEXER_TOKEN,
+      },
+    }),
 
-      // Point to local AA API for development
+    // Local configuration for RPC fallback (required for direct chain queries)
+    ...(process.env.NEXT_PUBLIC_CHECKSUM && process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS && {
+      localConfig: {
+        codeId: Number(process.env.NEXT_PUBLIC_CODE_ID) || 1,
+        checksum: process.env.NEXT_PUBLIC_CHECKSUM,
+        feeGranter: process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS,
+        addressPrefix: process.env.NEXT_PUBLIC_ADDRESS_PREFIX || "xion",
+      },
+    }),
+
+    authentication: {
+      type: "browser",
       aaApiUrl: process.env.NEXT_PUBLIC_AA_API_URL,
+      autoConnect: false, // Show wallet selection UI
 
-      // Indexer configuration for account lookup (optional but recommended)
-      // Only include if BOTH url and authToken are provided
-      ...(process.env.NEXT_PUBLIC_INDEXER_URL && process.env.NEXT_PUBLIC_INDEXER_TOKEN && {
-        indexer: {
-          url: process.env.NEXT_PUBLIC_INDEXER_URL,
-          authToken: process.env.NEXT_PUBLIC_INDEXER_TOKEN,
-        },
-      }),
-
-      // Local configuration for RPC fallback (required for direct chain queries)
-      ...(process.env.NEXT_PUBLIC_CHECKSUM && process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS && {
-        localConfig: {
-          codeId: Number(process.env.NEXT_PUBLIC_CODE_ID) || 1,
-          checksum: process.env.NEXT_PUBLIC_CHECKSUM,
-          feeGranter: process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS,
-          addressPrefix: process.env.NEXT_PUBLIC_ADDRESS_PREFIX || "xion",
-        },
-      }),
-
-      // Define wallets to support
-      // You can add any Ethereum or Cosmos wallet by specifying its window key!
+      // Use built-in wallet definitions
       wallets: [
-        { name: "MetaMask", windowKey: "ethereum", signingMethod: "ethereum" },
-        { name: "Keplr", windowKey: "keplr", signingMethod: "cosmos" },
-        { name: "OKX", windowKey: "okxwallet.keplr", signingMethod: "cosmos" },
-        // Example: Add Leap wallet (Cosmos)
-        // { name: "Leap", windowKey: "leap", signingMethod: "cosmos" },
-        // Example: Add Rainbow wallet (Ethereum)
-        // { name: "Rainbow", windowKey: "ethereum", signingMethod: "ethereum" },
-        // Example: Add Compass wallet (Cosmos)
-        // { name: "Compass", windowKey: "compass", signingMethod: "cosmos" },
+        BUILT_IN_WALLETS.metamask,
+        BUILT_IN_WALLETS.keplr,
+        BUILT_IN_WALLETS.okx,
       ],
-
-      // Custom wallet selection UI - all state management and auto-close is handled internally!
-      renderWalletSelection: ({ isOpen, onClose, wallets, connect, isConnecting, error }) => (
-        <WalletModal
-          isOpen={isOpen}
-          onClose={onClose}
-          wallets={wallets}
-          onConnect={connect}
-          loading={isConnecting}
-          error={error}
-        />
-      ),
     },
   }), []);
 
   return (
     <AbstraxionProvider config={directModeConfig}>
       {children}
+      {/* Wallet modal - renders when login() is called */}
+      (
+        <WalletModal
+          authentication={directModeConfig.authentication as BrowserWalletAuthentication}
+        />
+      )
     </AbstraxionProvider>
   );
 }

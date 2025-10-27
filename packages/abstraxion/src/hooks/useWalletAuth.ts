@@ -19,7 +19,11 @@ import {
   RpcAccountStrategy,
   type Authenticator,
 } from "@burnt-labs/account-management";
-import type { WalletAuthConfig } from "../components/Abstraxion";
+import type {
+  AuthenticationConfig,
+  WalletDefinition,
+} from "../authentication/types";
+import type { IndexerConfig, LocalConfig } from "../components/Abstraxion";
 
 /**
  * Wallet type for smart account authenticators
@@ -86,19 +90,19 @@ export interface WalletAuthState {
   error: string | null;
 
   // Generic wallet connection method
-  connectWallet: (walletConfig: import('../components/Abstraxion').GenericWalletConfig, chainId?: string) => Promise<void>;
+  connectWallet: (walletConfig: WalletDefinition, chainId?: string) => Promise<void>;
 
   // MetaMask connection (called by generic connectWallet for ethereum wallets)
   connectMetaMask: () => Promise<void>;
 
-  // Custom signer method (Turnkey, Privy, etc.)
-  connectWithCustomSigner: () => Promise<void>;
 
   disconnect: () => void;
 }
 
 interface UseWalletAuthProps {
-  config: WalletAuthConfig;
+  authentication?: AuthenticationConfig
+  indexer?: IndexerConfig;
+  localConfig?: LocalConfig;
   rpcUrl: string;
   onSuccess?: (smartAccountAddress: string, walletInfo: WalletConnectionInfo) => void;
   onError?: (error: string) => void;
@@ -108,7 +112,9 @@ interface UseWalletAuthProps {
  * Hook for managing wallet authentication
  */
 export function useWalletAuth({
-  config,
+  authentication,
+  indexer,
+  localConfig,
   rpcUrl,
   onSuccess,
   onError,
@@ -120,8 +126,8 @@ export function useWalletAuth({
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Default to testnet AA API URL (matching dashboard .env.testnet)
-  const aaApiUrl = config.aaApiUrl;
+  // Get AA API URL from authentication config
+  const aaApiUrl = authentication?.type === 'browser' ? authentication.aaApiUrl : undefined;
 
   // Initialize composite account query strategy with proper fallback chain:
   // 1. Try Numia indexer API (fast, requires indexer to be available)
@@ -130,20 +136,20 @@ export function useWalletAuth({
   const strategies = [];
 
   // Add indexer strategy if configured
-  if (config.indexer) {
-    console.log('[useWalletAuth] Using Numia indexer strategy:', config.indexer.url);
-    strategies.push(new NumiaAccountStrategy(config.indexer.url, config.indexer.authToken));
+  if (indexer) {
+    console.log('[useWalletAuth] Using Numia indexer strategy:', indexer.url);
+    strategies.push(new NumiaAccountStrategy(indexer.url, indexer.authToken));
   }
 
   // Add RPC strategy if config is available (recommended for production)
-  if (config.localConfig) {
-    console.log('[useWalletAuth] Using RPC fallback strategy with checksum:', config.localConfig.checksum.slice(0, 10) + '...');
+  if (localConfig) {
+    console.log('[useWalletAuth] Using RPC fallback strategy with checksum:', localConfig.checksum.slice(0, 10) + '...');
     strategies.push(new RpcAccountStrategy({
       rpcUrl,
-      checksum: config.localConfig.checksum,
-      creator: config.localConfig.feeGranter,
-      prefix: config.localConfig.addressPrefix,
-      codeId: config.localConfig.codeId,
+      checksum: localConfig.checksum,
+      creator: localConfig.feeGranter,
+      prefix: localConfig.addressPrefix,
+      codeId: localConfig.codeId,
     }));
   }
 
@@ -242,7 +248,7 @@ export function useWalletAuth({
       const { exists, accounts } = await checkAccountExistsByAuthenticator(ethAddress);
 
       if (exists && accounts.length > 0) {
-        // Account already exists, use the first one
+        // Account exists on-chain - set up connection info and let onSuccess handle grants
         console.log(`[useWalletAuth] ✅ Found existing account on-chain: ${accounts[0].id}`);
         console.log(`[useWalletAuth] Account details:`, {
           smartAccount: accounts[0].id,
@@ -250,8 +256,6 @@ export function useWalletAuth({
           authenticators: accounts[0].authenticators.length
         });
         const existingAccount = accounts[0];
-        setSmartAccountAddress(existingAccount.id);
-        setCodeId(existingAccount.codeId);
 
         // Find the authenticator that matches the current wallet (EthWallet uses address as identifier)
         const matchingAuthenticator = existingAccount.authenticators.find(
@@ -259,6 +263,10 @@ export function useWalletAuth({
         );
 
         const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
+
+        console.log(`[useWalletAuth] → Account exists, onSuccess will handle grant verification/creation`);
+        setSmartAccountAddress(existingAccount.id);
+        setCodeId(existingAccount.codeId);
 
         const walletConnectionInfo: WalletConnectionInfo = {
           type: 'EthWallet',
@@ -269,6 +277,7 @@ export function useWalletAuth({
         };
         setWalletInfo(walletConnectionInfo);
 
+        // Call onSuccess - it will check/create grants as needed
         onSuccess?.(existingAccount.id, walletConnectionInfo);
         return;
       }
@@ -323,85 +332,12 @@ export function useWalletAuth({
     }
   }, [checkAccountExistsByAuthenticator, callPrepare, createWalletAccount, onSuccess, onError]);
 
-  const connectWithCustomSigner = useCallback(async () => {
-    if (!config.customSigner) {
-      throw new Error('Custom signer not configured');
-    }
-
-    try {
-      setIsConnecting(true);
-      setError(null);
-
-      const signer = config.customSigner;
-
-      // Get credential based on signer type
-      const credential = signer.type === 'EthWallet'
-        ? await signer.getAddress?.()
-        : await signer.getPubkey?.();
-
-      if (!credential) {
-        throw new Error('Failed to get credential from custom signer');
-      }
-
-      // Call prepare endpoint
-      const prepareRequest = signer.type === 'EthWallet'
-        ? { wallet_type: 'EthWallet' as const, address: credential }
-        : { wallet_type: 'Secp256K1' as const, pubkey: credential };
-
-      const { message_to_sign, salt, metadata } = await callPrepare(prepareRequest);
-
-      // Sign with custom signer
-      const signature = await signer.sign(message_to_sign);
-
-      // Create account
-      const createRequest = signer.type === 'EthWallet'
-        ? {
-            wallet_type: 'EthWallet' as const,
-            address: credential,
-            signature,
-            salt,
-            message: JSON.stringify(metadata),
-          }
-        : {
-            wallet_type: 'Secp256K1' as const,
-            pubkey: credential,
-            signature,
-            salt,
-            message: JSON.stringify(metadata),
-          };
-
-      const result = await createWalletAccount(createRequest);
-
-      // Store results
-      setSmartAccountAddress(result.account_address);
-      setCodeId(result.code_id);
-      setWalletAddress(credential);
-
-      const walletConnectionInfo: WalletConnectionInfo = {
-        type: signer.type,
-        address: credential,
-        identifier: credential,
-        ...(signer.type === 'Secp256K1' && { pubkey: credential }),
-      };
-      setWalletInfo(walletConnectionInfo);
-
-      onSuccess?.(result.account_address, walletConnectionInfo);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to connect custom signer';
-      setError(errorMessage);
-      onError?.(errorMessage);
-      console.error('Custom signer connection error:', err);
-    } finally {
-      setIsConnecting(false);
-    }
-  }, [config.customSigner, callPrepare, createWalletAccount, onSuccess, onError]);
-
   /**
    * Generic wallet connection method
    * Works with any wallet by accessing window object and using appropriate signing method
    */
   const connectWallet = useCallback(async (
-    walletConfig: import('../components/Abstraxion').GenericWalletConfig,
+    walletConfig: WalletDefinition,
     chainId?: string
   ) => {
     try {
@@ -450,7 +386,7 @@ export function useWalletAuth({
         const { exists, accounts } = await checkAccountExistsByAuthenticator(pubkeyBase64);
 
         if (exists && accounts.length > 0) {
-          // Account exists
+          // Account exists - just restore the session
           console.log(`[useWalletAuth] ✅ Found existing account on-chain: ${accounts[0].id}`);
           console.log(`[useWalletAuth] Account details:`, {
             smartAccount: accounts[0].id,
@@ -458,14 +394,16 @@ export function useWalletAuth({
             authenticators: accounts[0].authenticators.length
           });
           const existingAccount = accounts[0];
-          setSmartAccountAddress(existingAccount.id);
-          setCodeId(existingAccount.codeId);
 
           const matchingAuthenticator = existingAccount.authenticators.find(
             (auth: Authenticator) => auth.authenticator === pubkeyBase64
           );
 
           const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
+
+          console.log(`[useWalletAuth] ✅ Restoring existing account session`);
+          setSmartAccountAddress(existingAccount.id);
+          setCodeId(existingAccount.codeId);
 
           const walletConnectionInfo: WalletConnectionInfo = {
             type: 'Secp256K1',
@@ -562,7 +500,6 @@ export function useWalletAuth({
     error,
     connectWallet,
     connectMetaMask,
-    connectWithCustomSigner,
     disconnect,
   };
 }

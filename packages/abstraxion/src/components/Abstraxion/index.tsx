@@ -15,6 +15,7 @@ import {
   BrowserRedirectStrategy,
   BrowserStorageStrategy,
 } from "@/src/strategies";
+import type { AuthenticationConfig } from "../../authentication/types";
 
 export interface ModalProps {
   onClose: VoidFunction;
@@ -52,7 +53,7 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
     };
   }, [closeOnEscKey]);
 
-  // Direct mode doesn't use built-in modal - users provide their own UI
+  // TODO: Remove the ui code on redirect mode
   if (walletAuthMode !== 'redirect') {
     return null;
   }
@@ -84,124 +85,22 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
 }
 
 /**
- * Custom signer interface for Turnkey, Privy, etc.
+ * Indexer configuration for querying existing accounts
  */
-export interface CustomSigner {
-  type: 'Secp256K1' | 'EthWallet';
-  sign: (message: string) => Promise<string>;
-  getPubkey?: () => Promise<string>;  // For Secp256K1 (Cosmos wallets)
-  getAddress?: () => Promise<string>; // For EthWallet
+export interface IndexerConfig {
+  url: string;
+  authToken: string;
 }
 
 /**
- * Supported signing methods for wallets
- * - 'cosmos': Cosmos ecosystem wallets (Keplr, Leap, OKX, etc.) using secp256k1
- * - 'ethereum': Ethereum ecosystem wallets (MetaMask, Rainbow, etc.)
- * - 'ed25519': Reserved for future Solana/Polkadot support
+ * Local mode configuration (for building transactions without AA API)
  */
-export type SigningMethod = 'cosmos' | 'ethereum' | 'ed25519';
-
-/**
- * Generic wallet configuration
- * Allows developers to add any wallet by specifying its window key and signing method
- */
-export interface GenericWalletConfig {
-  /** Display name of the wallet (e.g., "Keplr", "Leap") */
-  name: string;
-
-  /** Window object key (e.g., "keplr", "leap", "okxwallet.keplr", "ethereum") */
-  windowKey: string;
-
-  /** Signing method the wallet uses */
-  signingMethod: SigningMethod;
-
-  /** Optional icon/logo component or URL */
-  icon?: React.ReactNode | string;
-}
-
-/**
- * Props passed to custom wallet selection UI render function
- * This provides everything needed to render a custom wallet modal with zero boilerplate
- */
-export interface WalletSelectionRenderProps {
-  /** Whether the wallet selection modal should be shown */
-  isOpen: boolean;
-
-  /** Function to close the modal */
-  onClose: () => void;
-
-  /** List of available wallets from config */
-  wallets: GenericWalletConfig[];
-
-  /** Connect to a wallet by name - handles all connection logic internally */
-  connect: (walletName: string) => Promise<void>;
-
-  /** Whether a wallet connection is in progress */
-  isConnecting: boolean;
-
-  /** Error message if connection failed, null otherwise */
-  error: string | null;
-}
-
-/**
- * Wallet authentication configuration
- */
-export interface WalletAuthConfig {
-  /** Authentication mode: redirect (default), direct (in-app), or local (no AA API) */
-  mode?: 'redirect' | 'direct' | 'local';
-
-  /** Custom AA API URL (for direct mode) */
-  aaApiUrl?: string;
-
-  /** Indexer configuration for querying existing accounts */
-  indexer?: {
-    url: string;
-    authToken: string;
-  };
-
-  /** Custom signer (Turnkey, Privy, etc.) */
-  customSigner?: CustomSigner;
-
-  /** Local mode configuration (for building transactions without AA API) */
-  localConfig?: {
-    codeId: number;
-    checksum: string;
-    feeGranter: string;
-    addressPrefix: string;
-    workerAddress?: string;
-  };
-
-  /**
-   * List of wallets to support
-   *
-   * Example:
-   * [
-   *   { name: "Keplr", windowKey: "keplr", signingMethod: "cosmos" },
-   *   { name: "Leap", windowKey: "leap", signingMethod: "cosmos" },
-   *   { name: "OKX", windowKey: "okxwallet.keplr", signingMethod: "cosmos" },
-   *   { name: "MetaMask", windowKey: "ethereum", signingMethod: "ethereum" },
-   * ]
-   */
-  wallets?: GenericWalletConfig[];
-
-  /**
-   * Custom wallet selection UI render function
-   * If provided, this will be called when the user needs to select a wallet
-   * All state management and auto-close logic is handled internally
-   *
-   * Example:
-   * renderWalletSelection: ({ isOpen, onClose, wallets, connect, isConnecting, error }) => (
-   *   <MyWalletModal
-   *     isOpen={isOpen}
-   *     onClose={onClose}
-   *     wallets={wallets}
-   *     onConnect={connect}
-   *     loading={isConnecting}
-   *     error={error}
-   *   />
-   * )
-   */
-  renderWalletSelection?: (props: WalletSelectionRenderProps) => React.ReactNode;
+export interface LocalConfig {
+  codeId: number;
+  checksum: string;
+  feeGranter: string;
+  addressPrefix: string;
+  workerAddress?: string;
 }
 
 export interface AbstraxionConfig {
@@ -232,11 +131,18 @@ export interface AbstraxionConfig {
   /** Bank spend limits */
   bank?: SpendLimit[];
 
-  /** OAuth callback URL (for redirect mode) */
-  callbackUrl?: string;
+  /**
+   * Authentication configuration
+   * Defines how users authenticate (OAuth, signer, or browser wallet)
+   * If omitted, defaults to OAuth (redirect flow)
+   */
+  authentication?: AuthenticationConfig;
 
-  /** Wallet authentication configuration */
-  walletAuth?: WalletAuthConfig;
+  /** Indexer configuration for querying existing accounts */
+  indexer?: IndexerConfig;
+
+  /** Local mode configuration (for building transactions without AA API) */
+  localConfig?: LocalConfig;
 }
 
 export function AbstraxionProvider({
@@ -257,8 +163,9 @@ export function AbstraxionProvider({
       contracts={config.contracts}
       stake={config.stake}
       bank={config.bank}
-      callbackUrl={config.callbackUrl}
-      walletAuth={config.walletAuth}
+      authentication={config.authentication}
+      indexer={config.indexer}
+      localConfig={config.localConfig}
     >
       {children}
     </AbstraxionContextProvider>
