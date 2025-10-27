@@ -11,6 +11,107 @@ A NextJS application that provides backend API services for managing XION wallet
 - **Key Rotation**: Automatic key rotation and expiry handling
 - **Frontend UI**: Simple React interface for testing and demonstration
 
+## Prerequisites
+
+- Node.js 20+
+- pnpm 8+
+- SQLite 3.30+
+
+You need to setup the XION Treasury before you can use this application. Learn more about [how to setup the XION Treasury](https://docs.burnt.com/xion/developers/getting-started-advanced/gasless-ux-and-permission-grants/treasury-contracts).
+
+The required permission types in the Treasury you setup for this application to work are:
+
+- `Send Funds`
+
+After the treasury is setup, you can get the treasury address from the developer portal.
+
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+# Database
+DATABASE_URL="file:./dev.db"
+
+# XION Configuration
+XION_RPC_URL="https://rpc.xion-testnet-2.burnt.com/"
+XION_REST_URL="https://api.xion-testnet-2.burnt.com/"
+XION_REDIRECT_URL="http://localhost:3000/api/callback/grant_session"
+XION_TREASURY="xion1..." # Your Treasury address
+
+# Security
+ENCRYPTION_KEY="your-base64-encoded-aes-256-key-here" # Generate a secure encryption key using the script provided in the project root
+
+# Session Configuration (Optional)
+SESSION_KEY_EXPIRY_MS=864000000 # 10 days
+REFRESH_THRESHOLD_MS=3600000 # 1 hour
+
+# Rate Limiting (Optional)
+RATE_LIMIT_WINDOW_MS=900000 # 15 minutes
+RATE_LIMIT_MAX_REQUESTS=100 # Maximum number of requests per window
+```
+
+## Getting Started
+
+1. **Install Dependencies**
+
+   ```bash
+   pnpm install
+   ```
+
+2. **Quick Setup (Recommended)**
+
+   ```bash
+   chmod +x scripts/setup.sh
+   ./scripts/setup.sh
+   ```
+
+   This script will:
+   - Create `.env` file from template
+   - Generate encryption key
+   - Install dependencies
+   - Set up database
+   - Seed with sample data
+
+3. **Manual Setup (Alternative)**
+
+   ```bash
+   # Set up Environment Variables
+   cp env.example .env
+   # Edit .env with your configuration
+
+   # Generate Encryption Key
+   pnpm run generate-key
+
+   # Set up Database
+   pnpm run db:build
+   pnpm run db:push
+   pnpm run db:seed
+   ```
+
+4. **Start Development Server**
+
+   ```bash
+   pnpm run dev
+   ```
+
+5. **Open Application**
+   Navigate to `http://localhost:3000`
+
+## Scripts
+
+- `pnpm run dev` - Start development server
+- `pnpm run build` - Build for production
+- `pnpm run start` - Start production server
+- `pnpm run db:build` - Generate Prisma client
+- `pnpm run db:push` - Push schema to database
+- `pnpm run db:migrate` - Run database migrations
+- `pnpm run db:format` - Format Prisma schema
+- `pnpm run db:seed` - Seed database with sample data
+- `pnpm run test` - Run tests
+- `pnpm run test:watch` - Run tests in watch mode
+- `pnpm run test:coverage` - Run tests with coverage
+
 ## API Endpoints
 
 ### POST /api/wallet/connect
@@ -140,93 +241,6 @@ Health check endpoint to verify service status and database connectivity.
 - `details`: JSON string of event details
 - `ipAddress`: Optional IP address
 - `userAgent`: Optional user agent
-
-## Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-# Database
-DATABASE_URL="file:./dev.db"
-
-# XION Configuration
-XION_RPC_URL="https://rpc.xion-testnet-2.burnt.com/"
-XION_REST_URL="https://api.xion-testnet-2.burnt.com/"
-XION_REDIRECT_URL="http://localhost:3000/api/callback/grant_session"
-XION_TREASURY="xion1..."
-
-# Security
-ENCRYPTION_KEY="your-base64-encoded-aes-256-key-here"
-
-# Session Configuration
-SESSION_KEY_EXPIRY_MS=864000000 # 10 days
-REFRESH_THRESHOLD_MS=3600000
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-```
-
-## Getting Started
-
-1. **Install Dependencies**
-
-   ```bash
-   pnpm install
-   ```
-
-2. **Quick Setup (Recommended)**
-
-   ```bash
-   chmod +x scripts/setup.sh
-   ./scripts/setup.sh
-   ```
-
-   This script will:
-   - Create `.env` file from template
-   - Generate encryption key
-   - Install dependencies
-   - Set up database
-   - Seed with sample data
-
-3. **Manual Setup (Alternative)**
-
-   ```bash
-   # Set up Environment Variables
-   cp env.example .env
-   # Edit .env with your configuration
-
-   # Generate Encryption Key
-   pnpm run generate-key
-
-   # Set up Database
-   pnpm run db:build
-   pnpm run db:push
-   pnpm run db:seed
-   ```
-
-4. **Start Development Server**
-
-   ```bash
-   pnpm run dev
-   ```
-
-5. **Open Application**
-   Navigate to `http://localhost:3000`
-
-## Scripts
-
-- `pnpm run dev` - Start development server
-- `pnpm run build` - Build for production
-- `pnpm run start` - Start production server
-- `pnpm run db:build` - Generate Prisma client
-- `pnpm run db:push` - Push schema to database
-- `pnpm run db:migrate` - Run database migrations
-- `pnpm run db:format` - Format Prisma schema
-- `pnpm run db:seed` - Seed database with sample data
-- `pnpm run test` - Run tests
-- `pnpm run test:watch` - Run tests in watch mode
-- `pnpm run test:coverage` - Run tests with coverage
 
 ## Security Features
 
