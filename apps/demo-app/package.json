@@ -1,6 +1,6 @@
 {
   "name": "demo-app",
-  "version": "1.1.0-alpha.51",
+  "version": "1.1.0-alpha.53",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3001",
@@ -17,10 +17,11 @@
     "@burnt-labs/abstraxion-core": "workspace:*",
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
-    "@cosmjs/amino": "^0.32.4",
-    "@cosmjs/cosmwasm-stargate": "^0.32.4",
-    "@cosmjs/crypto": "^0.32.4",
+    "@cosmjs/amino": "^0.36.0",
+    "@cosmjs/cosmwasm-stargate": "^0.36.0",
+    "@cosmjs/crypto": "^0.36.0",
     "@heroicons/react": "^2.1.4",
+    "@noble/hashes": "1.8.0",
     "cosmjs-types": "^0.9.0",
     "next": "^14.0.3",
     "react": "^18.2.0",

@@ -1,11 +1,72 @@
 # demo-app
 
+## 1.1.0-alpha.53
+
+### Minor Changes
+
+- [#310](https://github.com/burnt-labs/xion.js/pull/310) [`9a659c3`](https://github.com/burnt-labs/xion.js/commit/9a659c3fe80bba10f76370c42f1c0b3574e7018d) Thanks [@ertemann](https://github.com/ertemann)! - remove demo app of legacy modal
+
+- [#310](https://github.com/burnt-labs/xion.js/pull/310) [`9a659c3`](https://github.com/burnt-labs/xion.js/commit/9a659c3fe80bba10f76370c42f1c0b3574e7018d) Thanks [@ertemann](https://github.com/ertemann)! - Solve race conditions useAbstraxionAccount loading states
+
+### Patch Changes
+
+- Updated dependencies [[`9a659c3`](https://github.com/burnt-labs/xion.js/commit/9a659c3fe80bba10f76370c42f1c0b3574e7018d), [`9a659c3`](https://github.com/burnt-labs/xion.js/commit/9a659c3fe80bba10f76370c42f1c0b3574e7018d)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.68
+
+## 1.1.0-alpha.52
+
+### Minor Changes
+
+- [#305](https://github.com/burnt-labs/xion.js/pull/305) [`1fe18d9`](https://github.com/burnt-labs/xion.js/commit/1fe18d970666b0c448427fda55d5e7764059174b) Thanks [@BurntVal](https://github.com/BurntVal)! - # Breaking Changes
+
+  ## React Native Crypto Setup Required
+
+  ### What Changed
+  - Added React Native support with `quickCrypto` fallback for KDF operations
+  - Made `executeKdf` method static in `SignArbSecp256k1HdWallet`
+  - Made `createWithSigner` method synchronous (removed async/await)
+
+  ### Migration Guide
+
+  #### For React Native Apps
+
+  You must now install and configure crypto dependencies:
+
+  ```bash
+  npm install react-native-get-random-values react-native-quick-crypto
+  ```
+
+  Add this to your app's entry point (before any Abstraxion imports):
+
+  ```typescript
+  import "react-native-get-random-values";
+  import crypto from "react-native-quick-crypto";
+
+  // Set up global crypto for React Native
+  if (
+    typeof global !== "undefined" &&
+    global.navigator?.product === "ReactNative"
+  ) {
+    global.quickCrypto = crypto;
+  }
+  ```
+
+  #### For Web Apps
+
+  No changes required - existing functionality remains the same.
+
+### Patch Changes
+
+- Updated dependencies [[`1fe18d9`](https://github.com/burnt-labs/xion.js/commit/1fe18d970666b0c448427fda55d5e7764059174b)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.60
+  - @burnt-labs/abstraxion@1.0.0-alpha.67
+  - @burnt-labs/constants@0.1.0-alpha.19
+
 ## 1.1.0-alpha.51
 
 ### Minor Changes
 
 - [#303](https://github.com/burnt-labs/xion.js/pull/303) [`15451b1`](https://github.com/burnt-labs/xion.js/commit/15451b19b56f222b78fbd0e46546ecbdc8922eb1) Thanks [@justinbarry](https://github.com/justinbarry)! - Add custom UI and legacy UI examples to demo app
-
   - Added custom UI example showing how to use Abstraxion without the default modal
   - Added legacy UI example demonstrating the traditional modal approach
   - Updated main page to serve as navigation between the two examples

@@ -35,7 +35,6 @@ import {
   cosmjsSalt,
   decrypt,
   encrypt,
-  executeKdf,
   supportedAlgorithms,
 } from "@cosmjs/proto-signing/build/wallet";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
@@ -229,6 +228,53 @@ export class SignArbSecp256k1HdWallet {
     }
   }
 
+  private static async executeKdf(
+    password: string,
+    configuration: KdfConfiguration,
+  ): Promise<Uint8Array> {
+    switch (configuration.algorithm) {
+      case "argon2id": {
+        // React Native detection
+        if (
+          typeof global !== "undefined" &&
+          global.navigator?.product === "ReactNative"
+        ) {
+          // Use injected crypto implementation
+          const quickCrypto = (global as any).quickCrypto;
+          if (!quickCrypto?.pbkdf2)
+            throw new Error(
+              "quickCrypto not available globally, please install react-native-quick-crypto",
+            );
+
+          return new Promise((resolve, reject) => {
+            quickCrypto.pbkdf2(
+              password,
+              cosmjsSalt,
+              100000,
+              configuration.params.outputLength,
+              "sha256",
+              (err: any, key: any) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve(key);
+                }
+              },
+            );
+          });
+        }
+
+        // CosmJS Argon2id
+        const options = configuration.params;
+        if (!isArgon2idOptions(options))
+          throw new Error("Invalid format of argon2id params");
+        return Argon2id.execute(password, cosmjsSalt, options);
+      }
+      default:
+        throw new Error("Unsupported KDF algorithm");
+    }
+  }
+
   private static async deserializeTypeV1(
     serialization: string,
     password: string,
@@ -238,7 +284,7 @@ export class SignArbSecp256k1HdWallet {
     };
     if (!isNonNullObject(root))
       throw new Error("Root document is not an object.");
-    const encryptionKey = await executeKdf(password, root.kdf);
+    const encryptionKey = await this.executeKdf(password, root.kdf);
     return this.deserializeWithEncryptionKey(serialization, encryptionKey);
   }
 
@@ -255,19 +301,6 @@ export class SignArbSecp256k1HdWallet {
     };
   }
 
-  async executeKdf(password: string, configuration: KdfConfiguration) {
-    switch (configuration.algorithm) {
-      case "argon2id": {
-        const options = configuration.params;
-        if (!isArgon2idOptions(options))
-          throw new Error("Invalid format of argon2id params");
-        return Argon2id.execute(password, cosmjsSalt, options);
-      }
-      default:
-        throw new Error("Unsupported KDF algorithm");
-    }
-  }
-
   /**
    * Generates an encrypted serialization of this wallet.
    *
@@ -276,7 +309,10 @@ export class SignArbSecp256k1HdWallet {
    */
   async serialize(password: string) {
     const kdfConfiguration = basicPasswordHashingOptions;
-    const encryptionKey = await this.executeKdf(password, kdfConfiguration);
+    const encryptionKey = await SignArbSecp256k1HdWallet.executeKdf(
+      password,
+      kdfConfiguration,
+    );
     return this.serializeWithEncryptionKey(encryptionKey, kdfConfiguration);
   }
   /**

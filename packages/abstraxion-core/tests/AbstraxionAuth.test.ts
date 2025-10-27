@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-import { TextDecoder, TextEncoder } from "text-encoding";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { AbstraxionAuth } from "../src/AbstraxionAuth";
 import {
@@ -13,9 +12,6 @@ import {
   MockRedirectStrategy,
   MockStorageStrategy,
 } from "./mockData/mockStrategies";
-
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
 
 // Add fetch polyfill for Node.js environment
 if (typeof fetch === "undefined") {

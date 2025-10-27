@@ -14,6 +14,10 @@ export {
 
 export type { ContractGrantDescription } from "./components/AbstraxionContext";
 export type {
+  AbstraxionAccount,
+  AbstraxionAccountState,
+} from "./hooks/useAbstraxionAccount";
+export type {
   GranteeSignerClient,
   GrantsResponse,
   Grant,

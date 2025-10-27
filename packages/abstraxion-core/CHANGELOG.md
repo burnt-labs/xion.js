@@ -1,5 +1,52 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.60
+
+### Major Changes
+
+- [#305](https://github.com/burnt-labs/xion.js/pull/305) [`1fe18d9`](https://github.com/burnt-labs/xion.js/commit/1fe18d970666b0c448427fda55d5e7764059174b) Thanks [@BurntVal](https://github.com/BurntVal)! - # Breaking Changes
+
+  ## React Native Crypto Setup Required
+
+  ### What Changed
+  - Added React Native support with `quickCrypto` fallback for KDF operations
+  - Made `executeKdf` method static in `SignArbSecp256k1HdWallet`
+  - Made `createWithSigner` method synchronous (removed async/await)
+
+  ### Migration Guide
+
+  #### For React Native Apps
+
+  You must now install and configure crypto dependencies:
+
+  ```bash
+  npm install react-native-get-random-values react-native-quick-crypto
+  ```
+
+  Add this to your app's entry point (before any Abstraxion imports):
+
+  ```typescript
+  import "react-native-get-random-values";
+  import crypto from "react-native-quick-crypto";
+
+  // Set up global crypto for React Native
+  if (
+    typeof global !== "undefined" &&
+    global.navigator?.product === "ReactNative"
+  ) {
+    global.quickCrypto = crypto;
+  }
+  ```
+
+  #### For Web Apps
+
+  No changes required - existing functionality remains the same.
+
+### Patch Changes
+
+- Updated dependencies [[`1fe18d9`](https://github.com/burnt-labs/xion.js/commit/1fe18d970666b0c448427fda55d5e7764059174b)]:
+  - @burnt-labs/constants@0.1.0-alpha.19
+
 ## 1.0.0-alpha.59
 
 ### Minor Changes
@@ -76,7 +123,6 @@
 ### Patch Changes
 
 - [#277](https://github.com/burnt-labs/xion.js/pull/277) [`cfd3e01`](https://github.com/burnt-labs/xion.js/commit/cfd3e01e1ee3b161184a415debb5b87888a65549) Thanks [@justinbarry](https://github.com/justinbarry)! - \* Upgrade @cosmjs packages from 0.32.4 to 0.33.1 to support Comet38.
-
   - Reduce calls to RPC status endpoint.
 
 - [#275](https://github.com/burnt-labs/xion.js/pull/275) [`7228469`](https://github.com/burnt-labs/xion.js/commit/72284694eb61be083829488e8916e46e9836b4e6) Thanks [@justinbarry](https://github.com/justinbarry)! - Move customAccountFromAny function from deprecated @burnt-labs/signers package to abstraxion-core to remove the dependency.

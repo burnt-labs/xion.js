@@ -10,14 +10,9 @@ export default function Page(): JSX.Element {
         ABSTRAXION
       </h1>
       <div className="flex w-full flex-col gap-2">
-        <Link href="/ui-less">
+        <Link href="/loading-states">
           <Button fullWidth structure="outlined">
-            CUSTOM UI EXAMPLE
-          </Button>
-        </Link>
-        <Link href="/default-ui">
-          <Button fullWidth structure="outlined">
-            LEGACY UI EXAMPLE
+            Connect with Abstraxion
           </Button>
         </Link>
       </div>
