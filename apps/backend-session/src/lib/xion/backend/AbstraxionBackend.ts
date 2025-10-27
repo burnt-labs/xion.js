@@ -29,7 +29,6 @@ import {
 export class AbstraxionBackend {
   public readonly sessionKeyManager: SessionKeyManager;
   private readonly _stateStore: NodeCache;
-  private readonly _gasPriceDefault: GasPrice;
 
   constructor(private readonly config: AbstraxionBackendConfig) {
     // Validate configuration
@@ -48,15 +47,6 @@ export class AbstraxionBackend {
     if (!config.rpcUrl) {
       throw new e.RpcUrlRequiredError();
     }
-
-    let gasPriceDefault: GasPrice;
-    const { gasPrice: gasPriceConstant } = xionGasValues;
-    if (config.rpcUrl.includes("mainnet")) {
-      gasPriceDefault = GasPrice.fromString(gasPriceConstant);
-    } else {
-      gasPriceDefault = GasPrice.fromString("0.001uxion");
-    }
-    this._gasPriceDefault = gasPriceDefault;
 
     // Initialize node-cache with 10 minutes TTL and automatic cleanup
     this._stateStore = new NodeCache({
@@ -77,7 +67,8 @@ export class AbstraxionBackend {
    * Get the default gas price
    */
   public get gasPriceDefault(): GasPrice {
-    return this._gasPriceDefault;
+    const { gasPrice: gasPriceConstant } = xionGasValues;
+    return GasPrice.fromString(gasPriceConstant);
   }
 
   /**
