@@ -38,6 +38,7 @@ export class ReactNativeStorageStrategy implements StorageStrategy {
  */
 export class ReactNativeRedirectStrategy implements RedirectStrategy {
   private redirectCallback?: (params: { granter?: string | null }) => void;
+  private reactStateCallback?: (params: { granter?: string | null }) => void;
 
   async getCurrentUrl(): Promise<string> {
     return Linking.createURL("");
@@ -54,14 +55,24 @@ export class ReactNativeRedirectStrategy implements RedirectStrategy {
         throw new Error("Authentication session was cancelled");
       }
 
-      if (result.type === "success" && result.url && this.redirectCallback) {
+      if (result.type === "success" && result.url) {
         const { queryParams } = Linking.parse(result.url);
-        this.redirectCallback({
+        const params = {
           granter: queryParams?.granter?.toString() || null,
-        });
+        };
+
+        // Call the original callback (this triggers AbstraxionAuth's logic)
+        if (this.redirectCallback) {
+          this.redirectCallback(params);
+        }
+
+        // Also call our React state callback if it exists
+        if (this.reactStateCallback) {
+          this.reactStateCallback(params);
+        }
       }
     } catch (error) {
-      console.error("Error during authentication:", error);
+      console.warn("Something went wrong during redirect:", error);
       throw error;
     }
   }
@@ -74,6 +85,13 @@ export class ReactNativeRedirectStrategy implements RedirectStrategy {
 
   async removeRedirectHandler(): Promise<void> {
     this.redirectCallback = undefined;
+  }
+
+  // Method to set up React state callback
+  setReactStateCallback(
+    callback: (params: { granter?: string | null }) => void,
+  ): void {
+    this.reactStateCallback = callback;
   }
 
   async getUrlParameter(param: string): Promise<string | null> {

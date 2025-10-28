@@ -287,19 +287,12 @@ export class AbstraxionAuth {
    * Get dashboard url and redirect in order to issue claim with XION meta account for local keypair.
    */
   async redirectToDashboard() {
-    try {
-      if (!this.rpcUrl) {
-        throw new Error("AbstraxionAuth needs to be configured.");
-      }
-      const userAddress = await this.getKeypairAddress();
-      const { dashboardUrl } = await fetchConfig(this.rpcUrl);
-      await this.configureUrlAndRedirect(dashboardUrl, userAddress);
-    } catch (error) {
-      console.warn(
-        "Something went wrong trying to redirect to XION dashboard: ",
-        error,
-      );
+    if (!this.rpcUrl) {
+      throw new Error("AbstraxionAuth needs to be configured.");
     }
+    const userAddress = await this.getKeypairAddress();
+    const { dashboardUrl } = await fetchConfig(this.rpcUrl);
+    await this.configureUrlAndRedirect(dashboardUrl, userAddress);
   }
 
   /**
@@ -522,7 +515,7 @@ export class AbstraxionAuth {
         retries++;
       }
     }
-    console.error("Max retries exceeded, giving up.");
+    console.warn("Max retries exceeded, giving up.");
     return false;
   }
 
@@ -592,7 +585,7 @@ export class AbstraxionAuth {
         );
       }
     } catch (error) {
-      console.error("Error during authentication:", error);
+      console.warn("Something went wrong during authentication:", error);
       await this.logout();
     }
   }
@@ -645,7 +638,7 @@ export class AbstraxionAuth {
       }
       return;
     } catch (error) {
-      console.warn("Something went wrong: ", error);
+      console.warn("Something went wrong during login: ", error);
       throw error;
     } finally {
       this.isLoginInProgress = false;
@@ -660,7 +653,10 @@ export class AbstraxionAuth {
       await this.generateAndStoreTempAccount();
       await this.redirectToDashboard();
     } catch (error) {
-      console.warn("Something went wrong: ", error);
+      console.warn(
+        "Something went wrong trying to create a new keypair: ",
+        error,
+      );
       throw error;
     }
   }
