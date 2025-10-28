@@ -137,18 +137,18 @@ export default function ProfilePage() {
   ) => {
     if (!permissions) {
       return (
-        <div className="text-sm text-slate-400">No permissions granted</div>
+        <div className="text-sm text-white/40">No permissions granted</div>
       );
     }
 
     return (
       <div className="space-y-4">
         {/* Contracts */}
-        {permissions.contracts && permissions.contracts.length > 0 && (
-          <div className="rounded-lg bg-white/5 p-4">
-            <div className="mb-3 flex items-center">
-              <svg
-                className="mr-2 h-4 w-4 text-blue-400"
+          {permissions.contracts && permissions.contracts.length > 0 && (
+            <div className="rounded-lg bg-[#0a0a0a] p-4">
+              <div className="mb-3 flex items-center">
+                <svg
+                  className="mr-2 h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -160,7 +160,7 @@ export default function ProfilePage() {
                   strokeWidth={2}
                 />
               </svg>
-              <span className="text-sm font-medium text-slate-300">
+              <span className="text-sm font-medium text-white">
                 Contract Permissions ({permissions.contracts.length})
               </span>
             </div>
@@ -168,23 +168,23 @@ export default function ProfilePage() {
               {permissions.contracts.map((contract, index) => {
                 const isStringContract = typeof contract === "string";
                 return (
-                  <div key={index} className="rounded bg-white/5 p-3">
+                  <div key={index} className="rounded bg-[#000000] p-3">
                     {isStringContract ? (
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-sm text-slate-200">
+                        <span className="font-mono text-sm text-white">
                           {contract}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-white/40">
                           Full Access
                         </span>
                       </div>
                     ) : (
                       <div>
                         <div className="mb-2 flex items-center justify-between">
-                          <span className="font-mono text-sm text-slate-200">
+                          <span className="font-mono text-sm text-white">
                             {(contract as { address: string }).address}
                           </span>
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-white/40">
                             Limited Access
                           </span>
                         </div>
@@ -204,7 +204,7 @@ export default function ProfilePage() {
                             }
                           ).amounts!.length > 0 && (
                             <div className="ml-4 space-y-1">
-                              <div className="text-xs text-slate-400">
+                              <div className="text-xs text-white/40">
                                 Spending Limits:
                               </div>
                               {(
@@ -218,7 +218,7 @@ export default function ProfilePage() {
                               ).amounts.map((amount, amountIndex) => (
                                 <div
                                   key={amountIndex}
-                                  className="text-xs text-slate-300"
+                                  className="text-xs text-white"
                                 >
                                   {amount.amount} {amount.denom}
                                 </div>
@@ -236,10 +236,10 @@ export default function ProfilePage() {
 
         {/* Bank Permissions */}
         {permissions.bank && permissions.bank.length > 0 && (
-          <div className="rounded-lg bg-white/5 p-4">
+          <div className="rounded-lg bg-[#0a0a0a] p-4">
             <div className="mb-3 flex items-center">
               <svg
-                className="mr-2 h-4 w-4 text-green-400"
+                className="mr-2 h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                   strokeWidth={2}
                 />
               </svg>
-              <span className="text-sm font-medium text-slate-300">
+              <span className="text-sm font-medium text-white">
                 Bank Spending Limits ({permissions.bank.length})
               </span>
             </div>
@@ -259,12 +259,12 @@ export default function ProfilePage() {
               {permissions.bank.map((limit, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between rounded bg-white/5 p-3"
+                  className="flex items-center justify-between rounded bg-[#000000] p-3"
                 >
-                  <span className="font-mono text-sm text-slate-200">
+                  <span className="font-mono text-sm text-white">
                     {limit.amount} {limit.denom}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-white/40">
                     Per Transaction
                   </span>
                 </div>
@@ -275,10 +275,10 @@ export default function ProfilePage() {
 
         {/* Staking Permission */}
         {permissions.stake && (
-          <div className="rounded-lg bg-white/5 p-4">
+          <div className="rounded-lg bg-[#0a0a0a] p-4">
             <div className="flex items-center">
               <svg
-                className="mr-2 h-4 w-4 text-purple-400"
+                className="mr-2 h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -290,14 +290,14 @@ export default function ProfilePage() {
                   strokeWidth={2}
                 />
               </svg>
-              <span className="text-sm font-medium text-slate-300">
+              <span className="text-sm font-medium text-white">
                 Staking Permission
               </span>
-              <span className="ml-2 rounded-full bg-green-500/20 px-2 py-1 text-xs text-green-300">
+              <span className="ml-2 rounded-full bg-white px-2 py-1 text-xs text-black">
                 Enabled
               </span>
             </div>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-white/40">
               Can stake and unstake tokens on your behalf
             </p>
           </div>
@@ -305,10 +305,10 @@ export default function ProfilePage() {
 
         {/* Treasury Permission */}
         {permissions.treasury && (
-          <div className="rounded-lg bg-white/5 p-4">
+          <div className="rounded-lg bg-[#0a0a0a] p-4">
             <div className="mb-2 flex items-center">
               <svg
-                className="mr-2 h-4 w-4 text-yellow-400"
+                className="mr-2 h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -320,16 +320,16 @@ export default function ProfilePage() {
                   strokeWidth={2}
                 />
               </svg>
-              <span className="text-sm font-medium text-slate-300">
+              <span className="text-sm font-medium text-white">
                 Treasury Access
               </span>
             </div>
-            <div className="rounded bg-white/5 p-3">
-              <span className="font-mono text-sm text-slate-200">
+            <div className="rounded bg-[#000000] p-3">
+              <span className="font-mono text-sm text-white">
                 {permissions.treasury}
               </span>
             </div>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-white/40">
               Can interact with treasury contract
             </p>
           </div>
@@ -337,10 +337,10 @@ export default function ProfilePage() {
 
         {/* Permission Expiry */}
         {permissions.expiry && (
-          <div className="rounded-lg bg-white/5 p-4">
+          <div className="rounded-lg bg-[#0a0a0a] p-4">
             <div className="flex items-center">
               <svg
-                className="mr-2 h-4 w-4 text-orange-400"
+                className="mr-2 h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -352,11 +352,11 @@ export default function ProfilePage() {
                   strokeWidth={2}
                 />
               </svg>
-              <span className="text-sm font-medium text-slate-300">
+              <span className="text-sm font-medium text-white">
                 Permission Expiry
               </span>
             </div>
-            <p className="mt-2 text-sm text-slate-200">
+            <p className="mt-2 text-sm text-white">
               {formatTimestamp(permissions.expiry)}
             </p>
           </div>
@@ -367,7 +367,7 @@ export default function ProfilePage() {
           !permissions.bank?.length &&
           !permissions.stake &&
           !permissions.treasury && (
-            <div className="text-center text-sm text-slate-400">
+            <div className="text-center text-sm text-white/40">
               No specific permissions granted
             </div>
           )}
@@ -378,10 +378,10 @@ export default function ProfilePage() {
   // Show loading while checking authentication
   if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="flex min-h-screen items-center justify-center bg-black">
         <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-          <span className="text-slate-300">Loading...</span>
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          <span className="text-white">Loading...</span>
         </div>
       </div>
     );
@@ -393,16 +393,16 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20" />
+      <div className="absolute inset-0 opacity-20" />
 
       <div className="relative mx-auto max-w-6xl px-4 py-12">
         {/* Header */}
         <div className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center justify-center rounded-full bg-white/10 p-3 backdrop-blur-sm">
+          <div className="mb-4 inline-flex items-center justify-center rounded-full bg-white p-3">
             <svg
-              className="h-8 w-8 text-purple-300"
+              className="h-8 w-8 text-black"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -415,21 +415,21 @@ export default function ProfilePage() {
               />
             </svg>
           </div>
-          <h1 className="mb-4 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-5xl font-bold text-transparent">
+          <h1 className="mb-4 text-5xl font-bold text-white">
             XION Backend Session
           </h1>
-          <p className="text-xl text-slate-300">
+          <p className="text-xl text-white">
             Secure wallet management for the future of blockchain
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="rounded-2xl border border-[#333333] bg-[#111111] p-8">
           <div className="space-y-8">
             {/* User header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-blue-500">
-                  <span className="text-lg font-bold text-white">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
+                  <span className="text-lg font-bold text-black">
                     {session.user.username.charAt(0).toUpperCase()}
                   </span>
                 </div>
@@ -437,18 +437,18 @@ export default function ProfilePage() {
                   <h2 className="text-2xl font-bold text-white">
                     Welcome back, {session.user.username}
                   </h2>
-                  <p className="text-slate-300">
+                  <p className="text-white">
                     Manage your XION wallet connection
                   </p>
                   {session.user.email ? (
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-white">
                       {session.user.email}
                     </p>
                   ) : null}
                 </div>
               </div>
               <Button
-                className="border border-red-400/30 bg-red-500/20 text-red-300 transition-all duration-200 hover:border-red-400/50 hover:bg-red-500/30"
+                className="border border-[#333333] bg-white text-black transition-all duration-200 hover:bg-white"
                 onClick={handleLogout}
               >
                 <svg
@@ -470,10 +470,10 @@ export default function ProfilePage() {
 
             {/* Error message */}
             {error ? (
-              <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-4 backdrop-blur-sm">
+              <div className="rounded-xl border border-[#333333] bg-[#111111] p-4">
                 <div className="flex items-center">
                   <svg
-                    className="mr-3 h-5 w-5 text-red-400"
+                    className="mr-3 h-5 w-5 text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -485,17 +485,17 @@ export default function ProfilePage() {
                       strokeWidth={2}
                     />
                   </svg>
-                  <p className="text-red-300">{error}</p>
+                  <p className="text-white">{error}</p>
                 </div>
               </div>
             ) : null}
 
             {/* Wallet status card */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+            <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
               <div className="mb-6 flex items-center">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-green-500 to-emerald-500">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
                   <svg
-                    className="h-6 w-6 text-white"
+                    className="h-6 w-6 text-black"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -516,8 +516,8 @@ export default function ProfilePage() {
               {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="flex items-center space-x-3">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-                    <span className="text-slate-300">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span className="text-white">
                       Loading wallet status...
                     </span>
                   </div>
@@ -526,17 +526,17 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   {/* Status badge */}
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-300">Connection Status</span>
+                    <span className="text-white">Connection Status</span>
                     <span
                       className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
                         walletStatus.connected
-                          ? "border border-green-400/30 bg-green-500/20 text-green-300"
-                          : "border border-red-400/30 bg-red-500/20 text-red-300"
+                          ? "border border-[#333333] bg-white text-black"
+                          : "border border-[#333333] bg-[#111111] text-white"
                       }`}
                     >
                       <div
                         className={`mr-2 h-2 w-2 rounded-full ${
-                          walletStatus.connected ? "bg-green-400" : "bg-red-400"
+                          walletStatus.connected ? "bg-black" : "bg-white"
                         }`}
                       />
                       {walletStatus.connected ? "Connected" : "Disconnected"}
@@ -546,10 +546,10 @@ export default function ProfilePage() {
                   {walletStatus.connected ? (
                     <div className="space-y-4">
                       {/* Meta Account */}
-                      <div className="rounded-lg bg-white/5 p-4">
+                      <div className="rounded-lg bg-[#0a0a0a] p-4">
                         <div className="mb-2 flex items-center">
                           <svg
-                            className="mr-2 h-4 w-4 text-blue-400"
+                            className="mr-2 h-4 w-4 text-white"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -561,20 +561,20 @@ export default function ProfilePage() {
                               strokeWidth={2}
                             />
                           </svg>
-                          <span className="text-sm font-medium text-slate-300">
+                          <span className="text-sm font-medium text-white">
                             Connected Meta Account
                           </span>
                         </div>
-                        <p className="break-all font-mono text-sm text-slate-200">
+                        <p className="break-all font-mono text-sm text-white">
                           {walletStatus.metaAccountAddress}
                         </p>
                       </div>
 
                       {/* Session Key */}
-                      <div className="rounded-lg bg-white/5 p-4">
+                      <div className="rounded-lg bg-[#0a0a0a] p-4">
                         <div className="mb-2 flex items-center">
                           <svg
-                            className="mr-2 h-4 w-4 text-purple-400"
+                            className="mr-2 h-4 w-4 text-white"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -586,21 +586,21 @@ export default function ProfilePage() {
                               strokeWidth={2}
                             />
                           </svg>
-                          <span className="text-sm font-medium text-slate-300">
+                          <span className="text-sm font-medium text-white">
                             Session Account (Stored in server)
                           </span>
                         </div>
-                        <p className="break-all font-mono text-sm text-slate-200">
+                        <p className="break-all font-mono text-sm text-white">
                           {walletStatus.sessionKeyAddress}
                         </p>
                       </div>
 
                       {/* Additional info grid */}
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div className="rounded-lg bg-white/5 p-4">
+                        <div className="rounded-lg bg-[#0a0a0a] p-4">
                           <div className="mb-2 flex items-center">
                             <svg
-                              className="mr-2 h-4 w-4 text-yellow-400"
+                              className="mr-2 h-4 w-4 text-white"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -612,19 +612,19 @@ export default function ProfilePage() {
                                 strokeWidth={2}
                               />
                             </svg>
-                            <span className="text-sm font-medium text-slate-300">
+                            <span className="text-sm font-medium text-white">
                               Expires
                             </span>
                           </div>
-                          <p className="text-sm text-slate-200">
+                          <p className="text-sm text-white">
                             {formatTimestamp(walletStatus.expiresAt)}
                           </p>
                         </div>
 
-                        <div className="rounded-lg bg-white/5 p-4">
+                        <div className="rounded-lg bg-[#0a0a0a] p-4">
                           <div className="mb-2 flex items-center">
                             <svg
-                              className="mr-2 h-4 w-4 text-indigo-400"
+                              className="mr-2 h-4 w-4 text-white"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -636,21 +636,21 @@ export default function ProfilePage() {
                                 strokeWidth={2}
                               />
                             </svg>
-                            <span className="text-sm font-medium text-slate-300">
+                            <span className="text-sm font-medium text-white">
                               State
                             </span>
                           </div>
-                          <p className="text-sm text-slate-200">
+                          <p className="text-sm text-white">
                             {walletStatus.state || "N/A"}
                           </p>
                         </div>
                       </div>
 
                       {/* Detailed Permissions */}
-                      <div className="rounded-lg bg-white/5 p-4">
+                      <div className="rounded-lg bg-[#0a0a0a] p-4">
                         <div className="mb-4 flex items-center">
                           <svg
-                            className="mr-2 h-4 w-4 text-green-400"
+                            className="mr-2 h-4 w-4 text-white"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -662,7 +662,7 @@ export default function ProfilePage() {
                               strokeWidth={2}
                             />
                           </svg>
-                          <span className="text-sm font-medium text-slate-300">
+                          <span className="text-sm font-medium text-white">
                             Detailed Permissions
                           </span>
                         </div>
@@ -674,7 +674,7 @@ export default function ProfilePage() {
               ) : (
                 <div className="py-8 text-center">
                   <svg
-                    className="mx-auto mb-4 h-12 w-12 text-slate-400"
+                    className="mx-auto mb-4 h-12 w-12 text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -686,7 +686,7 @@ export default function ProfilePage() {
                       strokeWidth={2}
                     />
                   </svg>
-                  <p className="text-slate-400">No wallet connection found</p>
+                  <p className="text-white">No wallet connection found</p>
                 </div>
               )}
             </div>
@@ -704,8 +704,8 @@ export default function ProfilePage() {
               <Button
                 className={`flex-1 transform rounded-xl px-6 py-3 font-semibold shadow-lg transition-all duration-200 hover:scale-105 ${
                   walletStatus?.connected
-                    ? "cursor-not-allowed bg-slate-600/50 text-slate-400"
-                    : "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+                    ? "cursor-not-allowed bg-[#333333] text-white/40"
+                    : "bg-white text-black hover:bg-white"
                 }`}
                 disabled={loading || walletStatus?.connected}
                 onClick={handleConnect}
@@ -733,8 +733,8 @@ export default function ProfilePage() {
               <Button
                 className={`flex-1 transform rounded-xl px-6 py-3 font-semibold shadow-lg transition-all duration-200 hover:scale-105 ${
                   !walletStatus?.connected
-                    ? "cursor-not-allowed bg-slate-600/50 text-slate-400"
-                    : "bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700"
+                    ? "cursor-not-allowed bg-[#333333] text-white/40"
+                    : "border border-[#333333] bg-[#111111] text-white hover:bg-[#1a1a1a]"
                 }`}
                 disabled={loading || !walletStatus?.connected}
                 onClick={handleDisconnect}
@@ -758,7 +758,7 @@ export default function ProfilePage() {
               </Button>
 
               <Button
-                className="flex-1 transform rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-emerald-700 hover:to-teal-700 disabled:transform-none disabled:cursor-not-allowed disabled:bg-slate-600/50 disabled:text-slate-400"
+                className="flex-1 rounded-xl bg-white px-6 py-3 font-semibold text-black hover:bg-white disabled:cursor-not-allowed disabled:bg-[#333333] disabled:text-white/40"
                 disabled={loading}
                 onClick={() => checkWalletStatus()}
               >

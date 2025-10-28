@@ -169,9 +169,6 @@ export class AbstraxionBackend {
         };
       }
 
-      // Clean up used state
-      this._stateStore.del(request.state);
-
       // Get the session key info that was stored during connectInit
       const sessionKeyInfo = await this.sessionKeyManager.getLastSessionKeyInfo(
         stateData.userId,
@@ -207,6 +204,9 @@ export class AbstraxionBackend {
       if (!pollSuccess) {
         throw new e.GrantedFailedError();
       }
+
+      // Clean up used state
+      this._stateStore.del(request.state);
 
       // Store session key with permissions and granter address
       await this.sessionKeyManager.storeGrantedSessionKey(

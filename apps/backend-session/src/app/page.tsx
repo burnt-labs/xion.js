@@ -20,26 +20,26 @@ export default function HomePage() {
   // Show loading while checking authentication
   if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="flex min-h-screen items-center justify-center bg-black">
         <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-          <span className="text-slate-300">Loading...</span>
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          <span className="text-white">Loading...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20" />
+      <div className="absolute inset-0 opacity-20" />
 
       <div className="relative mx-auto max-w-6xl px-4 py-12">
         {/* Header */}
         <div className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center justify-center rounded-full bg-white/10 p-3 backdrop-blur-sm">
+          <div className="mb-4 inline-flex items-center justify-center rounded-full bg-white p-3">
             <svg
-              className="h-8 w-8 text-purple-300"
+              className="h-8 w-8 text-black"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -52,31 +52,31 @@ export default function HomePage() {
               />
             </svg>
           </div>
-          <h1 className="mb-4 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-5xl font-bold text-transparent">
+          <h1 className="mb-4 text-5xl font-bold text-white">
             XION Backend Session
           </h1>
-          <p className="text-xl text-slate-300">
+          <p className="text-xl text-white">
             Secure wallet management for the future of blockchain
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="rounded-2xl border border-[#333333] bg-[#111111] p-8">
           <div className="space-y-8">
             <div className="text-center">
               <h2 className="mb-4 text-3xl font-bold text-white">
                 Welcome to XION
               </h2>
-              <p className="mb-8 text-lg text-slate-300">
+              <p className="mb-8 text-lg text-white">
                 Get started with secure wallet management and session keys
               </p>
             </div>
 
             {/* Features */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-blue-500">
+              <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-white">
                   <svg
-                    className="h-6 w-6 text-white"
+                    className="h-6 w-6 text-black"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -92,15 +92,15 @@ export default function HomePage() {
                 <h3 className="mb-2 text-xl font-semibold text-white">
                   Secure Authentication
                 </h3>
-                <p className="text-slate-300">
+                <p className="text-white">
                   Create an account with username and password for secure access
                 </p>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-r from-green-500 to-emerald-500">
+              <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-white">
                   <svg
-                    className="h-6 w-6 text-white"
+                    className="h-6 w-6 text-black"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -116,15 +116,15 @@ export default function HomePage() {
                 <h3 className="mb-2 text-xl font-semibold text-white">
                   Session Keys
                 </h3>
-                <p className="text-slate-300">
+                <p className="text-white">
                   Manage secure session keys for wallet operations
                 </p>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500">
+              <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-white">
                   <svg
-                    className="h-6 w-6 text-white"
+                    className="h-6 w-6 text-black"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -140,7 +140,7 @@ export default function HomePage() {
                 <h3 className="mb-2 text-xl font-semibold text-white">
                   Permissions
                 </h3>
-                <p className="text-slate-300">
+                <p className="text-white">
                   Control access to contracts, staking, and treasury operations
                 </p>
               </div>
@@ -149,7 +149,7 @@ export default function HomePage() {
             {/* Action buttons */}
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Link href="/auth/signup">
-                <Button className="w-full transform rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-purple-700 hover:to-blue-700 sm:w-auto">
+                <Button className="w-full rounded-xl bg-white px-8 py-4 text-lg font-semibold text-black hover:bg-white sm:w-auto">
                   <span className="flex items-center justify-center gap-2">
                     <svg
                       className="h-5 w-5"
@@ -170,7 +170,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/auth/signin">
-                <Button className="w-full transform rounded-xl border border-white/20 bg-white/10 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:bg-white/20 sm:w-auto">
+                <Button className="w-full rounded-xl border border-[#333333] bg-[#111111] px-8 py-4 text-lg font-semibold text-white hover:bg-[#1a1a1a] sm:w-auto">
                   <span className="flex items-center justify-center gap-2">
                     <svg
                       className="h-5 w-5"

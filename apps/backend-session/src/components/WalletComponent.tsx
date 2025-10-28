@@ -57,11 +57,11 @@ export default function WalletComponent({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+      <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
         <div className="mb-6 flex items-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
             <svg
-              className="h-6 w-6 text-white"
+              className="h-6 w-6 text-black"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -80,8 +80,8 @@ export default function WalletComponent({
         </div>
         <div className="flex items-center justify-center py-8">
           <div className="flex items-center space-x-3">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
-            <span className="text-slate-300">Loading wallet data...</span>
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <span className="text-white">Loading wallet data...</span>
           </div>
         </div>
       </div>
@@ -90,11 +90,11 @@ export default function WalletComponent({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+      <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
         <div className="mb-6 flex items-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
             <svg
-              className="h-6 w-6 text-white"
+              className="h-6 w-6 text-black"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -111,10 +111,10 @@ export default function WalletComponent({
             Wallet Information
           </h3>
         </div>
-        <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-4 backdrop-blur-sm">
+        <div className="rounded-xl border border-[#333333] bg-[#111111] p-4">
           <div className="flex items-center">
             <svg
-              className="mr-3 h-5 w-5 text-red-400"
+              className="mr-3 h-5 w-5 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -126,12 +126,12 @@ export default function WalletComponent({
                 strokeWidth={2}
               />
             </svg>
-            <p className="text-red-300">{error}</p>
+            <p className="text-white">{error}</p>
           </div>
         </div>
         <div className="mt-4 flex justify-center">
           <Button
-            className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700"
+            className="bg-white text-black hover:bg-white"
             onClick={handleRefresh}
           >
             Retry
@@ -143,11 +143,11 @@ export default function WalletComponent({
 
   if (!walletData) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+      <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
         <div className="mb-6 flex items-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
             <svg
-              className="h-6 w-6 text-white"
+              className="h-6 w-6 text-black"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -166,7 +166,7 @@ export default function WalletComponent({
         </div>
         <div className="py-8 text-center">
           <svg
-            className="mx-auto mb-4 h-12 w-12 text-slate-400"
+            className="mx-auto mb-4 h-12 w-12 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -178,19 +178,19 @@ export default function WalletComponent({
               strokeWidth={2}
             />
           </svg>
-          <p className="text-slate-400">No wallet data available</p>
+          <p className="text-white">No wallet data available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500">
+      <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
             <svg
-              className="h-6 w-6 text-white"
+              className="h-6 w-6 text-black"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -208,7 +208,7 @@ export default function WalletComponent({
           </h3>
         </div>
         <Button
-          className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700"
+          className="bg-white text-black hover:bg-white"
           onClick={handleRefresh}
         >
           <svg
@@ -230,10 +230,10 @@ export default function WalletComponent({
 
       <div className="space-y-6">
         {/* Meta Account Address */}
-        <div className="rounded-lg bg-white/5 p-4">
-          <div className="mb-2 flex items-center">
-            <svg
-              className="mr-2 h-4 w-4 text-blue-400"
+          <div className="rounded-lg bg-[#0a0a0a] p-4">
+            <div className="mb-2 flex items-center">
+              <svg
+                className="mr-2 h-4 w-4 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -245,11 +245,11 @@ export default function WalletComponent({
                 strokeWidth={2}
               />
             </svg>
-            <span className="text-sm font-medium text-slate-300">
+            <span className="text-sm font-medium text-white">
               Meta Account Address
             </span>
           </div>
-          <p className="break-all font-mono text-sm text-slate-200">
+          <p className="break-all font-mono text-sm text-white">
             {account.metaAccountAddress}
           </p>
         </div>
@@ -257,29 +257,29 @@ export default function WalletComponent({
         {/* Token Balances */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* XION Balance */}
-          <div className="rounded-lg bg-white/5 p-4">
+          <div className="rounded-lg bg-[#0a0a0a] p-4">
             <div className="mb-2 flex items-center">
-              <div className="mr-2 h-6 w-6 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500"></div>
-              <span className="text-sm font-medium text-slate-300">XION</span>
+              <div className="mr-2 h-6 w-6 rounded-full bg-white"></div>
+              <span className="text-sm font-medium text-white">XION</span>
             </div>
             <p className="text-2xl font-bold text-white">
               {formatAmount(walletData.balances?.xion.amount || "0")}
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-white/40">
               {walletData.balances?.xion.microAmount} uxion
             </p>
           </div>
 
           {/* USDC Balance */}
-          <div className="rounded-lg bg-white/5 p-4">
+          <div className="rounded-lg bg-[#0a0a0a] p-4">
             <div className="mb-2 flex items-center">
-              <div className="mr-2 h-6 w-6 rounded-full bg-gradient-to-r from-green-400 to-emerald-500"></div>
-              <span className="text-sm font-medium text-slate-300">USDC</span>
+              <div className="mr-2 h-6 w-6 rounded-full bg-white"></div>
+              <span className="text-sm font-medium text-white">USDC</span>
             </div>
             <p className="text-2xl font-bold text-white">
               {formatAmount(walletData.balances?.usdc.amount || "0")}
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-white/40">
               {walletData.balances?.usdc.microAmount} uusdc
             </p>
           </div>

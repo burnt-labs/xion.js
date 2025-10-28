@@ -84,10 +84,10 @@ export default function TransferComponent({
   };
 
   return (
-    <div className="rounded-lg bg-white/5 p-4">
+    <div className="rounded-lg bg-[#0a0a0a] p-4">
       <div className="mb-4 flex items-center">
         <svg
-          className="mr-2 h-5 w-5 text-green-400"
+          className="mr-2 h-5 w-5 text-white"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -105,7 +105,7 @@ export default function TransferComponent({
       <div className="space-y-4">
         {/* Recipient Address */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-300">
+          <label className="mb-2 block text-sm font-medium text-white">
             Recipient Address
           </label>
           <input
@@ -113,7 +113,7 @@ export default function TransferComponent({
             value={toAddress}
             onChange={(e) => setToAddress(e.target.value)}
             placeholder="Enter recipient address (xion1...)"
-            className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+            className="w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-white placeholder-white/40 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/20"
             disabled={loading}
           />
         </div>
@@ -121,7 +121,7 @@ export default function TransferComponent({
         {/* Amount and Denom */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-slate-300">
+            <label className="mb-2 block text-sm font-medium text-white">
               Amount
             </label>
             <input
@@ -131,18 +131,18 @@ export default function TransferComponent({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+              className="w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-white placeholder-white/40 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/20"
               disabled={loading}
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">
+            <label className="mb-2 block text-sm font-medium text-white">
               Token
             </label>
             <select
               value={denom}
               onChange={(e) => setDenom(e.target.value as TokenDenom)}
-              className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+              className="w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-white focus:border-white focus:outline-none focus:ring-2 focus:ring-white/20"
               disabled={loading}
             >
               <option value="XION">XION</option>
@@ -153,10 +153,10 @@ export default function TransferComponent({
 
         {/* Error Message */}
         {error && (
-          <div className="rounded-lg border border-red-400/30 bg-red-500/10 p-3">
+          <div className="rounded-lg border border-[#333333] bg-[#111111] p-3">
             <div className="flex items-center">
               <svg
-                className="mr-2 h-4 w-4 text-red-400"
+                className="mr-2 h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -168,17 +168,17 @@ export default function TransferComponent({
                   strokeWidth={2}
                 />
               </svg>
-              <p className="text-sm text-red-300">{error}</p>
+              <p className="text-sm text-white">{error}</p>
             </div>
           </div>
         )}
 
         {/* Success Message */}
         {success && (
-          <div className="rounded-lg border border-green-400/30 bg-green-500/10 p-3">
+          <div className="rounded-lg border border-[#333333] bg-[#111111] p-3">
             <div className="flex items-center">
               <svg
-                className="mr-2 h-4 w-4 text-green-400"
+                className="mr-2 h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -190,7 +190,7 @@ export default function TransferComponent({
                   strokeWidth={2}
                 />
               </svg>
-              <p className="text-sm text-green-300">{success}</p>
+              <p className="text-sm text-white">{success}</p>
             </div>
           </div>
         )}
@@ -198,7 +198,7 @@ export default function TransferComponent({
         {/* Action Buttons */}
         <div className="flex space-x-3">
           <Button
-            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 disabled:transform-none disabled:cursor-not-allowed disabled:bg-slate-600/50 disabled:text-slate-400"
+            className="flex-1 bg-white text-black hover:bg-white disabled:cursor-not-allowed disabled:bg-[#333333] disabled:text-white"
             onClick={handleTransfer}
             disabled={loading || !toAddress.trim() || !amount.trim()}
           >
@@ -227,7 +227,7 @@ export default function TransferComponent({
             )}
           </Button>
           <Button
-            className="bg-gradient-to-r from-slate-600 to-slate-700 text-white hover:from-slate-700 hover:to-slate-800"
+            className="border border-[#333333] bg-[#111111] text-white hover:bg-[#1a1a1a]"
             onClick={handleClear}
             disabled={loading}
           >
