@@ -144,11 +144,11 @@ export default function ProfilePage() {
     return (
       <div className="space-y-4">
         {/* Contracts */}
-          {permissions.contracts && permissions.contracts.length > 0 && (
-            <div className="rounded-lg bg-[#0a0a0a] p-4">
-              <div className="mb-3 flex items-center">
-                <svg
-                  className="mr-2 h-4 w-4 text-white"
+        {permissions.contracts && permissions.contracts.length > 0 && (
+          <div className="rounded-lg bg-[#0a0a0a] p-4">
+            <div className="mb-3 flex items-center">
+              <svg
+                className="mr-2 h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -264,9 +264,7 @@ export default function ProfilePage() {
                   <span className="font-mono text-sm text-white">
                     {limit.amount} {limit.denom}
                   </span>
-                  <span className="text-xs text-white/40">
-                    Per Transaction
-                  </span>
+                  <span className="text-xs text-white/40">Per Transaction</span>
                 </div>
               ))}
             </div>
@@ -441,9 +439,7 @@ export default function ProfilePage() {
                     Manage your XION wallet connection
                   </p>
                   {session.user.email ? (
-                    <p className="text-sm text-white">
-                      {session.user.email}
-                    </p>
+                    <p className="text-sm text-white">{session.user.email}</p>
                   ) : null}
                 </div>
               </div>
@@ -517,9 +513,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-center py-8">
                   <div className="flex items-center space-x-3">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span className="text-white">
-                      Loading wallet status...
-                    </span>
+                    <span className="text-white">Loading wallet status...</span>
                   </div>
                 </div>
               ) : walletStatus ? (

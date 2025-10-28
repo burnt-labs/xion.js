@@ -185,9 +185,9 @@ export default function WalletComponent({
   }
 
   return (
-      <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center">
+    <div className="rounded-xl border border-[#333333] bg-[#111111] p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white">
             <svg
               className="h-6 w-6 text-black"
@@ -230,10 +230,10 @@ export default function WalletComponent({
 
       <div className="space-y-6">
         {/* Meta Account Address */}
-          <div className="rounded-lg bg-[#0a0a0a] p-4">
-            <div className="mb-2 flex items-center">
-              <svg
-                className="mr-2 h-4 w-4 text-white"
+        <div className="rounded-lg bg-[#0a0a0a] p-4">
+          <div className="mb-2 flex items-center">
+            <svg
+              className="mr-2 h-4 w-4 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

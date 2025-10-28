@@ -65,9 +65,7 @@ export default function SignInPage() {
                 />
               </svg>
             </div>
-            <h1 className="mb-2 text-3xl font-bold text-white">
-              Welcome Back
-            </h1>
+            <h1 className="mb-2 text-3xl font-bold text-white">Welcome Back</h1>
             <p className="text-white">Sign in to your XION account</p>
           </div>
 
