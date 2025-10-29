@@ -10,3 +10,6 @@
 export * from "./treasury-daodao-strategy";
 export * from "./treasury-direct-query-strategy";
 export * from "./treasury-composite-strategy";
+
+// Factory function for creating composite treasury strategies
+export * from "./createCompositeTreasuryStrategy";

@@ -1,14 +1,6 @@
 import type { ReactNode } from "react";
 
 /**
- * Authentication configuration - defines how users authenticate
- * Type-safe union ensures only compatible options can be combined
- */
-export type AuthenticationConfig =
-  | RedirectAuthentication
-  | BrowserWalletAuthentication;
-
-/**
  * Redirect authentication (dashboard OAuth flow)
  * This is the default if no authentication config is provided
  */
@@ -44,6 +36,59 @@ export interface BrowserWalletAuthentication {
    */
   renderWalletSelection?: (props: WalletSelectionProps) => ReactNode;
 }
+
+/**
+ * Signer authentication (session signers like Turnkey, Privy, Web3Auth, etc.)
+ * Integrates with external authentication providers that handle key management
+ */
+export interface SignerAuthentication {
+  type: "signer";
+  aaApiUrl: string;
+
+  /**
+   * Function that returns signer configuration
+   * Called when user initiates connection
+   * Should wait for external auth provider to be ready
+   */
+  getSignerConfig: () => Promise<SignerConfig>;
+
+  /**
+   * Auto-connect behavior:
+   * - false (default): Manual login required
+   * - true: Auto-connect when signer is ready
+   */
+  autoConnect?: boolean;
+}
+
+/**
+ * Configuration for a session signer
+ * Provides Ethereum address and signing capability
+ */
+export interface SignerConfig {
+  /**
+   * Ethereum address from the signer (0x...)
+   * Used as the authenticator for the smart account
+   */
+  ethereumAddress: string;
+
+  /**
+   * Function that signs hex-encoded messages
+   * Compatible with personal_sign format
+   *
+   * @param hexMessage - Message to sign (hex string, with or without 0x prefix)
+   * @returns Signature as hex string (65 bytes: r + s + v)
+   */
+  signMessage: (hexMessage: string) => Promise<string>;
+}
+
+/**
+ * Authentication configuration - defines how users authenticate
+ * Type-safe union ensures only compatible options can be combined
+ */
+export type AuthenticationConfig =
+  | RedirectAuthentication
+  | BrowserWalletAuthentication
+  | SignerAuthentication;
 
 /**
  * Wallet definition - describes a browser wallet

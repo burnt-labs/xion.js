@@ -22,7 +22,7 @@ export class NumiaAccountStrategy implements IndexerStrategy {
 
   constructor(
     baseURL: string,
-    private readonly authToken: string,
+    private readonly authToken?: string,
   ) {
     // Ensure trailing slash
     if (!baseURL.endsWith("/")) {
@@ -45,12 +45,16 @@ export class NumiaAccountStrategy implements IndexerStrategy {
       const encodedAuthenticator = encodeURIComponent(loginAuthenticator);
       const url = `${this.baseURL}authenticators/${encodedAuthenticator}/smartAccounts/details`;
 
-      const response = await fetch(url, {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${this.authToken}`,
-        },
-      });
+      // Build headers, conditionally include Authorization
+      const headers: HeadersInit = {
+        Accept: "application/json",
+      };
+
+      if (this.authToken) {
+        headers.Authorization = `Bearer ${this.authToken}`;
+      }
+
+      const response = await fetch(url, { headers });
 
       if (!response.ok) {
         // 404 means no accounts found

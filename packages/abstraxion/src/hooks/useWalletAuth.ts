@@ -10,20 +10,19 @@
  * TODO: Add local mode support (build transactions without AA API)
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Buffer } from "buffer";
-import {
-  NumiaAccountStrategy,
-  EmptyAccountStrategy,
-  CompositeAccountStrategy,
-  RpcAccountStrategy,
-  type Authenticator,
-} from "@burnt-labs/account-management";
+import { createCompositeAccountStrategy } from "@burnt-labs/account-management";
 import type {
   AuthenticationConfig,
   WalletDefinition,
 } from "../authentication/types";
 import type { IndexerConfig, LocalConfig } from "../components/Abstraxion";
+import {
+  checkAccountExists,
+  createEthWalletAccount,
+  createSecp256k1Account,
+} from "../utils/aaApi";
 
 /**
  * Wallet type for smart account authenticators
@@ -31,7 +30,7 @@ import type { IndexerConfig, LocalConfig } from "../components/Abstraxion";
 export type WalletType = "EthWallet" | "Secp256K1";
 
 /**
- * Information about a connected wallet
+ * Information about a connected browser wallet (direct mode)
  */
 export interface WalletConnectionInfo {
   type: WalletType;
@@ -41,6 +40,22 @@ export interface WalletConnectionInfo {
   walletName?: 'keplr' | 'leap' | 'okx' | 'metamask'; // Which wallet was used
   authenticatorIndex?: number; // Index of the authenticator in the smart account
 }
+
+/**
+ * Information about a connected session signer (signer mode)
+ */
+export interface SignerConnectionInfo {
+  type: 'SignerEth';
+  ethereumAddress: string; // Ethereum address from the signer
+  identifier: string; // Ethereum address (lowercase) - used as authenticator
+  authenticatorIndex?: number; // Index of the authenticator in the smart account
+  signMessage: (hexMessage: string) => Promise<string>; // Signing function
+}
+
+/**
+ * Union type for all connection info types
+ */
+export type ConnectionInfo = WalletConnectionInfo | SignerConnectionInfo;
 
 /**
  * Gets Ethereum wallet address from MetaMask
@@ -129,112 +144,35 @@ export function useWalletAuth({
   // Get AA API URL from authentication config
   const aaApiUrl = authentication?.type === 'browser' ? authentication.aaApiUrl : undefined;
 
-  // Initialize composite account query strategy with proper fallback chain:
-  // 1. Try Numia indexer API (fast, requires indexer to be available)
-  // 2. Fallback to direct RPC query (slower but reliable, only needs RPC endpoint)
-  // 3. Final fallback to empty (creates new account)
-  const strategies = [];
-
-  // Add indexer strategy if configured
-  if (indexer) {
-    console.log('[useWalletAuth] Using Numia indexer strategy:', indexer.url);
-    strategies.push(new NumiaAccountStrategy(indexer.url, indexer.authToken));
-  }
-
-  // Add RPC strategy if config is available (recommended for production)
-  if (localConfig) {
-    console.log('[useWalletAuth] Using RPC fallback strategy with checksum:', localConfig.checksum.slice(0, 10) + '...');
-    strategies.push(new RpcAccountStrategy({
-      rpcUrl,
-      checksum: localConfig.checksum,
-      creator: localConfig.feeGranter,
-      prefix: localConfig.addressPrefix,
-      codeId: localConfig.codeId,
-    }));
-  }
-
-  // Always add empty strategy as final fallback
-  strategies.push(new EmptyAccountStrategy());
-
-  const accountStrategy = new CompositeAccountStrategy(...strategies);
-
-  /**
-   * Check if account exists by querying the indexer
-   * The authenticator is the identifier (base64 pubkey for Secp256k1, eth address for EthWallet)
-   */
-  const checkAccountExistsByAuthenticator = useCallback(async (
-    authenticator: string,
-  ): Promise<{ exists: boolean; accounts: any[] }> => {
-    try {
-      const accounts = await accountStrategy.fetchSmartAccounts(authenticator);
-
-      return {
-        exists: accounts.length > 0,
-        accounts,
-      };
-    } catch (error) {
-      console.warn('Error checking account exists:', error);
-      return {
-        exists: false,
-        accounts: [],
-      };
-    }
-  }, [accountStrategy]);
-
-  /**
-   * Call AA API /prepare endpoint
-   * Matches dashboard's useWalletAccountPrepare.ts
-   */
-  const callPrepare = useCallback(async (
-    request: { wallet_type: 'EthWallet' | 'Secp256K1'; address?: string; pubkey?: string }
-  ): Promise<{ message_to_sign: string; salt: string; metadata: any }> => {
-    const response = await fetch(`${aaApiUrl}/api/v1/wallet-accounts/prepare`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to prepare signature');
-    }
-
-    return await response.json();
-  }, [aaApiUrl]);
-
-  /**
-   * Call AA API /create endpoint
-   * Matches dashboard's createWalletAccount function
-   */
-  const createWalletAccount = useCallback(async (
-    request: {
-      wallet_type: 'EthWallet' | 'Secp256K1';
-      address?: string;
-      pubkey?: string;
-      signature: string;
-      salt: string;
-      message: string;
-    }
-  ): Promise<{ account_address: string; code_id: number; transaction_hash: string }> => {
-    const response = await fetch(`${aaApiUrl}/api/v1/wallet-accounts/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to create account');
-    }
-
-    return await response.json();
-  }, [aaApiUrl]);
+  // Create composite account strategy with proper fallback chain
+  const accountStrategy = useMemo(
+    () => createCompositeAccountStrategy({
+      indexer: indexer ? {
+        url: indexer.url,
+        authToken: indexer.authToken,
+      } : undefined,
+      rpc: localConfig ? {
+        rpcUrl,
+        checksum: localConfig.checksum,
+        creator: localConfig.feeGranter,
+        prefix: localConfig.addressPrefix,
+        codeId: localConfig.codeId,
+      } : undefined,
+    }),
+    [indexer, localConfig, rpcUrl]
+  );
 
   /**
    * Connect MetaMask
    * Matches dashboard's createAccountWithMetaMask
    */
   const connectMetaMask = useCallback(async () => {
+
+    // TODO: Add local mode so that people can push the transactions themselves
+    if (!aaApiUrl) {
+      throw new Error('AA API URL is required for browser wallet authentication');
+    }
+
     try {
       setIsConnecting(true);
       setError(null);
@@ -243,72 +181,49 @@ export function useWalletAuth({
       const ethAddress = await getEthWalletAddress();
       setWalletAddress(ethAddress);
 
-      // 2. Check if account already exists (authenticator is eth address for EthWallet)
+      // 2. Check if account already exists using shared utility
       console.log(`[useWalletAuth] Checking if account exists for authenticator: ${ethAddress}`);
-      const { exists, accounts } = await checkAccountExistsByAuthenticator(ethAddress);
+      const accountCheck = await checkAccountExists(
+        accountStrategy,
+        ethAddress.toLowerCase(),
+        '[useWalletAuth]'
+      );
 
-      if (exists && accounts.length > 0) {
-        // Account exists on-chain - set up connection info and let onSuccess handle grants
-        console.log(`[useWalletAuth] ✅ Found existing account on-chain: ${accounts[0].id}`);
-        console.log(`[useWalletAuth] Account details:`, {
-          smartAccount: accounts[0].id,
-          codeId: accounts[0].codeId,
-          authenticators: accounts[0].authenticators.length
-        });
-        const existingAccount = accounts[0];
-
-        // Find the authenticator that matches the current wallet (EthWallet uses address as identifier)
-        const matchingAuthenticator = existingAccount.authenticators.find(
-          (auth: Authenticator) => auth.authenticator.toLowerCase() === ethAddress.toLowerCase()
-        );
-
-        const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
-
+      if (accountCheck.exists && accountCheck.smartAccountAddress) {
+        // Account exists - set up connection info
         console.log(`[useWalletAuth] → Account exists, onSuccess will handle grant verification/creation`);
-        setSmartAccountAddress(existingAccount.id);
-        setCodeId(existingAccount.codeId);
+        setSmartAccountAddress(accountCheck.smartAccountAddress);
+        setCodeId(accountCheck.codeId || null);
 
         const walletConnectionInfo: WalletConnectionInfo = {
           type: 'EthWallet',
           address: ethAddress,
           identifier: ethAddress,
           walletName: 'metamask',
-          authenticatorIndex,
+          authenticatorIndex: accountCheck.authenticatorIndex,
         };
         setWalletInfo(walletConnectionInfo);
 
-        // Call onSuccess - it will check/create grants as needed
-        onSuccess?.(existingAccount.id, walletConnectionInfo);
+        onSuccess?.(accountCheck.smartAccountAddress, walletConnectionInfo);
         return;
       }
 
-      // 3. Account doesn't exist, create it
-      console.log(`[useWalletAuth] 🆕 No existing account found, creating new account via AA API`);
+      // 3. Account doesn't exist - create it using shared utility
+      const signFn = async (hexMessage: string) => {
+        // signWithEthWallet already handles the signing, but it expects plain text
+        // The shared utility will convert to hex, so we need to convert hex back to text
+        const plainText = Buffer.from(hexMessage.replace('0x', ''), 'hex').toString('utf8');
+        return await signWithEthWallet(plainText, ethAddress);
+      };
 
-      // Call backend prepare endpoint
-      console.log(`[useWalletAuth] → Calling AA API /prepare endpoint`);
-      const { message_to_sign, salt, metadata } = await callPrepare({
-        wallet_type: 'EthWallet',
-        address: ethAddress,
-      });
+      const result = await createEthWalletAccount(
+        aaApiUrl,
+        ethAddress,
+        signFn,
+        '[useWalletAuth]'
+      );
 
-      // 4. Get user signature
-      console.log(`[useWalletAuth] → Requesting signature from wallet`);
-      const signature = await signWithEthWallet(message_to_sign, ethAddress);
-
-      // 5. Create account
-      console.log(`[useWalletAuth] → Calling AA API /create endpoint`);
-      const result = await createWalletAccount({
-        wallet_type: 'EthWallet',
-        address: ethAddress,
-        signature,
-        salt,
-        message: JSON.stringify(metadata),
-      });
-
-      console.log(`[useWalletAuth] ✅ Successfully created new account: ${result.account_address}`);
-
-      // 6. Store results
+      // 4. Store results
       setSmartAccountAddress(result.account_address);
       setCodeId(result.code_id);
 
@@ -317,7 +232,7 @@ export function useWalletAuth({
         address: ethAddress,
         identifier: ethAddress,
         walletName: 'metamask',
-        authenticatorIndex: 0, // New account, first authenticator is always 0
+        authenticatorIndex: 0,
       };
       setWalletInfo(walletConnectionInfo);
 
@@ -330,7 +245,7 @@ export function useWalletAuth({
     } finally {
       setIsConnecting(false);
     }
-  }, [checkAccountExistsByAuthenticator, callPrepare, createWalletAccount, onSuccess, onError]);
+  }, [accountStrategy, aaApiUrl, onSuccess, onError]);
 
   /**
    * Generic wallet connection method
@@ -383,75 +298,50 @@ export function useWalletAuth({
 
         // Check if account exists
         console.log(`[useWalletAuth] Checking if account exists for authenticator (pubkey base64): ${pubkeyBase64.substring(0, 20)}...`);
-        const { exists, accounts } = await checkAccountExistsByAuthenticator(pubkeyBase64);
+        const accountCheck = await checkAccountExists(
+          accountStrategy,
+          pubkeyBase64,
+          '[useWalletAuth]'
+        );
 
-        if (exists && accounts.length > 0) {
-          // Account exists - just restore the session
-          console.log(`[useWalletAuth] ✅ Found existing account on-chain: ${accounts[0].id}`);
-          console.log(`[useWalletAuth] Account details:`, {
-            smartAccount: accounts[0].id,
-            codeId: accounts[0].codeId,
-            authenticators: accounts[0].authenticators.length
-          });
-          const existingAccount = accounts[0];
-
-          const matchingAuthenticator = existingAccount.authenticators.find(
-            (auth: Authenticator) => auth.authenticator === pubkeyBase64
-          );
-
-          const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
-
+        if (accountCheck.exists && accountCheck.smartAccountAddress) {
+          // Account exists - restore session
           console.log(`[useWalletAuth] ✅ Restoring existing account session`);
-          setSmartAccountAddress(existingAccount.id);
-          setCodeId(existingAccount.codeId);
+          setSmartAccountAddress(accountCheck.smartAccountAddress);
+          setCodeId(accountCheck.codeId || null);
 
           const walletConnectionInfo: WalletConnectionInfo = {
             type: 'Secp256K1',
             address: cosmosWalletAddress,
             pubkey: pubkeyHex,
             identifier: pubkeyBase64,
-            walletName: walletConfig.name.toLowerCase() as any, // Store wallet name for display
-            authenticatorIndex,
+            walletName: walletConfig.name.toLowerCase() as any,
+            authenticatorIndex: accountCheck.authenticatorIndex,
           };
           setWalletInfo(walletConnectionInfo);
 
-          onSuccess?.(existingAccount.id, walletConnectionInfo);
+          onSuccess?.(accountCheck.smartAccountAddress, walletConnectionInfo);
           return;
         }
 
         // Create new account
-        console.log(`[useWalletAuth] 🆕 No existing account found, creating new account via AA API`);
+        const signFn = async (message: string) => {
+          const response = await wallet.signArbitrary(chainId, cosmosWalletAddress, message);
+          if (!response || !response.signature) {
+            throw new Error(`Failed to get signature from ${walletConfig.name}`);
+          }
+          // Return signature as base64 string (the util expects this format)
+          return typeof response.signature === 'string'
+            ? response.signature
+            : Buffer.from(response.signature as Uint8Array).toString('base64');
+        };
 
-        console.log(`[useWalletAuth] → Calling AA API /prepare endpoint`);
-        const { message_to_sign, salt, metadata } = await callPrepare({
-          wallet_type: 'Secp256K1',
-          pubkey: pubkeyHex,
-        });
-
-        // Sign with wallet
-        console.log(`[useWalletAuth] → Requesting signature from ${walletConfig.name} wallet`);
-        const response = await wallet.signArbitrary(chainId, cosmosWalletAddress, message_to_sign);
-        if (!response || !response.signature) {
-          throw new Error(`Failed to get signature from ${walletConfig.name}`);
-        }
-
-        const signatureBase64 = typeof response.signature === 'string'
-          ? response.signature
-          : Buffer.from(response.signature as Uint8Array).toString('base64');
-
-        const signatureBytes = Buffer.from(signatureBase64, 'base64');
-        const signatureHex = signatureBytes.toString('hex');
-
-        console.log(`[useWalletAuth] → Calling AA API /create endpoint`);
-        const result = await createWalletAccount({
-          wallet_type: 'Secp256K1',
-          pubkey: pubkeyHex,
-          signature: signatureHex,
-          salt,
-          message: JSON.stringify(metadata),
-        });
-
-        console.log(`[useWalletAuth] ✅ Successfully created new account: ${result.account_address}`);
+        const result = await createSecp256k1Account(
+          aaApiUrl!,
+          pubkeyHex,
+          signFn,
+          '[useWalletAuth]'
+        );
 
         setSmartAccountAddress(result.account_address);
         setCodeId(result.code_id);
@@ -478,7 +368,7 @@ export function useWalletAuth({
     } finally {
       setIsConnecting(false);
     }
-  }, [connectMetaMask, checkAccountExistsByAuthenticator, callPrepare, createWalletAccount, onSuccess, onError]);
+  }, [connectMetaMask, accountStrategy, aaApiUrl, onSuccess, onError]);
 
   /**
    * Disconnect wallet

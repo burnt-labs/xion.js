@@ -13,3 +13,6 @@ export * from "./account-numia-strategy";
 export * from "./account-rpc-strategy";
 export * from "./account-empty-strategy";
 export * from "./account-composite-strategy";
+
+// Factory function for creating composite strategies
+export * from "./createCompositeAccountStrategy";

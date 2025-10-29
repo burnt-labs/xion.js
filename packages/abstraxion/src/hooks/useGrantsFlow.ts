@@ -7,15 +7,13 @@ import { useState, useCallback } from "react";
 import { GasPrice } from "@cosmjs/stargate";
 import {
   buildGrantMessages,
-  DirectQueryTreasuryStrategy,
-  CompositeTreasuryStrategy,
-  DaoDaoTreasuryStrategy,
+  createCompositeTreasuryStrategy,
   generateTreasuryGrants as generateTreasuryGrantMessages,
   isContractGrantConfigValid,
 } from "@burnt-labs/account-management";
 import { AADirectSigner, AAEthSigner, AAClient } from "@burnt-labs/signers";
 import { abstraxionAuth } from "../components/Abstraxion";
-import type { WalletConnectionInfo } from "./useWalletAuth";
+import type { ConnectionInfo } from "./useWalletAuth";
 import type { ContractGrantDescription, SpendLimit } from "../components/AbstraxionContext";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 
@@ -48,7 +46,7 @@ interface GrantsFlowState {
   grantsError: string | null;
   createGrants: (
     smartAccountAddress: string,
-    walletInfo: WalletConnectionInfo,
+    connectionInfo: ConnectionInfo,
     chainId: string,
   ) => Promise<void>;
 }
@@ -64,20 +62,13 @@ async function generateTreasuryGrants(
   grantee: string,
   daodaoIndexerUrl?: string,
 ): Promise<any[]> {
-  // Create composite treasury strategy with fallback chain
-  const strategies = [];
-
-  // Add DaoDao indexer strategy if URL provided (fast)
-  if (daodaoIndexerUrl) {
-    strategies.push(new DaoDaoTreasuryStrategy({
+  // Create composite treasury strategy with fallback chain using factory function
+  const treasuryStrategy = createCompositeTreasuryStrategy({
+    daodao: daodaoIndexerUrl ? {
       indexerUrl: daodaoIndexerUrl,
-    }));
-  }
-
-  // Always add direct query strategy as fallback (reliable)
-  strategies.push(new DirectQueryTreasuryStrategy());
-
-  const treasuryStrategy = new CompositeTreasuryStrategy(...strategies);
+    } : undefined,
+    includeDirectQuery: true, // Always include direct query as reliable fallback
+  });
 
   // Generate grant messages from treasury contract
   // Default expiration: 3 months from now
@@ -123,7 +114,7 @@ export function useGrantsFlow({
 
   const createGrants = useCallback(async (
     smartAccountAddress: string,
-    walletInfo: WalletConnectionInfo,
+    connectionInfo: ConnectionInfo,
     chainId: string,
   ) => {
     try {
@@ -206,12 +197,12 @@ export function useGrantsFlow({
       }
 
       // 3. Create signer for the smart account
-      const authenticatorIndex = walletInfo.authenticatorIndex ?? 0;
+      const authenticatorIndex = connectionInfo.authenticatorIndex ?? 0;
 
       let signer;
 
-      if (walletInfo.type === 'EthWallet') {
-        // MetaMask signer
+      if (connectionInfo.type === 'EthWallet') {
+        // MetaMask signer (browser wallet)
         if (!window.ethereum) {
           throw new Error('MetaMask not found');
         }
@@ -219,7 +210,7 @@ export function useGrantsFlow({
         const personalSign = async (message: string) => {
           const signature = await window.ethereum!.request({
             method: 'personal_sign',
-            params: [message, walletInfo.address],
+            params: [message, connectionInfo.address],
           });
           return signature as string;
         };
@@ -229,9 +220,22 @@ export function useGrantsFlow({
           authenticatorIndex,
           personalSign,
         );
+      } else if (connectionInfo.type === 'SignerEth') {
+        // Session signer (Turnkey, Privy, etc.)
+        console.log('[useGrantsFlow] Using session signer for grant creation');
+
+        const personalSign = async (message: string) => {
+          return await connectionInfo.signMessage(message);
+        };
+
+        signer = new AAEthSigner(
+          smartAccountAddress,
+          authenticatorIndex,
+          personalSign,
+        );
       } else {
-        // Keplr/Leap/OKX signer
-        const walletName = walletInfo.walletName || 'keplr';
+        // Keplr/Leap/OKX signer (Cosmos wallets)
+        const walletName = connectionInfo.walletName || 'keplr';
         const wallet = walletName === 'leap'
           ? window.leap
           : walletName === 'okx'

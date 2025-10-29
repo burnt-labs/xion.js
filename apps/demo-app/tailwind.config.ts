@@ -1,10 +1,11 @@
-// tailwind config is required for editor support
+// Tailwind CSS v4 - Configuration is now done via CSS using @theme directive
+// This file is kept for editor support compatibility
+// See src/app/globals.css for theme configuration
 
 import type { Config } from "tailwindcss";
-import sharedConfig from "@burnt-labs/tailwind-config/tailwind.config.ts";
 
-const config: Pick<Config, "presets"> = {
-  presets: [sharedConfig],
+const config: Config = {
+  content: [],
 };
 
 export default config;

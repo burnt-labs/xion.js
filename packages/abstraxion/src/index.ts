@@ -16,6 +16,8 @@ export type {
   AuthenticationConfig,
   RedirectAuthentication,
   BrowserWalletAuthentication,
+  SignerAuthentication,
+  SignerConfig,
   WalletDefinition,
   WalletSelectionProps,
 } from "./authentication/types";
@@ -55,3 +57,10 @@ export type {
   TreasuryGrantConfig,
   SpendLimit,
 } from "@burnt-labs/abstraxion-core";
+
+// Signer mode types
+export type {
+  SignerConnectionInfo,
+  WalletConnectionInfo,
+  ConnectionInfo,
+} from "./hooks/useWalletAuth";

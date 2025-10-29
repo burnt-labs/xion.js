@@ -20,6 +20,11 @@ export default function Page(): JSX.Element {
             DIRECT MODE
           </Button>
         </Link>
+        <Link href="/signer-mode">
+          <Button fullWidth structure="base">
+            SIGNER MODE
+          </Button>
+        </Link>
       </div>
       <p className="text-center text-xs text-gray-500 mt-4">
         <strong>Direct Mode</strong> allows wallet connections without dashboard redirect,

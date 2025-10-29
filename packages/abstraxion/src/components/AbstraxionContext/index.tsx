@@ -4,9 +4,11 @@ import { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
 // Removed Dialog dependency - UI rendering is now handled by consuming apps
 import { abstraxionAuth } from "../Abstraxion";
 import { useWalletAuth, type WalletAuthState } from "../../hooks/useWalletAuth";
+import { useSignerAuth, type SignerAuthState } from "../../hooks/useSignerAuth";
 import { useGrantsFlow } from "../../hooks/useGrantsFlow";
 import type {
   AuthenticationConfig,
+  SignerAuthentication,
 } from "../../authentication/types";
 import { BUILT_IN_WALLETS } from "../../authentication/wallets";
 import type { IndexerConfig, LocalConfig } from "../Abstraxion";
@@ -52,8 +54,9 @@ export interface AbstraxionContextProps {
   login: () => Promise<void>;
 
   // Authentication mode
-  walletAuthMode: 'redirect' | 'browser';
+  authMode: "browser" | "signer" | "redirect";
   walletAuthState: WalletAuthState | null;
+  signerAuthState: SignerAuthState | null;
 
   // Wallet selection state for browser mode (apps should render their own UI)
   showWalletSelectionModal: boolean;
@@ -122,8 +125,8 @@ export function AbstraxionContextProvider({
   const [walletSelectionError, setWalletSelectionError] = useState<string | null>(null);
 
   // Determine authentication mode from config
-  type WalletAuthMode = 'redirect' | 'browser';
-  const walletAuthMode: WalletAuthMode = authentication?.type || 'redirect';
+  type authModeType = 'redirect' | 'browser' | 'signer';
+  const authMode: authModeType = authentication?.type || 'redirect';
 
   // Initialize grants flow for direct mode (only when treasury is configured)
   const { createGrants } = useGrantsFlow({
@@ -138,7 +141,7 @@ export function AbstraxionContextProvider({
   });
 
   // Initialize wallet auth hook only for signer/browser modes
-  const walletAuthState = useWalletAuth({
+  const walletAuthState = authMode === 'browser' ? useWalletAuth({
     authentication,
     indexer,
     localConfig,
@@ -147,7 +150,7 @@ export function AbstraxionContextProvider({
       // Wallet connection successful
 
       // If treasury is configured, check/create grants for both signer and browser modes
-      if (treasury && (walletAuthMode === 'browser')) {
+      if (treasury && (authMode === 'browser')) {
         try {
           // Check if grants already exist in localStorage
           console.log('[AbstraxionContext] Checking if grants exist for smart account...');
@@ -237,7 +240,50 @@ export function AbstraxionContextProvider({
       setAbstraxionError(error);
       setIsConnecting(false);
     },
-  });
+  }) : null;
+
+  // Initialize signer auth hook (for signer mode)
+  const signerAuthState = authMode === 'signer' ? useSignerAuth({
+    authentication: authentication as SignerAuthentication,
+    indexer,
+    localConfig,
+    rpcUrl,
+    onSuccess: async (smartAccountAddress, connectionInfo) => {
+      console.log('[AbstraxionContext] Signer auth success');
+
+      if (treasury) {
+        try {
+          const storedGranter = localStorage.getItem('xion-authz-granter-account');
+          const storedTempAccount = localStorage.getItem('xion-authz-temp-account');
+
+          let grantsExist = storedGranter === smartAccountAddress && storedTempAccount;
+
+          if (!grantsExist) {
+            console.log('[AbstraxionContext] Creating grants for signer mode...');
+            await createGrants(smartAccountAddress, connectionInfo, chainId);
+          }
+
+          setGranterAddress(smartAccountAddress);
+          setIsConnected(true);
+          setIsConnecting(false);
+          setShowModal(false);
+        } catch (error) {
+          console.error('[AbstraxionContext] Failed to setup grants:', error);
+          setAbstraxionError(`Failed to setup grants: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          setIsConnecting(false);
+        }
+      } else {
+        setGranterAddress(smartAccountAddress);
+        localStorage.setItem("loginAuthenticator", connectionInfo.identifier);
+        setIsConnected(true);
+        setShowModal(false);
+      }
+    },
+    onError: (error) => {
+      setAbstraxionError(error);
+      setIsConnecting(false);
+    },
+  }) : null;
 
   // Auto-close wallet selection modal when connected
   useEffect(() => {
@@ -262,6 +308,11 @@ export function AbstraxionContextProvider({
     const walletConfig = authentication.wallets.find(w => w.id === walletId);
     if (!walletConfig) {
       setWalletSelectionError(`Wallet ${walletId} not found in configuration`);
+      return;
+    }
+
+    if (!walletAuthState) {
+      setWalletSelectionError('Wallet authentication not available');
       return;
     }
 
@@ -300,7 +351,7 @@ export function AbstraxionContextProvider({
   // Detect Auth callback after hydration
   useEffect(() => {
     // Only handle granted redirect in redirect mode
-    if (walletAuthMode === 'redirect') {
+    if (authMode === 'redirect') {
       const searchParams = new URLSearchParams(window.location.search);
       const isAuth = searchParams.get("granted") === "true";
 
@@ -312,11 +363,11 @@ export function AbstraxionContextProvider({
       }
     }
     // No real state to set yet, so Init stays true if not isAuth
-  }, [walletAuthMode]);
+  }, [authMode]);
 
   useEffect(() => {
     // Only subscribe to auth state changes in redirect mode
-    if (walletAuthMode !== 'redirect') {
+    if (authMode !== 'redirect') {
       return;
     }
 
@@ -353,11 +404,11 @@ export function AbstraxionContextProvider({
     return () => {
       unsubscribe?.();
     };
-  }, [isConnected, abstraxionAuth, walletAuthMode]);
+  }, [isConnected, abstraxionAuth, authMode]);
 
   const persistAuthenticateState = useCallback(async () => {
     // Only authenticate with OAuth in redirect mode
-    if (walletAuthMode !== 'redirect') {
+    if (authMode !== 'redirect') {
       return;
     }
 
@@ -380,13 +431,13 @@ export function AbstraxionContextProvider({
       // Always end initialization after auth check completes, even if authenticate() throws
       setIsInitializing(false);
     }
-  }, [abstraxionAuth, walletAuthMode]);
+  }, [abstraxionAuth, authMode]);
 
   // Restore session for redirect mode
   useEffect(() => {
     const initializeAuth = async () => {
-      // Only run in redirect mode - IMPORTANT: check walletAuthMode first before other conditions
-      if (walletAuthMode !== 'redirect') {
+      // Only run in redirect mode - IMPORTANT: check authMode first before other conditions
+      if (authMode !== 'redirect') {
         return;
       }
 
@@ -407,13 +458,13 @@ export function AbstraxionContextProvider({
     abstraxionAccount,
     granterAddress,
     persistAuthenticateState,
-    walletAuthMode,
+    authMode,
   ]);
 
   // Restore session for signer/browser modes on mount
   useEffect(() => {
     // Only run in signer/browser modes
-    if (walletAuthMode === 'redirect') {
+    if (authMode === 'redirect') {
       return;
     }
 
@@ -460,7 +511,7 @@ export function AbstraxionContextProvider({
     }
 
     restoreDirectModeSession();
-  }, [walletAuthMode, isConnected, isConnecting, abstraxionAuth]);
+  }, [authMode, isConnected, isConnecting, abstraxionAuth]);
 
   async function login() {
     // User actively logging in, so initialization phase is over
@@ -475,11 +526,11 @@ export function AbstraxionContextProvider({
       console.log('[AbstraxionContext] 🚀 login() called');
 
       // Check authentication mode
-      if (walletAuthMode === 'redirect') {
+      if (authMode === 'redirect') {
         // OAuth flow via dashboard redirect
         setIsConnecting(true);
         await abstraxionAuth.login();
-      } else if (walletAuthMode === 'browser' && authentication?.type === 'browser') {
+      } else if (authMode === 'browser' && authentication?.type === 'browser') {
         // Browser wallet mode
         if (authentication.autoConnect) {
           // Auto-connect to first available wallet
@@ -489,6 +540,11 @@ export function AbstraxionContextProvider({
           // Default to common Cosmos wallets if none specified
           const defaultWallets = [BUILT_IN_WALLETS.keplr, BUILT_IN_WALLETS.metamask];
           const wallets = authentication.wallets || defaultWallets;
+
+          if (!walletAuthState) {
+            setWalletSelectionError('Wallet authentication not available');
+            return;
+          }
 
           for (const walletConfig of wallets) {
             try {
@@ -502,10 +558,24 @@ export function AbstraxionContextProvider({
           }
           setIsConnecting(false);
         } else {
-          // Show wallet selection modal (UI rendered by consuming app)
-          // Don't set isConnecting yet - that happens when user clicks a wallet
-          console.log('[AbstraxionContext] Showing wallet selection modal');
+          // Manual wallet selection - show modal
+          setIsConnecting(false);
           setShowWalletSelectionModal(true);
+        }
+      } else if (authMode === 'signer') {
+        // Signer mode - call signerAuthState.connect()
+        if (!signerAuthState) {
+          console.error('[AbstraxionContext] Signer auth not initialized');
+          return;
+        }
+
+        setIsConnecting(true);
+        try {
+          await signerAuthState.connectSigner();
+        } catch (error: any) {
+          console.error('[AbstraxionContext] Signer connection failed:', error);
+          setAbstraxionError(error.message || 'Failed to connect signer');
+          setIsConnecting(false);
         }
       }
     } catch (error) {
@@ -513,14 +583,14 @@ export function AbstraxionContextProvider({
       throw error; // Re-throw to allow handling by the caller
     } finally {
       // Keep isLoggingIn true until auth state change sets isConnecting (only for manual login)
-      if (walletAuthMode === 'redirect') {
+      if (authMode === 'redirect') {
         setIsConnecting(false);
       }
     }
   }
   useEffect(() => {
     // Only handle login callback in redirect mode
-    if (walletAuthMode === 'redirect') {
+    if (authMode === 'redirect') {
       if (isReturningFromAuth) {
         // For Auth callback, we need to complete the login flow
         const completeAuthLogin = async () => {
@@ -544,7 +614,7 @@ export function AbstraxionContextProvider({
         }
       }
     }
-  }, [walletAuthMode, isReturningFromAuth]);
+  }, [authMode, isReturningFromAuth]);
 
   const logout = useCallback(() => {
     setIsConnected(false);
@@ -555,12 +625,14 @@ export function AbstraxionContextProvider({
     setIsReturningFromAuth(false);
 
     // Clear wallet auth state if in direct mode
-    if (walletAuthMode !== 'redirect') {
+    if (authMode === 'browser' && walletAuthState) {
       walletAuthState.disconnect();
+    } else if (authMode === 'signer' && signerAuthState) {
+      signerAuthState.disconnect();
     }
 
     abstraxionAuth?.logout();
-  }, [abstraxionAuth, walletAuthMode, walletAuthState]);
+  }, [abstraxionAuth, authMode, walletAuthState, signerAuthState]);
 
   return (
     <AbstraxionContext.Provider
@@ -594,8 +666,9 @@ export function AbstraxionContextProvider({
         indexerUrl: indexer?.url,
         login,
         logout,
-        walletAuthMode,
+        authMode,
         walletAuthState,
+        signerAuthState,
         // Wallet selection state for browser mode
         showWalletSelectionModal,
         setShowWalletSelectionModal,

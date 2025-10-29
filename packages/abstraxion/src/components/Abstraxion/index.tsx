@@ -33,7 +33,7 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
     isConnected,
     showModal,
     setShowModal,
-    walletAuthMode,
+    authMode,
   } = useContext(AbstraxionContext);
 
   const closeOnEscKey = useCallback(
@@ -54,7 +54,7 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
   }, [closeOnEscKey]);
 
   // TODO: Remove the ui code on redirect mode
-  if (walletAuthMode !== 'redirect') {
+  if (authMode !== 'redirect') {
     return null;
   }
 
