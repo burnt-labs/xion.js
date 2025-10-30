@@ -82,19 +82,14 @@ export function useSignerAuth({
       setIsConnecting(true);
       setError(null);
 
-      console.log('[useSignerAuth] Getting signer configuration...');
-
       // 1. Get signer config from developer's function
       const signerConfig = await authentication.getSignerConfig();
       const ethereumAddress = signerConfig.ethereumAddress;
-
-      console.log('[useSignerAuth] Signer address:', ethereumAddress);
 
       // 2. Use lowercase address as authenticator (consistent with EthWallet)
       const authenticator = ethereumAddress.toLowerCase();
 
       // 3. Check if account already exists using shared utility
-      console.log('[useSignerAuth] Checking if account exists for authenticator:', authenticator);
       const accountCheck = await checkAccountExists(
         accountStrategy,
         authenticator,

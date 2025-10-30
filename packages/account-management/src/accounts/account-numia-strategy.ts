@@ -35,21 +35,15 @@ export class NumiaAccountStrategy implements IndexerStrategy {
     }
 
     this.baseURL = baseURL;
-    console.log("[NumiaAccountStrategy] 🔧 Initialized with URL:", this.baseURL, "Auth:", !!authToken);
   }
 
   async fetchSmartAccounts(
     loginAuthenticator: string,
   ): Promise<SmartAccountWithCodeId[]> {
-    console.log("[NumiaAccountStrategy] 🔍 Fetching smart accounts from Numia indexer");
-    console.log("[NumiaAccountStrategy] Authenticator:", loginAuthenticator.substring(0, 30) + "...");
-
     try {
       // Encode authenticator for URL
       const encodedAuthenticator = encodeURIComponent(loginAuthenticator);
       const url = `${this.baseURL}authenticators/${encodedAuthenticator}/smartAccounts/details`;
-
-      console.log("[NumiaAccountStrategy] 📡 Sending request to:", url);
 
       // Build headers, conditionally include Authorization
       const headers: HeadersInit = {
@@ -65,15 +59,13 @@ export class NumiaAccountStrategy implements IndexerStrategy {
       if (!response.ok) {
         // 404 means no accounts found
         if (response.status === 404) {
-          console.log("[NumiaAccountStrategy] No accounts found (404)");
           return [];
         }
-        console.error("[NumiaAccountStrategy] ❌ Request failed:", response.status, response.statusText);
+        console.error("[NumiaAccountStrategy] Request failed:", response.status, response.statusText);
         throw new Error(`Indexer request failed: ${response.statusText}`);
       }
 
       const data: NumiaSmartAccountResp[] = await response.json();
-      console.log("[NumiaAccountStrategy] ✅ Received", data?.length || 0, "accounts from Numia");
 
       const results = data?.map(({ smart_account, code_id, authenticators }) => ({
         id: smart_account,
@@ -88,14 +80,9 @@ export class NumiaAccountStrategy implements IndexerStrategy {
         ),
       })) || [];
 
-      console.log(`[NumiaAccountStrategy] ✅ Successfully processed ${results.length} account(s) with code IDs`);
       return results;
     } catch (error) {
-      console.error('[NumiaAccountStrategy] ❌ Error fetching smart accounts:', error);
-      console.error('[NumiaAccountStrategy] Error details:', {
-        message: error instanceof Error ? error.message : String(error),
-        baseURL: this.baseURL
-      });
+      console.error('[NumiaAccountStrategy] Error fetching smart accounts:', error);
       // Return empty array on error - let the app decide whether to create new account
       return [];
     }

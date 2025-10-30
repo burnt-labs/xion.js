@@ -39,12 +39,7 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
   constructor(
     private readonly indexerUrl: string,
     private readonly rpcUrl: string,
-  ) {
-    console.log("[SubqueryAccountStrategy] 🔧 Initialized with:", {
-      indexerUrl: this.indexerUrl,
-      rpcUrl: this.rpcUrl
-    });
-  }
+  ) {}
 
   async fetchSmartAccounts(
     loginAuthenticator: string,
@@ -53,11 +48,6 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
       if (!this.rpcUrl || this.rpcUrl.length === 0) {
         throw new Error("rpcUrl must be a non-empty string.");
       }
-
-      console.log("[SubqueryAccountStrategy] 🔍 Fetching smart accounts from Subquery indexer");
-      console.log("[SubqueryAccountStrategy] Authenticator:", loginAuthenticator.substring(0, 30) + "...");
-
-      console.log("[SubqueryAccountStrategy] 📡 Sending GraphQL query to:", this.indexerUrl);
 
       const response = await fetch(this.indexerUrl, {
         method: "POST",
@@ -95,12 +85,11 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
       });
 
       if (!response.ok) {
-        console.error("[SubqueryAccountStrategy] ❌ Subquery request failed:", response.status, response.statusText);
+        console.error("[SubqueryAccountStrategy] Request failed:", response.status, response.statusText);
         throw new Error(`Subquery request failed: ${response.statusText}`);
       }
 
       const { data } = await response.json() as { data: AllSmartWalletQueryResponse };
-      console.log("[SubqueryAccountStrategy] ✅ Received data from Subquery, found", data.smartAccounts.nodes.length, "accounts");
 
       const smartAccounts = data.smartAccounts.nodes.map((node) => ({
         id: node.id,
@@ -113,15 +102,12 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
       }));
 
       // Fetch code IDs from RPC (Subquery doesn't provide code_id)
-      console.log("[SubqueryAccountStrategy] 🔗 Connecting to RPC to fetch code IDs:", this.rpcUrl);
       const client = await CosmWasmClient.connect(this.rpcUrl);
 
       const results: SmartAccountWithCodeId[] = [];
       // Doing this in serial to avoid rate limits
-      console.log("[SubqueryAccountStrategy] 📋 Fetching code IDs for", smartAccounts.length, "accounts...");
       for (let i = 0; i < smartAccounts.length; i++) {
         const smartAccount = smartAccounts[i];
-        console.log(`[SubqueryAccountStrategy] Fetching code ID for account ${i + 1}/${smartAccounts.length}:`, smartAccount.id);
         const { codeId } = await client.getContract(smartAccount.id);
         results.push({
           ...smartAccount,
@@ -129,15 +115,9 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
         });
       }
 
-      console.log(`[SubqueryAccountStrategy] ✅ Successfully processed ${results.length} account(s) with code IDs`);
       return results;
     } catch (error) {
-      console.error("[SubqueryAccountStrategy] ❌ Error fetching smart accounts:", error);
-      console.error("[SubqueryAccountStrategy] Error details:", {
-        message: error instanceof Error ? error.message : String(error),
-        indexerUrl: this.indexerUrl,
-        rpcUrl: this.rpcUrl
-      });
+      console.error("[SubqueryAccountStrategy] Error fetching smart accounts:", error);
       // Return empty array on error - let the app decide whether to create new account
       return [];
     }

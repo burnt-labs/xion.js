@@ -89,25 +89,16 @@ export function createCompositeAccountStrategy(
 
   // Add indexer strategy if configured (fast)
   if (config.indexer) {
-    console.log('[createCompositeAccountStrategy] Config received:', {
-      hasType: 'type' in config.indexer,
-      type: 'type' in config.indexer ? config.indexer.type : 'undefined',
-      url: config.indexer.url
-    });
-
     const indexerType = 'type' in config.indexer ? config.indexer.type : 'numia';
-    console.log('[createCompositeAccountStrategy] Detected indexer type:', indexerType);
 
     if (indexerType === 'subquery') {
       // Subquery indexer
-      console.log('[createCompositeAccountStrategy] ✅ Creating SubqueryAccountStrategy');
       const subqueryConfig = config.indexer as { type: 'subquery'; url: string; rpcUrl: string };
       strategies.push(
         new SubqueryAccountStrategy(subqueryConfig.url, subqueryConfig.rpcUrl)
       );
     } else {
       // Numia indexer (default)
-      console.log('[createCompositeAccountStrategy] ✅ Creating NumiaAccountStrategy');
       const numiaConfig = config.indexer as { type?: 'numia'; url: string; authToken?: string };
       strategies.push(
         new NumiaAccountStrategy(numiaConfig.url, numiaConfig.authToken)

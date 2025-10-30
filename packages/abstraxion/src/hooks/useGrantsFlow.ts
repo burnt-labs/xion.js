@@ -345,6 +345,15 @@ export function useGrantsFlow({
 
       // 7. Sign and broadcast grant transaction
       console.log('[useGrantsFlow] ✍️ Signing and broadcasting transaction...');
+      console.log('[useGrantsFlow] → Signer address (smart account):', smartAccountAddress);
+      console.log('[useGrantsFlow] → Authenticator index:', authenticatorIndex);
+      console.log('[useGrantsFlow] → Connection info:', connectionInfo);
+
+      // Query the smart account to see what authenticator is registered
+      if (connectionInfo.type === 'SignerEth') {
+        console.log('[useGrantsFlow] → Ethereum address signing with:', connectionInfo.ethereumAddress);
+      }
+
       const result = await client.signAndBroadcast(
         smartAccountAddress,
         messagesToSign,
@@ -355,6 +364,7 @@ export function useGrantsFlow({
       console.log('[useGrantsFlow] ✅ Transaction broadcast successful!');
       console.log('[useGrantsFlow] → Transaction hash:', result.transactionHash);
       console.log('[useGrantsFlow] → Height:', result.height);
+      console.log('[useGrantsFlow] → Explorer URL: https://explorer.burnt.com/xion-mainnet-1/tx/' + result.transactionHash);
 
       // 8. Store granter address (using storage directly since setGranter is private)
       console.log('[useGrantsFlow] 💾 Storing granter address in localStorage');

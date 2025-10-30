@@ -22,7 +22,6 @@ export class EmptyAccountStrategy implements IndexerStrategy {
   async fetchSmartAccounts(
     loginAuthenticator: string,
   ): Promise<SmartAccountWithCodeId[]> {
-    console.log(`[EmptyIndexerStrategy] No indexer available, returning empty array (will create new account)`);
     return [];
   }
 }

@@ -54,16 +54,11 @@ export class RpcAccountStrategy implements IndexerStrategy {
     loginAuthenticator: string,
   ): Promise<SmartAccountWithCodeId[]> {
     try {
-      console.log(`[RpcAccountStrategy] Querying chain for authenticator: ${loginAuthenticator.substring(0, 20)}...`);
-
       // 1. Determine wallet type explicitly from authenticator format
       const walletType = this.getWalletTypeForSaltCalculation(loginAuthenticator);
-      console.log(`[RpcAccountStrategy] Detected wallet type: ${walletType}`);
 
       // 2. Calculate salt from authenticator (uses same logic as AA API)
       const salt = calculateSalt(walletType, loginAuthenticator);
-      console.log(`[RpcAccountStrategy] Salt (hex): ${salt.slice(0, 20)}...`);
-      console.log(`[RpcAccountStrategy] Config - checksum: ${this.config.checksum.slice(0, 20)}..., creator: ${this.config.creator}, prefix: ${this.config.prefix}`);
 
       // 3. Predict smart account address using instantiate2
       const predictedAddress = predictSmartAccountAddress({
@@ -73,25 +68,17 @@ export class RpcAccountStrategy implements IndexerStrategy {
         prefix: this.config.prefix,
       });
 
-      console.log(`[RpcAccountStrategy] Predicted address: ${predictedAddress}`);
-
       // 4. Connect to chain and query contract
-      console.log(`[RpcAccountStrategy] Connecting to RPC: ${this.config.rpcUrl}`);
       const client = await CosmWasmClient.connect(this.config.rpcUrl);
-      console.log(`[RpcAccountStrategy] ✅ Connected to RPC`);
 
       // 5. Query authenticators directly (more reliable than getContract)
       // getContract() can fail with protobuf errors on some contract types
-      console.log(`[RpcAccountStrategy] Querying authenticators at ${predictedAddress}...`);
       const authenticators = await this.queryAuthenticators(client, predictedAddress, loginAuthenticator);
 
       if (!authenticators || authenticators.length === 0) {
         // If query failed, contract likely doesn't exist (this is normal)
-        console.log(`[RpcAccountStrategy] No contract or authenticators found at ${predictedAddress}`);
         return [];
       }
-
-      console.log(`[RpcAccountStrategy] ✅ Found contract with ${authenticators.length} authenticator(s)`);
 
       // 6. Return smart account with authenticators
       // Use configured codeId (same as AA API and Dashboard)
@@ -146,11 +133,8 @@ export class RpcAccountStrategy implements IndexerStrategy {
       });
 
       if (!Array.isArray(idsResponse) || idsResponse.length === 0) {
-        console.log("[RpcAccountStrategy] No authenticator IDs found");
         return [];
       }
-
-      console.log(`[RpcAccountStrategy] Found ${idsResponse.length} authenticator ID(s): ${idsResponse.join(", ")}`);
 
       // Step 2: Query each authenticator by ID
       const authenticators = await Promise.all(
@@ -189,7 +173,6 @@ export class RpcAccountStrategy implements IndexerStrategy {
               authenticatorString = authenticatorData.Passkey.credential_id;
               authenticatorType = "Passkey";
             } else {
-              console.log(`[RpcAccountStrategy] Unknown authenticator format for ID ${id}:`, authenticatorData);
               return null;
             }
 
@@ -200,7 +183,6 @@ export class RpcAccountStrategy implements IndexerStrategy {
               authenticatorIndex: id,
             };
           } catch (error: any) {
-            console.log(`[RpcAccountStrategy] Failed to query authenticator ${id}: ${error.message}`);
             return null;
           }
         })
@@ -209,12 +191,10 @@ export class RpcAccountStrategy implements IndexerStrategy {
       // Filter out null results
       const validAuthenticators = authenticators.filter((auth): auth is NonNullable<typeof auth> => auth !== null);
 
-      console.log(`[RpcAccountStrategy] Successfully queried ${validAuthenticators.length} authenticator(s)`);
       return validAuthenticators;
     } catch (error: any) {
       // If the query fails, the contract likely doesn't exist
       // This is normal for addresses that haven't been instantiated yet
-      console.log(`[RpcAccountStrategy] Failed to query authenticators: ${error.message || error}`);
       return [];
     }
   }

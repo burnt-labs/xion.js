@@ -75,8 +75,6 @@ export default function SignerModePage() {
   useEffect(() => {
     // Only attempt connection if Turnkey is fully ready but Abstraxion is not connected
     if (isTurnkeyReady && !isConnected && !isConnecting) {
-      console.log('[SignerModePage] Auth state sync: Turnkey ready, connecting to Abstraxion...');
-
       // Small delay to ensure wallet is fully indexed
       const timer = setTimeout(() => {
         handleAbstraxionConnect();
@@ -88,8 +86,6 @@ export default function SignerModePage() {
 
   const handleDisconnect = useCallback(() => {
     // Logout from both Abstraxion and Turnkey
-    console.log('[SignerModePage] Logging out from both Abstraxion and Turnkey...');
-
     if (abstraxionLogout) {
       abstraxionLogout();
     }

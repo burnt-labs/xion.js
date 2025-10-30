@@ -39,30 +39,20 @@ export class CompositeAccountStrategy implements IndexerStrategy {
   async fetchSmartAccounts(
     loginAuthenticator: string,
   ): Promise<SmartAccountWithCodeId[]> {
-    console.log(`[CompositeIndexerStrategy] Trying ${this.strategies.length} strategies for authenticator: ${loginAuthenticator.substring(0, 20)}...`);
-
     for (let i = 0; i < this.strategies.length; i++) {
       const strategy = this.strategies[i];
-      const strategyName = strategy.constructor.name;
 
       try {
-        console.log(`[CompositeIndexerStrategy] Attempting strategy ${i + 1}/${this.strategies.length}: ${strategyName}`);
-
         const result = await strategy.fetchSmartAccounts(loginAuthenticator);
 
         if (result && result.length > 0) {
-          console.log(`[CompositeIndexerStrategy] ✅ Strategy ${strategyName} found ${result.length} account(s)`);
           return result;
         }
-
-        console.log(`[CompositeIndexerStrategy] Strategy ${strategyName} returned empty, trying next...`);
       } catch (error) {
-        console.warn(`[CompositeIndexerStrategy] Strategy ${strategyName} failed:`, error);
-        // Continue to next strategy
+        // Continue to next strategy on error
       }
     }
 
-    console.log(`[CompositeIndexerStrategy] All strategies returned empty - no existing accounts found`);
     return [];
   }
 }

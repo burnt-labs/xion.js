@@ -184,7 +184,6 @@ export function useWalletAuth({
       setWalletAddress(ethAddress);
 
       // 2. Check if account already exists using shared utility
-      console.log(`[useWalletAuth] Checking if account exists for authenticator: ${ethAddress}`);
       const accountCheck = await checkAccountExists(
         accountStrategy,
         ethAddress.toLowerCase(),
@@ -193,7 +192,6 @@ export function useWalletAuth({
 
       if (accountCheck.exists && accountCheck.smartAccountAddress) {
         // Account exists - set up connection info
-        console.log(`[useWalletAuth] → Account exists, onSuccess will handle grant verification/creation`);
         setSmartAccountAddress(accountCheck.smartAccountAddress);
         setCodeId(accountCheck.codeId || null);
 
@@ -299,7 +297,6 @@ export function useWalletAuth({
         const pubkeyBase64 = Buffer.from(pubkeyHex, 'hex').toString('base64');
 
         // Check if account exists
-        console.log(`[useWalletAuth] Checking if account exists for authenticator (pubkey base64): ${pubkeyBase64.substring(0, 20)}...`);
         const accountCheck = await checkAccountExists(
           accountStrategy,
           pubkeyBase64,
@@ -308,7 +305,6 @@ export function useWalletAuth({
 
         if (accountCheck.exists && accountCheck.smartAccountAddress) {
           // Account exists - restore session
-          console.log(`[useWalletAuth] ✅ Restoring existing account session`);
           setSmartAccountAddress(accountCheck.smartAccountAddress);
           setCodeId(accountCheck.codeId || null);
 

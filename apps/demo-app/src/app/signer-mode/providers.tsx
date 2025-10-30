@@ -101,22 +101,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
         config={turnkeyConfig}
         callbacks={{
           onError: (error) => {
-            console.error('[Turnkey] ERROR:', error);
-            console.error('[Turnkey] Error details:', JSON.stringify(error, null, 2));
+            console.error('[Turnkey] Error:', error);
           },
-          onAuthenticationSuccess: async ({ session }) => {
-            console.log('[Turnkey] Authentication SUCCESS!');
-            console.log('[Turnkey] Session details:', JSON.stringify(session, null, 2));
-
+          onAuthenticationSuccess: async () => {
             // Ensure wallet is populated before calling Abstraxion login
             let wallets: any[] = [];
             const maxAttempts = 10; // 1 second max
             let attempts = 0;
-            
+
             while (attempts < maxAttempts) {
               wallets = walletsGetterRef.current ? walletsGetterRef.current() : [];
               if (wallets.length > 0) {
-                console.log('[Turnkey] Wallets populated:', wallets);
                 break;
               }
               await new Promise(resolve => setTimeout(resolve, 100));
@@ -124,13 +119,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
             }
 
             if (wallets.length === 0) {
-              console.warn('[Turnkey] No wallets found after waiting. Abstraxion login will fail.');
+              console.warn('[Turnkey] No wallets found after waiting');
               return;
             }
 
             // Call Abstraxion login directly On succes
             if (abstraxionLoginRef.current) {
-              console.log('[Turnkey] Calling Abstraxion login...');
               try {
                 await abstraxionLoginRef.current();
               } catch (error) {
@@ -139,11 +133,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             }
           },
           onSessionExpired: () => {
-            console.log('[Turnkey] Session EXPIRED, please log in again');
-
             // Logout from Abstraxion when Turnkey session expires
             if (abstraxionLogoutRef.current) {
-              console.log('[Turnkey] Logging out from Abstraxion...');
               abstraxionLogoutRef.current();
             }
           },

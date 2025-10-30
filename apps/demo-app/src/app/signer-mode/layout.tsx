@@ -34,7 +34,6 @@ function AbstraxionWrapper({
 
       // If type is explicitly set to subquery, use Subquery
       if (process.env.NEXT_PUBLIC_INDEXER_TYPE === 'subquery') {
-        console.log('[Config] 🔧 Using SUBQUERY indexer:', process.env.NEXT_PUBLIC_INDEXER_URL);
         return {
           type: 'subquery' as const,
           url: process.env.NEXT_PUBLIC_INDEXER_URL,
@@ -44,7 +43,6 @@ function AbstraxionWrapper({
 
       // Otherwise, use Numia (default)
       if (process.env.NEXT_PUBLIC_INDEXER_TOKEN) {
-        console.log('[Config] 🔧 Using NUMIA indexer:', process.env.NEXT_PUBLIC_INDEXER_URL);
         return {
           type: 'numia' as const,
           url: process.env.NEXT_PUBLIC_INDEXER_URL,
@@ -52,7 +50,6 @@ function AbstraxionWrapper({
         };
       }
 
-      console.warn('[Config] ⚠️ INDEXER_URL set but no TYPE or TOKEN provided');
       return undefined;
     })(),
 
@@ -88,7 +85,7 @@ export default function SignerModeLayout({
 }: {
   children: React.ReactNode
 }) {
-  const signingMethod: TurnkeySigningMethod = 'viem';
+  const signingMethod: TurnkeySigningMethod = 'raw-api';
 
   return (
     <TurnkeyProviders>
