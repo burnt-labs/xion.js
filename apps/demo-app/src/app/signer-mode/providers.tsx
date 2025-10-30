@@ -44,7 +44,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     walletsGetterRef.current = getter;
   };
 
-  // Generate dynamic username based on timestamp for better user identification
+  // Generate dynamic username based on timestamp just to be able to make infinite wallets during testing
   const generateUserName = () => {
     const now = new Date();
     const date = now.toISOString().split('T')[0]; // YYYY-MM-DD

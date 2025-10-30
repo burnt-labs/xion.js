@@ -16,7 +16,7 @@ import type { RpcAccountStrategyConfig } from "./account-rpc-strategy";
  */
 export type AccountIndexerConfig =
   | { type?: 'numia'; url: string; authToken?: string }
-  | { type: 'subquery'; url: string; rpcUrl: string };
+  | { type: 'subquery'; url: string; codeId: number };
 
 export interface CreateCompositeAccountStrategyConfig {
   /**
@@ -24,7 +24,7 @@ export interface CreateCompositeAccountStrategyConfig {
    * Supports both Numia and Subquery indexers
    *
    * For Numia: { type: 'numia', url: string, authToken?: string }
-   * For Subquery: { type: 'subquery', url: string, rpcUrl: string }
+   * For Subquery: { type: 'subquery', url: string, codeId: number }
    *
    * If type is not specified, defaults to Numia for backward compatibility
    */
@@ -69,7 +69,7 @@ export interface CreateCompositeAccountStrategyConfig {
  *   indexer: {
  *     type: 'subquery',
  *     url: 'https://subquery.example.com',
- *     rpcUrl: 'https://rpc.xion.com'
+ *     codeId: 1
  *   }
  * });
  *
@@ -93,9 +93,9 @@ export function createCompositeAccountStrategy(
 
     if (indexerType === 'subquery') {
       // Subquery indexer
-      const subqueryConfig = config.indexer as { type: 'subquery'; url: string; rpcUrl: string };
+      const subqueryConfig = config.indexer as { type: 'subquery'; url: string; codeId: number };
       strategies.push(
-        new SubqueryAccountStrategy(subqueryConfig.url, subqueryConfig.rpcUrl)
+        new SubqueryAccountStrategy(subqueryConfig.url, subqueryConfig.codeId)
       );
     } else {
       // Numia indexer (default)

@@ -26,13 +26,11 @@ export function useTurnkeyRawAPI() {
       throw new Error('Ethereum account not found in Turnkey wallet. Please ensure your wallet has an Ethereum account configured.');
     }
 
-    console.log('[useTurnkeyRawAPI] Using Ethereum address:', ethAccount.address);
-
     return {
       ethereumAddress: ethAccount.address,
 
       signMessage: async (hexMessage: string) => {
-        console.log('[useTurnkeyRawAPI] Signing message with Raw API...');
+        console.log('[useTurnkeyRawAPI] - Signing message with Raw API...');
 
         // Ensure hex message has 0x prefix
         const normalizedMessage = hexMessage.startsWith('0x')
@@ -65,10 +63,10 @@ export function useTurnkeyRawAPI() {
           // Combine with 0x prefix
           const signature = `0x${r}${s}${vHex}`;
 
-          console.log('[useTurnkeyRawAPI] ✅ Signature generated:', signature);
+          console.log('[useTurnkeyRawAPI] -  Signature generated:', signature);
           return signature;
         } catch (error) {
-          console.error('[useTurnkeyRawAPI] Failed to sign message:', error);
+          console.error('[useTurnkeyRawAPI] - Failed to sign message:', error);
           throw new Error(`Failed to sign message with Turnkey: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }

@@ -25,8 +25,7 @@ export default function SignerModePage() {
   // Get the signing client to pass to child components
   const { client } = useAbstraxionSigningClient();
 
-  const [error, setError] = useState<string>('');
-
+  // can create a smart account with any Account but we use the Eth style account in this example
   const wallet = wallets?.[0];
   const ethAccount = wallet?.accounts.find(
     a => a.addressFormat === 'ADDRESS_FORMAT_ETHEREUM'
@@ -35,21 +34,23 @@ export default function SignerModePage() {
   // Check if Turnkey is fully ready (authenticated + wallet + httpClient)
   const isTurnkeyReady = authState === AuthState.Authenticated && !!wallet && !!httpClient;
 
+  // Function to be called to handle the login in case the Callback from @turnkey/react-wallet-kit fails to connect to Abstraxion
+  // Could also use only this style and remove the integration with Turnkey onSuccess callback
   const handleAbstraxionConnect = useCallback(async () => {
     try {
-      setError('');
       await abstraxionLogin();
     } catch (err: any) {
       console.error('Abstraxion connection error:', err);
-      setError(err.message || 'Failed to connect to Abstraxion');
     }
   }, [abstraxionLogin]);
 
+  // Called when connect button is clicked
   const handleTurnkeyLogin = useCallback(() => {
     turnkeyLogin();
   }, [turnkeyLogin]);
 
   // Register functions for Turnkey callbacks (only run once on mount and when functions change)
+  // These functions are used by the onSuccess callback from @turnkey/react-wallet-kit to connect to Abstraxion
   useEffect(() => {
     registerWalletsGetter(() => wallets || []);
 
@@ -72,9 +73,14 @@ export default function SignerModePage() {
   }, [wallets, createWallet, registerWalletsGetter, registerCreateWallet, registerAbstraxionLogin, registerAbstraxionLogout, isConnected, isConnecting, handleAbstraxionConnect, abstraxionLogout]);
 
   // Single sync check: Ensure Turnkey auth and Abstraxion connection states are consistent
+  // This is tried once if for some reason the onSuccess callback fails to connect to Abstraxion
   useEffect(() => {
+    let hasAttempted = false;
+    
     // Only attempt connection if Turnkey is fully ready but Abstraxion is not connected
-    if (isTurnkeyReady && !isConnected && !isConnecting) {
+    if (isTurnkeyReady && !isConnected && !isConnecting && !hasAttempted) {
+      hasAttempted = true;
+      
       // Small delay to ensure wallet is fully indexed
       const timer = setTimeout(() => {
         handleAbstraxionConnect();
@@ -84,6 +90,7 @@ export default function SignerModePage() {
     }
   }, [isTurnkeyReady, isConnected, isConnecting, handleAbstraxionConnect]);
 
+  // Combined disconnect function to logout from both Abstraxion and Turnkey
   const handleDisconnect = useCallback(() => {
     // Logout from both Abstraxion and Turnkey
     if (abstraxionLogout) {
@@ -93,10 +100,9 @@ export default function SignerModePage() {
     if (turnkeyLogout) {
       turnkeyLogout();
     }
-    setError('');
   }, [abstraxionLogout, turnkeyLogout]);
 
-  // Combined initialization state: both Abstraxion and Turnkey need to initialize
+  // Combined initialization state: both Abstraxion and Turnkey need to initialize, can separate if you want to see the difference
   const isSystemInitializing = isInitializing || (authState !== AuthState.Authenticated && authState !== AuthState.Unauthenticated);
 
   return (

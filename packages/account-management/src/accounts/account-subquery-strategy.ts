@@ -1,9 +1,11 @@
 /**
  * Subquery indexer strategy for querying smart accounts
  * Based on dashboard's src/indexer-strategies/subquery-indexer-strategy.ts
+ *
+ * Subquery provides account addresses and authenticators but not code_id,
+ * so code_id must be configured (same pattern as RPC and Numia strategies)
  */
 
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { IndexerStrategy, SmartAccountWithCodeId } from "../types/indexer";
 
 interface SmartAccountAuthenticator {
@@ -38,17 +40,13 @@ export interface AllSmartWalletQueryResponse {
 export class SubqueryAccountStrategy implements IndexerStrategy {
   constructor(
     private readonly indexerUrl: string,
-    private readonly rpcUrl: string,
+    private readonly codeId: number,  // Required: code_id must be configured (Subquery doesn't provide it)
   ) {}
 
   async fetchSmartAccounts(
     loginAuthenticator: string,
   ): Promise<SmartAccountWithCodeId[]> {
     try {
-      if (!this.rpcUrl || this.rpcUrl.length === 0) {
-        throw new Error("rpcUrl must be a non-empty string.");
-      }
-
       const response = await fetch(this.indexerUrl, {
         method: "POST",
         headers: {
@@ -91,8 +89,11 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
 
       const { data } = await response.json() as { data: AllSmartWalletQueryResponse };
 
-      const smartAccounts = data.smartAccounts.nodes.map((node) => ({
+      // Use configured code_id (same pattern as RPC strategies)
+      // Avoids calling getContract() which can fail with protobuf errors
+      return data.smartAccounts.nodes.map((node) => ({
         id: node.id,
+        codeId: this.codeId,
         authenticators: node.authenticators.nodes.map((authNode) => ({
           id: authNode.id,
           type: authNode.type,
@@ -100,22 +101,6 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
           authenticatorIndex: authNode.authenticatorIndex,
         })),
       }));
-
-      // Fetch code IDs from RPC (Subquery doesn't provide code_id)
-      const client = await CosmWasmClient.connect(this.rpcUrl);
-
-      const results: SmartAccountWithCodeId[] = [];
-      // Doing this in serial to avoid rate limits
-      for (let i = 0; i < smartAccounts.length; i++) {
-        const smartAccount = smartAccounts[i];
-        const { codeId } = await client.getContract(smartAccount.id);
-        results.push({
-          ...smartAccount,
-          codeId,
-        });
-      }
-
-      return results;
     } catch (error) {
       console.error("[SubqueryAccountStrategy] Error fetching smart accounts:", error);
       // Return empty array on error - let the app decide whether to create new account
