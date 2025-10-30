@@ -203,6 +203,10 @@ export function AbstraxionContextProvider({
           console.log('[AbstraxionContext] ✅ Modals closed, connection complete');
         } catch (error) {
           console.error('[AbstraxionContext] ❌ Failed to setup grants:', error);
+
+          // Clean up session keys since they don't have valid grants so that keys only exist if fully setup
+          await cleanupSession();
+
           setAbstraxionError(`Failed to setup grants: ${error instanceof Error ? error.message : 'Unknown error'}`);
           console.log('[AbstraxionContext] ❌ Clearing isConnecting due to error');
           setIsConnecting(false);
@@ -279,6 +283,10 @@ export function AbstraxionContextProvider({
           setShowModal(false);
         } catch (error) {
           console.error('[AbstraxionContext] Failed to setup grants:', error);
+
+          // Clean up session on error
+          await cleanupSession();
+
           setAbstraxionError(`Failed to setup grants: ${error instanceof Error ? error.message : 'Unknown error'}`);
           setIsConnecting(false);
         }
@@ -288,17 +296,21 @@ export function AbstraxionContextProvider({
         if (!sessionKeypair) {
           console.log('[AbstraxionContext] No session keypair found, creating one for signer mode...');
           sessionKeypair = await abstraxionAuth.generateAndStoreTempAccount();
-          // Authenticate to trigger state change
-          await abstraxionAuth.authenticate();
         }
 
         if (sessionKeypair) {
           console.log('[AbstraxionContext] ✅ Setting abstraxionAccount from session keypair');
           setAbstraxionAccount(sessionKeypair);
         }
-
+        
         setGranterAddress(smartAccountAddress);
+        // Store granter address in localStorage (needed for reconnect)
+        localStorage.setItem('xion-authz-granter-account', smartAccountAddress);
         localStorage.setItem("loginAuthenticator", connectionInfo.identifier);
+
+        // Trigger auth state change now that both keypair and granter are stored
+        await abstraxionAuth.authenticate();
+
         setIsConnected(true);
         setShowModal(false);
       }
@@ -308,6 +320,16 @@ export function AbstraxionContextProvider({
       setIsConnecting(false);
     },
   }) : null;
+
+  // Centralized cleanup function for session keys and login state
+  const cleanupSession = useCallback(async () => {
+    console.log('[AbstraxionContext] 🧹 Cleaning up session...');
+    // Clear session keys and trigger auth state change
+    await abstraxionAuth.logout();
+    // Clear additional login state not handled by abstraxionAuth.logout()
+    localStorage.removeItem('loginType');
+    localStorage.removeItem('loginAuthenticator');
+  }, []);
 
   // Auto-close wallet selection modal when connected
   useEffect(() => {
@@ -528,10 +550,7 @@ export function AbstraxionContextProvider({
       } catch (error) {
         // Session expired or invalid - clear it silently
         console.log('[AbstraxionContext] ⚠️ Session expired or invalid, clearing stored session');
-        localStorage.removeItem('xion-authz-granter-account');
-        localStorage.removeItem('xion-authz-temp-account');
-        localStorage.removeItem('loginType');
-        localStorage.removeItem('loginAuthenticator');
+        await cleanupSession();
         setIsInitializing(false);
       }
     }
