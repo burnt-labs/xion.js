@@ -4,20 +4,31 @@
  */
 
 import { NumiaAccountStrategy } from "./account-numia-strategy";
+import { SubqueryAccountStrategy } from "./account-subquery-strategy";
 import { RpcAccountStrategy } from "./account-rpc-strategy";
 import { EmptyAccountStrategy } from "./account-empty-strategy";
 import { CompositeAccountStrategy } from "./account-composite-strategy";
 import type { RpcAccountStrategyConfig } from "./account-rpc-strategy";
 
+/**
+ * Indexer configuration for account discovery
+ * Discriminated union supporting both Numia and Subquery indexers
+ */
+export type AccountIndexerConfig =
+  | { type?: 'numia'; url: string; authToken?: string }
+  | { type: 'subquery'; url: string; rpcUrl: string };
+
 export interface CreateCompositeAccountStrategyConfig {
   /**
    * Indexer configuration for fast account lookups
-   * If provided, NumiaAccountStrategy will be used as the first strategy
+   * Supports both Numia and Subquery indexers
+   *
+   * For Numia: { type: 'numia', url: string, authToken?: string }
+   * For Subquery: { type: 'subquery', url: string, rpcUrl: string }
+   *
+   * If type is not specified, defaults to Numia for backward compatibility
    */
-  indexer?: {
-    url: string;
-    authToken?: string;
-  };
+  indexer?: AccountIndexerConfig;
 
   /**
    * RPC configuration for reliable on-chain account lookups
@@ -28,7 +39,7 @@ export interface CreateCompositeAccountStrategyConfig {
 
 /**
  * Creates a CompositeAccountStrategy with automatic fallback chain:
- * 1. NumiaAccountStrategy (if indexer config provided) - Fast indexer queries
+ * 1. Indexer strategy (Numia or Subquery, if configured) - Fast indexer queries
  * 2. RpcAccountStrategy (if RPC config provided) - Reliable on-chain queries
  * 3. EmptyAccountStrategy (always included) - Returns empty for new accounts
  *
@@ -37,10 +48,11 @@ export interface CreateCompositeAccountStrategyConfig {
  *
  * @example
  * ```typescript
- * // With both indexer and RPC fallback
+ * // With Numia indexer and RPC fallback
  * const strategy = createCompositeAccountStrategy({
  *   indexer: {
- *     url: 'https://indexer.example.com',
+ *     type: 'numia',
+ *     url: 'https://xion-testnet-2.numia.xyz/v3',
  *     authToken: 'token123'
  *   },
  *   rpc: {
@@ -52,7 +64,16 @@ export interface CreateCompositeAccountStrategyConfig {
  *   }
  * });
  *
- * // With only indexer
+ * // With Subquery indexer
+ * const strategy = createCompositeAccountStrategy({
+ *   indexer: {
+ *     type: 'subquery',
+ *     url: 'https://subquery.example.com',
+ *     rpcUrl: 'https://rpc.xion.com'
+ *   }
+ * });
+ *
+ * // With default (Numia) indexer
  * const strategy = createCompositeAccountStrategy({
  *   indexer: { url: 'https://indexer.example.com' }
  * });
@@ -66,11 +87,32 @@ export function createCompositeAccountStrategy(
 ): CompositeAccountStrategy {
   const strategies = [];
 
-  // Add Numia indexer strategy if configured (fast)
+  // Add indexer strategy if configured (fast)
   if (config.indexer) {
-    strategies.push(
-      new NumiaAccountStrategy(config.indexer.url, config.indexer.authToken)
-    );
+    console.log('[createCompositeAccountStrategy] Config received:', {
+      hasType: 'type' in config.indexer,
+      type: 'type' in config.indexer ? config.indexer.type : 'undefined',
+      url: config.indexer.url
+    });
+
+    const indexerType = 'type' in config.indexer ? config.indexer.type : 'numia';
+    console.log('[createCompositeAccountStrategy] Detected indexer type:', indexerType);
+
+    if (indexerType === 'subquery') {
+      // Subquery indexer
+      console.log('[createCompositeAccountStrategy] ✅ Creating SubqueryAccountStrategy');
+      const subqueryConfig = config.indexer as { type: 'subquery'; url: string; rpcUrl: string };
+      strategies.push(
+        new SubqueryAccountStrategy(subqueryConfig.url, subqueryConfig.rpcUrl)
+      );
+    } else {
+      // Numia indexer (default)
+      console.log('[createCompositeAccountStrategy] ✅ Creating NumiaAccountStrategy');
+      const numiaConfig = config.indexer as { type?: 'numia'; url: string; authToken?: string };
+      strategies.push(
+        new NumiaAccountStrategy(numiaConfig.url, numiaConfig.authToken)
+      );
+    }
   }
 
   // Add RPC strategy if configured (reliable fallback)

@@ -42,6 +42,13 @@ export default function DirectModeLayout({
       },
     }),
 
+    // Treasury indexer configuration for fetching grant configs (optional but recommended)
+    ...(process.env.NEXT_PUBLIC_TREASURY_INDEXER_URL && {
+      treasuryIndexer: {
+        url: process.env.NEXT_PUBLIC_TREASURY_INDEXER_URL,
+      },
+    }),
+
     // Local configuration for RPC fallback (required for direct chain queries)
     ...(process.env.NEXT_PUBLIC_CHECKSUM && process.env.NEXT_PUBLIC_FEE_GRANTER_ADDRESS && {
       localConfig: {

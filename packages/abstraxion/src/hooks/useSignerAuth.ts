@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { createCompositeAccountStrategy } from "@burnt-labs/account-management";
+import type { AccountIndexerConfig } from "@burnt-labs/account-management";
 import type { SignerAuthentication } from "../authentication/types";
 import type { IndexerConfig, LocalConfig } from "../components/Abstraxion";
 import type { SignerConnectionInfo } from "./useWalletAuth";
@@ -58,9 +59,10 @@ export function useSignerAuth({
   const accountStrategy = useMemo(
     () => createCompositeAccountStrategy({
       indexer: indexer ? {
+        ...indexer,
         url: indexer.url,
         authToken: indexer.authToken,
-      } : undefined,
+      } as AccountIndexerConfig : undefined,
       rpc: localConfig ? {
         rpcUrl,
         checksum: localConfig.checksum,

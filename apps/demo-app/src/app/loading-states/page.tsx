@@ -1,10 +1,11 @@
 "use client";
 import { useEffect } from "react";
-import { useAbstraxionAccount } from "@burnt-labs/abstraxion";
+import { useAbstraxionAccount, useAbstraxionSigningClient } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";
 import { StateTooltip } from "../../components/StateTooltip";
+import { SendTokens } from "@/components/SendTokens";
 
 export default function UILessPage(): JSX.Element {
   const {
@@ -18,6 +19,7 @@ export default function UILessPage(): JSX.Element {
     isConnecting,
     isReturningFromAuth,
   } = useAbstraxionAccount();
+  const { client } = useAbstraxionSigningClient();
 
   // Log state changes to show how your Dapp reacts
   useEffect(() => {
@@ -47,20 +49,20 @@ export default function UILessPage(): JSX.Element {
   };
 
   return (
-    <main className="m-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 p-4">
+    <main className="m-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-6 p-6">
       <div className="text-center">
-        <h1 className="mb-2 text-2xl font-bold tracking-tighter text-white">
+        <h1 className="mb-3 text-2xl font-bold tracking-tighter text-white">
           Enhanced Loading States Demo
         </h1>
         <p className="max-w-md text-sm text-gray-400">
           This demo showcases how to setup a connection flow for your dApp
-          throug Abstraxion.
+          through Abstraxion.
         </p>
       </div>
 
       {/* Enhanced Debug Panel */}
-      <div className="w-full rounded border border-white/10 bg-gray-900/50 p-4 text-xs backdrop-blur-sm">
-        <div className="mb-3 flex items-center gap-2">
+      <div className="w-full rounded-lg border border-white/10 bg-gray-900/50 p-5 text-xs backdrop-blur-sm">
+        <div className="mb-4 flex items-center gap-2">
           <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400"></div>
           <p className="font-mono font-semibold text-cyan-400">
             Authentication States
@@ -68,7 +70,7 @@ export default function UILessPage(): JSX.Element {
         </div>
 
         {/* There is a short period before the UI knows the actual connected state of the user. Consider it the mounting of the  UI */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <span className="font-mono text-gray-400">isInitializing:</span>
@@ -180,7 +182,7 @@ export default function UILessPage(): JSX.Element {
         </div>
       </div>
 
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-5">
         <Button
           fullWidth
           onClick={
@@ -235,8 +237,8 @@ export default function UILessPage(): JSX.Element {
         </Button>
 
         {/* State Flow Indicator */}
-        <div className="w-full rounded border border-gray-600/30 bg-gray-800/50 p-3">
-          <p className="mb-2 text-xs font-semibold text-gray-400">
+        <div className="w-full rounded-lg border border-gray-600/30 bg-gray-800/50 p-4">
+          <p className="mb-3 text-xs font-semibold text-gray-400">
             Authentication Flow:
           </p>
           <div className="flex items-center justify-between text-xs">
@@ -329,6 +331,15 @@ export default function UILessPage(): JSX.Element {
             </div>
           </div>
         </div>
+
+        {/* Account Info and Send Tokens - Only show when connected */}
+        {isConnected && account.bech32Address && (
+          <SendTokens
+            accountAddress={account.bech32Address}
+            client={client}
+            memo="Send XION via Abstraxion"
+          />
+        )}
       </div>
 
       <Link
@@ -338,79 +349,76 @@ export default function UILessPage(): JSX.Element {
         ← Back to examples
       </Link>
 
-      {/* Loading Overlays and UI Lock */}
-      {isLoading && <div className="fixed inset-0 z-40 bg-black/10" />}
-
       {/* Loading Overlays - Show for initialization, login flows, and Auth callbacks */}
       {(isInitializing ||
         isConnecting ||
         isReturningFromAuth ||
         isLoggingIn) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
           {/* Priority order: Auth callback > logging in > regular connecting > isInitializing */}
           {isReturningFromAuth ? (
-            <div className="mx-4 max-w-sm rounded-lg border border-purple-500/30 bg-purple-500/10 p-6 text-center backdrop-blur-md">
-              <div className="mb-4">
-                <div className="mx-auto flex h-12 w-12 animate-pulse items-center justify-center rounded-full border-4 border-purple-500/30 bg-purple-500/20">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-purple-400 border-r-transparent"></div>
+            <div className="mx-4 max-w-sm rounded-lg border border-purple-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+              <div className="mb-6">
+                <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-purple-500/40 bg-purple-500/20">
+                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-purple-400 border-r-transparent"></div>
                 </div>
               </div>
-              <p className="font-bold text-purple-400">
+              <p className="text-lg font-bold text-purple-400">
                 Completing Authentication
               </p>
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="mt-3 text-sm text-gray-300">
                 Processing authentication from authorization server
               </p>
             </div>
           ) : isLoggingIn ? (
-            <div className="mx-4 max-w-sm rounded-lg border border-blue-500/30 bg-blue-500/10 p-6 text-center backdrop-blur-md">
-              <div className="mb-4">
-                <div className="mx-auto flex h-12 w-12 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/30 bg-blue-500/20">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-400 border-r-transparent"></div>
+            <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+              <div className="mb-6">
+                <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/40 bg-blue-500/20">
+                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-blue-400 border-r-transparent"></div>
                 </div>
               </div>
-              <p className="font-bold text-blue-400">
+              <p className="text-lg font-bold text-blue-400">
                 Redirecting to Authorization
               </p>
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="mt-3 text-sm text-gray-300">
                 Opening XION dashboard for secure authentication
               </p>
-              <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="mt-5 flex items-center justify-center gap-2">
                 <div className="inline-block h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.3s]"></div>
                 <div className="inline-block h-2 w-2 animate-bounce rounded-full bg-blue-400 [animation-delay:-0.15s]"></div>
                 <div className="inline-block h-2 w-2 animate-bounce rounded-full bg-blue-400"></div>
               </div>
-              <p className="mt-4 text-xs text-gray-500">
+              <p className="mt-5 text-xs text-gray-400">
                 You'll be redirected back here after authentication
               </p>
             </div>
           ) : isConnecting && !isReturningFromAuth ? (
-            <div className="mx-4 max-w-sm rounded-lg border border-blue-500/30 bg-blue-500/10 p-6 text-center backdrop-blur-md">
-              <div className="mb-4">
-                <div className="mx-auto flex h-12 w-12 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/30 bg-blue-500/20">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-400 border-r-transparent"></div>
+            <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+              <div className="mb-6">
+                <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/40 bg-blue-500/20">
+                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-blue-400 border-r-transparent"></div>
                 </div>
               </div>
-              <p className="font-bold text-blue-400">Establishing Connection</p>
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="text-lg font-bold text-blue-400">Establishing Connection</p>
+              <p className="mt-3 text-sm text-gray-300">
                 Connecting to your XION account and verifying permissions
               </p>
             </div>
           ) : isInitializing ? (
-            <div className="mx-4 max-w-sm rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6 text-center backdrop-blur-md">
-              <div className="mb-4">
-                <div className="mx-auto flex h-12 w-12 animate-pulse items-center justify-center rounded-full border-4 border-yellow-500/30 bg-yellow-500/20">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-yellow-400 border-r-transparent"></div>
+            <div className="mx-4 max-w-sm rounded-lg border border-yellow-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+              <div className="mb-6">
+                <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-yellow-500/40 bg-yellow-500/20">
+                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-yellow-400 border-r-transparent"></div>
                 </div>
               </div>
-              <p className="font-bold text-yellow-400">
+              <p className="text-lg font-bold text-yellow-400">
                 Initializing Application
               </p>
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="mt-3 text-sm text-gray-300">
                 Checking for existing authentication and restoring session
               </p>
-              <div className="mt-4">
-                <div className="h-2 w-full rounded-full bg-gray-700">
+              <div className="mt-5">
+                <div className="h-2 w-full rounded-full bg-gray-700/50">
                   <div
                     className="h-2 animate-pulse rounded-full bg-yellow-400"
                     style={{ width: "60%" }}

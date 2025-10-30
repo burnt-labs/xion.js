@@ -85,11 +85,18 @@ export function Abstraxion({ onClose }: ModalProps): JSX.Element | null {
 }
 
 /**
- * Indexer configuration for querying existing accounts
+ * Indexer configuration for querying existing accounts (Numia or Subquery)
  */
 export interface IndexerConfig {
   url: string;
-  authToken: string;
+  authToken?: string;
+}
+
+/**
+ * Treasury indexer configuration for fetching grant configurations (DaoDao)
+ */
+export interface TreasuryIndexerConfig {
+  url: string;
 }
 
 /**
@@ -138,8 +145,18 @@ export interface AbstraxionConfig {
    */
   authentication?: AuthenticationConfig;
 
-  /** Indexer configuration for querying existing accounts */
+  /**
+   * Indexer configuration for querying existing smart accounts
+   * Supports Numia or Subquery indexers for fast account discovery
+   */
   indexer?: IndexerConfig;
+
+  /**
+   * Treasury indexer configuration for fetching grant configurations
+   * Uses DaoDao indexer for fast treasury queries
+   * Falls back to direct RPC queries if not provided
+   */
+  treasuryIndexer?: TreasuryIndexerConfig;
 
   /** Local mode configuration (for building transactions without AA API) */
   localConfig?: LocalConfig;
@@ -165,6 +182,7 @@ export function AbstraxionProvider({
       bank={config.bank}
       authentication={config.authentication}
       indexer={config.indexer}
+      treasuryIndexer={config.treasuryIndexer}
       localConfig={config.localConfig}
     >
       {children}

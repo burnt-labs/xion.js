@@ -30,6 +30,8 @@ export class AbstraxionAuth {
   callbackUrl?: string;
   treasury?: string;
   indexerUrl?: string;
+  indexerAuthToken?: string;
+  treasuryIndexerUrl?: string;
 
   // Signer
   private client?: GranteeSignerClient;
@@ -71,7 +73,9 @@ export class AbstraxionAuth {
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
    * @param {string} treasury - treasury contract instance address
-   * @param {string} indexerUrl - custom indexer URL to use instead of default
+   * @param {string} indexerUrl - custom indexer URL to use instead of default (for account discovery)
+   * @param {string} indexerAuthToken - authentication token for indexer API requests
+   * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -81,6 +85,8 @@ export class AbstraxionAuth {
     callbackUrl?: string,
     treasury?: string,
     indexerUrl?: string,
+    indexerAuthToken?: string,
+    treasuryIndexerUrl?: string,
   ) {
     this.rpcUrl = rpc;
     this.grantContracts = grantContracts;
@@ -89,6 +95,8 @@ export class AbstraxionAuth {
     this.callbackUrl = callbackUrl;
     this.treasury = treasury;
     this.indexerUrl = indexerUrl;
+    this.indexerAuthToken = indexerAuthToken;
+    this.treasuryIndexerUrl = treasuryIndexerUrl;
   }
 
   /**
@@ -382,7 +390,8 @@ export class AbstraxionAuth {
       cosmwasmClient,
       this.treasury,
       this.rpcUrl,
-      this.indexerUrl,
+      this.treasuryIndexerUrl,
+      this.indexerAuthToken,
     );
 
     const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
@@ -481,7 +490,8 @@ export class AbstraxionAuth {
               cosmwasmClient,
               this.treasury,
               this.rpcUrl,
-              this.indexerUrl,
+              this.treasuryIndexerUrl,
+              this.indexerAuthToken,
             ),
           ]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Providers as TurnkeyProviders } from './providers';
 import { AbstraxionProvider } from '@burnt-labs/abstraxion';
 import { useTurnkeyForAbstraxion, TurnkeySigningMethod } from '../../hooks/useTurnkeyForAbstraxion';
@@ -28,9 +28,37 @@ function AbstraxionWrapper({
     },
 
     // Indexer configuration - required to find existing accounts (fast)
-    indexer: process.env.NEXT_PUBLIC_INDEXER_URL && process.env.NEXT_PUBLIC_INDEXER_TOKEN ? {
-      url: process.env.NEXT_PUBLIC_INDEXER_URL,
-      authToken: process.env.NEXT_PUBLIC_INDEXER_TOKEN,
+    // Supports both Numia (with token) and Subquery (without token)
+    indexer: (() => {
+      if (!process.env.NEXT_PUBLIC_INDEXER_URL) return undefined;
+
+      // If type is explicitly set to subquery, use Subquery
+      if (process.env.NEXT_PUBLIC_INDEXER_TYPE === 'subquery') {
+        console.log('[Config] 🔧 Using SUBQUERY indexer:', process.env.NEXT_PUBLIC_INDEXER_URL);
+        return {
+          type: 'subquery' as const,
+          url: process.env.NEXT_PUBLIC_INDEXER_URL,
+          rpcUrl: process.env.NEXT_PUBLIC_RPC_URL,
+        };
+      }
+
+      // Otherwise, use Numia (default)
+      if (process.env.NEXT_PUBLIC_INDEXER_TOKEN) {
+        console.log('[Config] 🔧 Using NUMIA indexer:', process.env.NEXT_PUBLIC_INDEXER_URL);
+        return {
+          type: 'numia' as const,
+          url: process.env.NEXT_PUBLIC_INDEXER_URL,
+          authToken: process.env.NEXT_PUBLIC_INDEXER_TOKEN,
+        };
+      }
+
+      console.warn('[Config] ⚠️ INDEXER_URL set but no TYPE or TOKEN provided');
+      return undefined;
+    })(),
+
+    // Treasury indexer configuration - for fetching grant configs from DaoDao indexer (fast)
+    treasuryIndexer: process.env.NEXT_PUBLIC_TREASURY_INDEXER_URL ? {
+      url: process.env.NEXT_PUBLIC_TREASURY_INDEXER_URL,
     } : undefined,
 
     // Local/RPC configuration - fallback for finding existing accounts (reliable)
@@ -60,41 +88,13 @@ export default function SignerModeLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [signingMethod, setSigningMethod] = useState<TurnkeySigningMethod>('viem');
+  const signingMethod: TurnkeySigningMethod = 'viem';
 
   return (
     <TurnkeyProviders>
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Signer Mode Demo</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Testing Turnkey + Abstraxion integration
-            </p>
-
-            <div className="mt-3 flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">
-                Signing Method:
-              </label>
-              <select
-                value={signingMethod}
-                onChange={(e) => setSigningMethod(e.target.value as TurnkeySigningMethod)}
-                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="viem">Viem (Recommended)</option>
-                <option value="raw-api">Raw API</option>
-              </select>
-              <span className="text-xs text-gray-500">
-                {signingMethod === 'viem' ? 'Using @turnkey/viem' : 'Using signRawPayload API'}
-              </span>
-            </div>
-          </div>
-        </header>
-
-        <AbstraxionWrapper signingMethod={signingMethod}>
-          {children}
-        </AbstraxionWrapper>
-      </div>
+      <AbstraxionWrapper signingMethod={signingMethod}>
+        {children}
+      </AbstraxionWrapper>
     </TurnkeyProviders>
   );
 }

@@ -34,16 +34,25 @@ export const useAbstraxionSigningClient = (): {
   >(undefined);
 
   useEffect(() => {
+    // Skip if not connected or missing required data
+    if (!isConnected || !abstraxionAccount || !granterAddress) {
+      // Clear client if we're no longer connected
+      if (!isConnected && abstractClient) {
+        setAbstractClient(undefined);
+      }
+      return;
+    }
+
+    // Skip if client already exists (prevent unnecessary recreation)
+    if (abstractClient) {
+      return;
+    }
+
     async function getSigner() {
+      if (!abstraxionAccount) {
+        throw new Error("No account found.");
+      }
       try {
-        if (!abstraxionAccount) {
-          throw new Error("No account found.");
-        }
-
-        if (!granterAddress) {
-          throw new Error("No granter found.");
-        }
-
         const granteeAddress = await abstraxionAccount
           .getAccounts()
           .then((accounts) => {
@@ -77,7 +86,8 @@ export const useAbstraxionSigningClient = (): {
     }
 
     getSigner();
-  }, [isConnected, abstraxionAccount, granterAddress, abstraxionAuth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected, abstraxionAccount, granterAddress]);
 
   return {
     client: abstractClient,

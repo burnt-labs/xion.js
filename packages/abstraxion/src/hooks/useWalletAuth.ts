@@ -13,6 +13,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { Buffer } from "buffer";
 import { createCompositeAccountStrategy } from "@burnt-labs/account-management";
+import type { AccountIndexerConfig } from "@burnt-labs/account-management";
 import type {
   AuthenticationConfig,
   WalletDefinition,
@@ -148,9 +149,10 @@ export function useWalletAuth({
   const accountStrategy = useMemo(
     () => createCompositeAccountStrategy({
       indexer: indexer ? {
+        ...indexer,
         url: indexer.url,
         authToken: indexer.authToken,
-      } : undefined,
+      } as AccountIndexerConfig : undefined,
       rpc: localConfig ? {
         rpcUrl,
         checksum: localConfig.checksum,

@@ -55,7 +55,7 @@ export function WalletModal({ authentication }: WalletModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
       {/* Backdrop - click to close (disabled when connecting) */}
       <div
         className="fixed inset-0"
@@ -64,32 +64,42 @@ export function WalletModal({ authentication }: WalletModalProps) {
 
       {/* Modal Content */}
       <div className="relative z-10 w-full max-w-md mx-auto px-4">
-        <div className="bg-gray-900/95 border border-white/10 rounded-2xl p-6 shadow-2xl">
+        <div className="bg-black/80 border border-white/10 rounded-lg p-6 shadow-2xl backdrop-blur-xl">
           {/* Loading Overlay */}
           {isConnecting && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl">
-              <div className="mx-4 max-w-sm rounded-lg border border-blue-500/30 bg-blue-500/10 p-6 text-center backdrop-blur-md">
-                <div className="mb-4">
-                  <div className="mx-auto flex h-12 w-12 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/30 bg-blue-500/20">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-400 border-r-transparent"></div>
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-lg rounded-lg">
+              <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+                <div className="mb-6">
+                  <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/40 bg-blue-500/20">
+                    <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-blue-400 border-r-transparent"></div>
                   </div>
                 </div>
-                <p className="font-bold text-blue-400">Connecting Wallet</p>
-                <p className="mt-2 text-sm text-gray-400">
+                <p className="text-lg font-bold text-blue-400">Connecting Wallet</p>
+                <p className="mt-3 text-sm text-gray-300">
                   Please approve the connection and sign the grant creation transaction in your wallet
                 </p>
               </div>
             </div>
           )}
 
-          {/* Header */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">
-              Connect Wallet
-            </h2>
-            <p className="text-white/60 text-sm">
-              Choose a wallet to create or access your smart account
-            </p>
+          {/* Header with Close Button */}
+          <div className="mb-6 flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Connect Wallet
+              </h2>
+              <p className="text-gray-400 text-sm">
+                Choose a wallet to create or access your smart account
+              </p>
+            </div>
+            <button
+              onClick={() => setShowWalletSelectionModal(false)}
+              disabled={isConnecting}
+              className="text-gray-400 hover:text-white transition-colors text-2xl leading-none disabled:opacity-50 disabled:cursor-not-allowed ml-4"
+              aria-label="Close"
+            >
+              ×
+            </button>
           </div>
 
           {/* Error Display */}
@@ -113,8 +123,8 @@ export function WalletModal({ authentication }: WalletModalProps) {
           </div>
 
           {/* Footer */}
-          <div className="mt-6 pt-4 border-t border-white/5">
-            <p className="text-white/40 text-xs text-center">
+          <div className="mt-6 pt-4 border-t border-white/10">
+            <p className="text-gray-400 text-xs text-center">
               By connecting, you agree to the Terms of Service
             </p>
           </div>
@@ -136,7 +146,7 @@ function WalletButton({ icon, name, onClick, disabled }: WalletButtonProps) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="w-full h-[60px] bg-white/[0.05] hover:bg-white/[0.12] border border-white/10 hover:border-white/20 rounded-xl px-4 py-3 text-white font-semibold text-base flex items-center gap-3 transition-all duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/[0.05] disabled:hover:border-white/10"
+      className="w-full h-[60px] bg-gray-900/50 hover:bg-white/10 border border-white/10 hover:border-cyan-400/30 rounded-lg px-4 py-3 text-white font-semibold text-base flex items-center gap-3 transition-all duration-200 ease-in-out hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-900/50 disabled:hover:border-white/10 disabled:hover:scale-100"
     >
       <div className="flex items-center justify-center w-6 h-6">
         {icon}

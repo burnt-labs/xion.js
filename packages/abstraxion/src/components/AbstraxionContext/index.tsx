@@ -11,7 +11,7 @@ import type {
   SignerAuthentication,
 } from "../../authentication/types";
 import { BUILT_IN_WALLETS } from "../../authentication/wallets";
-import type { IndexerConfig, LocalConfig } from "../Abstraxion";
+import type { IndexerConfig, LocalConfig, TreasuryIndexerConfig } from "../Abstraxion";
 
 export type SpendLimit = { denom: string; amount: string };
 
@@ -83,6 +83,7 @@ export function AbstraxionContextProvider({
   feeGranter,
   authentication,
   indexer,
+  treasuryIndexer,
   localConfig,
 }: {
   children: ReactNode;
@@ -98,6 +99,7 @@ export function AbstraxionContextProvider({
   feeGranter?: string;
   authentication?: AuthenticationConfig;
   indexer?: IndexerConfig;
+  treasuryIndexer?: TreasuryIndexerConfig;
   localConfig?: LocalConfig;
 }): JSX.Element {
   // Initialize all loading states as false for consistent hydration, then detect OAuth in useEffect
@@ -138,6 +140,7 @@ export function AbstraxionContextProvider({
     stake,
     treasury,
     feeGranter,
+    daodaoIndexerUrl: treasuryIndexer?.url,
   });
 
   // Initialize wallet auth hook only for signer/browser modes
@@ -263,6 +266,13 @@ export function AbstraxionContextProvider({
             await createGrants(smartAccountAddress, connectionInfo, chainId);
           }
 
+          // Get the session keypair to set as abstraxionAccount
+          const sessionKeypair = await abstraxionAuth.getLocalKeypair();
+          if (sessionKeypair) {
+            console.log('[AbstraxionContext] ✅ Setting abstraxionAccount from session keypair');
+            setAbstraxionAccount(sessionKeypair);
+          }
+
           setGranterAddress(smartAccountAddress);
           setIsConnected(true);
           setIsConnecting(false);
@@ -273,6 +283,20 @@ export function AbstraxionContextProvider({
           setIsConnecting(false);
         }
       } else {
+        // No treasury - create session keypair if it doesn't exist
+        let sessionKeypair = await abstraxionAuth.getLocalKeypair();
+        if (!sessionKeypair) {
+          console.log('[AbstraxionContext] No session keypair found, creating one for signer mode...');
+          sessionKeypair = await abstraxionAuth.generateAndStoreTempAccount();
+          // Authenticate to trigger state change
+          await abstraxionAuth.authenticate();
+        }
+
+        if (sessionKeypair) {
+          console.log('[AbstraxionContext] ✅ Setting abstraxionAccount from session keypair');
+          setAbstraxionAccount(sessionKeypair);
+        }
+
         setGranterAddress(smartAccountAddress);
         localStorage.setItem("loginAuthenticator", connectionInfo.identifier);
         setIsConnected(true);
@@ -341,8 +365,10 @@ export function AbstraxionContextProvider({
       callbackUrl,
       treasury,
       indexer?.url,
+      indexer?.authToken,
+      treasuryIndexer?.url,
     );
-  }, [rpcUrl, contracts, stake, bank, authentication, treasury, indexer]);
+  }, [rpcUrl, contracts, stake, bank, authentication, treasury, indexer, treasuryIndexer]);
 
   useEffect(() => {
     configureInstance();

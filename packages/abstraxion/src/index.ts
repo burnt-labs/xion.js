@@ -9,6 +9,7 @@ export type {
   AbstraxionConfig,
   IndexerConfig,
   LocalConfig,
+  TreasuryIndexerConfig,
 } from "./components/Abstraxion";
 
 // New authentication types
