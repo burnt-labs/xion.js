@@ -31,10 +31,7 @@ export class AbstractAccountJWTSigner extends AASigner {
   }
 
   async getAccounts(): Promise<readonly AAccountData[]> {
-    //TODO: This only needs to check if stytch client can
-    // authenticate with whatever auth method is needed
-    // assuming that the auth method is already set up
-    // we simply return the abstract account data
+    // Return the abstract account data if available
     if (this.abstractAccount === undefined) {
       return [];
     }
