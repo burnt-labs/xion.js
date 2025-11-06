@@ -13,7 +13,6 @@ export const useAbstraxionSigningClient = (): {
   readonly signArb:
     | ((signerAddress: string, message: string | Uint8Array) => Promise<string>)
     | undefined;
-  readonly logout: (() => void) | undefined;
   readonly rpcUrl: string;
 } => {
   const {
@@ -21,7 +20,6 @@ export const useAbstraxionSigningClient = (): {
     abstraxionAccount,
     granterAddress,
     rpcUrl,
-    logout,
     gasPrice,
     treasury,
   } = useContext(AbstraxionContext);
@@ -92,7 +90,6 @@ export const useAbstraxionSigningClient = (): {
   return {
     client: abstractClient,
     signArb: signArbWallet?.signArb,
-    logout,
     rpcUrl,
   } as const;
 };

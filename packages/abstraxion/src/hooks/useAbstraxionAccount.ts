@@ -14,7 +14,7 @@ export interface AbstraxionAccountState {
   isReturningFromAuth: boolean;
   isLoggingIn: boolean;
   login: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const useAbstraxionAccount = (): AbstraxionAccountState => {

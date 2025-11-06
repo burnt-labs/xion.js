@@ -50,7 +50,7 @@ export interface AbstraxionContextProps {
   treasury?: string;
   feeGranter?: string;
   indexerUrl?: string;
-  logout: () => void;
+  logout: () => Promise<void>;
   login: () => Promise<void>;
 
   // Authentication mode
@@ -661,7 +661,7 @@ export function AbstraxionContextProvider({
     }
   }, [authMode, isReturningFromAuth]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setIsConnected(false);
     setAbstraxionAccount(undefined);
     setGranterAddress("");
@@ -676,8 +676,8 @@ export function AbstraxionContextProvider({
       signerAuthState.disconnect();
     }
 
-    abstraxionAuth?.logout();
-  }, [abstraxionAuth, authMode, walletAuthState, signerAuthState]);
+    await cleanupSession();
+  }, [authMode, walletAuthState, signerAuthState, cleanupSession]);
 
   return (
     <AbstraxionContext.Provider
