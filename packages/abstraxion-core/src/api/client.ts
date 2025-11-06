@@ -3,6 +3,7 @@
  * Low-level HTTP client functions for interacting with the Account Abstraction API v2
  */
 
+import type { AuthenticatorType } from "@burnt-labs/signers";
 import type {
   AddressResponse,
   CheckResponse,
@@ -10,7 +11,6 @@ import type {
   CreateSecp256k1Request,
   CreateJWTRequest,
   CreateAccountResponse,
-  AccountType,
 } from './types';
 
 /**
@@ -19,11 +19,11 @@ import type {
  */
 export async function getAccountAddress(
   aaApiUrl: string,
-  type: AccountType,
+  authenticatorType: AuthenticatorType,
   identifier: string
 ): Promise<AddressResponse> {
   const encodedIdentifier = encodeURIComponent(identifier);
-  const response = await fetch(`${aaApiUrl}/api/v2/account/address/${type}/${encodedIdentifier}`, {
+  const response = await fetch(`${aaApiUrl}/api/v2/account/address/${authenticatorType.toLowerCase()}/${encodedIdentifier}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -31,7 +31,7 @@ export async function getAccountAddress(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      errorData.error?.message || `AA API v2 /address/${type} failed with status ${response.status}`
+      errorData.error?.message || `AA API v2 /address/${authenticatorType.toLowerCase()} failed with status ${response.status}`
     );
   }
 
@@ -45,11 +45,11 @@ export async function getAccountAddress(
  */
 export async function checkAccountOnChain(
   aaApiUrl: string,
-  type: AccountType,
+  authenticatorType: AuthenticatorType,
   identifier: string
 ): Promise<CheckResponse> {
   const encodedIdentifier = encodeURIComponent(identifier);
-  const response = await fetch(`${aaApiUrl}/api/v2/account/check/${type}/${encodedIdentifier}`, {
+  const response = await fetch(`${aaApiUrl}/api/v2/account/check/${authenticatorType.toLowerCase()}/${encodedIdentifier}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -62,7 +62,7 @@ export async function checkAccountOnChain(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      errorData.error?.message || `AA API v2 /check/${type} failed with status ${response.status}`
+      errorData.error?.message || `AA API v2 /check/${authenticatorType.toLowerCase()} failed with status ${response.status}`
     );
   }
 
