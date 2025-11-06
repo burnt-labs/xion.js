@@ -16,6 +16,9 @@ export * from "./authenticators";
 // Grant utilities (includes treasury strategies)
 export * from "./grants";
 
+// Account discovery utilities
+export * from "./accounts/accountDiscovery";
+
 // Account query strategies
 export * from "./accounts";
 

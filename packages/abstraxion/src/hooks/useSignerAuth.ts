@@ -9,10 +9,8 @@ import type { AccountIndexerConfig } from "@burnt-labs/account-management";
 import type { SignerAuthentication } from "../authentication/types";
 import type { IndexerConfig, LocalConfig } from "../components/Abstraxion";
 import type { SignerConnectionInfo } from "./useWalletAuth";
-import {
-  checkAccountExists,
-  createEthWalletAccount,
-} from "../utils/aaApi";
+import { createEthWalletAccount } from "@burnt-labs/abstraxion-core";
+import { checkAccountExists } from "@burnt-labs/account-management";
 
 export interface SignerAuthState {
   smartAccountAddress: string | null;

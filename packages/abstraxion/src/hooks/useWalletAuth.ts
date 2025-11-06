@@ -20,10 +20,10 @@ import type {
 } from "../authentication/types";
 import type { IndexerConfig, LocalConfig } from "../components/Abstraxion";
 import {
-  checkAccountExists,
   createEthWalletAccount,
   createSecp256k1Account,
-} from "../utils/aaApi";
+} from "@burnt-labs/abstraxion-core";
+import { checkAccountExists } from "@burnt-labs/account-management";
 
 /**
  * Wallet type for smart account authenticators

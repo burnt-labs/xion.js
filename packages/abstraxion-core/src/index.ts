@@ -4,3 +4,6 @@ export { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 export { StorageStrategy, RedirectStrategy } from "../src/types/strategyTypes";
 export * from "@/types";
 export * from "@/utils/grant";
+export * from "./connectors";
+export * from "./api";
+export * from "./config";
