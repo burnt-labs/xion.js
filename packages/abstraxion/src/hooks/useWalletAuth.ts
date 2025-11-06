@@ -24,6 +24,7 @@ import {
   createSecp256k1Account,
 } from "@burnt-labs/abstraxion-core";
 import { checkAccountExists } from "@burnt-labs/account-management";
+import { AUTHENTICATOR_TYPE, type AuthenticatorType } from "@burnt-labs/signers";
 
 /**
  * Wallet type for smart account authenticators
@@ -46,11 +47,13 @@ export interface WalletConnectionInfo {
  * Information about a connected session signer (signer mode)
  */
 export interface SignerConnectionInfo {
-  type: 'SignerEth';
-  ethereumAddress: string; // Ethereum address from the signer
-  identifier: string; // Ethereum address (lowercase) - used as authenticator
+  type: 'SignerEth' | 'SignerPasskey' | 'SignerJWT' | 'SignerSecp256K1'; // Type based on authenticatorType
+  authenticatorType: AuthenticatorType; // Authenticator type from config
+  identifier: string; // Authenticator identifier (address, credential, JWT, etc.)
   authenticatorIndex?: number; // Index of the authenticator in the smart account
-  signMessage: (hexMessage: string) => Promise<string>; // Signing function
+  signMessage: (message: string) => Promise<string>; // Signing function
+  // Legacy field for backward compatibility (only for EthWallet)
+  ethereumAddress?: string; // Deprecated: use identifier instead
 }
 
 /**
@@ -184,9 +187,11 @@ export function useWalletAuth({
       setWalletAddress(ethAddress);
 
       // 2. Check if account already exists using shared utility
+      // We know the type is EthWallet since we're connecting MetaMask
       const accountCheck = await checkAccountExists(
         accountStrategy,
         ethAddress.toLowerCase(),
+        AUTHENTICATOR_TYPE.EthWallet,
         '[useWalletAuth]'
       );
 
@@ -196,7 +201,7 @@ export function useWalletAuth({
         setCodeId(accountCheck.codeId || null);
 
         const walletConnectionInfo: WalletConnectionInfo = {
-          type: 'EthWallet',
+          type: AUTHENTICATOR_TYPE.EthWallet,
           address: ethAddress,
           identifier: ethAddress,
           walletName: 'metamask',
@@ -216,10 +221,19 @@ export function useWalletAuth({
         return await signWithEthWallet(plainText, ethAddress);
       };
 
+      if (!localConfig) {
+        throw new Error('LocalConfig is required for account creation');
+      }
+
       const result = await createEthWalletAccount(
         aaApiUrl,
         ethAddress,
         signFn,
+        {
+          checksum: localConfig.checksum,
+          feeGranter: localConfig.feeGranter,
+          addressPrefix: localConfig.addressPrefix,
+        },
         '[useWalletAuth]'
       );
 
@@ -228,7 +242,7 @@ export function useWalletAuth({
       setCodeId(result.code_id);
 
       const walletConnectionInfo: WalletConnectionInfo = {
-        type: 'EthWallet',
+        type: AUTHENTICATOR_TYPE.EthWallet,
         address: ethAddress,
         identifier: ethAddress,
         walletName: 'metamask',
@@ -297,9 +311,11 @@ export function useWalletAuth({
         const pubkeyBase64 = Buffer.from(pubkeyHex, 'hex').toString('base64');
 
         // Check if account exists
+        // We know the type is Secp256K1 since we're connecting a Cosmos wallet
         const accountCheck = await checkAccountExists(
           accountStrategy,
           pubkeyBase64,
+          AUTHENTICATOR_TYPE.Secp256K1,
           '[useWalletAuth]'
         );
 
@@ -309,7 +325,7 @@ export function useWalletAuth({
           setCodeId(accountCheck.codeId || null);
 
           const walletConnectionInfo: WalletConnectionInfo = {
-            type: 'Secp256K1',
+            type: AUTHENTICATOR_TYPE.Secp256K1,
             address: cosmosWalletAddress,
             pubkey: pubkeyHex,
             identifier: pubkeyBase64,
@@ -334,10 +350,19 @@ export function useWalletAuth({
             : Buffer.from(response.signature as Uint8Array).toString('base64');
         };
 
+        if (!localConfig) {
+          throw new Error('LocalConfig is required for account creation');
+        }
+
         const result = await createSecp256k1Account(
           aaApiUrl!,
           pubkeyHex,
           signFn,
+          {
+            checksum: localConfig.checksum,
+            feeGranter: localConfig.feeGranter,
+            addressPrefix: localConfig.addressPrefix,
+          },
           '[useWalletAuth]'
         );
 
@@ -345,7 +370,7 @@ export function useWalletAuth({
         setCodeId(result.code_id);
 
         const walletConnectionInfo: WalletConnectionInfo = {
-          type: 'Secp256K1',
+          type: AUTHENTICATOR_TYPE.Secp256K1,
           address: cosmosWalletAddress,
           pubkey: pubkeyHex,
           identifier: pubkeyBase64,

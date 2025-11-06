@@ -11,7 +11,7 @@
  */
 
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { calculateSalt, predictSmartAccountAddress } from "@burnt-labs/signers";
+import { calculateSalt, calculateSmartAccountAddress, AUTHENTICATOR_TYPE, type AuthenticatorType } from "@burnt-labs/signers";
 import type { IndexerStrategy, SmartAccountWithCodeId } from "../types/indexer";
 import { Buffer } from "buffer";
 
@@ -52,16 +52,17 @@ export class RpcAccountStrategy implements IndexerStrategy {
 
   async fetchSmartAccounts(
     loginAuthenticator: string,
+    authenticatorType: AuthenticatorType,
   ): Promise<SmartAccountWithCodeId[]> {
     try {
-      // 1. Determine wallet type explicitly from authenticator format
-      const walletType = this.getWalletTypeForSaltCalculation(loginAuthenticator);
+      // 1. Use provided authenticator type for salt calculation
+      const typeForSalt = authenticatorType;
 
       // 2. Calculate salt from authenticator (uses same logic as AA API)
-      const salt = calculateSalt(walletType, loginAuthenticator);
+      const salt = calculateSalt(typeForSalt, loginAuthenticator);
 
-      // 3. Predict smart account address using instantiate2
-      const predictedAddress = predictSmartAccountAddress({
+      // 3. Calculate smart account address using instantiate2
+      const calculatedAddress = calculateSmartAccountAddress({
         checksum: this.config.checksum,
         creator: this.config.creator,
         salt,
@@ -73,7 +74,7 @@ export class RpcAccountStrategy implements IndexerStrategy {
 
       // 5. Query authenticators directly (more reliable than getContract)
       // getContract() can fail with protobuf errors on some contract types
-      const authenticators = await this.queryAuthenticators(client, predictedAddress, loginAuthenticator);
+      const authenticators = await this.queryAuthenticators(client, calculatedAddress, loginAuthenticator);
 
       if (!authenticators || authenticators.length === 0) {
         // If query failed, contract likely doesn't exist (this is normal)
@@ -83,7 +84,7 @@ export class RpcAccountStrategy implements IndexerStrategy {
       // 6. Return smart account with authenticators
       // Use configured codeId (same as AA API and Dashboard)
       return [{
-        id: predictedAddress,
+        id: calculatedAddress,
         codeId: this.config.codeId,
         authenticators: authenticators,
       }];
@@ -91,25 +92,6 @@ export class RpcAccountStrategy implements IndexerStrategy {
       console.error("[RpcAccountStrategy] Failed to query chain:", error);
       return [];
     }
-  }
-
-  /**
-   * Determine wallet type for salt calculation
-   * Only EthWallet and Secp256K1 are supported for salt calculation currently
-   */
-  private getWalletTypeForSaltCalculation(authenticator: string): "EthWallet" | "Secp256K1" {
-    // JWT format: "aud.sub" - treat as Secp256K1 for salt calculation
-    if (authenticator.includes(".") && !authenticator.startsWith("0x")) {
-      return "Secp256K1";
-    }
-
-    // EthWallet format: 0x-prefixed or 40-character hex
-    if (authenticator.startsWith("0x") || /^[0-9a-fA-F]{40}$/i.test(authenticator)) {
-      return "EthWallet";
-    }
-
-    // Default to Secp256K1 for all other formats (pubkeys, passkeys, etc.)
-    return "Secp256K1";
   }
 
   /**
@@ -159,20 +141,22 @@ export class RpcAccountStrategy implements IndexerStrategy {
               authenticatorData = authResponse;
             }
 
-            // Extract authenticator string and type
+            // Extract authenticator string and type from contract response
+            // Contract returns data in format: {"EthWallet":{"address":"0x..."}} etc.
             if (authenticatorData.EthWallet) {
               authenticatorString = authenticatorData.EthWallet.address;
-              authenticatorType = "EthWallet";
+              authenticatorType = AUTHENTICATOR_TYPE.EthWallet;
             } else if (authenticatorData.Secp256K1) {
               authenticatorString = authenticatorData.Secp256K1.pubkey;
-              authenticatorType = "Secp256K1";
+              authenticatorType = AUTHENTICATOR_TYPE.Secp256K1;
             } else if (authenticatorData.JWT) {
               authenticatorString = authenticatorData.JWT.aud_and_sub;
-              authenticatorType = "JWT";
+              authenticatorType = AUTHENTICATOR_TYPE.JWT;
             } else if (authenticatorData.Passkey) {
               authenticatorString = authenticatorData.Passkey.credential_id;
-              authenticatorType = "Passkey";
+              authenticatorType = AUTHENTICATOR_TYPE.Passkey;
             } else {
+              // Unknown authenticator type from contract - skip it
               return null;
             }
 

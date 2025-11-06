@@ -6,6 +6,7 @@
 import { useTurnkey } from '@turnkey/react-wallet-kit';
 import { hashMessage } from 'viem';
 import type { SignerConfig } from '@burnt-labs/abstraxion';
+import { AUTHENTICATOR_TYPE } from '@burnt-labs/abstraxion';
 
 export function useTurnkeyRawAPI() {
   const { authState, wallets, httpClient } = useTurnkey();
@@ -27,8 +28,8 @@ export function useTurnkeyRawAPI() {
     }
 
     return {
-      ethereumAddress: ethAccount.address,
-
+      authenticatorType: AUTHENTICATOR_TYPE.EthWallet,
+      authenticator: ethAccount.address,
       signMessage: async (hexMessage: string) => {
         console.log('[useTurnkeyRawAPI] - Signing message with Raw API...');
 

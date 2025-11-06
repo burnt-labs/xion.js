@@ -8,6 +8,7 @@
  */
 
 import type { IndexerStrategy, SmartAccountWithCodeId } from "../types/indexer";
+import type { AuthenticatorType } from "../authenticators/type-detection";
 
 /**
  * Empty Indexer Strategy
@@ -20,7 +21,8 @@ import type { IndexerStrategy, SmartAccountWithCodeId } from "../types/indexer";
  */
 export class EmptyAccountStrategy implements IndexerStrategy {
   async fetchSmartAccounts(
-    loginAuthenticator: string,
+    _loginAuthenticator: string,
+    _authenticatorType: AuthenticatorType, // Required by interface but not used - always returns empty
   ): Promise<SmartAccountWithCodeId[]> {
     return [];
   }

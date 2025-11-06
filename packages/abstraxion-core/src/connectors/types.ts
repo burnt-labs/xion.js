@@ -47,6 +47,8 @@ export interface ConnectorConnectionResult {
    * Additional metadata specific to the connection
    */
   metadata?: {
+    /** Authenticator type (EthWallet, Secp256K1, Passkey, JWT, etc.) */
+    authenticatorType?: string;
     /** Wallet name (for Cosmos wallets: 'keplr', 'leap', 'okx') */
     walletName?: string;
     /** Ethereum address (for EthWallet and SignerEth types) */

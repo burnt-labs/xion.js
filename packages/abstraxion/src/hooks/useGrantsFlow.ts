@@ -11,7 +11,7 @@ import {
   generateTreasuryGrants as generateTreasuryGrantMessages,
   isContractGrantConfigValid,
 } from "@burnt-labs/account-management";
-import { AADirectSigner, AAEthSigner, AAClient } from "@burnt-labs/signers";
+import { AADirectSigner, AAEthSigner, AAClient, AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 import { abstraxionAuth } from "../components/Abstraxion";
 import type { ConnectionInfo } from "./useWalletAuth";
 import type { ContractGrantDescription, SpendLimit } from "../components/AbstraxionContext";
@@ -201,7 +201,7 @@ export function useGrantsFlow({
 
       let signer;
 
-      if (connectionInfo.type === 'EthWallet') {
+      if (connectionInfo.type === AUTHENTICATOR_TYPE.EthWallet) {
         // MetaMask signer (browser wallet)
         if (!window.ethereum) {
           throw new Error('MetaMask not found');
@@ -235,7 +235,8 @@ export function useGrantsFlow({
         );
       } else {
         // Keplr/Leap/OKX signer (Cosmos wallets)
-        const walletName = connectionInfo.walletName || 'keplr';
+        // For SignerConnectionInfo, walletName doesn't exist, so default to keplr
+        const walletName = (connectionInfo as any).walletName || 'keplr';
         const wallet = walletName === 'leap'
           ? window.leap
           : walletName === 'okx'
@@ -305,13 +306,11 @@ export function useGrantsFlow({
       }
 
       // 6. Simulate transaction to get gas estimate
-      console.log('[useGrantsFlow] ⚙️ Simulating transaction to estimate gas...');
       const simmedGas = await client.simulate(
         smartAccountAddress,
         messagesToSign,
         'Create grants for abstraxion',
       );
-      console.log('[useGrantsFlow] → Estimated gas:', simmedGas);
       
       // Parse gas price from config (e.g., "0.001uxion" -> { amount: 0.001, denom: "uxion" })
       const gasPriceMatch = gasPrice.match(/^([\d.]+)(.+)$/);
@@ -336,24 +335,6 @@ export function useGrantsFlow({
           }
         : calculatedFee;
 
-      console.log('[useGrantsFlow] 💳 Fee configuration:');
-      console.log('[useGrantsFlow] → Gas limit:', feeToUse.gas);
-      console.log('[useGrantsFlow] → Fee amount:', feeToUse.amount);
-      if (feeGranter) {
-        console.log('[useGrantsFlow] → Fee granter:', feeGranter);
-      }
-
-      // 7. Sign and broadcast grant transaction
-      console.log('[useGrantsFlow] ✍️ Signing and broadcasting transaction...');
-      console.log('[useGrantsFlow] → Signer address (smart account):', smartAccountAddress);
-      console.log('[useGrantsFlow] → Authenticator index:', authenticatorIndex);
-      console.log('[useGrantsFlow] → Connection info:', connectionInfo);
-
-      // Query the smart account to see what authenticator is registered
-      if (connectionInfo.type === 'SignerEth') {
-        console.log('[useGrantsFlow] → Ethereum address signing with:', connectionInfo.ethereumAddress);
-      }
-
       const result = await client.signAndBroadcast(
         smartAccountAddress,
         messagesToSign,
@@ -363,8 +344,6 @@ export function useGrantsFlow({
 
       console.log('[useGrantsFlow] ✅ Transaction broadcast successful!');
       console.log('[useGrantsFlow] → Transaction hash:', result.transactionHash);
-      console.log('[useGrantsFlow] → Height:', result.height);
-      console.log('[useGrantsFlow] → Explorer URL: https://explorer.burnt.com/xion-mainnet-1/tx/' + result.transactionHash);
 
       // 8. Store granter address (using storage directly since setGranter is private)
       console.log('[useGrantsFlow] 💾 Storing granter address in localStorage');

@@ -4,6 +4,7 @@
  */
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../types/indexer";
+import type { AuthenticatorType } from "../authenticators/type-detection";
 
 interface NumiaAuthenticatorResp {
   type: string;
@@ -39,6 +40,7 @@ export class NumiaAccountStrategy implements IndexerStrategy {
 
   async fetchSmartAccounts(
     loginAuthenticator: string,
+    _authenticatorType: AuthenticatorType, // Required by interface but not used - Numia queries by authenticator string directly
   ): Promise<SmartAccountWithCodeId[]> {
     try {
       // Encode authenticator for URL

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { AuthenticatorType } from "@burnt-labs/account-management";
 
 /**
  * Redirect authentication (dashboard OAuth flow)
@@ -62,23 +63,38 @@ export interface SignerAuthentication {
 
 /**
  * Configuration for a session signer
- * Provides Ethereum address and signing capability
+ * Provides authenticator information and signing capability
  */
 export interface SignerConfig {
   /**
-   * Ethereum address from the signer (0x...)
-   * Used as the authenticator for the smart account
+   * Authenticator type - always known from the signer provider
+   * Examples: 'EthWallet' for Ethereum signers, 'Passkey' for WebAuthn, etc.
+   * 
+   * You can use string literals directly (e.g., 'EthWallet') or import AUTHENTICATOR_TYPE
+   * from @burnt-labs/abstraxion for type-safe constants.
    */
-  ethereumAddress: string;
+  authenticatorType: AuthenticatorType;
 
   /**
-   * Function that signs hex-encoded messages
-   * Compatible with personal_sign format
-   *
-   * @param hexMessage - Message to sign (hex string, with or without 0x prefix)
-   * @returns Signature as hex string (65 bytes: r + s + v)
+   * Authenticator identifier:
+   * - EthWallet: Ethereum address (0x...)
+   * - Passkey: Base64-encoded credential
+   * - JWT: JWT token or identifier (aud.sub format)
+   * - Secp256K1: Base64-encoded public key
    */
-  signMessage: (hexMessage: string) => Promise<string>;
+  authenticator: string;
+
+  /**
+   * Function that signs messages
+   * Signature format depends on authenticatorType:
+   * - EthWallet: hex signature (65 bytes: r + s + v)
+   * - Passkey: WebAuthn signature
+   * - Secp256K1: Cosmos signature format
+   *
+   * @param message - Message to sign (format depends on authenticatorType)
+   * @returns Signature (format depends on authenticatorType)
+   */
+  signMessage: (message: string) => Promise<string>;
 }
 
 /**

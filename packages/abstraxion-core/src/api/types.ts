@@ -1,18 +1,50 @@
 /**
- * Types for AA API interactions
+ * Types for AA API v2 interactions
  */
 
 /**
- * Response from AA API /prepare endpoint
+ * Response from AA API v2 /account/address endpoint
  */
-export interface PrepareResponse {
-  message_to_sign: string;
-  salt: string;
-  metadata: any;
+export interface AddressResponse {
+  address: string;
+  authenticator_type?: string;
 }
 
 /**
- * Response from AA API /create endpoint
+ * Response from AA API v2 /account/check endpoint
+ */
+export interface CheckResponse {
+  address: string;
+  codeId: number;
+  authenticatorType: string;
+}
+
+/**
+ * Request for AA API v2 /accounts/create endpoint (EthWallet)
+ */
+export interface CreateEthWalletRequest {
+  address: string;
+  signature: string;
+}
+
+/**
+ * Request for AA API v2 /accounts/create endpoint (Secp256k1)
+ */
+export interface CreateSecp256k1Request {
+  pubkey: string;
+  signature: string;
+}
+
+/**
+ * Request for AA API v2 /accounts/create endpoint (JWT)
+ */
+export interface CreateJWTRequest {
+  jwt: string;
+  auth_payload: string; // session_token or session_jwt
+}
+
+/**
+ * Response from AA API v2 /accounts/create endpoint
  */
 export interface CreateAccountResponse {
   account_address: string;
@@ -21,23 +53,7 @@ export interface CreateAccountResponse {
 }
 
 /**
- * Request for AA API /prepare endpoint
+ * Account authenticator type
  */
-export interface PrepareRequest {
-  wallet_type: 'EthWallet' | 'Secp256K1';
-  address?: string; // For EthWallet
-  pubkey?: string;  // For Secp256K1
-}
-
-/**
- * Request for AA API /create endpoint
- */
-export interface CreateAccountRequest {
-  wallet_type: 'EthWallet' | 'Secp256K1';
-  address?: string; // For EthWallet
-  pubkey?: string;  // For Secp256K1
-  signature: string;
-  salt: string;
-  message: string;
-}
+export type AccountType = 'ethwallet' | 'secp256k1' | 'jwt';
 

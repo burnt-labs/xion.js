@@ -11,6 +11,7 @@ import type {
   SignerAuthentication,
 } from "../../authentication/types";
 import { BUILT_IN_WALLETS } from "../../authentication/wallets";
+import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 import type { IndexerConfig, LocalConfig, TreasuryIndexerConfig } from "../Abstraxion";
 
 export type SpendLimit = { denom: string; amount: string };
@@ -219,11 +220,11 @@ export function AbstraxionContextProvider({
         localStorage.setItem("loginAuthenticator", walletInfo.identifier);
 
         // Map wallet type to connection type (keplr/leap both use "shuttle")
-        const connType = walletInfo.type === 'EthWallet' ? 'metamask' : 'shuttle';
+        const connType = walletInfo.type === AUTHENTICATOR_TYPE.EthWallet ? 'metamask' : 'shuttle';
         localStorage.setItem("loginType", connType);
 
         // Get the OfflineSigner from the connected wallet
-        if (walletInfo.type === 'Secp256K1' && walletInfo.walletName) {
+        if (walletInfo.type === AUTHENTICATOR_TYPE.Secp256K1 && walletInfo.walletName) {
           try {
             const wallet = walletInfo.walletName === 'keplr' ? (window as any).keplr :
                           walletInfo.walletName === 'leap' ? (window as any).leap :

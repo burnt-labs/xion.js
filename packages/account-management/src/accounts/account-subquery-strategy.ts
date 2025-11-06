@@ -7,6 +7,7 @@
  */
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../types/indexer";
+import type { AuthenticatorType } from "../authenticators/type-detection";
 
 interface SmartAccountAuthenticator {
   id: string;
@@ -45,6 +46,7 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
 
   async fetchSmartAccounts(
     loginAuthenticator: string,
+    _authenticatorType: AuthenticatorType, // Required by interface but not used - Subquery queries by authenticator string directly
   ): Promise<SmartAccountWithCodeId[]> {
     try {
       const response = await fetch(this.indexerUrl, {

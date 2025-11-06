@@ -65,3 +65,7 @@ export type {
   WalletConnectionInfo,
   ConnectionInfo,
 } from "./hooks/useWalletAuth";
+
+// Re-export AUTHENTICATOR_TYPE for convenience (consumers often need it when using signer mode)
+export { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
+export type { AuthenticatorType } from "@burnt-labs/signers";

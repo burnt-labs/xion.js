@@ -5,6 +5,7 @@
 
 import type { CompositeAccountStrategy } from '../accounts/index';
 import type { Authenticator } from '../types/authenticator';
+import type { AuthenticatorType } from '../authenticators/type-detection';
 
 /**
  * Result of account existence check
@@ -20,14 +21,21 @@ export interface AccountExistenceResult {
 /**
  * Check if account exists using the account strategy
  * Returns account details if found
+ * 
+ * @param accountStrategy - The account strategy to use for discovery
+ * @param authenticator - The authenticator string (address, pubkey, JWT, etc.)
+ * @param authenticatorType - Authenticator type. Required because the type is always known from context
+ *                            (wallet connection, signer config, etc.) when checking for accounts.
+ * @param logPrefix - Optional log prefix for debugging
  */
 export async function checkAccountExists(
   accountStrategy: CompositeAccountStrategy,
   authenticator: string,
+  authenticatorType: AuthenticatorType,
   logPrefix: string = '[account-discovery]'
 ): Promise<AccountExistenceResult> {
   try {
-    const accounts = await accountStrategy.fetchSmartAccounts(authenticator);
+    const accounts = await accountStrategy.fetchSmartAccounts(authenticator, authenticatorType);
 
     if (accounts.length === 0) {
       return {

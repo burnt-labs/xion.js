@@ -245,6 +245,9 @@ importers:
       '@burnt-labs/constants':
         specifier: workspace:*
         version: link:../constants
+      '@burnt-labs/signers':
+        specifier: workspace:*
+        version: link:../signers
       '@cosmjs/amino':
         specifier: ^0.36.0
         version: 0.36.0

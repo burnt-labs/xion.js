@@ -7,6 +7,25 @@ import { sha256 } from "@cosmjs/crypto";
 import { Buffer } from "buffer";
 
 /**
+ * Authenticator type constants
+ * Use these instead of string literals to avoid typos and ensure type safety
+ */
+export const AUTHENTICATOR_TYPE = {
+  EthWallet: "EthWallet" as const,      // Ethereum wallets (MetaMask, Rainbow, etc.)
+  Secp256K1: "Secp256K1" as const,      // Cosmos wallets (Keplr, Leap, OKX, etc.)
+  Ed25519: "Ed25519" as const,          // Ed25519 curve wallets (Solana, etc.)
+  JWT: "JWT" as const,                  // Social logins (Google, TikTok, etc.)
+  Passkey: "Passkey" as const,          // WebAuthn/Passkey
+  Sr25519: "Sr25519" as const,          // Sr25519 curve (Polkadot, etc.)
+} as const;
+
+/**
+ * Authenticator types that support salt calculation
+ * Used to determine which salt calculation method to use
+ */
+export type AuthenticatorType = typeof AUTHENTICATOR_TYPE[keyof typeof AUTHENTICATOR_TYPE];
+
+/**
  * Calculate salt for EthWallet authenticator
  *
  * Salt is sha256(address_bytes) where address is the hex Ethereum address
@@ -35,19 +54,46 @@ export function calculateSecp256k1Salt(pubkey: string): string {
 }
 
 /**
- * Calculate salt based on wallet type
+ * Calculate salt for JWT authenticator
  *
- * @param walletType - Type of wallet authenticator
- * @param credential - Address (for EthWallet) or pubkey (for Secp256K1)
+ * Salt is sha256(jwt_string) where jwt is the JWT token or identifier
+ *
+ * @param jwt - JWT token or identifier (e.g., "aud.sub" format)
+ * @returns Salt as hex string
+ */
+export function calculateJWTSalt(jwt: string): string {
+  const saltBytes = sha256(Buffer.from(jwt));
+  return Buffer.from(saltBytes).toString("hex");
+}
+
+/**
+ * Calculate salt based on authenticator type
+ *
+ * @param authenticatorType - Type of authenticator
+ * @param credential - Authenticator credential (address, pubkey, JWT, etc.)
  * @returns Salt as hex string
  */
 export function calculateSalt(
-  walletType: "EthWallet" | "Secp256K1",
+  authenticatorType: AuthenticatorType,
   credential: string,
 ): string {
-  if (walletType === "EthWallet") {
+  switch (authenticatorType) {
+    case AUTHENTICATOR_TYPE.EthWallet:
     return calculateEthWalletSalt(credential);
-  } else {
+    case AUTHENTICATOR_TYPE.Secp256K1:
+      return calculateSecp256k1Salt(credential);
+    case AUTHENTICATOR_TYPE.JWT:
+      return calculateJWTSalt(credential);
+    case AUTHENTICATOR_TYPE.Passkey:
+    case AUTHENTICATOR_TYPE.Ed25519:
+    case AUTHENTICATOR_TYPE.Sr25519:
+      // For now, these use the same salt calculation as Secp256K1
+      // (sha256 of the credential string)
+      // Can be extended with specific implementations later
     return calculateSecp256k1Salt(credential);
+    default:
+      // TypeScript exhaustiveness check - should never reach here
+      const _exhaustive: never = authenticatorType;
+      throw new Error(`Unsupported authenticator type: ${_exhaustive}`);
   }
 }

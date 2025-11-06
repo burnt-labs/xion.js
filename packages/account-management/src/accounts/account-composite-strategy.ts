@@ -5,6 +5,7 @@
  */
 
 import type { IndexerStrategy, SmartAccountWithCodeId } from "../types/indexer";
+import type { AuthenticatorType } from "../authenticators/type-detection";
 
 /**
  * Composite Indexer Strategy
@@ -38,12 +39,13 @@ export class CompositeAccountStrategy implements IndexerStrategy {
 
   async fetchSmartAccounts(
     loginAuthenticator: string,
+    authenticatorType: AuthenticatorType,
   ): Promise<SmartAccountWithCodeId[]> {
     for (let i = 0; i < this.strategies.length; i++) {
       const strategy = this.strategies[i];
 
       try {
-        const result = await strategy.fetchSmartAccounts(loginAuthenticator);
+        const result = await strategy.fetchSmartAccounts(loginAuthenticator, authenticatorType);
 
         if (result && result.length > 0) {
           return result;

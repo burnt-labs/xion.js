@@ -1,5 +1,5 @@
 /**
- * Smart account address prediction
+ * Smart account address calculation
  * Extracted from AA API prepare.ts
  */
 
@@ -7,18 +7,19 @@ import { instantiate2Address } from "@cosmjs/cosmwasm-stargate";
 import { Buffer } from "buffer";
 
 /**
- * Predict the smart account address using instantiate2
+ * Calculate the deterministic smart account address using instantiate2
  *
- * This uses the same deterministic address calculation as the smart contract
+ * This uses the same deterministic address calculation as the smart contract.
+ * Given the same inputs, this will always produce the same address.
  *
  * @param config - Configuration for address calculation
  * @param config.checksum - Contract checksum as hex string
  * @param config.creator - Creator address (fee granter)
  * @param config.salt - Salt as hex string
  * @param config.prefix - Address prefix (e.g., "xion")
- * @returns Predicted bech32 address
+ * @returns Calculated bech32 address
  */
-export function predictSmartAccountAddress(config: {
+export function calculateSmartAccountAddress(config: {
   checksum: string;
   creator: string;
   salt: string;

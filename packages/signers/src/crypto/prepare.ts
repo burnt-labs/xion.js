@@ -6,8 +6,8 @@
  * for use in environments where calling the API is not desired
  */
 
-import { calculateSalt } from "./salt";
-import { predictSmartAccountAddress } from "./address";
+import { calculateSalt, AUTHENTICATOR_TYPE } from "./salt";
+import { calculateSmartAccountAddress } from "./address";
 
 export interface PrepareConfig {
   /** Contract checksum as hex string */
@@ -21,8 +21,8 @@ export interface PrepareConfig {
 export interface PrepareResult {
   /** The message that should be signed by the user */
   messageToSign: string;
-  /** The predicted smart account address */
-  predictedAddress: string;
+  /** The calculated smart account address */
+  calculatedAddress: string;
   /** The salt used for address calculation (hex) */
   salt: string;
   /** Metadata for the create request */
@@ -49,30 +49,30 @@ export function prepareEthWalletSignature(
   config: PrepareConfig,
 ): PrepareResult {
   // Calculate salt
-  const salt = calculateSalt("EthWallet", address);
+  const salt = calculateSalt(AUTHENTICATOR_TYPE.EthWallet, address);
 
-  // Predict account address
-  const predictedAddress = predictSmartAccountAddress({
+  // Calculate account address
+  const calculatedAddress = calculateSmartAccountAddress({
     checksum: config.checksum,
     creator: config.feeGranter,
     salt,
     prefix: config.addressPrefix,
   });
 
-  // The message to sign is the predicted smart account address
-  const messageToSign = predictedAddress;
+  // The message to sign is the calculated smart account address
+  const messageToSign = calculatedAddress;
 
   // Build metadata
   const metadata = {
     action: "create_abstraxion_account",
-    wallet_type: "EthWallet",
+    wallet_type: AUTHENTICATOR_TYPE.EthWallet,
     address,
     timestamp: Date.now(),
   };
 
   return {
     messageToSign,
-    predictedAddress,
+    calculatedAddress,
     salt,
     metadata,
   };
@@ -92,30 +92,30 @@ export function prepareSecp256k1Signature(
   config: PrepareConfig,
 ): PrepareResult {
   // Calculate salt
-  const salt = calculateSalt("Secp256K1", pubkey);
+  const salt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, pubkey);
 
-  // Predict account address
-  const predictedAddress = predictSmartAccountAddress({
+  // Calculate account address
+  const calculatedAddress = calculateSmartAccountAddress({
     checksum: config.checksum,
     creator: config.feeGranter,
     salt,
     prefix: config.addressPrefix,
   });
 
-  // The message to sign is the predicted smart account address
-  const messageToSign = predictedAddress;
+  // The message to sign is the calculated smart account address
+  const messageToSign = calculatedAddress;
 
   // Build metadata
   const metadata = {
     action: "create_abstraxion_account",
-    wallet_type: "Secp256K1",
+    wallet_type: AUTHENTICATOR_TYPE.Secp256K1,
     pubkey,
     timestamp: Date.now(),
   };
 
   return {
     messageToSign,
-    predictedAddress,
+    calculatedAddress,
     salt,
     metadata,
   };
@@ -134,7 +134,7 @@ export function prepareSignatureMessage(
   credential: string,
   config: PrepareConfig,
 ): PrepareResult {
-  if (walletType === "EthWallet") {
+  if (walletType === AUTHENTICATOR_TYPE.EthWallet) {
     return prepareEthWalletSignature(credential, config);
   } else {
     return prepareSecp256k1Signature(credential, config);

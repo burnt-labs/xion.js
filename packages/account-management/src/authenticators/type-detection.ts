@@ -3,16 +3,13 @@
  * Explicitly identifies authenticator types based on format
  */
 
-/**
- * All supported authenticator types in XION smart accounts
- */
-export type AuthenticatorType =
-  | "EthWallet"    // Ethereum wallets (MetaMask, Rainbow, etc.)
-  | "Secp256K1"    // Cosmos wallets (Keplr, Leap, OKX, etc.)
-  | "Ed25519"      // Ed25519 curve wallets (Solana, etc.)
-  | "JWT"          // Social logins (Google, TikTok, etc.)
-  | "Passkey"      // WebAuthn/Passkey
-  | "Sr25519";     // Sr25519 curve (Polkadot, etc.)
+// Import from @burnt-labs/signers to maintain single source of truth
+// signers is the lower-level package, so it's the canonical source
+import { AUTHENTICATOR_TYPE, type AuthenticatorType } from '@burnt-labs/signers';
+
+// Re-export AuthenticatorType for internal use within account-management
+// (AUTHENTICATOR_TYPE should be imported directly from @burnt-labs/signers)
+export type { AuthenticatorType };
 
 /**
  * Explicitly determine authenticator type from the authenticator string
@@ -29,17 +26,17 @@ export type AuthenticatorType =
 export function detectAuthenticatorType(authenticator: string): AuthenticatorType {
   // JWT format: "aud.sub" (e.g., "google.com.user123")
   if (authenticator.includes(".") && !authenticator.startsWith("0x")) {
-    return "JWT";
+    return AUTHENTICATOR_TYPE.JWT;
   }
 
   // EthWallet format: 0x-prefixed or 40-character hex
   if (authenticator.startsWith("0x") || /^[0-9a-fA-F]{40}$/i.test(authenticator)) {
-    return "EthWallet";
+    return AUTHENTICATOR_TYPE.EthWallet;
   }
 
   // Passkey format: typically starts with "passkey:" or is a WebAuthn credential
   if (authenticator.startsWith("passkey:") || authenticator.includes("webauthn")) {
-    return "Passkey";
+    return AUTHENTICATOR_TYPE.Passkey;
   }
 
   // Default to Secp256K1 for base64-encoded pubkeys
@@ -49,50 +46,24 @@ export function detectAuthenticatorType(authenticator: string): AuthenticatorTyp
   // - Ed25519: 32 bytes = 43-44 chars base64
   // - Sr25519: 32 bytes = 43-44 chars base64
   // Default to Secp256K1 as it's the most common in Cosmos ecosystem
-  return "Secp256K1";
-}
-
-/**
- * Determine authenticator type with additional context
- *
- * @param authenticator - The authenticator string
- * @param hint - Optional hint about the authenticator type (from contract query, etc.)
- * @returns The authenticator type
- */
-export function detectAuthenticatorTypeWithHint(
-  authenticator: string,
-  hint?: string,
-): AuthenticatorType {
-  // If we have an explicit hint, use it
-  if (hint) {
-    const normalizedHint = hint.toLowerCase();
-    if (normalizedHint.includes("ethwallet")) return "EthWallet";
-    if (normalizedHint.includes("secp256k1")) return "Secp256K1";
-    if (normalizedHint.includes("ed25519")) return "Ed25519";
-    if (normalizedHint.includes("sr25519")) return "Sr25519";
-    if (normalizedHint.includes("jwt")) return "JWT";
-    if (normalizedHint.includes("passkey")) return "Passkey";
-  }
-
-  // Fall back to format detection
-  return detectAuthenticatorType(authenticator);
+  return AUTHENTICATOR_TYPE.Secp256K1;
 }
 
 /**
  * Check if authenticator is a specific type
  */
 export function isEthWallet(authenticator: string): boolean {
-  return detectAuthenticatorType(authenticator) === "EthWallet";
+  return detectAuthenticatorType(authenticator) === AUTHENTICATOR_TYPE.EthWallet;
 }
 
 export function isJWT(authenticator: string): boolean {
-  return detectAuthenticatorType(authenticator) === "JWT";
+  return detectAuthenticatorType(authenticator) === AUTHENTICATOR_TYPE.JWT;
 }
 
 export function isPasskey(authenticator: string): boolean {
-  return detectAuthenticatorType(authenticator) === "Passkey";
+  return detectAuthenticatorType(authenticator) === AUTHENTICATOR_TYPE.Passkey;
 }
 
 export function isSecp256k1(authenticator: string): boolean {
-  return detectAuthenticatorType(authenticator) === "Secp256K1";
+  return detectAuthenticatorType(authenticator) === AUTHENTICATOR_TYPE.Secp256K1;
 }

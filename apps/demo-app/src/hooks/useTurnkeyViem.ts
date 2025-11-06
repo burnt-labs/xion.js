@@ -6,6 +6,7 @@
 import { useTurnkey, AuthState } from '@turnkey/react-wallet-kit';
 import { createAccount } from '@turnkey/viem';
 import type { SignerConfig } from '@burnt-labs/abstraxion';
+import { AUTHENTICATOR_TYPE } from '@burnt-labs/abstraxion';
 
 export function useTurnkeyViem() {
   const { authState, wallets, httpClient, user } = useTurnkey();
@@ -49,8 +50,8 @@ export function useTurnkeyViem() {
     console.log('[useTurnkeyViem] - Viem account created successfully');
 
     return {
-      ethereumAddress: ethAccount.address,
-
+      authenticatorType: AUTHENTICATOR_TYPE.EthWallet,
+      authenticator: ethAccount.address,
       signMessage: async (hexMessage: string) => {
         console.log('[useTurnkeyViem] - Signing message with Viem...');
 

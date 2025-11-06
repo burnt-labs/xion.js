@@ -11,6 +11,7 @@ import type { IndexerConfig, LocalConfig } from "../components/Abstraxion";
 import type { SignerConnectionInfo } from "./useWalletAuth";
 import { createEthWalletAccount } from "@burnt-labs/abstraxion-core";
 import { checkAccountExists } from "@burnt-labs/account-management";
+import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 
 export interface SignerAuthState {
   smartAccountAddress: string | null;
@@ -82,26 +83,39 @@ export function useSignerAuth({
 
       // 1. Get signer config from developer's function
       const signerConfig = await authentication.getSignerConfig();
-      const ethereumAddress = signerConfig.ethereumAddress;
+      const authenticator = signerConfig.authenticator;
+      const authenticatorType = signerConfig.authenticatorType;
 
-      // 2. Use lowercase address as authenticator (consistent with EthWallet)
-      const authenticator = ethereumAddress.toLowerCase();
+      // 2. Normalize authenticator identifier (lowercase for addresses)
+      const normalizedAuthenticator = authenticatorType === AUTHENTICATOR_TYPE.EthWallet 
+        ? authenticator.toLowerCase() 
+        : authenticator;
 
       // 3. Check if account already exists using shared utility
+      // Type is always known from signerConfig.authenticatorType
       const accountCheck = await checkAccountExists(
         accountStrategy,
-        authenticator,
+        normalizedAuthenticator,
+        authenticatorType,
         '[useSignerAuth]'
       );
 
       if (accountCheck.exists && accountCheck.smartAccountAddress) {
         // Account exists - restore session
+        // Map authenticatorType to connection info type
+        const connectionType = authenticatorType === AUTHENTICATOR_TYPE.EthWallet ? 'SignerEth' :
+                               authenticatorType === AUTHENTICATOR_TYPE.Passkey ? 'SignerPasskey' :
+                               authenticatorType === AUTHENTICATOR_TYPE.JWT ? 'SignerJWT' :
+                               'SignerSecp256K1' as const;
+        
         const connectionInfo: SignerConnectionInfo = {
-          type: 'SignerEth',
-          ethereumAddress,
-          identifier: authenticator,
+          type: connectionType,
+          authenticatorType,
+          identifier: normalizedAuthenticator,
           authenticatorIndex: accountCheck.authenticatorIndex,
           signMessage: signerConfig.signMessage,
+          // Legacy field for backward compatibility (only for EthWallet)
+          ...(authenticatorType === AUTHENTICATOR_TYPE.EthWallet && { ethereumAddress: normalizedAuthenticator }),
         };
         setSignerInfo(connectionInfo);
         setSmartAccountAddress(accountCheck.smartAccountAddress);
@@ -112,10 +126,25 @@ export function useSignerAuth({
       }
 
       // 4. Account doesn't exist - create it using shared utility
+      // TODO: Support other authenticator types (Passkey, JWT, etc.) in account creation
+      // For now, only EthWallet is supported
+      if (authenticatorType !== AUTHENTICATOR_TYPE.EthWallet) {
+        throw new Error(`Account creation for ${authenticatorType} authenticator type is not yet supported`);
+      }
+
+      if (!localConfig) {
+        throw new Error('LocalConfig is required for account creation');
+      }
+
       const result = await createEthWalletAccount(
         aaApiUrl,
-        ethereumAddress,
+        normalizedAuthenticator,
         signerConfig.signMessage,
+        {
+          checksum: localConfig.checksum,
+          feeGranter: localConfig.feeGranter,
+          addressPrefix: localConfig.addressPrefix,
+        },
         '[useSignerAuth]'
       );
 
@@ -123,12 +152,19 @@ export function useSignerAuth({
       setSmartAccountAddress(result.account_address);
       setCodeId(result.code_id);
 
+      const connectionType = authenticatorType === AUTHENTICATOR_TYPE.EthWallet ? 'SignerEth' :
+                           authenticatorType === AUTHENTICATOR_TYPE.Passkey ? 'SignerPasskey' :
+                           authenticatorType === AUTHENTICATOR_TYPE.JWT ? 'SignerJWT' :
+                           'SignerSecp256K1' as const;
+
       const connectionInfo: SignerConnectionInfo = {
-        type: 'SignerEth',
-        ethereumAddress,
-        identifier: authenticator,
+        type: connectionType,
+        authenticatorType,
+        identifier: normalizedAuthenticator,
         authenticatorIndex: 0, // New account, first authenticator
         signMessage: signerConfig.signMessage,
+        // Legacy field for backward compatibility (only for EthWallet)
+        ...(authenticatorType === AUTHENTICATOR_TYPE.EthWallet && { ethereumAddress: normalizedAuthenticator }),
       };
       setSignerInfo(connectionInfo);
 

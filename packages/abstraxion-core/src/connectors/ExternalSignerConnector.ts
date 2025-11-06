@@ -5,25 +5,39 @@
  */
 
 import type { Connector, ConnectorConnectionResult, ConnectorMetadata } from './types';
+import { AUTHENTICATOR_TYPE, type AuthenticatorType } from '@burnt-labs/signers';
 
 /**
  * Signer configuration from external provider
+ * Matches the SignerConfig interface from @burnt-labs/abstraxion
  */
 export interface SignerConfig {
   /**
-   * Ethereum address from the signer (0x...)
-   * Used as the authenticator for the smart account
+   * Authenticator type - always known from the signer provider
+   * Examples: 'EthWallet' for Ethereum signers, 'Passkey' for WebAuthn, etc.
    */
-  ethereumAddress: string;
+  authenticatorType: AuthenticatorType;
 
   /**
-   * Function that signs hex-encoded messages
-   * Compatible with personal_sign format
-   *
-   * @param hexMessage - Message to sign (hex string, with or without 0x prefix)
-   * @returns Signature as hex string (65 bytes: r + s + v)
+   * Authenticator identifier:
+   * - EthWallet: Ethereum address (0x...)
+   * - Passkey: Base64-encoded credential
+   * - JWT: JWT token or identifier (aud.sub format)
+   * - Secp256K1: Base64-encoded public key
    */
-  signMessage: (hexMessage: string) => Promise<string>;
+  authenticator: string;
+
+  /**
+   * Function that signs messages
+   * Signature format depends on authenticatorType:
+   * - EthWallet: hex signature (65 bytes: r + s + v)
+   * - Passkey: WebAuthn signature
+   * - Secp256K1: Cosmos signature format
+   *
+   * @param message - Message to sign (format depends on authenticatorType)
+   * @returns Signature (format depends on authenticatorType)
+   */
+  signMessage: (message: string) => Promise<string>;
 }
 
 export interface ExternalSignerConnectorConfig {
@@ -74,32 +88,47 @@ export class ExternalSignerConnector implements Connector {
       const signerConfig = await this.config.getSignerConfig();
       this.signerConfig = signerConfig;
 
-      const ethereumAddress = signerConfig.ethereumAddress.toLowerCase();
+      // Normalize authenticator identifier (lowercase for addresses)
+      const normalizedAuthenticator = signerConfig.authenticatorType === AUTHENTICATOR_TYPE.EthWallet
+        ? signerConfig.authenticator.toLowerCase()
+        : signerConfig.authenticator;
 
-      // Create signMessage wrapper that ensures proper hex format
-      const signMessage = async (hexMessage: string): Promise<string> => {
+      // Create signMessage wrapper that ensures proper format
+      const signMessage = async (message: string): Promise<string> => {
         if (!this.signerConfig) {
           throw new Error('Signer not connected');
         }
 
-        // Ensure hex message has 0x prefix for consistency
-        const normalizedMessage = hexMessage.startsWith('0x')
-          ? hexMessage
-          : `0x${hexMessage}`;
+        // For EthWallet, ensure hex message has 0x prefix for consistency
+        if (this.signerConfig.authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
+          const normalizedMessage = message.startsWith('0x')
+            ? message
+            : `0x${message}`;
 
-        // Call the signer's signMessage function
-        const signature = await this.signerConfig.signMessage(normalizedMessage);
+          const signature = await this.signerConfig.signMessage(normalizedMessage);
 
-        // Remove 0x prefix if present (AA API expects signature without prefix)
-        return signature.replace(/^0x/, '');
+          // Remove 0x prefix if present (AA API expects signature without prefix)
+          return signature.replace(/^0x/, '');
+        }
+
+        // For other types, pass message as-is
+        return await this.signerConfig.signMessage(message);
       };
 
+      // Get display address (for EthWallet, use the address; for others, use identifier)
+      const displayAddress = signerConfig.authenticatorType === AUTHENTICATOR_TYPE.EthWallet
+        ? signerConfig.authenticator
+        : normalizedAuthenticator;
+
       return {
-        authenticator: ethereumAddress,
-        displayAddress: signerConfig.ethereumAddress,
+        authenticator: normalizedAuthenticator,
+        displayAddress,
         signMessage,
         metadata: {
-          ethereumAddress: signerConfig.ethereumAddress,
+          authenticatorType: signerConfig.authenticatorType,
+          ...(signerConfig.authenticatorType === AUTHENTICATOR_TYPE.EthWallet && {
+            ethereumAddress: signerConfig.authenticator,
+          }),
           connectionType: 'signer',
         },
       };

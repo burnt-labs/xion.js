@@ -6,3 +6,7 @@
 export * from "./salt";
 export * from "./address";
 export * from "./prepare";
+
+// Re-export AuthenticatorType and constants for convenience
+export type { AuthenticatorType } from "./salt";
+export { AUTHENTICATOR_TYPE } from "./salt";
