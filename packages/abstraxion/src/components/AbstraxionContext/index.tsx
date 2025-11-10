@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { createContext, useCallback, useEffect, useState, useRef } from "react";
 import { SignArbSecp256k1HdWallet, GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 import type { AccountState } from '@burnt-labs/account-management';
-import { AccountStateGuards } from '@burnt-labs/account-management';
+import { AccountStateGuards, extractIndexerAuthToken } from '@burnt-labs/account-management';
 import type { Controller } from "../../controllers";
 import { createController } from "../../utils/controllerFactory";
 import { RedirectController, SignerController } from "../../controllers";
@@ -211,7 +211,7 @@ export function AbstraxionProvider({
         treasury,
         feeGranter,
         indexerUrl: indexer?.url,
-        indexerAuthToken: indexer?.authToken,
+        indexerAuthToken: extractIndexerAuthToken(indexer),
         treasuryIndexerUrl: treasuryIndexer?.url,
         
         // Authentication

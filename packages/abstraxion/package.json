@@ -1,9 +1,6 @@
 {
   "name": "@burnt-labs/abstraxion",
   "version": "1.0.0-alpha.68",
-  "sideEffects": [
-    "**/*.css"
-  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -45,7 +42,6 @@
     "@burnt-labs/account-management": "workspace:*",
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
-    "@burnt-labs/ui": "workspace:*",
     "@cosmjs/amino": "^0.36.0",
     "@cosmjs/cosmwasm-stargate": "^0.36.0",
     "@cosmjs/crypto": "^0.36.0",

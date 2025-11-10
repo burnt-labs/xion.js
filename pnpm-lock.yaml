@@ -142,9 +142,6 @@ importers:
       '@burnt-labs/signers':
         specifier: workspace:*
         version: link:../signers
-      '@burnt-labs/ui':
-        specifier: workspace:*
-        version: link:../ui
       '@cosmjs/amino':
         specifier: ^0.36.0
         version: 0.36.0
@@ -242,9 +239,6 @@ importers:
 
   packages/abstraxion-core:
     dependencies:
-      '@burnt-labs/account-management':
-        specifier: workspace:*
-        version: link:../account-management
       '@burnt-labs/constants':
         specifier: workspace:*
         version: link:../constants
@@ -616,6 +610,9 @@ importers:
         specifier: ^18.2.18
         version: 18.3.7(@types/react@18.3.24)
     devDependencies:
+      '@burnt-labs/abstraxion':
+        specifier: workspace:*
+        version: link:../abstraxion
       '@burnt-labs/eslint-config-custom':
         specifier: workspace:*
         version: link:../eslint-config-custom

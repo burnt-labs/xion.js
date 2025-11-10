@@ -1,5 +1,3 @@
-import "./styles.css";
-
 export { AbstraxionProvider } from "./components/AbstraxionContext";
 export { AbstraxionContext } from "./components/AbstraxionContext";
 export type { AbstraxionContextProps } from "./components/AbstraxionContext";
@@ -22,11 +20,6 @@ export {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
   useAbstraxionClient,
-  useConnectorSelection,
-} from "./hooks";
-export type {
-  UseConnectorSelectionOptions,
-  UseConnectorSelectionReturn,
 } from "./hooks";
 
 export type { ContractGrantDescription, SpendLimit } from "./components/AbstraxionContext";
@@ -52,4 +45,3 @@ export { ConnectorType } from "@burnt-labs/abstraxion-core";
 
 // Re-export AUTHENTICATOR_TYPE for convenience (consumers often need it when using signer mode)
 export { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
-export type { AuthenticatorType } from "@burnt-labs/signers";
