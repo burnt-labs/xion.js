@@ -4,13 +4,11 @@
  * Uses local address calculation via @burnt-labs/signers crypto utilities
  */
 
-import { Buffer } from "buffer";
 import {
   calculateSalt,
   calculateSmartAccountAddress,
   AUTHENTICATOR_TYPE,
-  formatEthSignature,
-  formatHexMessage,
+  utf8ToHex,
   formatSecp256k1Signature,
   formatSecp256k1Pubkey,
 } from "@burnt-labs/signers";
@@ -54,19 +52,15 @@ export async function createEthWalletAccount(
   });
 
   // Step 2: Sign the calculated address
-  // Convert address to hex for personal_sign
-  const messageHex = formatHexMessage(
-    Buffer.from(calculatedAddress, "utf8").toString("hex"),
-  );
+  // Convert address to hex for personal_sign - externalSignerConnector will add 0x prefix
+  const messageHex = utf8ToHex(calculatedAddress);
   const signature = await signMessageFn(messageHex);
 
   // Step 3: Create account via v2 API
-  // Format signature for AA API v2 (ensure 0x prefix)
-  const formattedSignature = formatEthSignature(signature);
-
+  // Signature is already formatted by ExternalSignerConnector (validated and includes 0x prefix)
   const result = await createEthWalletAccountV2(aaApiUrl, {
     address: ethereumAddress.toLowerCase(),
-    signature: formattedSignature, // API expects signature WITH 0x prefix
+    signature: signature,
   });
 
   console.log(

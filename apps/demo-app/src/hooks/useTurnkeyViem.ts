@@ -63,14 +63,9 @@ export function useTurnkeyViem() {
       signMessage: async (hexMessage: string) => {
         console.log("[useTurnkeyViem] - Signing message with Viem...");
 
-        // Ensure hex message has 0x prefix
-        const normalizedMessage = hexMessage.startsWith("0x")
-          ? hexMessage
-          : `0x${hexMessage}`;
-
         // Viem's signMessage handles personal_sign format
         const signature = await viemAccount.signMessage({
-          message: { raw: normalizedMessage as `0x${string}` },
+          message: { raw: hexMessage as `0x${string}` },
         });
 
         return signature;

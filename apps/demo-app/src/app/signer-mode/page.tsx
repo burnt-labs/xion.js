@@ -8,7 +8,6 @@ import {
 } from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
-import "@burnt-labs/abstraxion/dist/index.css";
 import Link from "next/link";
 import { SendTokens } from "@/components/SendTokens";
 import { useTurnkeyAuth } from "./providers";

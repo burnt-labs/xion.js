@@ -7,6 +7,73 @@
 import { Buffer } from "buffer";
 
 /**
+ * Normalize hex string by removing all leading "0x" prefixes
+ * This makes formatting functions idempotent - safe to call multiple times
+ *
+ * @param hexString - Hex string that may have "0x" prefix(es)
+ * @returns Hex string without any "0x" prefix
+ */
+function normalizeHexPrefix(hexString: string): string {
+  return hexString.replace(/^0x+/i, "");
+}
+
+/**
+ * Validate that a string contains only valid hex characters and can be decoded
+ *
+ * @param hexString - Hex string to validate
+ * @param context - Context for error messages (e.g., "signature", "message")
+ * @throws Error if hex string is invalid
+ */
+function validateHexEncoding(hexString: string, context: string): void {
+  try {
+    Buffer.from(hexString, "hex");
+  } catch (error) {
+    throw new Error(
+      `Invalid ${context} format: contains invalid hex characters. ` +
+      `Value: "${hexString.substring(0, 20)}...". ` +
+      `Hex strings can only contain characters 0-9 and a-f, and must be valid hex encoding.`,
+    );
+  }
+}
+
+/**
+ * Convert UTF-8 string to hex string (without 0x prefix)
+ * Used for converting text messages to hex format for signing
+ *
+ * @param text - UTF-8 string to convert
+ * @returns Hex string without 0x prefix
+ *
+ */
+export function utf8ToHex(text: string): string {
+  if (!text) {
+    throw new Error("Text cannot be empty");
+  }
+
+  // Validate that input is not already hex
+  // Reject if it starts with "0x" (definitely hex)
+  if (text.startsWith("0x") || text.startsWith("0X")) {
+    throw new Error(
+      `Invalid input: text appears to be hex (starts with "0x"). ` +
+      `If you need to format hex, use formatHexMessage() instead. ` +
+      `Received: "${text.substring(0, 20)}..."`,
+    );
+  }
+
+  // Warn if string contains only hex characters (likely hex, not UTF-8 text)
+  // Legitimate UTF-8 text rarely contains ONLY hex characters
+  if (/^[0-9a-fA-F]+$/.test(text) && text.length > 2) {
+    console.warn(
+      `[utf8ToHex] Warning: Input appears to be hex (contains only hex characters). ` +
+      `If you need to format hex, use formatHexMessage() instead. ` +
+      `Received: "${text.substring(0, 20)}...". ` +
+      `Proceeding with UTF-8 conversion, but this may not be intended.`,
+    );
+  }
+
+  return Buffer.from(text, "utf8").toString("hex");
+}
+
+/**
  * Format Ethereum signature for AA API v2
  * Ensures signature has 0x prefix
  *
@@ -24,8 +91,20 @@ export function formatEthSignature(signature: string): string {
     throw new Error("Signature cannot be empty");
   }
 
-  // Ensure signature has 0x prefix (AA API v2 requires it)
-  return signature.startsWith("0x") ? signature : `0x${signature}`;
+  const normalized = normalizeHexPrefix(signature);
+  validateHexEncoding(normalized, "Ethereum signature");
+
+  // Validate normalized signature length
+  // Expected: 130 hex characters (65 bytes: r=32 bytes, s=32 bytes, v=1 byte)
+  if (normalized.length !== 130) {
+    throw new Error(
+      `Invalid Ethereum signature format: expected 130 hex characters (65 bytes: 32 bytes r + 32 bytes s + 1 byte v), got ${normalized.length}. ` +
+      `Original signature length: ${signature.length}. ` +
+      `This may indicate the signature format is incorrect or corrupted.`,
+    );
+  }
+
+  return `0x${normalized}`;
 }
 
 /**
@@ -46,8 +125,10 @@ export function formatHexMessage(message: string): string {
     throw new Error("Message cannot be empty");
   }
 
-  // Ensure message has 0x prefix for EIP-191/EIP-712 compatibility
-  return message.startsWith("0x") ? message : `0x${message}`;
+  const normalized = normalizeHexPrefix(message);
+  validateHexEncoding(normalized, "hex message");
+
+  return `0x${normalized}`;
 }
 
 /**

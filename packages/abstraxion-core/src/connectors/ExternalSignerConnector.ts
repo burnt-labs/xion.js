@@ -90,15 +90,8 @@ export class ExternalSignerConnector implements Connector {
           const signature =
             await this.signerConfig.signMessage(formattedMessage);
 
-          // Validate signature format: should be 130 chars (0x + 64 hex chars = 65 bytes)
-          const formattedSignature = formatEthSignature(signature);
-          if (formattedSignature.length !== 130) {
-            throw new Error(
-              `Invalid Ethereum signature format: expected 130 characters (0x + 64 hex), got ${formattedSignature.length}`,
-            );
-          }
-
-          return formattedSignature;
+          // Format and validate signature: Returns signature with "0x" prefix and validates length (132 chars = 0x + 130 hex)
+          return formatEthSignature(signature);
         } else if (authenticatorType === AUTHENTICATOR_TYPE.Secp256K1) {
           // Secp256K1: Pass message as-is, format and validate signature (hex without 0x prefix)
           const signature = await this.signerConfig.signMessage(message);
