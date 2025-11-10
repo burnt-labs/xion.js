@@ -3,7 +3,7 @@
  * Manages available connectors and provides lookup/filtering
  */
 
-import type { Connector } from './types';
+import type { Connector, ConnectorType } from './types';
 
 export class ConnectorRegistry {
   private connectors: Map<string, Connector> = new Map();
@@ -44,7 +44,7 @@ export class ConnectorRegistry {
   /**
    * Get connectors by type
    */
-  getByType(type: 'cosmos-wallet' | 'ethereum-wallet' | 'external-signer'): Connector[] {
+  getByType(type: ConnectorType): Connector[] {
     return this.getAll().filter((c) => c.metadata.type === type);
   }
 

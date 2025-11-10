@@ -1,70 +1,53 @@
 import "./styles.css";
 
-export {
-  Abstraxion,
-  AbstraxionProvider,
-  abstraxionAuth,
-} from "./components/Abstraxion";
+export { AbstraxionProvider } from "./components/AbstraxionContext";
+export { AbstraxionContext } from "./components/AbstraxionContext";
+export type { AbstraxionContextProps } from "./components/AbstraxionContext";
 export type {
   AbstraxionConfig,
   IndexerConfig,
-  LocalConfig,
   TreasuryIndexerConfig,
-} from "./components/Abstraxion";
+} from "./types";
 
 // New authentication types
 export type {
   AuthenticationConfig,
   RedirectAuthentication,
-  BrowserWalletAuthentication,
   SignerAuthentication,
-  SignerConfig,
-  WalletDefinition,
-  WalletSelectionProps,
-} from "./authentication/types";
-
-// Wallet presets
-export {
-  BUILT_IN_WALLETS,
-  WALLET_PRESETS,
-} from "./authentication/wallets";
-
-// Wallet utilities
-export {
-  detectAvailableWallets,
-  autoConnectWallet,
-  getWalletFromWindow,
-} from "./authentication/utils";
+} from "./types";
 
 export type { OfflineDirectSigner } from "@cosmjs/proto-signing";
 export {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
   useAbstraxionClient,
-  useModal,
-  useBrowserWallet,
+  useConnectorSelection,
+} from "./hooks";
+export type {
+  UseConnectorSelectionOptions,
+  UseConnectorSelectionReturn,
 } from "./hooks";
 
-export type { ContractGrantDescription } from "./components/AbstraxionContext";
+export type { ContractGrantDescription, SpendLimit } from "./components/AbstraxionContext";
 export type {
   AbstraxionAccount,
   AbstraxionAccountState,
 } from "./hooks/useAbstraxionAccount";
-export type { BrowserWalletState } from "./hooks/useBrowserWallet";
 export type {
   GranteeSignerClient,
   GrantsResponse,
   Grant,
   TreasuryGrantConfig,
-  SpendLimit,
 } from "@burnt-labs/abstraxion-core";
 
-// Signer mode types
+// Re-export connector types for convenience (consumers need these when implementing connectors)
 export type {
-  SignerConnectionInfo,
-  WalletConnectionInfo,
-  ConnectionInfo,
-} from "./hooks/useWalletAuth";
+  Connector,
+  ConnectorMetadata,
+  ConnectorConnectionResult,
+  ConnectorConfig,
+} from "@burnt-labs/abstraxion-core";
+export { ConnectorType } from "@burnt-labs/abstraxion-core";
 
 // Re-export AUTHENTICATOR_TYPE for convenience (consumers often need it when using signer mode)
 export { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";

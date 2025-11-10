@@ -2,15 +2,21 @@
  * Grant management utilities
  */
 
-// Grant building and permissions
-export * from "./authz";
-export * from "./feegrant";
-export * from "./format-permissions";
-export * from "./build-grant-messages";
-export { queryTreasuryContractWithPermissions } from "./query-treasury-contract";
-export type { TreasuryContractResponse } from "./query-treasury-contract";
-export { generateTreasuryGrants } from "./generate-treasury-grants";
-export * from "./treasury";
+// Discovery utilities (query/discover treasury contracts)
+export { queryTreasuryContractWithPermissions } from "./discovery";
+export type { TreasuryContractResponse } from "./discovery";
+
+// Construction utilities (build grant messages)
+export {
+  generateTreasuryGrants,
+  buildGrantMessages,
+  generateBankGrant,
+  generateContractGrant,
+  generateStakeAndGovGrant,
+} from "./construction";
+
+// Utility functions
+export * from "./utils";
 
 // Treasury strategies
 export * from "./strategies";

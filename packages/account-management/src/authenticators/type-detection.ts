@@ -1,14 +1,13 @@
 /**
  * Authenticator type detection utilities
  * Explicitly identifies authenticator types based on format
+ * 
+ * ---- ONLY USED AS BACKUP FOR, ALL QUERIES HAVE CASTED TYPES WITH AUTHENTICATOR_TYPE FROM @burnt-labs/signers ----
  */
 
-// Import from @burnt-labs/signers to maintain single source of truth
-// signers is the lower-level package, so it's the canonical source
 import { AUTHENTICATOR_TYPE, type AuthenticatorType } from '@burnt-labs/signers';
 
-// Re-export AuthenticatorType for internal use within account-management
-// (AUTHENTICATOR_TYPE should be imported directly from @burnt-labs/signers)
+// Re-export AuthenticatorType for use in other modules
 export type { AuthenticatorType };
 
 /**
@@ -47,23 +46,4 @@ export function detectAuthenticatorType(authenticator: string): AuthenticatorTyp
   // - Sr25519: 32 bytes = 43-44 chars base64
   // Default to Secp256K1 as it's the most common in Cosmos ecosystem
   return AUTHENTICATOR_TYPE.Secp256K1;
-}
-
-/**
- * Check if authenticator is a specific type
- */
-export function isEthWallet(authenticator: string): boolean {
-  return detectAuthenticatorType(authenticator) === AUTHENTICATOR_TYPE.EthWallet;
-}
-
-export function isJWT(authenticator: string): boolean {
-  return detectAuthenticatorType(authenticator) === AUTHENTICATOR_TYPE.JWT;
-}
-
-export function isPasskey(authenticator: string): boolean {
-  return detectAuthenticatorType(authenticator) === AUTHENTICATOR_TYPE.Passkey;
-}
-
-export function isSecp256k1(authenticator: string): boolean {
-  return detectAuthenticatorType(authenticator) === AUTHENTICATOR_TYPE.Secp256K1;
 }

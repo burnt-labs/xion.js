@@ -8,6 +8,7 @@
  * - Managing authenticators (add, remove, validate)
  * - Building grant messages (grants/)
  * - Querying treasury contracts (grants/strategies/)
+ * - Connection orchestration (orchestrator/)
  */
 
 // Authenticator utilities
@@ -17,10 +18,16 @@ export * from "./authenticators";
 export * from "./grants";
 
 // Account discovery utilities
-export * from "./accounts/accountDiscovery";
+export * from "./accounts/discovery";
 
 // Account query strategies
 export * from "./accounts";
+
+// Connection orchestrator
+export * from "./orchestrator";
+
+// State machine (shared between React packages)
+export * from "./state/accountState";
 
 // Types
 export * from "./types";

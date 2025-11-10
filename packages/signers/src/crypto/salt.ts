@@ -14,7 +14,7 @@ export const AUTHENTICATOR_TYPE = {
   EthWallet: "EthWallet" as const,      // Ethereum wallets (MetaMask, Rainbow, etc.)
   Secp256K1: "Secp256K1" as const,      // Cosmos wallets (Keplr, Leap, OKX, etc.)
   Ed25519: "Ed25519" as const,          // Ed25519 curve wallets (Solana, etc.)
-  JWT: "JWT" as const,                  // Social logins (Google, TikTok, etc.)
+  JWT: "JWT" as const,                  // Social logins (Google, Stytch, etc.)
   Passkey: "Passkey" as const,          // WebAuthn/Passkey
   Sr25519: "Sr25519" as const,          // Sr25519 curve (Polkadot, etc.)
 } as const;

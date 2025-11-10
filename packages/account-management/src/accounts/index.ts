@@ -10,11 +10,11 @@
  */
 
 // Account query strategies
-export * from "./account-numia-strategy";
-export * from "./account-subquery-strategy";
-export * from "./account-rpc-strategy";
-export * from "./account-empty-strategy";
-export * from "./account-composite-strategy";
+export * from "./strategies/account-numia-strategy";
+export * from "./strategies/account-subquery-strategy";
+export * from "./strategies/account-rpc-strategy";
+export * from "./strategies/account-empty-strategy";
+export * from "./strategies/account-composite-strategy";
 
 // Factory function for creating composite strategies
-export * from "./createCompositeAccountStrategy";
+export * from "./strategies/factory";

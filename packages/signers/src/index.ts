@@ -11,6 +11,8 @@ export {
   type AAccountData,
 } from "./interfaces";
 export { customAccountFromAny } from "./signers/utils";
+export { createSignerFromSigningFunction } from "./signers/utils/signer-factory";
+export type { CreateSignerParams } from "./signers/utils/signer-factory";
 
 // Crypto utilities for smart account creation
 export * from "./crypto";

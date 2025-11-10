@@ -1,0 +1,238 @@
+/**
+ * Signer Controller
+ * Headless connector-based flow for external signers (Turnkey, Privy, Web3Auth, etc.)
+ * Uses ConnectionOrchestrator to handle the full connection flow
+ */
+
+import { ExternalSignerConnector } from '@burnt-labs/abstraxion-core';
+import { ConnectionOrchestrator, SessionManager, AccountInfo, 
+  CompositeAccountStrategy, GrantConfig, AccountCreationConfig} from '@burnt-labs/account-management';
+import type { Connector, StorageStrategy} from '@burnt-labs/abstraxion-core';
+import { BaseController } from './BaseController';
+import type { ControllerConfig } from './types';
+import type { SignerAuthentication } from '../types';
+
+/**
+ * Configuration for SignerController
+ */
+export interface SignerControllerConfig extends ControllerConfig {
+  /** Signer authentication config */
+  signer: SignerAuthentication;
+  
+  /** Account discovery strategy */
+  accountStrategy: CompositeAccountStrategy;
+  
+  /** Grant configuration */
+  grantConfig?: GrantConfig;
+  
+  /** Account creation configuration (required for account creation) */
+  accountCreationConfig?: AccountCreationConfig;
+  
+  /** Session manager for keypair and granter storage */
+  sessionManager: SessionManager;
+  
+  /** Storage strategy (web: localStorage, React Native: AsyncStorage) */
+  storageStrategy: StorageStrategy;
+}
+
+/**
+ * Signer Controller
+ * Handles headless connector-based authentication flow
+ */
+export class SignerController extends BaseController {
+  private config: SignerControllerConfig;
+  private orchestrator: ConnectionOrchestrator;
+  private connector: Connector | null = null;
+  private autoConnectTimeout: NodeJS.Timeout | null = null;
+
+  constructor(config: SignerControllerConfig) {
+    // Always start in 'initializing' state for consistent SSR/client behavior
+    // This ensures UI immediately shows loading state and doesn't assume readiness
+    super(config.initialState || { status: 'initializing' });
+    this.config = config;
+    
+    // Create orchestrator
+    this.orchestrator = new ConnectionOrchestrator({
+      sessionManager: config.sessionManager,
+      storageStrategy: config.storageStrategy,
+      accountStrategy: config.accountStrategy,
+      grantConfig: config.grantConfig,
+      accountCreationConfig: config.accountCreationConfig,
+      chainId: config.chainId,
+      rpcUrl: config.rpcUrl,
+      gasPrice: config.gasPrice,
+    });
+  }
+
+  /**
+   * Initialize the controller
+   * Attempts to restore session, sets up auto-connect if configured
+   */
+  async initialize(): Promise<void> {
+    // Already in initializing state, so no need to dispatch INITIALIZE
+    // Just proceed with session restoration
+
+    try {
+      // Try to restore existing session (with signing client creation)
+      const restorationResult = await this.orchestrator.restoreSession(true);
+      
+      if (restorationResult.restored && restorationResult.keypair && restorationResult.granterAddress && restorationResult.signingClient) {
+        // Session restored successfully
+        const accounts = await restorationResult.keypair.getAccounts();
+        const granteeAddress = accounts[0].address;
+        
+        const accountInfo: AccountInfo = {
+          keypair: restorationResult.keypair,
+          granterAddress: restorationResult.granterAddress,
+          granteeAddress,
+        };
+        
+        this.dispatch({
+          type: 'SET_CONNECTED',
+          account: accountInfo,
+          signingClient: restorationResult.signingClient,
+        });
+        return;
+      }
+
+      // No session to restore - check if auto-connect is enabled
+      if (this.config.signer.autoConnect) {
+        // Wait a bit for signer to be ready, then auto-connect
+        this.autoConnectTimeout = setTimeout(() => {
+          this.connect().catch((error) => {
+            console.error('[SignerController] Auto-connect failed:', error);
+            this.dispatch({
+              type: 'SET_ERROR',
+              error: error instanceof Error ? error.message : 'Auto-connect failed',
+            });
+          });
+        }, 100);
+        // Stay in initializing state while waiting for auto-connect
+        return;
+      }
+
+      // No session and no auto-connect - transition to idle
+      this.dispatch({ type: 'RESET' });
+    } catch (error) {
+      console.error('[SignerController] Initialization error:', error);
+      // Transition to idle on error (don't stay in initializing)
+      this.dispatch({ type: 'RESET' });
+    }
+  }
+
+  /**
+   * Connect using the signer
+   * Creates ExternalSignerConnector and uses orchestrator to handle flow
+   */
+  async connect(): Promise<void> {
+    if (this.getState().status === 'connected') {
+      console.warn('[SignerController] Already connected');
+      return;
+    }
+
+    this.dispatch({ type: 'START_CONNECT' });
+
+    try {
+      // 1. Get signer config from developer's function
+      const signerConfig = await this.config.signer.getSignerConfig();
+      
+      // 2. Create ExternalSignerConnector
+      this.connector = new ExternalSignerConnector({
+        id: 'external-signer',
+        name: 'External Signer',
+        getSignerConfig: async () => signerConfig,
+      });
+
+      // 3. Use orchestrator to connect and setup
+      const connectionResult = await this.orchestrator.connectAndSetup(
+        this.connector,
+        signerConfig.authenticator,
+      );
+
+      // 4. Get session keypair for account info
+      const sessionKeypair = await this.config.sessionManager.getLocalKeypair();
+      if (!sessionKeypair) {
+        throw new Error('Session keypair not found after connection');
+      }
+
+      // 5. Dispatch success
+      const accounts = await sessionKeypair.getAccounts();
+      const granteeAddress = accounts[0].address;
+      
+      const accountInfo: AccountInfo = {
+        keypair: sessionKeypair,
+        granterAddress: connectionResult.smartAccountAddress,
+        granteeAddress,
+      };
+
+      if (!connectionResult.signingClient) {
+        throw new Error('Signing client not available after connection');
+      }
+
+      this.dispatch({
+        type: 'SET_CONNECTED',
+        account: accountInfo,
+        signingClient: connectionResult.signingClient,
+      });
+    } catch (error) {
+      console.error('[SignerController] Connection error:', error);
+      this.dispatch({
+        type: 'SET_ERROR',
+        error: error instanceof Error ? error.message : 'Connection failed',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Update the getSignerConfig function reference
+   * This allows updating the function when config changes without recreating the controller
+   */
+  updateGetSignerConfig(getSignerConfig: SignerAuthentication['getSignerConfig']): void {
+    this.config.signer.getSignerConfig = getSignerConfig;
+  }
+
+  /**
+   * Disconnect and cleanup
+   */
+  async disconnect(): Promise<void> {
+    // Clear auto-connect timeout if set
+    if (this.autoConnectTimeout) {
+      clearTimeout(this.autoConnectTimeout);
+      this.autoConnectTimeout = null;
+    }
+
+    // Disconnect connector if connected
+    if (this.connector) {
+      try {
+        await this.connector.disconnect();
+      } catch (error) {
+        console.error('[SignerController] Error disconnecting connector:', error);
+      }
+      this.connector = null;
+    }
+
+    // Cleanup session
+    try {
+      await this.config.sessionManager.logout();
+    } catch (error) {
+      console.error('[SignerController] Error cleaning up session:', error);
+    }
+
+    // Reset state
+    this.dispatch({ type: 'RESET' });
+  }
+
+  /**
+   * Cleanup resources
+   */
+  destroy(): void {
+    super.destroy();
+    
+    if (this.autoConnectTimeout) {
+      clearTimeout(this.autoConnectTimeout);
+      this.autoConnectTimeout = null;
+    }
+  }
+}
+

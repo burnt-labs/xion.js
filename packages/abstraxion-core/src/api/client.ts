@@ -14,6 +14,27 @@ import type {
 } from './types';
 
 /**
+ * Parse error response from AA API
+ * Attempts to extract error message from response, falls back to default message
+ */
+async function parseApiError(response: Response, defaultMessage: string): Promise<string> {
+  interface ErrorResponse {
+    error?: { message?: string };
+    message?: string;
+  }
+  
+  let errorData: ErrorResponse = {};
+  try {
+    const responseText = await response.text();
+    errorData = JSON.parse(responseText) as ErrorResponse;
+  } catch (e) {
+    // Failed to parse error response - use default message
+  }
+  
+  return errorData.error?.message || errorData.message || defaultMessage;
+}
+
+/**
  * Get deterministic smart account address for an identifier
  * GET /api/v2/account/address/<type>/<identifier>
  */
@@ -29,10 +50,11 @@ export async function getAccountAddress(
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.error?.message || `AA API v2 /address/${authenticatorType.toLowerCase()} failed with status ${response.status}`
+    const errorMessage = await parseApiError(
+      response,
+      `AA API v2 /address/${authenticatorType.toLowerCase()} failed with status ${response.status}`
     );
+    throw new Error(errorMessage);
   }
 
   return await response.json();
@@ -60,10 +82,11 @@ export async function checkAccountOnChain(
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.error?.message || `AA API v2 /check/${authenticatorType.toLowerCase()} failed with status ${response.status}`
+    const errorMessage = await parseApiError(
+      response,
+      `AA API v2 /check/${authenticatorType.toLowerCase()} failed with status ${response.status}`
     );
+    throw new Error(errorMessage);
   }
 
   return await response.json();
@@ -77,20 +100,23 @@ export async function createEthWalletAccountV2(
   aaApiUrl: string,
   request: CreateEthWalletRequest
 ): Promise<CreateAccountResponse> {
-  const response = await fetch(`${aaApiUrl}/api/v2/accounts/create/ethwallet`, {
+  const url = `${aaApiUrl}/api/v2/accounts/create/ethwallet`;
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.error?.message || `AA API v2 /create/ethwallet failed with status ${response.status}`
+    const errorMessage = await parseApiError(
+      response,
+      `AA API v2 /create/ethwallet failed with status ${response.status}`
     );
+    throw new Error(errorMessage);
   }
 
-  return await response.json();
+  const responseData = await response.json();
+  return responseData;
 }
 
 /**
@@ -108,10 +134,11 @@ export async function createSecp256k1AccountV2(
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.error?.message || `AA API v2 /create/secp256k1 failed with status ${response.status}`
+    const errorMessage = await parseApiError(
+      response,
+      `AA API v2 /create/secp256k1 failed with status ${response.status}`
     );
+    throw new Error(errorMessage);
   }
 
   return await response.json();
@@ -132,10 +159,11 @@ export async function createJWTAccountV2(
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.error?.message || `AA API v2 /create/jwt failed with status ${response.status}`
+    const errorMessage = await parseApiError(
+      response,
+      `AA API v2 /create/jwt failed with status ${response.status}`
     );
+    throw new Error(errorMessage);
   }
 
   return await response.json();
