@@ -113,7 +113,7 @@ export function AbstraxionProvider({
                          authentication?.type === 'signer';
     const isSignerController = controllerRef.current instanceof SignerController;
     const hasSignerConfigChanged = previousConfig.authentication?.type === 'signer' &&
-                                   authentication?.type === 'signer' &&
+        authentication?.type === 'signer' &&
                                    previousConfig.authentication.getSignerConfig !== 
                                    authentication.getSignerConfig;
     

@@ -94,8 +94,8 @@ export interface AccountCreationConfig {
   /** Smart account contract configuration */
   smartAccountContract: SmartAccountContractConfig;
   
-  /** Fee granter address (creator) */
-  feeGranter: string;
+    /** Fee granter address (creator) */
+    feeGranter: string;
 }
 
 /**

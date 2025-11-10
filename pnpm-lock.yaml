@@ -242,6 +242,9 @@ importers:
 
   packages/abstraxion-core:
     dependencies:
+      '@burnt-labs/account-management':
+        specifier: workspace:*
+        version: link:../account-management
       '@burnt-labs/constants':
         specifier: workspace:*
         version: link:../constants

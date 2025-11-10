@@ -42,8 +42,8 @@ export interface SignerAuthentication {
    * - true: Auto-connect when signer is ready
    */
   autoConnect?: boolean;
-  
-  /**
+
+/**
    * Smart account contract configuration
    * Required for creating new smart accounts when they don't exist
    */
@@ -55,7 +55,7 @@ export interface SignerAuthentication {
    * Optional - falls back to RPC queries if not provided
    */
   indexer?: IndexerConfig;
-  
+
   /**
    * Treasury indexer configuration for fetching grant configurations (DaoDao)
    * Uses DaoDao indexer for fast treasury queries

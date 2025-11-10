@@ -673,38 +673,38 @@ export class AbstraxionAuth {
    *   - Returns undefined when redirecting to dashboard
    */
   private async performLogin(): Promise<{ keypair: SignArbSecp256k1HdWallet; granter: string } | undefined> {
-    // Get local keypair and granter address from either URL param (if new) or this.storageStrategy (if existing)
-    const keypair = await this.getLocalKeypair();
-    const storedGranter = await this.getGranter();
-    const urlGranter = await this.redirectStrategy.getUrlParameter("granter");
-    const granter = storedGranter || urlGranter;
+      // Get local keypair and granter address from either URL param (if new) or this.storageStrategy (if existing)
+      const keypair = await this.getLocalKeypair();
+      const storedGranter = await this.getGranter();
+      const urlGranter = await this.redirectStrategy.getUrlParameter("granter");
+      const granter = storedGranter || urlGranter;
 
-    // If both exist, we can assume user is either 1. already logged in and grants have been created for the temp key, or 2. been redirected with the granter url param
-    // In either case, we poll for grants and make the appropriate state changes to reflect a "logged in" state
-    if (keypair && granter) {
-      const accounts = await keypair.getAccounts();
-      const keypairAddress = accounts[0].address;
-      const pollSuccess = await this.pollForGrants(keypairAddress, granter);
-      if (!pollSuccess) {
+      // If both exist, we can assume user is either 1. already logged in and grants have been created for the temp key, or 2. been redirected with the granter url param
+      // In either case, we poll for grants and make the appropriate state changes to reflect a "logged in" state
+      if (keypair && granter) {
+        const accounts = await keypair.getAccounts();
+        const keypairAddress = accounts[0].address;
+        const pollSuccess = await this.pollForGrants(keypairAddress, granter);
+        if (!pollSuccess) {
         throw new Error("Poll for grants was unsuccessful. Please try again");
-      }
+        }
 
-      await this.setGranter(granter);
-      this.abstractAccount = keypair;
-      this.triggerAuthStateChange(true);
+        await this.setGranter(granter);
+        this.abstractAccount = keypair;
+        this.triggerAuthStateChange(true);
 
-      // Clean URL parameters after successful authentication
-      await this.redirectStrategy.cleanUrlParameters?.([
-        "granted",
-        "granter",
-      ]);
+        // Clean URL parameters after successful authentication
+        await this.redirectStrategy.cleanUrlParameters?.([
+          "granted",
+          "granter",
+        ]);
       
       // Return values directly - on Redirect this means we dont have to read from storage which causes some Client/Server inconsistencies
       return { keypair, granter };
-    } else {
-      // If there isn't an existing keypair, or there isn't a granter in either this.storageStrategy or the url params, we want to start from scratch
-      // Generate new keypair and redirect to dashboard
-      await this.newKeypairFlow();
+      } else {
+        // If there isn't an existing keypair, or there isn't a granter in either this.storageStrategy or the url params, we want to start from scratch
+        // Generate new keypair and redirect to dashboard
+        await this.newKeypairFlow();
       return undefined; // Redirecting, so return undefined
     }
   }
