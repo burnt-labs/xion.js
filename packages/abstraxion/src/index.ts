@@ -5,6 +5,7 @@ export { AbstraxionContext } from "./components/AbstraxionContext";
 export type { AbstraxionContextProps } from "./components/AbstraxionContext";
 export type {
   AbstraxionConfig,
+  NormalizedAbstraxionConfig,
   IndexerConfig,
   TreasuryIndexerConfig,
 } from "./types";

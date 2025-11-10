@@ -16,3 +16,6 @@ export type { CreateSignerParams } from "./signers/utils/signer-factory";
 
 // Crypto utilities for smart account creation
 export * from "./crypto";
+
+// API types for AA API v2 interactions
+export * from "./api/types";

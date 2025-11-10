@@ -1,6 +1,5 @@
-import type { AuthenticatorType } from "@burnt-labs/account-management";
 import type { ContractGrantDescription, SpendLimit } from "./components/AbstraxionContext";
-import type { SmartAccountContractConfig } from "@burnt-labs/account-management";
+import type { SmartAccountContractConfig, UserIndexerConfig } from "@burnt-labs/account-management";
 import type { SignerConfig } from "@burnt-labs/abstraxion-core";
 
 // ============================================================================
@@ -13,7 +12,12 @@ import type { SignerConfig } from "@burnt-labs/abstraxion-core";
  */
 export interface RedirectAuthentication {
   type: "redirect";
-  /** Dashboard URL (optional, will be fetched from RPC if not provided) */
+  /** 
+   * Dashboard URL (optional, only needed for custom networks not in the constants map).
+   * For standard networks (xion-mainnet-1, xion-testnet-1), the dashboard URL is automatically
+   * fetched from RPC based on the network ID. Only provide this if you're using a custom
+   * network or a custom dashboard deployment.
+   */
   dashboardUrl?: string;
   callbackUrl?: string;
 }
@@ -35,13 +39,6 @@ export interface SignerAuthentication {
    * Should wait for external auth provider to be ready
    */
   getSignerConfig: () => Promise<SignerConfig>;
-
-  /**
-   * Auto-connect behavior:
-   * - false (default): Manual login required
-   * - true: Auto-connect when signer is ready
-   */
-  autoConnect?: boolean;
 
 /**
    * Smart account contract configuration
@@ -78,16 +75,15 @@ export type AuthenticationConfig =
 
 /**
  * Indexer configuration for querying existing accounts (Numia or Subquery)
+ * Discriminated union supporting both indexer types
  * If type is not specified, defaults to Numia for backward compatibility
+ * 
+ * Note: For Subquery indexers, codeId is derived from smartAccountContract.codeId
+ * and does not need to be provided here.
+ * 
+ * Re-exported from @burnt-labs/account-management for consistency across packages
  */
-export interface IndexerConfig {
-  /** Indexer type - 'numia' (default) or 'subquery' */
-  type?: 'numia' | 'subquery';
-  /** Indexer URL */
-  url: string;
-  /** Authentication token (required for Numia, not used for Subquery) */
-  authToken?: string;
-}
+export type IndexerConfig = UserIndexerConfig;
 
 /**
  * Treasury indexer configuration for fetching grant configurations (DaoDao)
@@ -98,19 +94,31 @@ export interface TreasuryIndexerConfig {
 
 /**
  * Main Abstraxion configuration
+ * 
+ * Note: rpcUrl, restUrl, and gasPrice are optional and will be automatically filled in by normalizeAbstraxionConfig()
+ * based on chainId. Only provide these if you're using a custom network or need to override defaults.
  */
 export interface AbstraxionConfig {
   /** Chain ID (e.g., 'xion-testnet-1', 'xion-mainnet-1') - REQUIRED */
   chainId: string;
 
-  /** RPC URL for blockchain connection - REQUIRED */
-  rpcUrl: string;
+  /** 
+   * RPC URL for blockchain connection (optional, defaults to chainId-based value from constants).
+   * Only provide if using a custom network or need to override the default.
+   */
+  rpcUrl?: string;
 
-  /** REST API endpoint for queries - REQUIRED */
-  restUrl: string;
+  /** 
+   * REST API endpoint for queries (optional, defaults to chainId-based value from constants).
+   * Only provide if using a custom network or need to override the default.
+   */
+  restUrl?: string;
 
-  /** Gas price (e.g., '0.001uxion') - REQUIRED */
-  gasPrice: string;
+  /** 
+   * Gas price (e.g., '0.001uxion') - Optional, defaults to xionGasValues.gasPrice from constants.
+   * Only provide if you need to override the default gas price.
+   */
+  gasPrice?: string;
 
   /** Treasury contract address for grant configurations */
   treasury?: string;
@@ -133,5 +141,18 @@ export interface AbstraxionConfig {
    * If omitted, defaults to redirect flow
    */
   authentication?: AuthenticationConfig;
+}
+
+/**
+ * Normalized Abstraxion configuration
+ * This type represents the config after normalization, where optional fields have been filled in
+ */
+export interface NormalizedAbstraxionConfig extends Omit<AbstraxionConfig, 'rpcUrl' | 'restUrl' | 'gasPrice'> {
+  /** RPC URL - always present after normalization */
+  rpcUrl: string;
+  /** REST URL - always present after normalization */
+  restUrl: string;
+  /** Gas price - always present after normalization */
+  gasPrice: string;
 }
 

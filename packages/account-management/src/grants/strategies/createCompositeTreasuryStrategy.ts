@@ -31,29 +31,6 @@ export interface CreateCompositeTreasuryStrategyConfig {
  * @param config - Configuration for the strategies to include
  * @returns CompositeTreasuryStrategy with configured fallback chain
  *
- * @example
- * ```typescript
- * // With DaoDao indexer and direct query fallback
- * const strategy = createCompositeTreasuryStrategy({
- *   daodao: {
- *     indexerUrl: 'https://daodao-indexer.example.com'
- *   },
- *   includeDirectQuery: true
- * });
- *
- * // With only direct query (no indexer)
- * const strategy = createCompositeTreasuryStrategy({
- *   includeDirectQuery: true
- * });
- *
- * // With only DaoDao indexer (no fallback)
- * const strategy = createCompositeTreasuryStrategy({
- *   daodao: {
- *     indexerUrl: 'https://daodao-indexer.example.com'
- *   },
- *   includeDirectQuery: false
- * });
- * ```
  */
 export function createCompositeTreasuryStrategy(
   config: CreateCompositeTreasuryStrategyConfig = {}

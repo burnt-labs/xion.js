@@ -17,7 +17,7 @@ import type { SessionManager, GrantConfig, ConnectionResult, SessionRestorationR
 import type { CompositeAccountStrategy } from '../accounts';
 import { restoreSession } from './flow/sessionRestoration';
 import { connectAccount } from './flow/accountConnection';
-import { createGrants, checkStorageGrants } from './flow/grantCreation';
+import { createGrants, checkStorageGrants, type GrantCreationResult } from './flow/grantCreation';
 import { initiateRedirect, completeRedirect } from './flow/redirectFlow';
 
 /**
@@ -120,18 +120,17 @@ export class ConnectionOrchestrator {
 
   /**
    * Create grants for a connected account
-   * Extracted from useGrantsFlow hook
    * 
    * @param smartAccountAddress - Smart account address (granter)
    * @param connectionResult - Connection result from connector
    * @param granteeAddress - Session key address (grantee)
-   * @returns Signing client if grants were created successfully
+   * @returns Result indicating success or failure
    */
   async createGrants(
     smartAccountAddress: string,
     connectionResult: ConnectorConnectionResult,
     granteeAddress: string,
-  ): Promise<GranteeSignerClient | undefined> {
+  ): Promise<GrantCreationResult> {
     if (!this.config.grantConfig) {
       throw new Error('Grant config is required but not provided');
     }
@@ -166,15 +165,18 @@ export class ConnectionOrchestrator {
         this.config.grantConfig?.contracts?.length ||
         this.config.grantConfig?.bank?.length ||
         this.config.grantConfig?.stake) {
-      const signingClient = await this.createGrants(
+      const grantResult = await this.createGrants(
         connectionResult.smartAccountAddress,
         connectionResult.connectionInfo,
         connectionResult.granteeAddress,
       );
       
-      // If createGrants didn't return a signing client (grants already exist or were just created),
-      // create one using the session keypair
-      const finalSigningClient = signingClient || await this.createSigningClient(
+      if (!grantResult.success) {
+        throw new Error(`Failed to create grants: ${grantResult.error}`);
+      }
+      
+      // Create signing client after grants are created/verified
+      const signingClient = await this.createSigningClient(
         connectionResult.sessionKeypair,
         connectionResult.smartAccountAddress,
         connectionResult.granteeAddress,
@@ -182,7 +184,7 @@ export class ConnectionOrchestrator {
       
       return {
         ...connectionResult,
-        signingClient: finalSigningClient,
+        signingClient,
       };
     } else {
       // No grants needed - just store granter

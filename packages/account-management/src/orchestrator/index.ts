@@ -8,4 +8,3 @@ export * from './flow/redirectFlow';
 export * from './orchestrator';
 export * from './flow/accountConnection';
 export * from './flow/grantCreation';
-export type { AccountCreationConfig, SmartAccountContractConfig } from './types';

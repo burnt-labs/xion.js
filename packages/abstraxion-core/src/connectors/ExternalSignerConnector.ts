@@ -1,11 +1,9 @@
 /**
  * External signer connector
  * Wraps external authentication providers (Turnkey, Privy, Web3Auth, etc.)
+ * Also functional to support web wallets through a modal connector.
  * 
- * Validates and formats messages and signatures for supported authenticator types:
- * - EthWallet: Formats hex messages (adds 0x prefix) and validates signatures (0x prefix, 130 chars)
- * - Secp256K1: Validates Cosmos signatures (hex without 0x prefix)
- * - Passkey, Ed25519: Pass-through (TODO: full support pending)
+ * - TODO: Passkey, Ed25519 full support/validation
  */
 
 import type { Connector, ConnectorConnectionResult, ConnectorMetadata, SignerConfig } from './types';

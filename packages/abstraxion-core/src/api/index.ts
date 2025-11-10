@@ -1,10 +1,20 @@
 /**
  * AA API exports
+ * Types are exported from @burnt-labs/signers
  */
 
-export * from './types';
 export * from './client';
 export * from './createAccount';
 
-// Note: checkAccountExists is exported from @burnt-labs/account-management
+// Re-export API types from @burnt-labs/signers for convenience
+export type {
+  AddressResponse,
+  CheckResponse,
+  CreateEthWalletRequest,
+  CreateSecp256k1Request,
+  CreateJWTRequest,
+  CreateAccountResponse,
+  AccountType,
+} from "@burnt-labs/signers";
+
 

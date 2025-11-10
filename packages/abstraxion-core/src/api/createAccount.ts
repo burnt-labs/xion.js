@@ -15,7 +15,7 @@ import {
   formatSecp256k1Pubkey
 } from '@burnt-labs/signers';
 import { createEthWalletAccountV2, createSecp256k1AccountV2 } from './client';
-import type { CreateAccountResponse } from './types';
+import type { CreateAccountResponse } from "@burnt-labs/signers";
 
 /**
  * Create account via AA API v2 for EthWallet type

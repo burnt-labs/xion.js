@@ -5,18 +5,18 @@
 
 import { BrowserStorageStrategy, BrowserRedirectStrategy } from '../strategies';
 import { AbstraxionAuth } from '@burnt-labs/abstraxion-core';
-import { createCompositeAccountStrategy, type AccountIndexerConfig, type SessionManager } from '@burnt-labs/account-management';
+import { createCompositeAccountStrategy, extractIndexerAuthToken, convertIndexerConfig, type SessionManager } from '@burnt-labs/account-management';
 import type { Controller } from '../controllers';
 import { RedirectController, SignerController } from '../controllers';
 import type { RedirectControllerConfig, SignerControllerConfig } from '../controllers';
-import type { AbstraxionConfig } from '../types';
+import type { NormalizedAbstraxionConfig, IndexerConfig } from '../types';
 
 /**
  * Create a controller based on authentication config
  * Supports redirect and signer modes only
  */
 export function createController(
-  config: AbstraxionConfig,
+  config: NormalizedAbstraxionConfig,
 ): Controller {
   const authMode = config.authentication?.type || 'redirect';
   
@@ -38,6 +38,10 @@ export function createController(
   const indexerConfig = signerAuth?.indexer;
   const treasuryIndexerConfig = signerAuth?.treasuryIndexer;
   
+  // Extract authToken for AbstraxionAuth (only available for Numia indexers)
+  // IndexerConfig matches UserIndexerConfig shape, so this is type-safe
+  const indexerAuthToken = extractIndexerAuthToken(indexerConfig);
+  
   abstraxionAuth.configureAbstraxionInstance(
     config.rpcUrl,
     config.contracts,
@@ -46,34 +50,16 @@ export function createController(
     config.authentication?.type === 'redirect' ? config.authentication.callbackUrl : undefined,
     config.treasury,
     indexerConfig?.url,
-    indexerConfig?.authToken,
+    indexerAuthToken,
     treasuryIndexerConfig?.url, // Get treasury indexer from signer auth
+    config.gasPrice, // Pass gasPrice (from normalized config, defaults to xionGasValues.gasPrice)
+    config.authentication?.type === 'redirect' ? config.authentication.dashboardUrl : undefined,
   );
   
   // Create account strategy
+  // IndexerConfig matches UserIndexerConfig shape, so this is type-safe
   const accountStrategy = createCompositeAccountStrategy({
-    indexer: indexerConfig ? ((): AccountIndexerConfig => {
-      // Check if type is specified in indexer config
-      const indexerType = indexerConfig.type;
-      
-      if (indexerType === 'subquery') {
-        if (!smartAccountContract?.codeId) {
-          throw new Error('Code ID is required when using Subquery indexer');
-        }
-        return {
-          type: 'subquery' as const,
-          url: indexerConfig.url,
-          codeId: smartAccountContract.codeId,
-        };
-      }
-      
-      // Default to Numia (when type is 'numia' or undefined)
-      return {
-        type: 'numia' as const,
-        url: indexerConfig.url,
-        authToken: indexerConfig.authToken,
-      };
-    })() : undefined,
+    indexer: convertIndexerConfig(indexerConfig, smartAccountContract),
     rpc: smartAccountContract ? {
       rpcUrl: config.rpcUrl,
       checksum: smartAccountContract.checksum,

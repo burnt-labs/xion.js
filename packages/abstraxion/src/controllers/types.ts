@@ -3,8 +3,8 @@
  * Controllers coordinate between the state machine, orchestrator, and React components
  */
 
-import type { AccountState, AccountStateAction, AccountInfo } from '@burnt-labs/account-management';
-import type { GranteeSignerClient } from '@burnt-labs/abstraxion-core';
+import type { AccountState, AccountStateAction } from '@burnt-labs/account-management';
+import type { NormalizedAbstraxionConfig } from '../types';
 
 /**
  * State subscription callback
@@ -49,9 +49,9 @@ export interface Controller {
   /**
    * Connect using the controller's specific flow
    * Mode-specific implementation (redirect, signer, direct)
-   * @param args - Mode-specific connection arguments
+   * All controllers currently take no arguments - connection is initiated via this method
    */
-  connect(...args: any[]): Promise<void>;
+  connect(): Promise<void>;
 
   /**
    * Disconnect and reset state
@@ -81,10 +81,10 @@ export interface ControllerConfig {
 
 /**
  * Controller factory function type
- * Creates a controller instance based on mode and config
+ * Creates a controller instance based on normalized config
+ * Matches the signature of createController() in utils/controllerFactory.ts
  */
 export type ControllerFactory = (
-  config: ControllerConfig,
-  ...args: any[]
+  config: NormalizedAbstraxionConfig,
 ) => Controller;
 

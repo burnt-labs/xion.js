@@ -4,7 +4,7 @@
  */
 
 import { Buffer } from 'buffer';
-import type { ConnectorConnectionResult, StorageStrategy, GranteeSignerClient } from '@burnt-labs/abstraxion-core';
+import type { ConnectorConnectionResult, StorageStrategy } from '@burnt-labs/abstraxion-core';
 import { AAClient, createSignerFromSigningFunction } from '@burnt-labs/signers';
 import { AUTHENTICATOR_TYPE, type AuthenticatorType } from '@burnt-labs/signers';
 import { GasPrice } from '@cosmjs/stargate';
@@ -17,6 +17,13 @@ import {
   isContractGrantConfigValid,
 } from '../../index';
 import type { GrantConfig } from '../types';
+
+/**
+ * Result of grant creation operation
+ */
+export type GrantCreationResult =
+  | { success: true }
+  | { success: false; error: string };
 
 /**
  * Parameters for grant creation
@@ -110,11 +117,12 @@ async function generateTreasuryGrants(
  * Extracted from useGrantsFlow hook
  * 
  * @param params - Grant creation parameters
- * @returns Signing client if grants were created successfully
+ * @returns Result indicating success or failure. On success, grants are created/verified.
+ *          Signing client should be created by the caller using the session keypair.
  */
 export async function createGrants(
   params: GrantCreationParams,
-): Promise<GranteeSignerClient | undefined> {
+): Promise<GrantCreationResult> {
   const {
     smartAccountAddress,
     connectionResult,
@@ -129,10 +137,8 @@ export async function createGrants(
   const { grantsExist } = await checkStorageGrants(smartAccountAddress, storageStrategy);
   
   if (grantsExist) {
-    // Grants already exist - create signing client and return
-    // Note: This would require additional context to create the client
-    // For now, return undefined
-    return undefined;
+    // Grants already exist - return success
+    return { success: true };
   }
 
   const { treasury, contracts, bank, stake, feeGranter, daodaoIndexerUrl } = grantConfig;
@@ -186,9 +192,9 @@ export async function createGrants(
     });
 
     if (grantMessages.length === 0) {
-      // No grant configs found - just store granter and return
+      // No grant configs found - just store granter and return success
       await storageStrategy.setItem('xion-authz-granter-account', smartAccountAddress);
-      return undefined;
+      return { success: true };
     }
   }
 
@@ -241,16 +247,27 @@ export async function createGrants(
   }
 
   // 5. Simulate transaction to get gas estimate
-  const simmedGas = await client.simulate(
-    smartAccountAddress,
-    messagesToSign,
-    'Create grants for abstraxion',
-  );
+  let simmedGas: number;
+  try {
+    simmedGas = await client.simulate(
+      smartAccountAddress,
+      messagesToSign,
+      'Create grants for abstraxion',
+    );
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to simulate transaction',
+    };
+  }
   
   // Parse gas price from config
   const gasPriceMatch = gasPrice.match(/^([\d.]+)(.+)$/);
   if (!gasPriceMatch) {
-    throw new Error(`Invalid gas price format: ${gasPrice}. Expected format: "0.001uxion"`);
+    return {
+      success: false,
+      error: `Invalid gas price format: ${gasPrice}. Expected format: "0.001uxion"`,
+    };
   }
   const gasPriceNum = parseFloat(gasPriceMatch[1]);
   const denom = gasPriceMatch[2];
@@ -270,22 +287,26 @@ export async function createGrants(
     : calculatedFee;
 
   // 6. Sign and broadcast transaction
-  const result = await client.signAndBroadcast(
-    smartAccountAddress,
-    messagesToSign,
-    feeToUse,
-    'Create grants for abstraxion',
-  );
+  try {
+    const result = await client.signAndBroadcast(
+      smartAccountAddress,
+      messagesToSign,
+      feeToUse,
+      'Create grants for abstraxion',
+    );
 
-  console.log('[orchestrator] ✅ Transaction broadcast successful!');
-  console.log('[orchestrator] → Transaction hash:', result.transactionHash);
+    console.log('[orchestrator] → Transaction hash:', result.transactionHash);
 
-  // 7. Store granter address
-  await storageStrategy.setItem('xion-authz-granter-account', smartAccountAddress);
+    // 7. Store granter address
+    await storageStrategy.setItem('xion-authz-granter-account', smartAccountAddress);
 
-  // 8. Create and return signing client
-  // Note: GranteeSignerClient creation would require additional imports and setup
-  // For now, return undefined - this can be implemented later
-  return undefined;
+    // 8. Return success - signing client should be created by caller
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to sign and broadcast transaction',
+    };
+  }
 }
 

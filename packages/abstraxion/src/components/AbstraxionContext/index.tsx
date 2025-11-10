@@ -6,7 +6,7 @@ import { AccountStateGuards } from '@burnt-labs/account-management';
 import type { Controller } from "../../controllers";
 import { createController } from "../../utils/controllerFactory";
 import { RedirectController, SignerController } from "../../controllers";
-import type { AbstraxionConfig, AuthenticationConfig } from "../../types";
+import type { AbstraxionConfig, AuthenticationConfig, NormalizedAbstraxionConfig } from "../../types";
 import { normalizeAbstraxionConfig } from "../../utils/normalizeAbstraxionConfig";
 
 export type SpendLimit = { denom: string; amount: string };
@@ -73,7 +73,7 @@ export function AbstraxionProvider({
   // When external auth providers (e.g., Turnkey) become ready after initial render,
   // they provide a new getSignerConfig function that must be updated in the controller
   const controllerRef = useRef<Controller | null>(null);
-  const configRef = useRef<AbstraxionConfig>(normalizedConfig);
+  const configRef = useRef<NormalizedAbstraxionConfig>(normalizedConfig);
   
   // Capture previous config BEFORE updating configRef (for comparison)
   const previousConfig = configRef.current;

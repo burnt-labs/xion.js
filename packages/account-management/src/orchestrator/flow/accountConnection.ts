@@ -3,7 +3,6 @@
  * Handles connecting via connector and discovering/creating smart accounts
  */
 
-import { Buffer } from 'buffer';
 import type { Connector, ConnectorConnectionResult } from '@burnt-labs/abstraxion-core';
 import { createEthWalletAccount, createSecp256k1Account } from '@burnt-labs/abstraxion-core';
 import { AUTHENTICATOR_TYPE, type AuthenticatorType } from '@burnt-labs/signers';

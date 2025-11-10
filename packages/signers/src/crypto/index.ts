@@ -5,7 +5,6 @@
 
 export * from "./salt";
 export * from "./address";
-export * from "./prepare";
 export * from "./signature";
 
 // Re-export AuthenticatorType and constants for convenience

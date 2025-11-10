@@ -70,9 +70,6 @@ function AbstraxionWrapper({
       // Function that returns signer configuration (from Turnkey)
       getSignerConfig,
       
-      // Auto-connect behavior
-      autoConnect: false, // Manual login - wait for user to click connect
-      
       // Smart account contract configuration (codeId, checksum, addressPrefix)
       smartAccountContract: smartAccountContractConfig,
       

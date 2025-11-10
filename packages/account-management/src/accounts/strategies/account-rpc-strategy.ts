@@ -32,16 +32,6 @@ export interface RpcAccountStrategyConfig {
  * Direct Chain Indexer Strategy
  * Calculates predicted address and queries chain directly (no indexer needed)
  *
- * Example usage:
- * ```typescript
- * const strategy = new RpcAccountStrategy({
- *   rpcUrl: "https://rpc.xion-testnet-1.burnt.com:443",
- *   checksum: "abc123...",
- *   creator: "xion1feeGranter...",
- *   prefix: "xion",
- *   codeId: 1,
- * });
- * ```
  */
 export class RpcAccountStrategy implements IndexerStrategy {
   private config: RpcAccountStrategyConfig;

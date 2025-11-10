@@ -1,6 +1,9 @@
 /**
  * Types for AA API v2 interactions
+ * These types define the request and response structures for the Account Abstraction API v2
  */
+
+import type { AUTHENTICATOR_TYPE } from "../crypto/salt";
 
 /**
  * Response from AA API v2 /account/address endpoint
@@ -53,7 +56,12 @@ export interface CreateAccountResponse {
 }
 
 /**
- * Account authenticator type
+ * Account authenticator type for API endpoints
+ * Derived from AuthenticatorType, filtered to API-supported types and converted to lowercase
  */
-export type AccountType = 'ethwallet' | 'secp256k1' | 'jwt';
+export type AccountType = Lowercase<
+  | typeof AUTHENTICATOR_TYPE.EthWallet
+  | typeof AUTHENTICATOR_TYPE.Secp256K1
+  | typeof AUTHENTICATOR_TYPE.JWT
+>;
 

@@ -12,13 +12,6 @@ import type { TreasuryStrategy, TreasuryConfig } from "../../types/treasury";
  * Composite Treasury Strategy
  * Tries multiple treasury strategies in order, returning the first successful result
  *
- * Example usage:
- * ```typescript
- * const strategy = new CompositeTreasuryStrategy(
- *   new DaoDaoTreasuryStrategy(),      // Try indexer first (fast)
- *   new DirectQueryTreasuryStrategy(), // Fallback to direct query (slower but reliable)
- * );
- * ```
  */
 export class CompositeTreasuryStrategy implements TreasuryStrategy {
   private readonly strategies: TreasuryStrategy[];

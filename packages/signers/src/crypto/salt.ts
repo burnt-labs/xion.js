@@ -1,6 +1,6 @@
 /**
  * Salt calculation utilities
- * Extracted from AA API prepare.ts
+ * Pure cryptographic functions for calculating deterministic salts for smart account creation
  */
 
 import { sha256 } from "@cosmjs/crypto";

@@ -62,6 +62,10 @@ export async function completeRedirect(
   
   const { keypair, granter } = loginResult;
   
+  // Get grantee address from keypair
+  const accounts = await keypair.getAccounts();
+  const granteeAddress = accounts[0].address;
+  
   // Get signing client using AbstraxionAuth's getSigner()
   const signingClient = await sessionManager.getSigner();
   
@@ -73,6 +77,7 @@ export async function completeRedirect(
     restored: true,
     keypair,
     granterAddress: granter,
+    granteeAddress,
     signingClient,
   };
 }

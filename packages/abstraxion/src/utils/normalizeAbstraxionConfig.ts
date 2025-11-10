@@ -1,4 +1,4 @@
-import type { AbstraxionConfig } from '../types';
+import type { AbstraxionConfig, NormalizedAbstraxionConfig } from '../types';
 import { 
   getFeeGranter, 
   getRpcUrl, 
@@ -15,7 +15,7 @@ import {
  */
 export function normalizeAbstraxionConfig(
   config: AbstraxionConfig
-): AbstraxionConfig {
+): NormalizedAbstraxionConfig {
   const { chainId } = config;
   
   // Get defaults from constants based on chainId

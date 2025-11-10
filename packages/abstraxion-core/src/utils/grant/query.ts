@@ -40,7 +40,6 @@ export const fetchTreasuryDataFromIndexer = async (
   treasuryAddress: string,
   rpcUrl: string,
   customIndexerUrl?: string,
-  authToken?: string,
 ): Promise<TreasuryIndexerResponse> => {
   // Create a cache key using treasuryAddress and rpcUrl
   const cacheKey = `${treasuryAddress}:${rpcUrl}`;
@@ -64,15 +63,7 @@ export const fetchTreasuryDataFromIndexer = async (
         `Fetching treasury data from indexer for ${treasuryAddress}`,
       );
 
-      // Prepare fetch options with authorization header if token is provided
-      const fetchOptions: RequestInit = {};
-      if (authToken) {
-        fetchOptions.headers = {
-          'Authorization': `Bearer ${authToken}`,
-        };
-      }
-
-      const response = await fetch(indexerUrl, fetchOptions);
+      const response = await fetch(indexerUrl);
       if (!response.ok) {
         throw new IndexerResponseError(
           `Failed to fetch treasury data: ${response.statusText}`,
@@ -131,7 +122,6 @@ export const getTreasuryGrantConfigs = async (
   treasuryAddress: string,
   rpcUrl?: string,
   indexerUrl?: string,
-  authToken?: string,
 ): Promise<TreasuryGrantConfig[]> => {
   try {
     if (!rpcUrl) {
@@ -143,7 +133,6 @@ export const getTreasuryGrantConfigs = async (
       treasuryAddress,
       rpcUrl,
       indexerUrl,
-      authToken,
     );
     const treasuryGrantConfigs: TreasuryGrantConfig[] = [];
 

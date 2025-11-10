@@ -18,3 +18,6 @@ export * from "./strategies/account-composite-strategy";
 
 // Factory function for creating composite strategies
 export * from "./strategies/factory";
+
+// Indexer config conversion utilities
+export * from "./strategies/indexerConfigUtils";

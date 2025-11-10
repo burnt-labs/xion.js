@@ -9,14 +9,7 @@ import { RpcAccountStrategy } from "./account-rpc-strategy";
 import { EmptyAccountStrategy } from "./account-empty-strategy";
 import { CompositeAccountStrategy } from "./account-composite-strategy";
 import type { RpcAccountStrategyConfig } from "./account-rpc-strategy";
-
-/**
- * Indexer configuration for account discovery
- * Discriminated union supporting both Numia and Subquery indexers
- */
-export type AccountIndexerConfig =
-  | { type?: 'numia'; url: string; authToken?: string }
-  | { type: 'subquery'; url: string; codeId: number };
+import type { AccountIndexerConfig } from "../../types/indexer";
 
 export interface CreateCompositeAccountStrategyConfig {
   /**
@@ -46,41 +39,6 @@ export interface CreateCompositeAccountStrategyConfig {
  * @param config - Configuration for the strategies to include
  * @returns CompositeAccountStrategy with configured fallback chain
  *
- * @example
- * ```typescript
- * // With Numia indexer and RPC fallback
- * const strategy = createCompositeAccountStrategy({
- *   indexer: {
- *     type: 'numia',
- *     url: 'https://xion-testnet-2.numia.xyz/v3',
- *     authToken: 'token123'
- *   },
- *   rpc: {
- *     rpcUrl: 'https://rpc.xion.com',
- *     checksum: '0x123...',
- *     creator: 'xion1...',
- *     prefix: 'xion',
- *     codeId: 1
- *   }
- * });
- *
- * // With Subquery indexer
- * const strategy = createCompositeAccountStrategy({
- *   indexer: {
- *     type: 'subquery',
- *     url: 'https://subquery.example.com',
- *     codeId: 1
- *   }
- * });
- *
- * // With default (Numia) indexer
- * const strategy = createCompositeAccountStrategy({
- *   indexer: { url: 'https://indexer.example.com' }
- * });
- *
- * // Minimal (only EmptyAccountStrategy)
- * const strategy = createCompositeAccountStrategy({});
- * ```
  */
 export function createCompositeAccountStrategy(
   config: CreateCompositeAccountStrategyConfig

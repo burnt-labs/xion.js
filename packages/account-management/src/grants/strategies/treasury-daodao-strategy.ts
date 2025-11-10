@@ -68,13 +68,6 @@ export interface DaoDaoTreasuryStrategyConfig {
  * DaoDao Treasury Indexer Strategy
  * Queries DaoDao indexer API for treasury configurations (fast, requires indexer)
  *
- * Example usage:
- * ```typescript
- * const strategy = new DaoDaoTreasuryStrategy({
- *   indexerUrl: "https://daodaoindexer.burnt.com",
- * });
- * const config = await strategy.fetchTreasuryConfig(treasuryAddress, client);
- * ```
  */
 export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
   private config: DaoDaoTreasuryStrategyConfig;
@@ -135,8 +128,6 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
             ? validatedData.params.icon_url || ""
             : "",
         };
-
-        console.log(`[DaoDaoTreasuryStrategy] ✅ Successfully fetched treasury config`);
 
         return {
           grantConfigs,

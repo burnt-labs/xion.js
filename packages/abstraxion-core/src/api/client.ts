@@ -3,15 +3,15 @@
  * Low-level HTTP client functions for interacting with the Account Abstraction API v2
  */
 
-import type { AuthenticatorType } from "@burnt-labs/signers";
 import type {
+  AuthenticatorType,
   AddressResponse,
   CheckResponse,
   CreateEthWalletRequest,
   CreateSecp256k1Request,
   CreateJWTRequest,
   CreateAccountResponse,
-} from './types';
+} from "@burnt-labs/signers";
 
 /**
  * Parse error response from AA API

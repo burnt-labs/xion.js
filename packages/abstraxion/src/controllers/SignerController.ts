@@ -6,7 +6,7 @@
 
 import { ExternalSignerConnector } from '@burnt-labs/abstraxion-core';
 import { ConnectionOrchestrator, SessionManager, AccountInfo, 
-  CompositeAccountStrategy, GrantConfig, AccountCreationConfig} from '@burnt-labs/account-management';
+  CompositeAccountStrategy, GrantConfig, AccountCreationConfig } from '@burnt-labs/account-management';
 import type { Connector, StorageStrategy} from '@burnt-labs/abstraxion-core';
 import { BaseController } from './BaseController';
 import type { ControllerConfig } from './types';
@@ -43,7 +43,6 @@ export class SignerController extends BaseController {
   private config: SignerControllerConfig;
   private orchestrator: ConnectionOrchestrator;
   private connector: Connector | null = null;
-  private autoConnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(config: SignerControllerConfig) {
     // Always start in 'initializing' state for consistent SSR/client behavior
@@ -66,7 +65,7 @@ export class SignerController extends BaseController {
 
   /**
    * Initialize the controller
-   * Attempts to restore session, sets up auto-connect if configured
+   * Attempts to restore existing session if available
    */
   async initialize(): Promise<void> {
     // Already in initializing state, so no need to dispatch INITIALIZE
@@ -76,15 +75,12 @@ export class SignerController extends BaseController {
       // Try to restore existing session (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
       
-      if (restorationResult.restored && restorationResult.keypair && restorationResult.granterAddress && restorationResult.signingClient) {
-        // Session restored successfully
-        const accounts = await restorationResult.keypair.getAccounts();
-        const granteeAddress = accounts[0].address;
-        
+      if (restorationResult.restored && restorationResult.signingClient) {
+        // Session restored successfully - restorationResult contains AccountInfo fields when restored: true
         const accountInfo: AccountInfo = {
-          keypair: restorationResult.keypair,
-          granterAddress: restorationResult.granterAddress,
-          granteeAddress,
+          keypair: (restorationResult as { restored: true } & AccountInfo).keypair,
+          granterAddress: (restorationResult as { restored: true } & AccountInfo).granterAddress,
+          granteeAddress: (restorationResult as { restored: true } & AccountInfo).granteeAddress,
         };
         
         this.dispatch({
@@ -95,23 +91,8 @@ export class SignerController extends BaseController {
         return;
       }
 
-      // No session to restore - check if auto-connect is enabled
-      if (this.config.signer.autoConnect) {
-        // Wait a bit for signer to be ready, then auto-connect
-        this.autoConnectTimeout = setTimeout(() => {
-          this.connect().catch((error) => {
-            console.error('[SignerController] Auto-connect failed:', error);
-            this.dispatch({
-              type: 'SET_ERROR',
-              error: error instanceof Error ? error.message : 'Auto-connect failed',
-            });
-          });
-        }, 100);
-        // Stay in initializing state while waiting for auto-connect
-        return;
-      }
-
-      // No session and no auto-connect - transition to idle
+      // No session to restore - transition to idle
+      // Client must call connect() manually (e.g., via onSuccess callback from external auth provider Or useEffect)
       this.dispatch({ type: 'RESET' });
     } catch (error) {
       console.error('[SignerController] Initialization error:', error);
@@ -196,12 +177,6 @@ export class SignerController extends BaseController {
    * Disconnect and cleanup
    */
   async disconnect(): Promise<void> {
-    // Clear auto-connect timeout if set
-    if (this.autoConnectTimeout) {
-      clearTimeout(this.autoConnectTimeout);
-      this.autoConnectTimeout = null;
-    }
-
     // Disconnect connector if connected
     if (this.connector) {
       try {
@@ -228,11 +203,6 @@ export class SignerController extends BaseController {
    */
   destroy(): void {
     super.destroy();
-    
-    if (this.autoConnectTimeout) {
-      clearTimeout(this.autoConnectTimeout);
-      this.autoConnectTimeout = null;
-    }
   }
 }
 

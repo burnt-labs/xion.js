@@ -7,7 +7,7 @@
 import { AbstraxionAuth } from '@burnt-labs/abstraxion-core';
 import type { StorageStrategy, RedirectStrategy} from '@burnt-labs/abstraxion-core';
 import { ConnectionOrchestrator } from '@burnt-labs/account-management';
-import type { AccountInfo, SessionRestorationResult } from '@burnt-labs/account-management';
+import type { AccountInfo } from '@burnt-labs/account-management';
 import { BaseController } from './BaseController';
 import type { ControllerConfig } from './types';
 import type { RedirectAuthentication } from '../types';
@@ -83,6 +83,7 @@ export class RedirectController extends BaseController {
       config.treasury, // Pass treasury so it's included in redirect URL
       // indexerUrl, indexerAuthToken, treasuryIndexerUrl omitted - not used in redirect mode
       config.gasPrice, // Pass gasPrice for signing client creation
+      config.redirect.dashboardUrl, // Pass dashboardUrl if provided (for custom networks)
     );
     
     // Create grant config
@@ -159,15 +160,12 @@ export class RedirectController extends BaseController {
       // Try to restore session using orchestrator (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
       
-      if (restorationResult.restored && restorationResult.keypair && restorationResult.granterAddress && restorationResult.signingClient) {
-        // Session restored successfully
-        const accounts = await restorationResult.keypair.getAccounts();
-        const granteeAddress = accounts[0].address;
-        
+      if (restorationResult.restored && restorationResult.signingClient) {
+        // Session restored successfully - restorationResult contains AccountInfo fields when restored: true
         const accountInfo: AccountInfo = {
-          keypair: restorationResult.keypair,
-          granterAddress: restorationResult.granterAddress,
-          granteeAddress,
+          keypair: (restorationResult as { restored: true } & AccountInfo).keypair,
+          granterAddress: (restorationResult as { restored: true } & AccountInfo).granterAddress,
+          granteeAddress: (restorationResult as { restored: true } & AccountInfo).granteeAddress,
         };
         
         this.dispatch({

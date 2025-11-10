@@ -34,6 +34,7 @@ export class AbstraxionAuth {
   indexerAuthToken?: string;
   treasuryIndexerUrl?: string;
   gasPrice?: string;
+  dashboardUrl?: string;
 
   // Signer
   private client?: GranteeSignerClient;
@@ -79,6 +80,7 @@ export class AbstraxionAuth {
    * @param {string} indexerAuthToken - authentication token for indexer API requests
    * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
    * @param {string} gasPrice - Gas price string (e.g., "0.001uxion"). Defaults to "0.001uxion" if not provided.
+   * @param {string} dashboardUrl - Custom dashboard URL (optional, only needed for custom networks not in the constants map)
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -91,6 +93,7 @@ export class AbstraxionAuth {
     indexerAuthToken?: string,
     treasuryIndexerUrl?: string,
     gasPrice?: string,
+    dashboardUrl?: string,
   ) {
     this.rpcUrl = rpc;
     this.grantContracts = grantContracts;
@@ -102,6 +105,7 @@ export class AbstraxionAuth {
     this.indexerAuthToken = indexerAuthToken;
     this.treasuryIndexerUrl = treasuryIndexerUrl;
     this.gasPrice = gasPrice;
+    this.dashboardUrl = dashboardUrl;
   }
 
   /**
@@ -249,7 +253,7 @@ export class AbstraxionAuth {
           return accounts[0].address;
         });
 
-      // Use configured gasPrice or default to 0.001uxion if not set
+      // Use configured gasPrice
       const gasPriceString = this.gasPrice || "0.001uxion";
       const directClient = await GranteeSignerClient.connectWithSigner(
         this.rpcUrl,
@@ -300,6 +304,7 @@ export class AbstraxionAuth {
 
   /**
    * Get dashboard url and redirect in order to issue claim with XION meta account for local keypair.
+   * Uses configured dashboardUrl if provided, otherwise fetches from RPC based on network ID.
    */
   async redirectToDashboard() {
     try {
@@ -307,7 +312,16 @@ export class AbstraxionAuth {
         throw new Error("AbstraxionAuth needs to be configured.");
       }
       const userAddress = await this.getKeypairAddress();
-      const { dashboardUrl } = await fetchConfig(this.rpcUrl);
+      
+      // Use configured dashboardUrl if provided, otherwise fetch from RPC
+      let dashboardUrl: string;
+      if (this.dashboardUrl) {
+        dashboardUrl = this.dashboardUrl;
+      } else {
+        const config = await fetchConfig(this.rpcUrl);
+        dashboardUrl = config.dashboardUrl;
+      }
+      
       await this.configureUrlAndRedirect(dashboardUrl, userAddress);
     } catch (error) {
       console.warn(
@@ -398,7 +412,6 @@ export class AbstraxionAuth {
       this.treasury,
       this.rpcUrl,
       this.treasuryIndexerUrl,
-      this.indexerAuthToken,
     );
 
     const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
@@ -498,7 +511,6 @@ export class AbstraxionAuth {
               this.treasury,
               this.rpcUrl,
               this.treasuryIndexerUrl,
-              this.indexerAuthToken,
             ),
           ]);
 

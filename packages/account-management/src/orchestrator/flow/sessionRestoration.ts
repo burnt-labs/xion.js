@@ -24,7 +24,8 @@ export interface SigningClientConfig {
  * 
  * @param sessionManager - Session management interface
  * @param signingClientConfig - Optional config for creating signing client
- * @returns Session restoration result
+ * @returns Session restoration result with `restored: false` if no valid session exists,
+ *          or `restored: true` with `keypair`, `granterAddress`, and optionally `signingClient` if session was restored successfully
  */
 export async function restoreSession(
   sessionManager: SessionManager,
@@ -43,11 +44,15 @@ export async function restoreSession(
     // Verify grants still exist on-chain via authenticate
     await sessionManager.authenticate();
 
-    // If we get here, grants are valid
+    // If we get here, grants are valid so Get grantee address from keypair
+    const accounts = await storedKeypair.getAccounts();
+    const granteeAddress = accounts[0].address;
+    
     const result: SessionRestorationResult = {
       restored: true,
       keypair: storedKeypair,
       granterAddress: storedGranter,
+      granteeAddress,
     };
 
     // Optionally create signing client if config provided

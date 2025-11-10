@@ -2,24 +2,10 @@
  * Types for connection orchestrator
  */
 
-import type { ConnectorConnectionResult, SignerConfig } from '@burnt-labs/abstraxion-core';
+import type { ConnectorConnectionResult} from '@burnt-labs/abstraxion-core';
 import type { SignArbSecp256k1HdWallet, GranteeSignerClient } from '@burnt-labs/abstraxion-core';
-import type { AuthenticatorType } from '../authenticators';
-
-/**
- * Smart account contract configuration
- * Required for creating new smart accounts in signer mode
- */
-export interface SmartAccountContractConfig {
-  /** Contract code ID for smart account creation */
-  codeId: number;
-  
-  /** Contract checksum as hex string */
-  checksum: string;
-  
-  /** Address prefix (e.g., "xion") */
-  addressPrefix: string;
-}
+import type { AccountInfo } from '../state/accountState';
+import type { SmartAccountContractConfig, AccountCreationConfig, GrantConfig } from '../types';
 
 /**
  * Session management interface
@@ -60,46 +46,8 @@ export interface SessionManager {
 }
 
 /**
- * Grant creation configuration
- */
-export interface GrantConfig {
-  /** Treasury contract address (if using treasury-based grants) */
-  treasury?: string;
-  
-  /** Manual contract grant descriptions */
-  contracts?: Array<string | { address: string; amounts: Array<{ denom: string; amount: string }> }>;
-  
-  /** Bank spend limits */
-  bank?: Array<{ denom: string; amount: string }>;
-  
-  /** Enable staking permissions */
-  stake?: boolean;
-  
-  /** Fee granter address */
-  feeGranter?: string;
-  
-  /** DaoDao indexer URL for treasury queries */
-  daodaoIndexerUrl?: string;
-}
-
-/**
- * Account creation configuration
- * Required for creating new smart accounts when they don't exist
- * Aligned with the grouped config structure used in signer mode
- */
-export interface AccountCreationConfig {
-  /** AA API URL for account creation */
-  aaApiUrl: string;
-  
-  /** Smart account contract configuration */
-  smartAccountContract: SmartAccountContractConfig;
-  
-    /** Fee granter address (creator) */
-    feeGranter: string;
-}
-
-/**
  * Connection result
+ * Return type from orchestrator connection operations
  */
 export interface ConnectionResult {
   /** Smart account address (granter) */
@@ -120,17 +68,37 @@ export interface ConnectionResult {
 
 /**
  * Session restoration result
+ * Uses AccountInfo when restored successfully to avoid duplication
  */
-export interface SessionRestorationResult {
-  /** Whether session was restored */
-  restored: boolean;
-  
-  /** Session keypair (if restored) */
-  keypair?: SignArbSecp256k1HdWallet;
-  
-  /** Granter address (if restored) */
-  granterAddress?: string;
-  
-  /** Signing client (if restored) */
-  signingClient?: GranteeSignerClient;
+export type SessionRestorationResult =
+  | { restored: false }
+  | ({ restored: true } & AccountInfo & { signingClient?: GranteeSignerClient });
+
+/**
+ * Type guard to check if session restoration was successful
+ */
+export function isSessionRestored(
+  result: SessionRestorationResult,
+): result is { restored: true } & AccountInfo & { signingClient?: GranteeSignerClient } {
+  return result.restored === true;
 }
+
+/**
+ * Extract AccountInfo from a restored session result
+ * Throws if session was not restored
+ */
+export function getAccountInfoFromRestored(
+  result: SessionRestorationResult,
+): AccountInfo {
+  if (!isSessionRestored(result)) {
+    throw new Error('Session was not restored');
+  }
+  return {
+    keypair: result.keypair,
+    granterAddress: result.granterAddress,
+    granteeAddress: result.granteeAddress,
+  };
+}
+
+// Re-export config types for convenience
+export type { SmartAccountContractConfig, AccountCreationConfig, GrantConfig };

@@ -70,8 +70,9 @@ export abstract class BaseController implements Controller {
   /**
    * Connect using the controller's specific flow
    * Mode-specific implementation (redirect, signer, direct)
+   * All controllers currently take no arguments - connection is initiated via this method
    */
-  abstract connect(...args: any[]): Promise<void>;
+  abstract connect(): Promise<void>;
 
   /**
    * Disconnect and reset state

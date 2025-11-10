@@ -1,6 +1,6 @@
 /**
  * Smart account address calculation
- * Extracted from AA API prepare.ts
+ * Pure cryptographic function for calculating deterministic smart account addresses
  */
 
 import { instantiate2Address } from "@cosmjs/cosmwasm-stargate";

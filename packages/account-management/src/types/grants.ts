@@ -45,3 +45,27 @@ export interface AllowanceResponse {
     allowance: Allowance;
   };
 }
+
+/**
+ * Grant creation configuration
+ * Used for configuring authorization grants from smart account to session keypair
+ */
+export interface GrantConfig {
+  /** Treasury contract address (if using treasury-based grants) */
+  treasury?: string;
+  
+  /** Manual contract grant descriptions */
+  contracts?: Array<string | { address: string; amounts: Array<{ denom: string; amount: string }> }>;
+  
+  /** Bank spend limits */
+  bank?: Array<{ denom: string; amount: string }>;
+  
+  /** Enable staking permissions */
+  stake?: boolean;
+  
+  /** Fee granter address */
+  feeGranter?: string;
+  
+  /** DaoDao indexer URL for treasury queries */
+  daodaoIndexerUrl?: string;
+}
