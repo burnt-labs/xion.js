@@ -15,11 +15,6 @@ export default function Page(): JSX.Element {
             LOADING STATES
           </Button>
         </Link>
-        <Link href="/direct-mode">
-          <Button fullWidth structure="base">
-            DIRECT MODE
-          </Button>
-        </Link>
         <Link href="/signer-mode">
           <Button fullWidth structure="base">
             SIGNER MODE
