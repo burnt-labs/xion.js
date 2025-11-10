@@ -15,6 +15,11 @@ export default function Page(): JSX.Element {
             LOADING STATES
           </Button>
         </Link>
+        <Link href="/abstraxion-ui">
+          <Button fullWidth structure="base">
+            ABSTRAXION UI COMPONENT
+          </Button>
+        </Link>
         <Link href="/signer-mode">
           <Button fullWidth structure="base">
             SIGNER MODE
@@ -22,9 +27,11 @@ export default function Page(): JSX.Element {
         </Link>
       </div>
       <p className="text-center text-xs text-gray-500 mt-4">
-        <strong>Direct Mode</strong> allows wallet connections without dashboard redirect,
+        <strong>Loading States</strong> shows manual hook usage with custom UI.
         <br />
-        <strong>Loading States</strong> shows how the app reacts to state changes in standard redirect mode.
+        <strong>Abstraxion UI Component</strong> demonstrates the pre-built modal component.
+        <br />
+        <strong>Signer Mode</strong> allows wallet connections without dashboard redirect.
       </p>
     </main>
   );
