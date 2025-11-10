@@ -78,7 +78,7 @@ export class ExternalSignerConnector implements Connector {
           // EthWallet: Format message (ensure 0x prefix) and validate signature format
           const formattedMessage = formatHexMessage(message);
           const signature = await this.signerConfig.signMessage(formattedMessage);
-          
+
           // Validate signature format: should be 130 chars (0x + 64 hex chars = 65 bytes)
           const formattedSignature = formatEthSignature(signature);
           if (formattedSignature.length !== 130) {
@@ -105,7 +105,7 @@ export class ExternalSignerConnector implements Connector {
           return formattedSignature;
         } else {
           // Passkey, Ed25519: Pass through as-is (TODO: full validation support and creation support.)
-          return await this.signerConfig.signMessage(message);
+        return await this.signerConfig.signMessage(message);
         }
       };
 
