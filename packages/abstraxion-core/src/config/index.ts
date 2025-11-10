@@ -2,5 +2,4 @@
  * Config utilities exports
  */
 
-export * from './validation';
-
+export * from "./validation";

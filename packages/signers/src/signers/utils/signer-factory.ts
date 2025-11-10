@@ -4,12 +4,12 @@
  * Simplifies signer creation logic
  */
 
-import { Buffer } from 'buffer';
-import { OfflineDirectSigner } from '@cosmjs/proto-signing';
-import { StdSignature } from '@cosmjs/amino';
-import { AAEthSigner, PersonalSignFn } from '../eth-signer';
-import { AADirectSigner, SignArbitraryFn } from '../direct-signer';
-import { AUTHENTICATOR_TYPE, type AuthenticatorType } from '../../crypto';
+import { Buffer } from "buffer";
+import { OfflineDirectSigner } from "@cosmjs/proto-signing";
+import { StdSignature } from "@cosmjs/amino";
+import { AAEthSigner, PersonalSignFn } from "../eth-signer";
+import { AADirectSigner, SignArbitraryFn } from "../direct-signer";
+import { AUTHENTICATOR_TYPE, type AuthenticatorType } from "../../crypto";
 
 /**
  * Parameters for creating a signer from a signing function
@@ -17,14 +17,14 @@ import { AUTHENTICATOR_TYPE, type AuthenticatorType } from '../../crypto';
 export interface CreateSignerParams {
   /** The abstract account address (granter) */
   smartAccountAddress: string;
-  
+
   /** Index of the authenticator in the smart account */
   authenticatorIndex: number;
-  
+
   /** Authenticator type (EthWallet, Secp256K1, etc.) */
   authenticatorType: AuthenticatorType;
-  
-  /** 
+
+  /**
    * Signing function that takes hex message and returns hex signature
    * This is the unified interface from connectors
    */
@@ -34,19 +34,32 @@ export interface CreateSignerParams {
 /**
  * Create an AASigner from a signing function
  * Automatically selects the appropriate signer type based on authenticator type
- * 
+ *
  * @param params - Parameters for signer creation
  * @returns AASigner instance (AAEthSigner or AADirectSigner)
  */
 export function createSignerFromSigningFunction(
   params: CreateSignerParams,
 ): AAEthSigner | AADirectSigner {
-  const { smartAccountAddress, authenticatorIndex, authenticatorType, signMessage } = params;
+  const {
+    smartAccountAddress,
+    authenticatorIndex,
+    authenticatorType,
+    signMessage,
+  } = params;
 
   if (authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
-    return createEthSigner(smartAccountAddress, authenticatorIndex, signMessage);
+    return createEthSigner(
+      smartAccountAddress,
+      authenticatorIndex,
+      signMessage,
+    );
   } else {
-    return createDirectSigner(smartAccountAddress, authenticatorIndex, signMessage);
+    return createDirectSigner(
+      smartAccountAddress,
+      authenticatorIndex,
+      signMessage,
+    );
   }
 }
 
@@ -61,15 +74,11 @@ function createEthSigner(
   // AAEthSigner expects hex with 0x prefix
   const personalSign: PersonalSignFn = async (message: string) => {
     // Ensure message has 0x prefix
-    const hexMessage = message.startsWith('0x') ? message : `0x${message}`;
+    const hexMessage = message.startsWith("0x") ? message : `0x${message}`;
     return await signMessage(hexMessage);
   };
 
-  return new AAEthSigner(
-    smartAccountAddress,
-    authenticatorIndex,
-    personalSign,
-  );
+  return new AAEthSigner(smartAccountAddress, authenticatorIndex, personalSign);
 }
 
 /**
@@ -81,13 +90,15 @@ function createDirectSigner(
   signMessage: (hexMessage: string) => Promise<string>,
 ): AADirectSigner {
   // Create minimal offline signer for getAccounts()
-  const minimalSigner: Pick<OfflineDirectSigner, 'getAccounts'> = {
+  const minimalSigner: Pick<OfflineDirectSigner, "getAccounts"> = {
     getAccounts: async () => {
-      return [{
-        address: smartAccountAddress,
-        algo: 'secp256k1' as const,
-        pubkey: new Uint8Array(),
-      }];
+      return [
+        {
+          address: smartAccountAddress,
+          algo: "secp256k1" as const,
+          pubkey: new Uint8Array(),
+        },
+      ];
     },
   };
 
@@ -98,21 +109,22 @@ function createDirectSigner(
     data: string | Uint8Array,
   ) => {
     // Convert data to hex
-    const hexMessage = typeof data === 'string'
-      ? Buffer.from(data, 'utf8').toString('hex')
-      : Buffer.from(data).toString('hex');
-    
+    const hexMessage =
+      typeof data === "string"
+        ? Buffer.from(data, "utf8").toString("hex")
+        : Buffer.from(data).toString("hex");
+
     // Use signing function (returns hex signature)
     const signatureHex = await signMessage(hexMessage);
-    
+
     // Convert hex signature to StdSignature format
-    const signatureBytes = Buffer.from(signatureHex, 'hex');
+    const signatureBytes = Buffer.from(signatureHex, "hex");
     return {
       pub_key: {
-        type: 'tendermint/PubKeySecp256k1',
-        value: '',
+        type: "tendermint/PubKeySecp256k1",
+        value: "",
       },
-      signature: signatureBytes.toString('base64'),
+      signature: signatureBytes.toString("base64"),
     };
   };
 
@@ -123,4 +135,3 @@ function createDirectSigner(
     signArbitrary,
   );
 }
-

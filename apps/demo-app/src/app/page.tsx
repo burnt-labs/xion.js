@@ -21,10 +21,12 @@ export default function Page(): JSX.Element {
           </Button>
         </Link>
       </div>
-      <p className="text-center text-xs text-gray-500 mt-4">
-        <strong>Direct Mode</strong> allows wallet connections without dashboard redirect,
+      <p className="mt-4 text-center text-xs text-gray-500">
+        <strong>Direct Mode</strong> allows wallet connections without dashboard
+        redirect,
         <br />
-        <strong>Loading States</strong> shows how the app reacts to state changes in standard redirect mode.
+        <strong>Loading States</strong> shows how the app reacts to state
+        changes in standard redirect mode.
       </p>
     </main>
   );

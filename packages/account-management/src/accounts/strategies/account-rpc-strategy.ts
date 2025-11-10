@@ -11,8 +11,16 @@
  */
 
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { calculateSalt, calculateSmartAccountAddress, AUTHENTICATOR_TYPE, type AuthenticatorType } from "@burnt-labs/signers";
-import type { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
+import {
+  calculateSalt,
+  calculateSmartAccountAddress,
+  AUTHENTICATOR_TYPE,
+  type AuthenticatorType,
+} from "@burnt-labs/signers";
+import type {
+  IndexerStrategy,
+  SmartAccountWithCodeId,
+} from "../../types/indexer";
 import { Buffer } from "buffer";
 
 export interface RpcAccountStrategyConfig {
@@ -64,7 +72,11 @@ export class RpcAccountStrategy implements IndexerStrategy {
 
       // 5. Query authenticators directly (more reliable than getContract)
       // getContract() can fail with protobuf errors on some contract types
-      const authenticators = await this.queryAuthenticators(client, calculatedAddress, loginAuthenticator);
+      const authenticators = await this.queryAuthenticators(
+        client,
+        calculatedAddress,
+        loginAuthenticator,
+      );
 
       if (!authenticators || authenticators.length === 0) {
         // If query failed, contract likely doesn't exist (this is normal)
@@ -73,11 +85,13 @@ export class RpcAccountStrategy implements IndexerStrategy {
 
       // 6. Return smart account with authenticators
       // Use configured codeId (same as AA API and Dashboard)
-      return [{
-        id: calculatedAddress,
-        codeId: this.config.codeId,
-        authenticators: authenticators,
-      }];
+      return [
+        {
+          id: calculatedAddress,
+          codeId: this.config.codeId,
+          authenticators: authenticators,
+        },
+      ];
     } catch (error) {
       console.error("[RpcAccountStrategy] Failed to query chain:", error);
       return [];
@@ -97,7 +111,14 @@ export class RpcAccountStrategy implements IndexerStrategy {
     client: CosmWasmClient,
     contractAddress: string,
     loginAuthenticator: string,
-  ): Promise<Array<{ id: string; type: string; authenticator: string; authenticatorIndex: number }>> {
+  ): Promise<
+    Array<{
+      id: string;
+      type: string;
+      authenticator: string;
+      authenticatorIndex: number;
+    }>
+  > {
     try {
       // Step 1: Query all authenticator IDs
       const idsResponse = await client.queryContractSmart(contractAddress, {
@@ -112,9 +133,12 @@ export class RpcAccountStrategy implements IndexerStrategy {
       const authenticators = await Promise.all(
         idsResponse.map(async (id: number) => {
           try {
-            const authResponse = await client.queryContractSmart(contractAddress, {
-              authenticator_by_i_d: { id },
-            });
+            const authResponse = await client.queryContractSmart(
+              contractAddress,
+              {
+                authenticator_by_i_d: { id },
+              },
+            );
 
             // Parse the authenticator data (it's base64-encoded JSON)
             // Format: {"EthWallet":{"address":"0x..."}} or {"Secp256K1":{"pubkey":"..."}}
@@ -122,9 +146,11 @@ export class RpcAccountStrategy implements IndexerStrategy {
             let authenticatorString: string;
             let authenticatorType: string;
 
-            if (typeof authResponse === 'string') {
+            if (typeof authResponse === "string") {
               // Response is base64-encoded
-              const decoded = Buffer.from(authResponse, 'base64').toString('utf-8');
+              const decoded = Buffer.from(authResponse, "base64").toString(
+                "utf-8",
+              );
               authenticatorData = JSON.parse(decoded);
             } else {
               // Response is already JSON
@@ -159,11 +185,13 @@ export class RpcAccountStrategy implements IndexerStrategy {
           } catch (error: any) {
             return null;
           }
-        })
+        }),
       );
 
       // Filter out null results
-      const validAuthenticators = authenticators.filter((auth): auth is NonNullable<typeof auth> => auth !== null);
+      const validAuthenticators = authenticators.filter(
+        (auth): auth is NonNullable<typeof auth> => auth !== null,
+      );
 
       return validAuthenticators;
     } catch (error: any) {

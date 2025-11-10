@@ -53,19 +53,22 @@ export interface AllowanceResponse {
 export interface GrantConfig {
   /** Treasury contract address (if using treasury-based grants) */
   treasury?: string;
-  
+
   /** Manual contract grant descriptions */
-  contracts?: Array<string | { address: string; amounts: Array<{ denom: string; amount: string }> }>;
-  
+  contracts?: Array<
+    | string
+    | { address: string; amounts: Array<{ denom: string; amount: string }> }
+  >;
+
   /** Bank spend limits */
   bank?: Array<{ denom: string; amount: string }>;
-  
+
   /** Enable staking permissions */
   stake?: boolean;
-  
+
   /** Fee granter address */
   feeGranter?: string;
-  
+
   /** DaoDao indexer URL for treasury queries */
   daodaoIndexerUrl?: string;
 }

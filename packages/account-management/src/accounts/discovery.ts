@@ -3,9 +3,9 @@
  * Functions for checking if smart accounts exist
  */
 
-import type { CompositeAccountStrategy } from '../accounts/index';
-import type { Authenticator } from '../types/authenticator';
-import type { AuthenticatorType } from '../authenticators/type-detection';
+import type { CompositeAccountStrategy } from "../accounts/index";
+import type { Authenticator } from "../types/authenticator";
+import type { AuthenticatorType } from "../authenticators/type-detection";
 
 /**
  * Result of account existence check
@@ -21,7 +21,7 @@ export interface AccountExistenceResult {
 /**
  * Check if account exists using the account strategy
  * Returns account details if found
- * 
+ *
  * @param accountStrategy - The account strategy to use for discovery
  * @param authenticator - The authenticator string (address, pubkey, JWT, etc.)
  * @param authenticatorType - Authenticator type. Required because the type is always known from context
@@ -32,10 +32,13 @@ export async function checkAccountExists(
   accountStrategy: CompositeAccountStrategy,
   authenticator: string,
   authenticatorType: AuthenticatorType,
-  logPrefix: string = '[account-discovery]'
+  logPrefix: string = "[account-discovery]",
 ): Promise<AccountExistenceResult> {
   try {
-    const accounts = await accountStrategy.fetchSmartAccounts(authenticator, authenticatorType);
+    const accounts = await accountStrategy.fetchSmartAccounts(
+      authenticator,
+      authenticatorType,
+    );
 
     if (accounts.length === 0) {
       return {
@@ -52,7 +55,7 @@ export async function checkAccountExists(
         // For EthWallet, compare lowercase addresses
         // For Secp256K1, compare base64 pubkeys
         return auth.authenticator.toLowerCase() === authenticator.toLowerCase();
-      }
+      },
     );
 
     const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
@@ -79,4 +82,3 @@ export async function checkAccountExists(
     };
   }
 }
-

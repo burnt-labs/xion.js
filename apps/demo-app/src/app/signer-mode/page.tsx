@@ -1,25 +1,41 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTurnkey, AuthState } from '@turnkey/react-wallet-kit';
-import { useAbstraxionAccount, useAbstraxionSigningClient } from '@burnt-labs/abstraxion';
-import { Button } from '@burnt-labs/ui';
-import '@burnt-labs/ui/dist/index.css';
-import '@burnt-labs/abstraxion/dist/index.css';
-import Link from 'next/link';
-import { SendTokens } from '@/components/SendTokens';
-import { useTurnkeyAuth } from './providers';
+import React, { useState, useEffect, useCallback } from "react";
+import { useTurnkey, AuthState } from "@turnkey/react-wallet-kit";
+import {
+  useAbstraxionAccount,
+  useAbstraxionSigningClient,
+} from "@burnt-labs/abstraxion";
+import { Button } from "@burnt-labs/ui";
+import "@burnt-labs/ui/dist/index.css";
+import "@burnt-labs/abstraxion/dist/index.css";
+import Link from "next/link";
+import { SendTokens } from "@/components/SendTokens";
+import { useTurnkeyAuth } from "./providers";
 
 export default function SignerModePage() {
-  const { authState, handleLogin: turnkeyLogin, logout: turnkeyLogout, user, wallets, httpClient, createWallet } = useTurnkey();
-  const { registerAbstraxionLogin, registerAbstraxionLogout, registerCreateWallet, registerWalletsGetter } = useTurnkeyAuth();
+  const {
+    authState,
+    handleLogin: turnkeyLogin,
+    logout: turnkeyLogout,
+    user,
+    wallets,
+    httpClient,
+    createWallet,
+  } = useTurnkey();
+  const {
+    registerAbstraxionLogin,
+    registerAbstraxionLogout,
+    registerCreateWallet,
+    registerWalletsGetter,
+  } = useTurnkeyAuth();
   const {
     data: abstraxionAccount,
     isConnected,
     isConnecting,
     isInitializing,
     login: abstraxionLogin,
-    logout: abstraxionLogout
+    logout: abstraxionLogout,
   } = useAbstraxionAccount();
 
   // Get the signing client to pass to child components
@@ -28,11 +44,12 @@ export default function SignerModePage() {
   // can create a smart account with any Account but we use the Eth style account in this example
   const wallet = wallets?.[0];
   const ethAccount = wallet?.accounts.find(
-    a => a.addressFormat === 'ADDRESS_FORMAT_ETHEREUM'
+    (a) => a.addressFormat === "ADDRESS_FORMAT_ETHEREUM",
   );
 
   // Check if Turnkey is fully ready (authenticated + wallet + httpClient)
-  const isTurnkeyReady = authState === AuthState.Authenticated && !!wallet && !!httpClient;
+  const isTurnkeyReady =
+    authState === AuthState.Authenticated && !!wallet && !!httpClient;
 
   // Function to be called to handle the login in case the Callback from @turnkey/react-wallet-kit fails to connect to Abstraxion
   // Could also use only this style and remove the integration with Turnkey onSuccess callback
@@ -40,7 +57,7 @@ export default function SignerModePage() {
     try {
       await abstraxionLogin();
     } catch (err: any) {
-      console.error('Abstraxion connection error:', err);
+      console.error("Abstraxion connection error:", err);
     }
   }, [abstraxionLogin]);
 
@@ -70,17 +87,28 @@ export default function SignerModePage() {
         abstraxionLogout();
       }
     });
-  }, [wallets, createWallet, registerWalletsGetter, registerCreateWallet, registerAbstraxionLogin, registerAbstraxionLogout, isConnected, isConnecting, handleAbstraxionConnect, abstraxionLogout]);
+  }, [
+    wallets,
+    createWallet,
+    registerWalletsGetter,
+    registerCreateWallet,
+    registerAbstraxionLogin,
+    registerAbstraxionLogout,
+    isConnected,
+    isConnecting,
+    handleAbstraxionConnect,
+    abstraxionLogout,
+  ]);
 
   // Single sync check: Ensure Turnkey auth and Abstraxion connection states are consistent
   // This is tried once if for some reason the onSuccess callback fails to connect to Abstraxion
   useEffect(() => {
     let hasAttempted = false;
-    
+
     // Only attempt connection if Turnkey is fully ready but Abstraxion is not connected
     if (isTurnkeyReady && !isConnected && !isConnecting && !hasAttempted) {
       hasAttempted = true;
-      
+
       // Small delay to ensure wallet is fully indexed
       const timer = setTimeout(() => {
         handleAbstraxionConnect();
@@ -103,17 +131,20 @@ export default function SignerModePage() {
   }, [abstraxionLogout, turnkeyLogout]);
 
   // Combined initialization state: both Abstraxion and Turnkey need to initialize, can separate if you want to see the difference
-  const isSystemInitializing = isInitializing || (authState !== AuthState.Authenticated && authState !== AuthState.Unauthenticated);
+  const isSystemInitializing =
+    isInitializing ||
+    (authState !== AuthState.Authenticated &&
+      authState !== AuthState.Unauthenticated);
 
   return (
     <main className="m-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 p-4">
       {/* Initialization Loading Overlay - System is checking for existing sessions */}
       {isSystemInitializing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
-          <div className="mx-4 max-w-sm rounded-lg border border-yellow-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+          <div className="mx-4 max-w-sm rounded-lg border border-yellow-500/50 bg-black/80 p-8 text-center shadow-2xl backdrop-blur-xl">
             <div className="mb-6">
               <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-yellow-500/40 bg-yellow-500/20">
-                <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-yellow-400 border-r-transparent"></div>
+                <div className="border-3 h-8 w-8 animate-spin rounded-full border-solid border-yellow-400 border-r-transparent"></div>
               </div>
             </div>
             <p className="text-lg font-bold text-yellow-400">Initializing</p>
@@ -127,13 +158,15 @@ export default function SignerModePage() {
       {/* Wallet Connection Loading Overlay - only show when creating smart account */}
       {isConnecting && !isSystemInitializing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
-          <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+          <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 p-8 text-center shadow-2xl backdrop-blur-xl">
             <div className="mb-6">
               <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/40 bg-blue-500/20">
-                <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-blue-400 border-r-transparent"></div>
+                <div className="border-3 h-8 w-8 animate-spin rounded-full border-solid border-blue-400 border-r-transparent"></div>
               </div>
             </div>
-            <p className="text-lg font-bold text-blue-400">Creating Smart Account</p>
+            <p className="text-lg font-bold text-blue-400">
+              Creating Smart Account
+            </p>
           </div>
         </div>
       )}
@@ -142,9 +175,9 @@ export default function SignerModePage() {
         Signer Mode Abstraxion Example
       </h1>
       <p className="text-center text-gray-400">
-        This example uses <strong>signer mode</strong> with Turnkey embedded wallets.
-        Turnkey creates a secure wallet, then Abstraxion creates a smart account with
-        session keys for gasless transactions.
+        This example uses <strong>signer mode</strong> with Turnkey embedded
+        wallets. Turnkey creates a secure wallet, then Abstraxion creates a
+        smart account with session keys for gasless transactions.
       </p>
 
       <div className="w-full space-y-4">
@@ -159,7 +192,8 @@ export default function SignerModePage() {
               className={`flex items-center gap-1 ${
                 isSystemInitializing
                   ? "text-yellow-400"
-                  : !isSystemInitializing && (authState !== AuthState.Unauthenticated || wallet)
+                  : !isSystemInitializing &&
+                      (authState !== AuthState.Unauthenticated || wallet)
                     ? "text-green-400"
                     : "text-gray-400"
               }`}
@@ -168,7 +202,8 @@ export default function SignerModePage() {
                 className={`h-2 w-2 rounded-full ${
                   isSystemInitializing
                     ? "animate-pulse bg-yellow-400"
-                    : !isSystemInitializing && (authState !== AuthState.Unauthenticated || wallet)
+                    : !isSystemInitializing &&
+                        (authState !== AuthState.Unauthenticated || wallet)
                       ? "bg-green-400"
                       : "bg-gray-400"
                 }`}
@@ -177,7 +212,9 @@ export default function SignerModePage() {
             </div>
             <div
               className={`mx-2 h-px flex-1 ${
-                !isSystemInitializing && authState !== AuthState.Unauthenticated ? "bg-green-400/50" : "bg-gray-600"
+                !isSystemInitializing && authState !== AuthState.Unauthenticated
+                  ? "bg-green-400/50"
+                  : "bg-gray-600"
               }`}
             ></div>
 
@@ -255,29 +292,27 @@ export default function SignerModePage() {
           <>
             {/* Connect Button */}
             {!isTurnkeyReady && (
-              <Button
-                fullWidth
-                onClick={handleTurnkeyLogin}
-                structure="base"
-              >
+              <Button fullWidth onClick={handleTurnkeyLogin} structure="base">
                 CONNECT WALLET
               </Button>
             )}
           </>
         )}
 
-
         {/* Abstraxion Account Info */}
         {isConnected && abstraxionAccount && (
           <>
-           <div className="rounded-lg border border-white/10 bg-gray-900/50 p-4 space-y-2 backdrop-blur-sm">
+            <div className="space-y-2 rounded-lg border border-white/10 bg-gray-900/50 p-4 backdrop-blur-sm">
               <h3 className="mb-2 font-semibold">Turnkey Info</h3>
-              <p className="text-sm text-gray-400 break-all">
-                Ethereum Address: {ethAccount?.address || 'N/A'}
+              <p className="break-all text-sm text-gray-400">
+                Ethereum Address: {ethAccount?.address || "N/A"}
               </p>
-              <div className="pt-2 border-t border-white/10">
+              <div className="border-t border-white/10 pt-2">
                 <p className="text-sm text-gray-400">
-                  User: <span className="font-mono text-white">{user?.userEmail || user?.userName || 'Anonymous'}</span>
+                  User:{" "}
+                  <span className="font-mono text-white">
+                    {user?.userEmail || user?.userName || "Anonymous"}
+                  </span>
                 </p>
               </div>
             </div>
@@ -288,11 +323,7 @@ export default function SignerModePage() {
               memo="Send XION via Abstraxion Signer Mode"
             />
 
-            <Button
-              fullWidth
-              onClick={handleDisconnect}
-              structure="outlined"
-            >
+            <Button fullWidth onClick={handleDisconnect} structure="outlined">
               DISCONNECT
             </Button>
           </>

@@ -9,7 +9,6 @@
   # Breaking Changes
 
   ## Removed Components and UI
-
   - All UI components removed: `<Abstraxion />`, `<AbstraxionSignin />`, `<Connected />`, `<Loading />`, `<ErrorDisplay />`
   - CSS import no longer needed - package is now UI-less
   - `@burnt-labs/ui` dependency removed
@@ -156,44 +155,44 @@
   ```
 
   ## Controller Architecture
-
   - New controller pattern with state machine for connection lifecycle
   - `RedirectController` for OAuth flow
   - `SignerController` for external signers
   - Handles state transitions, session restoration, account creation/discovery
 
   ## Indexer Support
-
   - Numia and Subquery indexers for fast account discovery (signer mode)
   - DaoDao treasury indexer for fast grant config queries
   - Falls back to RPC if no indexer configured
 
   # Migration Guide
-
   1. **Update provider:**
+
      ```tsx
      <AbstraxionProvider config={{ chainId: "xion-testnet-1", contracts }} />
      ```
 
   2. **Remove CSS import:**
+
      ```tsx
      // Remove: import "@burnt-labs/abstraxion/dist/index.css";
      ```
 
   3. **Replace useModal:**
+
      ```tsx
      // Use login from useAbstraxionAccount instead
      const { login } = useAbstraxionAccount();
      ```
 
   4. **Update hook usage:**
+
      ```tsx
      const { client, signArb } = useAbstraxionSigningClient();
      const { logout } = useAbstraxionAccount();
      ```
 
   5. **Optional - implement signer mode for custom auth**
-
 
 ## 1.0.0-alpha.68
 

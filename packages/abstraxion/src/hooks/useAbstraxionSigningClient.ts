@@ -1,7 +1,5 @@
 import { useContext } from "react";
-import {
-  GranteeSignerClient,
-} from "@burnt-labs/abstraxion-core";
+import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 import { AbstraxionContext } from "@/src/components/AbstraxionContext";
 
 export const useAbstraxionSigningClient = (): {

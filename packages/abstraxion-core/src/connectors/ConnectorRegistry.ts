@@ -3,7 +3,7 @@
  * Manages available connectors and provides lookup/filtering
  */
 
-import type { Connector, ConnectorType } from './types';
+import type { Connector, ConnectorType } from "./types";
 
 export class ConnectorRegistry {
   private connectors: Map<string, Connector> = new Map();
@@ -13,7 +13,9 @@ export class ConnectorRegistry {
    */
   register(connector: Connector): void {
     if (this.connectors.has(connector.metadata.id)) {
-      console.warn(`Connector with ID "${connector.metadata.id}" already registered, overwriting`);
+      console.warn(
+        `Connector with ID "${connector.metadata.id}" already registered, overwriting`,
+      );
     }
     this.connectors.set(connector.metadata.id, connector);
   }
@@ -81,4 +83,3 @@ export class ConnectorRegistry {
     this.connectors.clear();
   }
 }
-

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import type { GranteeSignerClient } from '@burnt-labs/abstraxion-core';
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 
 interface UseGetBalanceReturn {
   balance: string | null;
@@ -15,7 +15,7 @@ interface UseGetBalanceReturn {
  */
 export function useGetBalance(
   accountAddress: string | undefined,
-  client: GranteeSignerClient | undefined
+  client: GranteeSignerClient | undefined,
 ): UseGetBalanceReturn {
   const [balance, setBalance] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +28,9 @@ export function useGetBalance(
     async function fetchBalance() {
       if (!client || !accountAddress) {
         if (!hasLoggedRef.current) {
-          console.log('[useGetBalance] Waiting for client and account address...');
+          console.log(
+            "[useGetBalance] Waiting for client and account address...",
+          );
           hasLoggedRef.current = true;
         }
         setBalance(null);
@@ -41,18 +43,20 @@ export function useGetBalance(
       try {
         setIsLoading(true);
         const balances = await client.getAllBalances(accountAddress);
-        const xionBalance = balances.find((b) => b.denom === 'uxion');
+        const xionBalance = balances.find((b) => b.denom === "uxion");
 
         if (xionBalance) {
           // Convert uxion to XION (divide by 1,000,000)
-          const xionAmount = (parseInt(xionBalance.amount) / 1_000_000).toFixed(6);
+          const xionAmount = (parseInt(xionBalance.amount) / 1_000_000).toFixed(
+            6,
+          );
           setBalance(xionAmount);
         } else {
-          setBalance('0');
+          setBalance("0");
         }
       } catch (error) {
-        console.error('Failed to fetch balance:', error);
-        setBalance('Error');
+        console.error("Failed to fetch balance:", error);
+        setBalance("Error");
       } finally {
         setIsLoading(false);
       }
@@ -63,7 +67,7 @@ export function useGetBalance(
 
   // Memoize refetch to prevent re-renders in components that depend on it
   const refetch = useCallback(() => {
-    setRefetchTrigger(prev => prev + 1);
+    setRefetchTrigger((prev) => prev + 1);
   }, []);
 
   return {

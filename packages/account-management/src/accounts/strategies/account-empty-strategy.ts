@@ -7,7 +7,10 @@
  * instead of trying to find an existing one.
  */
 
-import type { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
+import type {
+  IndexerStrategy,
+  SmartAccountWithCodeId,
+} from "../../types/indexer";
 import type { AuthenticatorType } from "../../authenticators/type-detection";
 
 /**

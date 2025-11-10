@@ -63,28 +63,36 @@ export class NumiaAccountStrategy implements IndexerStrategy {
         if (response.status === 404) {
           return [];
         }
-        console.error("[NumiaAccountStrategy] Request failed:", response.status, response.statusText);
+        console.error(
+          "[NumiaAccountStrategy] Request failed:",
+          response.status,
+          response.statusText,
+        );
         throw new Error(`Indexer request failed: ${response.statusText}`);
       }
 
       const data: NumiaSmartAccountResp[] = await response.json();
 
-      const results = data?.map(({ smart_account, code_id, authenticators }) => ({
-        id: smart_account,
-        codeId: Number(code_id),
-        authenticators: authenticators.map(
-          ({ authenticator, authenticator_index, type }) => ({
-            id: `${smart_account}-${authenticator_index}`,
-            authenticator,
-            authenticatorIndex: Number(authenticator_index),
-            type,
-          }),
-        ),
-      })) || [];
+      const results =
+        data?.map(({ smart_account, code_id, authenticators }) => ({
+          id: smart_account,
+          codeId: Number(code_id),
+          authenticators: authenticators.map(
+            ({ authenticator, authenticator_index, type }) => ({
+              id: `${smart_account}-${authenticator_index}`,
+              authenticator,
+              authenticatorIndex: Number(authenticator_index),
+              type,
+            }),
+          ),
+        })) || [];
 
       return results;
     } catch (error) {
-      console.error('[NumiaAccountStrategy] Error fetching smart accounts:', error);
+      console.error(
+        "[NumiaAccountStrategy] Error fetching smart accounts:",
+        error,
+      );
       // Return empty array on error - let the app decide whether to create new account
       return [];
     }

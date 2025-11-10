@@ -1,8 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import type { GranteeSignerClient } from '@burnt-labs/abstraxion-core';
+import { useState, useRef, useEffect } from "react";
+import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 
 interface UseSendTokensReturn {
-  sendTokens: (recipient: string, amount: string, memo?: string) => Promise<string>;
+  sendTokens: (
+    recipient: string,
+    amount: string,
+    memo?: string,
+  ) => Promise<string>;
   isSending: boolean;
   txHash: string | null;
   txError: string | null;
@@ -19,7 +23,7 @@ interface UseSendTokensReturn {
 export function useSendTokens(
   accountAddress: string | undefined,
   client: GranteeSignerClient | undefined,
-  balance: string | null
+  balance: string | null,
 ): UseSendTokensReturn {
   const [isSending, setIsSending] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -30,7 +34,7 @@ export function useSendTokens(
 
   useEffect(() => {
     if (client && accountAddress && !hasLoggedRef.current) {
-      console.log('[useSendTokens] Initialized with client and account');
+      console.log("[useSendTokens] Initialized with client and account");
       hasLoggedRef.current = true;
     }
   }, [client, accountAddress]);
@@ -42,20 +46,32 @@ export function useSendTokens(
    * @param memo - Optional transaction memo
    * @returns Transaction hash
    */
-  const sendTokens = async (recipient: string, amount: string, memo: string = 'Send XION via Abstraxion'): Promise<string> => {
-    console.log('[useSendTokens.sendTokens] Checking client and accountAddress:', { client, accountAddress });
+  const sendTokens = async (
+    recipient: string,
+    amount: string,
+    memo: string = "Send XION via Abstraxion",
+  ): Promise<string> => {
+    console.log(
+      "[useSendTokens.sendTokens] Checking client and accountAddress:",
+      { client, accountAddress },
+    );
     if (!client || !accountAddress) {
-      console.error('[useSendTokens.sendTokens] Client not initialized - client:', client, 'accountAddress:', accountAddress);
-      throw new Error('Client not initialized');
+      console.error(
+        "[useSendTokens.sendTokens] Client not initialized - client:",
+        client,
+        "accountAddress:",
+        accountAddress,
+      );
+      throw new Error("Client not initialized");
     }
 
     if (!recipient || !amount) {
-      throw new Error('Recipient and amount are required');
+      throw new Error("Recipient and amount are required");
     }
 
     // Validate recipient address format
-    if (!recipient.startsWith('xion1')) {
-      throw new Error('Invalid recipient address. Must start with xion1');
+    if (!recipient.startsWith("xion1")) {
+      throw new Error("Invalid recipient address. Must start with xion1");
     }
 
     // Check if user has sufficient balance
@@ -74,15 +90,15 @@ export function useSendTokens(
       const result = await client.sendTokens(
         accountAddress,
         recipient,
-        [{ denom: 'uxion', amount: amountInUxion }],
-        'auto',
-        memo
+        [{ denom: "uxion", amount: amountInUxion }],
+        "auto",
+        memo,
       );
 
       setTxHash(result.transactionHash);
       return result.transactionHash;
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to send tokens';
+      const errorMessage = error.message || "Failed to send tokens";
       setTxError(errorMessage);
       throw new Error(errorMessage);
     } finally {

@@ -3,10 +3,10 @@
  * Extracted from AbstraxionContext restoreDirectModeSession function
  */
 
-import type { SignArbSecp256k1HdWallet } from '@burnt-labs/abstraxion-core';
-import { GranteeSignerClient } from '@burnt-labs/abstraxion-core';
-import { GasPrice } from '@cosmjs/stargate';
-import type { SessionManager, SessionRestorationResult } from '../types';
+import type { SignArbSecp256k1HdWallet } from "@burnt-labs/abstraxion-core";
+import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import { GasPrice } from "@cosmjs/stargate";
+import type { SessionManager, SessionRestorationResult } from "../types";
 
 /**
  * Configuration for creating a signing client during session restoration
@@ -21,7 +21,7 @@ export interface SigningClientConfig {
  * Restore an existing session if valid
  * Checks for stored keypair and granter, then verifies grants on-chain
  * Optionally creates a signing client if config is provided
- * 
+ *
  * @param sessionManager - Session management interface
  * @param signingClientConfig - Optional config for creating signing client
  * @returns Session restoration result with `restored: false` if no valid session exists,
@@ -47,7 +47,7 @@ export async function restoreSession(
     // If we get here, grants are valid so Get grantee address from keypair
     const accounts = await storedKeypair.getAccounts();
     const granteeAddress = accounts[0].address;
-    
+
     const result: SessionRestorationResult = {
       restored: true,
       keypair: storedKeypair,
@@ -83,15 +83,11 @@ async function createSigningClient(
 ): Promise<GranteeSignerClient> {
   const accounts = await keypair.getAccounts();
   const granteeAddress = accounts[0].address;
-  
-  return GranteeSignerClient.connectWithSigner(
-    config.rpcUrl,
-    keypair,
-    {
-      gasPrice: GasPrice.fromString(config.gasPrice),
-      granterAddress,
-      granteeAddress,
-      treasuryAddress: config.treasuryAddress,
-    },
-  );
+
+  return GranteeSignerClient.connectWithSigner(config.rpcUrl, keypair, {
+    gasPrice: GasPrice.fromString(config.gasPrice),
+    granterAddress,
+    granteeAddress,
+    treasuryAddress: config.treasuryAddress,
+  });
 }

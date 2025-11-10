@@ -11,19 +11,20 @@ import { Buffer } from "buffer";
  * Use these instead of string literals to avoid typos and ensure type safety
  */
 export const AUTHENTICATOR_TYPE = {
-  EthWallet: "EthWallet" as const,      // Ethereum wallets (MetaMask, Rainbow, etc.)
-  Secp256K1: "Secp256K1" as const,      // Cosmos wallets (Keplr, Leap, OKX, etc.)
-  Ed25519: "Ed25519" as const,          // Ed25519 curve wallets (Solana, etc.)
-  JWT: "JWT" as const,                  // Social logins (Google, Stytch, etc.)
-  Passkey: "Passkey" as const,          // WebAuthn/Passkey
-  Sr25519: "Sr25519" as const,          // Sr25519 curve (Polkadot, etc.)
+  EthWallet: "EthWallet" as const, // Ethereum wallets (MetaMask, Rainbow, etc.)
+  Secp256K1: "Secp256K1" as const, // Cosmos wallets (Keplr, Leap, OKX, etc.)
+  Ed25519: "Ed25519" as const, // Ed25519 curve wallets (Solana, etc.)
+  JWT: "JWT" as const, // Social logins (Google, Stytch, etc.)
+  Passkey: "Passkey" as const, // WebAuthn/Passkey
+  Sr25519: "Sr25519" as const, // Sr25519 curve (Polkadot, etc.)
 } as const;
 
 /**
  * Authenticator types that support salt calculation
  * Used to determine which salt calculation method to use
  */
-export type AuthenticatorType = typeof AUTHENTICATOR_TYPE[keyof typeof AUTHENTICATOR_TYPE];
+export type AuthenticatorType =
+  (typeof AUTHENTICATOR_TYPE)[keyof typeof AUTHENTICATOR_TYPE];
 
 /**
  * Calculate salt for EthWallet authenticator
@@ -79,7 +80,7 @@ export function calculateSalt(
 ): string {
   switch (authenticatorType) {
     case AUTHENTICATOR_TYPE.EthWallet:
-    return calculateEthWalletSalt(credential);
+      return calculateEthWalletSalt(credential);
     case AUTHENTICATOR_TYPE.Secp256K1:
       return calculateSecp256k1Salt(credential);
     case AUTHENTICATOR_TYPE.JWT:
@@ -90,7 +91,7 @@ export function calculateSalt(
       // For now, these use the same salt calculation as Secp256K1
       // (sha256 of the credential string)
       // Can be extended with specific implementations later
-    return calculateSecp256k1Salt(credential);
+      return calculateSecp256k1Salt(credential);
     default:
       // TypeScript exhaustiveness check - should never reach here
       const _exhaustive: never = authenticatorType;

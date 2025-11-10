@@ -14,10 +14,10 @@ export * from "./indexer";
 export interface SmartAccountContractConfig {
   /** Contract code ID for smart account creation */
   codeId: number;
-  
+
   /** Contract checksum as hex string */
   checksum: string;
-  
+
   /** Address prefix (e.g., "xion") */
   addressPrefix: string;
 }
@@ -30,10 +30,10 @@ export interface SmartAccountContractConfig {
 export interface AccountCreationConfig {
   /** AA API URL for account creation */
   aaApiUrl: string;
-  
+
   /** Smart account contract configuration */
   smartAccountContract: SmartAccountContractConfig;
-  
+
   /** Fee granter address (creator) */
   feeGranter: string;
 }

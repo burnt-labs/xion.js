@@ -17,9 +17,18 @@ interface SendTokensProps {
  * @param client - The signing client for transactions
  * @param memo - Optional memo to include with transactions
  */
-export function SendTokens({ accountAddress, client, memo = "Send XION via Abstraxion" }: SendTokensProps) {
-  const { balance, isLoading: isLoadingBalance, refetch } = useGetBalance(accountAddress, client);
-  const { sendTokens, isSending, txHash, txError, resetTxState } = useSendTokens(accountAddress, client, balance);
+export function SendTokens({
+  accountAddress,
+  client,
+  memo = "Send XION via Abstraxion",
+}: SendTokensProps) {
+  const {
+    balance,
+    isLoading: isLoadingBalance,
+    refetch,
+  } = useGetBalance(accountAddress, client);
+  const { sendTokens, isSending, txHash, txError, resetTxState } =
+    useSendTokens(accountAddress, client, balance);
 
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
@@ -56,12 +65,12 @@ export function SendTokens({ accountAddress, client, memo = "Send XION via Abstr
   return (
     <>
       {/* Account Info */}
-      <div className="rounded-lg border border-white/10 bg-gray-900/50 p-4 space-y-2 backdrop-blur-sm">
+      <div className="space-y-2 rounded-lg border border-white/10 bg-gray-900/50 p-4 backdrop-blur-sm">
         <h3 className="mb-2 font-semibold">Account Info</h3>
-        <p className="text-sm text-gray-400 break-all">
+        <p className="break-all text-sm text-gray-400">
           Address: {accountAddress}
         </p>
-        <div className="pt-2 border-t border-white/10">
+        <div className="border-t border-white/10 pt-2">
           <p className="text-sm text-gray-400">
             Balance:{" "}
             {isLoadingBalance ? (
@@ -90,14 +99,14 @@ export function SendTokens({ accountAddress, client, memo = "Send XION via Abstr
               className="underline hover:text-yellow-300"
             >
               Get testnet tokens from the faucet
-            </a>
-            {" "}to send transactions.
+            </a>{" "}
+            to send transactions.
           </p>
         </div>
       )}
 
       {/* Send XION Section */}
-      <div className="rounded-lg border border-white/10 bg-gray-900/50 p-4 space-y-3 backdrop-blur-sm">
+      <div className="space-y-3 rounded-lg border border-white/10 bg-gray-900/50 p-4 backdrop-blur-sm">
         <h3 className="font-semibold">Send XION</h3>
 
         <div className="space-y-2">
@@ -109,14 +118,12 @@ export function SendTokens({ accountAddress, client, memo = "Send XION via Abstr
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
             placeholder="xion1..."
-            className="w-full rounded bg-gray-800/50 border border-white/20 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+            className="w-full rounded border border-white/20 bg-gray-800/50 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm text-gray-400">
-            Amount (XION)
-          </label>
+          <label className="block text-sm text-gray-400">Amount (XION)</label>
           <input
             type="number"
             value={amount}
@@ -124,7 +131,7 @@ export function SendTokens({ accountAddress, client, memo = "Send XION via Abstr
             placeholder="0.001"
             step="0.001"
             min="0"
-            className="w-full rounded bg-gray-800/50 border border-white/20 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+            className="w-full rounded border border-white/20 bg-gray-800/50 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
           />
         </div>
 
@@ -139,20 +146,16 @@ export function SendTokens({ accountAddress, client, memo = "Send XION via Abstr
 
         {txHash && (
           <div className="rounded border border-green-500/20 bg-green-500/10 p-3">
-            <p className="text-xs text-green-400 font-medium mb-1">
+            <p className="mb-1 text-xs font-medium text-green-400">
               ✓ Transaction Successful
             </p>
-            <p className="text-xs text-gray-400 break-all">
-              Hash: {txHash}
-            </p>
+            <p className="break-all text-xs text-gray-400">Hash: {txHash}</p>
           </div>
         )}
 
         {txError && (
           <div className="rounded border border-red-500/20 bg-red-500/10 p-3">
-            <p className="text-xs text-red-400">
-              ✗ {txError}
-            </p>
+            <p className="text-xs text-red-400">✗ {txError}</p>
           </div>
         )}
       </div>

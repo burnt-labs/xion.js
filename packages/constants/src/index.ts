@@ -141,24 +141,24 @@ export function getRestUrl(chainId: string): string | undefined {
   return chainInfo?.rest;
 }
 
-export async function fetchConfig(rpcUrl: string) {
-  try {
-    const fetchReq = await fetch(`${rpcUrl}/status`);
-    if (!fetchReq.ok) {
-      throw new Error("Something went wrong querying RPC");
-    }
-
-    const data = (await fetchReq.json()) as RpcStatusResponse;
-    const networkId = data.result.node_info.network;
-
-    const dashboardUrl =
-      DASHBOARD_URLS[networkId as keyof typeof DASHBOARD_URLS];
-    const restUrl = REST_URLS[networkId as keyof typeof REST_URLS];
-    const feeGranter = FEE_GRANTERS[networkId] || "";
-    
-    if (!dashboardUrl || !restUrl) throw new Error("Network not found.");
-    return { dashboardUrl, restUrl, networkId, feeGranter };
-  } catch (error) {
-    throw error;
+export async function fetchConfig(rpcUrl: string): Promise<{
+  dashboardUrl: string;
+  restUrl: string;
+  networkId: string;
+  feeGranter: string;
+}> {
+  const fetchReq = await fetch(`${rpcUrl}/status`);
+  if (!fetchReq.ok) {
+    throw new Error("Something went wrong querying RPC");
   }
+
+  const data = (await fetchReq.json()) as RpcStatusResponse;
+  const networkId = data.result.node_info.network;
+
+  const dashboardUrl = DASHBOARD_URLS[networkId as keyof typeof DASHBOARD_URLS];
+  const restUrl = REST_URLS[networkId as keyof typeof REST_URLS];
+  const feeGranter = FEE_GRANTERS[networkId] || "";
+
+  if (!dashboardUrl || !restUrl) throw new Error("Network not found.");
+  return { dashboardUrl, restUrl, networkId, feeGranter };
 }

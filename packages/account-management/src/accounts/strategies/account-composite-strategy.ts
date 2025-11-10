@@ -4,7 +4,10 @@
  * Implements the Strategy pattern with fallback behavior
  */
 
-import type { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
+import type {
+  IndexerStrategy,
+  SmartAccountWithCodeId,
+} from "../../types/indexer";
 import type { AuthenticatorType } from "../../authenticators/type-detection";
 
 /**
@@ -31,7 +34,10 @@ export class CompositeAccountStrategy implements IndexerStrategy {
       const strategy = this.strategies[i];
 
       try {
-        const result = await strategy.fetchSmartAccounts(loginAuthenticator, authenticatorType);
+        const result = await strategy.fetchSmartAccounts(
+          loginAuthenticator,
+          authenticatorType,
+        );
 
         if (result && result.length > 0) {
           return result;

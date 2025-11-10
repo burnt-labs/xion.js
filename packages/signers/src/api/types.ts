@@ -64,4 +64,3 @@ export type AccountType = Lowercase<
   | typeof AUTHENTICATOR_TYPE.Secp256K1
   | typeof AUTHENTICATOR_TYPE.JWT
 >;
-

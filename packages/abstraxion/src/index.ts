@@ -22,7 +22,10 @@ export {
   useAbstraxionClient,
 } from "./hooks";
 
-export type { ContractGrantDescription, SpendLimit } from "./components/AbstraxionContext";
+export type {
+  ContractGrantDescription,
+  SpendLimit,
+} from "./components/AbstraxionContext";
 export type {
   AbstraxionAccount,
   AbstraxionAccountState,

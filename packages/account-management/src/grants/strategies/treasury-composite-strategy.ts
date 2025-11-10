@@ -29,14 +29,18 @@ export class CompositeTreasuryStrategy implements TreasuryStrategy {
     treasuryAddress: string,
     client: any, // AAClient from @burnt-labs/signers
   ): Promise<TreasuryConfig | null> {
-    console.log(`[CompositeTreasuryStrategy] Trying ${this.strategies.length} strategies for treasury: ${treasuryAddress}`);
+    console.log(
+      `[CompositeTreasuryStrategy] Trying ${this.strategies.length} strategies for treasury: ${treasuryAddress}`,
+    );
 
     for (let i = 0; i < this.strategies.length; i++) {
       const strategy = this.strategies[i];
       const strategyName = strategy.constructor.name;
 
       try {
-        console.log(`[CompositeTreasuryStrategy] Attempting strategy ${i + 1}/${this.strategies.length}: ${strategyName}`);
+        console.log(
+          `[CompositeTreasuryStrategy] Attempting strategy ${i + 1}/${this.strategies.length}: ${strategyName}`,
+        );
 
         const result = await strategy.fetchTreasuryConfig(
           treasuryAddress,
@@ -44,18 +48,27 @@ export class CompositeTreasuryStrategy implements TreasuryStrategy {
         );
 
         if (result) {
-          console.log(`[CompositeTreasuryStrategy] ✅ Strategy ${strategyName} succeeded`);
+          console.log(
+            `[CompositeTreasuryStrategy] ✅ Strategy ${strategyName} succeeded`,
+          );
           return result;
         }
 
-        console.log(`[CompositeTreasuryStrategy] Strategy ${strategyName} returned null, trying next...`);
+        console.log(
+          `[CompositeTreasuryStrategy] Strategy ${strategyName} returned null, trying next...`,
+        );
       } catch (error) {
-        console.warn(`[CompositeTreasuryStrategy] Strategy ${strategyName} failed:`, error);
+        console.warn(
+          `[CompositeTreasuryStrategy] Strategy ${strategyName} failed:`,
+          error,
+        );
         // Continue to next strategy
       }
     }
 
-    console.error(`[CompositeTreasuryStrategy] ❌ All ${this.strategies.length} strategies failed`);
+    console.error(
+      `[CompositeTreasuryStrategy] ❌ All ${this.strategies.length} strategies failed`,
+    );
     return null;
   }
 }

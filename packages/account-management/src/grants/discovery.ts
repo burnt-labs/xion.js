@@ -87,4 +87,3 @@ export async function queryTreasuryContractWithPermissions(
     params: treasuryConfig.params,
   };
 }
-

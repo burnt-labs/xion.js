@@ -27,7 +27,6 @@
   ```
 
   ## Fee Granter Configuration
-
   - Added fee granter addresses for supported networks:
     - `xion-mainnet-1`: `xion12q9q752mta5fvwjj2uevqpuku9y60j33j9rll0`
     - `xion-testnet-2`: `xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x`

@@ -4,13 +4,19 @@
  * Uses ConnectionOrchestrator to handle the full connection flow
  */
 
-import { ExternalSignerConnector } from '@burnt-labs/abstraxion-core';
-import { ConnectionOrchestrator, SessionManager, AccountInfo, 
-  CompositeAccountStrategy, GrantConfig, AccountCreationConfig } from '@burnt-labs/account-management';
-import type { Connector, StorageStrategy} from '@burnt-labs/abstraxion-core';
-import { BaseController } from './BaseController';
-import type { ControllerConfig } from './types';
-import type { SignerAuthentication } from '../types';
+import { ExternalSignerConnector } from "@burnt-labs/abstraxion-core";
+import {
+  ConnectionOrchestrator,
+  SessionManager,
+  AccountInfo,
+  CompositeAccountStrategy,
+  GrantConfig,
+  AccountCreationConfig,
+} from "@burnt-labs/account-management";
+import type { Connector, StorageStrategy } from "@burnt-labs/abstraxion-core";
+import { BaseController } from "./BaseController";
+import type { ControllerConfig } from "./types";
+import type { SignerAuthentication } from "../types";
 
 /**
  * Configuration for SignerController
@@ -18,19 +24,19 @@ import type { SignerAuthentication } from '../types';
 export interface SignerControllerConfig extends ControllerConfig {
   /** Signer authentication config */
   signer: SignerAuthentication;
-  
+
   /** Account discovery strategy */
   accountStrategy: CompositeAccountStrategy;
-  
+
   /** Grant configuration */
   grantConfig?: GrantConfig;
-  
+
   /** Account creation configuration (required for account creation) */
   accountCreationConfig?: AccountCreationConfig;
-  
+
   /** Session manager for keypair and granter storage */
   sessionManager: SessionManager;
-  
+
   /** Storage strategy (web: localStorage, React Native: AsyncStorage) */
   storageStrategy: StorageStrategy;
 }
@@ -47,9 +53,9 @@ export class SignerController extends BaseController {
   constructor(config: SignerControllerConfig) {
     // Always start in 'initializing' state for consistent SSR/client behavior
     // This ensures UI immediately shows loading state and doesn't assume readiness
-    super(config.initialState || { status: 'initializing' });
+    super(config.initialState || { status: "initializing" });
     this.config = config;
-    
+
     // Create orchestrator
     this.orchestrator = new ConnectionOrchestrator({
       sessionManager: config.sessionManager,
@@ -74,17 +80,22 @@ export class SignerController extends BaseController {
     try {
       // Try to restore existing session (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
-      
+
       if (restorationResult.restored && restorationResult.signingClient) {
         // Session restored successfully - restorationResult contains AccountInfo fields when restored: true
         const accountInfo: AccountInfo = {
-          keypair: (restorationResult as { restored: true } & AccountInfo).keypair,
-          granterAddress: (restorationResult as { restored: true } & AccountInfo).granterAddress,
-          granteeAddress: (restorationResult as { restored: true } & AccountInfo).granteeAddress,
+          keypair: (restorationResult as { restored: true } & AccountInfo)
+            .keypair,
+          granterAddress: (
+            restorationResult as { restored: true } & AccountInfo
+          ).granterAddress,
+          granteeAddress: (
+            restorationResult as { restored: true } & AccountInfo
+          ).granteeAddress,
         };
-        
+
         this.dispatch({
-          type: 'SET_CONNECTED',
+          type: "SET_CONNECTED",
           account: accountInfo,
           signingClient: restorationResult.signingClient,
         });
@@ -93,11 +104,11 @@ export class SignerController extends BaseController {
 
       // No session to restore - transition to idle
       // Client must call connect() manually (e.g., via onSuccess callback from external auth provider Or useEffect)
-      this.dispatch({ type: 'RESET' });
+      this.dispatch({ type: "RESET" });
     } catch (error) {
-      console.error('[SignerController] Initialization error:', error);
+      console.error("[SignerController] Initialization error:", error);
       // Transition to idle on error (don't stay in initializing)
-      this.dispatch({ type: 'RESET' });
+      this.dispatch({ type: "RESET" });
     }
   }
 
@@ -106,21 +117,21 @@ export class SignerController extends BaseController {
    * Creates ExternalSignerConnector and uses orchestrator to handle flow
    */
   async connect(): Promise<void> {
-    if (this.getState().status === 'connected') {
-      console.warn('[SignerController] Already connected');
+    if (this.getState().status === "connected") {
+      console.warn("[SignerController] Already connected");
       return;
     }
 
-    this.dispatch({ type: 'START_CONNECT' });
+    this.dispatch({ type: "START_CONNECT" });
 
     try {
       // 1. Get signer config from developer's function
       const signerConfig = await this.config.signer.getSignerConfig();
-      
+
       // 2. Create ExternalSignerConnector
       this.connector = new ExternalSignerConnector({
-        id: 'external-signer',
-        name: 'External Signer',
+        id: "external-signer",
+        name: "External Signer",
         getSignerConfig: async () => signerConfig,
       });
 
@@ -133,13 +144,13 @@ export class SignerController extends BaseController {
       // 4. Get session keypair for account info
       const sessionKeypair = await this.config.sessionManager.getLocalKeypair();
       if (!sessionKeypair) {
-        throw new Error('Session keypair not found after connection');
+        throw new Error("Session keypair not found after connection");
       }
 
       // 5. Dispatch success
       const accounts = await sessionKeypair.getAccounts();
       const granteeAddress = accounts[0].address;
-      
+
       const accountInfo: AccountInfo = {
         keypair: sessionKeypair,
         granterAddress: connectionResult.smartAccountAddress,
@@ -147,19 +158,19 @@ export class SignerController extends BaseController {
       };
 
       if (!connectionResult.signingClient) {
-        throw new Error('Signing client not available after connection');
+        throw new Error("Signing client not available after connection");
       }
 
       this.dispatch({
-        type: 'SET_CONNECTED',
+        type: "SET_CONNECTED",
         account: accountInfo,
         signingClient: connectionResult.signingClient,
       });
     } catch (error) {
-      console.error('[SignerController] Connection error:', error);
+      console.error("[SignerController] Connection error:", error);
       this.dispatch({
-        type: 'SET_ERROR',
-        error: error instanceof Error ? error.message : 'Connection failed',
+        type: "SET_ERROR",
+        error: error instanceof Error ? error.message : "Connection failed",
       });
       throw error;
     }
@@ -169,7 +180,9 @@ export class SignerController extends BaseController {
    * Update the getSignerConfig function reference
    * This allows updating the function when config changes without recreating the controller
    */
-  updateGetSignerConfig(getSignerConfig: SignerAuthentication['getSignerConfig']): void {
+  updateGetSignerConfig(
+    getSignerConfig: SignerAuthentication["getSignerConfig"],
+  ): void {
     this.config.signer.getSignerConfig = getSignerConfig;
   }
 
@@ -182,7 +195,10 @@ export class SignerController extends BaseController {
       try {
         await this.connector.disconnect();
       } catch (error) {
-        console.error('[SignerController] Error disconnecting connector:', error);
+        console.error(
+          "[SignerController] Error disconnecting connector:",
+          error,
+        );
       }
       this.connector = null;
     }
@@ -191,11 +207,11 @@ export class SignerController extends BaseController {
     try {
       await this.config.sessionManager.logout();
     } catch (error) {
-      console.error('[SignerController] Error cleaning up session:', error);
+      console.error("[SignerController] Error cleaning up session:", error);
     }
 
     // Reset state
-    this.dispatch({ type: 'RESET' });
+    this.dispatch({ type: "RESET" });
   }
 
   /**
@@ -205,4 +221,3 @@ export class SignerController extends BaseController {
     super.destroy();
   }
 }
-

@@ -41,7 +41,7 @@ export interface AllSmartWalletQueryResponse {
 export class SubqueryAccountStrategy implements IndexerStrategy {
   constructor(
     private readonly indexerUrl: string,
-    private readonly codeId: number,  // Required: code_id must be configured (Subquery doesn't provide it)
+    private readonly codeId: number, // Required: code_id must be configured (Subquery doesn't provide it)
   ) {}
 
   async fetchSmartAccounts(
@@ -85,11 +85,17 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
       });
 
       if (!response.ok) {
-        console.error("[SubqueryAccountStrategy] Request failed:", response.status, response.statusText);
+        console.error(
+          "[SubqueryAccountStrategy] Request failed:",
+          response.status,
+          response.statusText,
+        );
         throw new Error(`Subquery request failed: ${response.statusText}`);
       }
 
-      const { data } = await response.json() as { data: AllSmartWalletQueryResponse };
+      const { data } = (await response.json()) as {
+        data: AllSmartWalletQueryResponse;
+      };
 
       // Use configured code_id (same pattern as RPC strategies)
       // Avoids calling getContract() which can fail with protobuf errors
@@ -104,7 +110,10 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
         })),
       }));
     } catch (error) {
-      console.error("[SubqueryAccountStrategy] Error fetching smart accounts:", error);
+      console.error(
+        "[SubqueryAccountStrategy] Error fetching smart accounts:",
+        error,
+      );
       // Return empty array on error - let the app decide whether to create new account
       return [];
     }

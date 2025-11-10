@@ -11,7 +11,12 @@
  * Based on dashboard's src/treasury-strategies/daodao-treasury-strategy.ts
  */
 
-import type { TreasuryStrategy, TreasuryConfig, GrantConfigByTypeUrl, TreasuryParams } from "../../types/treasury";
+import type {
+  TreasuryStrategy,
+  TreasuryConfig,
+  GrantConfigByTypeUrl,
+  TreasuryParams,
+} from "../../types/treasury";
 
 // Helper to validate URLs for security
 function isUrlSafe(url?: string): boolean {
@@ -20,7 +25,7 @@ function isUrlSafe(url?: string): boolean {
   try {
     const parsed = new URL(url);
     // Only allow http and https protocols
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
   }
@@ -84,7 +89,9 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
     client: any, // AAClient from @burnt-labs/signers
   ): Promise<TreasuryConfig | null> {
     try {
-      console.log(`[DaoDaoTreasuryStrategy] Querying indexer for treasury: ${treasuryAddress}`);
+      console.log(
+        `[DaoDaoTreasuryStrategy] Querying indexer for treasury: ${treasuryAddress}`,
+      );
 
       // Get chain ID from client
       const chainId = await client.getChainId();
@@ -94,7 +101,10 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
 
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.config.timeout,
+      );
 
       try {
         const response = await fetch(indexerUrl, {
@@ -143,7 +153,10 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
         throw error;
       }
     } catch (error) {
-      console.debug("[DaoDaoTreasuryStrategy] Failed to fetch treasury config:", error);
+      console.debug(
+        "[DaoDaoTreasuryStrategy] Failed to fetch treasury config:",
+        error,
+      );
       return null;
     }
   }

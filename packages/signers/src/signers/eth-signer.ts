@@ -53,9 +53,7 @@ export class AAEthSigner extends AASigner {
     if (!matches) {
       throw new Error("Invalid signature format");
     }
-    const byteArray = new Uint8Array(
-      matches.map((hex) => parseInt(hex, 16)),
-    );
+    const byteArray = new Uint8Array(matches.map((hex) => parseInt(hex, 16)));
     const base64String = btoa(String.fromCharCode(...Array.from(byteArray)));
 
     return {

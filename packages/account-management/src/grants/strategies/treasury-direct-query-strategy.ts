@@ -15,7 +15,7 @@ function isUrlSafe(url: string): boolean {
   try {
     const parsed = new URL(url);
     // Only allow http and https protocols
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
   }
@@ -31,7 +31,9 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
     client: any, // AAClient from @burnt-labs/signers
   ): Promise<TreasuryConfig | null> {
     try {
-      console.log(`[DirectQueryTreasuryStrategy] Querying treasury contract: ${treasuryAddress}`);
+      console.log(
+        `[DirectQueryTreasuryStrategy] Querying treasury contract: ${treasuryAddress}`,
+      );
 
       // Query all grant config type URLs
       const queryTreasuryContractMsg = {
@@ -44,11 +46,15 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
       )) as string[];
 
       if (!queryAllTypeUrlsResponse || queryAllTypeUrlsResponse.length === 0) {
-        console.debug("[DirectQueryTreasuryStrategy] No grant configs found in treasury contract");
+        console.debug(
+          "[DirectQueryTreasuryStrategy] No grant configs found in treasury contract",
+        );
         return null;
       }
 
-      console.log(`[DirectQueryTreasuryStrategy] Found ${queryAllTypeUrlsResponse.length} grant config type URLs`);
+      console.log(
+        `[DirectQueryTreasuryStrategy] Found ${queryAllTypeUrlsResponse.length} grant config type URLs`,
+      );
 
       // Query each grant config by type URL
       const grantConfigs = await Promise.all(
@@ -59,7 +65,10 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
             },
           };
 
-          const grantConfig = await client.queryContractSmart(treasuryAddress, queryByMsg);
+          const grantConfig = await client.queryContractSmart(
+            treasuryAddress,
+            queryByMsg,
+          );
 
           if (!grantConfig || !grantConfig.description) {
             throw new Error(`Invalid grant config for type URL: ${typeUrl}`);
@@ -72,14 +81,19 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
       // Query params
       const params = await this.fetchTreasuryParams(client, treasuryAddress);
 
-      console.log(`[DirectQueryTreasuryStrategy] Successfully fetched treasury config`);
+      console.log(
+        `[DirectQueryTreasuryStrategy] Successfully fetched treasury config`,
+      );
 
       return {
         grantConfigs,
         params,
       };
     } catch (error) {
-      console.error("[DirectQueryTreasuryStrategy] Failed to fetch treasury config:", error);
+      console.error(
+        "[DirectQueryTreasuryStrategy] Failed to fetch treasury config:",
+        error,
+      );
       return null;
     }
   }
@@ -105,7 +119,10 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
         icon_url: isUrlSafe(params.icon_url) ? params.icon_url : "",
       };
     } catch (error) {
-      console.warn("[DirectQueryTreasuryStrategy] Error querying treasury params:", error);
+      console.warn(
+        "[DirectQueryTreasuryStrategy] Error querying treasury params:",
+        error,
+      );
       // Return safe defaults
       return {
         display_url: "",

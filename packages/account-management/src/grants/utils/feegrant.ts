@@ -10,7 +10,10 @@ import {
 function isAllowedMsgAllowance(
   allowance: Allowance,
 ): allowance is AllowedMsgAllowance {
-  return (allowance as any)["@type"] === "/cosmos.feegrant.v1beta1.AllowedMsgAllowance";
+  return (
+    (allowance as any)["@type"] ===
+    "/cosmos.feegrant.v1beta1.AllowedMsgAllowance"
+  );
 }
 
 function isContractsAllowance(

@@ -11,13 +11,13 @@ export interface RpcStatusResult {
 }
 
 export interface RpcStatusResultNodeInfo {
-  protocol_version: any;
+  protocol_version: Record<string, unknown>;
   id: string;
   network: string;
   version: string;
   channels: string;
   moniker: string;
-  other: any;
+  other: Record<string, unknown>;
 }
 
 export interface RpcStatusResultSyncInfo {

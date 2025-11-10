@@ -8,12 +8,11 @@ export type {
   ControllerFactory,
   StateSubscription,
   Unsubscribe,
-} from './types';
+} from "./types";
 
-export { BaseController } from './BaseController';
-export { SignerController } from './SignerController';
-export { RedirectController } from './RedirectController';
+export { BaseController } from "./BaseController";
+export { SignerController } from "./SignerController";
+export { RedirectController } from "./RedirectController";
 
-export type { SignerControllerConfig } from './SignerController';
-export type { RedirectControllerConfig } from './RedirectController';
-
+export type { SignerControllerConfig } from "./SignerController";
+export type { RedirectControllerConfig } from "./RedirectController";
