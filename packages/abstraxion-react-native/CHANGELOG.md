@@ -1,5 +1,16 @@
 # @burnt-labs/abstraxion-react-native
 
+## 1.0.0-alpha.10
+
+### Minor Changes
+
+- [#316](https://github.com/burnt-labs/xion.js/pull/316) [`0a7eb51`](https://github.com/burnt-labs/xion.js/commit/0a7eb5105e15494e9aa9b9397b99324067217435) Thanks [@BurntVal](https://github.com/BurntVal)! - Fix React Native Authentication Callback Flow
+
+### Patch Changes
+
+- Updated dependencies [[`79ee437`](https://github.com/burnt-labs/xion.js/commit/79ee437c11d45bdc877f6d232248bc555e22fd05), [`0a7eb51`](https://github.com/burnt-labs/xion.js/commit/0a7eb5105e15494e9aa9b9397b99324067217435)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.61
+
 ## 1.0.0-alpha.9
 
 ### Minor Changes

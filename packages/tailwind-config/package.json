@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/tailwind-config",
-  "version": "0.0.1-alpha.2",
+  "version": "0.0.1-alpha.3",
   "private": true,
   "main": "tailwind.config.ts",
   "types": "tailwind.config.ts",
