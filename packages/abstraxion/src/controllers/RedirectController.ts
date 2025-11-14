@@ -9,7 +9,10 @@ import type {
   StorageStrategy,
   RedirectStrategy,
 } from "@burnt-labs/abstraxion-core";
-import { ConnectionOrchestrator } from "@burnt-labs/account-management";
+import {
+  ConnectionOrchestrator,
+  isSessionRestorationError,
+} from "@burnt-labs/account-management";
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
@@ -135,27 +138,41 @@ export class RedirectController extends BaseController {
       // Transition from initializing to connecting
       this.dispatch({ type: "START_CONNECT" });
 
-      // Use orchestrator to complete redirect flow
-      const result = await this.orchestrator.completeRedirect();
+      try {
+        // Use orchestrator to complete redirect flow
+        const result = await this.orchestrator.completeRedirect();
 
-      if (!result.keypair || !result.granterAddress || !result.signingClient) {
-        throw new Error("Failed to complete redirect flow");
+        if (!result.keypair || !result.granterAddress || !result.signingClient) {
+          throw new Error("Failed to complete redirect flow");
+        }
+
+        const accounts = await result.keypair.getAccounts();
+        const granteeAddress = accounts[0].address;
+
+        const accountInfo: AccountInfo = {
+          keypair: result.keypair,
+          granterAddress: result.granterAddress,
+          granteeAddress,
+        };
+
+        this.dispatch({
+          type: "SET_CONNECTED",
+          account: accountInfo,
+          signingClient: result.signingClient,
+        });
+      } catch (error) {
+        console.error(
+          "[RedirectController] Error completing redirect callback:",
+          error,
+        );
+        this.dispatch({
+          type: "SET_ERROR",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to complete authentication. Please try again.",
+        });
       }
-
-      const accounts = await result.keypair.getAccounts();
-      const granteeAddress = accounts[0].address;
-
-      const accountInfo: AccountInfo = {
-        keypair: result.keypair,
-        granterAddress: result.granterAddress,
-        granteeAddress,
-      };
-
-      this.dispatch({
-        type: "SET_CONNECTED",
-        account: accountInfo,
-        signingClient: result.signingClient,
-      });
 
       return;
     }
@@ -189,12 +206,27 @@ export class RedirectController extends BaseController {
         return;
       }
 
+      // Check if restoration failed with an error (session existed but was invalid)
+      if (isSessionRestorationError(restorationResult)) {
+        this.dispatch({
+          type: "SET_ERROR",
+          error: restorationResult.error,
+        });
+        return;
+      }
+
       // No session to restore - transition to idle
       this.dispatch({ type: "RESET" });
     } catch (error) {
       console.error("[RedirectController] Initialization error:", error);
-      // Transition to idle on error (don't stay in initializing)
-      this.dispatch({ type: "RESET" });
+      // Unexpected error during initialization (network, config, etc.) - show to user
+      this.dispatch({
+        type: "SET_ERROR",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to initialize. Please try again.",
+      });
     }
   }
 

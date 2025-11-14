@@ -82,7 +82,7 @@ export interface ConnectionResult {
  * Uses AccountInfo when restored successfully to avoid duplication
  */
 export type SessionRestorationResult =
-  | { restored: false }
+  | { restored: false; error?: string }
   | ({ restored: true } & AccountInfo & {
         signingClient?: GranteeSignerClient;
       });
@@ -93,9 +93,18 @@ export type SessionRestorationResult =
 export function isSessionRestored(result: SessionRestorationResult): result is {
   restored: true;
 } & AccountInfo & {
-    signingClient?: GranteeSignerClient;
-  } {
+  signingClient?: GranteeSignerClient;
+} {
   return result.restored === true;
+}
+
+/**
+ * Type guard to check if session restoration failed with an error
+ */
+export function isSessionRestorationError(
+  result: SessionRestorationResult,
+): result is { restored: false; error: string } {
+  return result.restored === false && "error" in result && !!result.error;
 }
 
 /**

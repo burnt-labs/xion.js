@@ -12,6 +12,7 @@ import {
   CompositeAccountStrategy,
   GrantConfig,
   AccountCreationConfig,
+  isSessionRestorationError,
 } from "@burnt-labs/account-management";
 import type { Connector, StorageStrategy } from "@burnt-labs/abstraxion-core";
 import { BaseController } from "./BaseController";
@@ -102,13 +103,28 @@ export class SignerController extends BaseController {
         return;
       }
 
+      // Check if restoration failed with an error (session existed but was invalid)
+      if (isSessionRestorationError(restorationResult)) {
+        this.dispatch({
+          type: "SET_ERROR",
+          error: restorationResult.error,
+        });
+        return;
+      }
+
       // No session to restore - transition to idle
       // Client must call connect() manually (e.g., via onSuccess callback from external auth provider Or useEffect)
       this.dispatch({ type: "RESET" });
     } catch (error) {
       console.error("[SignerController] Initialization error:", error);
-      // Transition to idle on error (don't stay in initializing)
-      this.dispatch({ type: "RESET" });
+      // Unexpected error during initialization (network, config, etc.) - show to user
+      this.dispatch({
+        type: "SET_ERROR",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to initialize. Please refresh the page.",
+      });
     }
   }
 

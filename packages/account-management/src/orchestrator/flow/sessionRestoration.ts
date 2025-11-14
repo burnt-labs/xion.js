@@ -66,9 +66,17 @@ export async function restoreSession(
 
     return result;
   } catch (error) {
-    // Session expired or invalid - clear it silently
+    // Session expired or invalid - clear it and return error
+    // This distinguishes "no session exists" (normal) from "session exists but invalid" (error)
     await sessionManager.logout();
-    return { restored: false };
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Session expired or grants no longer valid. Please reconnect.";
+    return {
+      restored: false,
+      error: errorMessage,
+    };
   }
 }
 

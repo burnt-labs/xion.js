@@ -623,6 +623,8 @@ export class AbstraxionAuth {
     } catch (error) {
       console.error("Error during authentication:", error);
       await this.logout();
+      // Re-throw the error so that authenticate() rejects and callers can handle it
+      throw error;
     }
   }
 
