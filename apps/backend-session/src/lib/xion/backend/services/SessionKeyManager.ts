@@ -236,6 +236,17 @@ export class SessionKeyManager {
         return null;
       }
 
+      // Check if refresh already in progress to prevent race conditions
+      if (sessionKeyInfo.sessionState === SessionState.PENDING) {
+        // Return existing pending key instead of creating a new one
+        return {
+          address: sessionKeyInfo.sessionKeyAddress,
+          serializedKeypair: await this.encryptionService.decryptSessionKey(
+            sessionKeyInfo.sessionKeyMaterial,
+          ),
+        };
+      }
+
       // Check if near expiry
       const timeUntilExpiry =
         sessionKeyInfo.sessionKeyExpiry.getTime() - Date.now();

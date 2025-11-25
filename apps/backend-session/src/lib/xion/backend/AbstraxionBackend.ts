@@ -371,11 +371,13 @@ export class AbstraxionBackend {
       // Log error for debugging but don't expose sensitive information
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      // Redact potentially sensitive information
+      // Redact potentially sensitive information with more robust patterns
       const sanitizedMessage = errorMessage
-        .replace(/sessionKey[^,\s]*/gi, "[REDACTED]")
-        .replace(/userId[^,\s]*/gi, "[REDACTED]")
-        .replace(/address[^,\s]*/gi, "[REDACTED]");
+        .replace(/sessionKey\w*/gi, "[REDACTED]")
+        .replace(/userId\w*/gi, "[REDACTED]")
+        .replace(/address\w*/gi, "[REDACTED]")
+        .replace(/xion1[a-z0-9]{38,}/gi, "[ADDRESS_REDACTED]") // Bech32 addresses
+        .replace(/0x[a-fA-F0-9]{64,}/gi, "[KEY_REDACTED]"); // Hex keys
       console.error("Error checking status:", sanitizedMessage);
       return {
         connected: false,
