@@ -367,9 +367,7 @@ export class SessionKeyManager {
       // Use atomic update if adapter supports it (PrismaDatabaseAdapter)
       // This prevents race conditions by ensuring check-and-update happens atomically
       const adapter = this.databaseAdapter as any;
-      if (
-        typeof adapter.updateSessionKeyWithParamsAtomic === "function"
-      ) {
+      if (typeof adapter.updateSessionKeyWithParamsAtomic === "function") {
         // Atomic update with state verification
         await adapter.updateSessionKeyWithParamsAtomic(
           userId,

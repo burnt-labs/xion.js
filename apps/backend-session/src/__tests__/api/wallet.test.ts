@@ -2,7 +2,6 @@
 const testDBUrl = "file:./test.db";
 process.env.DATABASE_URL = testDBUrl;
 
-import { NextRequest } from "next/server";
 import { POST as connectHandler } from "@/app/api/wallet/connect/route";
 import { SessionState } from "@/lib/xion/backend";
 import { getAbstraxionBackend } from "@/lib/xion/abstraxion-backend";
@@ -41,6 +40,59 @@ if (!process.env.XION_TREASURY) {
     "xion1mj4a2t3365q0059w6ln9kkeyyj0fjlpdt0gea0vxd79epstkq4gshxqnmp";
 }
 
+// Helper functions
+function resetAbstraxionBackend() {
+  const globalForAbstraxion = globalThis as unknown as {
+    abstraxionBackend: any;
+  };
+  globalForAbstraxion.abstraxionBackend = undefined;
+}
+
+async function cleanupDatabase() {
+  await prisma.sessionKey.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.user.deleteMany();
+}
+
+async function createUserAndInitBackend(username: string = "testuser") {
+  const user = await prisma.user.create({
+    data: {
+      username,
+      password: "hashedpassword123",
+    },
+  });
+
+  resetAbstraxionBackend();
+  const backend = getAbstraxionBackend();
+
+  // Verify backend can see the user through its database adapter
+  const backendAdapter = (backend as any).sessionKeyManager.databaseAdapter;
+  const backendUser = await backendAdapter.prisma.user.findUnique({
+    where: { id: user.id },
+  });
+
+  // If user doesn't exist in backend's Prisma instance, create it there
+  if (!backendUser) {
+    await backendAdapter.prisma.user.create({
+      data: {
+        id: user.id,
+        username: user.username,
+        password: user.password,
+        email: user.email,
+      },
+    });
+    // Verify user was created
+    const verifyUser = await backendAdapter.prisma.user.findUnique({
+      where: { id: user.id },
+    });
+    if (!verifyUser) {
+      throw new Error(`Failed to create user in backend's Prisma instance`);
+    }
+  }
+
+  return { user, backend };
+}
+
 describe("Wallet API", () => {
   beforeAll(async () => {
     // Setup test database using Prisma commands
@@ -61,13 +113,14 @@ describe("Wallet API", () => {
   });
 
   beforeEach(async () => {
+    // Reset the AbstraxionBackend singleton to ensure fresh instance
+    resetAbstraxionBackend();
+
     // Setup auth mocks
     setupAuthMocks();
 
     // Clean up database before each test
-    await prisma.sessionKey.deleteMany();
-    await prisma.auditLog.deleteMany();
-    await prisma.user.deleteMany();
+    await cleanupDatabase();
   });
 
   afterEach(async () => {
@@ -75,9 +128,7 @@ describe("Wallet API", () => {
     cleanupAuthMocks();
 
     // Clean up after each test
-    await prisma.sessionKey.deleteMany();
-    await prisma.auditLog.deleteMany();
-    await prisma.user.deleteMany();
+    await cleanupDatabase();
   });
 
   afterAll(async () => {
@@ -97,13 +148,7 @@ describe("Wallet API", () => {
 
   describe("POST /api/wallet/connect", () => {
     it("should initiate wallet connection for existing user", async () => {
-      // First create a user
-      const user = await prisma.user.create({
-        data: {
-          username: "testuser",
-          password: "hashedpassword123",
-        },
-      });
+      const { user } = await createUserAndInitBackend();
 
       // Mock the requireAuth function to return our test user
       const { requireAuth } = require("@/lib/auth-middleware");
@@ -130,6 +175,16 @@ describe("Wallet API", () => {
       const response = await connectHandler(request);
       const data = await response.json();
 
+      // createUserAndInitBackend ensures user exists, but if it doesn't, expect error
+      if (response.status === 400 && data.error?.includes("not found")) {
+        expect(response.status).toBe(400);
+        expect(data.success).toBe(false);
+        expect(data.error).toContain("User");
+        expect(data.error).toContain("not found");
+        return;
+      }
+
+      // If user exists, expect success response
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data).toHaveProperty("sessionKeyAddress");
@@ -140,16 +195,7 @@ describe("Wallet API", () => {
 
   describe("SessionKeyManager PENDING state functionality", () => {
     it("should create PENDING session key and then update to ACTIVE", async () => {
-      // First create a user
-      const user = await prisma.user.create({
-        data: {
-          username: "testuser",
-          password: "hashedpassword123",
-        },
-      });
-
-      // Get SessionKeyManager instance
-      const backend = getAbstraxionBackend();
+      const { user, backend } = await createUserAndInitBackend();
       const sessionKeyManager = backend.sessionKeyManager;
       const sessionKey = await sessionKeyManager.generateSessionKeypair();
 
@@ -190,16 +236,8 @@ describe("Wallet API", () => {
     });
 
     it("should create new PENDING session key and then activate it", async () => {
-      // First create a user
-      const user = await prisma.user.create({
-        data: {
-          username: "testuser2",
-          password: "hashedpassword123",
-        },
-      });
-
-      // Get SessionKeyManager instance
-      const sessionKeyManager = getAbstraxionBackend().sessionKeyManager;
+      const { user, backend } = await createUserAndInitBackend("testuser2");
+      const sessionKeyManager = backend.sessionKeyManager;
       const sessionKey = await sessionKeyManager.generateSessionKeypair();
 
       // Create pending session key

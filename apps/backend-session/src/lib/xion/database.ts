@@ -140,6 +140,16 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
       "metaAccountAddress" | "sessionPermissions"
     >,
   ): Promise<void> {
+    // Verify user exists before creating session key
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new Error(
+        `User ${userId} not found. Cannot create session key for non-existent user.`,
+      );
+    }
+
     const updateData: Prisma.SessionKeyCreateInput = {
       user: {
         connect: {
@@ -161,6 +171,7 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
       );
     }
     // Then create the new pending session key
+    // Prisma will automatically validate the foreign key constraint
     await this.prisma.sessionKey.create({
       data: updateData,
     });
