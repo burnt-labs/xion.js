@@ -53,6 +53,7 @@ export class AbstraxionBackend {
       stdTTL: 600, // 10 minutes in seconds
       checkperiod: 60, // Check for expired keys every minute
       useClones: false, // Don't clone objects for better performance
+      maxKeys: 10000, // Maximum number of keys to prevent memory exhaustion
     });
 
     this.sessionKeyManager = new SessionKeyManager(config.databaseAdapter, {
@@ -367,11 +368,15 @@ export class AbstraxionBackend {
         state: sessionKeyInfo.sessionState,
       };
     } catch (error) {
-      // Log error for debugging but don't expose it to client
-      console.error(
-        "Error checking status:",
-        error instanceof Error ? error.message : String(error),
-      );
+      // Log error for debugging but don't expose sensitive information
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      // Redact potentially sensitive information
+      const sanitizedMessage = errorMessage
+        .replace(/sessionKey[^,\s]*/gi, "[REDACTED]")
+        .replace(/userId[^,\s]*/gi, "[REDACTED]")
+        .replace(/address[^,\s]*/gi, "[REDACTED]");
+      console.error("Error checking status:", sanitizedMessage);
       return {
         connected: false,
       };

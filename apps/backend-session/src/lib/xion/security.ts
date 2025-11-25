@@ -106,14 +106,16 @@ export class SecurityManager {
 
   /**
    * Generate secure random string with custom charset
+   * Uses cryptographically secure random bytes
    */
   static generateSecureString(
     length: number,
     charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
   ): string {
+    const bytes = randomBytes(length);
     let result = "";
     for (let i = 0; i < length; i++) {
-      result += charset.charAt(Math.floor(Math.random() * charset.length));
+      result += charset.charAt(bytes[i] % charset.length);
     }
     return result;
   }

@@ -57,12 +57,16 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
   ): Promise<SessionKeyInfo | null> {
     const sessionKey = await this.prisma.sessionKey.findUnique({
       where: {
-        userId,
         sessionKeyAddress,
       },
     });
 
     if (!sessionKey) {
+      return null;
+    }
+
+    // Guard against cross-user access
+    if (sessionKey.userId !== userId) {
       return null;
     }
 
@@ -90,9 +94,20 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
     userId: string,
     sessionKeyAddress: string,
   ): Promise<boolean> {
+    // First find the session key to verify userId
+    const sessionKey = await this.prisma.sessionKey.findUnique({
+      where: {
+        sessionKeyAddress,
+      },
+    });
+
+    if (!sessionKey || sessionKey.userId !== userId) {
+      return false;
+    }
+
+    // Update using the unique key
     const result = await this.prisma.sessionKey.update({
       where: {
-        userId,
         sessionKeyAddress,
       },
       data: {
@@ -161,6 +176,19 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
       >
     >,
   ): Promise<void> {
+    // First find the session key to verify userId
+    const sessionKey = await this.prisma.sessionKey.findUnique({
+      where: {
+        sessionKeyAddress,
+      },
+    });
+
+    if (!sessionKey || sessionKey.userId !== userId) {
+      throw new Error(
+        `Session key not found or does not belong to user ${userId}`,
+      );
+    }
+
     const updateData: Prisma.SessionKeyUpdateInput = {};
     if (updates.sessionPermissions) {
       updateData.sessionPermissions = JSON.stringify(
@@ -174,12 +202,71 @@ export class PrismaDatabaseAdapter extends BaseDatabaseAdapter {
       updateData.metaAccountAddress = updates.metaAccountAddress;
     }
 
+    // Update using the unique key
     await this.prisma.sessionKey.update({
       where: {
-        userId,
         sessionKeyAddress,
       },
       data: updateData,
+    });
+  }
+
+  /**
+   * Update session key with params in a transaction (atomic check-and-update)
+   * This prevents race conditions by ensuring the check and update happen atomically
+   */
+  async updateSessionKeyWithParamsAtomic(
+    userId: string,
+    sessionKeyAddress: string,
+    expectedState: SessionState,
+    updates: Partial<
+      Pick<
+        SessionKeyInfo,
+        "sessionState" | "sessionPermissions" | "metaAccountAddress"
+      >
+    >,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      // Check existing session key within transaction
+      const sessionKey = await tx.sessionKey.findUnique({
+        where: {
+          sessionKeyAddress,
+        },
+      });
+
+      if (!sessionKey || sessionKey.userId !== userId) {
+        throw new Error(
+          `Session key not found or does not belong to user ${userId}`,
+        );
+      }
+
+      // Verify expected state to prevent race conditions
+      if (sessionKey.sessionState !== expectedState) {
+        throw new Error(
+          `Session key state mismatch: expected ${expectedState}, got ${sessionKey.sessionState}`,
+        );
+      }
+
+      const updateData: Prisma.SessionKeyUpdateInput = {};
+      if (updates.sessionPermissions) {
+        updateData.sessionPermissions = JSON.stringify(
+          updates.sessionPermissions,
+        );
+      }
+      if (updates.sessionState) {
+        updateData.sessionState = updates.sessionState;
+      }
+      if (updates.metaAccountAddress) {
+        updateData.metaAccountAddress = updates.metaAccountAddress;
+      }
+
+      // Update within transaction
+      await tx.sessionKey.update({
+        where: {
+          sessionKeyAddress,
+        },
+        data: updateData,
+      });
     });
   }
 

@@ -5,6 +5,7 @@ import {
   sendTransactionSchema,
   SendTransactionRequest,
 } from "@/lib/validation";
+import { validateSessionKeyAddress } from "@/lib/xion/backend/utils/validation";
 import { MsgSend } from "cosmjs-types/cosmos/bank/v1beta1/tx";
 
 export const dynamic = "force-dynamic";
@@ -38,8 +39,20 @@ export const POST = createApiWrapper(
         abstraxionBackend.gasPriceDefault,
       );
 
-      // Convert amount to micro units
+      // Validate recipient address
+      if (!validateSessionKeyAddress(to)) {
+        throw new Error("Invalid XION recipient address format");
+      }
+
+      // Validate and convert amount to micro units
       const amountNum = parseFloat(amount);
+      if (
+        !isFinite(amountNum) ||
+        amountNum <= 0 ||
+        amountNum > Number.MAX_SAFE_INTEGER / 1_000_000
+      ) {
+        throw new Error("Invalid amount value");
+      }
       const microAmount = Math.floor(amountNum * 1_000_000).toString();
       const denomMicro = denom === "XION" ? "uxion" : "uusdc";
 

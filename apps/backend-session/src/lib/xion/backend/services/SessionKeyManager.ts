@@ -353,23 +353,17 @@ export class SessionKeyManager {
     }
 
     try {
-      // Check existing session key
-      const existingSessionKey = await this.databaseAdapter.getSessionKey(
-        userId,
-        sessionAddress,
-      );
-
-      if (!existingSessionKey) {
-        throw new SessionKeyNotFoundError(
-          `Session key not found for user: ${userId}, session address: ${sessionAddress}`,
-        );
-      }
-
-      if (existingSessionKey.sessionState === SessionState.PENDING) {
-        // Update existing PENDING session key
-        await this.databaseAdapter.updateSessionKeyWithParams(
+      // Use atomic update if adapter supports it (PrismaDatabaseAdapter)
+      // This prevents race conditions by ensuring check-and-update happens atomically
+      const adapter = this.databaseAdapter as any;
+      if (
+        typeof adapter.updateSessionKeyWithParamsAtomic === "function"
+      ) {
+        // Atomic update with state verification
+        await adapter.updateSessionKeyWithParamsAtomic(
           userId,
           sessionAddress,
+          SessionState.PENDING,
           {
             sessionState: SessionState.ACTIVE,
             metaAccountAddress: granterAddress,
@@ -385,9 +379,42 @@ export class SessionKeyManager {
           previousState: SessionState.PENDING,
         });
       } else {
-        throw new SessionKeyInvalidError(
-          `Session key invalid for user: ${userId}, it should be pending instead of ${existingSessionKey.sessionState}`,
+        // Fallback to non-atomic update for other adapters
+        const existingSessionKey = await this.databaseAdapter.getSessionKey(
+          userId,
+          sessionAddress,
         );
+
+        if (!existingSessionKey) {
+          throw new SessionKeyNotFoundError(
+            `Session key not found for user: ${userId}, session address: ${sessionAddress}`,
+          );
+        }
+
+        if (existingSessionKey.sessionState === SessionState.PENDING) {
+          // Update existing PENDING session key
+          await this.databaseAdapter.updateSessionKeyWithParams(
+            userId,
+            sessionAddress,
+            {
+              sessionState: SessionState.ACTIVE,
+              metaAccountAddress: granterAddress,
+              sessionPermissions: permissions,
+            },
+          );
+
+          // Log audit event
+          await this.logAuditEvent(userId, AuditAction.SESSION_KEY_UPDATED, {
+            sessionKeyAddress: sessionAddress,
+            metaAccountAddress: granterAddress,
+            permissions,
+            previousState: SessionState.PENDING,
+          });
+        } else {
+          throw new SessionKeyInvalidError(
+            `Session key invalid for user: ${userId}, it should be pending instead of ${existingSessionKey.sessionState}`,
+          );
+        }
       }
     } catch (error) {
       if (error instanceof AbstraxionBackendError) {
