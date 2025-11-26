@@ -12,7 +12,12 @@
     "prettier-check": "prettier --check \"**/*.{ts,tsx,md}\"",
     "publish:packages": "changeset publish",
     "version:packages": "changeset version",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "test:watch": "turbo run test --concurrency 1 -- --watch",
+    "test:coverage": "turbo run test -- --coverage",
+    "generate:types": "pnpm --filter @burnt-labs/signers generate:types",
+    "generate:types:testnet": "pnpm --filter @burnt-labs/signers generate:types:testnet",
+    "generate:types:mainnet": "pnpm --filter @burnt-labs/signers generate:types:mainnet"
   },
   "packageManager": "pnpm@8.9.0",
   "dependencies": {
@@ -24,10 +29,23 @@
     "prettier-plugin-tailwindcss": "^0.5.3",
     "turbo": "^2.0.11"
   },
+  "devDependencies": {
+    "@hono/zod-openapi": "^0.18.4"
+  },
   "pnpm": {
     "overrides": {
       "@types/react": "^18.2.47",
-      "@types/react-dom": "^18.2.18"
+      "@types/react-dom": "^18.2.18",
+      "@cosmjs/amino": "^0.36.0",
+      "@cosmjs/cosmwasm-stargate": "^0.36.0",
+      "@cosmjs/crypto": "^0.36.0",
+      "@cosmjs/encoding": "^0.36.0",
+      "@cosmjs/math": "^0.36.0",
+      "@cosmjs/proto-signing": "^0.36.0",
+      "@cosmjs/stargate": "^0.36.0",
+      "@cosmjs/tendermint-rpc": "^0.36.0",
+      "@cosmjs/utils": "^0.36.0",
+      "cosmjs-types": "^0.9.0"
     }
   }
 }

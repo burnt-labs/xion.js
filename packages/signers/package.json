@@ -5,6 +5,23 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./crypto": {
+      "import": "./dist/crypto/index.mjs",
+      "require": "./dist/crypto/index.js",
+      "types": "./dist/crypto/index.d.ts"
+    },
+    "./types/account": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "license": "MIT",
   "scripts": {
     "build": "tsup",
@@ -12,9 +29,15 @@
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
     "clean": "rimraf ./dist",
-    "test": "vitest"
+    "test": "vitest",
+    "test:deps": "vitest run src/__tests__/circular-deps.test.ts",
+    "generate:types": "tsx ../../scripts/generate-aa-api-types.ts testnet",
+    "generate:types:testnet": "tsx ../../scripts/generate-aa-api-types.ts testnet",
+    "generate:types:mainnet": "tsx ../../scripts/generate-aa-api-types.ts mainnet",
+    "generate:types:local": "tsx ../../scripts/generate-aa-api-types.ts local"
   },
   "dependencies": {
+    "account-abstraction-api": "file:../../../account-abstraction-api",
     "@burnt-labs/constants": "workspace:*",
     "@cosmjs/amino": "^0.36.0",
     "@cosmjs/cosmwasm-stargate": "^0.36.0",
@@ -30,17 +53,20 @@
     "bech32": "^2.0.0",
     "buffer": "^6.0.3",
     "cosmjs-types": "^0.9.0",
+    "ethers": "^6.15.0",
     "long": "^5.2.3",
     "protobufjs": "^7.2.4"
   },
   "devDependencies": {
     "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/test-utils": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
     "eslint": "^8.48.0",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.5",
     "tsup": "^6.0.1",
+    "tsx": "^4.7.0",
     "typescript": "^5.2.2",
     "vitest": "^1.0.0"
   }

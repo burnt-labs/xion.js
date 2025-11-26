@@ -12,7 +12,9 @@
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
     "clean": "rimraf ./dist",
-    "test": "vitest"
+    "test": "vitest",
+    "test:integration": "vitest run tests/integration --config vitest.config.integration.ts",
+    "test:integration:watch": "vitest tests/integration --config vitest.config.integration.ts"
   },
   "dependencies": {
     "@burnt-labs/abstraxion-core": "workspace:*",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/test-utils": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
     "eslint": "^8.48.0",
