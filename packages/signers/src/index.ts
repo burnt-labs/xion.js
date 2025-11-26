@@ -17,5 +17,8 @@ export type { CreateSignerParams } from "./signers/utils/signer-factory";
 // Crypto utilities for smart account creation
 export * from "./crypto";
 
+// Domain types (source of truth for account types)
+export * from "./types/account";
+
 // API types for AA API v2 interactions
-export * from "./api/types";
+export * from "./types/api";

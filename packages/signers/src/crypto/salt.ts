@@ -4,27 +4,10 @@
  */
 
 import { sha256 } from "@cosmjs/crypto";
-import { Buffer } from "buffer";
-
-/**
- * Authenticator type constants
- * Use these instead of string literals to avoid typos and ensure type safety
- */
-export const AUTHENTICATOR_TYPE = {
-  EthWallet: "EthWallet" as const, // Ethereum wallets (MetaMask, Rainbow, etc.)
-  Secp256K1: "Secp256K1" as const, // Cosmos wallets (Keplr, Leap, OKX, etc.)
-  Ed25519: "Ed25519" as const, // Ed25519 curve wallets (Solana, etc.)
-  JWT: "JWT" as const, // Social logins (Google, Stytch, etc.)
-  Passkey: "Passkey" as const, // WebAuthn/Passkey
-  Sr25519: "Sr25519" as const, // Sr25519 curve (Polkadot, etc.)
-} as const;
-
-/**
- * Authenticator types that support salt calculation
- * Used to determine which salt calculation method to use
- */
-export type AuthenticatorType =
-  (typeof AUTHENTICATOR_TYPE)[keyof typeof AUTHENTICATOR_TYPE];
+import { fromHex, toHex } from "@cosmjs/encoding";
+import { validateAndDecodeHex, validateEthereumAddress } from "./hex-validation";
+import type { AuthenticatorType } from "../types/account";
+import { AUTHENTICATOR_TYPE } from "../types/account";
 
 /**
  * Calculate salt for EthWallet authenticator
@@ -35,10 +18,21 @@ export type AuthenticatorType =
  * @returns Salt as hex string
  */
 export function calculateEthWalletSalt(address: string): string {
-  const addressHex = address.replace(/^0x/, "");
-  const addressBinary = Buffer.from(addressHex, "hex");
+  // Remove 0x prefix and normalize to lowercase
+  // Ethereum addresses are case-insensitive (EIP-55 checksum is optional)
+  const addressHex = address.replace(/^0x/i, "").toLowerCase();
+
+  // Validate using our wrapper which uses CosmJS
+  validateEthereumAddress(`0x${addressHex}`, "Ethereum address");
+
+  // Decode hex using CosmJS (validates format)
+  const addressBinary = fromHex(addressHex);
+
+  // Calculate SHA256 hash using CosmJS
   const saltBytes = sha256(addressBinary);
-  return Buffer.from(saltBytes).toString("hex");
+
+  // Encode result as hex using CosmJS
+  return toHex(saltBytes);
 }
 
 /**
@@ -50,8 +44,14 @@ export function calculateEthWalletSalt(address: string): string {
  * @returns Salt as hex string
  */
 export function calculateSecp256k1Salt(pubkey: string): string {
-  const saltBytes = sha256(Buffer.from(pubkey));
-  return Buffer.from(saltBytes).toString("hex");
+  // Runtime type validation for defense-in-depth
+  if (!pubkey || typeof pubkey !== "string") {
+    throw new Error("Public key must be a non-empty string");
+  }
+
+  // Hash the string directly (not hex-encoded)
+  const saltBytes = sha256(new TextEncoder().encode(pubkey));
+  return toHex(saltBytes);
 }
 
 /**
@@ -63,8 +63,14 @@ export function calculateSecp256k1Salt(pubkey: string): string {
  * @returns Salt as hex string
  */
 export function calculateJWTSalt(jwt: string): string {
-  const saltBytes = sha256(Buffer.from(jwt));
-  return Buffer.from(saltBytes).toString("hex");
+  // Runtime type validation for defense-in-depth
+  if (!jwt || typeof jwt !== "string") {
+    throw new Error("JWT must be a non-empty string");
+  }
+
+  // Hash the string directly (not hex-encoded)
+  const saltBytes = sha256(new TextEncoder().encode(jwt));
+  return toHex(saltBytes);
 }
 
 /**
@@ -97,4 +103,24 @@ export function calculateSalt(
       const _exhaustive: never = authenticatorType;
       throw new Error(`Unsupported authenticator type: ${_exhaustive}`);
   }
+}
+
+/**
+ * Convert hex salt string to Uint8Array
+ * Used by AA API for address calculation with instantiate2Address
+ *
+ * @param hexSalt - Salt as hex string (64 hex chars = 32 bytes)
+ * @returns Salt as Uint8Array
+ * @throws Error if hex salt is invalid format or wrong length
+ *
+ * @example
+ * ```typescript
+ * const salt = calculateEthWalletSalt("0x1234...");
+ * const saltBytes = hexSaltToUint8Array(salt);
+ * // Use saltBytes with instantiate2Address
+ * ```
+ */
+export function hexSaltToUint8Array(hexSalt: string): Uint8Array {
+  // Use CosmJS-based validation and decoding
+  return validateAndDecodeHex(hexSalt, "salt", { exactByteLength: 32 });
 }
