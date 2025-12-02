@@ -6,15 +6,27 @@
 
 import { decodeAuthorization } from "@burnt-labs/abstraxion-core";
 import type { TreasuryStrategy } from "../types/treasury";
-import type { PermissionDescription } from "./utils/format-permissions";
+import type {
+  PermissionDescription,
+  DecodedReadableAuthorization,
+} from "./utils/format-permissions";
 import { generatePermissionDescriptions } from "./utils/format-permissions";
+
+/**
+ * Minimal interface for blockchain client with smart contract query capability
+ * This avoids circular dependency with @burnt-labs/signers
+ */
+export interface ContractQueryClient {
+  queryContractSmart(address: string, queryMsg: Record<string, unknown>): Promise<unknown>;
+  getChainId(): Promise<string>;
+}
 
 export interface TreasuryContractResponse {
   permissionDescriptions: PermissionDescription[];
   params: {
-    display_url: string;
     redirect_url: string;
     icon_url: string;
+    metadata: string;  // Note: Contract field is "metadata", but some indexers may return "display_url"
   };
 }
 
@@ -29,7 +41,7 @@ export interface TreasuryContractResponse {
  */
 export async function queryTreasuryContractWithPermissions(
   contractAddress: string,
-  client: any, // AAClient from @burnt-labs/signers
+  client: ContractQueryClient,
   account: string,
   strategy: TreasuryStrategy,
   usdcDenom?: string,
@@ -63,21 +75,21 @@ export async function queryTreasuryContractWithPermissions(
   }
 
   // Process grant configurations
-  const decodedGrantsWithDappDescription = treasuryConfig.grantConfigs.map(
-    (grantConfig) => {
-      return {
-        ...decodeAuthorization(
-          grantConfig.authorization.type_url,
-          grantConfig.authorization.value,
-        ),
-        dappDescription: grantConfig.description,
-      };
-    },
-  );
+  const decodedGrantsWithDappDescription: (DecodedReadableAuthorization & {
+    dappDescription: string;
+  })[] = treasuryConfig.grantConfigs.map((grantConfig) => {
+    return {
+      ...decodeAuthorization(
+        grantConfig.authorization.type_url,
+        grantConfig.authorization.value,
+      ),
+      dappDescription: grantConfig.description,
+    };
+  });
 
   // Generate human-readable permission descriptions
   const permissionDescriptions = generatePermissionDescriptions(
-    decodedGrantsWithDappDescription as any,
+    decodedGrantsWithDappDescription,
     account,
     usdcDenom,
   );

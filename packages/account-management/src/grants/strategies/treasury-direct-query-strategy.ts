@@ -6,7 +6,13 @@
  * Based on dashboard's src/treasury-strategies/direct-query-treasury-strategy.ts
  */
 
-import type { TreasuryStrategy, TreasuryConfig } from "../../types/treasury";
+import type {
+  TreasuryStrategy,
+  TreasuryConfig,
+  TreasuryParams,
+} from "../../types/treasury";
+import type { ContractQueryClient } from "../discovery";
+import type { TreasuryGrantConfig } from "@burnt-labs/abstraxion-core";
 
 // Helper to validate URLs for security
 function isUrlSafe(url: string): boolean {
@@ -28,12 +34,9 @@ function isUrlSafe(url: string): boolean {
 export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
   async fetchTreasuryConfig(
     treasuryAddress: string,
-    client: any, // AAClient from @burnt-labs/signers
+    client: ContractQueryClient,
   ): Promise<TreasuryConfig | null> {
     try {
-      console.log(
-        `[DirectQueryTreasuryStrategy] Querying treasury contract: ${treasuryAddress}`,
-      );
 
       // Query all grant config type URLs
       const queryTreasuryContractMsg = {
@@ -46,15 +49,8 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
       )) as string[];
 
       if (!queryAllTypeUrlsResponse || queryAllTypeUrlsResponse.length === 0) {
-        console.debug(
-          "[DirectQueryTreasuryStrategy] No grant configs found in treasury contract",
-        );
         return null;
       }
-
-      console.log(
-        `[DirectQueryTreasuryStrategy] Found ${queryAllTypeUrlsResponse.length} grant config type URLs`,
-      );
 
       // Query each grant config by type URL
       const grantConfigs = await Promise.all(
@@ -68,7 +64,7 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
           const grantConfig = await client.queryContractSmart(
             treasuryAddress,
             queryByMsg,
-          );
+          ) as TreasuryGrantConfig;
 
           if (!grantConfig || !grantConfig.description) {
             throw new Error(`Invalid grant config for type URL: ${typeUrl}`);
@@ -81,20 +77,17 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
       // Query params
       const params = await this.fetchTreasuryParams(client, treasuryAddress);
 
-      console.log(
-        `[DirectQueryTreasuryStrategy] Successfully fetched treasury config`,
-      );
-
       return {
         grantConfigs,
         params,
       };
     } catch (error) {
-      console.error(
-        "[DirectQueryTreasuryStrategy] Failed to fetch treasury config:",
-        error,
+      // Re-throw error instead of returning null
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Direct query treasury strategy failed: ${errorMessage}`,
       );
-      return null;
     }
   }
 
@@ -102,32 +95,28 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
    * Fetch treasury params directly from contract
    */
   private async fetchTreasuryParams(
-    client: any,
+    client: ContractQueryClient,
     treasuryAddress: string,
-  ): Promise<{ display_url: string; redirect_url: string; icon_url: string }> {
+  ): Promise<TreasuryParams> {
     try {
       const queryParams = { params: {} };
       const params = await client.queryContractSmart(
         treasuryAddress,
         queryParams,
-      );
+      ) as TreasuryParams;
 
       // Validate URLs for security
       return {
-        display_url: isUrlSafe(params.display_url) ? params.display_url : "",
         redirect_url: isUrlSafe(params.redirect_url) ? params.redirect_url : "",
         icon_url: isUrlSafe(params.icon_url) ? params.icon_url : "",
+        metadata: isUrlSafe(params.metadata) ? params.metadata : "",
       };
     } catch (error) {
-      console.warn(
-        "[DirectQueryTreasuryStrategy] Error querying treasury params:",
-        error,
-      );
-      // Return safe defaults
+      // Return safe defaults on error (params are optional)
       return {
-        display_url: "",
         redirect_url: "",
         icon_url: "",
+        metadata: "",
       };
     }
   }

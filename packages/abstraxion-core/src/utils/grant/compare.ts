@@ -15,6 +15,62 @@ import {
 } from "@/utils/grant/constants";
 
 /**
+ * Type guard to check if data is HumanContractExecAuth
+ */
+function isHumanContractExecAuth(
+  data: DecodedReadableAuthorization["data"],
+): data is HumanContractExecAuth {
+  return (
+    data !== null &&
+    typeof data === "object" &&
+    "grants" in data &&
+    Array.isArray((data as HumanContractExecAuth).grants)
+  );
+}
+
+/**
+ * Type guard to check if data is SendAuthorization
+ */
+function isSendAuthorization(
+  data: DecodedReadableAuthorization["data"],
+): data is SendAuthorization {
+  return (
+    data !== null &&
+    typeof data === "object" &&
+    "spendLimit" in data &&
+    Array.isArray((data as SendAuthorization).spendLimit)
+  );
+}
+
+/**
+ * Type guard to check if data is StakeAuthorization
+ */
+function isStakeAuthorization(
+  data: DecodedReadableAuthorization["data"],
+): data is StakeAuthorization {
+  return (
+    data !== null &&
+    typeof data === "object" &&
+    "authorizationType" in data &&
+    typeof (data as StakeAuthorization).authorizationType === "number"
+  );
+}
+
+/**
+ * Type guard to check if data is GenericAuthorization
+ */
+function isGenericAuthorization(
+  data: DecodedReadableAuthorization["data"],
+): data is GenericAuthorization {
+  return (
+    data !== null &&
+    typeof data === "object" &&
+    "msg" in data &&
+    typeof (data as GenericAuthorization).msg === "string"
+  );
+}
+
+/**
  * Generic function that validates if a chain limit is less than or equal to an expected limit.
  * This is used to validate that on-chain limits have not increased beyond what was authorized.
  *
@@ -60,20 +116,14 @@ export const validateContractExecution = (
   treasuryAuth: DecodedReadableAuthorization,
   chainAuth: DecodedReadableAuthorization,
 ): boolean => {
-  // Safe way to make sure type assertion doesn't break things
-  const treasuryGrants =
-    treasuryAuth &&
-    treasuryAuth.data &&
-    (treasuryAuth.data as HumanContractExecAuth).grants
-      ? (treasuryAuth.data as HumanContractExecAuth).grants
-      : [];
+  // Use type guards for safe type narrowing
+  const treasuryGrants = isHumanContractExecAuth(treasuryAuth.data)
+    ? treasuryAuth.data.grants
+    : [];
 
-  const chainGrants =
-    chainAuth &&
-    chainAuth.data &&
-    (chainAuth.data as HumanContractExecAuth).grants
-      ? (chainAuth.data as HumanContractExecAuth).grants
-      : [];
+  const chainGrants = isHumanContractExecAuth(chainAuth.data)
+    ? chainAuth.data.grants
+    : [];
 
   return treasuryGrants.every((treasuryGrant) => {
     const matchingChainGrants = chainGrants.filter((chainGrant) => {
@@ -194,28 +244,45 @@ export function compareChainGrantsToTreasuryGrants(
       if (!isTypeMatch) return false;
 
       if (chainAuthType === AuthorizationTypes.Generic) {
-        return (
-          (chainConfig.data as GenericAuthorization).msg ===
-          (treasuryConfig.data as GenericAuthorization)?.msg
-        );
+        // Use type guards for safe type narrowing
+        if (
+          !isGenericAuthorization(chainConfig.data) ||
+          !isGenericAuthorization(treasuryConfig.data)
+        ) {
+          return false;
+        }
+        return chainConfig.data.msg === treasuryConfig.data.msg;
       }
 
       if (chainAuthType === AuthorizationTypes.Send) {
+        // Use type guards for safe type narrowing
+        if (
+          !isSendAuthorization(chainConfig.data) ||
+          !isSendAuthorization(treasuryConfig.data)
+        ) {
+          return false;
+        }
         return (
           isLimitValid(
-            (treasuryConfig.data as SendAuthorization).spendLimit,
-            (chainConfig.data as SendAuthorization).spendLimit,
+            treasuryConfig.data.spendLimit,
+            chainConfig.data.spendLimit,
           ) &&
-          JSON.stringify(
-            (treasuryConfig.data as SendAuthorization).allowList,
-          ) ===
-            JSON.stringify((chainConfig.data as SendAuthorization).allowList)
+          JSON.stringify(treasuryConfig.data.allowList) ===
+            JSON.stringify(chainConfig.data.allowList)
         );
       }
 
       if (chainAuthType === AuthorizationTypes.Stake) {
-        const treasuryStakeAuth = treasuryConfig.data as StakeAuthorization;
-        const grantStakeAuth = chainConfig.data as StakeAuthorization;
+        // Use type guards for safe type narrowing
+        if (
+          !isStakeAuthorization(chainConfig.data) ||
+          !isStakeAuthorization(treasuryConfig.data)
+        ) {
+          return false;
+        }
+
+        const treasuryStakeAuth = treasuryConfig.data;
+        const grantStakeAuth = chainConfig.data;
 
         return (
           treasuryStakeAuth.authorizationType ===
