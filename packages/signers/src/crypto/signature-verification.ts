@@ -31,7 +31,9 @@ export function verifyEthWalletSignature(
 
 /**
  * Verify Secp256k1 signature (Cosmos wallets)
- * @param message - The message that was signed (typically the smart account address)
+ * @param message - The message that was signed (hex format with 0x prefix, or bech32 string for backward compatibility).
+ *                 For account creation, this is hex-encoded UTF-8 bytes of the bech32 address.
+ *                 For transaction signing, this is hex-encoded transaction bytes.
  * @param signature - The signature to verify (hex format, with or without 0x)
  * @param publicKey - The public key (base64 or hex format)
  * @returns true if valid, false otherwise
@@ -42,8 +44,8 @@ export async function verifySecp256k1Signature(
   signature: string,
   publicKey: string
 ): Promise<boolean> {
-  // Parse signature
-  const signatureHex = signature.replace(/^0x/, "");
+  // Parse signature - normalize hex prefix and decode
+  const signatureHex = normalizeHexPrefix(signature);
   let signatureBytes: Uint8Array;
 
   try {
@@ -61,8 +63,8 @@ export async function verifySecp256k1Signature(
   let pubkeyBytes: Uint8Array;
   // Check for hex first (with or without 0x prefix)
   if (/^(0x)?[0-9a-fA-F]+$/.test(publicKey)) {
-    // Hex format
-    const pubkeyHex = publicKey.replace(/^0x/, "");
+    // Hex format - normalize prefix and decode
+    const pubkeyHex = normalizeHexPrefix(publicKey);
     pubkeyBytes = Buffer.from(pubkeyHex, "hex");
   } else if (/^[A-Za-z0-9+/]+=*$/.test(publicKey)) {
     // Base64 format
@@ -76,7 +78,16 @@ export async function verifySecp256k1Signature(
   }
 
   // Hash the message (same as smart contract does)
-  const messageBytes = Buffer.from(message);
+  // Handle both hex format (with 0x prefix) and string format (for backward compatibility)
+  let messageBytes: Uint8Array;
+  if (message.startsWith("0x")) {
+    // Hex format: normalize prefix and decode hex to bytes
+    const messageHex = normalizeHexPrefix(message);
+    messageBytes = fromHex(messageHex);
+  } else {
+    // String format (bech32 address): convert string to UTF-8 bytes (backward compatibility)
+    messageBytes = Buffer.from(message, "utf8");
+  }
   const messageHash = sha256(messageBytes);
 
   // Verify the signature

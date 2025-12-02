@@ -59,15 +59,22 @@ export class AADirectSigner extends AASigner {
 
   async getAccounts(): Promise<readonly AAccountData[]> {
     if (this.abstractAccount === undefined) {
-      return [];
+      throw new Error(
+        "Abstract account address is required but was undefined. Ensure abstractAccount is set before calling getAccounts().",
+      );
     }
 
     const accounts = await this.signer.getAccounts();
     if (accounts.length === 0) {
-      return [];
-    } else if (accounts.length > 1) {
-      // @TODO How to handle this case?
-      console.log("Signer returned more than 1 account");
+      throw new Error(
+        "Signer returned no accounts. The underlying signer must provide at least one account.",
+      );
+    }
+
+    if (accounts.length > 1) {
+      throw new Error(
+        `Signer returned ${accounts.length} accounts, but AADirectSigner expects exactly one account.`,
+      );
     }
 
     return [

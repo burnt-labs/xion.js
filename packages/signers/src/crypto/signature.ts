@@ -46,6 +46,21 @@ export function utf8ToHex(text: string): string {
 }
 
 /**
+ * Convert UTF-8 string to hex string with 0x prefix
+ * Ensures exactly one 0x prefix (never double-prefixes)
+ * Used for converting text messages to hex format for signing when 0x prefix is required
+ *
+ * @param text - UTF-8 string to convert
+ * @returns Hex string with exactly one 0x prefix
+ */
+export function utf8ToHexWithPrefix(text: string): string {
+  const hex = utf8ToHex(text);
+  // Ensure exactly one 0x prefix - remove if already present, then add
+  const normalized = normalizeHexPrefix(hex);
+  return `0x${normalized}`;
+}
+
+/**
  * Format Ethereum signature for AA API v2
  * Ensures signature has 0x prefix
  *

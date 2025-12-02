@@ -6,10 +6,9 @@
 
 import { Buffer } from "buffer";
 import { OfflineDirectSigner } from "@cosmjs/proto-signing";
-import { StdSignature } from "@cosmjs/amino";
 import { AAEthSigner, PersonalSignFn } from "../eth-signer";
 import { AADirectSigner, SignArbitraryFn } from "../direct-signer";
-import { AUTHENTICATOR_TYPE, type AuthenticatorType } from "../../crypto";
+import { AUTHENTICATOR_TYPE, type AuthenticatorType } from "../../types/account";
 
 /**
  * Parameters for creating a signer from a signing function
@@ -27,6 +26,11 @@ export interface CreateSignerParams {
   /**
    * Signing function that takes hex message and returns hex signature
    * This is the unified interface from connectors
+   *
+   * @param hexMessage - Hex-encoded message (with 0x prefix).
+   *                    For string messages (e.g., bech32 addresses), this should be hex-encoded UTF-8 bytes.
+   *                    For transaction signing, this should be hex-encoded transaction bytes.
+   *                    Callers are responsible for converting strings to hex before calling this function.
    */
   signMessage: (hexMessage: string) => Promise<string>;
 }
