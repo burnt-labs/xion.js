@@ -17,7 +17,6 @@ import {
   AUTHENTICATOR_TYPE,
   type AuthenticatorType,
   formatEthSignature,
-  formatHexMessage,
   formatSecp256k1Signature,
 } from "@burnt-labs/signers";
 
@@ -85,15 +84,15 @@ export class ExternalSignerConnector implements Connector {
         const authenticatorType = this.signerConfig.authenticatorType;
 
         if (authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
-          // EthWallet: Format message (ensure 0x prefix) and validate signature format
-          const formattedMessage = formatHexMessage(message);
-          const signature =
-            await this.signerConfig.signMessage(formattedMessage);
+          // EthWallet: signMessage expects hex-encoded message (with 0x prefix)
+          // The message is already hex-encoded by the caller (createEthWalletAccount converts bech32 to hex)
+          const signature = await this.signerConfig.signMessage(message);
 
           // Format and validate signature: Returns signature with "0x" prefix and validates length (132 chars = 0x + 130 hex)
           return formatEthSignature(signature);
         } else if (authenticatorType === AUTHENTICATOR_TYPE.Secp256K1) {
-          // Secp256K1: Pass message as-is, format and validate signature (hex without 0x prefix)
+          // Secp256K1: signMessage expects hex-encoded message (with 0x prefix)
+          // The message is already hex-encoded by the caller (createSecp256k1Account converts bech32 to hex)
           const signature = await this.signerConfig.signMessage(message);
 
           // Format signature (convert base64 to hex if needed, ensure no 0x prefix)
@@ -134,10 +133,9 @@ export class ExternalSignerConnector implements Connector {
           connectionType: "signer",
         },
       };
-    } catch (error: any) {
-      throw new Error(
-        `Failed to connect to ${this.config.name}: ${error.message || error}`,
-      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to connect to ${this.config.name}: ${message}`);
     }
   }
 

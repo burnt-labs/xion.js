@@ -269,7 +269,6 @@ export class AbstraxionAuth {
       this.client = directClient;
       return directClient;
     } catch (error) {
-      console.warn("Something went wrong getting signer: ", error);
       this.client = undefined;
       throw error;
     }
@@ -296,7 +295,6 @@ export class AbstraxionAuth {
       this.cosmwasmQueryClient = cosmwasmClient;
       return cosmwasmClient;
     } catch (error) {
-      console.warn("Something went wrong getting cosmwasm client: ", error);
       this.cosmwasmQueryClient = undefined;
       throw error;
     }
@@ -324,10 +322,7 @@ export class AbstraxionAuth {
 
       await this.configureUrlAndRedirect(dashboardUrl, userAddress);
     } catch (error) {
-      console.warn(
-        "Something went wrong trying to redirect to XION dashboard: ",
-        error,
-      );
+      // Error is thrown and handled by caller
     }
   }
 
@@ -363,8 +358,6 @@ export class AbstraxionAuth {
 
       const queryString = urlParams.toString();
       await this.redirectStrategy.redirect(`${dashboardUrl}?${queryString}`);
-    } else {
-      console.warn("Window not defined. Cannot redirect to dashboard");
     }
   }
 
@@ -522,7 +515,6 @@ export class AbstraxionAuth {
         }
 
         if (data.grants.length === 0) {
-          console.warn("No grants found.");
           return false;
         }
 
@@ -545,13 +537,11 @@ export class AbstraxionAuth {
 
         return validGrant && isValid;
       } catch (error) {
-        console.warn("Error fetching grants: ", error);
         const delay = Math.pow(2, retries) * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
         retries++;
       }
     }
-    console.error("Max retries exceeded, giving up.");
     return false;
   }
 
@@ -602,7 +592,6 @@ export class AbstraxionAuth {
       const granter = await this.getGranter();
 
       if (!keypair || !granter) {
-        console.warn("Missing keypair or granter, cannot authenticate.");
         return;
       }
 
@@ -621,7 +610,6 @@ export class AbstraxionAuth {
         );
       }
     } catch (error) {
-      console.error("Error during authentication:", error);
       await this.logout();
       // Re-throw the error so that authenticate() rejects and callers can handle it
       throw error;
@@ -639,14 +627,12 @@ export class AbstraxionAuth {
   async login(): Promise<void> {
     try {
       if (this.isLoginInProgress) {
-        console.warn("Login is already in progress.");
         return;
       }
       this.isLoginInProgress = true;
 
       await this.performLogin();
     } catch (error) {
-      console.warn("Something went wrong during login core logic: ", error);
       throw error;
     } finally {
       this.isLoginInProgress = false;
@@ -667,7 +653,6 @@ export class AbstraxionAuth {
   > {
     try {
       if (this.isLoginInProgress) {
-        console.warn("Login is already in progress.");
         return undefined;
       }
       this.isLoginInProgress = true;
@@ -675,7 +660,6 @@ export class AbstraxionAuth {
       const result = await this.performLogin();
       return result;
     } catch (error) {
-      console.warn("Something went wrong: ", error);
       throw error;
     } finally {
       this.isLoginInProgress = false;
@@ -732,7 +716,6 @@ export class AbstraxionAuth {
       await this.generateAndStoreTempAccount();
       await this.redirectToDashboard();
     } catch (error) {
-      console.warn("Something went wrong in redirecting to dashboard: ", error);
       throw error;
     }
   }
