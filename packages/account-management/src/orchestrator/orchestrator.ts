@@ -131,6 +131,7 @@ export class ConnectionOrchestrator {
       connector,
       authenticator,
       chainId: this.config.chainId,
+      rpcUrl: this.config.rpcUrl,
       accountStrategy: this.config.accountStrategy,
       accountCreationConfig: this.config.accountCreationConfig,
       sessionManager: this.config.sessionManager,

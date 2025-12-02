@@ -5,7 +5,7 @@
 
 import type { CompositeAccountStrategy } from "../accounts/index";
 import type { Authenticator } from "../types/authenticator";
-import type { AuthenticatorType } from "../authenticators/type-detection";
+import type { AuthenticatorType } from "@burnt-labs/signers";
 
 /**
  * Result of account existence check
@@ -16,6 +16,7 @@ export interface AccountExistenceResult {
   smartAccountAddress?: string;
   codeId?: number;
   authenticatorIndex?: number;
+  error?: string; // Error message if account check failed (distinguishes from "not found")
 }
 
 /**
@@ -26,13 +27,11 @@ export interface AccountExistenceResult {
  * @param authenticator - The authenticator string (address, pubkey, JWT, etc.)
  * @param authenticatorType - Authenticator type. Required because the type is always known from context
  *                            (wallet connection, signer config, etc.) when checking for accounts.
- * @param logPrefix - Optional log prefix for debugging
  */
 export async function checkAccountExists(
   accountStrategy: CompositeAccountStrategy,
   authenticator: string,
   authenticatorType: AuthenticatorType,
-  logPrefix: string = "[account-discovery]",
 ): Promise<AccountExistenceResult> {
   try {
     const accounts = await accountStrategy.fetchSmartAccounts(
@@ -60,13 +59,6 @@ export async function checkAccountExists(
 
     const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
 
-    console.log(`${logPrefix} ✅ Found existing account:`, {
-      smartAccount: existingAccount.id,
-      codeId: existingAccount.codeId,
-      authenticators: existingAccount.authenticators.length,
-      authenticatorIndex,
-    });
-
     return {
       exists: true,
       accounts,
@@ -75,10 +67,12 @@ export async function checkAccountExists(
       authenticatorIndex,
     };
   } catch (error) {
-    console.warn(`${logPrefix} Error checking account exists:`, error);
+    const errorMessage =
+      error instanceof Error ? error.message : String(error);
     return {
       exists: false,
       accounts: [],
+      error: errorMessage,
     };
   }
 }

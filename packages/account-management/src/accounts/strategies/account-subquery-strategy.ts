@@ -7,7 +7,7 @@
  */
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
-import type { AuthenticatorType } from "../../authenticators/type-detection";
+import type { AuthenticatorType } from "@burnt-labs/signers";
 
 interface SmartAccountAuthenticator {
   id: string;
@@ -85,12 +85,9 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
       });
 
       if (!response.ok) {
-        console.error(
-          "[SubqueryAccountStrategy] Request failed:",
-          response.status,
-          response.statusText,
+        throw new Error(
+          `Subquery request failed: ${response.status} ${response.statusText}`,
         );
-        throw new Error(`Subquery request failed: ${response.statusText}`);
       }
 
       const { data } = (await response.json()) as {
@@ -104,18 +101,17 @@ export class SubqueryAccountStrategy implements IndexerStrategy {
         codeId: this.codeId,
         authenticators: node.authenticators.nodes.map((authNode) => ({
           id: authNode.id,
-          type: authNode.type,
+          type: authNode.type as AuthenticatorType,
           authenticator: authNode.authenticator,
           authenticatorIndex: authNode.authenticatorIndex,
         })),
       }));
     } catch (error) {
-      console.error(
-        "[SubqueryAccountStrategy] Error fetching smart accounts:",
-        error,
-      );
-      // Return empty array on error - let the app decide whether to create new account
-      return [];
+      // Re-throw error instead of silently returning empty array
+      // Caller (composite strategy) will handle fallback
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(`Subquery account strategy failed: ${errorMessage}`);
     }
   }
 }

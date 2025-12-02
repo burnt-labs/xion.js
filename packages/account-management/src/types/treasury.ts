@@ -1,9 +1,13 @@
 export type GrantConfigTypeUrlsResponse = string[];
 
+/**
+ * Treasury parameters returned from treasury contract
+ * Matches the Params struct in contracts/contracts/treasury/src/state.rs
+ */
 export interface TreasuryParams {
-  display_url: string;
   redirect_url: string;
   icon_url: string;
+  metadata: string;
 }
 
 export interface Any {
@@ -11,10 +15,16 @@ export interface Any {
   value: string;
 }
 
+/**
+ * Grant configuration with additional fields for UI display
+ * Extended from TreasuryGrantConfig with extra fields like allowance for fee grants
+ */
 export interface GrantConfigByTypeUrl {
-  allowance: Any;
   authorization: Any;
   description: string;
+  optional: boolean;
+  // Additional fields for fee grants (not from treasury contract directly)
+  allowance?: Any;
   maxDuration?: number;
 }
 
