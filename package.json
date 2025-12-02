@@ -30,7 +30,8 @@
     "turbo": "^2.0.11"
   },
   "devDependencies": {
-    "@hono/zod-openapi": "^0.18.4"
+    "@hono/zod-openapi": "^0.18.4",
+    "@vitest/coverage-v8": "^1.6.1"
   },
   "pnpm": {
     "overrides": {
