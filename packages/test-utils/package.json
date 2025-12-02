@@ -1,7 +1,7 @@
 {
   "name": "@burnt-labs/test-utils",
   "version": "1.0.0-alpha.1",
-  "description": "Shared test utilities, mock data, and test helpers for xion.js packages",
+  "description": "Shared test utilities and helpers for xion.js packages",
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -14,10 +14,6 @@
       "types": "./src/mocks/index.ts",
       "default": "./src/mocks/index.ts"
     },
-    "./fixtures": {
-      "types": "./src/fixtures/index.ts",
-      "default": "./src/fixtures/index.ts"
-    },
     "./builders": {
       "types": "./src/builders/index.ts",
       "default": "./src/builders/index.ts"
@@ -29,6 +25,10 @@
     "./vitest": {
       "types": "./src/vitest/index.ts",
       "default": "./src/vitest/index.ts"
+    },
+    "./vitest/setup": {
+      "types": "./src/vitest/setup.ts",
+      "default": "./src/vitest/setup.ts"
     }
   },
   "scripts": {

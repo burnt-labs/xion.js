@@ -7,19 +7,24 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./crypto": {
+      "types": "./dist/crypto/index.d.ts",
       "import": "./dist/crypto/index.mjs",
-      "require": "./dist/crypto/index.js",
-      "types": "./dist/crypto/index.d.ts"
+      "require": "./dist/crypto/index.js"
     },
     "./types/account": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.mjs",
+      "require": "./dist/testing/index.js"
     }
   },
   "license": "MIT",

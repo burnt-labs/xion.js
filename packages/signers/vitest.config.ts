@@ -1,10 +1,21 @@
 import { defineConfig } from "vitest/config";
-import path from "path";
 
 export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    setupFiles: ["./vitest.setup.ts"],
+    // Explicitly include tests in __tests__ directories
+    include: [
+      "**/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+    ],
+    exclude: [
+      "node_modules",
+      "dist",
+      ".next",
+      ".turbo",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
@@ -14,14 +25,6 @@ export default defineConfig({
         "**/*.test.ts",
         "**/*.config.ts",
       ],
-    },
-  },
-  resolve: {
-    alias: {
-      "@github/webauthn-json/browser-ponyfill": path.resolve(
-        __dirname,
-        "__mocks__/@github/webauthn-json/browser-ponyfill.ts",
-      ),
     },
   },
 });

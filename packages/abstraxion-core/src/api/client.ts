@@ -11,30 +11,63 @@ import type {
   CreateSecp256k1Request,
   CreateJWTRequest,
   CreateAccountResponse,
+  ErrorResponse,
 } from "@burnt-labs/signers";
 
 /**
- * Parse error response from AA API
- * Attempts to extract error message from response, falls back to default message
+ * Type guard for ErrorResponse from AA API
+ * Checks if response matches the ErrorResponse schema from  generated types
  */
+function isErrorResponse(value: unknown): value is ErrorResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+
+  // Check if it matches ErrorResponse schema: { error: { message: string } }
+  if (obj.error && typeof obj.error === "object") {
+    const error = obj.error as Record<string, unknown>;
+    return typeof error.message === "string";
+  }
+
+  return false;
+}
+
+/**
+ * Extended type for error responses that may have legacy format
+ * Some older error responses may have message at root level
+ */
+type LegacyErrorResponse = {
+  message: string;
+};
+
+function isLegacyErrorResponse(value: unknown): value is LegacyErrorResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return typeof obj.message === "string";
+}
+
 async function parseApiError(
   response: Response,
   defaultMessage: string,
 ): Promise<string> {
-  interface ErrorResponse {
-    error?: { message?: string };
-    message?: string;
-  }
-
-  let errorData: ErrorResponse = {};
   try {
     const responseText = await response.text();
-    errorData = JSON.parse(responseText) as ErrorResponse;
+    const parsed: unknown = JSON.parse(responseText);
+
+    // Check for standard ErrorResponse format from OpenAPI schema
+    if (isErrorResponse(parsed)) {
+      return parsed.error.message;
+    }
+
+    // Fallback: check for legacy error format (message at root level)
+    if (isLegacyErrorResponse(parsed)) {
+      return parsed.message;
+    }
+
+    return defaultMessage;
   } catch (e) {
     // Failed to parse error response - use default message
+    return defaultMessage;
   }
-
-  return errorData.error?.message || errorData.message || defaultMessage;
 }
 
 /**

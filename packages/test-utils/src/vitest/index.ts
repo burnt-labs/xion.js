@@ -1,7 +1,10 @@
 /**
  * Vitest utilities
- * 
+ *
  * Vitest-specific test utilities and setup functions
+ *
+ * Note: setup.ts is imported directly in vitest.config.ts setupFiles:
+ * setupFiles: ['../test-utils/src/vitest/setup.ts']
  */
 
 /**

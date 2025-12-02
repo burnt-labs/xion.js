@@ -1,31 +1,13 @@
-import { CacheManager, TimeProvider } from "../src/utils/cache/CacheManager";
-
-class MockTimeProvider implements TimeProvider {
-  private currentTime: number;
-
-  constructor(initialTime: number = 1000000) {
-    this.currentTime = initialTime;
-  }
-
-  now(): number {
-    return this.currentTime;
-  }
-
-  advance(ms: number): void {
-    this.currentTime += ms;
-  }
-
-  setTime(time: number): void {
-    this.currentTime = time;
-  }
-}
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { CacheManager } from "../src/utils/cache/CacheManager";
+import { MockTimer } from "@burnt-labs/test-utils/helpers";
 
 describe("CacheManager", () => {
-  let timeProvider: MockTimeProvider;
+  let timeProvider: MockTimer;
   let cacheManager: CacheManager<string>;
 
   beforeEach(() => {
-    timeProvider = new MockTimeProvider();
+    timeProvider = new MockTimer(1000000);
     cacheManager = new CacheManager<string>({
       ttl: 5 * 60 * 1000, // 5 minutes
       timeProvider,
@@ -34,7 +16,7 @@ describe("CacheManager", () => {
 
   describe("Basic Functionality", () => {
     it("should cache values on first fetch", async () => {
-      const fetchFn = jest.fn().mockResolvedValue("test-value");
+      const fetchFn = vi.fn().mockResolvedValue("test-value");
 
       const result = await cacheManager.get("key1", fetchFn);
 
@@ -43,7 +25,7 @@ describe("CacheManager", () => {
     });
 
     it("should return cached value on subsequent calls", async () => {
-      const fetchFn = jest.fn().mockResolvedValue("test-value");
+      const fetchFn = vi.fn().mockResolvedValue("test-value");
 
       // First call
       await cacheManager.get("key1", fetchFn);
@@ -55,8 +37,8 @@ describe("CacheManager", () => {
     });
 
     it("should cache different keys separately", async () => {
-      const fetchFn1 = jest.fn().mockResolvedValue("value1");
-      const fetchFn2 = jest.fn().mockResolvedValue("value2");
+      const fetchFn1 = vi.fn().mockResolvedValue("value1");
+      const fetchFn2 = vi.fn().mockResolvedValue("value2");
 
       const result1 = await cacheManager.get("key1", fetchFn1);
       const result2 = await cacheManager.get("key2", fetchFn2);
@@ -70,7 +52,7 @@ describe("CacheManager", () => {
 
   describe("TTL Expiration", () => {
     it("should refetch after TTL expires", async () => {
-      const fetchFn = jest
+      const fetchFn = vi
         .fn()
         .mockResolvedValueOnce("value1")
         .mockResolvedValueOnce("value2");
@@ -93,7 +75,7 @@ describe("CacheManager", () => {
     });
 
     it("should clean up expired entries when fetching", async () => {
-      const fetchFn = jest.fn().mockResolvedValue("value");
+      const fetchFn = vi.fn().mockResolvedValue("value");
 
       // Create multiple entries
       await cacheManager.get("key1", fetchFn);
@@ -120,7 +102,7 @@ describe("CacheManager", () => {
         resolvePromise = resolve;
       });
 
-      const fetchFn = jest.fn().mockReturnValue(delayedPromise);
+      const fetchFn = vi.fn().mockReturnValue(delayedPromise);
 
       // Start multiple concurrent requests
       const promises = [
@@ -150,7 +132,7 @@ describe("CacheManager", () => {
         rejectPromise = reject;
       });
 
-      const fetchFn = jest.fn().mockReturnValue(delayedPromise);
+      const fetchFn = vi.fn().mockReturnValue(delayedPromise);
 
       // Start multiple concurrent requests
       const promises = [
@@ -170,7 +152,7 @@ describe("CacheManager", () => {
       });
 
       // Should be able to retry after error
-      const retryFn = jest.fn().mockResolvedValue("retry-value");
+      const retryFn = vi.fn().mockResolvedValue("retry-value");
       const retryResult = await cacheManager.get("key1", retryFn);
       expect(retryResult).toBe("retry-value");
       expect(retryFn).toHaveBeenCalledTimes(1);
@@ -179,7 +161,7 @@ describe("CacheManager", () => {
 
   describe("Cache Management", () => {
     it("should clear all entries", async () => {
-      const fetchFn = jest.fn().mockResolvedValue("value");
+      const fetchFn = vi.fn().mockResolvedValue("value");
 
       await cacheManager.get("key1", fetchFn);
       await cacheManager.get("key2", fetchFn);
@@ -196,7 +178,7 @@ describe("CacheManager", () => {
     });
 
     it("should delete specific entries", async () => {
-      const fetchFn = jest.fn().mockResolvedValue("value");
+      const fetchFn = vi.fn().mockResolvedValue("value");
 
       await cacheManager.get("key1", fetchFn);
       await cacheManager.get("key2", fetchFn);
@@ -212,7 +194,7 @@ describe("CacheManager", () => {
     });
 
     it("should check if key exists and is valid", async () => {
-      const fetchFn = jest.fn().mockResolvedValue("value");
+      const fetchFn = vi.fn().mockResolvedValue("value");
 
       expect(cacheManager.has("key1")).toBe(false);
 
@@ -227,7 +209,7 @@ describe("CacheManager", () => {
 
   describe("Debug Logging", () => {
     it("should log cache hits when debugLabel is provided", async () => {
-      const consoleSpy = jest.spyOn(console, "debug").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "debug").mockImplementation();
 
       const debugCacheManager = new CacheManager<string>({
         ttl: 5 * 60 * 1000,
@@ -235,7 +217,7 @@ describe("CacheManager", () => {
         debugLabel: "test cache",
       });
 
-      const fetchFn = jest.fn().mockResolvedValue("value");
+      const fetchFn = vi.fn().mockResolvedValue("value");
 
       // First call - no cache hit
       await debugCacheManager.get("key1", fetchFn);

@@ -2,17 +2,11 @@
  * Fluent builder for creating grant authorization objects
  */
 
+import type { GrantsResponse } from '../mocks/grants.js';
+
 export interface Grant {
   authorization: any;
   expiration: string;
-}
-
-export interface GrantsResponse {
-  grants: Grant[];
-  pagination: {
-    next_key: string | null;
-    total: string;
-  };
 }
 
 export class GrantBuilder {

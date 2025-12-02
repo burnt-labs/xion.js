@@ -3,5 +3,15 @@
  * Runs before all tests
  */
 
-// Setup can be empty for now - add any global test setup here if needed
+import { vi } from "vitest";
+
+// Mock @github/webauthn-json/browser-ponyfill to avoid module resolution issues
+// This is needed because @burnt-labs/signers imports this module which isn't available in Node.js environment
+vi.mock("@github/webauthn-json/browser-ponyfill", () => ({
+  create: vi.fn(),
+  get: vi.fn(),
+  supported: vi.fn(() => false),
+  parseCreationOptionsFromJSON: vi.fn(),
+  parseRequestOptionsFromJSON: vi.fn(),
+}))
 

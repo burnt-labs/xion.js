@@ -1,11 +1,25 @@
 import { defineConfig } from "vitest/config";
-import path from "path";
 
 export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: ["./vitest.setup.ts"],
+    setupFiles: [
+      "../test-utils/src/vitest/setup.ts", // Shared webauthn and global mocks
+      "./vitest.setup.ts", // Package-specific setup
+    ],
+    // Explicitly include tests in __tests__ directories and integration tests
+    include: [
+      "**/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "tests/integration/**/*.integration.test.{ts,tsx}",
+    ],
+    exclude: [
+      "node_modules",
+      "dist",
+      ".next",
+      ".turbo",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
@@ -15,14 +29,6 @@ export default defineConfig({
         "**/*.test.ts",
         "**/*.config.ts",
       ],
-    },
-  },
-  resolve: {
-    alias: {
-      "@github/webauthn-json/browser-ponyfill": path.resolve(
-        __dirname,
-        "__mocks__/@github/webauthn-json/browser-ponyfill.ts",
-      ),
     },
   },
 });

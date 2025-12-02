@@ -5,7 +5,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: [
+      '../test-utils/src/vitest/setup.ts', // Shared webauthn and global mocks
+      './tests/setup.ts', // Package-specific setup
+    ],
     include: ['tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
