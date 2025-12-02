@@ -13,6 +13,8 @@ import {
   GrantConfig,
   AccountCreationConfig,
   isSessionRestorationError,
+  isSessionRestored,
+  getAccountInfoFromRestored,
 } from "@burnt-labs/account-management";
 import type { Connector, StorageStrategy } from "@burnt-labs/abstraxion-core";
 import { BaseController } from "./BaseController";
@@ -82,18 +84,9 @@ export class SignerController extends BaseController {
       // Try to restore existing session (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
 
-      if (restorationResult.restored && restorationResult.signingClient) {
-        // Session restored successfully - restorationResult contains AccountInfo fields when restored: true
-        const accountInfo: AccountInfo = {
-          keypair: (restorationResult as { restored: true } & AccountInfo)
-            .keypair,
-          granterAddress: (
-            restorationResult as { restored: true } & AccountInfo
-          ).granterAddress,
-          granteeAddress: (
-            restorationResult as { restored: true } & AccountInfo
-          ).granteeAddress,
-        };
+      if (isSessionRestored(restorationResult) && restorationResult.signingClient) {
+        // Session restored successfully - extract AccountInfo using type-safe helper
+        const accountInfo = getAccountInfoFromRestored(restorationResult);
 
         this.dispatch({
           type: "SET_CONNECTED",
