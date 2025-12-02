@@ -33,19 +33,25 @@ export function useTurnkeyRawAPI() {
     return {
       authenticatorType: AUTHENTICATOR_TYPE.EthWallet,
       authenticator: ethAccount.address,
-      signMessage: async (hexMessage: string) => {
+      signMessage: async (message: string) => {
         console.log("[useTurnkeyRawAPI] - Signing message with Raw API...");
-
-        // Ensure hex message has 0x prefix
-        const normalizedMessage = hexMessage.startsWith("0x")
-          ? hexMessage
-          : `0x${hexMessage}`;
+        console.log("[useTurnkeyRawAPI] - Message to sign:", message);
 
         try {
+          // Validate hex format - signMessage expects hex-encoded messages with 0x prefix
+          if (!message.startsWith("0x")) {
+            throw new Error(
+              `Invalid message format: expected hex string with 0x prefix, got: ${message.substring(0, 50)}...`
+            );
+          }
+
+          const messageHex = message as `0x${string}`;
+
           // Apply Ethereum personal_sign prefix and hash with keccak256
           // This is what the contract expects: keccak256("\x19Ethereum Signed Message:\n" + len + message)
+          // hashMessage with { raw: ... } applies the personal_sign prefix automatically
           const messageHash = hashMessage({
-            raw: normalizedMessage as `0x${string}`,
+            raw: messageHex,
           });
 
           // Sign the hash with Turnkey Raw API
@@ -90,4 +96,3 @@ export function useTurnkeyRawAPI() {
     authState,
   };
 }
-//
