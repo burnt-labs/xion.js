@@ -2,7 +2,6 @@ name: Dependency Validation
 
 on:
   pull_request:
-    branches: [main, develop]
     paths:
       - 'packages/**'
       - '.github/workflows/dependency-validation.yml'
@@ -11,6 +10,7 @@ on:
     paths:
       - 'packages/**'
       - '.github/workflows/dependency-validation.yml'
+  workflow_dispatch:
 
 jobs:
   validate-dependencies:
