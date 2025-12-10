@@ -316,10 +316,16 @@ describe("salt.ts - Salt Calculation Utilities", () => {
       expect(saltWith0x).toBe(saltWithout0x);
     });
 
-    it("should reject multiple 0x prefixes (invalid address)", () => {
-      // BUG FIX: Now validates, so double 0x prefix throws error
+    it("should handle multiple 0x prefixes (normalized)", () => {
+      // normalizeHexPrefix() removes duplicate 0x prefixes, making this valid
       const addressWithDouble0x = "0x0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
-      expect(() => calculateEthWalletSalt(addressWithDouble0x)).toThrow(/invalid.*ethereum address/i);
+      const addressNormal = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
+
+      const saltDouble = calculateEthWalletSalt(addressWithDouble0x);
+      const saltNormal = calculateEthWalletSalt(addressNormal);
+
+      // After normalization, both should produce the same salt
+      expect(saltDouble).toBe(saltNormal);
     });
 
     it("should handle 0X uppercase prefix", () => {
@@ -428,9 +434,9 @@ describe("salt.ts - Salt Calculation Utilities", () => {
 
     it("should handle array inputs (TypeScript should prevent this)", () => {
       const arr = ["test"];
-      // calculateEthWalletSalt calls address.replace(), which throws on arrays
+      // calculateEthWalletSalt calls normalizeHexPrefix().toLowerCase(), which throws on arrays
       expect(() => calculateEthWalletSalt(arr as any)).toThrow(
-        /replace is not a function/,
+        /toLowerCase is not a function/,
       );
       // Runtime validation now throws error for non-string inputs
       expect(() => calculateSecp256k1Salt(arr as any)).toThrow();

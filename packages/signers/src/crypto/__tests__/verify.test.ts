@@ -217,36 +217,6 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
       };
     }
 
-    // Helper function to create a test key pair and signature over hex-encoded message
-    async function createTestSignatureHex(message: string) {
-      const privkey = new Uint8Array(32);
-      for (let i = 0; i < 32; i++) {
-        privkey[i] = (i * 7 + 13) % 256;
-      }
-
-      const keypair = await Secp256k1.makeKeypair(privkey);
-      // Convert message to hex format (as createSecp256k1Account does)
-      const messageHex = Buffer.from(message).toString("hex");
-      const messageBytes = Buffer.from(messageHex, "hex");
-      const messageHash = sha256(messageBytes);
-      const signature = await Secp256k1.createSignature(messageHash, privkey);
-
-      const signatureBytes = new Uint8Array(64);
-      signatureBytes.set(signature.r(), 0);
-      signatureBytes.set(signature.s(), 32);
-
-      return {
-        privkey,
-        pubkey: keypair.pubkey,
-        pubkeyHex: toHex(keypair.pubkey),
-        pubkeyBase64: Buffer.from(keypair.pubkey).toString("base64"),
-        signature,
-        signatureHex: toHex(signatureBytes),
-        message,
-        messageHex: "0x" + messageHex,
-        messageHash,
-      };
-    }
 
     describe("Valid Signature Verification with Base64 Public Key", () => {
       it("should verify a valid secp256k1 signature with base64 pubkey", async () => {
@@ -330,60 +300,6 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
       });
     });
 
-    describe("Valid Signature Verification with Hex Public Key", () => {
-      it("should verify signature with hex pubkey", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
-
-        const result = await verifySecp256k1Signature(
-          testData.message,
-          testData.signatureHex,
-          testData.pubkeyHex
-        );
-
-        expect(result).toBe(true);
-      });
-
-      it("should verify signature with 0x prefix on hex pubkey", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
-        const pubkeyWith0x = "0x" + testData.pubkeyHex;
-
-        const result = await verifySecp256k1Signature(
-          testData.message,
-          testData.signatureHex,
-          pubkeyWith0x
-        );
-
-        expect(result).toBe(true);
-      });
-
-      it("should verify signature with uppercase hex pubkey", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
-        const pubkeyUpper = testData.pubkeyHex.toUpperCase();
-
-        const result = await verifySecp256k1Signature(
-          testData.message,
-          testData.signatureHex,
-          pubkeyUpper
-        );
-
-        expect(result).toBe(true);
-      });
-
-      it("should verify signature with mixed case hex pubkey", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
-        const pubkeyMixed =
-          testData.pubkeyHex.slice(0, 10).toUpperCase() +
-          testData.pubkeyHex.slice(10).toLowerCase();
-
-        const result = await verifySecp256k1Signature(
-          testData.message,
-          testData.signatureHex,
-          pubkeyMixed
-        );
-
-        expect(result).toBe(true);
-      });
-    });
 
     describe("Compressed and Uncompressed Public Keys", () => {
       it("should work with compressed pubkey (33 bytes)", async () => {
@@ -427,7 +343,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           message,
           toHex(signatureBytes),
-          toHex(uncompressedPubkey)
+          Buffer.from(uncompressedPubkey).toString("base64")
         );
 
         expect(result).toBe(true);
@@ -652,41 +568,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
       });
     });
 
-    describe("Hex Format Support (Standardized)", () => {
-      it("should verify signature with hex-encoded message (0x prefix)", async () => {
-        const testData = await createTestSignatureHex("xion1test123456789abcdefghijklmnopqrstuvwxyz");
-
-        const result = await verifySecp256k1Signature(
-          testData.messageHex,
-          testData.signatureHex,
-          testData.pubkeyBase64
-        );
-
-        expect(result).toBe(true);
-      });
-
-      it("should verify signature with hex-encoded message without 0x prefix (treated as string for backward compatibility)", async () => {
-        // Note: Hex without 0x prefix is treated as string format (backward compatibility)
-        // This test verifies backward compatibility behavior
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
-        
-        // Remove 0x prefix - this will be treated as string format
-        const messageWithoutPrefix = testData.message;
-
-        // This should work because it's treated as string format (backward compatibility)
-        const result = await verifySecp256k1Signature(
-          messageWithoutPrefix,
-          testData.signatureHex,
-          testData.pubkeyBase64
-        );
-
-        expect(result).toBe(true);
-      });
-
-      it("should verify signature with string format (backward compatibility)", async () => {
+    describe("String Message Format (Standard)", () => {
+      it("should verify signature with plain string message", async () => {
         const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
 
-        // Verify with string format (backward compatibility)
+        // Verify with string format (standard)
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
@@ -694,36 +580,6 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         );
 
         expect(result).toBe(true);
-      });
-
-      it("should handle hex and string formats equivalently for same message", async () => {
-        const message = "xion1test123456789abcdefghijklmnopqrstuvwxyz";
-        
-        // Create signature over string format (backward compatibility)
-        const testDataString = await createTestSignature(message);
-        
-        // Create signature over hex format (new standardized format)
-        const testDataHex = await createTestSignatureHex(message);
-
-        // String format should verify with string message
-        const resultString = await verifySecp256k1Signature(
-          testDataString.message,
-          testDataString.signatureHex,
-          testDataString.pubkeyBase64
-        );
-
-        // Hex format should verify with hex message
-        const resultHex = await verifySecp256k1Signature(
-          testDataHex.messageHex,
-          testDataHex.signatureHex,
-          testDataHex.pubkeyBase64
-        );
-
-        expect(resultString).toBe(true);
-        expect(resultHex).toBe(true);
-        
-        // Note: These signatures are different because they're over different byte representations
-        // (string UTF-8 bytes vs hex-encoded bytes), but both are valid for their respective formats
       });
     });
 
@@ -773,17 +629,17 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         expect(result).toBe(true);
       });
 
-      it("should verify signature with hex format (new standardized format)", async () => {
+      it("should verify signature with plain string format (standard)", async () => {
         const contractAddress = "xion1contract123456789abcdefghijklmnopqrstuvwxyz";
-        
-        // Create signature over hex-encoded address (as createSecp256k1Account does)
-        const testDataHex = await createTestSignatureHex(contractAddress);
 
-        // Verify with hex format (new standardized format)
+        // Create signature over plain string address
+        const testData = await createTestSignature(contractAddress);
+
+        // Verify with plain string format (standard)
         const result = await verifySecp256k1Signature(
-          testDataHex.messageHex,
-          testDataHex.signatureHex,
-          testDataHex.pubkeyBase64
+          testData.message,
+          testData.signatureHex,
+          testData.pubkeyBase64
         );
 
         expect(result).toBe(true);

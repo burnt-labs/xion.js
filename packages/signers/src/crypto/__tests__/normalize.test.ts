@@ -66,10 +66,20 @@ describe("normalize.ts - Normalization Utilities", () => {
         );
       });
 
-      it("should throw error for address without 0x prefix", () => {
-        expect(() =>
-          normalizeEthereumAddress("742d35cc6634c0532925a3b844bc9e7595f0beb0")
-        ).toThrow("Invalid Ethereum address format");
+      it("should auto-add 0x prefix for address without it (backward compatibility)", () => {
+        const address = "742d35cc6634c0532925a3b844bc9e7595f0beb0";
+        const normalized = normalizeEthereumAddress(address);
+
+        expect(normalized).toBe("0x742d35cc6634c0532925a3b844bc9e7595f0beb0");
+        expect(normalized).toMatch(/^0x[a-f0-9]{40}$/);
+      });
+
+      it("should produce same result regardless of 0x prefix presence", () => {
+        const withPrefix = normalizeEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
+        const withoutPrefix = normalizeEthereumAddress("742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
+
+        expect(withPrefix).toBe(withoutPrefix);
+        expect(withPrefix).toBe("0x742d35cc6634c0532925a3b844bc9e7595f0beb0");
       });
 
       it("should throw error for address with only 0x", () => {
