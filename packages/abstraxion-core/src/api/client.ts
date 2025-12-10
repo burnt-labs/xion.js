@@ -55,15 +55,17 @@ async function parseApiError(
 
     // Check for standard ErrorResponse format from OpenAPI schema
     if (isErrorResponse(parsed)) {
-      return parsed.error.message;
+      // Include full response for debugging
+      return `${parsed.error.message}\n[Full Response]: ${responseText}\n[Status]: ${response.status}`;
     }
 
     // Fallback: check for legacy error format (message at root level)
     if (isLegacyErrorResponse(parsed)) {
-      return parsed.message;
+      return `${parsed.message}\n[Full Response]: ${responseText}\n[Status]: ${response.status}`;
     }
 
-    return defaultMessage;
+    // Return default with full response text
+    return `${defaultMessage}\n[Full Response]: ${responseText}`;
   } catch (e) {
     // Failed to parse error response - use default message
     return defaultMessage;

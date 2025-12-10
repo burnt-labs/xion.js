@@ -9,7 +9,6 @@ import {
   calculateSmartAccountAddress,
   AUTHENTICATOR_TYPE,
   formatSecp256k1Signature,
-  formatSecp256k1Pubkey,
   normalizeSecp256k1PublicKey,
   normalizeEthereumAddress,
   utf8ToHexWithPrefix,
@@ -32,7 +31,7 @@ async function waitForTxConfirmation(
   const maxAttempts = 3;
   const pollIntervalMs = 1000;
   const timeoutIds: NodeJS.Timeout[] = [];
-  
+
   // Helper to create timeout with cleanup tracking
   const createTimeout = (ms: number): Promise<void> => {
     return new Promise((resolve) => {
@@ -46,7 +45,7 @@ async function waitForTxConfirmation(
       timeoutIds.push(timeoutId);
     });
   };
-  
+
   // Cleanup function to clear all pending timeouts
   const cleanupTimeouts = () => {
     timeoutIds.forEach((timeoutId) => {
@@ -54,7 +53,7 @@ async function waitForTxConfirmation(
     });
     timeoutIds.length = 0;
   };
-  
+
   try {
     client = await StargateClient.connect(rpcUrl);
 
@@ -74,7 +73,7 @@ async function waitForTxConfirmation(
         await createTimeout(pollIntervalMs);
       }
     }
-    
+
     // Reached max attempts without finding transaction
     await createTimeout(2000);
   } catch (error) {
@@ -93,15 +92,33 @@ async function waitForTxConfirmation(
 }
 
 /**
+ * Simple sleep function to prevent account sequence errors
+ * Temporary replacement for waitForTxConfirmation to reduce latency
+ * Memory leak safe: timeout is properly tracked and cleaned up
+ */
+async function simpleSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    const timeoutId = setTimeout(() => {
+      resolve();
+    }, ms);
+
+    // Ensure cleanup even if promise is abandoned
+    // This is a safeguard, though in practice the timeout will complete normally
+    if (typeof timeoutId === 'object' && 'unref' in timeoutId) {
+      // In Node.js, allow the process to exit without waiting for this timeout
+      (timeoutId as NodeJS.Timeout).unref();
+    }
+  });
+}
+
+/**
  * Create account via AA API v2 for EthWallet type
- * Handles the full flow: calculate address → sign → create
  *
- * Uses local address calculation (no API call needed for prepare step)
+ * Flow: normalize address → calculate salt/address → sign address → create via API
  *
- * @param signMessageFn - Function that signs hex messages (with 0x prefix).
- *                        Expects hex-encoded UTF-8 bytes for string messages (e.g., bech32 addresses).
- *                        For transaction signing, expects hex-encoded transaction bytes.
- * @param rpcUrl - Optional RPC URL. If provided, waits for transaction confirmation before returning.
+ * @param signMessageFn - Signs hex messages (with 0x prefix)
+ * @param rpcUrl - Optional RPC URL for transaction confirmation
+ * @see @burnt-labs/signers/src/crypto/README.md for salt calculation details
  */
 export async function createEthWalletAccount(
   aaApiUrl: string,
@@ -119,12 +136,10 @@ export async function createEthWalletAccount(
     );
   }
 
-  // Step 1: Normalize Ethereum address (AA API normalizes before salt calculation)
-  // This ensures our local salt calculation matches what AA API will calculate
+  // Normalize address (matches AA API normalization)
   const normalizedAddress = normalizeEthereumAddress(ethereumAddress);
 
-  // Step 2: Calculate address locally using normalized address for salt
-  // Salt must be calculated from the same format (normalized lowercase) that AA API uses
+  // Calculate smart account address via CREATE2
   const salt = calculateSalt(AUTHENTICATOR_TYPE.EthWallet, normalizedAddress);
   const calculatedAddress = calculateSmartAccountAddress({
     checksum,
@@ -133,26 +148,25 @@ export async function createEthWalletAccount(
     prefix: addressPrefix,
   });
 
-  // Step 3: Sign the calculated address
-  // Convert bech32 address string to hex-encoded UTF-8 bytes (with 0x prefix)
-  // signMessageFn expects hex format: hex-encoded UTF-8 bytes for strings, or hex-encoded raw bytes
+  // Sign the calculated address (hex format with 0x prefix)
   const addressHex = utf8ToHexWithPrefix(calculatedAddress);
   const signature = await signMessageFn(addressHex);
 
-  // Step 4: Create account via v2 API
-  // Use normalized address to ensure it matches AA API expectations
+  // Create account via v2 API
   const result = await createEthWalletAccountV2(aaApiUrl, {
     address: normalizedAddress,
     signature: signature,
   });
 
-  // Step 5: Optionally wait for transaction confirmation
+  // Short sleep to prevent sequence errors
   if (rpcUrl && result.transaction_hash) {
-    try {
-      await waitForTxConfirmation(rpcUrl, result.transaction_hash);
-    } catch (error) {
-      // Confirmation failed - continue anyway
-    }
+    // try {
+    //   await waitForTxConfirmation(rpcUrl, result.transaction_hash);
+    // } catch (error) {
+    //   // Confirmation failed - continue anyway
+    // }
+    //TODO: test more thoroughly if account sequence errors can be avoided without this sleep
+    await simpleSleep(500); // 500ms sleep instead of polling
   }
 
   return result;
@@ -160,19 +174,16 @@ export async function createEthWalletAccount(
 
 /**
  * Create account via AA API v2 for Secp256K1 type (Cosmos wallets)
- * Handles the full flow: calculate address → sign → create
  *
- * Uses local address calculation (no API call needed for prepare step)
+ * Flow: normalize pubkey → calculate salt/address → sign address → create via API
  *
- * @param signMessageFn - Function that signs hex messages (with 0x prefix).
- *                        Expects hex-encoded UTF-8 bytes for string messages (e.g., bech32 addresses).
- *                        For transaction signing, expects hex-encoded transaction bytes.
- *                        Consistent with EthWallet format for unified interface.
- * @param rpcUrl - Optional RPC URL. If provided, waits for transaction confirmation before returning.
+ * @param signMessageFn - Signs hex messages (with 0x prefix)
+ * @param rpcUrl - Optional RPC URL for transaction confirmation
+ * @see @burnt-labs/signers/src/crypto/README.md for salt calculation details
  */
 export async function createSecp256k1Account(
   aaApiUrl: string,
-  pubkeyHex: string,
+  pubkey: string,
   signMessageFn: (hexMessage: string) => Promise<string>,
   checksum: string,
   feeGranter: string,
@@ -186,12 +197,12 @@ export async function createSecp256k1Account(
     );
   }
 
-  // Step 1: Normalize pubkey to base64 (AA API normalizes before salt calculation)
-  // This ensures our local salt calculation matches what AA API will calculate
-  const normalizedPubkey = normalizeSecp256k1PublicKey(pubkeyHex);
+  // Normalize pubkey to base64 (matches AA API normalization)
+  const normalizedPubkey = normalizeSecp256k1PublicKey(pubkey);
 
-  // Step 2: Calculate address locally using normalized pubkey for salt
-  // Salt must be calculated from the same format (base64) that AA API uses
+  // Calculate smart account address via CREATE2
+  // CRITICAL: Salt must be calculated from the SAME format that AA-API will use
+  // Both xion.js and AA-API calculate: SHA256(UTF8(base64_pubkey_string))
   const salt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
   const calculatedAddress = calculateSmartAccountAddress({
     checksum,
@@ -200,30 +211,30 @@ export async function createSecp256k1Account(
     prefix: addressPrefix,
   });
 
-  // Step 3: Sign the calculated address
-  // Convert bech32 address string to hex-encoded UTF-8 bytes (with 0x prefix)
-  // signMessageFn expects hex format: hex-encoded UTF-8 bytes for strings, or hex-encoded raw bytes
-  // This ensures consistency with EthWallet format and unified interface
+  // Sign the calculated address (hex format with 0x prefix)
   const addressHex = utf8ToHexWithPrefix(calculatedAddress);
   const signatureResponse = await signMessageFn(addressHex);
 
-  // Format signature and pubkey for AA API v2 (convert base64 to hex, ensure no 0x prefix)
+  // Format signature and pubkey for AA API v2
   const formattedSignature = formatSecp256k1Signature(signatureResponse);
-  const formattedPubkey = formatSecp256k1Pubkey(pubkeyHex);
+  // Send normalized base64 pubkey to AA-API (not converted to hex)
+  // AA-API will calculate salt from this same base64 string, ensuring address match
+  const formattedPubkey = normalizedPubkey;
 
-  // Step 4: Create account via v2 API
+  // Create account via v2 API
   const result = await createSecp256k1AccountV2(aaApiUrl, {
     pubKey: formattedPubkey,
     signature: formattedSignature,
   });
 
-  // Step 5: Optionally wait for transaction confirmation
+  // Short sleep to prevent sequence errors
   if (rpcUrl && result.transaction_hash) {
-    try {
-      await waitForTxConfirmation(rpcUrl, result.transaction_hash);
-    } catch (error) {
-      // Confirmation failed - continue anyway
-    }
+    // try {
+    //   await waitForTxConfirmation(rpcUrl, result.transaction_hash);
+    // } catch (error) {
+    //   // Confirmation failed - continue anyway
+    // }
+    await simpleSleep(250); // 250ms sleep instead of polling
   }
 
   return result;

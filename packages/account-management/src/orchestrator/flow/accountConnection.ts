@@ -133,9 +133,10 @@ export async function connectAccount(
       const pubkeyFromMetadata =
         connectionResult.metadata?.pubkey || authenticatorToUse;
 
-      const signFn = async (message: string) => {
-        // Cosmos wallets expect plain text, not hex
-        return await connectionResult.signMessage(message);
+      const signFn = async (hexMessage: string) => {
+        // createSecp256k1Account passes hex-encoded messages (with 0x prefix)
+        // The connector's signMessage expects hex format (consistent with EthWallet)
+        return await connectionResult.signMessage(hexMessage);
       };
 
       const result = await createSecp256k1Account(
