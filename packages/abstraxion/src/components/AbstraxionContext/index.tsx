@@ -110,9 +110,8 @@ const defaultContextValue: AbstraxionContextProps = {
   },
 };
 
-export const AbstraxionContext = createContext<AbstraxionContextProps>(
-  defaultContextValue,
-);
+export const AbstraxionContext =
+  createContext<AbstraxionContextProps>(defaultContextValue);
 
 export function AbstraxionProvider({
   children,

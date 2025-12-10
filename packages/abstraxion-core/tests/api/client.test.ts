@@ -70,9 +70,7 @@ describe("API Client - Error Parsing", () => {
 
       await expect(
         getAccountAddress("http://test-api", "EthWallet", "test-id"),
-      ).rejects.toThrow(
-        "AA API v2 /address/ethwallet failed with status 500",
-      );
+      ).rejects.toThrow("AA API v2 /address/ethwallet failed with status 500");
     });
 
     it("should use default error message for malformed JSON", async () => {
@@ -84,9 +82,7 @@ describe("API Client - Error Parsing", () => {
 
       await expect(
         getAccountAddress("http://test-api", "EthWallet", "test-id"),
-      ).rejects.toThrow(
-        "AA API v2 /address/ethwallet failed with status 400",
-      );
+      ).rejects.toThrow("AA API v2 /address/ethwallet failed with status 400");
     });
 
     it("should handle error responses with unexpected structure", async () => {
@@ -103,9 +99,7 @@ describe("API Client - Error Parsing", () => {
 
       await expect(
         getAccountAddress("http://test-api", "EthWallet", "test-id"),
-      ).rejects.toThrow(
-        "AA API v2 /address/ethwallet failed with status 500",
-      );
+      ).rejects.toThrow("AA API v2 /address/ethwallet failed with status 500");
     });
   });
 
@@ -117,11 +111,7 @@ describe("API Client - Error Parsing", () => {
       });
       global.fetch = mockFetch;
 
-      await getAccountAddress(
-        "http://test-api",
-        "JWT",
-        "user@example.com",
-      );
+      await getAccountAddress("http://test-api", "JWT", "user@example.com");
 
       expect(mockFetch).toHaveBeenCalledWith(
         "http://test-api/api/v2/account/address/jwt/user%40example.com",

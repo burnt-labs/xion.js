@@ -144,7 +144,8 @@ describe("Account Discovery Integration Tests", () => {
       async () => {
         // For EthWallet, the authenticator is the lowercase ETH address
         // We'll use a test ETH address format
-        const testEthAddress = "0x742d35cc6634c0532925a3b844bc9e7595f0beb".toLowerCase();
+        const testEthAddress =
+          "0x742d35cc6634c0532925a3b844bc9e7595f0beb".toLowerCase();
 
         const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
         const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
@@ -313,7 +314,10 @@ describe("Account Discovery Integration Tests", () => {
           );
           expect(accountInfo).toBeDefined();
 
-          console.log("✓ Account validated on-chain:", result.smartAccountAddress);
+          console.log(
+            "✓ Account validated on-chain:",
+            result.smartAccountAddress,
+          );
         }
       },
       INTEGRATION_TEST_TIMEOUT,

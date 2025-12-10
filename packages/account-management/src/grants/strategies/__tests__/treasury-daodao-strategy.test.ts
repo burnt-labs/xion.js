@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-
 import { DaoDaoTreasuryStrategy } from "../treasury-daodao-strategy";
 
 // Local mock data to avoid circular dependency
@@ -67,7 +66,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       };
       const result = await strategy.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toBeDefined();
@@ -78,7 +77,10 @@ describe("DaoDaoTreasuryStrategy", () => {
     it("should construct correct indexer URL", async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ grantConfigs: {}, params: mockTreasuryParams.basic }),
+        json: async () => ({
+          grantConfigs: {},
+          params: mockTreasuryParams.basic,
+        }),
       });
 
       await strategy.fetchTreasuryConfig("xion1treasury", {
@@ -87,7 +89,7 @@ describe("DaoDaoTreasuryStrategy", () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/xion1treasury/xion/treasury/all"),
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -101,7 +103,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       await expect(
         strategy.fetchTreasuryConfig("xion1treasury", {
           getChainId: vi.fn().mockResolvedValue("xion-testnet-2"),
-        })
+        }),
       ).rejects.toThrow("DaoDao treasury strategy failed");
     });
 
@@ -115,7 +117,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       await expect(
         strategy.fetchTreasuryConfig("xion1treasury", {
           getChainId: vi.fn().mockResolvedValue("xion-testnet-2"),
-        })
+        }),
       ).rejects.toThrow("DaoDao treasury strategy failed");
     });
 
@@ -125,7 +127,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       await expect(
         strategy.fetchTreasuryConfig("xion1treasury", {
           getChainId: vi.fn().mockResolvedValue("xion-testnet-2"),
-        })
+        }),
       ).rejects.toThrow("DaoDao treasury strategy failed");
     });
 
@@ -135,11 +137,17 @@ describe("DaoDaoTreasuryStrategy", () => {
         json: async () => ({
           grantConfigs: {
             [mockGrantTypeUrls.genericAuthorization]: {
-              authorization: { type_url: mockGrantTypeUrls.genericAuthorization, value: "val1" },
+              authorization: {
+                type_url: mockGrantTypeUrls.genericAuthorization,
+                value: "val1",
+              },
               description: "Execute",
             },
             [mockGrantTypeUrls.sendAuthorization]: {
-              authorization: { type_url: mockGrantTypeUrls.sendAuthorization, value: "val2" },
+              authorization: {
+                type_url: mockGrantTypeUrls.sendAuthorization,
+                value: "val2",
+              },
               description: "Send",
             },
           },
@@ -169,7 +177,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       });
 
       await expect(
-        strategy.fetchTreasuryConfig("xion1treasury", {})
+        strategy.fetchTreasuryConfig("xion1treasury", {}),
       ).rejects.toThrow();
     });
 
@@ -181,7 +189,10 @@ describe("DaoDaoTreasuryStrategy", () => {
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ grantConfigs: {}, params: mockTreasuryParams.basic }),
+        json: async () => ({
+          grantConfigs: {},
+          params: mockTreasuryParams.basic,
+        }),
       });
 
       await customStrategy.fetchTreasuryConfig("xion1treasury", {
@@ -192,7 +203,7 @@ describe("DaoDaoTreasuryStrategy", () => {
         expect.any(String),
         expect.objectContaining({
           signal: expect.any(AbortSignal),
-        })
+        }),
       );
     });
 

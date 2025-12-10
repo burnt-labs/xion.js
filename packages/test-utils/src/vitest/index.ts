@@ -13,14 +13,14 @@
  */
 export function setupTestEnvironment(): void {
   // Ensure TextEncoder/TextDecoder are available
-  if (typeof global.TextEncoder === 'undefined') {
-    const { TextEncoder, TextDecoder } = require('text-encoding');
+  if (typeof global.TextEncoder === "undefined") {
+    const { TextEncoder, TextDecoder } = require("text-encoding");
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder as any;
   }
 
   // Set test timeout defaults
-  if (typeof vi !== 'undefined') {
+  if (typeof vi !== "undefined") {
     vi.setConfig({ testTimeout: 30000 });
   }
 }
@@ -66,15 +66,15 @@ export function captureConsole(): {
   const originalError = console.error;
 
   console.log = (...args: any[]) => {
-    logs.push(args.map(String).join(' '));
+    logs.push(args.map(String).join(" "));
   };
-  
+
   console.warn = (...args: any[]) => {
-    warns.push(args.map(String).join(' '));
+    warns.push(args.map(String).join(" "));
   };
-  
+
   console.error = (...args: any[]) => {
-    errors.push(args.map(String).join(' '));
+    errors.push(args.map(String).join(" "));
   };
 
   return {
@@ -96,14 +96,15 @@ export function toBeValidXionAddress(received: string): {
   pass: boolean;
   message: () => string;
 } {
-  const isValid = typeof received === 'string' && 
-                  received.startsWith('xion') && 
-                  received.length >= 39 && 
-                  received.length <= 90;
+  const isValid =
+    typeof received === "string" &&
+    received.startsWith("xion") &&
+    received.length >= 39 &&
+    received.length <= 90;
 
   return {
     pass: isValid,
-    message: () => 
+    message: () =>
       isValid
         ? `Expected ${received} not to be a valid XION address`
         : `Expected ${received} to be a valid XION address (must start with 'xion' and be 39-90 characters)`,
@@ -124,7 +125,7 @@ export function toBeValidGrantExpiration(received: string): {
 
     return {
       pass: isValid,
-      message: () => 
+      message: () =>
         isValid
           ? `Expected ${received} not to be a valid future expiration date`
           : `Expected ${received} to be a valid future expiration date`,
@@ -141,7 +142,7 @@ export function toBeValidGrantExpiration(received: string): {
  * Extend Vitest matchers with custom matchers
  */
 export function extendVitestMatchers(): void {
-  if (typeof expect !== 'undefined' && expect.extend) {
+  if (typeof expect !== "undefined" && expect.extend) {
     expect.extend({
       toBeValidXionAddress,
       toBeValidGrantExpiration,

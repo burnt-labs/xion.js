@@ -90,24 +90,24 @@ describe("Fee Granting Integration Tests", () => {
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
       "should verify treasury contract exists on-chain",
       async () => {
         const treasuryExists = await checkTreasuryContract(
-          config.treasuryAddress
+          config.treasuryAddress,
         );
         expect(treasuryExists).toBe(true);
 
         const treasuryBalance = await stargateClient.getBalance(
           config.treasuryAddress,
-          "uxion"
+          "uxion",
         );
         expect(BigInt(treasuryBalance.amount)).toBeGreaterThan(0n);
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
@@ -127,14 +127,14 @@ describe("Fee Granting Integration Tests", () => {
         const contractMsg = createUserMapUpdateMsg(
           smartAccountAddress,
           config.userMapContract,
-          `fee-grant-test-${Date.now()}`
+          `fee-grant-test-${Date.now()}`,
         );
 
         const result = await signingClient!.signAndBroadcast(
           smartAccountAddress,
           [contractMsg],
           "auto",
-          "Treasury fee granting test"
+          "Treasury fee granting test",
         );
 
         expect(result.code).toBe(0);
@@ -142,7 +142,7 @@ describe("Fee Granting Integration Tests", () => {
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
@@ -162,7 +162,7 @@ describe("Fee Granting Integration Tests", () => {
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
   });
 
@@ -184,14 +184,14 @@ describe("Fee Granting Integration Tests", () => {
         const contractMsg = createUserMapUpdateMsg(
           smartAccountAddress,
           config.userMapContract,
-          `fee-calc-test-${Date.now()}`
+          `fee-calc-test-${Date.now()}`,
         );
 
         // Simulate to get gas estimation
         const gasEstimation = await signingClient!.simulate(
           smartAccountAddress,
           [contractMsg],
-          "Fee calculation test"
+          "Fee calculation test",
         );
 
         // Execute with auto fee
@@ -199,7 +199,7 @@ describe("Fee Granting Integration Tests", () => {
           smartAccountAddress,
           [contractMsg],
           "auto",
-          "Fee calculation test"
+          "Fee calculation test",
         );
 
         expect(result.code).toBe(0);
@@ -208,7 +208,7 @@ describe("Fee Granting Integration Tests", () => {
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
@@ -228,13 +228,13 @@ describe("Fee Granting Integration Tests", () => {
         const contractMsg = createUserMapUpdateMsg(
           smartAccountAddress,
           config.userMapContract,
-          `explicit-fee-test-${Date.now()}`
+          `explicit-fee-test-${Date.now()}`,
         );
 
         const gasEstimation = await signingClient!.simulate(
           smartAccountAddress,
           [contractMsg],
-          "Explicit fee test"
+          "Explicit fee test",
         );
 
         const explicitFee = {
@@ -247,14 +247,14 @@ describe("Fee Granting Integration Tests", () => {
           smartAccountAddress,
           [contractMsg],
           explicitFee,
-          "Explicit fee test"
+          "Explicit fee test",
         );
 
         expect(result.code).toBe(0);
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
@@ -274,7 +274,7 @@ describe("Fee Granting Integration Tests", () => {
         const contractMsg = createUserMapUpdateMsg(
           smartAccountAddress,
           config.userMapContract,
-          `insufficient-gas-test-${Date.now()}`
+          `insufficient-gas-test-${Date.now()}`,
         );
 
         const insufficientFee = {
@@ -288,13 +288,13 @@ describe("Fee Granting Integration Tests", () => {
             smartAccountAddress,
             [contractMsg],
             insufficientFee,
-            "Insufficient gas test"
-          )
+            "Insufficient gas test",
+          ),
         ).rejects.toThrow();
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
   });
 
@@ -316,21 +316,21 @@ describe("Fee Granting Integration Tests", () => {
         const contractMsg = createUserMapUpdateMsg(
           smartAccountAddress,
           config.userMapContract,
-          `fee-grant-test-${Date.now()}`
+          `fee-grant-test-${Date.now()}`,
         );
 
         const result = await signingClient!.signAndBroadcast(
           smartAccountAddress,
           [contractMsg],
           "auto",
-          "Treasury grant test"
+          "Treasury grant test",
         );
 
         expect(result.code).toBe(0);
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
@@ -352,14 +352,14 @@ describe("Fee Granting Integration Tests", () => {
           const contractMsg = createUserMapUpdateMsg(
             smartAccountAddress,
             config.userMapContract,
-            `multi-tx-test-${i}-${Date.now()}`
+            `multi-tx-test-${i}-${Date.now()}`,
           );
 
           const result = await signingClient!.signAndBroadcast(
             smartAccountAddress,
             [contractMsg],
             "auto",
-            `Multi-transaction test ${i + 1}`
+            `Multi-transaction test ${i + 1}`,
           );
 
           expect(result.code).toBe(0);
@@ -367,7 +367,7 @@ describe("Fee Granting Integration Tests", () => {
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
   });
 });

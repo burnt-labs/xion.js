@@ -4,7 +4,8 @@ import { calculateSmartAccountAddress } from "../address";
 describe("address.ts - calculateSmartAccountAddress", () => {
   // Valid test data for deterministic address calculation
   const validConfig = {
-    checksum: "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+    checksum:
+      "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
     creator: "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x", // Valid testnet fee granter address
     salt: "b5a4c786a6f581ffc7e1d4c18e3c70c35344e9e2b0a65e4c8f8e6c2e1d4e3b8a",
     prefix: "xion",
@@ -35,7 +36,8 @@ describe("address.ts - calculateSmartAccountAddress", () => {
       const address1 = calculateSmartAccountAddress(validConfig);
       const address2 = calculateSmartAccountAddress({
         ...validConfig,
-        checksum: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+        checksum:
+          "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
       });
 
       expect(address1).not.toBe(address2);
@@ -91,7 +93,8 @@ describe("address.ts - calculateSmartAccountAddress", () => {
       expect(() =>
         calculateSmartAccountAddress({
           ...validConfig,
-          checksum: "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2aG", // 'G' is invalid hex
+          checksum:
+            "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2aG", // 'G' is invalid hex
         }),
       ).toThrow();
     });
@@ -100,7 +103,8 @@ describe("address.ts - calculateSmartAccountAddress", () => {
       expect(() =>
         calculateSmartAccountAddress({
           ...validConfig,
-          checksum: "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a", // Missing 1 char
+          checksum:
+            "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a", // Missing 1 char
         }),
       ).toThrow();
     });
@@ -139,18 +143,22 @@ describe("address.ts - calculateSmartAccountAddress", () => {
 
     it("should throw error for salt with invalid hex characters (BUG FIX)", () => {
       // BUG FIX: Now validates hex before calling CosmJS
-      expect(() => calculateSmartAccountAddress({
-        ...validConfig,
-        salt: "b5a4c786a6f581ffc7e1d4c18e3c70c35344e9e2b0a65e4c8f8e6c2e1d4e3b8Z", // 'Z' is invalid
-      })).toThrow(/invalid.*salt/i);
+      expect(() =>
+        calculateSmartAccountAddress({
+          ...validConfig,
+          salt: "b5a4c786a6f581ffc7e1d4c18e3c70c35344e9e2b0a65e4c8f8e6c2e1d4e3b8Z", // 'Z' is invalid
+        }),
+      ).toThrow(/invalid.*salt/i);
     });
 
     it("should throw error for odd-length salt (BUG FIX)", () => {
       // BUG FIX: Now validates even length before calling CosmJS
-      expect(() => calculateSmartAccountAddress({
-        ...validConfig,
-        salt: "b5a4c786a6f581ffc7e1d4c18e3c70c35344e9e2b0a65e4c8f8e6c2e1d4e3b8", // Missing 1 char (63 chars)
-      })).toThrow(/invalid.*salt/i);
+      expect(() =>
+        calculateSmartAccountAddress({
+          ...validConfig,
+          salt: "b5a4c786a6f581ffc7e1d4c18e3c70c35344e9e2b0a65e4c8f8e6c2e1d4e3b8", // Missing 1 char (63 chars)
+        }),
+      ).toThrow(/invalid.*salt/i);
     });
   });
 
@@ -188,7 +196,8 @@ describe("address.ts - calculateSmartAccountAddress", () => {
       expect(() =>
         calculateSmartAccountAddress({
           ...validConfig,
-          creator: "xion1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbb", // Invalid checksum
+          creator:
+            "xion1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbb", // Invalid checksum
         }),
       ).toThrow();
     });
@@ -204,7 +213,9 @@ describe("address.ts - calculateSmartAccountAddress", () => {
         prefix: "x", // 1 char prefix
       };
 
-      expect(() => calculateSmartAccountAddress(minConfig)).toThrow(/checksum.*32 bytes/i);
+      expect(() => calculateSmartAccountAddress(minConfig)).toThrow(
+        /checksum.*32 bytes/i,
+      );
     });
 
     it("should reject too-long inputs (BUG FIX)", () => {
@@ -216,7 +227,9 @@ describe("address.ts - calculateSmartAccountAddress", () => {
         prefix: "xion",
       };
 
-      expect(() => calculateSmartAccountAddress(maxConfig)).toThrow(/checksum.*32 bytes/i);
+      expect(() => calculateSmartAccountAddress(maxConfig)).toThrow(
+        /checksum.*32 bytes/i,
+      );
     });
 
     it("should handle uppercase hex strings", () => {
@@ -232,7 +245,8 @@ describe("address.ts - calculateSmartAccountAddress", () => {
 
     it("should handle mixed case hex strings", () => {
       const mixedConfig = {
-        checksum: "A1b2C3d4E5f6A7b8C9d0E1f2A3b4C5d6E7f8A9b0C1d2E3f4A5b6C7d8E9f0A1b2",
+        checksum:
+          "A1b2C3d4E5f6A7b8C9d0E1f2A3b4C5d6E7f8A9b0C1d2E3f4A5b6C7d8E9f0A1b2",
         creator: validConfig.creator,
         salt: "B5a4C786a6F581fFc7E1d4C18e3C70c35344E9e2B0a65E4c8F8e6C2e1D4e3B8a",
         prefix: "xion",
@@ -243,18 +257,22 @@ describe("address.ts - calculateSmartAccountAddress", () => {
 
     it("should reject empty prefix (BUG FIX)", () => {
       // BUG FIX: Now validates prefix format BEFORE calling CosmJS
-      expect(() => calculateSmartAccountAddress({
-        ...validConfig,
-        prefix: "",
-      })).toThrow(/invalid.*prefix/i);
+      expect(() =>
+        calculateSmartAccountAddress({
+          ...validConfig,
+          prefix: "",
+        }),
+      ).toThrow(/invalid.*prefix/i);
     });
 
     it("should reject special characters in prefix (BUG FIX)", () => {
       // BUG FIX: Now validates prefix format BEFORE calling CosmJS
-      expect(() => calculateSmartAccountAddress({
-        ...validConfig,
-        prefix: "xion@123",
-      })).toThrow(/invalid.*prefix/i);
+      expect(() =>
+        calculateSmartAccountAddress({
+          ...validConfig,
+          prefix: "xion@123",
+        }),
+      ).toThrow(/invalid.*prefix/i);
     });
   });
 
@@ -320,10 +338,12 @@ describe("address.ts - calculateSmartAccountAddress", () => {
 
     it("should reject newlines in inputs (BUG FIX)", () => {
       // BUG FIX: Now validates hex, so newlines throw error
-      expect(() => calculateSmartAccountAddress({
-        ...validConfig,
-        salt: `${validConfig.salt}\n`, // Trailing newline
-      })).toThrow(/invalid.*salt/i);
+      expect(() =>
+        calculateSmartAccountAddress({
+          ...validConfig,
+          salt: `${validConfig.salt}\n`, // Trailing newline
+        }),
+      ).toThrow(/invalid.*salt/i);
     });
   });
 
@@ -346,8 +366,10 @@ describe("address.ts - calculateSmartAccountAddress", () => {
     });
 
     it("should produce different addresses for byte-order variations", () => {
-      const salt1 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-      const salt2 = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210";
+      const salt1 =
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+      const salt2 =
+        "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210";
 
       const address1 = calculateSmartAccountAddress({
         ...validConfig,

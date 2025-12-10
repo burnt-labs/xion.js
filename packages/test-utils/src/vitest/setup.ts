@@ -47,8 +47,8 @@ vi.mock("@github/webauthn-json/browser-ponyfill", () => ({
  * Mock TextEncoder/TextDecoder if not available in test environment
  * Some Node.js versions may not have these globals
  */
-if (typeof global.TextEncoder === 'undefined') {
-  const { TextEncoder, TextDecoder } = require('util');
+if (typeof global.TextEncoder === "undefined") {
+  const { TextEncoder, TextDecoder } = require("util");
   global.TextEncoder = TextEncoder;
   global.TextDecoder = TextDecoder;
 }

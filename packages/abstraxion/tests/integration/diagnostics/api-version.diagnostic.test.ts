@@ -32,10 +32,20 @@ async function testAAAPI(apiUrl: string, name: string) {
   const [account] = await wallet.getAccounts();
 
   // Get private key
-  const { Slip10, Slip10Curve, stringToPath: pathToArray, Bip39, EnglishMnemonic } = await import("@cosmjs/crypto");
+  const {
+    Slip10,
+    Slip10Curve,
+    stringToPath: pathToArray,
+    Bip39,
+    EnglishMnemonic,
+  } = await import("@cosmjs/crypto");
   const mnemonicObj = new EnglishMnemonic(TEST_MNEMONIC);
   const seed = await Bip39.mnemonicToSeed(mnemonicObj);
-  const { privkey } = Slip10.derivePath(Slip10Curve.Secp256k1, seed, pathToArray(`m/44'/118'/0'/0/0`));
+  const { privkey } = Slip10.derivePath(
+    Slip10Curve.Secp256k1,
+    seed,
+    pathToArray(`m/44'/118'/0'/0/0`),
+  );
 
   // Normalize pubkey
   const compressedPubkey = Secp256k1.compressPubkey(account.pubkey);
@@ -43,7 +53,8 @@ async function testAAAPI(apiUrl: string, name: string) {
   const pubkeyBase64 = normalizeSecp256k1PublicKey(pubkeyHex);
 
   // Calculate address
-  const checksum = "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8";
+  const checksum =
+    "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8";
   const feeGranter = "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x";
   const salt = calculateSecp256k1Salt(pubkeyBase64);
   const smartAccountAddress = calculateSmartAccountAddress({
@@ -116,7 +127,7 @@ describe("AA API Version Comparison", () => {
   it("should test deployed AA API", async () => {
     await testAAAPI(
       "https://aa-api.xion-testnet-2.burnt.com",
-      "DEPLOYED AA API (testnet)"
+      "DEPLOYED AA API (testnet)",
     );
   }, 30000);
 });

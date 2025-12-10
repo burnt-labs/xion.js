@@ -29,7 +29,7 @@ vi.mock("@burnt-labs/signers", async () => {
     ...actual,
     calculateSalt: vi.fn(() => "mock-salt"),
     calculateSmartAccountAddress: vi.fn(
-      () => "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8"
+      () => "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8",
     ),
   };
 });
@@ -99,13 +99,13 @@ describe("RpcAccountStrategy", () => {
               Secp256K1: {
                 pubkey: mockAuthenticators.secp256k1.id,
               },
-            })
-          ).toString("base64")
+            }),
+          ).toString("base64"),
         );
 
       const result = await strategy.fetchSmartAccounts(
         mockAuthenticators.secp256k1.id,
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toHaveLength(1);
@@ -120,7 +120,7 @@ describe("RpcAccountStrategy", () => {
 
       const result = await strategy.fetchSmartAccounts(
         mockAuthenticators.secp256k1.id,
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([]);
@@ -129,27 +129,27 @@ describe("RpcAccountStrategy", () => {
     it("should handle RPC connection errors", async () => {
       // Use the mocked CosmWasmClient imported at top
       vi.mocked(CosmWasmClient.connect).mockRejectedValueOnce(
-        new Error("RPC connection failed")
+        new Error("RPC connection failed"),
       );
 
       await expect(
         strategy.fetchSmartAccounts(
           mockAuthenticators.secp256k1.id,
-          AUTHENTICATOR_TYPE.Secp256K1
-        )
+          AUTHENTICATOR_TYPE.Secp256K1,
+        ),
       ).rejects.toThrow("RPC account strategy failed");
     });
 
     it("should handle contract query errors", async () => {
       mockClient.queryContractSmart.mockRejectedValueOnce(
-        new Error("contract: not found")
+        new Error("contract: not found"),
       );
 
       // queryAuthenticators catches errors and returns empty array
       // This is normal for addresses that haven't been instantiated yet
       const result = await strategy.fetchSmartAccounts(
         mockAuthenticators.secp256k1.id,
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([]);
@@ -164,17 +164,19 @@ describe("RpcAccountStrategy", () => {
               EthWallet: {
                 address: mockAuthenticators.ethWallet.id,
               },
-            })
-          ).toString("base64")
+            }),
+          ).toString("base64"),
         );
 
       const result = await strategy.fetchSmartAccounts(
         mockAuthenticators.ethWallet.id,
-        AUTHENTICATOR_TYPE.EthWallet
+        AUTHENTICATOR_TYPE.EthWallet,
       );
 
       expect(result).toHaveLength(1);
-      expect(result[0].authenticators[0].type).toBe(AUTHENTICATOR_TYPE.EthWallet);
+      expect(result[0].authenticators[0].type).toBe(
+        AUTHENTICATOR_TYPE.EthWallet,
+      );
     });
 
     it("should parse JWT authenticator correctly", async () => {
@@ -186,13 +188,13 @@ describe("RpcAccountStrategy", () => {
               JWT: {
                 aud_and_sub: "test-project|user123",
               },
-            })
-          ).toString("base64")
+            }),
+          ).toString("base64"),
         );
 
       const result = await strategy.fetchSmartAccounts(
         mockAuthenticators.jwt.id,
-        AUTHENTICATOR_TYPE.JWT
+        AUTHENTICATOR_TYPE.JWT,
       );
 
       expect(result).toHaveLength(1);
@@ -207,21 +209,21 @@ describe("RpcAccountStrategy", () => {
           Buffer.from(
             JSON.stringify({
               Secp256K1: { pubkey: mockAuthenticators.secp256k1.id },
-            })
-          ).toString("base64")
+            }),
+          ).toString("base64"),
         )
         .mockResolvedValueOnce(
           // Second authenticator
           Buffer.from(
             JSON.stringify({
               EthWallet: { address: mockAuthenticators.ethWallet.id },
-            })
-          ).toString("base64")
+            }),
+          ).toString("base64"),
         );
 
       const result = await strategy.fetchSmartAccounts(
         mockAuthenticators.secp256k1.id,
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toHaveLength(1);
@@ -237,18 +239,18 @@ describe("RpcAccountStrategy", () => {
           Buffer.from(
             JSON.stringify({
               Secp256K1: { pubkey: "test-pubkey" },
-            })
-          ).toString("base64")
+            }),
+          ).toString("base64"),
         );
 
       await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Passkey
+        AUTHENTICATOR_TYPE.Passkey,
       );
 
       expect(calculateSalt).toHaveBeenCalledWith(
         AUTHENTICATOR_TYPE.Passkey,
-        "test-auth"
+        "test-auth",
       );
     });
   });
@@ -261,7 +263,7 @@ describe("RpcAccountStrategy", () => {
 
       await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(calculateSmartAccountAddress).toHaveBeenCalledWith({
@@ -279,13 +281,13 @@ describe("RpcAccountStrategy", () => {
           Buffer.from(
             JSON.stringify({
               Secp256K1: { pubkey: "test-pubkey" },
-            })
-          ).toString("base64")
+            }),
+          ).toString("base64"),
         );
 
       const result = await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result[0].codeId).toBe(config.codeId);

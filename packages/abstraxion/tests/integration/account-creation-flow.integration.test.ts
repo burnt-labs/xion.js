@@ -22,7 +22,8 @@ import {
 } from "@burnt-labs/signers";
 
 const TESTNET_AA_API_URL = "https://aa-api.xion-testnet-2.burnt.com";
-const LOCAL_AA_API_URL = process.env.LOCAL_AA_API_URL || "http://localhost:8787";
+const LOCAL_AA_API_URL =
+  process.env.LOCAL_AA_API_URL || "http://localhost:8787";
 
 // Test configuration - should match what's used in production
 const TEST_CONFIG = {
@@ -41,11 +42,18 @@ describe("End-to-End Account Creation Flow", () => {
     it("should calculate same address as testnet AA API", async () => {
       // Step 1: Client-side - Normalize address (mimics createEthWalletAccount)
       const normalizedAddress = normalizeEthereumAddress(TEST_ADDRESS);
-      expect(normalizedAddress).toBe("0x742d35cc6634c0532925a3b844bc9e7595f0beb0");
+      expect(normalizedAddress).toBe(
+        "0x742d35cc6634c0532925a3b844bc9e7595f0beb0",
+      );
 
       // Step 2: Client-side - Calculate salt
-      const clientSalt = calculateSalt(AUTHENTICATOR_TYPE.EthWallet, normalizedAddress);
-      expect(clientSalt).toBe("3b54f2a1226c4af7c429c9326547a09bf3a1ca36314c60cdff6edf1d3af6a55c");
+      const clientSalt = calculateSalt(
+        AUTHENTICATOR_TYPE.EthWallet,
+        normalizedAddress,
+      );
+      expect(clientSalt).toBe(
+        "3b54f2a1226c4af7c429c9326547a09bf3a1ca36314c60cdff6edf1d3af6a55c",
+      );
 
       // Step 3: Client-side - Calculate expected smart account address
       const clientCalculatedAddress = calculateSmartAccountAddress({
@@ -57,7 +65,7 @@ describe("End-to-End Account Creation Flow", () => {
 
       // Step 4: Server-side - Get address from testnet AA API
       const testnetResponse = await fetch(
-        `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${TEST_ADDRESS}`
+        `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${TEST_ADDRESS}`,
       );
       expect(testnetResponse.ok).toBe(true);
 
@@ -67,28 +75,35 @@ describe("End-to-End Account Creation Flow", () => {
       expect(clientCalculatedAddress).toBe(testnetData.address);
     }, 30000);
 
-    it.skipIf(!hasLocalApi)("should calculate same address as local AA API", async () => {
-      // Client-side calculation
-      const normalizedAddress = normalizeEthereumAddress(TEST_ADDRESS);
-      const clientSalt = calculateSalt(AUTHENTICATOR_TYPE.EthWallet, normalizedAddress);
-      const clientCalculatedAddress = calculateSmartAccountAddress({
-        checksum: TEST_CONFIG.checksum,
-        creator: TEST_CONFIG.feeGranter,
-        salt: clientSalt,
-        prefix: TEST_CONFIG.addressPrefix,
-      });
+    it.skipIf(!hasLocalApi)(
+      "should calculate same address as local AA API",
+      async () => {
+        // Client-side calculation
+        const normalizedAddress = normalizeEthereumAddress(TEST_ADDRESS);
+        const clientSalt = calculateSalt(
+          AUTHENTICATOR_TYPE.EthWallet,
+          normalizedAddress,
+        );
+        const clientCalculatedAddress = calculateSmartAccountAddress({
+          checksum: TEST_CONFIG.checksum,
+          creator: TEST_CONFIG.feeGranter,
+          salt: clientSalt,
+          prefix: TEST_CONFIG.addressPrefix,
+        });
 
-      // Local server calculation
-      const localResponse = await fetch(
-        `${LOCAL_AA_API_URL}/api/v2/account/address/ethwallet/${TEST_ADDRESS}`
-      );
-      expect(localResponse.ok).toBe(true);
+        // Local server calculation
+        const localResponse = await fetch(
+          `${LOCAL_AA_API_URL}/api/v2/account/address/ethwallet/${TEST_ADDRESS}`,
+        );
+        expect(localResponse.ok).toBe(true);
 
-      const localData = await localResponse.json();
+        const localData = await localResponse.json();
 
-      // Verify: Client matches local server
-      expect(clientCalculatedAddress).toBe(localData.address);
-    }, 30000);
+        // Verify: Client matches local server
+        expect(clientCalculatedAddress).toBe(localData.address);
+      },
+      30000,
+    );
 
     it("should handle backward compatibility (address without 0x prefix)", async () => {
       const addressWithoutPrefix = "742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
@@ -123,7 +138,7 @@ describe("End-to-End Account Creation Flow", () => {
 
       // Verify against testnet
       const testnetResponse = await fetch(
-        `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${addressWithPrefix}`
+        `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${addressWithPrefix}`,
       );
       const testnetData = await testnetResponse.json();
       expect(address1).toBe(testnetData.address);
@@ -131,7 +146,8 @@ describe("End-to-End Account Creation Flow", () => {
   });
 
   describe("Secp256k1 Full Flow", () => {
-    const TEST_PUBKEY_HEX = "02e8a8f1c7b8d9a0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5";
+    const TEST_PUBKEY_HEX =
+      "02e8a8f1c7b8d9a0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5";
 
     it("should calculate same address as testnet AA API", async () => {
       // Step 1: Client-side - Normalize pubkey (mimics createSecp256k1Account)
@@ -140,7 +156,10 @@ describe("End-to-End Account Creation Flow", () => {
       expect(normalizedPubkey).toMatch(/^A[A-Za-z0-9+/]{43}$/); // Base64 format
 
       // Step 2: Client-side - Calculate salt from normalized pubkey
-      const clientSalt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
+      const clientSalt = calculateSalt(
+        AUTHENTICATOR_TYPE.Secp256K1,
+        normalizedPubkey,
+      );
       expect(clientSalt).toMatch(/^[a-f0-9]{64}$/); // Hex format
 
       // Step 3: Client-side - Calculate expected smart account address
@@ -153,7 +172,7 @@ describe("End-to-End Account Creation Flow", () => {
 
       // Step 4: Server-side - Get address from testnet AA API
       const testnetResponse = await fetch(
-        `${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(TEST_PUBKEY_HEX)}`
+        `${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(TEST_PUBKEY_HEX)}`,
       );
       expect(testnetResponse.ok).toBe(true);
 
@@ -163,31 +182,39 @@ describe("End-to-End Account Creation Flow", () => {
       expect(clientCalculatedAddress).toBe(testnetData.address);
     }, 30000);
 
-    it.skipIf(!hasLocalApi)("should calculate same address as local AA API", async () => {
-      // Client-side calculation
-      const normalizedPubkey = normalizeSecp256k1PublicKey(TEST_PUBKEY_HEX);
-      const clientSalt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
-      const clientCalculatedAddress = calculateSmartAccountAddress({
-        checksum: TEST_CONFIG.checksum,
-        creator: TEST_CONFIG.feeGranter,
-        salt: clientSalt,
-        prefix: TEST_CONFIG.addressPrefix,
-      });
+    it.skipIf(!hasLocalApi)(
+      "should calculate same address as local AA API",
+      async () => {
+        // Client-side calculation
+        const normalizedPubkey = normalizeSecp256k1PublicKey(TEST_PUBKEY_HEX);
+        const clientSalt = calculateSalt(
+          AUTHENTICATOR_TYPE.Secp256K1,
+          normalizedPubkey,
+        );
+        const clientCalculatedAddress = calculateSmartAccountAddress({
+          checksum: TEST_CONFIG.checksum,
+          creator: TEST_CONFIG.feeGranter,
+          salt: clientSalt,
+          prefix: TEST_CONFIG.addressPrefix,
+        });
 
-      // Local server calculation
-      const localResponse = await fetch(
-        `${LOCAL_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(TEST_PUBKEY_HEX)}`
-      );
-      expect(localResponse.ok).toBe(true);
+        // Local server calculation
+        const localResponse = await fetch(
+          `${LOCAL_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(TEST_PUBKEY_HEX)}`,
+        );
+        expect(localResponse.ok).toBe(true);
 
-      const localData = await localResponse.json();
+        const localData = await localResponse.json();
 
-      // Verify: Client matches local server
-      expect(clientCalculatedAddress).toBe(localData.address);
-    }, 30000);
+        // Verify: Client matches local server
+        expect(clientCalculatedAddress).toBe(localData.address);
+      },
+      30000,
+    );
 
     it("should handle both hex and base64 input formats", async () => {
-      const hexPubkey = "02e8a8f1c7b8d9a0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5";
+      const hexPubkey =
+        "02e8a8f1c7b8d9a0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5";
 
       // Normalize hex to base64
       const base64Pubkey = normalizeSecp256k1PublicKey(hexPubkey);
@@ -222,43 +249,52 @@ describe("End-to-End Account Creation Flow", () => {
   });
 
   describe("Cross-API Consistency", () => {
-    it.skipIf(!hasLocalApi)("should produce identical results between local and testnet for EthWallet", async () => {
-      const testAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
+    it.skipIf(!hasLocalApi)(
+      "should produce identical results between local and testnet for EthWallet",
+      async () => {
+        const testAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
 
-      // Get from testnet
-      const testnetResponse = await fetch(
-        `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`
-      );
-      const testnetData = await testnetResponse.json();
+        // Get from testnet
+        const testnetResponse = await fetch(
+          `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`,
+        );
+        const testnetData = await testnetResponse.json();
 
-      // Get from local
-      const localResponse = await fetch(
-        `${LOCAL_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`
-      );
-      const localData = await localResponse.json();
+        // Get from local
+        const localResponse = await fetch(
+          `${LOCAL_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`,
+        );
+        const localData = await localResponse.json();
 
-      // Both should return the same address
-      expect(localData.address).toBe(testnetData.address);
-    }, 30000);
+        // Both should return the same address
+        expect(localData.address).toBe(testnetData.address);
+      },
+      30000,
+    );
 
-    it.skipIf(!hasLocalApi)("should produce identical results between local and testnet for Secp256k1", async () => {
-      const testPubkey = "02e8a8f1c7b8d9a0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5";
+    it.skipIf(!hasLocalApi)(
+      "should produce identical results between local and testnet for Secp256k1",
+      async () => {
+        const testPubkey =
+          "02e8a8f1c7b8d9a0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5";
 
-      // Get from testnet
-      const testnetResponse = await fetch(
-        `${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`
-      );
-      const testnetData = await testnetResponse.json();
+        // Get from testnet
+        const testnetResponse = await fetch(
+          `${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`,
+        );
+        const testnetData = await testnetResponse.json();
 
-      // Get from local
-      const localResponse = await fetch(
-        `${LOCAL_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`
-      );
-      const localData = await localResponse.json();
+        // Get from local
+        const localResponse = await fetch(
+          `${LOCAL_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`,
+        );
+        const localData = await localResponse.json();
 
-      // Both should return the same address
-      expect(localData.address).toBe(testnetData.address);
-    }, 30000);
+        // Both should return the same address
+        expect(localData.address).toBe(testnetData.address);
+      },
+      30000,
+    );
   });
 
   describe("Determinism and Repeatability", () => {
@@ -267,13 +303,19 @@ describe("End-to-End Account Creation Flow", () => {
 
       // Call testnet API multiple times
       const responses = await Promise.all([
-        fetch(`${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`),
-        fetch(`${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`),
-        fetch(`${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`),
+        fetch(
+          `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`,
+        ),
+        fetch(
+          `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`,
+        ),
+        fetch(
+          `${TESTNET_AA_API_URL}/api/v2/account/address/ethwallet/${testAddress}`,
+        ),
       ]);
 
       const addresses = await Promise.all(
-        responses.map(r => r.json().then(d => d.address))
+        responses.map((r) => r.json().then((d) => d.address)),
       );
 
       // All addresses should be identical
@@ -281,17 +323,24 @@ describe("End-to-End Account Creation Flow", () => {
     }, 30000);
 
     it("should produce identical results across multiple calls (Secp256k1)", async () => {
-      const testPubkey = "02e8a8f1c7b8d9a0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5";
+      const testPubkey =
+        "02e8a8f1c7b8d9a0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5";
 
       // Call testnet API multiple times
       const responses = await Promise.all([
-        fetch(`${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`),
-        fetch(`${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`),
-        fetch(`${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`),
+        fetch(
+          `${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`,
+        ),
+        fetch(
+          `${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`,
+        ),
+        fetch(
+          `${TESTNET_AA_API_URL}/api/v2/account/address/secp256k1/${encodeURIComponent(testPubkey)}`,
+        ),
       ]);
 
       const addresses = await Promise.all(
-        responses.map(r => r.json().then(d => d.address))
+        responses.map((r) => r.json().then((d) => d.address)),
       );
 
       // All addresses should be identical

@@ -74,7 +74,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
 
       it("should reject signature with only r + s (no v)", () => {
         const noVSig = "a".repeat(128); // 64 bytes (r=32, s=32, no v)
-        expect(() => formatEthSignature(noVSig)).toThrow(/ethereum signature.*65 bytes/i);
+        expect(() => formatEthSignature(noVSig)).toThrow(
+          /ethereum signature.*65 bytes/i,
+        );
       });
 
       it("should provide clear error message for wrong length", () => {
@@ -110,37 +112,50 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       it("should reject 0xxx prefix (invalid hex)", () => {
         // BUG FIX: Now validates hex, so extra 'x' throws error
         const multiX = `0xxx${validEthSig}`;
-        expect(() => formatEthSignature(multiX)).toThrow(/Invalid.*hex characters/i);
+        expect(() => formatEthSignature(multiX)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
     });
 
     describe("Invalid Input Handling", () => {
       it("should throw error for empty signature", () => {
-        expect(() => formatEthSignature("")).toThrow(/Signature cannot be empty/i);
+        expect(() => formatEthSignature("")).toThrow(
+          /Signature cannot be empty/i,
+        );
       });
 
       it("should reject signature with invalid hex characters (BUG FIX)", () => {
         // BUG FIX: Now validates hex characters before Buffer.from()
         const invalidSig = "g".repeat(130); // 'g' is not valid hex
-        expect(() => formatEthSignature(invalidSig)).toThrow(/Invalid.*hex characters/i);
+        expect(() => formatEthSignature(invalidSig)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
 
       it("should reject signature with special characters (BUG FIX)", () => {
         // BUG FIX: Now validates hex, so '-' throws error
         const specialCharSig = "abcd-efgh-".repeat(13);
-        expect(() => formatEthSignature(specialCharSig)).toThrow(/Invalid.*hex characters/i);
+        expect(() => formatEthSignature(specialCharSig)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
 
       it("should reject signature with whitespace (BUG FIX)", () => {
         // BUG FIX: Now validates hex, so spaces throw error
         const withSpaces = `ab cd ${"ef".repeat(64)}`;
-        expect(() => formatEthSignature(withSpaces)).toThrow(/Invalid.*hex characters/i);
+        expect(() => formatEthSignature(withSpaces)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
 
       it("should reject base64 signature (invalid hex)", () => {
         // BUG FIX: Now validates hex, so base64 special chars throw error
-        const base64Sig = "SGVsbG8gV29ybGQhIFRoaXMgaXMgYSB0ZXN0IHNpZ25hdHVyZQ==";
-        expect(() => formatEthSignature(base64Sig)).toThrow(/Invalid.*hex characters/i);
+        const base64Sig =
+          "SGVsbG8gV29ybGQhIFRoaXMgaXMgYSB0ZXN0IHNpZ25hdHVyZQ==";
+        expect(() => formatEthSignature(base64Sig)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
     });
 
@@ -234,7 +249,8 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       });
 
       it("should handle base64 without padding", () => {
-        const noPaddingBase64 = "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkw";
+        const noPaddingBase64 =
+          "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkw";
         const result = formatSecp256k1Signature(noPaddingBase64);
         expect(result).toMatch(/^[0-9a-f]+$/);
       });
@@ -316,15 +332,14 @@ describe("signature.ts - Signature Formatting Utilities", () => {
 
   describe("🔴 CRITICAL: formatSecp256k1Pubkey()", () => {
     // Compressed secp256k1 pubkey (33 bytes = 66 hex chars)
-    const validCompressedPubkeyHex =
-      "02" + "1234567890abcdef".repeat(4); // 33 bytes
+    const validCompressedPubkeyHex = "02" + "1234567890abcdef".repeat(4); // 33 bytes
 
     // Uncompressed secp256k1 pubkey (65 bytes = 130 hex chars)
-    const validUncompressedPubkeyHex =
-      "04" + "1234567890abcdef".repeat(8); // 65 bytes
+    const validUncompressedPubkeyHex = "04" + "1234567890abcdef".repeat(8); // 65 bytes
 
     // Base64 encoding of 33 bytes (compressed pubkey) = 44 chars
-    const validCompressedPubkeyBase64 = "AhI0VniQq83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83v";
+    const validCompressedPubkeyBase64 =
+      "AhI0VniQq83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83v";
 
     // Base64 encoding of 65 bytes (uncompressed pubkey) = 88 chars
     const validUncompressedPubkeyBase64 =
@@ -390,7 +405,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
 
       it("should detect base64 by length (44 chars for compressed)", () => {
         // Base64 detection relies on length = 44 or 88
-        expect(() => formatSecp256k1Pubkey(validCompressedPubkeyBase64)).not.toThrow();
+        expect(() =>
+          formatSecp256k1Pubkey(validCompressedPubkeyBase64),
+        ).not.toThrow();
       });
 
       it("should detect base64 by length (88 chars for uncompressed)", () => {
@@ -401,7 +418,8 @@ describe("signature.ts - Signature Formatting Utilities", () => {
 
       it("should detect base64 by non-hex characters (BUG FIX)", () => {
         // BUG FIX: Now checks for non-hex chars (+, /, =) and treats as base64
-        const base64WithSpecialChars = "AB+/CD+/EF+/GH+/IJ+/KL+/MN+/OP+/QR+/ST+/UV+/WX==";
+        const base64WithSpecialChars =
+          "AB+/CD+/EF+/GH+/IJ+/KL+/MN+/OP+/QR+/ST+/UV+/WX==";
         const result = formatSecp256k1Pubkey(base64WithSpecialChars);
         // Should be converted from base64 to hex
         expect(result).not.toBe(base64WithSpecialChars);
@@ -419,7 +437,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
 
     describe("Invalid Input Handling", () => {
       it("should throw error for empty pubkey", () => {
-        expect(() => formatSecp256k1Pubkey("")).toThrow(/Pubkey cannot be empty/i);
+        expect(() => formatSecp256k1Pubkey("")).toThrow(
+          /Pubkey cannot be empty/i,
+        );
       });
 
       it("should throw error for null pubkey", () => {
@@ -457,7 +477,8 @@ describe("signature.ts - Signature Formatting Utilities", () => {
 
       it("should reject base64 with URL-safe characters", () => {
         // URL-safe base64 (with - and _) is not supported
-        const urlSafeBase64 = "AB-_CD-_EF-_GH-_IJ-_KL-_MN-_OP-_QR-_ST-_UV-_WX==";
+        const urlSafeBase64 =
+          "AB-_CD-_EF-_GH-_IJ-_KL-_MN-_OP-_QR-_ST-_UV-_WX==";
         expect(() => formatSecp256k1Pubkey(urlSafeBase64)).toThrow(/invalid/i);
       });
     });
@@ -483,7 +504,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
         const result = formatSecp256k1Pubkey(validCompressedPubkeyBase64);
         expect(result).toMatch(/^[0-9a-f]+$/);
         // Base64 is more compact than hex, so hex output is longer
-        expect(result.length).toBeGreaterThan(validCompressedPubkeyBase64.length);
+        expect(result.length).toBeGreaterThan(
+          validCompressedPubkeyBase64.length,
+        );
       });
 
       it("should convert 88-char base64 to hex", () => {
@@ -563,7 +586,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       it("should reject 0xxx prefix (invalid hex)", () => {
         // BUG FIX: Now validates hex, so extra 'x' throws error
         const multiX = `0xxx${validHexMessage}`;
-        expect(() => formatHexMessage(multiX)).toThrow(/Invalid.*hex characters/i);
+        expect(() => formatHexMessage(multiX)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
     });
 
@@ -575,19 +600,25 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       it("should reject message with invalid hex characters (BUG FIX)", () => {
         // BUG FIX: Now validates hex characters
         const invalidMsg = "xyz123"; // 'x', 'y', 'z' are not valid hex
-        expect(() => formatHexMessage(invalidMsg)).toThrow(/Invalid.*hex characters/i);
+        expect(() => formatHexMessage(invalidMsg)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
 
       it("should reject message with special characters (BUG FIX)", () => {
         // BUG FIX: Now validates hex, so '-' throws error
         const specialCharMsg = "abc-def-123";
-        expect(() => formatHexMessage(specialCharMsg)).toThrow(/Invalid.*hex characters/i);
+        expect(() => formatHexMessage(specialCharMsg)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
 
       it("should reject message with whitespace (BUG FIX)", () => {
         // BUG FIX: Now validates hex, so spaces throw error
         const withSpaces = "ab cd ef";
-        expect(() => formatHexMessage(withSpaces)).toThrow(/Invalid.*hex characters/i);
+        expect(() => formatHexMessage(withSpaces)).toThrow(
+          /Invalid.*hex characters/i,
+        );
       });
 
       it("should silently accept base64 message (CRITICAL BUG)", () => {
@@ -634,7 +665,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       it("should reject odd-length hex string (BUG FIX)", () => {
         // BUG FIX: Now validates even length (hex must be full bytes)
         const oddMsg = "abc";
-        expect(() => formatHexMessage(oddMsg)).toThrow(/hex string must have even length/i);
+        expect(() => formatHexMessage(oddMsg)).toThrow(
+          /hex string must have even length/i,
+        );
       });
     });
 
@@ -738,7 +771,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       });
 
       it("should warn for text that looks like hex (console.warn)", () => {
-        const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "warn")
+          .mockImplementation(() => {});
 
         // Text that contains only hex characters (likely hex, not UTF-8)
         const hexLikeText = "abcdef123456";
@@ -753,7 +788,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       });
 
       it("should not warn for short hex-like strings (≤2 chars)", () => {
-        const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "warn")
+          .mockImplementation(() => {});
 
         // Short strings with only hex chars should not trigger warning
         const shortText = "ab";
@@ -765,7 +802,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       });
 
       it("should not warn for text with mixed characters", () => {
-        const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "warn")
+          .mockImplementation(() => {});
 
         // Text with non-hex characters should not trigger warning
         const mixedText = "hello world";
@@ -924,7 +963,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
     it("should provide error for invalid hex characters (BUG FIX)", () => {
       // BUG FIX: Now validates hex and provides helpful error
       const invalidHex = "g".repeat(130);
-      expect(() => formatEthSignature(invalidHex)).toThrow(/Invalid.*hex characters/i);
+      expect(() => formatEthSignature(invalidHex)).toThrow(
+        /Invalid.*hex characters/i,
+      );
     });
 
     it("should provide helpful error for 0x-prefixed UTF-8 input", () => {
@@ -936,7 +977,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
     it("should provide error for invalid characters first (BUG FIX)", () => {
       // BUG FIX: Now checks hex validity before length
       const veryLongInvalidSig = "x".repeat(200);
-      expect(() => formatEthSignature(veryLongInvalidSig)).toThrow(/Invalid.*hex characters/i);
+      expect(() => formatEthSignature(veryLongInvalidSig)).toThrow(
+        /Invalid.*hex characters/i,
+      );
     });
   });
 
@@ -970,7 +1013,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       });
 
       it("should detect likely hex strings in utf8ToHex", () => {
-        const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const consoleSpy = vi
+          .spyOn(console, "warn")
+          .mockImplementation(() => {});
 
         const hexLike = "abcdef123456";
         utf8ToHex(hexLike);
@@ -1021,7 +1066,9 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       expect(() => formatEthSignature(validSig)).not.toThrow();
 
       const invalidSig = "a".repeat(64); // Only r
-      expect(() => formatEthSignature(invalidSig)).toThrow(/ethereum signature.*65 bytes/i);
+      expect(() => formatEthSignature(invalidSig)).toThrow(
+        /ethereum signature.*65 bytes/i,
+      );
     });
 
     it("should prevent signature truncation attacks", () => {
@@ -1075,14 +1122,14 @@ describe("signature.ts - Signature Formatting Utilities", () => {
       it("should reject signature with 64 bytes", () => {
         const shortSig = "a".repeat(128);
         expect(() => formatEthSignatureToBase64(shortSig)).toThrow(
-          /must be 65 bytes, got 64/i
+          /must be 65 bytes, got 64/i,
         );
       });
 
       it("should reject signature with 66 bytes", () => {
         const longSig = "a".repeat(132);
         expect(() => formatEthSignatureToBase64(longSig)).toThrow(
-          /must be 65 bytes, got 66/i
+          /must be 65 bytes, got 66/i,
         );
       });
     });
@@ -1090,21 +1137,21 @@ describe("signature.ts - Signature Formatting Utilities", () => {
     describe("Invalid Input Handling", () => {
       it("should throw error for empty signature", () => {
         expect(() => formatEthSignatureToBase64("")).toThrow(
-          /Signature cannot be empty/i
+          /Signature cannot be empty/i,
         );
       });
 
       it("should reject invalid hex characters", () => {
         const invalidSig = "g".repeat(130);
         expect(() => formatEthSignatureToBase64(invalidSig)).toThrow(
-          /invalid.*ethereum signature/i
+          /invalid.*ethereum signature/i,
         );
       });
 
       it("should reject signature with special characters", () => {
         const specialCharSig = "abcd-efgh-".repeat(13);
         expect(() => formatEthSignatureToBase64(specialCharSig)).toThrow(
-          /invalid.*ethereum signature/i
+          /invalid.*ethereum signature/i,
         );
       });
     });
@@ -1164,21 +1211,21 @@ describe("signature.ts - Signature Formatting Utilities", () => {
     describe("Signature Length Validation", () => {
       it("should accept exactly 64 bytes (128 hex chars)", () => {
         expect(() =>
-          formatSecp256k1SignatureToBase64(validSecp256k1Hex)
+          formatSecp256k1SignatureToBase64(validSecp256k1Hex),
         ).not.toThrow();
       });
 
       it("should reject signature with 63 bytes", () => {
         const shortSig = "a".repeat(126);
         expect(() => formatSecp256k1SignatureToBase64(shortSig)).toThrow(
-          /must be 64 bytes, got 63/i
+          /must be 64 bytes, got 63/i,
         );
       });
 
       it("should reject signature with 65 bytes", () => {
         const longSig = "a".repeat(130);
         expect(() => formatSecp256k1SignatureToBase64(longSig)).toThrow(
-          /must be 64 bytes, got 65/i
+          /must be 64 bytes, got 65/i,
         );
       });
     });
@@ -1186,21 +1233,21 @@ describe("signature.ts - Signature Formatting Utilities", () => {
     describe("Invalid Input Handling", () => {
       it("should throw error for empty signature", () => {
         expect(() => formatSecp256k1SignatureToBase64("")).toThrow(
-          /Signature cannot be empty/i
+          /Signature cannot be empty/i,
         );
       });
 
       it("should reject invalid hex characters", () => {
         const invalidSig = "g".repeat(128);
         expect(() => formatSecp256k1SignatureToBase64(invalidSig)).toThrow(
-          /invalid.*secp256k1 signature/i
+          /invalid.*secp256k1 signature/i,
         );
       });
 
       it("should reject signature with special characters", () => {
         const specialCharSig = "abcd-efgh".repeat(16);
         expect(() => formatSecp256k1SignatureToBase64(specialCharSig)).toThrow(
-          /invalid.*secp256k1 signature/i
+          /invalid.*secp256k1 signature/i,
         );
       });
     });

@@ -123,16 +123,19 @@ function isDerivationJson(thing: unknown): thing is DerivationInfoJson {
 /**
  * Type guard for serialization root object
  */
-function isSerializationRoot(value: unknown): value is { readonly type: string } {
-  return isNonNullObject(value) && typeof (value as Record<string, unknown>).type === "string";
+function isSerializationRoot(
+  value: unknown,
+): value is { readonly type: string } {
+  return (
+    isNonNullObject(value) &&
+    typeof (value as Record<string, unknown>).type === "string"
+  );
 }
 
 /**
  * Type guard for encrypted serialization
  */
-function isEncryptedSerialization(
-  value: unknown,
-): value is {
+function isEncryptedSerialization(value: unknown): value is {
   readonly type: string;
   readonly data: string;
   readonly encryption: EncryptionConfiguration;
@@ -149,9 +152,7 @@ function isEncryptedSerialization(
 /**
  * Type guard for decrypted wallet document
  */
-function isDecryptedDocument(
-  value: unknown,
-): value is {
+function isDecryptedDocument(value: unknown): value is {
   readonly mnemonic: { readonly data: string };
   readonly accounts: readonly Secp256k1Derivation[];
 } {
@@ -237,7 +238,9 @@ export class SignArbSecp256k1HdWallet {
     const parsed: unknown = JSON.parse(serialization);
 
     if (!isSerializationRoot(parsed)) {
-      throw new Error("Invalid serialization format: root document is not a valid object with type field.");
+      throw new Error(
+        "Invalid serialization format: root document is not a valid object with type field.",
+      );
     }
 
     if (parsed.type === serializationTypeV1) {
@@ -262,7 +265,9 @@ export class SignArbSecp256k1HdWallet {
     const parsed: unknown = JSON.parse(serialization);
 
     if (!isEncryptedSerialization(parsed)) {
-      throw new Error("Invalid encrypted serialization format: missing required fields.");
+      throw new Error(
+        "Invalid encrypted serialization format: missing required fields.",
+      );
     }
 
     switch (parsed.type) {
@@ -276,7 +281,9 @@ export class SignArbSecp256k1HdWallet {
         const decryptedParsed: unknown = JSON.parse(fromUtf8(decryptedBytes));
 
         if (!isDecryptedDocument(decryptedParsed)) {
-          throw new Error("Invalid decrypted document format: missing mnemonic or accounts.");
+          throw new Error(
+            "Invalid decrypted document format: missing mnemonic or accounts.",
+          );
         }
 
         const { mnemonic, accounts } = decryptedParsed;
@@ -381,7 +388,10 @@ export class SignArbSecp256k1HdWallet {
       throw new Error("Missing or invalid KDF configuration.");
     }
 
-    const encryptionKey = await this.executeKdf(password, root.kdf as KdfConfiguration);
+    const encryptionKey = await this.executeKdf(
+      password,
+      root.kdf as KdfConfiguration,
+    );
     return this.deserializeWithEncryptionKey(serialization, encryptionKey);
   }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { fetchConfig, clearConfigCache } from "../src/utils/configUtils";
 import {
   fetchTreasuryDataFromIndexer,
@@ -349,9 +349,7 @@ describe("Treasury Data Caching", () => {
         resolveFetchPromise = resolve;
       });
 
-      (constants.fetchConfig as vi.Mock).mockReturnValue(
-        configDelayedPromise,
-      );
+      (constants.fetchConfig as vi.Mock).mockReturnValue(configDelayedPromise);
       (global.fetch as vi.Mock).mockReturnValue(fetchDelayedPromise);
 
       // Start multiple concurrent requests

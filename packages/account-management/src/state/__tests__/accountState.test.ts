@@ -1,6 +1,6 @@
 /**
  * State Machine Tests - accountState.ts
- * 
+ *
  * Focus: Breaking state transitions, invalid actions, edge cases
  * Goal: Ensure state machine maintains consistency and rejects invalid transitions
  */
@@ -39,10 +39,19 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
       });
 
       it("should return false for non-idle states", () => {
-        expect(AccountStateGuards.isIdle({ status: "initializing" })).toBe(false);
-        expect(AccountStateGuards.isIdle({ status: "redirecting", dashboardUrl: "https://test.com" })).toBe(false);
+        expect(AccountStateGuards.isIdle({ status: "initializing" })).toBe(
+          false,
+        );
+        expect(
+          AccountStateGuards.isIdle({
+            status: "redirecting",
+            dashboardUrl: "https://test.com",
+          }),
+        ).toBe(false);
         expect(AccountStateGuards.isIdle({ status: "connecting" })).toBe(false);
-        expect(AccountStateGuards.isIdle({ status: "error", error: "test" })).toBe(false);
+        expect(
+          AccountStateGuards.isIdle({ status: "error", error: "test" }),
+        ).toBe(false);
       });
 
       it("should narrow type correctly", () => {
@@ -61,24 +70,42 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
       });
 
       it("should return false for non-initializing states", () => {
-        expect(AccountStateGuards.isInitializing({ status: "idle" })).toBe(false);
-        expect(AccountStateGuards.isInitializing({ status: "connected", account: createMockAccountInfo(), signingClient: createMockSigningClient() })).toBe(false);
+        expect(AccountStateGuards.isInitializing({ status: "idle" })).toBe(
+          false,
+        );
+        expect(
+          AccountStateGuards.isInitializing({
+            status: "connected",
+            account: createMockAccountInfo(),
+            signingClient: createMockSigningClient(),
+          }),
+        ).toBe(false);
       });
     });
 
     describe("isRedirecting", () => {
       it("should return true for redirecting state with dashboardUrl", () => {
-        const state: AccountState = { status: "redirecting", dashboardUrl: "https://test.com" };
+        const state: AccountState = {
+          status: "redirecting",
+          dashboardUrl: "https://test.com",
+        };
         expect(AccountStateGuards.isRedirecting(state)).toBe(true);
       });
 
       it("should return false for non-redirecting states", () => {
-        expect(AccountStateGuards.isRedirecting({ status: "idle" })).toBe(false);
-        expect(AccountStateGuards.isRedirecting({ status: "connecting" })).toBe(false);
+        expect(AccountStateGuards.isRedirecting({ status: "idle" })).toBe(
+          false,
+        );
+        expect(AccountStateGuards.isRedirecting({ status: "connecting" })).toBe(
+          false,
+        );
       });
 
       it("should narrow type correctly to access dashboardUrl", () => {
-        const state: AccountState = { status: "redirecting", dashboardUrl: "https://test.com" };
+        const state: AccountState = {
+          status: "redirecting",
+          dashboardUrl: "https://test.com",
+        };
         if (AccountStateGuards.isRedirecting(state)) {
           expect(state.dashboardUrl).toBe("https://test.com");
         }
@@ -92,13 +119,22 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
       });
 
       it("should return true for connecting state with connectorId", () => {
-        const state: AccountState = { status: "connecting", connectorId: "metamask" };
+        const state: AccountState = {
+          status: "connecting",
+          connectorId: "metamask",
+        };
         expect(AccountStateGuards.isConnecting(state)).toBe(true);
       });
 
       it("should return false for non-connecting states", () => {
         expect(AccountStateGuards.isConnecting({ status: "idle" })).toBe(false);
-        expect(AccountStateGuards.isConnecting({ status: "connected", account: createMockAccountInfo(), signingClient: createMockSigningClient() })).toBe(false);
+        expect(
+          AccountStateGuards.isConnecting({
+            status: "connected",
+            account: createMockAccountInfo(),
+            signingClient: createMockSigningClient(),
+          }),
+        ).toBe(false);
       });
     });
 
@@ -112,8 +148,12 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
       });
 
       it("should return false for non-configuring states", () => {
-        expect(AccountStateGuards.isConfiguringPermissions({ status: "idle" })).toBe(false);
-        expect(AccountStateGuards.isConfiguringPermissions({ status: "connecting" })).toBe(false);
+        expect(
+          AccountStateGuards.isConfiguringPermissions({ status: "idle" }),
+        ).toBe(false);
+        expect(
+          AccountStateGuards.isConfiguringPermissions({ status: "connecting" }),
+        ).toBe(false);
       });
 
       it("should narrow type correctly to access smartAccountAddress", () => {
@@ -122,7 +162,9 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
           smartAccountAddress: "xion1account123456789abcdefghijklmnopqrstuv",
         };
         if (AccountStateGuards.isConfiguringPermissions(state)) {
-          expect(state.smartAccountAddress).toBe("xion1account123456789abcdefghijklmnopqrstuv");
+          expect(state.smartAccountAddress).toBe(
+            "xion1account123456789abcdefghijklmnopqrstuv",
+          );
         }
       });
     });
@@ -141,7 +183,9 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
 
       it("should return false for non-connected states", () => {
         expect(AccountStateGuards.isConnected({ status: "idle" })).toBe(false);
-        expect(AccountStateGuards.isConnected({ status: "error", error: "test" })).toBe(false);
+        expect(
+          AccountStateGuards.isConnected({ status: "error", error: "test" }),
+        ).toBe(false);
       });
 
       it("should narrow type correctly to access account and signingClient", () => {
@@ -161,13 +205,22 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
 
     describe("isError", () => {
       it("should return true for error state", () => {
-        const state: AccountState = { status: "error", error: "Something went wrong" };
+        const state: AccountState = {
+          status: "error",
+          error: "Something went wrong",
+        };
         expect(AccountStateGuards.isError(state)).toBe(true);
       });
 
       it("should return false for non-error states", () => {
         expect(AccountStateGuards.isError({ status: "idle" })).toBe(false);
-        expect(AccountStateGuards.isError({ status: "connected", account: createMockAccountInfo(), signingClient: createMockSigningClient() })).toBe(false);
+        expect(
+          AccountStateGuards.isError({
+            status: "connected",
+            account: createMockAccountInfo(),
+            signingClient: createMockSigningClient(),
+          }),
+        ).toBe(false);
       });
 
       it("should narrow type correctly to access error message", () => {
@@ -296,7 +349,9 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
         const newState = accountStateReducer(state, action);
         expect(newState.status).toBe("configuring-permissions");
         if (newState.status === "configuring-permissions") {
-          expect(newState.smartAccountAddress).toBe("xion1account123456789abcdefghijklmnopqrstuv");
+          expect(newState.smartAccountAddress).toBe(
+            "xion1account123456789abcdefghijklmnopqrstuv",
+          );
         }
       });
 
@@ -363,8 +418,12 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
         };
         const newState = accountStateReducer(state, action);
         if (newState.status === "connected") {
-          expect(newState.account.granterAddress).toBe(accountInfo.granterAddress);
-          expect(newState.account.granteeAddress).toBe(accountInfo.granteeAddress);
+          expect(newState.account.granterAddress).toBe(
+            accountInfo.granterAddress,
+          );
+          expect(newState.account.granteeAddress).toBe(
+            accountInfo.granteeAddress,
+          );
         }
       });
     });
@@ -530,7 +589,9 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
 
       it("should allow START_CONFIGURING_PERMISSIONS from connecting", () => {
         const state: AccountState = { status: "connecting" };
-        expect(isValidTransition(state, "START_CONFIGURING_PERMISSIONS")).toBe(true);
+        expect(isValidTransition(state, "START_CONFIGURING_PERMISSIONS")).toBe(
+          true,
+        );
       });
 
       it("should allow SET_CONNECTED from configuring-permissions", () => {
@@ -666,7 +727,9 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
         ];
 
         states.forEach((state) => {
-          expect(isValidTransition(state, "START_CONFIGURING_PERMISSIONS")).toBe(false);
+          expect(
+            isValidTransition(state, "START_CONFIGURING_PERMISSIONS"),
+          ).toBe(false);
         });
       });
 
@@ -827,14 +890,20 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
 
     it("should handle SET_CONNECTED with missing account", () => {
       const state: AccountState = { status: "connecting" };
-      const action = { type: "SET_CONNECTED", signingClient: createMockSigningClient() } as any;
+      const action = {
+        type: "SET_CONNECTED",
+        signingClient: createMockSigningClient(),
+      } as any;
       const newState = accountStateReducer(state, action);
       expect(newState.status).toBe("connected");
     });
 
     it("should handle SET_CONNECTED with missing signingClient", () => {
       const state: AccountState = { status: "connecting" };
-      const action = { type: "SET_CONNECTED", account: createMockAccountInfo() } as any;
+      const action = {
+        type: "SET_CONNECTED",
+        account: createMockAccountInfo(),
+      } as any;
       const newState = accountStateReducer(state, action);
       expect(newState.status).toBe("connected");
     });
@@ -907,4 +976,3 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
     });
   });
 });
-

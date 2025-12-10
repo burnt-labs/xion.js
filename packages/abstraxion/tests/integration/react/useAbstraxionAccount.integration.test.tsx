@@ -80,260 +80,249 @@ describe("useAbstraxionAccount Integration Tests", () => {
   });
 
   describe("Hook Updates After Login (Signer Mode)", () => {
-    it(
-      "should successfully connect with signer authentication",
-      async () => {
-        const signerConfig = testConfig.signerMode;
+    it("should successfully connect with signer authentication", async () => {
+      const signerConfig = testConfig.signerMode;
 
-        const { result } = renderHook(() => useAbstraxionAccount(), {
-          wrapper: createWrapper(signerConfig),
-        });
+      const { result } = renderHook(() => useAbstraxionAccount(), {
+        wrapper: createWrapper(signerConfig),
+      });
 
-        // Wait for initialization
-        await waitFor(() => {
-          expect(result.current.isInitializing).toBe(false);
-        });
+      // Wait for initialization
+      await waitFor(() => {
+        expect(result.current.isInitializing).toBe(false);
+      });
 
-        // Verify initial state
-        expect(result.current.isConnected).toBe(false);
-        expect(result.current.data.bech32Address).toBe("");
+      // Verify initial state
+      expect(result.current.isConnected).toBe(false);
+      expect(result.current.data.bech32Address).toBe("");
 
-        // Call login with signer
-        await result.current.login();
+      // Call login with signer
+      await result.current.login();
 
-        // Wait for connection - should succeed for valid configuration
-        await waitFor(
-          () => {
-            expect(result.current.isConnected).toBe(true);
-          },
-          { timeout: 120000 } // Increased timeout for network operations and account creation
-        );
+      // Wait for connection - should succeed for valid configuration
+      await waitFor(
+        () => {
+          expect(result.current.isConnected).toBe(true);
+        },
+        { timeout: 120000 }, // Increased timeout for network operations and account creation
+      );
 
-        // Verify successful connection
-        expect(result.current.isConnected).toBe(true);
-        expect(result.current.data.bech32Address).toMatch(/^xion1[a-z0-9]+$/);
-        expect(result.current.data.bech32Address.length).toBeGreaterThan(30);
-        expect(result.current.isError).toBe(false);
-        expect(result.current.error).toBe("");
-      },
-      180000 // 3 minute timeout for account creation and grant setup
-    );
+      // Verify successful connection
+      expect(result.current.isConnected).toBe(true);
+      expect(result.current.data.bech32Address).toMatch(/^xion1[a-z0-9]+$/);
+      expect(result.current.data.bech32Address.length).toBeGreaterThan(30);
+      expect(result.current.isError).toBe(false);
+      expect(result.current.error).toBe("");
+    }, 180000); // 3 minute timeout for account creation and grant setup
 
-    it(
-      "should transition through connecting states during login",
-      async () => {
-        const signerConfig = testConfig.signerMode;
+    it("should transition through connecting states during login", async () => {
+      const signerConfig = testConfig.signerMode;
 
-        const { result } = renderHook(() => useAbstraxionAccount(), {
-          wrapper: createWrapper(signerConfig),
-        });
+      const { result } = renderHook(() => useAbstraxionAccount(), {
+        wrapper: createWrapper(signerConfig),
+      });
 
-        // Wait for initialization
-        await waitFor(() => {
-          expect(result.current.isInitializing).toBe(false);
-        });
+      // Wait for initialization
+      await waitFor(() => {
+        expect(result.current.isInitializing).toBe(false);
+      });
 
-        // Start login
-        const loginPromise = result.current.login();
+      // Start login
+      const loginPromise = result.current.login();
 
-        // Should enter connecting state
-        await waitFor(
-          () => {
-            expect(result.current.isConnecting).toBe(true);
-          },
-          { timeout: 5000 }
-        );
+      // Should enter connecting state
+      await waitFor(
+        () => {
+          expect(result.current.isConnecting).toBe(true);
+        },
+        { timeout: 5000 },
+      );
 
-        // isLoading should be true when connecting
-        expect(result.current.isLoading).toBe(true);
+      // isLoading should be true when connecting
+      expect(result.current.isLoading).toBe(true);
 
-        // Wait for login to complete
-        await loginPromise;
+      // Wait for login to complete
+      await loginPromise;
 
-        // Should eventually settle (connected or error)
-        await waitFor(
-          () => {
-            const settled = result.current.isConnected || result.current.isError;
-            expect(settled).toBe(true);
-          },
-          { timeout: 60000 }
-        );
+      // Should eventually settle (connected or error)
+      await waitFor(
+        () => {
+          const settled = result.current.isConnected || result.current.isError;
+          expect(settled).toBe(true);
+        },
+        { timeout: 60000 },
+      );
 
-        // Should no longer be connecting
-        expect(result.current.isConnecting).toBe(false);
-        expect(result.current.isLoading).toBe(false);
+      // Should no longer be connecting
+      expect(result.current.isConnecting).toBe(false);
+      expect(result.current.isLoading).toBe(false);
 
-        // Should have successfully connected
-        expect(result.current.isConnected).toBe(true);
-        expect(result.current.isError).toBe(false);
-      },
-      120000
-    );
+      // Should have successfully connected
+      expect(result.current.isConnected).toBe(true);
+      expect(result.current.isError).toBe(false);
+    }, 120000);
   });
 
   describe("Hook Handles Logout", () => {
-    it(
-      "should disconnect and clear account data (if connection succeeded)",
-      async () => {
-        const signerConfig = testConfig.signerMode;
+    it("should disconnect and clear account data (if connection succeeded)", async () => {
+      const signerConfig = testConfig.signerMode;
 
-        const { result } = renderHook(() => useAbstraxionAccount(), {
-          wrapper: createWrapper(signerConfig),
-        });
+      const { result } = renderHook(() => useAbstraxionAccount(), {
+        wrapper: createWrapper(signerConfig),
+      });
 
-        // Login first
-        await waitFor(() => expect(result.current.isInitializing).toBe(false));
-        await result.current.login();
+      // Login first
+      await waitFor(() => expect(result.current.isInitializing).toBe(false));
+      await result.current.login();
 
-        // Wait for successful connection
-        await waitFor(() => {
+      // Wait for successful connection
+      await waitFor(
+        () => {
           expect(result.current.isConnected).toBe(true);
-        }, {
+        },
+        {
           timeout: 120000,
-        });
+        },
+      );
 
-        // Verify connection succeeded
-        expect(result.current.isConnected).toBe(true);
-        expect(result.current.isError).toBe(false);
+      // Verify connection succeeded
+      expect(result.current.isConnected).toBe(true);
+      expect(result.current.isError).toBe(false);
 
-        // Connection succeeded - test logout
-        const addressBeforeLogout = result.current.data.bech32Address;
-        expect(addressBeforeLogout).toMatch(/^xion1[a-z0-9]+$/);
+      // Connection succeeded - test logout
+      const addressBeforeLogout = result.current.data.bech32Address;
+      expect(addressBeforeLogout).toMatch(/^xion1[a-z0-9]+$/);
 
-        // Logout
-        await result.current.logout();
+      // Logout
+      await result.current.logout();
 
-        await waitFor(() => {
-          expect(result.current.isConnected).toBe(false);
-        });
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(false);
+      });
 
-        // Verify account data is cleared
-        expect(result.current.data.bech32Address).toBe("");
-        expect(result.current.isConnecting).toBe(false);
-        expect(result.current.isLoading).toBe(false);
-        console.log("✅ Logout successful");
-      },
-      120000
-    );
+      // Verify account data is cleared
+      expect(result.current.data.bech32Address).toBe("");
+      expect(result.current.isConnecting).toBe(false);
+      expect(result.current.isLoading).toBe(false);
+      console.log("✅ Logout successful");
+    }, 120000);
 
-    it(
-      "should clear localStorage on logout (if connection succeeded)",
-      async () => {
-        const signerConfig = testConfig.signerMode;
+    it("should clear localStorage on logout (if connection succeeded)", async () => {
+      const signerConfig = testConfig.signerMode;
 
-        const { result } = renderHook(() => useAbstraxionAccount(), {
-          wrapper: createWrapper(signerConfig),
-        });
+      const { result } = renderHook(() => useAbstraxionAccount(), {
+        wrapper: createWrapper(signerConfig),
+      });
 
-        // Login first
-        await waitFor(() => expect(result.current.isInitializing).toBe(false));
-        await result.current.login();
+      // Login first
+      await waitFor(() => expect(result.current.isInitializing).toBe(false));
+      await result.current.login();
 
-        // Wait for successful connection
-        await waitFor(() => {
+      // Wait for successful connection
+      await waitFor(
+        () => {
           expect(result.current.isConnected).toBe(true);
-        }, {
+        },
+        {
           timeout: 120000,
-        });
+        },
+      );
 
-        // Verify connection succeeded
-        expect(result.current.isConnected).toBe(true);
-        expect(result.current.isError).toBe(false);
+      // Verify connection succeeded
+      expect(result.current.isConnected).toBe(true);
+      expect(result.current.isError).toBe(false);
 
-        // Verify some session data exists in localStorage
-        // (The exact key names depend on the implementation)
-        const storageKeys = Object.keys(localStorage);
-        const hasSessionData = storageKeys.some((key) =>
-          key.includes("abstraxion")
-        );
-        expect(hasSessionData).toBe(true);
+      // Verify some session data exists in localStorage
+      // (The exact key names depend on the implementation)
+      const storageKeys = Object.keys(localStorage);
+      const hasSessionData = storageKeys.some((key) =>
+        key.includes("abstraxion"),
+      );
+      expect(hasSessionData).toBe(true);
 
-        // Logout
-        await result.current.logout();
+      // Logout
+      await result.current.logout();
 
-        await waitFor(() => {
-          expect(result.current.isConnected).toBe(false);
-        });
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(false);
+      });
 
-        // Verify localStorage is cleared
-        // Note: Some implementations may keep certain keys, but session data should be gone
-        const storageKeysAfter = Object.keys(localStorage);
-        const hasSessionDataAfter = storageKeysAfter.some(
-          (key) =>
-            key.includes("abstraxion") &&
-            !key.includes("config") &&
-            !key.includes("settings")
-        );
-        expect(hasSessionDataAfter).toBe(false);
-        console.log("✅ localStorage cleared successfully");
-      },
-      120000
-    );
+      // Verify localStorage is cleared
+      // Note: Some implementations may keep certain keys, but session data should be gone
+      const storageKeysAfter = Object.keys(localStorage);
+      const hasSessionDataAfter = storageKeysAfter.some(
+        (key) =>
+          key.includes("abstraxion") &&
+          !key.includes("config") &&
+          !key.includes("settings"),
+      );
+      expect(hasSessionDataAfter).toBe(false);
+      console.log("✅ localStorage cleared successfully");
+    }, 120000);
   });
 
   describe("Hook Persists Session on Remount", () => {
-    it(
-      "should restore session from localStorage (if connection succeeded)",
-      async () => {
-        const signerConfig = testConfig.signerMode;
+    it("should restore session from localStorage (if connection succeeded)", async () => {
+      const signerConfig = testConfig.signerMode;
 
-        // First render: login
-        const { result: firstResult, unmount } = renderHook(
-          () => useAbstraxionAccount(),
-          {
-            wrapper: createWrapper(signerConfig),
-          }
-        );
+      // First render: login
+      const { result: firstResult, unmount } = renderHook(
+        () => useAbstraxionAccount(),
+        {
+          wrapper: createWrapper(signerConfig),
+        },
+      );
 
-        await waitFor(() =>
-          expect(firstResult.current.isInitializing).toBe(false)
-        );
-        await firstResult.current.login();
+      await waitFor(() =>
+        expect(firstResult.current.isInitializing).toBe(false),
+      );
+      await firstResult.current.login();
 
-        // Wait for successful connection
-        await waitFor(() => {
+      // Wait for successful connection
+      await waitFor(
+        () => {
           expect(firstResult.current.isConnected).toBe(true);
-        }, {
+        },
+        {
           timeout: 120000,
-        });
+        },
+      );
 
-        // Verify connection succeeded
-        expect(firstResult.current.isConnected).toBe(true);
-        expect(firstResult.current.isError).toBe(false);
+      // Verify connection succeeded
+      expect(firstResult.current.isConnected).toBe(true);
+      expect(firstResult.current.isError).toBe(false);
 
-        const originalAddress = firstResult.current.data.bech32Address;
-        expect(originalAddress).toMatch(/^xion1[a-z0-9]+$/);
+      const originalAddress = firstResult.current.data.bech32Address;
+      expect(originalAddress).toMatch(/^xion1[a-z0-9]+$/);
 
-        // Verify session data is in localStorage
-        const storageKeys = Object.keys(localStorage);
-        expect(storageKeys.length).toBeGreaterThan(0);
+      // Verify session data is in localStorage
+      const storageKeys = Object.keys(localStorage);
+      expect(storageKeys.length).toBeGreaterThan(0);
 
-        // Unmount
-        unmount();
+      // Unmount
+      unmount();
 
-        // Second render: should restore session
-        const { result: secondResult } = renderHook(
-          () => useAbstraxionAccount(),
-          {
-            wrapper: createWrapper(signerConfig),
-          }
-        );
+      // Second render: should restore session
+      const { result: secondResult } = renderHook(
+        () => useAbstraxionAccount(),
+        {
+          wrapper: createWrapper(signerConfig),
+        },
+      );
 
-        // Wait for initialization - session should be restored
-        await waitFor(
-          () => {
-            expect(secondResult.current.isConnected).toBe(true);
-          },
-          { timeout: 30000 }
-        );
+      // Wait for initialization - session should be restored
+      await waitFor(
+        () => {
+          expect(secondResult.current.isConnected).toBe(true);
+        },
+        { timeout: 30000 },
+      );
 
-        // Verify same account address is restored
-        expect(secondResult.current.data.bech32Address).toBe(originalAddress);
-        expect(secondResult.current.isError).toBe(false);
-        console.log("✅ Session restored successfully");
-      },
-      120000
-    );
+      // Verify same account address is restored
+      expect(secondResult.current.data.bech32Address).toBe(originalAddress);
+      expect(secondResult.current.isError).toBe(false);
+      console.log("✅ Session restored successfully");
+    }, 120000);
   });
 
   describe("Hook State Consistency", () => {

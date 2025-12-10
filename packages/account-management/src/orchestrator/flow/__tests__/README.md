@@ -26,12 +26,14 @@ This directory contains comprehensive test suites for the three main orchestrato
 The tests currently fail due to a module resolution issue with `@github/webauthn-json/browser-ponyfill` imported from the `@burnt-labs/signers` package. This is a Node.js environment compatibility issue, not a problem with the test logic itself.
 
 **Error:**
+
 ```
 Package subpath './browser-ponyfill' is not defined by "exports" in
 @github/webauthn-json/package.json
 ```
 
 **Attempted Solutions:**
+
 1. Created manual mock file at `__mocks__/@github/webauthn-json/browser-ponyfill.ts`
 2. Added Vite resolve alias in `vitest.config.ts`
 3. Added mock in `vitest.setup.ts`
@@ -41,6 +43,7 @@ Package subpath './browser-ponyfill' is not defined by "exports" in
 The `@burnt-labs/signers` package imports passkey-signer which uses browser-specific WebAuthn APIs that aren't available in Node/jsdom test environments. The import happens before mocks can be applied.
 
 **Potential Solutions:**
+
 1. Update `@burnt-labs/signers` package to conditionally import WebAuthn only when needed
 2. Add proper package.json exports configuration to webauthn-json
 3. Use a different test environment that better simulates browsers

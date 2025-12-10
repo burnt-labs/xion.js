@@ -31,7 +31,9 @@ describe("createCompositeAccountStrategy", () => {
 
       const strategies = (strategy as any).strategies;
       expect(strategies[0]).toBeInstanceOf(NumiaAccountStrategy);
-      expect(strategies[strategies.length - 1]).toBeInstanceOf(EmptyAccountStrategy);
+      expect(strategies[strategies.length - 1]).toBeInstanceOf(
+        EmptyAccountStrategy,
+      );
     });
 
     it("should include SubqueryAccountStrategy when Subquery indexer configured", () => {
@@ -128,17 +130,33 @@ describe("createCompositeAccountStrategy", () => {
       const configs = [
         {},
         { indexer: { type: "numia" as const, url: "https://test.com" } },
-        { rpc: { rpcUrl: "https://rpc.com", checksum: "0", creator: "x", prefix: "x", codeId: 1 } },
+        {
+          rpc: {
+            rpcUrl: "https://rpc.com",
+            checksum: "0",
+            creator: "x",
+            prefix: "x",
+            codeId: 1,
+          },
+        },
         {
           indexer: { type: "numia" as const, url: "https://test.com" },
-          rpc: { rpcUrl: "https://rpc.com", checksum: "0", creator: "x", prefix: "x", codeId: 1 }
+          rpc: {
+            rpcUrl: "https://rpc.com",
+            checksum: "0",
+            creator: "x",
+            prefix: "x",
+            codeId: 1,
+          },
         },
       ];
 
       configs.forEach((config) => {
         const strategy = createCompositeAccountStrategy(config);
         const strategies = (strategy as any).strategies;
-        expect(strategies[strategies.length - 1]).toBeInstanceOf(EmptyAccountStrategy);
+        expect(strategies[strategies.length - 1]).toBeInstanceOf(
+          EmptyAccountStrategy,
+        );
       });
     });
   });

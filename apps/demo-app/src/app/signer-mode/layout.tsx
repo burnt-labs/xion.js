@@ -21,9 +21,12 @@ function AbstraxionWrapper({
   // Only check in browser to avoid build-time errors
   React.useEffect(() => {
     if (typeof window !== "undefined") {
-      if (!process.env.NEXT_PUBLIC_CODE_ID || !process.env.NEXT_PUBLIC_CHECKSUM) {
+      if (
+        !process.env.NEXT_PUBLIC_CODE_ID ||
+        !process.env.NEXT_PUBLIC_CHECKSUM
+      ) {
         console.error(
-          "Smart account contract config is required for signer mode. Please provide NEXT_PUBLIC_CODE_ID and NEXT_PUBLIC_CHECKSUM."
+          "Smart account contract config is required for signer mode. Please provide NEXT_PUBLIC_CODE_ID and NEXT_PUBLIC_CHECKSUM.",
         );
       }
     }
@@ -80,8 +83,12 @@ function AbstraxionWrapper({
     // Chain configuration (can be simplified - defaults filled in by normalizeAbstraxionConfig)
     // Use placeholder values during build time, actual values at runtime
     chainId: process.env.NEXT_PUBLIC_CHAIN_ID || "xion-testnet-2",
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://rpc.xion-testnet-2.burnt.com:443",
-    restUrl: process.env.NEXT_PUBLIC_REST_URL || "https://api.xion-testnet-2.burnt.com",
+    rpcUrl:
+      process.env.NEXT_PUBLIC_RPC_URL ||
+      "https://rpc.xion-testnet-2.burnt.com:443",
+    restUrl:
+      process.env.NEXT_PUBLIC_REST_URL ||
+      "https://api.xion-testnet-2.burnt.com",
     gasPrice: process.env.NEXT_PUBLIC_GAS_PRICE || "0.001uxion",
 
     // Signer-mode configuration
@@ -89,7 +96,9 @@ function AbstraxionWrapper({
       type: "signer" as const,
 
       // AA API URL for account creation
-      aaApiUrl: process.env.NEXT_PUBLIC_AA_API_URL || "https://aa-api.xion-testnet-2.burnt.com",
+      aaApiUrl:
+        process.env.NEXT_PUBLIC_AA_API_URL ||
+        "https://aa-api.xion-testnet-2.burnt.com",
 
       // Function that returns signer configuration (from Turnkey)
       getSignerConfig,

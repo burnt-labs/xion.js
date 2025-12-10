@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 /**
  * @vitest-environment jsdom
  */
@@ -623,9 +623,9 @@ describe("AbstraxionAuth", () => {
         getAccounts: () => Promise.resolve([{ address: "testAddress" }]),
       } as any;
 
-      vi
-        .spyOn(abstraxionAuth, "getLocalKeypair")
-        .mockResolvedValue(mockKeypair);
+      vi.spyOn(abstraxionAuth, "getLocalKeypair").mockResolvedValue(
+        mockKeypair,
+      );
       vi.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("testGranter");
       vi.spyOn(abstraxionAuth, "pollForGrants").mockResolvedValue(true);
       vi.spyOn(abstraxionAuth, "setGranter").mockResolvedValue();
@@ -649,13 +649,12 @@ describe("AbstraxionAuth", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
       // Mock failed login scenario
-      vi
-        .spyOn(abstraxionAuth, "getLocalKeypair")
-        .mockResolvedValue(undefined);
+      vi.spyOn(abstraxionAuth, "getLocalKeypair").mockResolvedValue(undefined);
       vi.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("");
-      vi
-        .spyOn(abstraxionAuth, "generateAndStoreTempAccount")
-        .mockResolvedValue();
+      vi.spyOn(
+        abstraxionAuth,
+        "generateAndStoreTempAccount",
+      ).mockResolvedValue();
       vi.spyOn(abstraxionAuth, "redirectToDashboard").mockResolvedValue();
 
       // Mock the redirect strategy's cleanUrlParameters method

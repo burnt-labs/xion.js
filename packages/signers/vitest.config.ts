@@ -10,21 +10,11 @@ export default defineConfig({
       "**/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
-    exclude: [
-      "node_modules",
-      "dist",
-      ".next",
-      ".turbo",
-    ],
+    exclude: ["node_modules", "dist", ".next", ".turbo"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      exclude: [
-        "node_modules/**",
-        "dist/**",
-        "**/*.test.ts",
-        "**/*.config.ts",
-      ],
+      exclude: ["node_modules/**", "dist/**", "**/*.test.ts", "**/*.config.ts"],
     },
   },
 });

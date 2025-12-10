@@ -37,7 +37,6 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
     client: ContractQueryClient,
   ): Promise<TreasuryConfig | null> {
     try {
-
       // Query all grant config type URLs
       const queryTreasuryContractMsg = {
         grant_config_type_urls: {},
@@ -61,10 +60,10 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
             },
           };
 
-          const grantConfig = await client.queryContractSmart(
+          const grantConfig = (await client.queryContractSmart(
             treasuryAddress,
             queryByMsg,
-          ) as TreasuryGrantConfig;
+          )) as TreasuryGrantConfig;
 
           if (!grantConfig || !grantConfig.description) {
             throw new Error(`Invalid grant config for type URL: ${typeUrl}`);
@@ -85,9 +84,7 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
       // Re-throw error instead of returning null
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      throw new Error(
-        `Direct query treasury strategy failed: ${errorMessage}`,
-      );
+      throw new Error(`Direct query treasury strategy failed: ${errorMessage}`);
     }
   }
 
@@ -100,10 +97,10 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
   ): Promise<TreasuryParams> {
     try {
       const queryParams = { params: {} };
-      const params = await client.queryContractSmart(
+      const params = (await client.queryContractSmart(
         treasuryAddress,
         queryParams,
-      ) as TreasuryParams;
+      )) as TreasuryParams;
 
       // Validate URLs for security
       return {

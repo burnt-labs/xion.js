@@ -10,7 +10,8 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
   describe("🔴 CRITICAL: Signature Format Compatibility with AA API", () => {
     it("should produce base64 signature format expected by aa-api (without 0x prefix in signMessage)", async () => {
       // Mock signing function that returns hex signature WITHOUT 0x prefix
-      const mockSignature = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
+      const mockSignature =
+        "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
       const signMessage = async (hexMessage: string): Promise<string> => {
         expect(hexMessage).toMatch(/^0x[0-9a-fA-F]+$/); // Should receive hex with 0x prefix
         return mockSignature; // Return hex WITHOUT 0x prefix
@@ -29,7 +30,11 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
 
       // Sign a test message
       const testMessage = "test message";
-      const result = await signArbitrary("xion-testnet-1", mockAddress, testMessage);
+      const result = await signArbitrary(
+        "xion-testnet-1",
+        mockAddress,
+        testMessage,
+      );
 
       // Verify signature format
       expect(result.signature).toBeDefined();
@@ -40,7 +45,9 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
       expect(isBase64).toBe(true);
 
       // Verify it decodes to the expected bytes
-      const decodedSignature = Buffer.from(result.signature, "base64").toString("hex");
+      const decodedSignature = Buffer.from(result.signature, "base64").toString(
+        "hex",
+      );
       expect(decodedSignature).toBe(mockSignature);
 
       // Verify pub_key structure
@@ -50,7 +57,8 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
 
     it("should produce base64 signature format expected by aa-api (with 0x prefix in signMessage)", async () => {
       // Mock signing function that returns hex signature WITH 0x prefix
-      const mockSignatureHex = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
+      const mockSignatureHex =
+        "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
       const signMessage = async (hexMessage: string): Promise<string> => {
         expect(hexMessage).toMatch(/^0x[0-9a-fA-F]+$/);
         return `0x${mockSignatureHex}`; // Return hex WITH 0x prefix
@@ -67,17 +75,24 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
       const signArbitrary = directSigner.signArbFn;
 
       const testMessage = "test message";
-      const result = await signArbitrary("xion-testnet-1", mockAddress, testMessage);
+      const result = await signArbitrary(
+        "xion-testnet-1",
+        mockAddress,
+        testMessage,
+      );
 
       // Should handle 0x prefix correctly and produce same base64 signature
       expect(result.signature).toBeDefined();
-      const decodedSignature = Buffer.from(result.signature, "base64").toString("hex");
+      const decodedSignature = Buffer.from(result.signature, "base64").toString(
+        "hex",
+      );
       expect(decodedSignature).toBe(mockSignatureHex);
     });
 
     it("should handle duplicate 0x prefixes gracefully", async () => {
       // Edge case: signMessage returns signature with duplicate 0x prefixes
-      const mockSignatureHex = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
+      const mockSignatureHex =
+        "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
       const signMessage = async (hexMessage: string): Promise<string> => {
         return `0x0x${mockSignatureHex}`; // Duplicate 0x prefix
       };
@@ -93,15 +108,22 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
       const signArbitrary = directSigner.signArbFn;
 
       const testMessage = "test message";
-      const result = await signArbitrary("xion-testnet-1", mockAddress, testMessage);
+      const result = await signArbitrary(
+        "xion-testnet-1",
+        mockAddress,
+        testMessage,
+      );
 
       // normalizeHexPrefix should handle this correctly
-      const decodedSignature = Buffer.from(result.signature, "base64").toString("hex");
+      const decodedSignature = Buffer.from(result.signature, "base64").toString(
+        "hex",
+      );
       expect(decodedSignature).toBe(mockSignatureHex);
     });
 
     it("should handle Uint8Array input for signArbitrary", async () => {
-      const mockSignatureHex = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
+      const mockSignatureHex =
+        "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
       const signMessage = async (hexMessage: string): Promise<string> => {
         expect(hexMessage).toMatch(/^0x[0-9a-fA-F]+$/);
         return mockSignatureHex;
@@ -119,17 +141,24 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
 
       // Pass Uint8Array instead of string
       const testMessageBytes = new Uint8Array([116, 101, 115, 116]); // "test"
-      const result = await signArbitrary("xion-testnet-1", mockAddress, testMessageBytes);
+      const result = await signArbitrary(
+        "xion-testnet-1",
+        mockAddress,
+        testMessageBytes,
+      );
 
       expect(result.signature).toBeDefined();
-      const decodedSignature = Buffer.from(result.signature, "base64").toString("hex");
+      const decodedSignature = Buffer.from(result.signature, "base64").toString(
+        "hex",
+      );
       expect(decodedSignature).toBe(mockSignatureHex);
     });
   });
 
   describe("🔴 CRITICAL: EthWallet Signature Format", () => {
     it("should create AAEthSigner with correct personalSign function", async () => {
-      const mockSignatureHex = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b21b";
+      const mockSignatureHex =
+        "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b21b";
       const signMessage = async (hexMessage: string): Promise<string> => {
         expect(hexMessage).toMatch(/^0x[0-9a-fA-F]+$/);
         return `0x${mockSignatureHex}`;
@@ -156,7 +185,8 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
     });
 
     it("should ensure EthWallet signatures include 0x prefix", async () => {
-      const mockSignatureHex = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b21b";
+      const mockSignatureHex =
+        "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b21b";
 
       // Test case 1: signMessage returns signature WITH 0x
       const signMessage1 = async (hexMessage: string): Promise<string> => {
@@ -194,7 +224,8 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
 
   describe("🟡 HIGH: Authenticator Type Selection", () => {
     it("should create AAEthSigner for EthWallet authenticator type", () => {
-      const signMessage = async (hexMessage: string): Promise<string> => "0xsignature";
+      const signMessage = async (hexMessage: string): Promise<string> =>
+        "0xsignature";
 
       const signer = createSignerFromSigningFunction({
         smartAccountAddress: mockAddress,
@@ -210,7 +241,8 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
     });
 
     it("should create AADirectSigner for Secp256K1 authenticator type", () => {
-      const signMessage = async (hexMessage: string): Promise<string> => "signature";
+      const signMessage = async (hexMessage: string): Promise<string> =>
+        "signature";
 
       const signer = createSignerFromSigningFunction({
         smartAccountAddress: mockAddress,
@@ -226,7 +258,8 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
     });
 
     it("should create AADirectSigner for any non-EthWallet authenticator type", () => {
-      const signMessage = async (hexMessage: string): Promise<string> => "signature";
+      const signMessage = async (hexMessage: string): Promise<string> =>
+        "signature";
 
       // Test with a different authenticator type (future-proofing)
       const signer = createSignerFromSigningFunction({
@@ -243,7 +276,8 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
 
   describe("🟢 MEDIUM: Signature Format Consistency", () => {
     it("should produce consistent base64 format across multiple calls", async () => {
-      const mockSignatureHex = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
+      const mockSignatureHex =
+        "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2";
       const signMessage = async (hexMessage: string): Promise<string> => {
         return mockSignatureHex;
       };
@@ -259,9 +293,21 @@ describe("signer-factory.ts - Hex Prefix Handling & Signature Format", () => {
       const signArbitrary = directSigner.signArbFn;
 
       // Call multiple times
-      const result1 = await signArbitrary("xion-testnet-1", mockAddress, "test1");
-      const result2 = await signArbitrary("xion-testnet-1", mockAddress, "test2");
-      const result3 = await signArbitrary("xion-testnet-1", mockAddress, "test3");
+      const result1 = await signArbitrary(
+        "xion-testnet-1",
+        mockAddress,
+        "test1",
+      );
+      const result2 = await signArbitrary(
+        "xion-testnet-1",
+        mockAddress,
+        "test2",
+      );
+      const result3 = await signArbitrary(
+        "xion-testnet-1",
+        mockAddress,
+        "test3",
+      );
 
       // All should produce valid base64
       expect(result1.signature).toMatch(/^[A-Za-z0-9+/]+=*$/);

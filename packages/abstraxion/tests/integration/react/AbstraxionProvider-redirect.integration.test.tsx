@@ -1,7 +1,7 @@
 /**
  * AbstraxionProvider Integration Tests - Redirect Mode
  * Tests the provider component with redirect-based authentication
- * 
+ *
  * This can proceed independently as redirect mode doesn't depend on signer fixes
  */
 
@@ -15,16 +15,26 @@ import type { ReactNode } from "react";
 // Test component that uses the hooks
 function TestComponent() {
   const account = useAbstraxionAccount();
-  
+
   return (
     <div>
-      <div data-testid="is-connected">{account.isConnected ? "connected" : "disconnected"}</div>
-      <div data-testid="is-initializing">{account.isInitializing ? "initializing" : "ready"}</div>
-      <div data-testid="is-connecting">{account.isConnecting ? "connecting" : "idle"}</div>
+      <div data-testid="is-connected">
+        {account.isConnected ? "connected" : "disconnected"}
+      </div>
+      <div data-testid="is-initializing">
+        {account.isInitializing ? "initializing" : "ready"}
+      </div>
+      <div data-testid="is-connecting">
+        {account.isConnecting ? "connecting" : "idle"}
+      </div>
       <div data-testid="address">{account.data.bech32Address}</div>
       <div data-testid="error">{account.error}</div>
-      <button data-testid="login-btn" onClick={() => account.login()}>Login</button>
-      <button data-testid="logout-btn" onClick={() => account.logout()}>Logout</button>
+      <button data-testid="login-btn" onClick={() => account.login()}>
+        Login
+      </button>
+      <button data-testid="logout-btn" onClick={() => account.logout()}>
+        Logout
+      </button>
     </div>
   );
 }
@@ -33,7 +43,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
-    
+
     // Mock window.location for redirect tests
     delete (window as any).location;
     (window as any).location = {
@@ -59,7 +69,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
       render(
         <AbstraxionProvider config={redirectConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       // Wait for initialization to complete
@@ -68,7 +78,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           const initializing = screen.getByTestId("is-initializing");
           expect(initializing.textContent).toBe("ready");
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Should start disconnected
@@ -91,7 +101,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
       render(
         <AbstraxionProvider config={redirectConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       await waitFor(
@@ -99,7 +109,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           const initializing = screen.getByTestId("is-initializing");
           expect(initializing.textContent).toBe("ready");
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Should still initialize successfully
@@ -125,7 +135,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
       render(
         <AbstraxionProvider config={redirectConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       // Wait for initialization
@@ -134,7 +144,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           const initializing = screen.getByTestId("is-initializing");
           expect(initializing.textContent).toBe("ready");
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Click login button
@@ -147,7 +157,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           const connecting = screen.getByTestId("is-connecting");
           expect(connecting.textContent).toBe("connecting");
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       // In redirect mode, login should trigger redirect
@@ -181,7 +191,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
       render(
         <AbstraxionProvider config={redirectConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       // Provider should detect redirect callback
@@ -191,7 +201,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           // Should enter connecting state when returning from redirect
           expect(connecting.textContent).toBe("connecting");
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Restore original location
@@ -221,7 +231,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
       render(
         <AbstraxionProvider config={redirectConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       await waitFor(
@@ -229,7 +239,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           const initializing = screen.getByTestId("is-initializing");
           expect(initializing.textContent).toBe("ready");
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // All context values should be accessible
@@ -256,7 +266,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
       const { rerender } = render(
         <AbstraxionProvider config={redirectConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       await waitFor(
@@ -264,7 +274,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           const initializing = screen.getByTestId("is-initializing");
           expect(initializing.textContent).toBe("ready");
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Change config
@@ -276,7 +286,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
       rerender(
         <AbstraxionProvider config={newConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       // Provider should handle config change
@@ -285,7 +295,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           const initializing = screen.getByTestId("is-initializing");
           expect(initializing.textContent).toBe("ready");
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     });
   });
@@ -305,7 +315,7 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
       render(
         <AbstraxionProvider config={redirectConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       // Should still initialize (errors handled internally)
@@ -314,9 +324,8 @@ describe("AbstraxionProvider - Redirect Mode Integration Tests", () => {
           const initializing = screen.getByTestId("is-initializing");
           expect(initializing.textContent).toBe("ready");
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     });
   });
 });
-

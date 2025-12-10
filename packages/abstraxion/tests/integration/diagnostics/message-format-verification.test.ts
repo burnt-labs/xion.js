@@ -16,7 +16,8 @@ import { TEST_MNEMONIC } from "../fixtures";
 
 describe("Message Format Verification", () => {
   it("should verify that hex-encoded and plain string produce same hash", async () => {
-    const address = "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
+    const address =
+      "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
 
     // Convert to hex
     const addressHex = utf8ToHexWithPrefix(address);
@@ -50,14 +51,23 @@ describe("Message Format Verification", () => {
     const [account] = await wallet.getAccounts();
 
     // Get private key for signing
-    const { Slip10, Slip10Curve, stringToPath: pathToArray } = await import("@cosmjs/crypto");
+    const {
+      Slip10,
+      Slip10Curve,
+      stringToPath: pathToArray,
+    } = await import("@cosmjs/crypto");
     const { Bip39, EnglishMnemonic } = await import("@cosmjs/crypto");
     const mnemonicObj = new EnglishMnemonic(TEST_MNEMONIC);
     const seed = await Bip39.mnemonicToSeed(mnemonicObj);
-    const { privkey } = Slip10.derivePath(Slip10Curve.Secp256k1, seed, pathToArray(`m/44'/118'/0'/0/0`));
+    const { privkey } = Slip10.derivePath(
+      Slip10Curve.Secp256k1,
+      seed,
+      pathToArray(`m/44'/118'/0'/0/0`),
+    );
 
     // Test address
-    const address = "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
+    const address =
+      "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
 
     // Sign the HEX-encoded address (like xion.js does)
     const addressHex = utf8ToHexWithPrefix(address);
@@ -84,27 +94,33 @@ describe("Message Format Verification", () => {
     // So signing hex bytes and signing plain string produce THE SAME signature!
 
     // Verify with HEX format (will FAIL - verifySecp256k1Signature expects plain string, not hex)
-    console.log("\n=== Verifying with HEX format (should fail - wrong input format) ===");
+    console.log(
+      "\n=== Verifying with HEX format (should fail - wrong input format) ===",
+    );
     const isValidHex = await verifySecp256k1Signature(
-      addressHex,  // This is "0x78696f6e31..." - verifySecp256k1Signature will treat this as UTF-8!
+      addressHex, // This is "0x78696f6e31..." - verifySecp256k1Signature will treat this as UTF-8!
       signatureHex,
-      pubkeyBase64
+      pubkeyBase64,
     );
     console.log("Verification result (hex message):", isValidHex);
-    expect(isValidHex).toBe(false);  // SHOULD FAIL - input is "0x..." string, not plain bech32!
+    expect(isValidHex).toBe(false); // SHOULD FAIL - input is "0x..." string, not plain bech32!
 
     // Verify with PLAIN STRING format (should SUCCEED!)
     // The signature was created by signing UTF-8 bytes, which is exactly what plain string verification does
-    console.log("\n=== Verifying with PLAIN STRING format (should succeed) ===");
+    console.log(
+      "\n=== Verifying with PLAIN STRING format (should succeed) ===",
+    );
     const isValidPlain = await verifySecp256k1Signature(
-      address,  // Plain string "xion1..."
-      signatureHex,  // Signature of UTF-8 bytes
-      pubkeyBase64
+      address, // Plain string "xion1..."
+      signatureHex, // Signature of UTF-8 bytes
+      pubkeyBase64,
     );
     console.log("Verification result (plain message):", isValidPlain);
-    expect(isValidPlain).toBe(true);  // SHOULD SUCCEED - same bytes!
+    expect(isValidPlain).toBe(true); // SHOULD SUCCEED - same bytes!
 
-    console.log("\n✅ Hex representation of UTF-8 bytes equals plain UTF-8 bytes!");
+    console.log(
+      "\n✅ Hex representation of UTF-8 bytes equals plain UTF-8 bytes!",
+    );
   });
 
   it("should demonstrate the CORRECT AA API flow", async () => {
@@ -119,12 +135,23 @@ describe("Message Format Verification", () => {
 
     const [account] = await wallet.getAccounts();
 
-    const { Slip10, Slip10Curve, stringToPath: pathToArray, Bip39, EnglishMnemonic } = await import("@cosmjs/crypto");
+    const {
+      Slip10,
+      Slip10Curve,
+      stringToPath: pathToArray,
+      Bip39,
+      EnglishMnemonic,
+    } = await import("@cosmjs/crypto");
     const mnemonicObj = new EnglishMnemonic(TEST_MNEMONIC);
     const seed = await Bip39.mnemonicToSeed(mnemonicObj);
-    const { privkey } = Slip10.derivePath(Slip10Curve.Secp256k1, seed, pathToArray(`m/44'/118'/0'/0/0`));
+    const { privkey } = Slip10.derivePath(
+      Slip10Curve.Secp256k1,
+      seed,
+      pathToArray(`m/44'/118'/0'/0/0`),
+    );
 
-    const address = "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
+    const address =
+      "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
 
     // XION.JS SIDE: Signs PLAIN STRING (NOT hex!)
     const signPlainStringFn = async (plainMessage: string) => {
@@ -147,13 +174,13 @@ describe("Message Format Verification", () => {
     const pubkeyBase64 = normalizeSecp256k1PublicKey(pubkeyHex);
 
     console.log("\n=== AA API SIDE ===");
-    console.log("Verifying message:", address);  // Plain string!
+    console.log("Verifying message:", address); // Plain string!
     console.log("Using pubkey:", pubkeyBase64);
 
     const isValid = await verifySecp256k1Signature(
-      address,  // Plain string
-      signature,  // Signature of plain string
-      pubkeyBase64
+      address, // Plain string
+      signature, // Signature of plain string
+      pubkeyBase64,
     );
 
     console.log("Verification result:", isValid);

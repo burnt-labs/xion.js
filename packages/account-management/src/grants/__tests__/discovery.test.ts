@@ -382,4 +382,3 @@ describe("discovery.ts - queryTreasuryContractWithPermissions", () => {
     });
   });
 });
-

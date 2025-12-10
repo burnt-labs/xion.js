@@ -28,7 +28,12 @@ describe("Circular Dependency Prevention", () => {
       eager: true,
     });
 
-    const allFiles = { ...signerFiles, ...cryptoFiles, ...interfaceFiles, ...typesFiles };
+    const allFiles = {
+      ...signerFiles,
+      ...cryptoFiles,
+      ...interfaceFiles,
+      ...typesFiles,
+    };
 
     const violations: string[] = [];
 
@@ -42,7 +47,8 @@ describe("Circular Dependency Prevention", () => {
       if (typeof content === "string") {
         // Match import statements that reference account-abstraction-api
         // from "account-abstraction-api" or from '@burnt-labs/account-abstraction-api'
-        const importPattern = /(?:import|from)\s+(?:type\s+)?(?:[^"']*\s+)?["'](?:@burnt-labs\/)?account-abstraction-api(?:\/[^"']*)?["']/;
+        const importPattern =
+          /(?:import|from)\s+(?:type\s+)?(?:[^"']*\s+)?["'](?:@burnt-labs\/)?account-abstraction-api(?:\/[^"']*)?["']/;
 
         if (importPattern.test(content)) {
           violations.push(path);
@@ -62,7 +68,7 @@ describe("Circular Dependency Prevention", () => {
   it("should not import from packages higher in the dependency hierarchy", async () => {
     // Signers is in Layer 2 of the dependency hierarchy
     // It should NOT import from packages in higher layers (Layer 3, 4, 5)
-    // 
+    //
     // Higher-level packages that signers should NOT import from:
     // - Layer 3: account-abstraction-api (already checked above)
     // - Layer 4: @burnt-labs/abstraxion-core, @burnt-labs/account-management
@@ -89,7 +95,12 @@ describe("Circular Dependency Prevention", () => {
       eager: true,
     });
 
-    const allFiles = { ...signerFiles, ...cryptoFiles, ...interfaceFiles, ...typesFiles };
+    const allFiles = {
+      ...signerFiles,
+      ...cryptoFiles,
+      ...interfaceFiles,
+      ...typesFiles,
+    };
 
     // Packages that are higher in the hierarchy (should NOT be imported)
     const forbiddenPackages = [
@@ -112,7 +123,7 @@ describe("Circular Dependency Prevention", () => {
       if (typeof content === "string") {
         for (const pkg of forbiddenPackages) {
           // Check for import statements that reference these packages
-          // Match patterns like: 
+          // Match patterns like:
           //   from "@burnt-labs/abstraxion-core"
           //   from '@burnt-labs/account-management'
           //   import ... from "account-abstraction-api"
@@ -122,7 +133,7 @@ describe("Circular Dependency Prevention", () => {
             `(?:import|from)\\s+(?:type\\s+)?(?:[^"']*\\s+)?["']${escapedPkg}(?:/[^"']*)?["']`,
             "g",
           );
-          
+
           if (importPattern.test(content)) {
             violations.push({ file: path, package: pkg });
           }
@@ -270,8 +281,9 @@ describe("Package Boundary Tests", () => {
     const apiTypesContent = Object.values(apiTypesFiles)[0];
 
     // Should only have type exports and imports
-    const hasImplementation =
-      /export\s+(function|class|const|let|var)/.test(apiTypesContent as string);
+    const hasImplementation = /export\s+(function|class|const|let|var)/.test(
+      apiTypesContent as string,
+    );
 
     expect(hasImplementation).toBe(false);
   });

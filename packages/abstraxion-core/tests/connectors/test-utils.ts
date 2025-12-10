@@ -19,7 +19,8 @@ export const TEST_SIGNATURES = {
 
   // Secp256K1: 64 bytes as hex without 0x prefix (128 chars)
   secp256k1: "b".repeat(128), // 128 hex chars = 64 bytes
-  secp256k1Base64: "u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7uw==", // 64 bytes in base64
+  secp256k1Base64:
+    "u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7uw==", // 64 bytes in base64
 
   // JWT: Just a simple JWT string (format varies)
   jwt: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature",
@@ -45,7 +46,8 @@ export const TEST_AUTHENTICATORS = {
 
   // JWT: Token identifier (aud.sub format or full JWT)
   jwt: "https://example.com.user123",
-  jwtFull: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature",
+  jwtFull:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature",
 
   // Passkey: Credential ID (base64)
   passkey: "passkey-credential-id-base64",
@@ -61,7 +63,7 @@ export function createMockSignerConfig(
   authenticatorType: string,
   authenticator: string,
   signatureResult: string,
-  shouldThrow: boolean = false
+  shouldThrow: boolean = false,
 ): SignerConfig {
   return {
     authenticatorType: authenticatorType as any,
@@ -85,7 +87,7 @@ export function createMockConnectorConfig(
   options?: {
     shouldThrow?: boolean;
     isReady?: boolean;
-  }
+  },
 ): ExternalSignerConnectorConfig {
   return {
     id,
@@ -99,9 +101,8 @@ export function createMockConnectorConfig(
       }
       return signerConfig;
     },
-    isReady: options?.isReady !== undefined
-      ? async () => options.isReady!
-      : undefined,
+    isReady:
+      options?.isReady !== undefined ? async () => options.isReady! : undefined,
   };
 }
 
@@ -113,7 +114,7 @@ export function createSimpleMockConnector(
   id: string,
   name: string,
   type: ConnectorType = ConnectorType.EXTERNAL_SIGNER,
-  isAvailable: boolean = true
+  isAvailable: boolean = true,
 ): Connector {
   return {
     metadata: {

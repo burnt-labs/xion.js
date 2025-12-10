@@ -90,7 +90,6 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
     client: ContractQueryClient,
   ): Promise<TreasuryConfig | null> {
     try {
-
       // Get chain ID from client
       const chainId = await client.getChainId();
 
@@ -126,7 +125,10 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
 
         // Extract and validate params from the response
         // Note: DaoDao indexer may return display_url, but contract uses metadata
-        const metadataValue = validatedData.params.metadata || validatedData.params.display_url || "";
+        const metadataValue =
+          validatedData.params.metadata ||
+          validatedData.params.display_url ||
+          "";
         const params: TreasuryParams = {
           redirect_url: isUrlSafe(validatedData.params.redirect_url)
             ? validatedData.params.redirect_url || ""
@@ -158,9 +160,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
       // Re-throw other errors instead of returning null
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      throw new Error(
-        `DaoDao treasury strategy failed: ${errorMessage}`,
-      );
+      throw new Error(`DaoDao treasury strategy failed: ${errorMessage}`);
     }
   }
 

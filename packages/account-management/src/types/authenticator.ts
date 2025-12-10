@@ -13,7 +13,8 @@ import type {
  * Authenticator with required authenticatorIndex
  * Extends base AuthenticatorInfo with required index field
  */
-export interface Authenticator extends Omit<BaseAuthenticatorInfo, "authenticatorIndex"> {
+export interface Authenticator
+  extends Omit<BaseAuthenticatorInfo, "authenticatorIndex"> {
   authenticatorIndex: number; // Required in account-management context
 }
 
@@ -26,7 +27,8 @@ export type SmartAccount = BaseSmartAccount;
  * Smart account with required code ID
  * Extends base SmartAccount with required codeId field
  */
-export interface SmartAccountWithCodeId extends Omit<BaseSmartAccount, "codeId"> {
+export interface SmartAccountWithCodeId
+  extends Omit<BaseSmartAccount, "codeId"> {
   codeId: number; // Required in account-management context
   authenticators: Authenticator[]; // Use our stricter Authenticator type
 }

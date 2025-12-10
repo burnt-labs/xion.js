@@ -10,7 +10,8 @@ import { sha256 } from "@cosmjs/crypto";
 async function loadWebAuthnGet() {
   const { get } = await import("@github/webauthn-json/browser-ponyfill");
   return get;
-}import { AAccountData, AASigner } from "../interfaces/AASigner";
+}
+import { AAccountData, AASigner } from "../interfaces/AASigner";
 import { AAAlgo } from "../interfaces";
 import { registeredCredentials } from "./utils/webauthn-utils";
 
@@ -55,7 +56,8 @@ export class AAPasskeySigner extends AASigner {
     };
 
     // Lazy-load the webauthn get function only when needed
-    const get = await loadWebAuthnGet();    const publicKeyCredential = await get(options);
+    const get = await loadWebAuthnGet();
+    const publicKeyCredential = await get(options);
     const pubKeyJson = publicKeyCredential.toJSON();
     const pubKeyCredArray = new TextEncoder().encode(
       JSON.stringify(pubKeyJson),

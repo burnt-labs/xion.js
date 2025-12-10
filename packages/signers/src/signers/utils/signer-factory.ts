@@ -8,7 +8,10 @@ import { Buffer } from "buffer";
 import { OfflineDirectSigner } from "@cosmjs/proto-signing";
 import { AAEthSigner, PersonalSignFn } from "../eth-signer";
 import { AADirectSigner, SignArbitraryFn } from "../direct-signer";
-import { AUTHENTICATOR_TYPE, type AuthenticatorType } from "../../types/account";
+import {
+  AUTHENTICATOR_TYPE,
+  type AuthenticatorType,
+} from "../../types/account";
 import { normalizeHexPrefix, fromHex } from "../../crypto/hex-validation";
 
 /**

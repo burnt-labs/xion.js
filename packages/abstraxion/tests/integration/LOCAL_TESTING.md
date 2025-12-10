@@ -5,6 +5,7 @@ This guide explains how to run the integration tests locally, emulating the GitH
 ## Quick Start
 
 1. **Create your local environment file**:
+
    ```bash
    cd packages/abstraxion/tests/integration
    cp .env.test.local .env.test.local.mine
@@ -16,6 +17,7 @@ This guide explains how to run the integration tests locally, emulating the GitH
    - You only need to add sensitive values if you have them
 
 3. **Run the tests**:
+
    ```bash
    # From xion.js root
    cd /Users/GijsvanLeeuwen/Documents/projs/xion-core/xion.js
@@ -38,11 +40,13 @@ XION_DEPLOYED_FEE_GRANTER=xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x
 ```
 
 **Advantages**:
+
 - No local AA-API server needed
 - Uses production-like environment
 - Faster setup
 
 **Disadvantages**:
+
 - Fee grants might be exhausted (tests may fail with "insufficient funds")
 - Cannot debug AA-API internals
 
@@ -58,8 +62,10 @@ XION_LOCAL_FEE_GRANTER=xion10y5pzqs0jn89zpm6va625v6xzsqjkm293efwq8
 ```
 
 **Prerequisites**:
+
 1. Clone the `account-abstraction-api` repository
 2. Create a `.dev.vars` file with Stytch credentials:
+
    ```bash
    cd /Users/GijsvanLeeuwen/Documents/projs/xion-core/account-abstraction-api
 
@@ -73,6 +79,7 @@ XION_LOCAL_FEE_GRANTER=xion10y5pzqs0jn89zpm6va625v6xzsqjkm293efwq8
    ```
 
 3. Start the AA-API dev server:
+
    ```bash
    npm run dev
    ```
@@ -86,46 +93,51 @@ XION_LOCAL_FEE_GRANTER=xion10y5pzqs0jn89zpm6va625v6xzsqjkm293efwq8
    ```
 
 **Advantages**:
+
 - Full control over AA-API
 - Can debug AA-API issues
 - Can modify AA-API behavior
 
 **Disadvantages**:
+
 - Requires Stytch credentials
 - More complex setup
 
 ## Environment Variables Reference
 
 ### Required (Public Values)
+
 These are already set in `.env.test.local`:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `XION_TESTNET_CHAIN_ID` | Chain ID for testnet | `xion-testnet-2` |
-| `XION_TESTNET_RPC_URL` | RPC endpoint | `https://rpc.xion-testnet-2.burnt.com:443` |
-| `XION_TESTNET_REST_URL` | REST API endpoint | `https://api.xion-testnet-2.burnt.com:443` |
-| `XION_TESTNET_GAS_PRICE` | Gas price | `0.001uxion` |
-| `XION_TESTNET_TREASURY_ADDRESS` | Treasury contract address | `xion1sv6...` |
-| `XION_DEPLOYED_AA_API_URL` | Deployed AA-API URL | `https://aa-api.xion-testnet-2.burnt.com` |
-| `XION_DEPLOYED_FEE_GRANTER` | Fee granter address | `xion1xrqz...` |
+| Variable                        | Description               | Default                                    |
+| ------------------------------- | ------------------------- | ------------------------------------------ |
+| `XION_TESTNET_CHAIN_ID`         | Chain ID for testnet      | `xion-testnet-2`                           |
+| `XION_TESTNET_RPC_URL`          | RPC endpoint              | `https://rpc.xion-testnet-2.burnt.com:443` |
+| `XION_TESTNET_REST_URL`         | REST API endpoint         | `https://api.xion-testnet-2.burnt.com:443` |
+| `XION_TESTNET_GAS_PRICE`        | Gas price                 | `0.001uxion`                               |
+| `XION_TESTNET_TREASURY_ADDRESS` | Treasury contract address | `xion1sv6...`                              |
+| `XION_DEPLOYED_AA_API_URL`      | Deployed AA-API URL       | `https://aa-api.xion-testnet-2.burnt.com`  |
+| `XION_DEPLOYED_FEE_GRANTER`     | Fee granter address       | `xion1xrqz...`                             |
 
 ### Optional (Sensitive Values)
+
 These improve test reliability but are not required:
 
-| Variable | Description | How to Get |
-|----------|-------------|------------|
-| `XION_TESTNET_INDEXER_URL` | Numia indexer URL | Request from team |
+| Variable                            | Description          | How to Get        |
+| ----------------------------------- | -------------------- | ----------------- |
+| `XION_TESTNET_INDEXER_URL`          | Numia indexer URL    | Request from team |
 | `XION_TESTNET_TREASURY_INDEXER_URL` | SubQuery indexer URL | Request from team |
 
 Without these, some tests might be slower (account discovery uses retry logic instead of indexer queries).
 
 ### Local AA-API Only
+
 Only needed if `TEST_TARGET=local`:
 
-| Variable | Description | How to Get |
-|----------|-------------|------------|
+| Variable            | Description       | How to Get            |
+| ------------------- | ----------------- | --------------------- |
 | `STYTCH_PROJECT_ID` | Stytch project ID | From Stytch dashboard |
-| `STYTCH_SECRET` | Stytch secret key | From Stytch dashboard |
+| `STYTCH_SECRET`     | Stytch secret key | From Stytch dashboard |
 
 ## Test Structure
 
@@ -153,6 +165,7 @@ tests/integration/
 **Problem**: Fee granter account has no balance or grants are exhausted.
 
 **Solution**:
+
 - Switch to local AA-API mode (requires Stytch credentials)
 - Or wait for fee granter to be refilled
 - Or request team to refill the fee granter
@@ -162,6 +175,7 @@ tests/integration/
 **Problem**: Indexer is slow or unavailable.
 
 **Solution**:
+
 - Tests already use retry logic (5 retries, 2s delay)
 - Add indexer URLs if you have them (improves speed)
 - Tests should eventually pass, just takes longer
@@ -171,6 +185,7 @@ tests/integration/
 **Problem**: Network or RPC issues.
 
 **Solution**:
+
 - Check RPC endpoint is accessible
 - Increase timeout: `INTEGRATION_TEST_TIMEOUT=240000` (4 minutes)
 
@@ -179,6 +194,7 @@ tests/integration/
 **Problem**: Packages not built.
 
 **Solution**:
+
 ```bash
 cd /Users/GijsvanLeeuwen/Documents/projs/xion-core/xion.js
 pnpm build
@@ -194,6 +210,7 @@ The GitHub Actions workflow ([.github/workflows/integration-tests.yml](../../.gi
 4. Runs tests with `pnpm --filter @burnt-labs/abstraxion test:integration`
 
 Your local setup does the same, but:
+
 - Configuration comes from `.env.test.local` instead of GitHub secrets
 - You manually start AA-API server if using local mode
 - You run tests directly via pnpm

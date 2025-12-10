@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-
 import { DirectQueryTreasuryStrategy } from "../treasury-direct-query-strategy";
 
 // Local mock data to avoid circular dependency
@@ -18,7 +17,7 @@ const mockGrantConfigs = {
       value: Buffer.from(
         JSON.stringify({
           msg: "/cosmwasm.wasm.v1.MsgExecuteContract",
-        })
+        }),
       ).toString("base64"),
     },
     description: "Execute smart contracts",
@@ -30,7 +29,7 @@ const mockGrantConfigs = {
       value: Buffer.from(
         JSON.stringify({
           spend_limit: [{ denom: "uxion", amount: "1000000" }],
-        })
+        }),
       ).toString("base64"),
     },
     description: "Send tokens",
@@ -43,7 +42,7 @@ const mockGrantConfigs = {
         JSON.stringify({
           authorization_type: "AUTHORIZATION_TYPE_DELEGATE",
           max_tokens: { denom: "uxion", amount: "5000000" },
-        })
+        }),
       ).toString("base64"),
     },
     description: "Delegate tokens to validators",
@@ -55,7 +54,7 @@ const mockGrantConfigs = {
       value: Buffer.from(
         JSON.stringify({
           spend_limit: [{ denom: "uxion", amount: "100000" }],
-        })
+        }),
       ).toString("base64"),
     },
     description: "Cover transaction fees",
@@ -99,7 +98,9 @@ describe("DirectQueryTreasuryStrategy", () => {
     it("should fetch treasury config successfully", async () => {
       // Mock grant_config_type_urls query
       mockClient.queryContractSmart
-        .mockResolvedValueOnce(mockTreasuryContractResponses.typeUrlsResponse.basic)
+        .mockResolvedValueOnce(
+          mockTreasuryContractResponses.typeUrlsResponse.basic,
+        )
         // Mock grant_config_by_type_url queries
         .mockResolvedValueOnce(mockGrantConfigs.genericExecute)
         .mockResolvedValueOnce(mockGrantConfigs.feeGrant)
@@ -108,7 +109,7 @@ describe("DirectQueryTreasuryStrategy", () => {
 
       const result = await strategy.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toBeDefined();
@@ -125,7 +126,7 @@ describe("DirectQueryTreasuryStrategy", () => {
 
       const result = await strategy.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toBeNull();
@@ -133,11 +134,11 @@ describe("DirectQueryTreasuryStrategy", () => {
 
     it("should handle contract not found error", async () => {
       mockClient.queryContractSmart.mockRejectedValueOnce(
-        new Error("contract: not found")
+        new Error("contract: not found"),
       );
 
       await expect(
-        strategy.fetchTreasuryConfig("xion1treasury", mockClient)
+        strategy.fetchTreasuryConfig("xion1treasury", mockClient),
       ).rejects.toThrow("Direct query treasury strategy failed");
     });
 
@@ -155,12 +156,12 @@ describe("DirectQueryTreasuryStrategy", () => {
 
       const result = await strategy.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(mockClient.queryContractSmart).toHaveBeenCalledWith(
         "xion1treasury",
-        { grant_config_type_urls: {} }
+        { grant_config_type_urls: {} },
       );
 
       expect(mockClient.queryContractSmart).toHaveBeenCalledWith(
@@ -169,7 +170,7 @@ describe("DirectQueryTreasuryStrategy", () => {
           grant_config_by_type_url: {
             msg_type_url: mockGrantTypeUrls.genericAuthorization,
           },
-        }
+        },
       );
 
       expect(result?.grantConfigs).toHaveLength(2);
@@ -185,7 +186,7 @@ describe("DirectQueryTreasuryStrategy", () => {
 
       expect(mockClient.queryContractSmart).toHaveBeenCalledWith(
         "xion1treasury",
-        { params: {} }
+        { params: {} },
       );
     });
 
@@ -195,7 +196,7 @@ describe("DirectQueryTreasuryStrategy", () => {
         .mockResolvedValueOnce({ authorization: {} }); // Missing description
 
       await expect(
-        strategy.fetchTreasuryConfig("xion1treasury", mockClient)
+        strategy.fetchTreasuryConfig("xion1treasury", mockClient),
       ).rejects.toThrow("Direct query treasury strategy failed");
     });
 
@@ -205,7 +206,10 @@ describe("DirectQueryTreasuryStrategy", () => {
         .mockResolvedValueOnce(mockGrantConfigs.genericExecute)
         .mockRejectedValueOnce(new Error("params query failed"));
 
-      const result = await strategy.fetchTreasuryConfig("xion1treasury", mockClient);
+      const result = await strategy.fetchTreasuryConfig(
+        "xion1treasury",
+        mockClient,
+      );
 
       // Should return result with empty params instead of throwing
       expect(result).toBeDefined();
@@ -229,7 +233,7 @@ describe("DirectQueryTreasuryStrategy", () => {
 
       const result = await strategy.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result?.grantConfigs).toHaveLength(3);
@@ -245,7 +249,10 @@ describe("DirectQueryTreasuryStrategy", () => {
           metadata: "test",
         });
 
-      const result = await strategy.fetchTreasuryConfig("xion1treasury", mockClient);
+      const result = await strategy.fetchTreasuryConfig(
+        "xion1treasury",
+        mockClient,
+      );
 
       // Invalid URLs should be sanitized to empty strings
       expect(result?.params.redirect_url).toBe("");
@@ -265,7 +272,7 @@ describe("DirectQueryTreasuryStrategy", () => {
 
       const result = await strategy.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result?.params.redirect_url).toBe("https://example.com/redirect");

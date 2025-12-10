@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { verifyEthWalletSignature, verifySecp256k1Signature } from "../signature-verification";
+import {
+  verifyEthWalletSignature,
+  verifySecp256k1Signature,
+} from "../signature-verification";
 import { Wallet } from "ethers";
 import { Secp256k1, sha256 } from "@cosmjs/crypto";
 import { toHex } from "@cosmjs/encoding";
@@ -12,7 +15,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const message = "xion1test123456789abcdefghijklmnopqrstuvwxyz";
         const signature = await wallet.signMessage(message);
 
-        const result = verifyEthWalletSignature(message, signature, wallet.address);
+        const result = verifyEthWalletSignature(
+          message,
+          signature,
+          wallet.address,
+        );
         expect(result).toBe(true);
       });
 
@@ -21,7 +28,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const message = "xion1test123456789abcdefghijklmnopqrstuvwxyz";
         const signature = await wallet.signMessage(message);
 
-        const result = verifyEthWalletSignature(message, signature, wallet.address);
+        const result = verifyEthWalletSignature(
+          message,
+          signature,
+          wallet.address,
+        );
         expect(result).toBe(true);
       });
 
@@ -35,7 +46,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
           signature = signature.slice(2);
         }
 
-        const result = verifyEthWalletSignature(message, signature, wallet.address);
+        const result = verifyEthWalletSignature(
+          message,
+          signature,
+          wallet.address,
+        );
         expect(result).toBe(true);
       });
 
@@ -48,7 +63,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result1 = verifyEthWalletSignature(
           message,
           signature,
-          wallet.address.toUpperCase()
+          wallet.address.toUpperCase(),
         );
         expect(result1).toBe(true);
 
@@ -56,7 +71,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result2 = verifyEthWalletSignature(
           message,
           signature,
-          wallet.address.toLowerCase()
+          wallet.address.toLowerCase(),
         );
         expect(result2).toBe(true);
 
@@ -73,11 +88,15 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
 
         const message1 = "xion1message1";
         const signature1 = await wallet.signMessage(message1);
-        expect(verifyEthWalletSignature(message1, signature1, wallet.address)).toBe(true);
+        expect(
+          verifyEthWalletSignature(message1, signature1, wallet.address),
+        ).toBe(true);
 
         const message2 = "xion1message2";
         const signature2 = await wallet.signMessage(message2);
-        expect(verifyEthWalletSignature(message2, signature2, wallet.address)).toBe(true);
+        expect(
+          verifyEthWalletSignature(message2, signature2, wallet.address),
+        ).toBe(true);
       });
     });
 
@@ -90,7 +109,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         // Sign with wallet2 but try to verify with wallet1's address
         const signature = await wallet2.signMessage(message);
 
-        const result = verifyEthWalletSignature(message, signature, wallet1.address);
+        const result = verifyEthWalletSignature(
+          message,
+          signature,
+          wallet1.address,
+        );
         expect(result).toBe(false);
       });
 
@@ -102,7 +125,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         // Sign message1 but try to verify with message2
         const signature = await wallet.signMessage(message1);
 
-        const result = verifyEthWalletSignature(message2, signature, wallet.address);
+        const result = verifyEthWalletSignature(
+          message2,
+          signature,
+          wallet.address,
+        );
         expect(result).toBe(false);
       });
 
@@ -111,9 +138,9 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const address = "0x1234567890123456789012345678901234567890";
         const invalidSignature = "0xinvalid_signature_data";
 
-        expect(() => verifyEthWalletSignature(message, invalidSignature, address)).toThrow(
-          /Signature recovery failed/
-        );
+        expect(() =>
+          verifyEthWalletSignature(message, invalidSignature, address),
+        ).toThrow(/Signature recovery failed/);
       });
 
       it("should throw error for empty signature", () => {
@@ -121,7 +148,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const address = "0x1234567890123456789012345678901234567890";
 
         expect(() => verifyEthWalletSignature(message, "", address)).toThrow(
-          /Signature recovery failed/
+          /Signature recovery failed/,
         );
       });
 
@@ -130,9 +157,9 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const address = "0x1234567890123456789012345678901234567890";
         const shortSignature = "0x123456";
 
-        expect(() => verifyEthWalletSignature(message, shortSignature, address)).toThrow(
-          /Signature recovery failed/
-        );
+        expect(() =>
+          verifyEthWalletSignature(message, shortSignature, address),
+        ).toThrow(/Signature recovery failed/);
       });
 
       it("should throw error for signature with invalid hex characters", () => {
@@ -140,9 +167,9 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const address = "0x1234567890123456789012345678901234567890";
         const invalidHexSig = "0x" + "g".repeat(130);
 
-        expect(() => verifyEthWalletSignature(message, invalidHexSig, address)).toThrow(
-          /Signature recovery failed/
-        );
+        expect(() =>
+          verifyEthWalletSignature(message, invalidHexSig, address),
+        ).toThrow(/Signature recovery failed/);
       });
     });
 
@@ -152,7 +179,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const longMessage = "x".repeat(1000);
         const signature = await wallet.signMessage(longMessage);
 
-        const result = verifyEthWalletSignature(longMessage, signature, wallet.address);
+        const result = verifyEthWalletSignature(
+          longMessage,
+          signature,
+          wallet.address,
+        );
         expect(result).toBe(true);
       });
 
@@ -161,7 +192,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const message = "xion1test!@#$%^&*()_+-={}[]|:;<>?,./";
         const signature = await wallet.signMessage(message);
 
-        const result = verifyEthWalletSignature(message, signature, wallet.address);
+        const result = verifyEthWalletSignature(
+          message,
+          signature,
+          wallet.address,
+        );
         expect(result).toBe(true);
       });
 
@@ -170,7 +205,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const message = "xion1test你好世界🌍";
         const signature = await wallet.signMessage(message);
 
-        const result = verifyEthWalletSignature(message, signature, wallet.address);
+        const result = verifyEthWalletSignature(
+          message,
+          signature,
+          wallet.address,
+        );
         expect(result).toBe(true);
       });
 
@@ -179,7 +218,11 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const message = "line1\nline2\nline3";
         const signature = await wallet.signMessage(message);
 
-        const result = verifyEthWalletSignature(message, signature, wallet.address);
+        const result = verifyEthWalletSignature(
+          message,
+          signature,
+          wallet.address,
+        );
         expect(result).toBe(true);
       });
     });
@@ -202,8 +245,8 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
       // Extract r and s components (64 bytes total, without recovery byte)
       // This matches what verifySecp256k1Signature expects
       const signatureBytes = new Uint8Array(64);
-      signatureBytes.set(signature.r(), 0);   // First 32 bytes (r)
-      signatureBytes.set(signature.s(), 32);  // Second 32 bytes (s)
+      signatureBytes.set(signature.r(), 0); // First 32 bytes (r)
+      signatureBytes.set(signature.s(), 32); // Second 32 bytes (s)
 
       return {
         privkey,
@@ -211,46 +254,51 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         pubkeyHex: toHex(keypair.pubkey),
         pubkeyBase64: Buffer.from(keypair.pubkey).toString("base64"),
         signature,
-        signatureHex: toHex(signatureBytes),  // 64 bytes (r+s) without recovery byte
+        signatureHex: toHex(signatureBytes), // 64 bytes (r+s) without recovery byte
         message,
         messageHash,
       };
     }
 
-
     describe("Valid Signature Verification with Base64 Public Key", () => {
       it("should verify a valid secp256k1 signature with base64 pubkey", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
 
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
       });
 
       it("should verify signature with 0x prefix on signature", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const signatureWith0x = "0x" + testData.signatureHex;
 
         const result = await verifySecp256k1Signature(
           testData.message,
           signatureWith0x,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
       });
 
       it("should verify signature without 0x prefix on signature", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
 
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
@@ -277,7 +325,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result1 = await verifySecp256k1Signature(
           message1,
           toHex(sig1Bytes),
-          pubkeyBase64
+          pubkeyBase64,
         );
         expect(result1).toBe(true);
 
@@ -294,17 +342,18 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result2 = await verifySecp256k1Signature(
           message2,
           toHex(sig2Bytes),
-          pubkeyBase64
+          pubkeyBase64,
         );
         expect(result2).toBe(true);
       });
     });
 
-
     describe("Compressed and Uncompressed Public Keys", () => {
       it("should work with compressed pubkey (33 bytes)", async () => {
         // Create a truly compressed pubkey by compressing the one from makeKeypair
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
 
         // CosmJS makeKeypair returns uncompressed (65 bytes), so we compress it
         const compressedPubkey = Secp256k1.compressPubkey(testData.pubkey);
@@ -313,7 +362,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          Buffer.from(compressedPubkey).toString("base64")
+          Buffer.from(compressedPubkey).toString("base64"),
         );
 
         expect(result).toBe(true);
@@ -328,7 +377,9 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const keypair = await Secp256k1.makeKeypair(privkey);
 
         // Create uncompressed pubkey (65 bytes: 0x04 + x-coordinate + y-coordinate)
-        const uncompressedPubkey = await Secp256k1.uncompressPubkey(keypair.pubkey);
+        const uncompressedPubkey = await Secp256k1.uncompressPubkey(
+          keypair.pubkey,
+        );
         expect(uncompressedPubkey.length).toBe(65);
 
         const message = "xion1test123456789abcdefghijklmnopqrstuvwxyz";
@@ -343,7 +394,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           message,
           toHex(signatureBytes),
-          Buffer.from(uncompressedPubkey).toString("base64")
+          Buffer.from(uncompressedPubkey).toString("base64"),
         );
 
         expect(result).toBe(true);
@@ -352,7 +403,9 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
 
     describe("Invalid Signature Rejection", () => {
       it("should return false for signature from different key", async () => {
-        const testData1 = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData1 = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
 
         // Create a second keypair with a different account number/seed
         const privkey2 = new Uint8Array(32);
@@ -365,7 +418,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData1.message,
           testData1.signatureHex,
-          Buffer.from(keypair2.pubkey).toString("base64")
+          Buffer.from(keypair2.pubkey).toString("base64"),
         );
 
         expect(result).toBe(false);
@@ -378,98 +431,154 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           "xion1message2",
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(false);
       });
 
       it("should throw error for invalid signature length", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const shortSig = "abcd1234"; // Too short
 
         await expect(
-          verifySecp256k1Signature(testData.message, shortSig, testData.pubkeyBase64)
+          verifySecp256k1Signature(
+            testData.message,
+            shortSig,
+            testData.pubkeyBase64,
+          ),
         ).rejects.toThrow(/Signature must be 64 bytes/);
       });
 
       it("should throw error for signature with 63 bytes", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const sig63Bytes = "a".repeat(126); // 63 bytes in hex
 
         await expect(
-          verifySecp256k1Signature(testData.message, sig63Bytes, testData.pubkeyBase64)
+          verifySecp256k1Signature(
+            testData.message,
+            sig63Bytes,
+            testData.pubkeyBase64,
+          ),
         ).rejects.toThrow(/Signature must be 64 bytes, got 63/);
       });
 
       it("should throw error for signature with 65 bytes", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const sig65Bytes = "a".repeat(130); // 65 bytes in hex
 
         await expect(
-          verifySecp256k1Signature(testData.message, sig65Bytes, testData.pubkeyBase64)
+          verifySecp256k1Signature(
+            testData.message,
+            sig65Bytes,
+            testData.pubkeyBase64,
+          ),
         ).rejects.toThrow(/Signature must be 64 bytes, got 65/);
       });
 
       it("should throw error for invalid hex signature", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const invalidHexSig = "zzzz" + "a".repeat(124); // Invalid hex chars
 
         await expect(
-          verifySecp256k1Signature(testData.message, invalidHexSig, testData.pubkeyBase64)
+          verifySecp256k1Signature(
+            testData.message,
+            invalidHexSig,
+            testData.pubkeyBase64,
+          ),
         ).rejects.toThrow(/Failed to decode signature/);
       });
 
       it("should throw error for empty signature", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
 
         await expect(
-          verifySecp256k1Signature(testData.message, "", testData.pubkeyBase64)
+          verifySecp256k1Signature(testData.message, "", testData.pubkeyBase64),
         ).rejects.toThrow(/Signature must be 64 bytes, got 0/);
       });
 
       it("should throw error for invalid pubkey length", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const shortPubkey = Buffer.from("ab", "hex").toString("base64"); // Too short
 
         await expect(
-          verifySecp256k1Signature(testData.message, testData.signatureHex, shortPubkey)
+          verifySecp256k1Signature(
+            testData.message,
+            testData.signatureHex,
+            shortPubkey,
+          ),
         ).rejects.toThrow(/Public key must be 33 or 65 bytes/);
       });
 
       it("should throw error for pubkey with 32 bytes", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const pubkey32Bytes = Buffer.alloc(32, "a").toString("base64");
 
         await expect(
-          verifySecp256k1Signature(testData.message, testData.signatureHex, pubkey32Bytes)
+          verifySecp256k1Signature(
+            testData.message,
+            testData.signatureHex,
+            pubkey32Bytes,
+          ),
         ).rejects.toThrow(/Public key must be 33 or 65 bytes, got 32/);
       });
 
       it("should throw error for pubkey with 64 bytes", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const pubkey64Bytes = Buffer.alloc(64, "a").toString("base64");
 
         await expect(
-          verifySecp256k1Signature(testData.message, testData.signatureHex, pubkey64Bytes)
+          verifySecp256k1Signature(
+            testData.message,
+            testData.signatureHex,
+            pubkey64Bytes,
+          ),
         ).rejects.toThrow(/Public key must be 33 or 65 bytes, got 64/);
       });
 
       it("should throw error for pubkey with 34 bytes", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const pubkey34Bytes = Buffer.alloc(34, "a").toString("base64");
 
         await expect(
-          verifySecp256k1Signature(testData.message, testData.signatureHex, pubkey34Bytes)
+          verifySecp256k1Signature(
+            testData.message,
+            testData.signatureHex,
+            pubkey34Bytes,
+          ),
         ).rejects.toThrow(/Public key must be 33 or 65 bytes, got 34/);
       });
 
       it("should throw error for pubkey with 66 bytes", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const pubkey66Bytes = Buffer.alloc(66, "a").toString("base64");
 
         await expect(
-          verifySecp256k1Signature(testData.message, testData.signatureHex, pubkey66Bytes)
+          verifySecp256k1Signature(
+            testData.message,
+            testData.signatureHex,
+            pubkey66Bytes,
+          ),
         ).rejects.toThrow(/Public key must be 33 or 65 bytes, got 66/);
       });
     });
@@ -482,7 +591,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
@@ -495,7 +604,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
@@ -508,7 +617,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
@@ -520,7 +629,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
@@ -533,27 +642,31 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
       });
 
       it("should handle signature with uppercase hex", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const signatureUpper = testData.signatureHex.toUpperCase();
 
         const result = await verifySecp256k1Signature(
           testData.message,
           signatureUpper,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
       });
 
       it("should handle signature with mixed case hex", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
         const signatureMixed =
           testData.signatureHex.slice(0, 20).toUpperCase() +
           testData.signatureHex.slice(20).toLowerCase();
@@ -561,7 +674,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData.message,
           signatureMixed,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
@@ -570,13 +683,15 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
 
     describe("String Message Format (Standard)", () => {
       it("should verify signature with plain string message", async () => {
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
 
         // Verify with string format (standard)
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
@@ -586,13 +701,15 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
     describe("Integration with AA API behavior", () => {
       it("should match AA API verification logic for Secp256k1AbstractAccount", async () => {
         // This test ensures our implementation matches the AA API's verifySignature method
-        const testData = await createTestSignature("xion1test123456789abcdefghijklmnopqrstuvwxyz");
+        const testData = await createTestSignature(
+          "xion1test123456789abcdefghijklmnopqrstuvwxyz",
+        );
 
         // Verify with base64 pubkey (as stored in AA API)
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);
@@ -605,7 +722,8 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         }
 
         const keypair = await Secp256k1.makeKeypair(privkey);
-        const contractAddress = "xion1contract123456789abcdefghijklmnopqrstuvwxyz";
+        const contractAddress =
+          "xion1contract123456789abcdefghijklmnopqrstuvwxyz";
 
         // Hash the contract address (same as AA API does)
         const messageBytes = Buffer.from(contractAddress);
@@ -623,14 +741,15 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           contractAddress,
           toHex(signatureBytes),
-          Buffer.from(keypair.pubkey).toString("base64")
+          Buffer.from(keypair.pubkey).toString("base64"),
         );
 
         expect(result).toBe(true);
       });
 
       it("should verify signature with plain string format (standard)", async () => {
-        const contractAddress = "xion1contract123456789abcdefghijklmnopqrstuvwxyz";
+        const contractAddress =
+          "xion1contract123456789abcdefghijklmnopqrstuvwxyz";
 
         // Create signature over plain string address
         const testData = await createTestSignature(contractAddress);
@@ -639,7 +758,7 @@ describe("signature-verification.ts - Signature Verification Utilities", () => {
         const result = await verifySecp256k1Signature(
           testData.message,
           testData.signatureHex,
-          testData.pubkeyBase64
+          testData.pubkeyBase64,
         );
 
         expect(result).toBe(true);

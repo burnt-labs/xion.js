@@ -34,7 +34,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
 
   // isLoading is true if the account is initializing, connecting, or in transition state (isConnecting is true when the user is in login or in callback)
   const isLoading = isInitializing || isConnecting;
-  
+
   // isError is true when there's an error message
   const isError = !!abstraxionError;
 

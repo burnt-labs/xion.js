@@ -49,7 +49,7 @@ export async function globalSetup() {
         return { client: c, height };
       },
       3, // max retries
-      2000 // initial delay 2 seconds
+      2000, // initial delay 2 seconds
     );
     console.log(`✅ RPC connection successful (height: ${client.height})`);
   } catch (error) {
@@ -57,7 +57,7 @@ export async function globalSetup() {
     console.error(error);
     throw new Error(
       `RPC connection failed after retries. Check your RPC URL (${testConfig.rpcUrl}) and network connectivity. ` +
-      `Error: ${error instanceof Error ? error.message : String(error)}`
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 
@@ -65,26 +65,21 @@ export async function globalSetup() {
   if (testConfig.treasuryAddress) {
     try {
       console.log("🏦 Checking treasury contract...");
-      const exists = await checkTreasuryContract(
-        testConfig.treasuryAddress
-      );
+      const exists = await checkTreasuryContract(testConfig.treasuryAddress);
       if (exists) {
         console.log(
-          `✅ Treasury contract found: ${testConfig.treasuryAddress}`
+          `✅ Treasury contract found: ${testConfig.treasuryAddress}`,
         );
       } else {
         console.warn(
-          `⚠️  Treasury contract not found: ${testConfig.treasuryAddress}`
+          `⚠️  Treasury contract not found: ${testConfig.treasuryAddress}`,
         );
         console.warn(
-          "   Treasury-related tests may fail. This is expected if testing without a treasury."
+          "   Treasury-related tests may fail. This is expected if testing without a treasury.",
         );
       }
     } catch (error) {
-      console.warn(
-        "⚠️  Could not verify treasury contract:",
-        error
-      );
+      console.warn("⚠️  Could not verify treasury contract:", error);
     }
   }
 
@@ -99,10 +94,10 @@ export async function globalSetup() {
 
     if (parseInt(balance, 10) === 0) {
       console.warn(
-        "⚠️  Test account has zero balance. Transaction tests will fail."
+        "⚠️  Test account has zero balance. Transaction tests will fail.",
       );
       console.warn(
-        "   Please fund the test account or use a different mnemonic."
+        "   Please fund the test account or use a different mnemonic.",
       );
     } else {
       console.log("✅ Test account has sufficient balance");
@@ -175,7 +170,7 @@ export function validateRequiredEnvVars() {
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}\n` +
-        "Please ensure .env.test is properly configured."
+        "Please ensure .env.test is properly configured.",
     );
   }
 }
@@ -197,7 +192,9 @@ export function shouldSkipTreasuryTests(): boolean {
 /**
  * Get test timeout based on test type
  */
-export function getTestTimeout(type: "unit" | "integration" = "integration"): number {
+export function getTestTimeout(
+  type: "unit" | "integration" = "integration",
+): number {
   if (type === "integration") {
     return parseInt(process.env.INTEGRATION_TEST_TIMEOUT || "120000", 10);
   }

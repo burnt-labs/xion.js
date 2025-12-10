@@ -12,11 +12,13 @@ const mockSmartAccounts = {
   withSecp256k1: {
     id: "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8",
     codeId: 1,
-    authenticators: [{
-      id: "03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5e5",
-      type: AUTHENTICATOR_TYPE.Secp256K1,
-      authenticatorIndex: 0,
-    }],
+    authenticators: [
+      {
+        id: "03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5e5",
+        type: AUTHENTICATOR_TYPE.Secp256K1,
+        authenticatorIndex: 0,
+      },
+    ],
   },
 };
 
@@ -25,7 +27,7 @@ describe("CompositeAccountStrategy", () => {
   const createMockStrategy = (
     name: string,
     behavior: "success" | "empty" | "error",
-    accounts = [mockSmartAccounts.withSecp256k1]
+    accounts = [mockSmartAccounts.withSecp256k1],
   ): IndexerStrategy => {
     return {
       fetchSmartAccounts: vi.fn(async () => {
@@ -44,7 +46,7 @@ describe("CompositeAccountStrategy", () => {
   describe("constructor", () => {
     it("should throw error when no strategies provided", () => {
       expect(() => new CompositeAccountStrategy()).toThrow(
-        "CompositeAccountStrategy requires at least one strategy"
+        "CompositeAccountStrategy requires at least one strategy",
       );
     });
 
@@ -57,7 +59,7 @@ describe("CompositeAccountStrategy", () => {
       const strategy1 = createMockStrategy("Strategy1", "success");
       const strategy2 = createMockStrategy("Strategy2", "success");
       expect(
-        () => new CompositeAccountStrategy(strategy1, strategy2)
+        () => new CompositeAccountStrategy(strategy1, strategy2),
       ).not.toThrow();
     });
   });
@@ -70,7 +72,7 @@ describe("CompositeAccountStrategy", () => {
 
       const result = await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([mockSmartAccounts.withSecp256k1]);
@@ -85,7 +87,7 @@ describe("CompositeAccountStrategy", () => {
 
       const result = await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([mockSmartAccounts.withSecp256k1]);
@@ -100,7 +102,7 @@ describe("CompositeAccountStrategy", () => {
 
       const result = await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([mockSmartAccounts.withSecp256k1]);
@@ -115,7 +117,7 @@ describe("CompositeAccountStrategy", () => {
 
       const result = await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([]);
@@ -129,15 +131,15 @@ describe("CompositeAccountStrategy", () => {
       const composite = new CompositeAccountStrategy(strategy1, strategy2);
 
       await expect(
-        composite.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1)
+        composite.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1),
       ).rejects.toThrow("All account discovery strategies failed");
 
       await expect(
-        composite.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1)
+        composite.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1),
       ).rejects.toThrow("Strategy1 failed");
 
       await expect(
-        composite.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1)
+        composite.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1),
       ).rejects.toThrow("Strategy2 failed");
     });
 
@@ -148,12 +150,12 @@ describe("CompositeAccountStrategy", () => {
       const composite = new CompositeAccountStrategy(
         strategy1,
         strategy2,
-        strategy3
+        strategy3,
       );
 
       const result = await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([mockSmartAccounts.withSecp256k1]);
@@ -169,16 +171,16 @@ describe("CompositeAccountStrategy", () => {
 
       await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.EthWallet
+        AUTHENTICATOR_TYPE.EthWallet,
       );
 
       expect(strategy1.fetchSmartAccounts).toHaveBeenCalledWith(
         "test-auth",
-        AUTHENTICATOR_TYPE.EthWallet
+        AUTHENTICATOR_TYPE.EthWallet,
       );
       expect(strategy2.fetchSmartAccounts).toHaveBeenCalledWith(
         "test-auth",
-        AUTHENTICATOR_TYPE.EthWallet
+        AUTHENTICATOR_TYPE.EthWallet,
       );
     });
 
@@ -191,12 +193,12 @@ describe("CompositeAccountStrategy", () => {
         strategy1,
         strategy2,
         strategy3,
-        strategy4
+        strategy4,
       );
 
       const result = await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([mockSmartAccounts.withSecp256k1]);
@@ -209,12 +211,12 @@ describe("CompositeAccountStrategy", () => {
       const composite = new CompositeAccountStrategy(
         strategy1,
         strategy2,
-        strategy3
+        strategy3,
       );
 
       await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(strategy1.fetchSmartAccounts).toHaveBeenCalledOnce();
@@ -234,7 +236,7 @@ describe("CompositeAccountStrategy", () => {
 
       const result = await composite.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([mockSmartAccounts.withSecp256k1]);

@@ -142,7 +142,11 @@ export class RedirectController extends BaseController {
         // Use orchestrator to complete redirect flow
         const result = await this.orchestrator.completeRedirect();
 
-        if (!result.keypair || !result.granterAddress || !result.signingClient) {
+        if (
+          !result.keypair ||
+          !result.granterAddress ||
+          !result.signingClient
+        ) {
           throw new Error("Failed to complete redirect flow");
         }
 

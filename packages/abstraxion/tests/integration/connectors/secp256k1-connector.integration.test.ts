@@ -64,7 +64,10 @@ describe("Secp256K1 Connector - Integration Tests", () => {
       async () => {
         // 1. Create connector
         const testIndex = Math.floor(Math.random() * 1000) + 600;
-        const connector = createTestSecp256k1Connector(TEST_MNEMONIC, testIndex);
+        const connector = createTestSecp256k1Connector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
 
         console.log("✓ Step 1: Connector created");
 
@@ -78,7 +81,10 @@ describe("Secp256K1 Connector - Integration Tests", () => {
         expect(connectorResult.signMessage).toBeDefined();
 
         console.log("✓ Step 2: Connector connected");
-        console.log("  Authenticator type:", connectorResult.metadata?.authenticatorType);
+        console.log(
+          "  Authenticator type:",
+          connectorResult.metadata?.authenticatorType,
+        );
 
         // 3. Check if account exists
         const existenceCheck = await checkAccountExists(
@@ -145,7 +151,10 @@ describe("Secp256K1 Connector - Integration Tests", () => {
       "should handle account that already exists",
       async () => {
         const testIndex = Math.floor(Math.random() * 1000) + 700;
-        const connector = createTestSecp256k1Connector(TEST_MNEMONIC, testIndex);
+        const connector = createTestSecp256k1Connector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
 
         // First run - create account
         const orchestrator1 = new ConnectionOrchestrator({
@@ -264,7 +273,9 @@ describe("Secp256K1 Connector - Integration Tests", () => {
         expect(signature1).toBeDefined();
         expect(signature2).toBeDefined();
 
-        console.log("✓ Signature generation consistent (non-deterministic due to nonce)");
+        console.log(
+          "✓ Signature generation consistent (non-deterministic due to nonce)",
+        );
       },
       INTEGRATION_TEST_TIMEOUT,
     );
@@ -429,7 +440,10 @@ describe("Secp256K1 Connector - Integration Tests", () => {
         });
 
         await expect(
-          orchestrator.connectAndSetup(connector, connectorResult.authenticator),
+          orchestrator.connectAndSetup(
+            connector,
+            connectorResult.authenticator,
+          ),
         ).rejects.toThrow();
 
         console.log("✓ Network failures handled gracefully");

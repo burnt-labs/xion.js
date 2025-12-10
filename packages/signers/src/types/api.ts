@@ -4,10 +4,10 @@
  *
  * These types are automatically generated from the AA API OpenAPI schema.
  * They are regenerated in CI to ensure they match the live API contract.
- * 
+ *
  * To regenerate types locally:
  *   pnpm generate:types
- * 
+ *
  * To regenerate from a specific environment:
  *   pnpm generate:types:testnet
  *   pnpm generate:types:mainnet

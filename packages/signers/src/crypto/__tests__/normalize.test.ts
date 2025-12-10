@@ -56,13 +56,13 @@ describe("normalize.ts - Normalization Utilities", () => {
     describe("Invalid Ethereum Addresses", () => {
       it("should throw error for empty address", () => {
         expect(() => normalizeEthereumAddress("")).toThrow(
-          "Ethereum address cannot be empty"
+          "Ethereum address cannot be empty",
         );
       });
 
       it("should throw error for whitespace-only address", () => {
         expect(() => normalizeEthereumAddress("   ")).toThrow(
-          "Ethereum address cannot be empty"
+          "Ethereum address cannot be empty",
         );
       });
 
@@ -75,8 +75,12 @@ describe("normalize.ts - Normalization Utilities", () => {
       });
 
       it("should produce same result regardless of 0x prefix presence", () => {
-        const withPrefix = normalizeEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
-        const withoutPrefix = normalizeEthereumAddress("742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
+        const withPrefix = normalizeEthereumAddress(
+          "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
+        );
+        const withoutPrefix = normalizeEthereumAddress(
+          "742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
+        );
 
         expect(withPrefix).toBe(withoutPrefix);
         expect(withPrefix).toBe("0x742d35cc6634c0532925a3b844bc9e7595f0beb0");
@@ -84,37 +88,43 @@ describe("normalize.ts - Normalization Utilities", () => {
 
       it("should throw error for address with only 0x", () => {
         expect(() => normalizeEthereumAddress("0x")).toThrow(
-          "Invalid Ethereum address format"
+          "Invalid Ethereum address format",
         );
       });
 
       it("should throw error for too short address", () => {
         expect(() => normalizeEthereumAddress("0x123")).toThrow(
-          "Invalid Ethereum address format"
+          "Invalid Ethereum address format",
         );
       });
 
       it("should throw error for too long address", () => {
         expect(() =>
-          normalizeEthereumAddress("0x742d35cc6634c0532925a3b844bc9e7595f0beb01")
+          normalizeEthereumAddress(
+            "0x742d35cc6634c0532925a3b844bc9e7595f0beb01",
+          ),
         ).toThrow("Invalid Ethereum address format");
       });
 
       it("should throw error for address with invalid hex character", () => {
         expect(() =>
-          normalizeEthereumAddress("0x742d35cc6634c0532925a3b844bc9e7595f0bebZ")
+          normalizeEthereumAddress(
+            "0x742d35cc6634c0532925a3b844bc9e7595f0bebZ",
+          ),
         ).toThrow("Invalid Ethereum address format");
       });
 
       it("should throw error for completely invalid string", () => {
         expect(() => normalizeEthereumAddress("not-an-address")).toThrow(
-          "Invalid Ethereum address format"
+          "Invalid Ethereum address format",
         );
       });
 
       it("should throw error for address with special characters", () => {
         expect(() =>
-          normalizeEthereumAddress("0x742d35cc6634c0532925a3b844bc9e7595f0beb!")
+          normalizeEthereumAddress(
+            "0x742d35cc6634c0532925a3b844bc9e7595f0beb!",
+          ),
         ).toThrow("Invalid Ethereum address format");
       });
     });
@@ -152,9 +162,7 @@ describe("normalize.ts - Normalization Utilities", () => {
 
       it("should handle base64 key with whitespace (trimmed)", () => {
         const base64PubKey = "A1234567890123456789012345678901234567890123";
-        const normalized = normalizeSecp256k1PublicKey(
-          `  ${base64PubKey}  `
-        );
+        const normalized = normalizeSecp256k1PublicKey(`  ${base64PubKey}  `);
 
         expect(normalized).toBe(base64PubKey);
       });
@@ -237,33 +245,33 @@ describe("normalize.ts - Normalization Utilities", () => {
     describe("Invalid Public Key Formats", () => {
       it("should throw error for empty public key", () => {
         expect(() => normalizeSecp256k1PublicKey("")).toThrow(
-          "Public key cannot be empty"
+          "Public key cannot be empty",
         );
       });
 
       it("should throw error for whitespace-only public key", () => {
         expect(() => normalizeSecp256k1PublicKey("   ")).toThrow(
-          "Public key cannot be empty"
+          "Public key cannot be empty",
         );
       });
 
       it("should throw error for invalid format", () => {
         expect(() => normalizeSecp256k1PublicKey("invalid-key-format")).toThrow(
-          "Invalid Secp256k1 public key format"
+          "Invalid Secp256k1 public key format",
         );
       });
 
       it("should throw error for base64 not starting with A", () => {
         const invalidBase64 = "B123456789abcdef123456789abcdef123456789abc";
         expect(() => normalizeSecp256k1PublicKey(invalidBase64)).toThrow(
-          "Invalid Secp256k1 public key format"
+          "Invalid Secp256k1 public key format",
         );
       });
 
       it("should throw error for too short base64", () => {
         const shortBase64 = "A123";
         expect(() => normalizeSecp256k1PublicKey(shortBase64)).toThrow(
-          "Invalid Secp256k1 public key format"
+          "Invalid Secp256k1 public key format",
         );
       });
 
@@ -271,21 +279,21 @@ describe("normalize.ts - Normalization Utilities", () => {
         const wrongPrefix =
           "01123456789abcdef123456789abcdef123456789abcdef123456789abcdef1234";
         expect(() => normalizeSecp256k1PublicKey(wrongPrefix)).toThrow(
-          "Invalid Secp256k1 public key format"
+          "Invalid Secp256k1 public key format",
         );
       });
 
       it("should throw error for compressed hex with wrong length", () => {
         const wrongLength = "02123456789abcdef"; // Too short
         expect(() => normalizeSecp256k1PublicKey(wrongLength)).toThrow(
-          "Invalid Secp256k1 public key format"
+          "Invalid Secp256k1 public key format",
         );
       });
 
       it("should throw error for uncompressed hex with wrong length", () => {
         const wrongLength = "04" + "a".repeat(64); // Too short (should be 128)
         expect(() => normalizeSecp256k1PublicKey(wrongLength)).toThrow(
-          "Invalid Secp256k1 public key format"
+          "Invalid Secp256k1 public key format",
         );
       });
 
@@ -293,7 +301,7 @@ describe("normalize.ts - Normalization Utilities", () => {
         const longInvalidKey = "x".repeat(100);
 
         expect(() => normalizeSecp256k1PublicKey(longInvalidKey)).toThrow(
-          /Invalid Secp256k1 public key format: x{50}\.\.\./
+          /Invalid Secp256k1 public key format: x{50}\.\.\./,
         );
       });
 
@@ -301,7 +309,7 @@ describe("normalize.ts - Normalization Utilities", () => {
         const shortInvalidKey = "invalid";
 
         expect(() => normalizeSecp256k1PublicKey(shortInvalidKey)).toThrow(
-          "Invalid Secp256k1 public key format: invalid"
+          "Invalid Secp256k1 public key format: invalid",
         );
       });
     });
@@ -318,7 +326,7 @@ describe("normalize.ts - Normalization Utilities", () => {
       it("should normalize JWT with array aud (use first element)", () => {
         const normalized = normalizeJWTIdentifier(
           ["test-aud", "other-aud"],
-          "test-sub"
+          "test-sub",
         );
 
         expect(normalized).toBe("test-aud.test-sub");
@@ -327,7 +335,7 @@ describe("normalize.ts - Normalization Utilities", () => {
       it("should handle complex aud and sub values", () => {
         const normalized = normalizeJWTIdentifier(
           "my-app-prod-v2",
-          "user-123-456-789"
+          "user-123-456-789",
         );
 
         expect(normalized).toBe("my-app-prod-v2.user-123-456-789");
@@ -336,7 +344,7 @@ describe("normalize.ts - Normalization Utilities", () => {
       it("should handle array aud with multiple elements", () => {
         const normalized = normalizeJWTIdentifier(
           ["first-aud", "second-aud", "third-aud"],
-          "my-subject"
+          "my-subject",
         );
 
         expect(normalized).toBe("first-aud.my-subject");
@@ -345,62 +353,62 @@ describe("normalize.ts - Normalization Utilities", () => {
       it("should handle aud and sub with special characters", () => {
         const normalized = normalizeJWTIdentifier(
           "aud-with-dashes_and_underscores",
-          "sub:with:colons"
+          "sub:with:colons",
         );
 
         expect(normalized).toBe(
-          "aud-with-dashes_and_underscores.sub:with:colons"
+          "aud-with-dashes_and_underscores.sub:with:colons",
         );
       });
     });
 
     describe("Invalid JWT Identifiers", () => {
       it("should throw error for missing aud (undefined)", () => {
-        expect(() => normalizeJWTIdentifier(undefined as any, "test-sub")).toThrow(
-          'JWT identifier must contain valid "aud" and "sub" claims'
-        );
+        expect(() =>
+          normalizeJWTIdentifier(undefined as any, "test-sub"),
+        ).toThrow('JWT identifier must contain valid "aud" and "sub" claims');
       });
 
       it("should throw error for missing sub (undefined)", () => {
-        expect(() => normalizeJWTIdentifier("test-aud", undefined as any)).toThrow(
-          'JWT identifier must contain valid "aud" and "sub" claims'
-        );
+        expect(() =>
+          normalizeJWTIdentifier("test-aud", undefined as any),
+        ).toThrow('JWT identifier must contain valid "aud" and "sub" claims');
       });
 
       it("should throw error for missing aud (null)", () => {
         expect(() => normalizeJWTIdentifier(null as any, "test-sub")).toThrow(
-          'JWT identifier must contain valid "aud" and "sub" claims'
+          'JWT identifier must contain valid "aud" and "sub" claims',
         );
       });
 
       it("should throw error for missing sub (null)", () => {
         expect(() => normalizeJWTIdentifier("test-aud", null as any)).toThrow(
-          'JWT identifier must contain valid "aud" and "sub" claims'
+          'JWT identifier must contain valid "aud" and "sub" claims',
         );
       });
 
       it("should throw error for empty string aud", () => {
         expect(() => normalizeJWTIdentifier("", "test-sub")).toThrow(
-          'JWT identifier must contain valid "aud" and "sub" claims'
+          'JWT identifier must contain valid "aud" and "sub" claims',
         );
       });
 
       it("should throw error for empty string sub", () => {
         expect(() => normalizeJWTIdentifier("test-aud", "")).toThrow(
-          'JWT identifier must contain valid "aud" and "sub" claims'
+          'JWT identifier must contain valid "aud" and "sub" claims',
         );
       });
 
       it("should throw error for empty array aud", () => {
         expect(() => normalizeJWTIdentifier([], "test-sub")).toThrow(
-          'JWT "aud" claim cannot be empty'
+          'JWT "aud" claim cannot be empty',
         );
       });
 
       it("should throw error for array aud with empty first element", () => {
-        expect(() => normalizeJWTIdentifier(["", "second"], "test-sub")).toThrow(
-          'JWT "aud" claim cannot be empty'
-        );
+        expect(() =>
+          normalizeJWTIdentifier(["", "second"], "test-sub"),
+        ).toThrow('JWT "aud" claim cannot be empty');
       });
     });
 

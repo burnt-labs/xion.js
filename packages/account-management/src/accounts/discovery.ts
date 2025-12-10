@@ -67,8 +67,7 @@ export async function checkAccountExists(
       authenticatorIndex,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       exists: false,
       accounts: [],

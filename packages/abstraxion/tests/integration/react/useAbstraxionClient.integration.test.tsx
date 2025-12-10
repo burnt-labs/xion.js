@@ -1,7 +1,7 @@
 /**
  * useAbstraxionClient Hook Integration Tests
  * Tests the query client hook that provides CosmWasmClient for read-only operations
- * 
+ *
  * This hook can be tested independently as it only requires RPC connection
  * and doesn't depend on authentication or signing capabilities
  */
@@ -44,7 +44,7 @@ describe("useAbstraxionClient Integration Tests", () => {
         () => {
           expect(result.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Client should be a CosmWasmClient instance
@@ -65,32 +65,31 @@ describe("useAbstraxionClient Integration Tests", () => {
         () => {
           expect(result.current.error).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       expect(result.current.client).toBeUndefined();
       expect(result.current.error).toBeInstanceOf(Error);
-      expect(result.current.error?.message).toContain("Failed to connect to RPC");
+      expect(result.current.error?.message).toContain(
+        "Failed to connect to RPC",
+      );
     });
 
     it("should reconnect when rpcUrl changes", async () => {
       const config = getTestConfig();
-      const { result, rerender } = renderHook(
-        () => useAbstraxionClient(),
-        {
-          wrapper: createWrapper({
-            chainId: config.chainId,
-            rpcUrl: config.rpcUrl,
-          }),
-        }
-      );
+      const { result, rerender } = renderHook(() => useAbstraxionClient(), {
+        wrapper: createWrapper({
+          chainId: config.chainId,
+          rpcUrl: config.rpcUrl,
+        }),
+      });
 
       // Wait for initial connection
       await waitFor(
         () => {
           expect(result.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const firstClient = result.current.client;
@@ -108,7 +107,7 @@ describe("useAbstraxionClient Integration Tests", () => {
         () => {
           expect(result.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       expect(result.current.client).toBeDefined();
@@ -130,7 +129,7 @@ describe("useAbstraxionClient Integration Tests", () => {
         () => {
           expect(result.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Test querying chain height
@@ -155,7 +154,7 @@ describe("useAbstraxionClient Integration Tests", () => {
         () => {
           expect(result.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Query a test account balance
@@ -163,7 +162,7 @@ describe("useAbstraxionClient Integration Tests", () => {
         const testAddress = "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x";
         const balance = await result.current.client.getBalance(
           testAddress,
-          "uxion"
+          "uxion",
         );
         expect(balance).toBeDefined();
         expect(balance.amount).toBeDefined();
@@ -185,7 +184,7 @@ describe("useAbstraxionClient Integration Tests", () => {
         () => {
           expect(result.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Test querying a contract (if we have a test contract address)
@@ -193,7 +192,7 @@ describe("useAbstraxionClient Integration Tests", () => {
         try {
           // Try to query contract info
           const contractInfo = await result.current.client.getContract(
-            config.smartAccountContract.address
+            config.smartAccountContract.address,
           );
           expect(contractInfo).toBeDefined();
         } catch (error) {
@@ -208,24 +207,21 @@ describe("useAbstraxionClient Integration Tests", () => {
   describe("Hook State Management", () => {
     it("should clear error when connection succeeds after failure", async () => {
       const config = getTestConfig();
-      
+
       // Start with invalid URL
-      const { result, rerender } = renderHook(
-        () => useAbstraxionClient(),
-        {
-          wrapper: createWrapper({
-            chainId: config.chainId,
-            rpcUrl: "https://invalid-url.com",
-          }),
-        }
-      );
+      const { result, rerender } = renderHook(() => useAbstraxionClient(), {
+        wrapper: createWrapper({
+          chainId: config.chainId,
+          rpcUrl: "https://invalid-url.com",
+        }),
+      });
 
       // Wait for error
       await waitFor(
         () => {
           expect(result.current.error).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Switch to valid URL
@@ -242,28 +238,25 @@ describe("useAbstraxionClient Integration Tests", () => {
           expect(result.current.client).toBeDefined();
           expect(result.current.error).toBeUndefined();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
     });
 
     it("should maintain client instance across re-renders", async () => {
       const config = getTestConfig();
-      const { result, rerender } = renderHook(
-        () => useAbstraxionClient(),
-        {
-          wrapper: createWrapper({
-            chainId: config.chainId,
-            rpcUrl: config.rpcUrl,
-          }),
-        }
-      );
+      const { result, rerender } = renderHook(() => useAbstraxionClient(), {
+        wrapper: createWrapper({
+          chainId: config.chainId,
+          rpcUrl: config.rpcUrl,
+        }),
+      });
 
       // Wait for initial connection
       await waitFor(
         () => {
           expect(result.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const firstClient = result.current.client;
@@ -281,11 +274,10 @@ describe("useAbstraxionClient Integration Tests", () => {
         () => {
           expect(result.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       expect(result.current.client).toBeDefined();
     });
   });
 });
-

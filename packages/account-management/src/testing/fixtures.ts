@@ -58,7 +58,7 @@ export const mockGrantConfigs = {
       value: Buffer.from(
         JSON.stringify({
           msg: "/cosmwasm.wasm.v1.MsgExecuteContract",
-        })
+        }),
       ).toString("base64"),
     },
     description: "Execute smart contracts",
@@ -74,7 +74,7 @@ export const mockGrantConfigs = {
       value: Buffer.from(
         JSON.stringify({
           spend_limit: [{ denom: "uxion", amount: "1000000" }],
-        })
+        }),
       ).toString("base64"),
     },
     description: "Send tokens",
@@ -91,7 +91,7 @@ export const mockGrantConfigs = {
         JSON.stringify({
           authorization_type: "AUTHORIZATION_TYPE_DELEGATE",
           max_tokens: { denom: "uxion", amount: "5000000" },
-        })
+        }),
       ).toString("base64"),
     },
     description: "Delegate tokens to validators",
@@ -107,7 +107,7 @@ export const mockGrantConfigs = {
       value: Buffer.from(
         JSON.stringify({
           spend_limit: [{ denom: "uxion", amount: "100000" }],
-        })
+        }),
       ).toString("base64"),
     },
     description: "Cover transaction fees",
@@ -117,7 +117,7 @@ export const mockGrantConfigs = {
       value: Buffer.from(
         JSON.stringify({
           spend_limit: [{ denom: "uxion", amount: "100000" }],
-        })
+        }),
       ).toString("base64"),
     },
     maxDuration: 86400, // 24 hours in seconds
@@ -260,7 +260,8 @@ export const mockDaoTreasuryResponses = {
 export const mockPermissionDescriptions = {
   execute: {
     authorizationDescription: "Execute smart contracts",
-    dappDescription: "Allow the dApp to execute contract actions on your behalf",
+    dappDescription:
+      "Allow the dApp to execute contract actions on your behalf",
     contracts: ["xion1contract1", "xion1contract2"],
   },
 

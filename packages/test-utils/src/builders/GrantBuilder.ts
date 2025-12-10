@@ -2,7 +2,7 @@
  * Fluent builder for creating grant authorization objects
  */
 
-import type { GrantsResponse } from '../mocks/grants.js';
+import type { GrantsResponse } from "../mocks/grants.js";
 
 export interface Grant {
   authorization: any;
@@ -11,12 +11,18 @@ export interface Grant {
 
 export class GrantBuilder {
   private authorization: any = {};
-  private expiration: string = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year default
+  private expiration: string = new Date(
+    Date.now() + 365 * 24 * 60 * 60 * 1000,
+  ).toISOString(); // 1 year default
 
   /**
    * Create a bank send authorization
    */
-  withBankSend(spendLimit: Array<{ denom: string; amount: string }> = [{ denom: "uxion", amount: "1000000" }]): this {
+  withBankSend(
+    spendLimit: Array<{ denom: string; amount: string }> = [
+      { denom: "uxion", amount: "1000000" },
+    ],
+  ): this {
     this.authorization = {
       "@type": "/cosmos.bank.v1beta1.SendAuthorization",
       spend_limit: spendLimit,
@@ -40,8 +46,11 @@ export class GrantBuilder {
    * Create a stake authorization
    */
   withStakeAuth(
-    type: "AUTHORIZATION_TYPE_DELEGATE" | "AUTHORIZATION_TYPE_UNDELEGATE" | "AUTHORIZATION_TYPE_REDELEGATE",
-    maxTokens: { denom: string; amount: string } | null = null
+    type:
+      | "AUTHORIZATION_TYPE_DELEGATE"
+      | "AUTHORIZATION_TYPE_UNDELEGATE"
+      | "AUTHORIZATION_TYPE_REDELEGATE",
+    maxTokens: { denom: string; amount: string } | null = null,
   ): this {
     this.authorization = {
       "@type": "/cosmos.staking.v1beta1.StakeAuthorization",
@@ -59,7 +68,7 @@ export class GrantBuilder {
       contract: string;
       limit?: any;
       filter?: any;
-    }>
+    }>,
   ): this {
     this.authorization = {
       "@type": "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
@@ -89,9 +98,9 @@ export class GrantBuilder {
    * Set expiration date
    */
   withExpiration(date: Date | string | number): this {
-    if (typeof date === 'number') {
+    if (typeof date === "number") {
       this.expiration = new Date(date).toISOString();
-    } else if (typeof date === 'string') {
+    } else if (typeof date === "string") {
       this.expiration = date;
     } else {
       this.expiration = date.toISOString();

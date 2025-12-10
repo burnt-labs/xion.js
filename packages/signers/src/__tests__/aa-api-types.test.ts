@@ -9,14 +9,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type {
-  AddressResponse,
-  CreateAccountResponseV2,
-} from "../types/api";
-import type {
-  AuthenticatorType,
-  SmartAccount,
-} from "../types/account";
+import type { AddressResponse, CreateAccountResponseV2 } from "../types/api";
+import type { AuthenticatorType, SmartAccount } from "../types/account";
 
 describe("AA API Type Imports", () => {
   it("should import AddressResponse type correctly", () => {

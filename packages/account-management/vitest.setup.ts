@@ -13,5 +13,4 @@ vi.mock("@github/webauthn-json/browser-ponyfill", () => ({
   supported: vi.fn(() => false),
   parseCreationOptionsFromJSON: vi.fn(),
   parseRequestOptionsFromJSON: vi.fn(),
-}))
-
+}));

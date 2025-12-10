@@ -30,16 +30,12 @@ export const isContractGrantConfigValid = (
 ): boolean => {
   // Validate account has id property (must check even for empty contracts)
   try {
-    if (!account || typeof account !== 'object' || !('id' in account)) {
-      throw new InvalidContractGrantError(
-        "Account must have an 'id' property"
-      );
+    if (!account || typeof account !== "object" || !("id" in account)) {
+      throw new InvalidContractGrantError("Account must have an 'id' property");
     }
     // Check account.id value (may throw if id is a getter)
     if (!account.id) {
-      throw new InvalidContractGrantError(
-        "Account must have an 'id' property"
-      );
+      throw new InvalidContractGrantError("Account must have an 'id' property");
     }
   } catch (error) {
     // Re-throw InvalidContractGrantError
@@ -68,13 +64,16 @@ export const isContractGrantConfigValid = (
       // Handle null/undefined contracts - throw error (expected behavior per tests)
       if (contract === null || contract === undefined) {
         throw new InvalidContractGrantError(
-          "Contract grant description cannot be null or undefined"
+          "Contract grant description cannot be null or undefined",
         );
       }
 
       // Handle wrong types (number, boolean, array) - return false without throwing
       // But allow strings and objects (valid ContractGrantDescription types)
-      if (typeof contract !== 'string' && (typeof contract !== 'object' || Array.isArray(contract))) {
+      if (
+        typeof contract !== "string" &&
+        (typeof contract !== "object" || Array.isArray(contract))
+      ) {
         return false;
       }
 
@@ -82,13 +81,13 @@ export const isContractGrantConfigValid = (
       let contractAddress: string | null | undefined;
       try {
         contractAddress = getContractAddress(contract);
-        
+
         // Handle missing address - check if empty object vs object with wrong shape
         if (contractAddress === undefined) {
           // Only objects can have undefined address (strings always return a value)
-          if (typeof contract === 'object' && !Array.isArray(contract)) {
+          if (typeof contract === "object" && !Array.isArray(contract)) {
             // Check if address property exists but is undefined vs doesn't exist at all
-            if ('address' in contract) {
+            if ("address" in contract) {
               // Address property exists but is undefined/null - return false
               return false;
             }
@@ -97,7 +96,7 @@ export const isContractGrantConfigValid = (
             if (hasProperties) {
               // Object has properties but missing address property - wrong shape
               throw new InvalidContractGrantError(
-                "Contract grant description missing address"
+                "Contract grant description missing address",
               );
             }
             // Empty object - return false
@@ -114,11 +113,13 @@ export const isContractGrantConfigValid = (
       }
 
       // Validate address - return false for invalid addresses (don't throw)
-      if (!contractAddress || 
-          contractAddress === null || 
-          contractAddress === undefined || 
-          typeof contractAddress !== 'string' ||
-          contractAddress.trim() === '') {
+      if (
+        !contractAddress ||
+        contractAddress === null ||
+        contractAddress === undefined ||
+        typeof contractAddress !== "string" ||
+        contractAddress.trim() === ""
+      ) {
         return false;
       }
 

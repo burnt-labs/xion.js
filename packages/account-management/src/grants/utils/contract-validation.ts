@@ -20,10 +20,12 @@ export interface ContractValidationResult {
 
 /**
  * Extracts address from contract grant description
- * 
+ *
  * @returns The contract address, or undefined if missing (for object form without address)
  */
-export function getContractAddress(contract: ContractGrantDescription): string | undefined {
+export function getContractAddress(
+  contract: ContractGrantDescription,
+): string | undefined {
   if (typeof contract === "string") {
     return contract;
   }
@@ -35,7 +37,7 @@ export function getContractAddress(contract: ContractGrantDescription): string |
 /**
  * Checks if a contract address is self-referential (same as granter address)
  * Uses case-insensitive comparison for bech32 addresses
- * 
+ *
  * @param contractAddress - The contract address to check
  * @param granterAddress - The granter address (smart account)
  * @returns true if addresses match (self-referential), false otherwise
@@ -174,7 +176,10 @@ export async function validateContractGrants(
 
     // 3. Verify contract exists on-chain (optional)
     if (options.rpcUrl && !options.skipOnChainVerification) {
-      const existenceError = await verifyContractExists(address, options.rpcUrl);
+      const existenceError = await verifyContractExists(
+        address,
+        options.rpcUrl,
+      );
       if (existenceError) {
         errors.push({
           index,
@@ -230,7 +235,11 @@ export async function validateContractGrantsOrThrow(
     skipOnChainVerification?: boolean;
   },
 ): Promise<void> {
-  const result = await validateContractGrants(contracts, granterAddress, options);
+  const result = await validateContractGrants(
+    contracts,
+    granterAddress,
+    options,
+  );
 
   if (!result.valid) {
     throw new Error(formatValidationErrors(result.errors));

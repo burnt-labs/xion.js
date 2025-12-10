@@ -1,19 +1,23 @@
 /**
  * Loading State Management Integration Tests
  * Tests that loading states are properly managed without flashing
- * 
+ *
  * These tests verify:
  * - isLoading is correctly derived from state machine states
  * - No flashing between loading states (smooth transitions)
  * - Multiple hooks stay in sync during state transitions
  * - Loading states match AccountState machine states
- * 
+ *
  * Based on how demo-app uses loading states and AccountState from account-management
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
-import { render, screen, waitFor as waitForScreen } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor as waitForScreen,
+} from "@testing-library/react";
 import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
@@ -21,7 +25,10 @@ import {
 } from "../../../src/hooks";
 import { AbstraxionProvider } from "../../../src/components/AbstraxionContext";
 import { getTestConfig } from "../fixtures";
-import { createTestSecp256k1Connector, getSignerConfigFromConnectorResult } from "../helpers";
+import {
+  createTestSecp256k1Connector,
+  getSignerConfigFromConnectorResult,
+} from "../helpers";
 import type { ReactNode } from "react";
 
 describe("Loading State Management Integration Tests", () => {
@@ -73,7 +80,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isInitializing).toBe(false);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // After initialization, if not connecting, isLoading should be false
@@ -91,7 +98,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isConnecting).toBe(true);
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       expect(result.current.isLoading).toBe(true);
@@ -102,7 +109,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isConnected).toBe(true);
         },
-        { timeout: 120000 }
+        { timeout: 120000 },
       );
 
       // After connection, isLoading should be false
@@ -151,7 +158,9 @@ describe("Loading State Management Integration Tests", () => {
 
       // Initial state
       checkStates();
-      expect(result.current.isLoading).toBe(result.current.isInitializing || result.current.isConnecting);
+      expect(result.current.isLoading).toBe(
+        result.current.isInitializing || result.current.isConnecting,
+      );
 
       // Wait for initialization
       await waitFor(
@@ -159,7 +168,7 @@ describe("Loading State Management Integration Tests", () => {
           checkStates();
           expect(result.current.isInitializing).toBe(false);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Start login
@@ -173,7 +182,7 @@ describe("Loading State Management Integration Tests", () => {
           checkStates();
           expect(result.current.isConnecting).toBe(true);
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       // Track through connection
@@ -182,7 +191,7 @@ describe("Loading State Management Integration Tests", () => {
           checkStates();
           expect(result.current.isConnected).toBe(true);
         },
-        { timeout: 120000 }
+        { timeout: 120000 },
       );
 
       // Verify isLoading was always consistent
@@ -249,7 +258,7 @@ describe("Loading State Management Integration Tests", () => {
 
       // isLoading should start as true and stay true during initialization
       expect(isLoadingHistory[0]).toBe(true);
-      
+
       // Should not have rapid false→true→false flashes
       let flashCount = 0;
       for (let i = 1; i < isLoadingHistory.length; i++) {
@@ -293,7 +302,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isInitializing).toBe(false);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Track isLoading during connection
@@ -317,7 +326,7 @@ describe("Loading State Management Integration Tests", () => {
             () => {
               expect(result.current.isConnected).toBe(true);
             },
-            { timeout: 120000 }
+            { timeout: 120000 },
           ),
           new Promise((r) => setTimeout(r, 5000)), // Max 5 seconds of monitoring
         ]).then(() => {
@@ -366,15 +375,21 @@ describe("Loading State Management Integration Tests", () => {
       };
 
       const wrapper = createWrapper(signerConfig);
-      const { result: accountResult } = renderHook(() => useAbstraxionAccount(), { wrapper });
-      const { result: signingResult } = renderHook(() => useAbstraxionSigningClient(), { wrapper });
+      const { result: accountResult } = renderHook(
+        () => useAbstraxionAccount(),
+        { wrapper },
+      );
+      const { result: signingResult } = renderHook(
+        () => useAbstraxionSigningClient(),
+        { wrapper },
+      );
 
       // Wait for initialization
       await waitFor(
         () => {
           expect(accountResult.current.isInitializing).toBe(false);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Both hooks should reflect same connection state
@@ -391,7 +406,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(accountResult.current.isConnected).toBe(true);
         },
-        { timeout: 120000 }
+        { timeout: 120000 },
       );
 
       // Both hooks should reflect connected state
@@ -400,7 +415,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(signingResult.current.client).toBeDefined();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       // Logout
@@ -413,7 +428,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(accountResult.current.isConnected).toBe(false);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Both hooks should reflect disconnected state
@@ -445,16 +460,24 @@ describe("Loading State Management Integration Tests", () => {
       };
 
       const wrapper = createWrapper(signerConfig);
-      const { result: accountResult } = renderHook(() => useAbstraxionAccount(), { wrapper });
-      const { result: signingResult } = renderHook(() => useAbstraxionSigningClient(), { wrapper });
-      const { result: queryResult } = renderHook(() => useAbstraxionClient(), { wrapper });
+      const { result: accountResult } = renderHook(
+        () => useAbstraxionAccount(),
+        { wrapper },
+      );
+      const { result: signingResult } = renderHook(
+        () => useAbstraxionSigningClient(),
+        { wrapper },
+      );
+      const { result: queryResult } = renderHook(() => useAbstraxionClient(), {
+        wrapper,
+      });
 
       // Wait for initialization
       await waitFor(
         () => {
           expect(accountResult.current.isInitializing).toBe(false);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Query client should be ready (independent of connection)
@@ -462,7 +485,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(queryResult.current.client).toBeDefined();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Account and signing client should be disconnected
@@ -479,7 +502,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(accountResult.current.isConnecting).toBe(true);
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       expect(accountResult.current.isLoading).toBe(true);
@@ -490,7 +513,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(accountResult.current.isConnected).toBe(true);
         },
-        { timeout: 120000 }
+        { timeout: 120000 },
       );
 
       // All hooks should reflect connected state
@@ -499,7 +522,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(signingResult.current.client).toBeDefined();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
       expect(queryResult.current.client).toBeDefined(); // Query client should still be available
     });
@@ -543,7 +566,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isInitializing).toBe(false);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // After initialization: idle (not initializing, not connecting)
@@ -561,7 +584,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isConnecting).toBe(true);
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       expect(result.current.isInitializing).toBe(false);
@@ -573,7 +596,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isConnected).toBe(true);
         },
-        { timeout: 120000 }
+        { timeout: 120000 },
       );
 
       // Connected state
@@ -615,7 +638,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isInitializing).toBe(false);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Start login
@@ -628,7 +651,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isConnecting).toBe(true);
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       // isConnecting includes both "connecting" and "configuring-permissions" states
@@ -641,7 +664,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(result.current.isConnected).toBe(true);
         },
-        { timeout: 120000 }
+        { timeout: 120000 },
       );
 
       // After connection, isConnecting should be false
@@ -690,7 +713,7 @@ describe("Loading State Management Integration Tests", () => {
       render(
         <AbstraxionProvider config={signerConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       // Button should be disabled during initialization
@@ -702,7 +725,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(button).not.toBeDisabled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Click login
@@ -713,7 +736,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(button).toBeDisabled();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       // Wait for connection
@@ -721,7 +744,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(button).not.toBeDisabled();
         },
-        { timeout: 120000 }
+        { timeout: 120000 },
       );
     });
 
@@ -769,7 +792,7 @@ describe("Loading State Management Integration Tests", () => {
       render(
         <AbstraxionProvider config={signerConfig}>
           <TestComponent />
-        </AbstraxionProvider>
+        </AbstraxionProvider>,
       );
 
       // Should show loading overlay during initialization
@@ -780,7 +803,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(screen.queryByTestId("loading-overlay")).toBeNull();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       // Start login
@@ -797,7 +820,7 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(screen.getByTestId("loading-overlay")).toBeDefined();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       // Wait for connection
@@ -805,9 +828,8 @@ describe("Loading State Management Integration Tests", () => {
         () => {
           expect(screen.queryByTestId("loading-overlay")).toBeNull();
         },
-        { timeout: 120000 }
+        { timeout: 120000 },
       );
     });
   });
 });
-

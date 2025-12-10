@@ -12,10 +12,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { restoreSession } from "../sessionRestoration";
-import type {
-  SessionManager,
-  SigningClientConfig,
-} from "../../types";
+import type { SessionManager, SigningClientConfig } from "../../types";
 
 // Mock dependencies - no need to mock @burnt-labs/signers, just what we use
 vi.mock("@burnt-labs/abstraxion-core", async () => {
@@ -63,12 +60,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
 
   describe("🔴 CRITICAL: restoreSession()", () => {
     it("should restore keypair and granter from storage", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const result = await restoreSession(mockSessionManager);
@@ -82,12 +75,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should return not restored when no keypair exists", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        undefined,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(undefined);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
 
       const result = await restoreSession(mockSessionManager);
 
@@ -96,9 +85,7 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should return not restored when no granter exists", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
       mockSessionManager.getGranter.mockResolvedValue(undefined);
 
       const result = await restoreSession(mockSessionManager);
@@ -108,12 +95,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should validate session by calling authenticate", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const result = await restoreSession(mockSessionManager);
@@ -123,12 +106,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should clear invalid session when authenticate fails", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("Grants no longer valid"),
       );
@@ -146,12 +125,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
       const { GranteeSignerClient } = await import(
         "@burnt-labs/abstraxion-core"
       );
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const signingClientConfig: SigningClientConfig = {
@@ -182,12 +157,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
       const { GranteeSignerClient } = await import(
         "@burnt-labs/abstraxion-core"
       );
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const signingClientConfig: SigningClientConfig = {
@@ -211,12 +182,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
       const { GranteeSignerClient } = await import(
         "@burnt-labs/abstraxion-core"
       );
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const result = await restoreSession(mockSessionManager);
@@ -229,12 +196,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should emit error state when grants expired", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("Session expired"),
       );
@@ -249,15 +212,9 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should handle non-Error exceptions during authentication", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
-      mockSessionManager.authenticate.mockRejectedValue(
-        "String error",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
+      mockSessionManager.authenticate.mockRejectedValue("String error");
 
       const result = await restoreSession(mockSessionManager);
 
@@ -276,12 +233,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
           .mockResolvedValue([{ address: "xion1customgrantee" }]),
       };
 
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        customKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(customKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const result = await restoreSession(mockSessionManager);
@@ -294,12 +247,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should return success when grants validation passes", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const result = await restoreSession(mockSessionManager);
@@ -311,9 +260,7 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should handle missing both keypair and granter gracefully", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        undefined,
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(undefined);
       mockSessionManager.getGranter.mockResolvedValue(undefined);
 
       const result = await restoreSession(mockSessionManager);
@@ -326,12 +273,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
 
   describe("🔴 CRITICAL: Session Validation Edge Cases", () => {
     it("should handle authenticate throwing network error", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("Network error: Failed to fetch"),
       );
@@ -346,12 +289,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should handle authenticate throwing RPC error", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("RPC error: node unavailable"),
       );
@@ -369,12 +308,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
         getAccounts: vi.fn().mockRejectedValue(new Error("Invalid keypair")),
       };
 
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        brokenKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(brokenKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const result = await restoreSession(mockSessionManager);
@@ -387,12 +322,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should preserve error context when session invalid", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("Grant revoked by user"),
       );
@@ -409,12 +340,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
       const { GranteeSignerClient } = await import(
         "@burnt-labs/abstraxion-core"
       );
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
       vi.mocked(GranteeSignerClient.connectWithSigner).mockRejectedValue(
         new Error("Failed to connect to RPC"),
@@ -439,9 +366,7 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
 
     it("should differentiate no session vs invalid session", async () => {
       // No session case (normal)
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        undefined,
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(undefined);
       mockSessionManager.getGranter.mockResolvedValue(undefined);
 
       const noSessionResult = await restoreSession(mockSessionManager);
@@ -452,12 +377,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
       expect(mockSessionManager.logout).not.toHaveBeenCalled();
 
       // Invalid session case (error)
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("Invalid session"),
       );
@@ -473,21 +394,15 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
 
   describe("🔴 CRITICAL: Grant Consistency Scenarios", () => {
     it("should handle authenticate verifying on-chain grants", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
 
       // Simulate authenticate checking on-chain state
       let authenticateCalled = false;
-      mockSessionManager.authenticate.mockImplementation(
-        async () => {
-          authenticateCalled = true;
-          // If authenticate completes, grants are valid
-        },
-      );
+      mockSessionManager.authenticate.mockImplementation(async () => {
+        authenticateCalled = true;
+        // If authenticate completes, grants are valid
+      });
 
       const result = await restoreSession(mockSessionManager);
 
@@ -496,12 +411,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should handle authenticate detecting expired grants", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("Grants expired"),
       );
@@ -516,12 +427,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should handle authenticate detecting revoked grants", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("Grant not found"),
       );
@@ -536,12 +443,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should handle authenticate detecting insufficient permissions", async () => {
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockRejectedValue(
         new Error("Insufficient authorization"),
       );
@@ -556,12 +459,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
 
     it("should complete full restoration flow successfully", async () => {
       // Setup successful restoration scenario
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockKeypair,
-      );
-      mockSessionManager.getGranter.mockResolvedValue(
-        "xion1granter",
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
+      mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
 
       const signingClientConfig: SigningClientConfig = {

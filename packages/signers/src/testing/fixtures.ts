@@ -256,5 +256,6 @@ export const testAccounts = {
   /**
    * Test treasury address
    */
-  treasury: "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw" as const,
+  treasury:
+    "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw" as const,
 };

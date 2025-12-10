@@ -34,19 +34,31 @@ export interface TestConfig {
  * Both connect to testnet blockchain
  */
 export function getTestConfig(): TestConfig {
-  const target = (process.env.TEST_TARGET || "deployed") as "local" | "deployed";
+  const target = (process.env.TEST_TARGET || "deployed") as
+    | "local"
+    | "deployed";
 
   // Testnet blockchain config (same for both)
   const baseConfig = {
     chainId: process.env.XION_TESTNET_CHAIN_ID || "xion-testnet-2",
-    rpcUrl: process.env.XION_TESTNET_RPC_URL || "https://rpc.xion-testnet-2.burnt.com:443",
-    restUrl: process.env.XION_TESTNET_REST_URL || "https://api.xion-testnet-2.burnt.com",
+    rpcUrl:
+      process.env.XION_TESTNET_RPC_URL ||
+      "https://rpc.xion-testnet-2.burnt.com:443",
+    restUrl:
+      process.env.XION_TESTNET_REST_URL ||
+      "https://api.xion-testnet-2.burnt.com",
     gasPrice: process.env.XION_TESTNET_GAS_PRICE || "0.001uxion",
     addressPrefix: process.env.XION_TESTNET_ADDRESS_PREFIX || "xion",
     codeId: process.env.XION_TESTNET_CODE_ID || "1",
-    checksum: process.env.XION_TESTNET_CHECKSUM || "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
-    treasuryAddress: process.env.XION_TESTNET_TREASURY_ADDRESS || "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw",
-    userMapContract: process.env.XION_TESTNET_USER_MAP_CONTRACT || "xion1q66h2ynmrm5je9awcdwcyxjykd6c0h4wf3u5ha4s5cntf8jr5jfqh8mwey",
+    checksum:
+      process.env.XION_TESTNET_CHECKSUM ||
+      "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
+    treasuryAddress:
+      process.env.XION_TESTNET_TREASURY_ADDRESS ||
+      "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw",
+    userMapContract:
+      process.env.XION_TESTNET_USER_MAP_CONTRACT ||
+      "xion1q66h2ynmrm5je9awcdwcyxjykd6c0h4wf3u5ha4s5cntf8jr5jfqh8mwey",
     indexerUrl: process.env.XION_TESTNET_INDEXER_URL,
   };
 
@@ -56,7 +68,9 @@ export function getTestConfig(): TestConfig {
       ...baseConfig,
       environment: "local",
       aaApiUrl: process.env.XION_LOCAL_AA_API_URL || "http://localhost:8787",
-      feeGranter: process.env.XION_LOCAL_FEE_GRANTER || "xion10y5pzqs0jn89zpm6va625v6xzsqjkm293efwq8",
+      feeGranter:
+        process.env.XION_LOCAL_FEE_GRANTER ||
+        "xion10y5pzqs0jn89zpm6va625v6xzsqjkm293efwq8",
     };
   }
 
@@ -64,8 +78,12 @@ export function getTestConfig(): TestConfig {
   return {
     ...baseConfig,
     environment: "testnet",
-    aaApiUrl: process.env.XION_DEPLOYED_AA_API_URL || "https://aa-api.xion-testnet-2.burnt.com",
-    feeGranter: process.env.XION_DEPLOYED_FEE_GRANTER || "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
+    aaApiUrl:
+      process.env.XION_DEPLOYED_AA_API_URL ||
+      "https://aa-api.xion-testnet-2.burnt.com",
+    feeGranter:
+      process.env.XION_DEPLOYED_FEE_GRANTER ||
+      "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
   };
 }
 
@@ -82,23 +100,20 @@ export const TEST_MNEMONIC =
  */
 export const TEST_GRANT_AMOUNT = parseInt(
   process.env.TEST_GRANT_AMOUNT || "1000000",
-  10
+  10,
 ); // 1 XION = 1e6 uxion
 export const TEST_SEND_AMOUNT = parseInt(
   process.env.TEST_SEND_AMOUNT || "10000",
-  10
+  10,
 ); // 0.01 XION
 
 /**
  * Test timeouts
  */
-export const TEST_TIMEOUT = parseInt(
-  process.env.TEST_TIMEOUT || "30000",
-  10
-);
+export const TEST_TIMEOUT = parseInt(process.env.TEST_TIMEOUT || "30000", 10);
 export const INTEGRATION_TEST_TIMEOUT = parseInt(
   process.env.INTEGRATION_TEST_TIMEOUT || "120000",
-  10
+  10,
 );
 
 /**
@@ -218,12 +233,15 @@ export const testConfig = {
         // Create test connector on demand
         const connector = createTestSecp256k1Connector(TEST_MNEMONIC, 0);
         const result = await connector.connect();
-        const { getSignerConfigFromConnectorResult } = await import("./helpers");
+        const { getSignerConfigFromConnectorResult } = await import(
+          "./helpers"
+        );
         return getSignerConfigFromConnectorResult(result);
       },
       smartAccountContract: {
         codeId: 1,
-        checksum: "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
+        checksum:
+          "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
         addressPrefix: "xion",
       },
     },

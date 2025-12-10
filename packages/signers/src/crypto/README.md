@@ -51,6 +51,7 @@ XION abstract accounts use CREATE2 address derivation, which requires determinis
 ```
 
 **Critical requirement**: Salt calculation MUST be identical across:
+
 - xion.js SDK (this package)
 - account-abstraction-api
 - Smart contract expectations
@@ -61,13 +62,13 @@ XION abstract accounts use CREATE2 address derivation, which requires determinis
 
 Different authenticator types use different input formats and hashing strategies:
 
-| Authenticator Type | Input Format | Normalization | What Gets Hashed | Output |
-|-------------------|--------------|---------------|------------------|--------|
-| **Secp256k1** | Base64 pubkey (must normalize hex first) | None (expects base64) | UTF-8 bytes of base64 STRING (44 bytes) | 64-char hex |
-| **EthWallet** | Ethereum address | Lowercase, remove 0x | Binary address bytes (20 bytes) | 64-char hex |
-| **JWT** | JWT token string | None | UTF-8 bytes of JWT string | 64-char hex |
-| **Passkey** | Credential string | None | UTF-8 bytes of credential string | 64-char hex |
-| **Ed25519** | Pubkey string | None | UTF-8 bytes of pubkey string | 64-char hex |
+| Authenticator Type | Input Format                             | Normalization         | What Gets Hashed                        | Output      |
+| ------------------ | ---------------------------------------- | --------------------- | --------------------------------------- | ----------- |
+| **Secp256k1**      | Base64 pubkey (must normalize hex first) | None (expects base64) | UTF-8 bytes of base64 STRING (44 bytes) | 64-char hex |
+| **EthWallet**      | Ethereum address                         | Lowercase, remove 0x  | Binary address bytes (20 bytes)         | 64-char hex |
+| **JWT**            | JWT token string                         | None                  | UTF-8 bytes of JWT string               | 64-char hex |
+| **Passkey**        | Credential string                        | None                  | UTF-8 bytes of credential string        | 64-char hex |
+| **Ed25519**        | Pubkey string                            | None                  | UTF-8 bytes of pubkey string            | 64-char hex |
 
 ### Secp256k1 Salt
 
@@ -83,7 +84,8 @@ salt = SHA256(UTF8_encode(base64_pubkey_string))
 
 ```typescript
 // Input: Hex public key (66 chars)
-const pubkeyHex = "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
+const pubkeyHex =
+  "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
 
 // Step 1: Normalize to base64 (using normalizeSecp256k1PublicKey)
 const pubkeyBase64 = "AjXd9gVDhhiQ3UX5SI7aCbb3olSwvxqYCZpf3hBfo09W";
@@ -103,8 +105,8 @@ const salt = toHex(saltBytes);
 
 ```typescript
 // ❌ WRONG: Hashing decoded pubkey bytes
-const pubkeyBytes = fromBase64(pubkeyBase64);  // 33 bytes
-const salt = sha256(pubkeyBytes);  // Will produce WRONG salt!
+const pubkeyBytes = fromBase64(pubkeyBase64); // 33 bytes
+const salt = sha256(pubkeyBytes); // Will produce WRONG salt!
 
 // ✅ CORRECT: Hash the base64 STRING
 const salt = sha256(new TextEncoder().encode(pubkeyBase64));
@@ -112,10 +114,10 @@ const salt = sha256(new TextEncoder().encode(pubkeyBase64));
 
 #### Input Requirements
 
-| Requirement | Details |
-|------------|---------|
-| Format | MUST be base64 (44 chars) - function does NOT accept hex directly |
-| Pubkey Type | MUST be compressed (33 bytes when decoded) |
+| Requirement   | Details                                                                         |
+| ------------- | ------------------------------------------------------------------------------- |
+| Format        | MUST be base64 (44 chars) - function does NOT accept hex directly               |
+| Pubkey Type   | MUST be compressed (33 bytes when decoded)                                      |
 | Normalization | **ALWAYS** call `normalizeSecp256k1PublicKey()` first if input is in hex format |
 
 #### Code Example
@@ -125,11 +127,12 @@ import { calculateSecp256k1Salt } from "./salt";
 import { normalizeSecp256k1PublicKey } from "./normalization";
 
 // Always normalize first
-const pubkeyHex = "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
-const normalized = normalizeSecp256k1PublicKey(pubkeyHex);  // → base64
+const pubkeyHex =
+  "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
+const normalized = normalizeSecp256k1PublicKey(pubkeyHex); // → base64
 const salt = calculateSecp256k1Salt(normalized);
 
-console.log(salt);  // "671de17b..." (64 hex chars)
+console.log(salt); // "671de17b..." (64 hex chars)
 ```
 
 ### EthWallet Salt
@@ -163,11 +166,11 @@ const salt = toHex(saltBytes);
 
 #### Input Requirements
 
-| Requirement | Details |
-|------------|---------|
-| Format | Ethereum address (with or without 0x prefix) |
-| Case | Any case (normalized to lowercase internally) |
-| Length | 40 hex chars (42 with 0x) = 20 bytes |
+| Requirement | Details                                       |
+| ----------- | --------------------------------------------- |
+| Format      | Ethereum address (with or without 0x prefix)  |
+| Case        | Any case (normalized to lowercase internally) |
+| Length      | 40 hex chars (42 with 0x) = 20 bytes          |
 
 #### Code Example
 
@@ -175,11 +178,17 @@ const salt = toHex(saltBytes);
 import { calculateEthWalletSalt } from "./salt";
 
 // All these produce the same salt:
-const salt1 = calculateEthWalletSalt("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
-const salt2 = calculateEthWalletSalt("742d35Cc6634C0532925a3b844Bc9e7595f0bEb0");
-const salt3 = calculateEthWalletSalt("0x742D35CC6634C0532925A3B844BC9E7595F0BEB0");
+const salt1 = calculateEthWalletSalt(
+  "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
+);
+const salt2 = calculateEthWalletSalt(
+  "742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
+);
+const salt3 = calculateEthWalletSalt(
+  "0x742D35CC6634C0532925A3B844BC9E7595F0BEB0",
+);
 
-console.log(salt1 === salt2 && salt2 === salt3);  // true
+console.log(salt1 === salt2 && salt2 === salt3); // true
 ```
 
 ### JWT Salt
@@ -215,7 +224,7 @@ import { calculateJWTSalt } from "./salt";
 const jwt = "my-app.user-123";
 const salt = calculateJWTSalt(jwt);
 
-console.log(salt);  // "a1b2c3d4..." (64 hex chars)
+console.log(salt); // "a1b2c3d4..." (64 hex chars)
 ```
 
 ## Signature Verification
@@ -226,11 +235,11 @@ Verifies that a signature is over `SHA256(message_bytes)`. During account creati
 
 #### Format Requirements
 
-| Component | Format | Length | Notes |
-|-----------|--------|--------|-------|
-| **Message** | Hex (0x-prefixed) or plain string | Variable | Typically bech32 address (e.g., "xion1...") |
-| **Signature** | Hex (with or without 0x) | 128 hex chars | 64 bytes (r + s, NO recovery byte) |
-| **Public Key** | Base64 or hex | 44 chars (base64) or 66 chars (hex) | 33 bytes compressed or 65 bytes uncompressed |
+| Component      | Format                            | Length                              | Notes                                        |
+| -------------- | --------------------------------- | ----------------------------------- | -------------------------------------------- |
+| **Message**    | Hex (0x-prefixed) or plain string | Variable                            | Typically bech32 address (e.g., "xion1...")  |
+| **Signature**  | Hex (with or without 0x)          | 128 hex chars                       | 64 bytes (r + s, NO recovery byte)           |
+| **Public Key** | Base64 or hex                     | 44 chars (base64) or 66 chars (hex) | 33 bytes compressed or 65 bytes uncompressed |
 
 #### Message Format
 
@@ -247,10 +256,10 @@ Both formats are converted to UTF-8 bytes and then SHA256 hashed.
 
 ```typescript
 // ✅ CORRECT: 64 bytes (128 hex chars)
-const signature = "cdae249670bafbc5...";  // 128 chars
+const signature = "cdae249670bafbc5..."; // 128 chars
 
 // ❌ WRONG: 65 bytes (includes recovery byte)
-const signature = "cdae249670bafbc5...1b";  // 130 chars
+const signature = "cdae249670bafbc5...1b"; // 130 chars
 ```
 
 #### Example Verification
@@ -260,14 +269,15 @@ import { verifySecp256k1Signature } from "./signature-verification";
 import { utf8ToHexWithPrefix } from "./hex-validation";
 
 // Smart account address (predicted via CREATE2)
-const smartAccountAddress = "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
+const smartAccountAddress =
+  "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
 
 // Convert to hex format (recommended)
 const messageHex = utf8ToHexWithPrefix(smartAccountAddress);
 // Result: "0x78696f6e31796c323434756a66616476647961..."
 
 // Signature from wallet (64 bytes)
-const signatureHex = "cdae249670bafbc5...";  // 128 hex chars
+const signatureHex = "cdae249670bafbc5..."; // 128 hex chars
 
 // Public key (base64 format)
 const pubkeyBase64 = "AjXd9gVDhhiQ3UX5SI7aCbb3olSwvxqYCZpf3hBfo09W";
@@ -276,10 +286,10 @@ const pubkeyBase64 = "AjXd9gVDhhiQ3UX5SI7aCbb3olSwvxqYCZpf3hBfo09W";
 const isValid = await verifySecp256k1Signature(
   messageHex,
   signatureHex,
-  pubkeyBase64
+  pubkeyBase64,
 );
 
-console.log(isValid);  // true if signature is valid
+console.log(isValid); // true if signature is valid
 ```
 
 #### Smart Contract Equivalent
@@ -300,11 +310,11 @@ Verifies Ethereum wallet signatures using ECDSA signature recovery.
 
 #### Format Requirements
 
-| Component | Format | Length | Notes |
-|-----------|--------|--------|-------|
-| **Message** | String | Variable | Typically bech32 address (e.g., "xion1...") |
-| **Signature** | Hex (with or without 0x) | 130 hex chars | 65 bytes (r + s + v) |
-| **Expected Address** | Ethereum address | 42 chars (with 0x) | Address that should have signed |
+| Component            | Format                   | Length             | Notes                                       |
+| -------------------- | ------------------------ | ------------------ | ------------------------------------------- |
+| **Message**          | String                   | Variable           | Typically bech32 address (e.g., "xion1...") |
+| **Signature**        | Hex (with or without 0x) | 130 hex chars      | 65 bytes (r + s + v)                        |
+| **Expected Address** | Ethereum address         | 42 chars (with 0x) | Address that should have signed             |
 
 #### Signature Format
 
@@ -312,10 +322,10 @@ Verifies Ethereum wallet signatures using ECDSA signature recovery.
 
 ```typescript
 // ✅ CORRECT: 65 bytes (130 hex chars)
-const signature = "cdae249670bafbc5...1b";  // 130 chars (includes recovery byte)
+const signature = "cdae249670bafbc5...1b"; // 130 chars (includes recovery byte)
 
 // ❌ WRONG: 64 bytes (missing recovery byte)
-const signature = "cdae249670bafbc5...";  // 128 chars
+const signature = "cdae249670bafbc5..."; // 128 chars
 ```
 
 #### Example Verification
@@ -324,10 +334,11 @@ const signature = "cdae249670bafbc5...";  // 128 chars
 import { verifyEthWalletSignature } from "./signature-verification";
 
 // Smart account address
-const smartAccountAddress = "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
+const smartAccountAddress =
+  "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx";
 
 // Signature from MetaMask (65 bytes)
-const signatureHex = "cdae249670bafbc5...1b";  // 130 hex chars
+const signatureHex = "cdae249670bafbc5...1b"; // 130 hex chars
 
 // Expected signer address
 const expectedAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
@@ -336,10 +347,10 @@ const expectedAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
 const isValid = verifyEthWalletSignature(
   smartAccountAddress,
   signatureHex,
-  expectedAddress
+  expectedAddress,
 );
 
-console.log(isValid);  // true if signature is valid
+console.log(isValid); // true if signature is valid
 ```
 
 ## Common Patterns
@@ -355,11 +366,12 @@ import {
   calculateSmartAccountAddress,
   verifySecp256k1Signature,
   utf8ToHexWithPrefix,
-  hexSaltToUint8Array
+  hexSaltToUint8Array,
 } from "@burnt-labs/signers";
 
 // 1. Normalize public key
-const pubkeyHex = "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
+const pubkeyHex =
+  "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
 const normalizedPubkey = normalizeSecp256k1PublicKey(pubkeyHex);
 // Result: "AjXd9gVDhhiQ3UX5SI7aCbb3olSwvxqYCZpf3hBfo09W" (base64)
 
@@ -375,7 +387,7 @@ const smartAccountAddress = calculateSmartAccountAddress({
   creator: "xion1...",
   codeHash: "...",
   salt: saltBytes,
-  chainPrefix: "xion"
+  chainPrefix: "xion",
 });
 // Result: "xion1yl244ujfadvdya78ryzf2pqzcycz46zs72rq2gtvdlq7aup7gn9s27mxzx"
 
@@ -388,7 +400,7 @@ const signature = await wallet.signMessage(messageHex);
 const isValid = await verifySecp256k1Signature(
   messageHex,
   signature,
-  normalizedPubkey
+  normalizedPubkey,
 );
 
 if (!isValid) {
@@ -401,19 +413,20 @@ if (!isValid) {
 
 ### Format Conversion Table
 
-| From | To | Function | Example |
-|------|----|---------|---------|
-| Hex pubkey | Base64 pubkey | `normalizeSecp256k1PublicKey()` | `"0235dd..."` → `"AjXd9g..."` |
-| String | Hex with 0x | `utf8ToHexWithPrefix()` | `"xion1..."` → `"0x78696f..."` |
-| Hex salt | Uint8Array | `hexSaltToUint8Array()` | `"671de1..."` → `Uint8Array(32)` |
-| Hex | Bytes | `fromHex()` | `"0235dd..."` → `Uint8Array(33)` |
-| Bytes | Hex | `toHex()` | `Uint8Array(32)` → `"671de1..."` |
+| From       | To            | Function                        | Example                          |
+| ---------- | ------------- | ------------------------------- | -------------------------------- |
+| Hex pubkey | Base64 pubkey | `normalizeSecp256k1PublicKey()` | `"0235dd..."` → `"AjXd9g..."`    |
+| String     | Hex with 0x   | `utf8ToHexWithPrefix()`         | `"xion1..."` → `"0x78696f..."`   |
+| Hex salt   | Uint8Array    | `hexSaltToUint8Array()`         | `"671de1..."` → `Uint8Array(32)` |
+| Hex        | Bytes         | `fromHex()`                     | `"0235dd..."` → `Uint8Array(33)` |
+| Bytes      | Hex           | `toHex()`                       | `Uint8Array(32)` → `"671de1..."` |
 
 ## Cross-Repository Consistency
 
 ### Salt Calculation Consistency
 
 **xion.js** (this package):
+
 ```typescript
 // packages/signers/src/crypto/salt.ts
 export function calculateSecp256k1Salt(pubkey: string): string {
@@ -423,6 +436,7 @@ export function calculateSecp256k1Salt(pubkey: string): string {
 ```
 
 **account-abstraction-api**:
+
 ```typescript
 // src/xion/accounts/secp256k1/Secp256k1AbstractAccount.ts
 import { calculateSecp256k1Salt } from "@burnt-labs/signers";
@@ -434,6 +448,7 @@ protected getEncodedSalt(pubKey: string): Uint8Array<ArrayBufferLike> {
 ```
 
 **Smart Contract**:
+
 ```rust
 // contracts/account/src/contract.rs
 // Uses salt in CREATE2 formula during instantiate
@@ -443,6 +458,7 @@ let contract_addr = deps.api.addr_canonicalize(env.contract.address.as_str())?;
 ### Signature Verification Consistency
 
 **xion.js** (this package):
+
 ```typescript
 // Verifies SHA256(message_bytes)
 const messageHash = sha256(messageBytes);
@@ -450,6 +466,7 @@ return await Secp256k1.verifySignature(sig, messageHash, pubkeyBytes);
 ```
 
 **Smart Contract**:
+
 ```rust
 // contracts/account/src/auth.rs
 Authenticator::Secp256K1 { pubkey } => {
@@ -459,6 +476,7 @@ Authenticator::Secp256K1 { pubkey } => {
 ```
 
 Both implementations:
+
 1. SHA256 hash the message bytes
 2. Verify signature over the hash
 3. Use the same pubkey format (compressed or uncompressed)
@@ -474,6 +492,7 @@ Both implementations:
 **Cause**: Public key not normalized to base64 format before hashing.
 
 **Solution**:
+
 ```typescript
 // ❌ WRONG: Passing hex directly
 const salt = calculateSecp256k1Salt(pubkeyHex);
@@ -490,13 +509,15 @@ const salt = calculateSecp256k1Salt(normalized);
 **Causes and Solutions**:
 
 1. **Wrong signature length**:
+
    ```typescript
    // Check signature length
    const sigBytes = fromHex(signature);
-   console.log(sigBytes.length);  // Must be 64 for Secp256k1, 65 for EthWallet
+   console.log(sigBytes.length); // Must be 64 for Secp256k1, 65 for EthWallet
    ```
 
 2. **Wrong message format**:
+
    ```typescript
    // ✅ CORRECT: Convert to hex with 0x prefix
    const messageHex = utf8ToHexWithPrefix(smartAccountAddress);
@@ -523,14 +544,15 @@ const salt = calculateSecp256k1Salt(normalized);
 3. **Creator mismatch**: Ensure using correct creator address
 
 **Debug checklist**:
+
 ```typescript
 // 1. Verify salt calculation
 const saltHex = calculateSecp256k1Salt(normalizedPubkey);
-console.log("Salt:", saltHex);  // Should be 64 hex chars
+console.log("Salt:", saltHex); // Should be 64 hex chars
 
 // 2. Verify salt bytes
 const saltBytes = hexSaltToUint8Array(saltHex);
-console.log("Salt bytes length:", saltBytes.length);  // Should be 32
+console.log("Salt bytes length:", saltBytes.length); // Should be 32
 
 // 3. Verify inputs to CREATE2
 console.log("Creator:", creator);
@@ -541,6 +563,7 @@ console.log("Chain prefix:", chainPrefix);
 ### Getting Help
 
 For more detailed information, see:
+
 - [Root-level cryptography reference](../../../../../../../XION_CRYPTOGRAPHY_REFERENCE.md) - Complete specifications
 - [Integration test findings](../../../../INTEGRATION_TEST_FINDINGS.md) - Common issues and solutions
 - Smart contract source: `contracts/contracts/account/src/` - Contract implementation
@@ -555,6 +578,7 @@ pnpm test tests/integration/diagnostics/secp256k1-consistency.diagnostic.test.ts
 ```
 
 These tests verify:
+
 - Salt calculation consistency
 - Address derivation correctness
 - Signature format validation

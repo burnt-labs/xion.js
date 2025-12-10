@@ -127,8 +127,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
       expect(accountDiscovery.checkAccountExists).toHaveBeenCalledWith(
         mockAccountStrategy,
         "0x123",
-        AUTHENTICATOR_TYPE.EthWallet
-        
+        AUTHENTICATOR_TYPE.EthWallet,
       );
       expect(result.smartAccountAddress).toBe("xion1existingaccount");
       expect(result.connectionInfo.metadata?.authenticatorIndex).toBe(1);
@@ -241,7 +240,9 @@ describe("accountConnection.ts - Account Connection Flow", () => {
 
     it("should generate keypair for grantee when none exists", async () => {
       const mockNewKeypair = {
-        getAccounts: vi.fn().mockResolvedValue([{ address: "xion1newgrantee" }]),
+        getAccounts: vi
+          .fn()
+          .mockResolvedValue([{ address: "xion1newgrantee" }]),
       };
 
       mockConnector.connect.mockResolvedValue({
@@ -294,9 +295,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         authenticatorIndex: 0,
       });
 
-      mockSessionManager.getLocalKeypair.mockResolvedValue(
-        mockExistingKeypair,
-      );
+      mockSessionManager.getLocalKeypair.mockResolvedValue(mockExistingKeypair);
 
       const result = await connectAccount(mockParams);
 
@@ -337,8 +336,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
       expect(accountDiscovery.checkAccountExists).toHaveBeenCalledWith(
         mockAccountStrategy,
         "0x789custom",
-        AUTHENTICATOR_TYPE.EthWallet
-        
+        AUTHENTICATOR_TYPE.EthWallet,
       );
     });
 
@@ -448,7 +446,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
       const result = await connectAccount(mockParams);
 
       expect(result.connectionInfo.metadata?.authenticatorType).toBe(
-        AUTHENTICATOR_TYPE.EthWallet
+        AUTHENTICATOR_TYPE.EthWallet,
       );
       expect(result.connectionInfo.metadata?.authenticatorIndex).toBe(2);
       expect(result.connectionInfo.metadata?.codeId).toBe(555);

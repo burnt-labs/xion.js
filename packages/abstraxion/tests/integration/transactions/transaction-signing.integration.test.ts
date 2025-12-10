@@ -97,14 +97,14 @@ describe("Transaction Signing Integration Tests", () => {
         const contractMsg = createUserMapUpdateMsg(
           smartAccountAddress,
           config.userMapContract,
-          `transaction-signing-test-${Date.now()}`
+          `transaction-signing-test-${Date.now()}`,
         );
 
         // Simulate (gas estimation)
         const gasEstimation = await signingClient!.simulate(
           smartAccountAddress,
           [contractMsg],
-          "Full flow test"
+          "Full flow test",
         );
 
         expect(gasEstimation).toBeGreaterThan(0);
@@ -115,7 +115,7 @@ describe("Transaction Signing Integration Tests", () => {
           smartAccountAddress,
           [contractMsg],
           "auto",
-          "Full flow test"
+          "Full flow test",
         );
 
         expect(result.code).toBe(0);
@@ -125,14 +125,14 @@ describe("Transaction Signing Integration Tests", () => {
         // Verify on-chain
         const txConfirmation = await waitForTxConfirmation(
           stargateClient,
-          result.transactionHash
+          result.transactionHash,
         );
         expect(txConfirmation).toBeDefined();
         expect(txConfirmation.code).toBe(0);
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
   });
 
@@ -154,20 +154,20 @@ describe("Transaction Signing Integration Tests", () => {
         const contractMsg = createUserMapUpdateMsg(
           smartAccountAddress,
           config.userMapContract,
-          `test-${Date.now()}`
+          `test-${Date.now()}`,
         );
 
         // Simulate twice - should return consistent results
         const estimation1 = await signingClient!.simulate(
           smartAccountAddress,
           [contractMsg],
-          "Gas estimation test"
+          "Gas estimation test",
         );
 
         const estimation2 = await signingClient!.simulate(
           smartAccountAddress,
           [contractMsg],
-          "Gas estimation test"
+          "Gas estimation test",
         );
 
         expect(estimation1).toBe(estimation2);
@@ -175,7 +175,7 @@ describe("Transaction Signing Integration Tests", () => {
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
@@ -194,18 +194,36 @@ describe("Transaction Signing Integration Tests", () => {
 
         const singleMsgGas = await signingClient!.simulate(
           smartAccountAddress,
-          [createUserMapUpdateMsg(smartAccountAddress, config.userMapContract, `test-1-${Date.now()}`)],
-          ""
+          [
+            createUserMapUpdateMsg(
+              smartAccountAddress,
+              config.userMapContract,
+              `test-1-${Date.now()}`,
+            ),
+          ],
+          "",
         );
 
         const tripleMsgGas = await signingClient!.simulate(
           smartAccountAddress,
           [
-            createUserMapUpdateMsg(smartAccountAddress, config.userMapContract, `test-2-${Date.now()}`),
-            createUserMapUpdateMsg(smartAccountAddress, config.userMapContract, `test-3-${Date.now()}`),
-            createUserMapUpdateMsg(smartAccountAddress, config.userMapContract, `test-4-${Date.now()}`),
+            createUserMapUpdateMsg(
+              smartAccountAddress,
+              config.userMapContract,
+              `test-2-${Date.now()}`,
+            ),
+            createUserMapUpdateMsg(
+              smartAccountAddress,
+              config.userMapContract,
+              `test-3-${Date.now()}`,
+            ),
+            createUserMapUpdateMsg(
+              smartAccountAddress,
+              config.userMapContract,
+              `test-4-${Date.now()}`,
+            ),
           ],
-          ""
+          "",
         );
 
         // More messages should require more gas
@@ -215,7 +233,7 @@ describe("Transaction Signing Integration Tests", () => {
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
   });
 
@@ -241,14 +259,14 @@ describe("Transaction Signing Integration Tests", () => {
         const contractMsg = createUserMapUpdateMsg(
           smartAccountAddress,
           config.userMapContract,
-          testId
+          testId,
         );
 
         const result = await signingClient!.signAndBroadcast(
           smartAccountAddress,
           [contractMsg],
           "auto",
-          "Contract verification test"
+          "Contract verification test",
         );
 
         expect(result.code).toBe(0);
@@ -260,7 +278,7 @@ describe("Transaction Signing Integration Tests", () => {
         const cosmwasmClient = await CosmWasmClient.connect(config.rpcUrl);
         const queryResult = await cosmwasmClient.queryContractSmart(
           config.userMapContract,
-          { get_value_by_user: { address: smartAccountAddress } }
+          { get_value_by_user: { address: smartAccountAddress } },
         );
 
         // Parse the stored JSON
@@ -270,7 +288,7 @@ describe("Transaction Signing Integration Tests", () => {
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
   });
 
@@ -293,17 +311,17 @@ describe("Transaction Signing Integration Tests", () => {
         const invalidMsg = createTestTransferMsg(
           smartAccountAddress,
           config.feeGranter,
-          "999999999999999999999"
+          "999999999999999999999",
         );
 
         // Simulation should fail
         await expect(
-          signingClient!.simulate(smartAccountAddress, [invalidMsg], "")
+          signingClient!.simulate(smartAccountAddress, [invalidMsg], ""),
         ).rejects.toThrow();
 
         await controller.disconnect();
       },
-      INTEGRATION_TEST_TIMEOUT
+      INTEGRATION_TEST_TIMEOUT,
     );
   });
 });

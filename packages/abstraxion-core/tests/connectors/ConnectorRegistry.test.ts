@@ -54,7 +54,9 @@ describe("ConnectorRegistry", () => {
 
       // Should warn about overwriting
       expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Connector with ID "same-id" already registered')
+        expect.stringContaining(
+          'Connector with ID "same-id" already registered',
+        ),
       );
 
       // Second connector should win
@@ -160,17 +162,17 @@ describe("ConnectorRegistry", () => {
       const externalSigner = createSimpleMockConnector(
         "ext-1",
         "External",
-        ConnectorType.EXTERNAL_SIGNER
+        ConnectorType.EXTERNAL_SIGNER,
       );
       const cosmosWallet = createSimpleMockConnector(
         "cosmos-1",
         "Cosmos",
-        ConnectorType.COSMOS_WALLET
+        ConnectorType.COSMOS_WALLET,
       );
       const ethWallet = createSimpleMockConnector(
         "eth-1",
         "Ethereum",
-        ConnectorType.ETHEREUM_WALLET
+        ConnectorType.ETHEREUM_WALLET,
       );
 
       registry.register(externalSigner);
@@ -190,7 +192,7 @@ describe("ConnectorRegistry", () => {
       const connector = createSimpleMockConnector(
         "test",
         "Test",
-        ConnectorType.EXTERNAL_SIGNER
+        ConnectorType.EXTERNAL_SIGNER,
       );
       registry.register(connector);
 
@@ -202,17 +204,17 @@ describe("ConnectorRegistry", () => {
       const ext1 = createSimpleMockConnector(
         "ext-1",
         "External 1",
-        ConnectorType.EXTERNAL_SIGNER
+        ConnectorType.EXTERNAL_SIGNER,
       );
       const ext2 = createSimpleMockConnector(
         "ext-2",
         "External 2",
-        ConnectorType.EXTERNAL_SIGNER
+        ConnectorType.EXTERNAL_SIGNER,
       );
       const cosmos = createSimpleMockConnector(
         "cosmos-1",
         "Cosmos",
-        ConnectorType.COSMOS_WALLET
+        ConnectorType.COSMOS_WALLET,
       );
 
       registry.register(ext1);
@@ -228,9 +230,24 @@ describe("ConnectorRegistry", () => {
 
   describe("getAvailableIds()", () => {
     it("should return IDs of available connectors", async () => {
-      const available1 = createSimpleMockConnector("avail-1", "Available 1", ConnectorType.EXTERNAL_SIGNER, true);
-      const available2 = createSimpleMockConnector("avail-2", "Available 2", ConnectorType.EXTERNAL_SIGNER, true);
-      const unavailable = createSimpleMockConnector("unavail", "Unavailable", ConnectorType.EXTERNAL_SIGNER, false);
+      const available1 = createSimpleMockConnector(
+        "avail-1",
+        "Available 1",
+        ConnectorType.EXTERNAL_SIGNER,
+        true,
+      );
+      const available2 = createSimpleMockConnector(
+        "avail-2",
+        "Available 2",
+        ConnectorType.EXTERNAL_SIGNER,
+        true,
+      );
+      const unavailable = createSimpleMockConnector(
+        "unavail",
+        "Unavailable",
+        ConnectorType.EXTERNAL_SIGNER,
+        false,
+      );
 
       registry.register(available1);
       registry.register(available2);
@@ -244,8 +261,18 @@ describe("ConnectorRegistry", () => {
     });
 
     it("should return empty array when no connectors are available", async () => {
-      const unavailable1 = createSimpleMockConnector("unavail-1", "Unavailable 1", ConnectorType.EXTERNAL_SIGNER, false);
-      const unavailable2 = createSimpleMockConnector("unavail-2", "Unavailable 2", ConnectorType.EXTERNAL_SIGNER, false);
+      const unavailable1 = createSimpleMockConnector(
+        "unavail-1",
+        "Unavailable 1",
+        ConnectorType.EXTERNAL_SIGNER,
+        false,
+      );
+      const unavailable2 = createSimpleMockConnector(
+        "unavail-2",
+        "Unavailable 2",
+        ConnectorType.EXTERNAL_SIGNER,
+        false,
+      );
 
       registry.register(unavailable1);
       registry.register(unavailable2);
@@ -262,9 +289,24 @@ describe("ConnectorRegistry", () => {
 
   describe("getAvailable()", () => {
     it("should return available connectors", async () => {
-      const available1 = createSimpleMockConnector("avail-1", "Available 1", ConnectorType.EXTERNAL_SIGNER, true);
-      const available2 = createSimpleMockConnector("avail-2", "Available 2", ConnectorType.EXTERNAL_SIGNER, true);
-      const unavailable = createSimpleMockConnector("unavail", "Unavailable", ConnectorType.EXTERNAL_SIGNER, false);
+      const available1 = createSimpleMockConnector(
+        "avail-1",
+        "Available 1",
+        ConnectorType.EXTERNAL_SIGNER,
+        true,
+      );
+      const available2 = createSimpleMockConnector(
+        "avail-2",
+        "Available 2",
+        ConnectorType.EXTERNAL_SIGNER,
+        true,
+      );
+      const unavailable = createSimpleMockConnector(
+        "unavail",
+        "Unavailable",
+        ConnectorType.EXTERNAL_SIGNER,
+        false,
+      );
 
       registry.register(available1);
       registry.register(available2);
@@ -278,7 +320,12 @@ describe("ConnectorRegistry", () => {
     });
 
     it("should return empty array when no connectors are available", async () => {
-      const unavailable = createSimpleMockConnector("unavail", "Unavailable", ConnectorType.EXTERNAL_SIGNER, false);
+      const unavailable = createSimpleMockConnector(
+        "unavail",
+        "Unavailable",
+        ConnectorType.EXTERNAL_SIGNER,
+        false,
+      );
       registry.register(unavailable);
 
       const availableConnectors = await registry.getAvailable();
@@ -333,17 +380,17 @@ describe("ConnectorRegistry", () => {
       const externalSigner = createSimpleMockConnector(
         "turnkey",
         "Turnkey",
-        ConnectorType.EXTERNAL_SIGNER
+        ConnectorType.EXTERNAL_SIGNER,
       );
       const cosmosWallet = createSimpleMockConnector(
         "keplr",
         "Keplr",
-        ConnectorType.COSMOS_WALLET
+        ConnectorType.COSMOS_WALLET,
       );
       const ethWallet = createSimpleMockConnector(
         "metamask",
         "MetaMask",
-        ConnectorType.ETHEREUM_WALLET
+        ConnectorType.ETHEREUM_WALLET,
       );
 
       registry.register(externalSigner);

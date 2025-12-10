@@ -104,7 +104,7 @@ async function simpleSleep(ms: number): Promise<void> {
 
     // Ensure cleanup even if promise is abandoned
     // This is a safeguard, though in practice the timeout will complete normally
-    if (typeof timeoutId === 'object' && 'unref' in timeoutId) {
+    if (typeof timeoutId === "object" && "unref" in timeoutId) {
       // In Node.js, allow the process to exit without waiting for this timeout
       (timeoutId as NodeJS.Timeout).unref();
     }

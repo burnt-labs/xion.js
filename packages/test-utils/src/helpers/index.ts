@@ -1,6 +1,6 @@
 /**
  * Test helper functions
- * 
+ *
  * Provides utilities for setting up tests, timeouts, and waiting for conditions
  */
 
@@ -20,8 +20,10 @@ export interface TestConfig {
  */
 export function getTestConfig(): TestConfig {
   return {
-    rpcUrl: process.env.TEST_RPC_URL || "https://rpc.xion-testnet-1.burnt.com:443",
-    restUrl: process.env.TEST_REST_URL || "https://api.xion-testnet-1.burnt.com",
+    rpcUrl:
+      process.env.TEST_RPC_URL || "https://rpc.xion-testnet-1.burnt.com:443",
+    restUrl:
+      process.env.TEST_REST_URL || "https://api.xion-testnet-1.burnt.com",
     chainId: process.env.TEST_CHAIN_ID || "xion-testnet-1",
     addressPrefix: "xion",
     feeToken: "uxion",
@@ -45,7 +47,7 @@ export async function waitForCondition(
     timeout?: number;
     interval?: number;
     timeoutMessage?: string;
-  } = {}
+  } = {},
 ): Promise<void> {
   const {
     timeout = 30000,
@@ -83,7 +85,7 @@ export async function retryWithBackoff<T>(
     initialDelay?: number;
     maxDelay?: number;
     backoffMultiplier?: number;
-  } = {}
+  } = {},
 ): Promise<T> {
   const {
     maxRetries = 3,
@@ -100,7 +102,7 @@ export async function retryWithBackoff<T>(
       return await fn();
     } catch (error) {
       lastError = error as Error;
-      
+
       if (attempt < maxRetries) {
         await sleep(delay);
         delay = Math.min(delay * backoffMultiplier, maxDelay);
@@ -140,7 +142,7 @@ export class MockTimer {
    * Set the current time to a specific value
    */
   setTime(time: number | Date): void {
-    this.currentTime = typeof time === 'number' ? time : time.getTime();
+    this.currentTime = typeof time === "number" ? time : time.getTime();
   }
 
   /**
@@ -156,7 +158,7 @@ export class MockTimer {
  */
 export function randomHex(length: number = 32): string {
   const bytes = new Uint8Array(length);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
     crypto.getRandomValues(bytes);
   } else {
     // Fallback for environments without crypto
@@ -165,15 +167,15 @@ export function randomHex(length: number = 32): string {
     }
   }
   return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 /**
  * Check if running in CI environment
  */
 export function isCI(): boolean {
-  return process.env.CI === 'true' || !!process.env.GITHUB_ACTIONS;
+  return process.env.CI === "true" || !!process.env.GITHUB_ACTIONS;
 }
 
 /**
@@ -181,6 +183,8 @@ export function isCI(): boolean {
  */
 export function skipIfNotIntegration(): void {
   if (!process.env.RUN_INTEGRATION_TESTS) {
-    throw new Error('Skipping: Integration tests not enabled. Set RUN_INTEGRATION_TESTS=true');
+    throw new Error(
+      "Skipping: Integration tests not enabled. Set RUN_INTEGRATION_TESTS=true",
+    );
   }
 }

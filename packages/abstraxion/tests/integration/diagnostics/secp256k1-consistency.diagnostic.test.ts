@@ -20,7 +20,15 @@ import {
   calculateSmartAccountAddress,
   AUTHENTICATOR_TYPE,
 } from "@burnt-labs/signers";
-import { Secp256k1, sha256, stringToPath, Bip39, EnglishMnemonic, Slip10, Slip10Curve } from "@cosmjs/crypto";
+import {
+  Secp256k1,
+  sha256,
+  stringToPath,
+  Bip39,
+  EnglishMnemonic,
+  Slip10,
+  Slip10Curve,
+} from "@cosmjs/crypto";
 import { toHex, fromHex } from "@cosmjs/encoding";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { TEST_MNEMONIC, getTestConfig } from "../fixtures";
@@ -41,7 +49,7 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
     const { privkey } = Slip10.derivePath(
       Slip10Curve.Secp256k1,
       seed,
-      stringToPath(`m/44'/118'/0'/0/${accountIndex}`)
+      stringToPath(`m/44'/118'/0'/0/${accountIndex}`),
     );
 
     // Compress pubkey to match AA API expectations (33 bytes = 66 hex chars)
@@ -63,20 +71,35 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
 
       console.log("[DIAGNOSTIC] Public Key Formats:");
       console.log("  Hex:", pubkeyHex);
-      console.log("  Hex length:", pubkeyHex.length, "(expected: 66 chars = 33 bytes)");
+      console.log(
+        "  Hex length:",
+        pubkeyHex.length,
+        "(expected: 66 chars = 33 bytes)",
+      );
       console.log("  Base64:", pubkeyBase64);
-      console.log("  Base64 length:", pubkeyBase64.length, "(expected: 44 chars)");
+      console.log(
+        "  Base64 length:",
+        pubkeyBase64.length,
+        "(expected: 44 chars)",
+      );
 
       // AA-API normalizes pubkey to base64 before salt calculation
       const normalizedPubkey = normalizeSecp256k1PublicKey(pubkeyHex);
-      console.log("\n[DIAGNOSTIC] Normalized pubkey (should be base64):", normalizedPubkey);
+      console.log(
+        "\n[DIAGNOSTIC] Normalized pubkey (should be base64):",
+        normalizedPubkey,
+      );
       console.log("  Is same as base64?", normalizedPubkey === pubkeyBase64);
 
       // Calculate salt using base64 pubkey (as AA-API does)
       const saltHex = calculateSecp256k1Salt(normalizedPubkey);
       console.log("\n[DIAGNOSTIC] Salt calculation:");
       console.log("  Salt (hex):", saltHex);
-      console.log("  Salt length:", saltHex.length, "(expected: 64 chars = 32 bytes)");
+      console.log(
+        "  Salt length:",
+        saltHex.length,
+        "(expected: 64 chars = 32 bytes)",
+      );
 
       // Verify salt is deterministic
       const saltHex2 = calculateSecp256k1Salt(normalizedPubkey);
@@ -100,8 +123,14 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
       const calculatedSaltHex = calculateSecp256k1Salt(pubkeyBase64);
 
       console.log("[DIAGNOSTIC] Manual vs Calculated Salt:");
-      console.log("  Manual (UTF-8 encode base64 string, then SHA256):", manualSaltHex);
-      console.log("  Calculated (via calculateSecp256k1Salt):", calculatedSaltHex);
+      console.log(
+        "  Manual (UTF-8 encode base64 string, then SHA256):",
+        manualSaltHex,
+      );
+      console.log(
+        "  Calculated (via calculateSecp256k1Salt):",
+        calculatedSaltHex,
+      );
       console.log("  Match?", manualSaltHex === calculatedSaltHex);
 
       expect(calculatedSaltHex).toBe(manualSaltHex);
@@ -171,30 +200,49 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
       const messageHexWithoutPrefix = messageHex.slice(2);
       const messageBytes = fromHex(messageHexWithoutPrefix);
       console.log("  Message bytes length:", messageBytes.length);
-      console.log("  Message bytes (first 10):", Array.from(messageBytes.slice(0, 10)));
+      console.log(
+        "  Message bytes (first 10):",
+        Array.from(messageBytes.slice(0, 10)),
+      );
 
       // Step 3: Hash the message bytes (as smart contract does)
       const messageHash = sha256(messageBytes);
       console.log("  Message hash length:", messageHash.length);
-      console.log("  Message hash (first 10):", Array.from(messageHash.slice(0, 10)));
+      console.log(
+        "  Message hash (first 10):",
+        Array.from(messageHash.slice(0, 10)),
+      );
 
       // Step 4: Sign the hash
       const signature = await Secp256k1.createSignature(messageHash, privkey);
 
       // Step 5: Extract r and s (WITHOUT recovery byte)
-      const signatureBytes = new Uint8Array([...signature.r(32), ...signature.s(32)]);
+      const signatureBytes = new Uint8Array([
+        ...signature.r(32),
+        ...signature.s(32),
+      ]);
       const signatureHex = toHex(signatureBytes);
       const signatureBase64 = Buffer.from(signatureBytes).toString("base64");
 
-      console.log("  Signature bytes length:", signatureBytes.length, "(expected: 64 bytes)");
+      console.log(
+        "  Signature bytes length:",
+        signatureBytes.length,
+        "(expected: 64 bytes)",
+      );
       console.log("  Signature (hex):", signatureHex);
-      console.log("  Signature hex length:", signatureHex.length, "(expected: 128 chars)");
+      console.log(
+        "  Signature hex length:",
+        signatureHex.length,
+        "(expected: 128 chars)",
+      );
       console.log("  Signature (base64):", signatureBase64);
 
       // Verify signature format
       expect(signatureBytes.length).toBe(64);
       expect(signatureHex.length).toBe(128);
-      console.log("  ✓ Signature format is correct (64 bytes, no recovery byte)");
+      console.log(
+        "  ✓ Signature format is correct (64 bytes, no recovery byte)",
+      );
 
       // Step 6: Verify signature using shared verification function
       // IMPORTANT: utf8ToHexWithPrefix just creates hex representation of UTF-8 bytes
@@ -202,10 +250,13 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
       const isValid = await verifySecp256k1Signature(
         smartAccountAddress, // Plain string (what AA API expects)
         signatureHex, // This signature is for UTF-8 bytes (same whether from hex or plain)
-        pubkeyBase64 // Base64 format
+        pubkeyBase64, // Base64 format
       );
 
-      console.log("  Signature verification (signing hex === signing plain UTF-8):", isValid ? "✓ VALID" : "✗ INVALID");
+      console.log(
+        "  Signature verification (signing hex === signing plain UTF-8):",
+        isValid ? "✓ VALID" : "✗ INVALID",
+      );
       expect(isValid).toBe(true); // Should SUCCEED - hex is just representation!
     });
 
@@ -217,10 +268,15 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
       const messageBytes = Buffer.from(smartAccountAddress, "utf8");
       const messageHash = sha256(messageBytes);
       const signature = await Secp256k1.createSignature(messageHash, privkey);
-      const signatureBytes = new Uint8Array([...signature.r(32), ...signature.s(32)]);
+      const signatureBytes = new Uint8Array([
+        ...signature.r(32),
+        ...signature.s(32),
+      ]);
       const signatureHex = toHex(signatureBytes);
 
-      console.log("[DIAGNOSTIC] Signature Verification with Different Pubkey Formats:");
+      console.log(
+        "[DIAGNOSTIC] Signature Verification with Different Pubkey Formats:",
+      );
 
       // Verify with hex pubkey (should throw error - not base64!)
       console.log("  Testing hex pubkey (should FAIL)...");
@@ -229,7 +285,7 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
         await verifySecp256k1Signature(
           smartAccountAddress, // Plain string
           signatureHex,
-          pubkeyHex  // Hex format - NOT SUPPORTED!
+          pubkeyHex, // Hex format - NOT SUPPORTED!
         );
       } catch (error) {
         hexError = error as Error;
@@ -242,9 +298,12 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
       const isValidBase64 = await verifySecp256k1Signature(
         smartAccountAddress, // Plain string
         signatureHex,
-        pubkeyBase64  // Base64 format - SUPPORTED!
+        pubkeyBase64, // Base64 format - SUPPORTED!
       );
-      console.log("  With base64 pubkey:", isValidBase64 ? "✓ VALID" : "✗ INVALID");
+      console.log(
+        "  With base64 pubkey:",
+        isValidBase64 ? "✓ VALID" : "✗ INVALID",
+      );
       expect(isValidBase64).toBe(true);
       console.log("  ✓ Verification works with base64 pubkey only");
     });
@@ -283,26 +342,41 @@ describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
       });
       console.log("\n3. SMART ACCOUNT ADDRESS:");
       console.log("   Address:", smartAccountAddress);
-      console.log("   ✓ Valid format:", /^xion1[a-z0-9]{38,59}$/.test(smartAccountAddress));
+      console.log(
+        "   ✓ Valid format:",
+        /^xion1[a-z0-9]{38,59}$/.test(smartAccountAddress),
+      );
 
       // STEP 4: Sign the smart account address CORRECTLY (sign plain string, not hex!)
       const addressBytes = Buffer.from(smartAccountAddress, "utf8");
       const addressHash = sha256(addressBytes);
-      const signatureObj = await Secp256k1.createSignature(addressHash, privkey);
-      const signatureBytes = new Uint8Array([...signatureObj.r(32), ...signatureObj.s(32)]);
+      const signatureObj = await Secp256k1.createSignature(
+        addressHash,
+        privkey,
+      );
+      const signatureBytes = new Uint8Array([
+        ...signatureObj.r(32),
+        ...signatureObj.s(32),
+      ]);
       const signatureHex = toHex(signatureBytes);
 
-      console.log("\n4. SIGNATURE GENERATION (CORRECT - signing plain string):");
+      console.log(
+        "\n4. SIGNATURE GENERATION (CORRECT - signing plain string):",
+      );
       console.log("   Message (bech32):", smartAccountAddress);
       console.log("   Signature (hex, no 0x):", signatureHex);
-      console.log("   Signature length:", signatureHex.length, "chars (64 bytes)");
+      console.log(
+        "   Signature length:",
+        signatureHex.length,
+        "chars (64 bytes)",
+      );
       console.log("   ✓ Valid format");
 
       // STEP 5: Verify signature (as AA-API does)
       const isValid = await verifySecp256k1Signature(
-        smartAccountAddress,  // Plain string!
+        smartAccountAddress, // Plain string!
         signatureHex,
-        normalizedPubkey
+        normalizedPubkey,
       );
       console.log("\n5. SIGNATURE VERIFICATION:");
       console.log("   Verification result:", isValid ? "✓ VALID" : "✗ INVALID");

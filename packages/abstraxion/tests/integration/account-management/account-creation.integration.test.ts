@@ -71,7 +71,10 @@ describe("Account Creation Integration Tests", () => {
         );
         expect(connectorResult.authenticator).toBeDefined();
 
-        console.log("✓ Connector connected:", connectorResult.metadata?.authenticatorType);
+        console.log(
+          "✓ Connector connected:",
+          connectorResult.metadata?.authenticatorType,
+        );
 
         // 3. Check if account already exists
         const existenceCheck = await checkAccountExists(
@@ -112,7 +115,10 @@ describe("Account Creation Integration Tests", () => {
         expect(isValidXionAddress(setupResult.smartAccountAddress)).toBe(true);
         expect(setupResult.signingClient).toBeDefined();
 
-        console.log("✓ Smart account address:", setupResult.smartAccountAddress);
+        console.log(
+          "✓ Smart account address:",
+          setupResult.smartAccountAddress,
+        );
 
         // 7. Verify account exists on-chain
         const onChainAccount = await stargateClient.getAccount(
@@ -136,7 +142,7 @@ describe("Account Creation Integration Tests", () => {
             return result;
           },
           5, // 5 retries
-          2000 // 2 second delay
+          2000, // 2 second delay
         );
 
         expect(postCreationCheck.exists).toBe(true);
@@ -158,8 +164,14 @@ describe("Account Creation Integration Tests", () => {
         // Use a unique account index to avoid conflicts
         const testIndex = Math.floor(Math.random() * 1000) + 100;
 
-        const connector1 = createTestSecp256k1Connector(TEST_MNEMONIC, testIndex);
-        const connector2 = createTestSecp256k1Connector(TEST_MNEMONIC, testIndex);
+        const connector1 = createTestSecp256k1Connector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
+        const connector2 = createTestSecp256k1Connector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
 
         const result1 = await connector1.connect();
         const result2 = await connector2.connect();
@@ -187,7 +199,10 @@ describe("Account Creation Integration Tests", () => {
         );
         expect(connectorResult.authenticator).toMatch(/^0x[a-fA-F0-9]{40}$/);
 
-        console.log("✓ EthWallet connector connected:", connectorResult.authenticator);
+        console.log(
+          "✓ EthWallet connector connected:",
+          connectorResult.authenticator,
+        );
 
         // 3. Check if account already exists
         const existenceCheck = await checkAccountExists(
@@ -196,7 +211,10 @@ describe("Account Creation Integration Tests", () => {
           AUTHENTICATOR_TYPE.EthWallet,
         );
 
-        console.log("✓ EthWallet account existence check:", existenceCheck.exists);
+        console.log(
+          "✓ EthWallet account existence check:",
+          existenceCheck.exists,
+        );
 
         // 4. Create orchestrator
         const orchestrator = new ConnectionOrchestrator({
@@ -228,7 +246,10 @@ describe("Account Creation Integration Tests", () => {
         expect(isValidXionAddress(setupResult.smartAccountAddress)).toBe(true);
         expect(setupResult.signingClient).toBeDefined();
 
-        console.log("✓ EthWallet smart account:", setupResult.smartAccountAddress);
+        console.log(
+          "✓ EthWallet smart account:",
+          setupResult.smartAccountAddress,
+        );
 
         // 7. Verify account exists on-chain
         const onChainAccount = await stargateClient.getAccount(
@@ -249,8 +270,14 @@ describe("Account Creation Integration Tests", () => {
       async () => {
         const testIndex = Math.floor(Math.random() * 1000) + 200;
 
-        const connector1 = createTestEthWalletConnector(TEST_MNEMONIC, testIndex);
-        const connector2 = createTestEthWalletConnector(TEST_MNEMONIC, testIndex);
+        const connector1 = createTestEthWalletConnector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
+        const connector2 = createTestEthWalletConnector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
 
         const result1 = await connector1.connect();
         const result2 = await connector2.connect();
@@ -395,7 +422,10 @@ describe("Account Creation Integration Tests", () => {
         });
 
         await expect(
-          orchestrator.connectAndSetup(connector, connectorResult.authenticator),
+          orchestrator.connectAndSetup(
+            connector,
+            connectorResult.authenticator,
+          ),
         ).rejects.toThrow();
 
         console.log("✓ Invalid AA API URL handled correctly");
@@ -440,7 +470,9 @@ describe("Account Creation Integration Tests", () => {
 
           console.log("✓ Missing creation config handled correctly");
         } else {
-          console.log("⚠ Account already exists, skipping creation config test");
+          console.log(
+            "⚠ Account already exists, skipping creation config test",
+          );
         }
 
         // Cleanup
@@ -455,7 +487,10 @@ describe("Account Creation Integration Tests", () => {
       "should find newly created account on subsequent discovery",
       async () => {
         const testIndex = Math.floor(Math.random() * 1000) + 500;
-        const connector = createTestSecp256k1Connector(TEST_MNEMONIC, testIndex);
+        const connector = createTestSecp256k1Connector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
         const connectorResult = await connector.connect();
 
         // First check
@@ -508,7 +543,7 @@ describe("Account Creation Integration Tests", () => {
             return result;
           },
           5, // 5 retries
-          2000 // 2 second delay
+          2000, // 2 second delay
         );
 
         expect(afterCreation.exists).toBe(true);

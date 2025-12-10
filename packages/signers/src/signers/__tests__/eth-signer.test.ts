@@ -102,8 +102,7 @@ describe("eth-signer.ts - AAEthSigner", () => {
 
     it("should preserve signature data integrity through conversion", async () => {
       // Known test signature
-      const testSignature =
-        "0x" + "aa".repeat(64) + "1c"; // 65 bytes: aa repeated 64 times + 1c
+      const testSignature = "0x" + "aa".repeat(64) + "1c"; // 65 bytes: aa repeated 64 times + 1c
 
       mockPersonalSign.mockResolvedValue(testSignature);
 
@@ -162,8 +161,7 @@ describe("eth-signer.ts - AAEthSigner", () => {
     });
 
     it("should handle mixed case hex signatures", async () => {
-      const mixedCaseSignature =
-        "0x" + "AbCdEf1234567890".repeat(8) + "1b";
+      const mixedCaseSignature = "0x" + "AbCdEf1234567890".repeat(8) + "1b";
 
       mockPersonalSign.mockResolvedValue(mixedCaseSignature);
 
@@ -264,9 +262,7 @@ describe("eth-signer.ts - AAEthSigner", () => {
       // BUG: Implementation uses regex [\da-f]{2} which silently ignores special chars
       // Instead of throwing "Invalid signature format", it extracts valid hex pairs
       // This is a SECURITY ISSUE: malformed signatures are accepted
-      mockPersonalSign.mockResolvedValue(
-        "0x1234567890abcdef-1234567890abcdef",
-      );
+      mockPersonalSign.mockResolvedValue("0x1234567890abcdef-1234567890abcdef");
 
       const signer = new AAEthSigner(
         testAbstractAccount,
@@ -540,11 +536,7 @@ describe("eth-signer.ts - AAEthSigner", () => {
     });
 
     it("should handle zero authenticatorId", async () => {
-      const signer = new AAEthSigner(
-        testAbstractAccount,
-        0,
-        mockPersonalSign,
-      );
+      const signer = new AAEthSigner(testAbstractAccount, 0, mockPersonalSign);
 
       const accounts = await signer.getAccounts();
 
@@ -552,11 +544,7 @@ describe("eth-signer.ts - AAEthSigner", () => {
     });
 
     it("should handle negative authenticatorId (edge case)", async () => {
-      const signer = new AAEthSigner(
-        testAbstractAccount,
-        -1,
-        mockPersonalSign,
-      );
+      const signer = new AAEthSigner(testAbstractAccount, -1, mockPersonalSign);
 
       const accounts = await signer.getAccounts();
 

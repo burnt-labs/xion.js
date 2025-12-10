@@ -1,6 +1,6 @@
 /**
  * Grant Utilities Tests - feegrant.ts
- * 
+ *
  * Focus: Network errors, malformed API responses, allowance validation edge cases
  * Goal: Ensure fee grant validation handles all failure scenarios gracefully
  */
@@ -38,27 +38,46 @@ describe("feegrant.test.ts - Breaking Things", () => {
     describe("Invalid Inputs", () => {
       it("should throw error for empty restUrl", async () => {
         await expect(
-          validateFeeGrant("", mockFeeGranter, mockGranter, mockRequestedActions)
+          validateFeeGrant(
+            "",
+            mockFeeGranter,
+            mockGranter,
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
       it("should return invalid result for empty feeGranter", async () => {
-        const result = await validateFeeGrant(mockRestUrl, "", mockGranter, mockRequestedActions);
+        const result = await validateFeeGrant(
+          mockRestUrl,
+          "",
+          mockGranter,
+          mockRequestedActions,
+        );
         expect(result.valid).toBe(false);
         expect(result.error).toBeInstanceOf(FeeGrantValidationError);
-        expect(result.error.message).toContain("Fee granter and granter addresses must be non-empty strings");
+        expect(result.error.message).toContain(
+          "Fee granter and granter addresses must be non-empty strings",
+        );
       });
 
       it("should return invalid result for empty granter", async () => {
-        const result = await validateFeeGrant(mockRestUrl, mockFeeGranter, "", mockRequestedActions);
+        const result = await validateFeeGrant(
+          mockRestUrl,
+          mockFeeGranter,
+          "",
+          mockRequestedActions,
+        );
         expect(result.valid).toBe(false);
         expect(result.error).toBeInstanceOf(FeeGrantValidationError);
-        expect(result.error.message).toContain("Fee granter and granter addresses must be non-empty strings");
+        expect(result.error.message).toContain(
+          "Fee granter and granter addresses must be non-empty strings",
+        );
       });
 
       it("should throw error for empty requestedActions", async () => {
         await expect(
-          validateFeeGrant(mockRestUrl, mockFeeGranter, mockGranter, [])
+          validateFeeGrant(mockRestUrl, mockFeeGranter, mockGranter, []),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -69,8 +88,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             "not-a-url",
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -79,7 +98,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
           mockRestUrl,
           "",
           mockGranter,
-          mockRequestedActions
+          mockRequestedActions,
         );
         expect(result.valid).toBe(false);
         expect(result.error).toBeInstanceOf(FeeGrantValidationError);
@@ -90,7 +109,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
           mockRestUrl,
           mockFeeGranter,
           "",
-          mockRequestedActions
+          mockRequestedActions,
         );
         expect(result.valid).toBe(false);
         expect(result.error).toBeInstanceOf(FeeGrantValidationError);
@@ -109,16 +128,16 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
-        
+
         try {
           await validateFeeGrant(
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
+            mockRequestedActions,
           );
         } catch (error) {
           expect(error).toBeInstanceOf(FeeGrantValidationError);
@@ -130,16 +149,16 @@ describe("feegrant.test.ts - Breaking Things", () => {
         mockFetch.mockImplementation(
           () =>
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("Timeout")), 100)
-            )
+              setTimeout(() => reject(new Error("Timeout")), 100),
+            ),
         );
         await expect(
           validateFeeGrant(
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -150,8 +169,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -162,8 +181,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
     });
@@ -175,13 +194,13 @@ describe("feegrant.test.ts - Breaking Things", () => {
           status: 404,
           statusText: "Not Found",
         });
-        
+
         try {
           await validateFeeGrant(
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
+            mockRequestedActions,
           );
           expect.fail("Should have thrown");
         } catch (error) {
@@ -203,8 +222,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -219,8 +238,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -235,8 +254,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -251,8 +270,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -267,8 +286,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
     });
@@ -286,8 +305,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -301,8 +320,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -316,8 +335,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -331,8 +350,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -351,8 +370,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -372,8 +391,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -393,8 +412,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
     });
@@ -409,8 +428,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
 
@@ -426,8 +445,8 @@ describe("feegrant.test.ts - Breaking Things", () => {
             mockRestUrl,
             mockFeeGranter,
             mockGranter,
-            mockRequestedActions
-          )
+            mockRequestedActions,
+          ),
         ).rejects.toThrow(FeeGrantValidationError);
       });
     });
@@ -451,7 +470,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
           mockRestUrl,
           mockFeeGranter,
           mockGranter,
-          mockRequestedActions
+          mockRequestedActions,
         );
         expect(result).toEqual({ valid: true });
       });
@@ -474,7 +493,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
           mockRestUrl,
           mockFeeGranter,
           mockGranter,
-          mockRequestedActions
+          mockRequestedActions,
         );
         expect(result).toEqual({
           valid: false,
@@ -505,14 +524,14 @@ describe("feegrant.test.ts - Breaking Things", () => {
       it("should throw InvalidAllowanceError for null allowance", () => {
         // @ts-expect-error - Testing runtime behavior
         expect(() => validateActions(mockActions, null)).toThrow(
-          InvalidAllowanceError
+          InvalidAllowanceError,
         );
       });
 
       it("should throw InvalidAllowanceError for undefined allowance", () => {
         // @ts-expect-error - Testing runtime behavior
         expect(() => validateActions(mockActions, undefined)).toThrow(
-          InvalidAllowanceError
+          InvalidAllowanceError,
         );
       });
 
@@ -529,7 +548,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
           "@type": "/cosmos.feegrant.v1beta1.AllowedMsgAllowance",
         };
         expect(() => validateActions(mockActions, allowance)).toThrow(
-          InvalidAllowanceError
+          InvalidAllowanceError,
         );
       });
 
@@ -557,7 +576,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
         };
         const result = validateActions(
           ["/cosmos.bank.v1beta1.MsgSend"],
-          allowance
+          allowance,
         );
         expect(result).toBe(false);
       });
@@ -572,7 +591,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
             "/cosmos.bank.v1beta1.MsgSend",
             "/cosmos.staking.v1beta1.MsgDelegate",
           ],
-          allowance
+          allowance,
         );
         expect(result).toBe(false);
       });
@@ -585,14 +604,14 @@ describe("feegrant.test.ts - Breaking Things", () => {
         // Message type URLs are case-sensitive (protocol buffer type URLs)
         const result = validateActions(
           ["/Cosmos.Bank.V1Beta1.MsgSend"], // Different case
-          allowance
+          allowance,
         );
         expect(result).toBe(false);
-        
+
         // Same case should work
         const result2 = validateActions(
           ["/cosmos.bank.v1beta1.MsgSend"], // Same case
-          allowance
+          allowance,
         );
         expect(result2).toBe(true);
       });
@@ -604,7 +623,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
         };
         const result = validateActions(
           Array(1000).fill("/cosmos.bank.v1beta1.MsgSend"),
-          allowance
+          allowance,
         );
         expect(result).toBe(true);
       });
@@ -650,7 +669,9 @@ describe("feegrant.test.ts - Breaking Things", () => {
             "@type": "/cosmos.feegrant.v1beta1.AllowedMsgAllowance",
             allowedMessages: mockActions,
           },
-          contractAddresses: ["xion1othercontract123456789abcdefghijklmnopqrstuv"],
+          contractAddresses: [
+            "xion1othercontract123456789abcdefghijklmnopqrstuv",
+          ],
         };
         const result = validateActions(mockActions, allowance, mockUserAddress);
         expect(result).toBe(false);
@@ -701,7 +722,9 @@ describe("feegrant.test.ts - Breaking Things", () => {
           allowance: null,
           contractAddresses: [mockUserAddress],
         };
-        expect(() => validateActions(mockActions, allowance, mockUserAddress)).toThrow();
+        expect(() =>
+          validateActions(mockActions, allowance, mockUserAddress),
+        ).toThrow();
       });
 
       it("should handle recursive ContractsAllowance", () => {
@@ -728,7 +751,7 @@ describe("feegrant.test.ts - Breaking Things", () => {
           "@type": "/xion.v1.MultiAnyAllowance",
         };
         expect(() => validateActions(mockActions, allowance)).toThrow(
-          InvalidAllowanceError
+          InvalidAllowanceError,
         );
       });
 
@@ -907,4 +930,3 @@ describe("feegrant.test.ts - Breaking Things", () => {
     });
   });
 });
-

@@ -6,7 +6,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ConnectionOrchestrator } from "../orchestrator";
 import type { SessionManager, ConnectionResult } from "../types";
 import type { CompositeAccountStrategy } from "../../accounts";
-import type { Connector, ConnectorConnectionResult } from "@burnt-labs/abstraxion-core";
+import type {
+  Connector,
+  ConnectorConnectionResult,
+} from "@burnt-labs/abstraxion-core";
 
 // Mock the flow modules
 vi.mock("../flow/sessionRestoration", () => ({
@@ -113,7 +116,7 @@ describe("ConnectionOrchestrator", () => {
 
       expect(restoreSession).toHaveBeenCalledWith(
         mockSessionManager,
-        undefined
+        undefined,
       );
     });
 
@@ -144,7 +147,7 @@ describe("ConnectionOrchestrator", () => {
 
       expect(restoreSession).toHaveBeenCalledWith(
         mockSessionManager,
-        undefined
+        undefined,
       );
     });
   });
@@ -157,7 +160,7 @@ describe("ConnectionOrchestrator", () => {
       });
 
       await expect(orchestrator.connect(mockConnector)).rejects.toThrow(
-        "Account strategy is required"
+        "Account strategy is required",
       );
     });
 
@@ -203,7 +206,7 @@ describe("ConnectionOrchestrator", () => {
       expect(connectAccount).toHaveBeenCalledWith(
         expect.objectContaining({
           authenticator: "test-auth",
-        })
+        }),
       );
     });
   });
@@ -219,8 +222,8 @@ describe("ConnectionOrchestrator", () => {
         orchestrator.createGrants(
           "xion1smart",
           {} as ConnectorConnectionResult,
-          "xion1grantee"
-        )
+          "xion1grantee",
+        ),
       ).rejects.toThrow("Grant config is required");
     });
 
@@ -238,7 +241,7 @@ describe("ConnectionOrchestrator", () => {
       await orchestrator.createGrants(
         "xion1smart",
         mockConnectionResult,
-        "xion1grantee"
+        "xion1grantee",
       );
 
       expect(createGrants).toHaveBeenCalledWith({
@@ -271,7 +274,7 @@ describe("ConnectionOrchestrator", () => {
 
       expect(checkStorageGrants).toHaveBeenCalledWith(
         "xion1smart",
-        baseConfig.storageStrategy
+        baseConfig.storageStrategy,
       );
     });
   });
@@ -293,7 +296,7 @@ describe("ConnectionOrchestrator", () => {
       expect(initiateRedirect).toHaveBeenCalledWith(
         mockSessionManager,
         baseConfig.rpcUrl,
-        undefined
+        undefined,
       );
     });
 
@@ -314,7 +317,7 @@ describe("ConnectionOrchestrator", () => {
       expect(initiateRedirect).toHaveBeenCalledWith(
         mockSessionManager,
         baseConfig.rpcUrl,
-        "https://custom.dashboard.com"
+        "https://custom.dashboard.com",
       );
     });
   });
@@ -344,9 +347,9 @@ describe("ConnectionOrchestrator", () => {
         sessionManager: mockSessionManager,
       });
 
-      await expect(
-        orchestrator.connectAndSetup(mockConnector)
-      ).rejects.toThrow("Account strategy is required");
+      await expect(orchestrator.connectAndSetup(mockConnector)).rejects.toThrow(
+        "Account strategy is required",
+      );
     });
 
     it("should connect and skip grants when no grant config", async () => {
@@ -422,9 +425,9 @@ describe("ConnectionOrchestrator", () => {
         grantConfig: { treasury: "xion1treasury" },
       });
 
-      await expect(
-        orchestrator.connectAndSetup(mockConnector)
-      ).rejects.toThrow("Failed to create grants");
+      await expect(orchestrator.connectAndSetup(mockConnector)).rejects.toThrow(
+        "Failed to create grants",
+      );
     });
   });
 

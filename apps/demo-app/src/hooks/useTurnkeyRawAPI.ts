@@ -41,7 +41,7 @@ export function useTurnkeyRawAPI() {
           // Validate hex format - signMessage expects hex-encoded messages with 0x prefix
           if (!message.startsWith("0x")) {
             throw new Error(
-              `Invalid message format: expected hex string with 0x prefix, got: ${message.substring(0, 50)}...`
+              `Invalid message format: expected hex string with 0x prefix, got: ${message.substring(0, 50)}...`,
             );
           }
 

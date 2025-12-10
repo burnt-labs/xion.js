@@ -19,9 +19,11 @@ describe("redirectFlow", () => {
     vi.clearAllMocks();
 
     mockKeypair = {
-      getAccounts: vi.fn().mockResolvedValue([
-        { address: "xion1grantee", pubkey: new Uint8Array() },
-      ]),
+      getAccounts: vi
+        .fn()
+        .mockResolvedValue([
+          { address: "xion1grantee", pubkey: new Uint8Array() },
+        ]),
     };
 
     mockSessionManager = {
@@ -45,22 +47,31 @@ describe("redirectFlow", () => {
       } as any;
 
       await expect(
-        initiateRedirect(sessionManagerWithoutRedirect, "https://rpc.example.com")
+        initiateRedirect(
+          sessionManagerWithoutRedirect,
+          "https://rpc.example.com",
+        ),
       ).rejects.toThrow("SessionManager does not support redirect flow");
     });
 
     it("should generate and store temp account", async () => {
       const { fetchConfig } = await import("@burnt-labs/abstraxion-core");
-      (fetchConfig as any).mockResolvedValueOnce({ dashboardUrl: "https://dashboard.example.com" });
+      (fetchConfig as any).mockResolvedValueOnce({
+        dashboardUrl: "https://dashboard.example.com",
+      });
 
       await initiateRedirect(mockSessionManager, "https://rpc.example.com");
 
-      expect(mockSessionManager.generateAndStoreTempAccount).toHaveBeenCalledOnce();
+      expect(
+        mockSessionManager.generateAndStoreTempAccount,
+      ).toHaveBeenCalledOnce();
     });
 
     it("should call redirectToDashboard", async () => {
       const { fetchConfig } = await import("@burnt-labs/abstraxion-core");
-      (fetchConfig as any).mockResolvedValueOnce({ dashboardUrl: "https://dashboard.example.com" });
+      (fetchConfig as any).mockResolvedValueOnce({
+        dashboardUrl: "https://dashboard.example.com",
+      });
 
       await initiateRedirect(mockSessionManager, "https://rpc.example.com");
 
@@ -71,7 +82,7 @@ describe("redirectFlow", () => {
       const result = await initiateRedirect(
         mockSessionManager,
         "https://rpc.example.com",
-        "https://custom.dashboard.com"
+        "https://custom.dashboard.com",
       );
 
       expect(result.dashboardUrl).toBe("https://custom.dashboard.com");
@@ -85,7 +96,7 @@ describe("redirectFlow", () => {
 
       const result = await initiateRedirect(
         mockSessionManager,
-        "https://rpc.example.com"
+        "https://rpc.example.com",
       );
 
       expect(fetchConfig).toHaveBeenCalledWith("https://rpc.example.com");
@@ -98,7 +109,7 @@ describe("redirectFlow", () => {
 
       const result = await initiateRedirect(
         mockSessionManager,
-        "https://rpc.example.com"
+        "https://rpc.example.com",
       );
 
       expect(result.dashboardUrl).toBe("");
@@ -106,7 +117,9 @@ describe("redirectFlow", () => {
 
     it("should generate keypair before redirecting", async () => {
       const { fetchConfig } = await import("@burnt-labs/abstraxion-core");
-      (fetchConfig as any).mockResolvedValueOnce({ dashboardUrl: "https://dashboard.example.com" });
+      (fetchConfig as any).mockResolvedValueOnce({
+        dashboardUrl: "https://dashboard.example.com",
+      });
 
       const callOrder: string[] = [];
       mockSessionManager.generateAndStoreTempAccount = vi.fn(async () => {
@@ -140,7 +153,7 @@ describe("redirectFlow", () => {
       } as any;
 
       await expect(
-        completeRedirect(sessionManagerWithoutComplete)
+        completeRedirect(sessionManagerWithoutComplete),
       ).rejects.toThrow("SessionManager does not support redirect flow");
     });
 
@@ -151,7 +164,7 @@ describe("redirectFlow", () => {
       } as any;
 
       await expect(
-        completeRedirect(sessionManagerWithoutSigner)
+        completeRedirect(sessionManagerWithoutSigner),
       ).rejects.toThrow("SessionManager does not support redirect flow");
     });
 
@@ -165,7 +178,7 @@ describe("redirectFlow", () => {
       mockSessionManager.completeLogin = vi.fn().mockResolvedValue(null);
 
       await expect(completeRedirect(mockSessionManager)).rejects.toThrow(
-        "Login redirected to dashboard instead of completing"
+        "Login redirected to dashboard instead of completing",
       );
     });
 
@@ -185,7 +198,7 @@ describe("redirectFlow", () => {
       mockSessionManager.getSigner = vi.fn().mockResolvedValue(null);
 
       await expect(completeRedirect(mockSessionManager)).rejects.toThrow(
-        "Failed to get signing client after redirect"
+        "Failed to get signing client after redirect",
       );
     });
 
@@ -205,9 +218,11 @@ describe("redirectFlow", () => {
 
     it("should handle completeLogin with keypair and granter", async () => {
       const customKeypair = {
-        getAccounts: vi.fn().mockResolvedValue([
-          { address: "xion1custom", pubkey: new Uint8Array() },
-        ]),
+        getAccounts: vi
+          .fn()
+          .mockResolvedValue([
+            { address: "xion1custom", pubkey: new Uint8Array() },
+          ]),
       };
 
       mockSessionManager.completeLogin = vi.fn().mockResolvedValue({

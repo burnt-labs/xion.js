@@ -503,7 +503,11 @@ describe("construction.ts - Grant Message Generation", () => {
     it("should handle different denom formats", () => {
       const spendLimits: SpendLimit[] = [
         { denom: "uxion", amount: "100" },
-        { denom: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2", amount: "200" },
+        {
+          denom:
+            "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+          amount: "200",
+        },
         { denom: "factory/xion1.../subdenom", amount: "300" },
       ];
 
@@ -598,7 +602,9 @@ describe("construction.ts - Grant Message Generation", () => {
         "xion1valid2",
       ];
 
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       const result = generateContractGrant(
         mockExpiration,
@@ -628,7 +634,10 @@ describe("construction.ts - Grant Message Generation", () => {
       const contracts: ContractGrantDescription[] = [
         "xion1valid1",
         { address: "", amounts: [] },
-        { address: "xion1valid2", amounts: [{ denom: "uxion", amount: "100" }] },
+        {
+          address: "xion1valid2",
+          amounts: [{ denom: "uxion", amount: "100" }],
+        },
       ];
 
       const result = generateContractGrant(
@@ -677,7 +686,10 @@ describe("construction.ts - Grant Message Generation", () => {
     it("should use AllowAllMessagesFilter for all grants", () => {
       const contracts: ContractGrantDescription[] = [
         "xion1contract1",
-        { address: "xion1contract2", amounts: [{ denom: "uxion", amount: "100" }] },
+        {
+          address: "xion1contract2",
+          amounts: [{ denom: "uxion", amount: "100" }],
+        },
       ];
 
       const result = generateContractGrant(
@@ -704,9 +716,15 @@ describe("construction.ts - Grant Message Generation", () => {
     it("should handle mixed contract types", () => {
       const contracts: ContractGrantDescription[] = [
         "xion1contract1",
-        { address: "xion1contract2", amounts: [{ denom: "uxion", amount: "100" }] },
+        {
+          address: "xion1contract2",
+          amounts: [{ denom: "uxion", amount: "100" }],
+        },
         "xion1contract3",
-        { address: "xion1contract4", amounts: [{ denom: "uatom", amount: "200" }] },
+        {
+          address: "xion1contract4",
+          amounts: [{ denom: "uatom", amount: "200" }],
+        },
       ];
 
       const result = generateContractGrant(
@@ -791,9 +809,7 @@ describe("construction.ts - Grant Message Generation", () => {
       const feeGrantValue = feeGrant!.value as any;
       expect(feeGrantValue.granter).toBe(mockGranter);
       expect(feeGrantValue.grantee).toBe(mockGrantee);
-      expect(feeGrantValue.allowance.typeUrl).toBe(
-        AllowedMsgAllowance.typeUrl,
-      );
+      expect(feeGrantValue.allowance.typeUrl).toBe(AllowedMsgAllowance.typeUrl);
     });
 
     it("should include correct allowed messages in fee grant", () => {
@@ -1286,7 +1302,10 @@ describe("construction.ts - Grant Message Generation", () => {
     it("should encode and decode ContractExecutionAuthorization correctly", () => {
       const contracts: ContractGrantDescription[] = [
         "xion1contract1",
-        { address: "xion1contract2", amounts: [{ denom: "uxion", amount: "100" }] },
+        {
+          address: "xion1contract2",
+          amounts: [{ denom: "uxion", amount: "100" }],
+        },
       ];
 
       const result = generateContractGrant(
@@ -1438,7 +1457,9 @@ describe("construction.ts - Grant Message Generation", () => {
       const feeGrant = result.find(
         (msg) => msg.typeUrl === MsgGrantAllowance.typeUrl,
       );
-      expect(feeGrant?.typeUrl).toBe("/cosmos.feegrant.v1beta1.MsgGrantAllowance");
+      expect(feeGrant?.typeUrl).toBe(
+        "/cosmos.feegrant.v1beta1.MsgGrantAllowance",
+      );
     });
 
     it("should use correct typeUrl for SendAuthorization", () => {
@@ -1491,7 +1512,10 @@ describe("construction.ts - Grant Message Generation", () => {
 
     it("should use correct typeUrl for CombinedLimit", () => {
       const contracts: ContractGrantDescription[] = [
-        { address: "xion1contract123", amounts: [{ denom: "uxion", amount: "100" }] },
+        {
+          address: "xion1contract123",
+          amounts: [{ denom: "uxion", amount: "100" }],
+        },
       ];
       const result = generateContractGrant(
         mockExpiration,

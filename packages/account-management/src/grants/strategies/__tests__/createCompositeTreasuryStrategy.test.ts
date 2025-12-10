@@ -49,7 +49,7 @@ describe("createCompositeTreasuryStrategy", () => {
       expect(() =>
         createCompositeTreasuryStrategy({
           includeDirectQuery: false,
-        })
+        }),
       ).toThrow("At least one strategy must be enabled");
     });
 
@@ -63,7 +63,7 @@ describe("createCompositeTreasuryStrategy", () => {
       const strategies = (strategy as any).strategies;
       const daodaoStrategy = strategies[0] as DaoDaoTreasuryStrategy;
       expect((daodaoStrategy as any).config.indexerUrl).toBe(
-        "https://custom.indexer.com"
+        "https://custom.indexer.com",
       );
     });
 
@@ -123,7 +123,7 @@ describe("createCompositeTreasuryStrategy", () => {
         createCompositeTreasuryStrategy({
           daodao: undefined,
           includeDirectQuery: false,
-        })
+        }),
       ).toThrow("At least one strategy must be enabled");
     });
 
@@ -131,7 +131,9 @@ describe("createCompositeTreasuryStrategy", () => {
       const strategy = createCompositeTreasuryStrategy({});
 
       const strategies = (strategy as any).strategies;
-      expect(strategies.some((s: any) => s instanceof DirectQueryTreasuryStrategy)).toBe(true);
+      expect(
+        strategies.some((s: any) => s instanceof DirectQueryTreasuryStrategy),
+      ).toBe(true);
     });
   });
 
@@ -156,7 +158,7 @@ describe("createCompositeTreasuryStrategy", () => {
 
       const strategies = (strategy as any).strategies;
       expect(strategies[strategies.length - 1]).toBeInstanceOf(
-        DirectQueryTreasuryStrategy
+        DirectQueryTreasuryStrategy,
       );
     });
   });

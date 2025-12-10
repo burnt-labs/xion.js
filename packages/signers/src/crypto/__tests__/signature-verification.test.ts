@@ -10,14 +10,26 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { verifySecp256k1Signature, verifyEthWalletSignature } from "../signature-verification";
-import { Secp256k1, sha256, Slip10, Slip10Curve, stringToPath, Bip39, EnglishMnemonic } from "@cosmjs/crypto";
+import {
+  verifySecp256k1Signature,
+  verifyEthWalletSignature,
+} from "../signature-verification";
+import {
+  Secp256k1,
+  sha256,
+  Slip10,
+  Slip10Curve,
+  stringToPath,
+  Bip39,
+  EnglishMnemonic,
+} from "@cosmjs/crypto";
 import { toHex, fromHex } from "@cosmjs/encoding";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { HDNodeWallet } from "ethers";
 import { utf8ToHexWithPrefix } from "../signature";
 
-const TEST_MNEMONIC = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+const TEST_MNEMONIC =
+  "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
 /**
  * Helper to create Secp256k1 keypair for testing
@@ -39,7 +51,7 @@ async function createSecp256k1Keypair(accountIndex: number = 0) {
   const { privkey } = Slip10.derivePath(
     Slip10Curve.Secp256k1,
     seed,
-    stringToPath(`m/44'/118'/0'/0/${accountIndex}`)
+    stringToPath(`m/44'/118'/0'/0/${accountIndex}`),
   );
 
   return { pubkeyHex, privkey, compressedPubkey };
@@ -67,7 +79,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = await verifySecp256k1Signature(
         smartAccountAddress, // Plain bech32 string
         signatureHex, // Hex signature
-        pubkeyBase64 // Compressed pubkey in base64
+        pubkeyBase64, // Compressed pubkey in base64
       );
 
       expect(isValid).toBe(true);
@@ -90,7 +102,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = await verifySecp256k1Signature(
         smartAccountAddress,
         signatureHex,
-        pubkeyBase64 // Base64 format
+        pubkeyBase64, // Base64 format
       );
 
       expect(isValid).toBe(true);
@@ -109,15 +121,21 @@ describe("Signature Verification - AA-API Integration", () => {
 
       // Create signature over wrong message using a different keypair
       const { privkey: wrongPrivkey } = await createSecp256k1Keypair(1);
-      const wrongSig = await Secp256k1.createSignature(wrongDigest, wrongPrivkey);
-      const wrongSignatureBytes = new Uint8Array([...wrongSig.r(32), ...wrongSig.s(32)]);
+      const wrongSig = await Secp256k1.createSignature(
+        wrongDigest,
+        wrongPrivkey,
+      );
+      const wrongSignatureBytes = new Uint8Array([
+        ...wrongSig.r(32),
+        ...wrongSig.s(32),
+      ]);
       const wrongSignatureHex = toHex(wrongSignatureBytes);
 
       // Should reject because signature is over different message
       const isValid = await verifySecp256k1Signature(
         smartAccountAddress, // Correct message
         wrongSignatureHex, // Signature over wrong message
-        pubkeyBase64
+        pubkeyBase64,
       );
 
       expect(isValid).toBe(false);
@@ -140,7 +158,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = await verifySecp256k1Signature(
         smartAccountAddress, // Plain bech32 string
         signatureHex,
-        pubkeyBase64
+        pubkeyBase64,
       );
 
       expect(isValid).toBe(true);
@@ -166,7 +184,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = await verifySecp256k1Signature(
         smartAccountAddress,
         signatureHex,
-        wrongPubkeyBase64 // Wrong pubkey
+        wrongPubkeyBase64, // Wrong pubkey
       );
 
       expect(isValid).toBe(false);
@@ -182,7 +200,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const invalidSignature = "abcd1234"; // Too short
 
       await expect(
-        verifySecp256k1Signature(message, invalidSignature, pubkeyBase64)
+        verifySecp256k1Signature(message, invalidSignature, pubkeyBase64),
       ).rejects.toThrow(/Signature must be 64 bytes/);
     });
 
@@ -194,7 +212,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const invalidPubkey = "abcd"; // Too short base64
 
       await expect(
-        verifySecp256k1Signature(message, signatureHex, invalidPubkey)
+        verifySecp256k1Signature(message, signatureHex, invalidPubkey),
       ).rejects.toThrow(/Public key must be 33 or 65 bytes/);
     });
 
@@ -214,7 +232,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = await verifySecp256k1Signature(
         smartAccountAddress,
         signatureHex, // With 0x prefix
-        pubkeyBase64
+        pubkeyBase64,
       );
 
       expect(isValid).toBe(true);
@@ -227,7 +245,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const ethWallet = HDNodeWallet.fromPhrase(
         TEST_MNEMONIC,
         undefined,
-        "m/44'/60'/0'/0/0"
+        "m/44'/60'/0'/0/0",
       );
 
       const ethAddress = ethWallet.address.toLowerCase();
@@ -240,7 +258,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = verifyEthWalletSignature(
         smartAccountAddress, // Plain text message
         signature,
-        ethAddress
+        ethAddress,
       );
 
       expect(isValid).toBe(true);
@@ -250,7 +268,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const ethWallet = HDNodeWallet.fromPhrase(
         TEST_MNEMONIC,
         undefined,
-        "m/44'/60'/0'/0/0"
+        "m/44'/60'/0'/0/0",
       );
 
       const smartAccountAddress = "xion1test";
@@ -261,7 +279,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid1 = verifyEthWalletSignature(
         smartAccountAddress,
         signature,
-        upperAddress
+        upperAddress,
       );
 
       // Test with lowercase address
@@ -269,7 +287,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid2 = verifyEthWalletSignature(
         smartAccountAddress,
         signature,
-        lowerAddress
+        lowerAddress,
       );
 
       expect(isValid1).toBe(true);
@@ -280,7 +298,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const ethWallet = HDNodeWallet.fromPhrase(
         TEST_MNEMONIC,
         undefined,
-        "m/44'/60'/0'/0/0"
+        "m/44'/60'/0'/0/0",
       );
 
       const smartAccountAddress = "xion1test";
@@ -293,7 +311,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = verifyEthWalletSignature(
         smartAccountAddress, // Correct message
         signature, // Signature over wrong message
-        ethWallet.address.toLowerCase()
+        ethWallet.address.toLowerCase(),
       );
 
       expect(isValid).toBe(false);
@@ -303,13 +321,13 @@ describe("Signature Verification - AA-API Integration", () => {
       const ethWallet1 = HDNodeWallet.fromPhrase(
         TEST_MNEMONIC,
         undefined,
-        "m/44'/60'/0'/0/0"
+        "m/44'/60'/0'/0/0",
       );
 
       const ethWallet2 = HDNodeWallet.fromPhrase(
         TEST_MNEMONIC,
         undefined,
-        "m/44'/60'/0'/0/1" // Different derivation path
+        "m/44'/60'/0'/0/1", // Different derivation path
       );
 
       const smartAccountAddress = "xion1test";
@@ -321,7 +339,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = verifyEthWalletSignature(
         smartAccountAddress,
         signature,
-        ethWallet2.address.toLowerCase() // Wrong address
+        ethWallet2.address.toLowerCase(), // Wrong address
       );
 
       expect(isValid).toBe(false);
@@ -331,7 +349,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const ethWallet = HDNodeWallet.fromPhrase(
         TEST_MNEMONIC,
         undefined,
-        "m/44'/60'/0'/0/0"
+        "m/44'/60'/0'/0/0",
       );
 
       const smartAccountAddress = "xion1test";
@@ -343,7 +361,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = verifyEthWalletSignature(
         smartAccountAddress,
         signature, // Already has 0x
-        ethWallet.address.toLowerCase()
+        ethWallet.address.toLowerCase(),
       );
 
       expect(isValid).toBe(true);
@@ -357,7 +375,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const invalidSignature = "0xabcd1234";
 
       expect(() =>
-        verifyEthWalletSignature(message, invalidSignature, ethAddress)
+        verifyEthWalletSignature(message, invalidSignature, ethAddress),
       ).toThrow(/Signature recovery failed/);
     });
   });
@@ -365,7 +383,8 @@ describe("Signature Verification - AA-API Integration", () => {
   describe("Cross-Verification - AA-API Format Compatibility", () => {
     it("should verify Secp256k1 signature in same format as smart contract", async () => {
       // This test ensures our signing format matches what the smart contract expects
-      const { pubkeyHex, privkey, compressedPubkey } = await createSecp256k1Keypair(0);
+      const { pubkeyHex, privkey, compressedPubkey } =
+        await createSecp256k1Keypair(0);
 
       // Smart account address (what gets signed during account creation)
       const smartAccountAddress = "xion1contracttest123456789abcdefgh";
@@ -384,7 +403,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = await verifySecp256k1Signature(
         smartAccountAddress,
         signatureHex,
-        pubkeyBase64
+        pubkeyBase64,
       );
 
       expect(isValid).toBe(true);
@@ -400,7 +419,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const ethWallet = HDNodeWallet.fromPhrase(
         TEST_MNEMONIC,
         undefined,
-        "m/44'/60'/0'/0/0"
+        "m/44'/60'/0'/0/0",
       );
 
       const smartAccountAddress = "xion1ethtest123";
@@ -413,7 +432,7 @@ describe("Signature Verification - AA-API Integration", () => {
       const isValid = verifyEthWalletSignature(
         smartAccountAddress,
         signature,
-        ethWallet.address.toLowerCase()
+        ethWallet.address.toLowerCase(),
       );
 
       expect(isValid).toBe(true);

@@ -9,7 +9,11 @@
 
 import { sha256 } from "@cosmjs/crypto";
 import { fromHex, toHex } from "@cosmjs/encoding";
-import { validateAndDecodeHex, validateEthereumAddress, normalizeHexPrefix } from "./hex-validation";
+import {
+  validateAndDecodeHex,
+  validateEthereumAddress,
+  normalizeHexPrefix,
+} from "./hex-validation";
 import type { AuthenticatorType } from "../types/account";
 import { AUTHENTICATOR_TYPE } from "../types/account";
 

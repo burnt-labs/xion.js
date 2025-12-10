@@ -12,5 +12,10 @@ export * from "./signature-verification";
 export * from "./hex-validation";
 
 // Re-export types from the types module for backward compatibility
-export type { AuthenticatorType, AuthenticatorInfo, SmartAccount, ContractInfo } from "../types/account";
+export type {
+  AuthenticatorType,
+  AuthenticatorInfo,
+  SmartAccount,
+  ContractInfo,
+} from "../types/account";
 export { AUTHENTICATOR_TYPE } from "../types/account";

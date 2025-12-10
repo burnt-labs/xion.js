@@ -38,7 +38,7 @@ export function normalizeEthereumAddress(address: string): string {
   // Validate final format: must be exactly 0x + 40 hex characters
   if (!/^0x[a-f0-9]{40}$/.test(normalized)) {
     throw new Error(
-      `Invalid Ethereum address format. Expected 40 hex characters (20 bytes), got: ${trimmed}`
+      `Invalid Ethereum address format. Expected 40 hex characters (20 bytes), got: ${trimmed}`,
     );
   }
 
@@ -78,7 +78,9 @@ export function normalizeSecp256k1PublicKey(pubkey: string): string {
       const decoded = Buffer.from(trimmed, "base64");
       // Verify it decodes to valid secp256k1 key length (33 or 65 bytes)
       if (decoded.length !== 33 && decoded.length !== 65) {
-        throw new Error(`Decoded key must be 33 or 65 bytes, got ${decoded.length}`);
+        throw new Error(
+          `Decoded key must be 33 or 65 bytes, got ${decoded.length}`,
+        );
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
@@ -101,7 +103,7 @@ export function normalizeSecp256k1PublicKey(pubkey: string): string {
 
   // If we reach here, the format is unrecognized
   throw new Error(
-    `Invalid Secp256k1 public key format: ${trimmed.substring(0, 50)}${trimmed.length > 50 ? "..." : ""}`
+    `Invalid Secp256k1 public key format: ${trimmed.substring(0, 50)}${trimmed.length > 50 ? "..." : ""}`,
   );
 }
 
@@ -128,7 +130,7 @@ export function normalizeSecp256k1PublicKey(pubkey: string): string {
  */
 export function normalizeJWTIdentifier(
   aud: string | string[],
-  sub: string
+  sub: string,
 ): string {
   if (!aud || !sub) {
     throw new Error('JWT identifier must contain valid "aud" and "sub" claims');

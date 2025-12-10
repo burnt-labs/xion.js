@@ -83,7 +83,12 @@ export async function validateFeeGrant(
   }
 
   // Validate inputs before making HTTP request
-  if (!feeGranter || !granter || feeGranter.trim() === '' || granter.trim() === '') {
+  if (
+    !feeGranter ||
+    !granter ||
+    feeGranter.trim() === "" ||
+    granter.trim() === ""
+  ) {
     return {
       valid: false,
       error: new FeeGrantValidationError(
@@ -94,11 +99,11 @@ export async function validateFeeGrant(
   }
 
   const baseUrl = `${restUrl}/cosmos/feegrant/v1beta1/allowance/${feeGranter}/${granter}`;
-  
+
   let response: Response;
   try {
     response = await fetch(baseUrl, { cache: "no-store" });
-    
+
     if (!response.ok) {
       throw new FeeGrantValidationError(
         `HTTP ${response.status} ${response.statusText}: Failed to fetch fee grant allowance`,
@@ -150,15 +155,19 @@ export async function validateFeeGrant(
   }
 
   const { allowance } = camelCasedData.allowance;
-  
+
   // Validate that allowance is an object (not a string, number, null, etc.)
-  if (typeof allowance !== 'object' || allowance === null || Array.isArray(allowance)) {
+  if (
+    typeof allowance !== "object" ||
+    allowance === null ||
+    Array.isArray(allowance)
+  ) {
     throw new FeeGrantValidationError(
       "Fee grant allowance has malformed structure: allowance must be an object",
       "INVALID_RESPONSE",
     );
   }
-  
+
   try {
     const isValid = validateActions(requestedActions, allowance, userAddress);
 
@@ -221,12 +230,12 @@ export function validateActions(
   if (isAllowedMsgAllowance(allowance)) {
     if (!allowance.allowedMessages) {
       throw new InvalidAllowanceError(
-        "AllowedMsgAllowance missing allowedMessages property"
+        "AllowedMsgAllowance missing allowedMessages property",
       );
     }
     if (!Array.isArray(allowance.allowedMessages)) {
       throw new InvalidAllowanceError(
-        "AllowedMsgAllowance.allowedMessages must be an array"
+        "AllowedMsgAllowance.allowedMessages must be an array",
       );
     }
     if (allowance.allowedMessages.length === 0) {
@@ -241,23 +250,27 @@ export function validateActions(
   if (isContractsAllowance(allowance)) {
     if (!allowance.allowance) {
       throw new InvalidAllowanceError(
-        "ContractsAllowance missing allowance property"
+        "ContractsAllowance missing allowance property",
       );
     }
     if (!allowance.contractAddresses) {
       throw new InvalidAllowanceError(
-        "ContractsAllowance missing contractAddresses property"
+        "ContractsAllowance missing contractAddresses property",
       );
     }
     if (!Array.isArray(allowance.contractAddresses)) {
       throw new InvalidAllowanceError(
-        "ContractsAllowance.contractAddresses must be an array"
+        "ContractsAllowance.contractAddresses must be an array",
       );
     }
     // Validate nested allowance structure
-    if (typeof allowance.allowance !== 'object' || allowance.allowance === null || Array.isArray(allowance.allowance)) {
+    if (
+      typeof allowance.allowance !== "object" ||
+      allowance.allowance === null ||
+      Array.isArray(allowance.allowance)
+    ) {
       throw new InvalidAllowanceError(
-        "Nested allowance in ContractsAllowance is malformed"
+        "Nested allowance in ContractsAllowance is malformed",
       );
     }
     // If userAddress is provided and contractAddresses is empty, return false
@@ -280,12 +293,12 @@ export function validateActions(
   if (isMultiAnyAllowance(allowance)) {
     if (!allowance.allowances) {
       throw new InvalidAllowanceError(
-        "MultiAnyAllowance missing allowances property"
+        "MultiAnyAllowance missing allowances property",
       );
     }
     if (!Array.isArray(allowance.allowances)) {
       throw new InvalidAllowanceError(
-        "MultiAnyAllowance.allowances must be an array"
+        "MultiAnyAllowance.allowances must be an array",
       );
     }
     if (allowance.allowances.length === 0) {
@@ -294,7 +307,7 @@ export function validateActions(
     for (const subAllowance of allowance.allowances) {
       if (!subAllowance) {
         throw new InvalidAllowanceError(
-          "MultiAnyAllowance contains null or undefined allowance"
+          "MultiAnyAllowance contains null or undefined allowance",
         );
       }
       if (validateActions(actions, subAllowance, userAddress)) {

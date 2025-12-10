@@ -6,7 +6,10 @@ import {
   calculateSalt,
   hexSaltToUint8Array,
 } from "../salt";
-import { AUTHENTICATOR_TYPE, type AuthenticatorType } from "../../types/account";
+import {
+  AUTHENTICATOR_TYPE,
+  type AuthenticatorType,
+} from "../../types/account";
 import { ETH_WALLET_TEST_DATA } from "@burnt-labs/test-utils/mocks";
 
 describe("salt.ts - Salt Calculation Utilities", () => {
@@ -88,8 +91,10 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     });
 
     it("should return different salts for different pubkeys", () => {
-      const pubkey1 = "03d8f1b7b8e3c6c8f7b8f7c6e5f7c8d9e0f1c2d3e4f5c6d7e8f9c0d1e2f3c4d5";
-      const pubkey2 = "02a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1";
+      const pubkey1 =
+        "03d8f1b7b8e3c6c8f7b8f7c6e5f7c8d9e0f1c2d3e4f5c6d7e8f9c0d1e2f3c4d5";
+      const pubkey2 =
+        "02a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1";
 
       const salt1 = calculateSecp256k1Salt(pubkey1);
       const salt2 = calculateSecp256k1Salt(pubkey2);
@@ -171,7 +176,8 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     });
 
     it("should handle special characters in JWT", () => {
-      const jwtWithSpecialChars = "https://accounts.google.com.user+special/chars=test";
+      const jwtWithSpecialChars =
+        "https://accounts.google.com.user+special/chars=test";
       const salt = calculateJWTSalt(jwtWithSpecialChars);
       expect(salt).toMatch(/^[a-f0-9]{64}$/);
     });
@@ -214,10 +220,7 @@ describe("salt.ts - Salt Calculation Utilities", () => {
 
     it("should route to calculateSecp256k1Salt for Passkey type", () => {
       const credential = "passkey-credential-id";
-      const passkeySalt = calculateSalt(
-        AUTHENTICATOR_TYPE.Passkey,
-        credential,
-      );
+      const passkeySalt = calculateSalt(AUTHENTICATOR_TYPE.Passkey, credential);
       const secp256k1Salt = calculateSecp256k1Salt(credential);
 
       // Passkey uses same calculation as Secp256K1
@@ -245,7 +248,10 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     it("should handle all authenticator types without throwing", () => {
       // Use type-appropriate credentials for each authenticator type
       const typeCredentials: Array<[AuthenticatorType, string]> = [
-        [AUTHENTICATOR_TYPE.EthWallet, "0x1234567890123456789012345678901234567890"],
+        [
+          AUTHENTICATOR_TYPE.EthWallet,
+          "0x1234567890123456789012345678901234567890",
+        ],
         [AUTHENTICATOR_TYPE.Secp256K1, "test-credential"],
         [AUTHENTICATOR_TYPE.JWT, "test-credential"],
         [AUTHENTICATOR_TYPE.Passkey, "test-credential"],
@@ -269,12 +275,16 @@ describe("salt.ts - Salt Calculation Utilities", () => {
   describe("🔴 CRITICAL: Edge Cases - Empty/Invalid Inputs", () => {
     it("should throw error for empty string for EthWallet", () => {
       // BUG FIX: Now validates input, so empty string throws error
-      expect(() => calculateEthWalletSalt("")).toThrow(/invalid.*ethereum address/i);
+      expect(() => calculateEthWalletSalt("")).toThrow(
+        /invalid.*ethereum address/i,
+      );
     });
 
     it("should throw error for empty string for Secp256k1 (defense-in-depth)", () => {
       // Runtime validation now throws error for empty strings
-      expect(() => calculateSecp256k1Salt("")).toThrow(/public key.*non-empty/i);
+      expect(() => calculateSecp256k1Salt("")).toThrow(
+        /public key.*non-empty/i,
+      );
     });
 
     it("should throw error for empty string for JWT (defense-in-depth)", () => {
@@ -318,7 +328,8 @@ describe("salt.ts - Salt Calculation Utilities", () => {
 
     it("should handle multiple 0x prefixes (normalized)", () => {
       // normalizeHexPrefix() removes duplicate 0x prefixes, making this valid
-      const addressWithDouble0x = "0x0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
+      const addressWithDouble0x =
+        "0x0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
       const addressNormal = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
 
       const saltDouble = calculateEthWalletSalt(addressWithDouble0x);
@@ -329,8 +340,10 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     });
 
     it("should handle 0X uppercase prefix", () => {
-      const addressWithUppercase0X = "0X742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
-      const addressWithLowercase0x = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
+      const addressWithUppercase0X =
+        "0X742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
+      const addressWithLowercase0x =
+        "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0";
 
       const saltUpper = calculateEthWalletSalt(addressWithUppercase0X);
       const saltLower = calculateEthWalletSalt(addressWithLowercase0x);
@@ -342,7 +355,9 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     it("should reject 0x in the middle of address", () => {
       // BUG FIX: Now validates hex, so 'x' in middle throws error
       const addressWith0xMiddle = "742d0x35Cc6634C0532925a3b844Bc9e7595f0bEb0";
-      expect(() => calculateEthWalletSalt(addressWith0xMiddle)).toThrow(/invalid.*ethereum address/i);
+      expect(() => calculateEthWalletSalt(addressWith0xMiddle)).toThrow(
+        /invalid.*ethereum address/i,
+      );
     });
   });
 
@@ -350,19 +365,25 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     it("should reject invalid hex characters in address", () => {
       // BUG FIX: Now validates hex, so 'Z' throws error
       const invalidAddress = "742d35Cc6634C0532925a3b844Bc9e7595f0bEZ0"; // 'Z' is invalid
-      expect(() => calculateEthWalletSalt(invalidAddress)).toThrow(/invalid.*ethereum address/i);
+      expect(() => calculateEthWalletSalt(invalidAddress)).toThrow(
+        /invalid.*ethereum address/i,
+      );
     });
 
     it("should reject odd-length hex strings", () => {
       // BUG FIX: Now validates length, so 39 chars throws error
       const oddLengthAddress = "742d35Cc6634C0532925a3b844Bc9e7595f0bE"; // 39 chars (missing 1)
-      expect(() => calculateEthWalletSalt(oddLengthAddress)).toThrow(/invalid.*ethereum address/i);
+      expect(() => calculateEthWalletSalt(oddLengthAddress)).toThrow(
+        /invalid.*ethereum address/i,
+      );
     });
 
     it("should reject non-hex strings", () => {
       // BUG FIX: Now validates format, so non-hex throws error
       const nonHexAddress = "not-a-hex-address";
-      expect(() => calculateEthWalletSalt(nonHexAddress)).toThrow(/invalid.*ethereum address/i);
+      expect(() => calculateEthWalletSalt(nonHexAddress)).toThrow(
+        /invalid.*ethereum address/i,
+      );
     });
   });
 
@@ -388,18 +409,9 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     it("should produce same salts for Passkey/Ed25519/Sr25519 (use Secp256k1 implementation)", () => {
       const credential = "test-pubkey";
 
-      const passkeySalt = calculateSalt(
-        AUTHENTICATOR_TYPE.Passkey,
-        credential,
-      );
-      const ed25519Salt = calculateSalt(
-        AUTHENTICATOR_TYPE.Ed25519,
-        credential,
-      );
-      const sr25519Salt = calculateSalt(
-        AUTHENTICATOR_TYPE.Sr25519,
-        credential,
-      );
+      const passkeySalt = calculateSalt(AUTHENTICATOR_TYPE.Passkey, credential);
+      const ed25519Salt = calculateSalt(AUTHENTICATOR_TYPE.Ed25519, credential);
+      const sr25519Salt = calculateSalt(AUTHENTICATOR_TYPE.Sr25519, credential);
       const secp256k1Salt = calculateSalt(
         AUTHENTICATOR_TYPE.Secp256K1,
         credential,
@@ -502,7 +514,9 @@ describe("salt.ts - Salt Calculation Utilities", () => {
   describe("🔒 Security: Known SHA256 Test Vectors", () => {
     it("should reject empty input (defense-in-depth)", () => {
       // Runtime validation now throws error for empty strings
-      expect(() => calculateSecp256k1Salt("")).toThrow(/public key.*non-empty/i);
+      expect(() => calculateSecp256k1Salt("")).toThrow(
+        /public key.*non-empty/i,
+      );
     });
 
     it("should produce correct SHA256 for 'abc'", () => {
@@ -543,8 +557,7 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     });
 
     it("should handle real Cosmos Secp256k1 pubkey", () => {
-      const realPubkey =
-        "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ"; // Example from Cosmos
+      const realPubkey = "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ"; // Example from Cosmos
       const salt = calculateSecp256k1Salt(realPubkey);
       expect(salt).toMatch(/^[a-f0-9]{64}$/);
     });
@@ -587,7 +600,10 @@ describe("salt.ts - Salt Calculation Utilities", () => {
     it("should support all authenticator types in calculateSalt", () => {
       // Use type-appropriate credentials
       const typeCredentials = new Map<string, string>([
-        [AUTHENTICATOR_TYPE.EthWallet, "0x1234567890123456789012345678901234567890"],
+        [
+          AUTHENTICATOR_TYPE.EthWallet,
+          "0x1234567890123456789012345678901234567890",
+        ],
         [AUTHENTICATOR_TYPE.Secp256K1, "test"],
         [AUTHENTICATOR_TYPE.Ed25519, "test"],
         [AUTHENTICATOR_TYPE.JWT, "test"],
@@ -619,7 +635,7 @@ describe("salt.ts - Salt Calculation Utilities", () => {
 
         expect(result1.length).toBe(result2.length);
         expect(Buffer.from(result1).toString("hex")).toBe(
-          Buffer.from(result2).toString("hex")
+          Buffer.from(result2).toString("hex"),
         );
       });
 
@@ -633,7 +649,8 @@ describe("salt.ts - Salt Calculation Utilities", () => {
       });
 
       it("should convert salt from calculateSecp256k1Salt", () => {
-        const pubkey = "03d8f1b7b8e3c6c8f7b8f7c6e5f7c8d9e0f1c2d3e4f5c6d7e8f9c0d1e2f3c4d5";
+        const pubkey =
+          "03d8f1b7b8e3c6c8f7b8f7c6e5f7c8d9e0f1c2d3e4f5c6d7e8f9c0d1e2f3c4d5";
         const hexSalt = calculateSecp256k1Salt(pubkey);
         const uint8Salt = hexSaltToUint8Array(hexSalt);
 
@@ -659,59 +676,49 @@ describe("salt.ts - Salt Calculation Utilities", () => {
 
       it("should reject salt with 31 bytes (62 hex chars)", () => {
         const shortSalt = "a".repeat(62);
-        expect(() => hexSaltToUint8Array(shortSalt)).toThrow(
-          /salt.*32 bytes/i
-        );
+        expect(() => hexSaltToUint8Array(shortSalt)).toThrow(/salt.*32 bytes/i);
       });
 
       it("should reject salt with 33 bytes (66 hex chars)", () => {
         const longSalt = "a".repeat(66);
-        expect(() => hexSaltToUint8Array(longSalt)).toThrow(
-          /salt.*32 bytes/i
-        );
+        expect(() => hexSaltToUint8Array(longSalt)).toThrow(/salt.*32 bytes/i);
       });
 
       it("should reject odd-length hex string", () => {
         const oddSalt = "a".repeat(63);
-        expect(() => hexSaltToUint8Array(oddSalt)).toThrow(
-          /salt.*32 bytes/i
-        );
+        expect(() => hexSaltToUint8Array(oddSalt)).toThrow(/salt.*32 bytes/i);
       });
     });
 
     describe("Invalid Input Handling", () => {
       it("should throw error for empty salt", () => {
-        expect(() => hexSaltToUint8Array("")).toThrow(
-          /invalid.*salt/i
-        );
+        expect(() => hexSaltToUint8Array("")).toThrow(/invalid.*salt/i);
       });
 
       it("should reject invalid hex characters", () => {
         const invalidSalt = "g".repeat(64);
         expect(() => hexSaltToUint8Array(invalidSalt)).toThrow(
-          /invalid.*salt/i
+          /invalid.*salt/i,
         );
       });
 
       it("should reject salt with special characters", () => {
         const specialCharSalt = "abcd-efgh".repeat(8);
         expect(() => hexSaltToUint8Array(specialCharSalt)).toThrow(
-          /invalid.*salt/i
+          /invalid.*salt/i,
         );
       });
 
       it("should reject salt with spaces", () => {
         const saltWithSpaces = "abcd efgh".repeat(8);
         expect(() => hexSaltToUint8Array(saltWithSpaces)).toThrow(
-          /invalid.*salt/i
+          /invalid.*salt/i,
         );
       });
 
       it("should reject salt with 0x prefix", () => {
         const saltWith0x = `0x${"a".repeat(64)}`;
-        expect(() => hexSaltToUint8Array(saltWith0x)).toThrow(
-          /invalid.*salt/i
-        );
+        expect(() => hexSaltToUint8Array(saltWith0x)).toThrow(/invalid.*salt/i);
       });
     });
 
@@ -723,7 +730,7 @@ describe("salt.ts - Salt Calculation Utilities", () => {
         expect(result).toBeInstanceOf(Uint8Array);
         expect(result.length).toBe(32);
         // All bytes should be 0
-        expect(Array.from(result).every(byte => byte === 0)).toBe(true);
+        expect(Array.from(result).every((byte) => byte === 0)).toBe(true);
       });
 
       it("should handle salt with all f's (max value)", () => {
@@ -733,7 +740,7 @@ describe("salt.ts - Salt Calculation Utilities", () => {
         expect(result).toBeInstanceOf(Uint8Array);
         expect(result.length).toBe(32);
         // All bytes should be 255 (0xff)
-        expect(Array.from(result).every(byte => byte === 255)).toBe(true);
+        expect(Array.from(result).every((byte) => byte === 255)).toBe(true);
       });
 
       it("should handle uppercase hex salt", () => {

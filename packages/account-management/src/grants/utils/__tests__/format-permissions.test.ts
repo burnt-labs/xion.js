@@ -1,6 +1,6 @@
 /**
  * Grant Utilities Tests - format-permissions.ts
- * 
+ *
  * Focus: Breaking things - edge cases, malformed inputs, security scenarios
  * Goal: Find bugs before they reach production
  */
@@ -167,14 +167,18 @@ describe("format-permissions.test.ts - Breaking Things", () => {
       it("should handle very long strings", () => {
         const longAmount = "1".repeat(1000);
         const longDenom = "u" + "xion".repeat(100);
-        const result = formatCoinArray([{ amount: longAmount, denom: longDenom }]);
+        const result = formatCoinArray([
+          { amount: longAmount, denom: longDenom },
+        ]);
         expect(result.length).toBeGreaterThan(1000);
       });
     });
 
     describe("Coin Object Edge Cases", () => {
       it("should format negative amounts", () => {
-        const result = formatCoinArray([{ amount: "-1000000", denom: "uxion" }]);
+        const result = formatCoinArray([
+          { amount: "-1000000", denom: "uxion" },
+        ]);
         expect(result).toBe("-1000000uxion");
       });
 
@@ -194,12 +198,16 @@ describe("format-permissions.test.ts - Breaking Things", () => {
       });
 
       it("should format XSS attempt in denom", () => {
-        const result = formatCoinArray([{ amount: "100", denom: "uxion<script>" }]);
+        const result = formatCoinArray([
+          { amount: "100", denom: "uxion<script>" },
+        ]);
         expect(result).toBe("100uxion<script>");
       });
 
       it("should format SQL injection in denom", () => {
-        const result = formatCoinArray([{ amount: "100", denom: "uxion'; DROP--" }]);
+        const result = formatCoinArray([
+          { amount: "100", denom: "uxion'; DROP--" },
+        ]);
         expect(result).toBe("100uxion'; DROP--");
       });
     });
@@ -210,7 +218,7 @@ describe("format-permissions.test.ts - Breaking Things", () => {
         const parsed1 = parseCoinString(coinStr);
         const formatted = formatCoinArray(parsed1);
         const parsed2 = parseCoinString(formatted);
-        
+
         expect(parsed1).toEqual(parsed2);
         expect(formatted).toBe("1000000uxion");
       });
@@ -220,7 +228,7 @@ describe("format-permissions.test.ts - Breaking Things", () => {
         const parsed1 = parseCoinString(coinStr);
         const formatted = formatCoinArray(parsed1);
         const parsed2 = parseCoinString(formatted);
-        
+
         expect(parsed1).toEqual(parsed2);
         expect(formatted).toBe("1000000uxion,2000000usdc");
       });
@@ -230,7 +238,7 @@ describe("format-permissions.test.ts - Breaking Things", () => {
         const parsed1 = parseCoinString(coinStr);
         const formatted = formatCoinArray(parsed1);
         const parsed2 = parseCoinString(formatted);
-        
+
         // Spaces are removed in formatCoinArray, so round-trip changes format
         expect(parsed1).toEqual(parsed2);
         expect(formatted).toBe("1000000uxion");
@@ -417,7 +425,10 @@ describe("format-permissions.test.ts - Breaking Things", () => {
       });
 
       it("should handle mix with USDC", () => {
-        const result = formatCoins("1000000uxion,2000000usdc,3000000unknown", "usdc");
+        const result = formatCoins(
+          "1000000uxion,2000000usdc,3000000unknown",
+          "usdc",
+        );
         expect(result).toContain("1 XION");
         expect(result).toContain("2 USDC");
         expect(result).toContain("3000000 UNKNOWN");
@@ -560,7 +571,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
 
       it("should handle array with null elements", () => {
         // @ts-expect-error - Testing runtime behavior
-        expect(() => generatePermissionDescriptions([null], mockAccount)).toThrow();
+        expect(() =>
+          generatePermissionDescriptions([null], mockAccount),
+        ).toThrow();
       });
 
       it("should handle missing required properties", () => {
@@ -569,7 +582,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           // Missing data and dappDescription
         };
         // Should throw when trying to access missing properties
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).toThrow();
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).toThrow();
       });
     });
 
@@ -581,7 +596,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           dappDescription: "Test",
         };
         // May throw or handle gracefully
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).not.toThrow();
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).not.toThrow();
       });
 
       it("should handle unknown msg type", () => {
@@ -600,7 +617,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           data: null,
           dappDescription: "Test",
         };
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).toThrow();
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).toThrow();
       });
 
       it("should handle missing dappDescription", () => {
@@ -622,7 +641,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           data: { allowList: [] },
           dappDescription: "Test",
         };
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).toThrow();
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).toThrow();
       });
 
       it("should handle empty spendLimit", () => {
@@ -632,7 +653,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           dappDescription: "Test",
         };
         const result = generatePermissionDescriptions([grant], mockAccount);
-        expect(result[0].authorizationDescription).toContain("Permission to send tokens");
+        expect(result[0].authorizationDescription).toContain(
+          "Permission to send tokens",
+        );
       });
 
       it("should handle malformed coins in spendLimit", () => {
@@ -658,9 +681,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           },
           dappDescription: "Test",
         };
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).toThrow(
-          "Invalid SendAuthorization: spend limit has invalid amount"
-        );
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).toThrow("Invalid SendAuthorization: spend limit has invalid amount");
       });
 
       it("should handle missing allowList", () => {
@@ -671,7 +694,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           },
           dappDescription: "Test",
         };
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).toThrow();
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).toThrow();
       });
 
       it("should handle allowList with invalid addresses", () => {
@@ -695,7 +720,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           data: {},
           dappDescription: "Test",
         };
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).toThrow();
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).toThrow();
       });
 
       it("should handle empty allocations", () => {
@@ -705,14 +732,18 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           dappDescription: "Test",
         };
         const result = generatePermissionDescriptions([grant], mockAccount);
-        expect(result[0].authorizationDescription).toContain("Permission to transfer tokens via IBC");
+        expect(result[0].authorizationDescription).toContain(
+          "Permission to transfer tokens via IBC",
+        );
       });
 
       it("should handle malformed spendLimit in allocations", () => {
         const grant: any = {
           type: AuthorizationTypes.IbcTransfer,
           data: {
-            allocations: [{ spendLimit: [{ amount: "invalid", denom: "uxion" }] }],
+            allocations: [
+              { spendLimit: [{ amount: "invalid", denom: "uxion" }] },
+            ],
           },
           dappDescription: "Test",
         };
@@ -730,7 +761,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           dappDescription: "Test",
         };
         const result = generatePermissionDescriptions([grant], mockAccount);
-        expect(result[0].authorizationDescription).toContain("Permission to stake tokens");
+        expect(result[0].authorizationDescription).toContain(
+          "Permission to stake tokens",
+        );
       });
 
       it("should handle maxTokens with malformed coin", () => {
@@ -755,7 +788,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           dappDescription: "Test",
         };
         const result = generatePermissionDescriptions([grant], mockAccount);
-        expect(result[0].authorizationDescription).toContain("without specified validators");
+        expect(result[0].authorizationDescription).toContain(
+          "without specified validators",
+        );
       });
     });
 
@@ -768,7 +803,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
         };
         // Missing grants are handled gracefully - returns empty contracts array
         const result = generatePermissionDescriptions([grant], mockAccount);
-        expect(result[0].authorizationDescription).toBe("Permission to execute smart contracts");
+        expect(result[0].authorizationDescription).toBe(
+          "Permission to execute smart contracts",
+        );
         expect(result[0].contracts).toEqual([]);
       });
 
@@ -779,7 +816,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           dappDescription: "Test",
         };
         const result = generatePermissionDescriptions([grant], mockAccount);
-        expect(result[0].authorizationDescription).toBe("Permission to execute smart contracts");
+        expect(result[0].authorizationDescription).toBe(
+          "Permission to execute smart contracts",
+        );
         expect(result[0].contracts).toEqual([]);
       });
 
@@ -791,25 +830,22 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           },
           dappDescription: "Test",
         };
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).toThrow(
-          "Misconfigured treasury contract"
-        );
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).toThrow("Misconfigured treasury contract");
       });
 
       it("CRITICAL: should throw when one of multiple contracts equals account", () => {
         const grant: any = {
           type: AuthorizationTypes.ContractExecution,
           data: {
-            grants: [
-              { address: "xion1valid" },
-              { address: mockAccount },
-            ],
+            grants: [{ address: "xion1valid" }, { address: mockAccount }],
           },
           dappDescription: "Test",
         };
-        expect(() => generatePermissionDescriptions([grant], mockAccount)).toThrow(
-          "Misconfigured treasury contract"
-        );
+        expect(() =>
+          generatePermissionDescriptions([grant], mockAccount),
+        ).toThrow("Misconfigured treasury contract");
       });
 
       it("should handle grants with invalid addresses", () => {
@@ -857,7 +893,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           dappDescription: "Test",
         };
         const result = generatePermissionDescriptions([grant], mockAccount);
-        expect(result[0].authorizationDescription).toContain("Unknown Authorization Type");
+        expect(result[0].authorizationDescription).toContain(
+          "Unknown Authorization Type",
+        );
       });
 
       it("should handle type as null", () => {
@@ -867,7 +905,9 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           dappDescription: "Test",
         };
         const result = generatePermissionDescriptions([grant], mockAccount);
-        expect(result[0].authorizationDescription).toContain("Unknown Authorization Type");
+        expect(result[0].authorizationDescription).toContain(
+          "Unknown Authorization Type",
+        );
       });
     });
 
@@ -907,7 +947,12 @@ describe("format-permissions.test.ts - Breaking Things", () => {
           data: {}, // Missing required properties
           dappDescription: "Malformed",
         };
-        expect(() => generatePermissionDescriptions([validGrant, malformedGrant], mockAccount)).toThrow();
+        expect(() =>
+          generatePermissionDescriptions(
+            [validGrant, malformedGrant],
+            mockAccount,
+          ),
+        ).toThrow();
       });
 
       it("should handle mix of all authorization types", () => {
@@ -945,9 +990,10 @@ describe("format-permissions.test.ts - Breaking Things", () => {
         expect(result[0].authorizationDescription).toContain("send tokens");
         expect(result[1].authorizationDescription).toContain("send tokens");
         expect(result[2].authorizationDescription).toContain("stake tokens");
-        expect(result[3].authorizationDescription).toContain("execute smart contracts");
+        expect(result[3].authorizationDescription).toContain(
+          "execute smart contracts",
+        );
       });
     });
   });
 });
-

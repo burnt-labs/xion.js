@@ -5,6 +5,7 @@ Automated CI/CD workflows for the xion.js monorepo.
 ## Workflows
 
 ### 🧪 Unit Tests (`unit-tests.yml`)
+
 **Triggers**: All pushes, PRs, manual
 **Purpose**: Fast feedback on code changes
 
@@ -19,15 +20,18 @@ Automated CI/CD workflows for the xion.js monorepo.
 ---
 
 ### 🧪 Integration Tests (`integration-tests.yml`)
+
 **Triggers**: Push to `main`, manual dispatch
 **Purpose**: Test against live/local blockchain networks
 
 **Manual Run Options**:
+
 - `test_environment`: `testnet` | `mainnet` (default: `testnet`)
 - `aa_api_mode`: `live-url` | `dev-server` (default: `live-url`)
 - `aa_api_url`: Custom AA-API URL (optional)
 
 **What it does**:
+
 1. Loads config from [.github/config/test-environments.json](../config/test-environments.json)
 2. Optionally starts local AA-API server (`dev-server` mode)
 3. Runs integration tests for `@burnt-labs/account-management` and `@burnt-labs/abstraxion`
@@ -37,18 +41,21 @@ Automated CI/CD workflows for the xion.js monorepo.
 ---
 
 ### 🏗️ Build (`build.yml`)
+
 **Triggers**: All pushes, PRs, manual
 **Purpose**: Verify packages build successfully
 
 ---
 
 ### 🔍 Dependency Validation (`dependency-validation.yml`)
+
 **Triggers**: PRs/pushes to `main`/`develop` when package files change
 **Purpose**: Check CosmJS versions, circular dependencies
 
 ---
 
 ### 🚀 Release (`release.yml`)
+
 **Triggers**: Push to `main`, manual
 **Purpose**: Publish packages to npm using Changesets
 
@@ -59,12 +66,14 @@ Automated CI/CD workflows for the xion.js monorepo.
 ### Run Integration Tests Locally
 
 **Option 1: Against deployed testnet AA-API (easiest)**
+
 ```bash
 cd xion.js
 ./test-local-ci.sh testnet
 ```
 
 **Option 2: Against local AA-API server**
+
 ```bash
 # Terminal 1: Start AA-API
 cd account-abstraction-api
@@ -83,7 +92,9 @@ See [packages/abstraxion/tests/integration/LOCAL_TESTING.md](../../packages/abst
 ## Configuration
 
 ### Public Values (in [test-environments.json](../config/test-environments.json))
+
 All non-sensitive configuration for testnet and mainnet:
+
 - Chain IDs, RPC URLs, REST URLs
 - Gas prices, treasury addresses, fee granters
 - AA-API URLs (testnet public, mainnet requires secret)
@@ -91,15 +102,18 @@ All non-sensitive configuration for testnet and mainnet:
 ### Required GitHub Secrets
 
 **Testnet (Optional - improves performance)**:
+
 - `XION_TESTNET_INDEXER_URL` - Numia indexer
 - `XION_TESTNET_TREASURY_INDEXER_URL` - SubQuery indexer
 
 **Mainnet (Required for mainnet tests)**:
+
 - `XION_MAINNET_AA_API_URL` - Mainnet AA-API endpoint
 - `XION_MAINNET_INDEXER_URL` - Mainnet Numia indexer
 - `XION_MAINNET_TREASURY_INDEXER_URL` - Mainnet SubQuery indexer
 
 **AA-API Dev Server (Required for `dev-server` mode)**:
+
 - `STYTCH_PROJECT_ID` - Stytch authentication
 - `STYTCH_SECRET` - Stytch authentication
 
@@ -114,6 +128,7 @@ All environments export both specific and generic variables:
 **Generic (matches selected env)**: `XION_*`
 
 Example:
+
 ```bash
 # When test_environment=testnet
 XION_TESTNET_CHAIN_ID=xion-testnet-2
@@ -122,6 +137,7 @@ XION_CHAIN_ID=xion-testnet-2  # Matches selected environment
 ```
 
 This ensures:
+
 - ✅ Both environments always have correct, distinct values
 - ✅ No accidental mixing of testnet/mainnet configuration
 - ✅ Generic variables provide backward compatibility
@@ -133,12 +149,14 @@ See [BUGFIX-TREASURY-ADDRESS.md](../BUGFIX-TREASURY-ADDRESS.md) for details on t
 ## Quick Reference
 
 ### Run Specific Workflow Manually
+
 1. Go to **Actions** tab in GitHub
 2. Select workflow (e.g., "🧪 Integration Tests")
 3. Click **Run workflow**
 4. Configure options and run
 
 ### Check Workflow Status
+
 ```bash
 # View recent workflow runs
 gh run list --workflow=integration-tests.yml
@@ -148,6 +166,7 @@ gh run view <run-id> --log
 ```
 
 ### Local Development Flow
+
 ```bash
 # 1. Make changes
 # 2. Run unit tests
@@ -168,24 +187,31 @@ git push
 ## Troubleshooting
 
 ### Integration Tests Fail
+
 **Check**:
+
 1. Environment variables loaded correctly (Step 2 logs)
 2. AA-API accessible/started (Step 4-5 logs)
 3. Test logs for specific errors
 
 **Common Issues**:
+
 - **"Insufficient funds"**: Fee granter exhausted (testnet only, not a bug)
 - **"Account not discoverable"**: Indexer slow, tests retry automatically
 - **"AA-API not ready"**: Server startup timeout, check `.dev.vars`
 
 ### AA-API Dev Server Won't Start
+
 **Check**:
+
 1. `.dev.vars` exists in `account-abstraction-api/`
 2. `STYTCH_PROJECT_ID` and `STYTCH_SECRET` set
 3. Logs at `/tmp/aa-api-local-test.log` (local) or workflow logs (CI)
 
 ### Unit Tests Not Running
+
 **Check**:
+
 1. Test files match vitest config patterns
 2. Dependencies installed: `pnpm install`
 3. Not accidentally running integration tests

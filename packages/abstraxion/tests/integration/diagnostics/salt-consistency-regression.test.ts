@@ -24,8 +24,10 @@ import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Secp256k1, Sha256, stringToPath } from "@cosmjs/crypto";
 import { toHex } from "@cosmjs/encoding";
 
-const TEST_MNEMONIC = "furnace hammer kite tent baby settle bonus decade draw never juice myth";
-const TEST_CHECKSUM = "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8";
+const TEST_MNEMONIC =
+  "furnace hammer kite tent baby settle bonus decade draw never juice myth";
+const TEST_CHECKSUM =
+  "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8";
 const TEST_FEE_GRANTER = "xion10y5pzqs0jn89zpm6va625v6xzsqjkm293efwq8";
 const TEST_ADDRESS_PREFIX = "xion";
 
@@ -45,7 +47,9 @@ describe("Salt Consistency Regression Tests", () => {
       const pubkeyBase64 = Buffer.from(compressedPubkey).toString("base64");
       const pubkeyHex = toHex(compressedPubkey);
 
-      console.log("\n📋 Testing salt consistency with different input formats:");
+      console.log(
+        "\n📋 Testing salt consistency with different input formats:",
+      );
       console.log("  Pubkey (base64):", pubkeyBase64);
       console.log("  Pubkey (hex):", pubkeyHex);
 
@@ -62,8 +66,14 @@ describe("Salt Consistency Regression Tests", () => {
       expect(normalizedFromBase64).toBe(pubkeyBase64); // Should be base64
 
       // Calculate salts - BOTH should be identical
-      const saltFromBase64 = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedFromBase64);
-      const saltFromHex = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedFromHex);
+      const saltFromBase64 = calculateSalt(
+        AUTHENTICATOR_TYPE.Secp256K1,
+        normalizedFromBase64,
+      );
+      const saltFromHex = calculateSalt(
+        AUTHENTICATOR_TYPE.Secp256K1,
+        normalizedFromHex,
+      );
 
       console.log("\n🔐 Salt calculation:");
       console.log("  Salt (from base64 input):", saltFromBase64);
@@ -125,7 +135,9 @@ describe("Salt Consistency Regression Tests", () => {
       // If we accidentally convert to hex, it would be 66 chars
       expect(formattedPubkey.length).not.toBe(66);
 
-      console.log("\n✅ Pubkey format verified - still base64, not converted to hex!");
+      console.log(
+        "\n✅ Pubkey format verified - still base64, not converted to hex!",
+      );
     });
   });
 
@@ -150,7 +162,10 @@ describe("Salt Consistency Regression Tests", () => {
       expect(normalizedPubkey).toBe(pubkeyBase64); // Should remain base64
 
       // Step 2: Calculate salt (like createSecp256k1Account does)
-      const salt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
+      const salt = calculateSalt(
+        AUTHENTICATOR_TYPE.Secp256K1,
+        normalizedPubkey,
+      );
       console.log("  3. Salt calculated:", salt.substring(0, 20) + "...");
 
       // Step 3: Calculate address (like createSecp256k1Account does)
@@ -188,13 +203,19 @@ describe("Salt Consistency Regression Tests", () => {
 
       // What xion.js calculates
       const normalizedPubkey = normalizeSecp256k1PublicKey(testPubkeyBase64);
-      const xionSalt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
+      const xionSalt = calculateSalt(
+        AUTHENTICATOR_TYPE.Secp256K1,
+        normalizedPubkey,
+      );
 
       // What AA-API will calculate (simulated)
       // AA-API receives: base64 pubkey
       // AA-API normalizes to: base64 (no change)
       // AA-API calculates salt from: base64 string
-      const aaSalt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, testPubkeyBase64);
+      const aaSalt = calculateSalt(
+        AUTHENTICATOR_TYPE.Secp256K1,
+        testPubkeyBase64,
+      );
 
       console.log("\n🔄 Comparing salt calculation:");
       console.log("  xion.js salt:", xionSalt);
@@ -241,19 +262,27 @@ describe("Salt Consistency Regression Tests", () => {
       const pubkeyBase64 = Buffer.from(compressedPubkey).toString("base64");
 
       // Get private key for signing
-      const { Slip10, Slip10Curve, stringToPath: pathToArray, Bip39, EnglishMnemonic } =
-        await import("@cosmjs/crypto");
+      const {
+        Slip10,
+        Slip10Curve,
+        stringToPath: pathToArray,
+        Bip39,
+        EnglishMnemonic,
+      } = await import("@cosmjs/crypto");
       const mnemonicObj = new EnglishMnemonic(TEST_MNEMONIC);
       const seed = await Bip39.mnemonicToSeed(mnemonicObj);
       const { privkey } = Slip10.derivePath(
         Slip10Curve.Secp256k1,
         seed,
-        pathToArray("m/44'/118'/0'/0/0")
+        pathToArray("m/44'/118'/0'/0/0"),
       );
 
       // Calculate address
       const normalizedPubkey = normalizeSecp256k1PublicKey(pubkeyBase64);
-      const salt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
+      const salt = calculateSalt(
+        AUTHENTICATOR_TYPE.Secp256K1,
+        normalizedPubkey,
+      );
       const calculatedAddress = calculateSmartAccountAddress({
         checksum: TEST_CHECKSUM,
         creator: TEST_FEE_GRANTER,
@@ -267,17 +296,26 @@ describe("Salt Consistency Regression Tests", () => {
       const signature = await Secp256k1.createSignature(digest, privkey);
 
       // Create signature bytes (r + s)
-      const signatureBytes = new Uint8Array([...signature.r(32), ...signature.s(32)]);
+      const signatureBytes = new Uint8Array([
+        ...signature.r(32),
+        ...signature.s(32),
+      ]);
       const signatureBase64 = Buffer.from(signatureBytes).toString("base64");
       const signatureHex = Buffer.from(signatureBytes).toString("hex");
 
       console.log("\n🔏 Signature format handling:");
-      console.log("  Signature (base64):", signatureBase64.substring(0, 40) + "...");
+      console.log(
+        "  Signature (base64):",
+        signatureBase64.substring(0, 40) + "...",
+      );
       console.log("  Signature (hex):", signatureHex.substring(0, 40) + "...");
 
       // Test helper returns base64, formatSecp256k1Signature converts to hex
       const formattedSignature = formatSecp256k1Signature(signatureBase64);
-      console.log("  After formatSecp256k1Signature:", formattedSignature.substring(0, 40) + "...");
+      console.log(
+        "  After formatSecp256k1Signature:",
+        formattedSignature.substring(0, 40) + "...",
+      );
 
       // Should be hex (128 chars, no 0x prefix for Secp256k1)
       expect(formattedSignature.length).toBe(128);
@@ -301,22 +339,32 @@ describe("Salt Consistency Regression Tests", () => {
       console.log("  - xion.js calculated salt from BASE64 pubkey");
       console.log("  - But sent HEX pubkey to AA-API");
       console.log("  - AA-API calculated salt from HEX string");
-      console.log("  - Different salts → different addresses → signature verification FAILED");
+      console.log(
+        "  - Different salts → different addresses → signature verification FAILED",
+      );
       console.log("\n✅ THE FIX:");
       console.log("  - Always send BASE64 pubkey to AA-API");
       console.log("  - Both sides now calculate salt from BASE64 string");
-      console.log("  - Same salt → same address → signature verification SUCCEEDS");
+      console.log(
+        "  - Same salt → same address → signature verification SUCCEEDS",
+      );
       console.log("\n🛡️ PREVENTION:");
       console.log("  - This test file validates:");
       console.log("    ✓ Pubkey normalization always results in base64");
-      console.log("    ✓ Salt calculation is consistent regardless of input format");
+      console.log(
+        "    ✓ Salt calculation is consistent regardless of input format",
+      );
       console.log("    ✓ createSecp256k1Account sends base64 pubkey to AA-API");
       console.log("    ✓ Addresses match between xion.js and AA-API");
       console.log("    ✓ Signature format conversion works correctly");
       console.log("\n📍 LOCATION OF FIX:");
-      console.log("  - File: packages/abstraxion-core/src/api/createAccount.ts");
+      console.log(
+        "  - File: packages/abstraxion-core/src/api/createAccount.ts",
+      );
       console.log("  - Line: ~230");
-      console.log("  - Before: const formattedPubkey = formatSecp256k1Pubkey(pubkeyHex);");
+      console.log(
+        "  - Before: const formattedPubkey = formatSecp256k1Pubkey(pubkeyHex);",
+      );
       console.log("  - After:  const formattedPubkey = normalizedPubkey;");
       console.log("\n" + "=".repeat(80));
 

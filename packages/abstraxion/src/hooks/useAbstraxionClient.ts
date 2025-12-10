@@ -25,8 +25,7 @@ export const useAbstraxionClient = (): {
 
         setAbstractClient(client);
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : String(err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
         setError(
           new Error(
             `Failed to connect to RPC: ${errorMessage}. Please check your network connection and RPC URL.`,

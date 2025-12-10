@@ -17,7 +17,10 @@ import { generatePermissionDescriptions } from "./utils/format-permissions";
  * This avoids circular dependency with @burnt-labs/signers
  */
 export interface ContractQueryClient {
-  queryContractSmart(address: string, queryMsg: Record<string, unknown>): Promise<unknown>;
+  queryContractSmart(
+    address: string,
+    queryMsg: Record<string, unknown>,
+  ): Promise<unknown>;
   getChainId(): Promise<string>;
 }
 
@@ -26,7 +29,7 @@ export interface TreasuryContractResponse {
   params: {
     redirect_url: string;
     icon_url: string;
-    metadata: string;  // Note: Contract field is "metadata", but some indexers may return "display_url"
+    metadata: string; // Note: Contract field is "metadata", but some indexers may return "display_url"
   };
 }
 

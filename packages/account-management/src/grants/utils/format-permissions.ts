@@ -45,7 +45,10 @@ export function parseCoinString(coinStr: string): Coin[] {
   }
 
   // Split by commas and parse each coin
-  const coinStrings = trimmed.split(",").map(s => s.trim()).filter(s => s.length > 0);
+  const coinStrings = trimmed
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
   const coins: Coin[] = [];
 
   for (const singleCoinStr of coinStrings) {
@@ -217,18 +220,18 @@ export function generatePermissionDescriptions(
       }
       case AuthorizationTypes.Send: {
         const sendAuth = decodedGrant.data as SendAuthorization;
-        
+
         // Validate spend limits - only negative amounts are invalid (throw error)
         // Invalid/NaN amounts will be handled gracefully by formatXionAmount
         for (const limit of sendAuth.spendLimit) {
           const numAmount = Number(limit.amount);
           if (!isNaN(numAmount) && numAmount < 0) {
             throw new Error(
-              `Invalid SendAuthorization: spend limit has invalid amount "${limit.amount}" for denom "${limit.denom}"`
+              `Invalid SendAuthorization: spend limit has invalid amount "${limit.amount}" for denom "${limit.denom}"`,
             );
           }
         }
-        
+
         const spendLimit = sendAuth.spendLimit
           .map((limit: Coin) => formatXionAmount(limit.amount, limit.denom))
           .join(", ");
@@ -277,12 +280,12 @@ export function generatePermissionDescriptions(
       case AuthorizationTypes.ContractExecution: {
         description = "Permission to execute smart contracts";
         const contractAuth = decodedGrant.data as HumanContractExecAuth;
-        
+
         // Handle empty grants gracefully - return empty contracts array
         if (!contractAuth?.grants || contractAuth.grants.length === 0) {
           break;
         }
-        
+
         // Case-insensitive comparison for bech32 addresses
         const normalizedAccount = account.toLowerCase();
         contractAuth.grants.forEach((grant) => {
@@ -291,11 +294,11 @@ export function generatePermissionDescriptions(
             contracts.push(undefined);
             return;
           }
-          
+
           // Still throw for critical security issue: contract address equals account
           if (grant.address.toLowerCase() === normalizedAccount) {
             throw new Error(
-              `Misconfigured treasury contract: contract address "${grant.address}" cannot be the same as granter account "${account}"`
+              `Misconfigured treasury contract: contract address "${grant.address}" cannot be the same as granter account "${account}"`,
             );
           }
           contracts.push(grant.address);

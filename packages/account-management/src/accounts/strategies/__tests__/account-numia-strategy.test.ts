@@ -27,19 +27,23 @@ describe("NumiaAccountStrategy", () => {
     });
 
     it("should preserve v2 suffix if present", () => {
-      const strategy = new NumiaAccountStrategy("https://indexer.example.com/v2/");
+      const strategy = new NumiaAccountStrategy(
+        "https://indexer.example.com/v2/",
+      );
       expect((strategy as any).baseURL).toBe("https://indexer.example.com/v2/");
     });
 
     it("should preserve v3 suffix if present", () => {
-      const strategy = new NumiaAccountStrategy("https://indexer.example.com/v3/");
+      const strategy = new NumiaAccountStrategy(
+        "https://indexer.example.com/v3/",
+      );
       expect((strategy as any).baseURL).toBe("https://indexer.example.com/v3/");
     });
 
     it("should store auth token when provided", () => {
       const strategy = new NumiaAccountStrategy(
         "https://indexer.example.com",
-        "test-token"
+        "test-token",
       );
       expect((strategy as any).authToken).toBe("test-token");
     });
@@ -69,7 +73,7 @@ describe("NumiaAccountStrategy", () => {
 
       const result = await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toHaveLength(1);
@@ -89,7 +93,7 @@ describe("NumiaAccountStrategy", () => {
 
       const result = await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([]);
@@ -105,7 +109,7 @@ describe("NumiaAccountStrategy", () => {
       });
 
       await expect(
-        strategy.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1)
+        strategy.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1),
       ).rejects.toThrow("Numia indexer request failed: 503");
     });
 
@@ -113,16 +117,18 @@ describe("NumiaAccountStrategy", () => {
       const strategy = new NumiaAccountStrategy("https://indexer.example.com");
 
       (global.fetch as any).mockRejectedValueOnce(
-        new Error("Network request failed")
+        new Error("Network request failed"),
       );
 
       await expect(
-        strategy.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1)
+        strategy.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1),
       ).rejects.toThrow("Numia account strategy failed");
     });
 
     it("should encode authenticator in URL", async () => {
-      const strategy = new NumiaAccountStrategy("https://indexer.example.com/v2/");
+      const strategy = new NumiaAccountStrategy(
+        "https://indexer.example.com/v2/",
+      );
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
@@ -131,19 +137,19 @@ describe("NumiaAccountStrategy", () => {
 
       await strategy.fetchSmartAccounts(
         "test@auth#special",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(encodeURIComponent("test@auth#special")),
-        expect.anything()
+        expect.anything(),
       );
     });
 
     it("should include Authorization header when auth token provided", async () => {
       const strategy = new NumiaAccountStrategy(
         "https://indexer.example.com",
-        "test-token"
+        "test-token",
       );
 
       (global.fetch as any).mockResolvedValueOnce({
@@ -153,7 +159,7 @@ describe("NumiaAccountStrategy", () => {
 
       await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
@@ -162,7 +168,7 @@ describe("NumiaAccountStrategy", () => {
           headers: expect.objectContaining({
             Authorization: "Bearer test-token",
           }),
-        })
+        }),
       );
     });
 
@@ -176,7 +182,7 @@ describe("NumiaAccountStrategy", () => {
 
       await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       const callArgs = (global.fetch as any).mock.calls[0][1];
@@ -210,7 +216,7 @@ describe("NumiaAccountStrategy", () => {
 
       const result = await strategy.fetchSmartAccounts(
         "auth-1",
-        AUTHENTICATOR_TYPE.EthWallet
+        AUTHENTICATOR_TYPE.EthWallet,
       );
 
       expect(result[0].codeId).toBe(5); // Converted to number
@@ -240,7 +246,7 @@ describe("NumiaAccountStrategy", () => {
 
       const result = await strategy.fetchSmartAccounts(
         "auth-value",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       // ID format should be: {smart_account}-{authenticator_index}
@@ -257,7 +263,7 @@ describe("NumiaAccountStrategy", () => {
 
       const result = await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([]);
@@ -273,14 +279,16 @@ describe("NumiaAccountStrategy", () => {
 
       const result = await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toEqual([]);
     });
 
     it("should construct correct URL path", async () => {
-      const strategy = new NumiaAccountStrategy("https://indexer.example.com/v2/");
+      const strategy = new NumiaAccountStrategy(
+        "https://indexer.example.com/v2/",
+      );
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
@@ -289,12 +297,12 @@ describe("NumiaAccountStrategy", () => {
 
       await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
         "https://indexer.example.com/v2/authenticators/test-auth/smartAccounts/details",
-        expect.anything()
+        expect.anything(),
       );
     });
   });

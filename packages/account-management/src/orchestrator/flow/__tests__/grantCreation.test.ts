@@ -80,7 +80,9 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       getAccounts: vi.fn(),
     };
 
-    const { AAClient, createSignerFromSigningFunction } = await import("@burnt-labs/signers");
+    const { AAClient, createSignerFromSigningFunction } = await import(
+      "@burnt-labs/signers"
+    );
     AAClient.connectWithSigner.mockResolvedValue(mockClient);
     createSignerFromSigningFunction.mockReturnValue(mockSigner);
 
@@ -403,9 +405,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
 
       const fee = mockClient.signAndBroadcast.mock.calls[0][2];
       expect(fee.gas).toBe(String(Math.ceil(100000 * 1.6)));
-      expect(fee.amount[0].amount).toBe(
-        String(Math.ceil(100000 * 0.001 * 2)),
-      );
+      expect(fee.amount[0].amount).toBe(String(Math.ceil(100000 * 0.001 * 2)));
     });
 
     it("should include fee granter if provided", async () => {
@@ -447,7 +447,9 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       mockParams.gasPrice = "invalid";
 
       // GasPrice.fromString throws an error for invalid format
-      await expect(createGrants(mockParams)).rejects.toThrow("Invalid gas price");
+      await expect(createGrants(mockParams)).rejects.toThrow(
+        "Invalid gas price",
+      );
     });
 
     it("should handle missing authenticatorType", async () => {
@@ -562,7 +564,9 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should create signer with correct parameters", async () => {
-      const { createSignerFromSigningFunction } = await import("@burnt-labs/signers");
+      const { createSignerFromSigningFunction } = await import(
+        "@burnt-labs/signers"
+      );
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
       vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([

@@ -17,7 +17,7 @@ describe("SubqueryAccountStrategy", () => {
     it("should return accounts when found", async () => {
       const strategy = new SubqueryAccountStrategy(
         "https://subquery.example.com/graphql",
-        1
+        1,
       );
 
       (global.fetch as any).mockResolvedValueOnce({
@@ -48,7 +48,7 @@ describe("SubqueryAccountStrategy", () => {
 
       const result = await strategy.fetchSmartAccounts(
         "test-auth",
-        AUTHENTICATOR_TYPE.Secp256K1
+        AUTHENTICATOR_TYPE.Secp256K1,
       );
 
       expect(result).toHaveLength(1);
@@ -59,46 +59,62 @@ describe("SubqueryAccountStrategy", () => {
     it("should use configured codeId", async () => {
       const strategy = new SubqueryAccountStrategy(
         "https://subquery.example.com/graphql",
-        42
+        42,
       );
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          data: { smartAccounts: { nodes: [{ id: "xion1test", authenticators: { nodes: [] } }] } },
+          data: {
+            smartAccounts: {
+              nodes: [{ id: "xion1test", authenticators: { nodes: [] } }],
+            },
+          },
         }),
       });
 
-      const result = await strategy.fetchSmartAccounts("test", AUTHENTICATOR_TYPE.Secp256K1);
+      const result = await strategy.fetchSmartAccounts(
+        "test",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
       expect(result[0].codeId).toBe(42);
     });
 
     it("should handle network errors", async () => {
-      const strategy = new SubqueryAccountStrategy("https://subquery.example.com", 1);
+      const strategy = new SubqueryAccountStrategy(
+        "https://subquery.example.com",
+        1,
+      );
 
       (global.fetch as any).mockRejectedValueOnce(new Error("Network error"));
 
       await expect(
-        strategy.fetchSmartAccounts("test", AUTHENTICATOR_TYPE.Secp256K1)
+        strategy.fetchSmartAccounts("test", AUTHENTICATOR_TYPE.Secp256K1),
       ).rejects.toThrow("Subquery account strategy failed");
     });
 
     it("should send correct GraphQL query", async () => {
-      const strategy = new SubqueryAccountStrategy("https://subquery.example.com", 1);
+      const strategy = new SubqueryAccountStrategy(
+        "https://subquery.example.com",
+        1,
+      );
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: { smartAccounts: { nodes: [] } } }),
       });
 
-      await strategy.fetchSmartAccounts("test-auth", AUTHENTICATOR_TYPE.Secp256K1);
+      await strategy.fetchSmartAccounts(
+        "test-auth",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
 
       expect(global.fetch).toHaveBeenCalledWith(
         "https://subquery.example.com",
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },
-        })
+        }),
       );
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);

@@ -226,17 +226,12 @@ describe("Grant Management Integration Tests", () => {
         const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
 
         // Create bank grant with spend limit
-        const bankGrant = generateBankGrant(
-          expiration,
-          grantee,
-          granter,
-          [
-            {
-              denom: "uxion",
-              amount: "1000000", // 1 XION
-            },
-          ],
-        );
+        const bankGrant = generateBankGrant(expiration, grantee, granter, [
+          {
+            denom: "uxion",
+            amount: "1000000", // 1 XION
+          },
+        ]);
 
         // Validate grant structure
         expect(bankGrant).toBeDefined();

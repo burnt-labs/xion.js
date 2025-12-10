@@ -25,15 +25,15 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should validate all lowercase Ethereum addresses", () => {
-        expect(isEthereumAddress("0x742d35cc6634c0532925a3b844bc9e7595f0beb0")).toBe(
-          true,
-        );
+        expect(
+          isEthereumAddress("0x742d35cc6634c0532925a3b844bc9e7595f0beb0"),
+        ).toBe(true);
       });
 
       it("should validate all uppercase Ethereum addresses", () => {
-        expect(isEthereumAddress("0x742D35CC6634C0532925A3B844BC9E7595F0BEB0")).toBe(
-          true,
-        );
+        expect(
+          isEthereumAddress("0x742D35CC6634C0532925A3B844BC9E7595F0BEB0"),
+        ).toBe(true);
       });
     });
 
@@ -43,9 +43,9 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should reject address without 0x prefix", () => {
-        expect(isEthereumAddress("742d35Cc6634C0532925a3b844Bc9e7595f0bEb0")).toBe(
-          false,
-        );
+        expect(
+          isEthereumAddress("742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"),
+        ).toBe(false);
       });
 
       it("should reject address with only 0x", () => {
@@ -58,24 +58,24 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should reject too long addresses", () => {
-        expect(isEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb01")).toBe(
-          false,
-        );
+        expect(
+          isEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb01"),
+        ).toBe(false);
         expect(
           isEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0123"),
         ).toBe(false);
       });
 
       it("should reject addresses with invalid characters", () => {
-        expect(isEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEbZ")).toBe(
-          false,
-        );
-        expect(isEthereumAddress("0xGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")).toBe(
-          false,
-        );
-        expect(isEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bE!0")).toBe(
-          false,
-        );
+        expect(
+          isEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEbZ"),
+        ).toBe(false);
+        expect(
+          isEthereumAddress("0xGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"),
+        ).toBe(false);
+        expect(
+          isEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bE!0"),
+        ).toBe(false);
       });
 
       it("should reject non-address strings", () => {
@@ -136,11 +136,7 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should validate hex uncompressed keys (130 chars starting with 04)", () => {
-        expect(
-          isSecp256k1PublicKey(
-            "04" + "a".repeat(128),
-          ),
-        ).toBe(true);
+        expect(isSecp256k1PublicKey("04" + "a".repeat(128))).toBe(true);
         expect(
           isSecp256k1PublicKey(
             "04123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
@@ -155,12 +151,12 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should reject base64 keys not starting with A", () => {
-        expect(isSecp256k1PublicKey("B123456789abcdef123456789abcdef123456789abc")).toBe(
-          false,
-        );
-        expect(isSecp256k1PublicKey("C123456789abcdef123456789abcdef123456789abc")).toBe(
-          false,
-        );
+        expect(
+          isSecp256k1PublicKey("B123456789abcdef123456789abcdef123456789abc"),
+        ).toBe(false);
+        expect(
+          isSecp256k1PublicKey("C123456789abcdef123456789abcdef123456789abc"),
+        ).toBe(false);
       });
 
       it("should reject too short keys", () => {
@@ -200,15 +196,15 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should reject keys with no A prefix for base64", () => {
-        expect(isSecp256k1PublicKey("123456789abcdef123456789abcdef123456789abc")).toBe(
-          false,
-        );
+        expect(
+          isSecp256k1PublicKey("123456789abcdef123456789abcdef123456789abc"),
+        ).toBe(false);
       });
 
       it("should reject base64 keys with invalid base64 characters", () => {
-        expect(isSecp256k1PublicKey("A123456789!bcdef123456789abcdef123456789ab")).toBe(
-          false,
-        );
+        expect(
+          isSecp256k1PublicKey("A123456789!bcdef123456789abcdef123456789ab"),
+        ).toBe(false);
       });
     });
   });
@@ -232,18 +228,18 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should validate JWT tokens with underscores and hyphens", () => {
-        expect(isJWTToken("header_with-chars.payload_with-chars.signature_12345")).toBe(
-          true,
-        );
+        expect(
+          isJWTToken("header_with-chars.payload_with-chars.signature_12345"),
+        ).toBe(true);
       });
 
       it("should validate very long JWT tokens", () => {
         const longHeader = "a".repeat(100);
         const longPayload = "b".repeat(200);
         const longSignature = "c".repeat(150);
-        expect(isJWTToken(`${longHeader}.${longPayload}.${longSignature}`)).toBe(
-          true,
-        );
+        expect(
+          isJWTToken(`${longHeader}.${longPayload}.${longSignature}`),
+        ).toBe(true);
       });
     });
 
@@ -258,7 +254,9 @@ describe("validation.ts - Credential Validation", () => {
 
       it("should reject two part tokens", () => {
         expect(isJWTToken("two.parts")).toBe(false);
-        expect(isJWTToken("validheaderpart123.validpayloadpart123")).toBe(false);
+        expect(isJWTToken("validheaderpart123.validpayloadpart123")).toBe(
+          false,
+        );
       });
 
       it("should reject four part tokens", () => {
@@ -277,17 +275,23 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should reject tokens with short header (less than 10 chars)", () => {
-        expect(isJWTToken("short.longPayloadPartHere12345.signature12345")).toBe(
-          false,
-        );
+        expect(
+          isJWTToken("short.longPayloadPartHere12345.signature12345"),
+        ).toBe(false);
         expect(isJWTToken("a.verylongpayloadpart.signature12345")).toBe(false);
-        expect(isJWTToken("123456789.validpayloadpart123.signature")).toBe(false); // 9 chars
+        expect(isJWTToken("123456789.validpayloadpart123.signature")).toBe(
+          false,
+        ); // 9 chars
       });
 
       it("should reject tokens with short payload (less than 10 chars)", () => {
-        expect(isJWTToken("longenoughheader123.short.signature12345")).toBe(false);
+        expect(isJWTToken("longenoughheader123.short.signature12345")).toBe(
+          false,
+        );
         expect(isJWTToken("verylongheaderpart.b.signature12345")).toBe(false);
-        expect(isJWTToken("validheaderpart123.123456789.signature")).toBe(false); // 9 chars
+        expect(isJWTToken("validheaderpart123.123456789.signature")).toBe(
+          false,
+        ); // 9 chars
       });
 
       it("should reject tokens with both header and payload too short", () => {
@@ -304,7 +308,9 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should reject tokens with empty signature", () => {
-        expect(isJWTToken("validheaderpart123.validpayloadpart123.")).toBe(false);
+        expect(isJWTToken("validheaderpart123.validpayloadpart123.")).toBe(
+          false,
+        );
       });
 
       it("should reject tokens with invalid characters in header", () => {
@@ -332,27 +338,27 @@ describe("validation.ts - Credential Validation", () => {
       });
 
       it("should reject tokens with invalid characters in signature", () => {
-        expect(isJWTToken("validheaderpart123.validpayloadpart123.invalid!sig")).toBe(
-          false,
-        );
-        expect(isJWTToken("validheaderpart123.validpayloadpart123.invalid$sig")).toBe(
-          false,
-        );
-        expect(isJWTToken("validheaderpart123.validpayloadpart123.invalid@sig")).toBe(
-          false,
-        );
+        expect(
+          isJWTToken("validheaderpart123.validpayloadpart123.invalid!sig"),
+        ).toBe(false);
+        expect(
+          isJWTToken("validheaderpart123.validpayloadpart123.invalid$sig"),
+        ).toBe(false);
+        expect(
+          isJWTToken("validheaderpart123.validpayloadpart123.invalid@sig"),
+        ).toBe(false);
       });
 
       it("should reject tokens with spaces", () => {
-        expect(isJWTToken(" validheaderpart123.validpayloadpart123.signature")).toBe(
-          false,
-        );
-        expect(isJWTToken("validheaderpart123.validpayloadpart123.signature ")).toBe(
-          false,
-        );
-        expect(isJWTToken("validheader part123.validpayloadpart123.signature")).toBe(
-          false,
-        );
+        expect(
+          isJWTToken(" validheaderpart123.validpayloadpart123.signature"),
+        ).toBe(false);
+        expect(
+          isJWTToken("validheaderpart123.validpayloadpart123.signature "),
+        ).toBe(false);
+        expect(
+          isJWTToken("validheader part123.validpayloadpart123.signature"),
+        ).toBe(false);
       });
     });
 

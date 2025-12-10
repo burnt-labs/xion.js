@@ -323,7 +323,7 @@ describe("direct-signer.ts - AADirectSigner", () => {
       );
 
       await expect(signer.getAccounts()).rejects.toThrow(
-        /Abstract account address is required but was undefined/
+        /Abstract account address is required but was undefined/,
       );
       expect(mockSigner.getAccounts).not.toHaveBeenCalled();
     });
@@ -338,7 +338,7 @@ describe("direct-signer.ts - AADirectSigner", () => {
       );
 
       await expect(signer.getAccounts()).rejects.toThrow(
-        /Signer returned no accounts/
+        /Signer returned no accounts/,
       );
     });
 
@@ -357,7 +357,9 @@ describe("direct-signer.ts - AADirectSigner", () => {
     });
 
     it("should handle signArbitrary rejection during signing", async () => {
-      const mockSignArbFn = vi.fn().mockRejectedValue(new Error("Signing failed"));
+      const mockSignArbFn = vi
+        .fn()
+        .mockRejectedValue(new Error("Signing failed"));
       const mockSigner = createMockSigner();
       const signer = new AADirectSigner(
         mockSigner,
@@ -368,9 +370,9 @@ describe("direct-signer.ts - AADirectSigner", () => {
 
       const signDoc = createMockSignDoc();
 
-      await expect(signer.signDirect(mockAbstractAccount, signDoc)).rejects.toThrow(
-        "Signing failed",
-      );
+      await expect(
+        signer.signDirect(mockAbstractAccount, signDoc),
+      ).rejects.toThrow("Signing failed");
     });
 
     it("should handle empty signature from signArbitrary", async () => {
@@ -409,7 +411,10 @@ describe("direct-signer.ts - AADirectSigner", () => {
       } as any;
 
       // makeSignBytes in CosmJS handles null gracefully
-      const result = await signer.signDirect(mockAbstractAccount, signDocWithNulls);
+      const result = await signer.signDirect(
+        mockAbstractAccount,
+        signDocWithNulls,
+      );
 
       expect(result.signature.signature).toBe(mockSignature);
       expect(mockSignArbFn).toHaveBeenCalled();
@@ -427,7 +432,7 @@ describe("direct-signer.ts - AADirectSigner", () => {
       );
 
       await expect(signer.getAccounts()).rejects.toThrow(
-        /Signer returned 3 accounts, but AADirectSigner expects exactly one account/
+        /Signer returned 3 accounts, but AADirectSigner expects exactly one account/,
       );
     });
 
@@ -441,7 +446,7 @@ describe("direct-signer.ts - AADirectSigner", () => {
       );
 
       await expect(signer.getAccounts()).rejects.toThrow(
-        /Signer returned 5 accounts, but AADirectSigner expects exactly one account/
+        /Signer returned 5 accounts, but AADirectSigner expects exactly one account/,
       );
     });
 
@@ -455,7 +460,7 @@ describe("direct-signer.ts - AADirectSigner", () => {
       );
 
       await expect(signer.getAccounts()).rejects.toThrow(
-        /Signer returned 10 accounts, but AADirectSigner expects exactly one account/
+        /Signer returned 10 accounts, but AADirectSigner expects exactly one account/,
       );
     });
   });
@@ -766,7 +771,7 @@ describe("direct-signer.ts - AADirectSigner", () => {
 
       // Multiple accounts handling is not supported
       await expect(signer.getAccounts()).rejects.toThrow(
-        /Signer returned 2 accounts, but AADirectSigner expects exactly one account/
+        /Signer returned 2 accounts, but AADirectSigner expects exactly one account/,
       );
     });
 

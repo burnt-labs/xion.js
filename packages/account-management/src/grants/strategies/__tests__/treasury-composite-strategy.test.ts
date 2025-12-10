@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
 
-
 import { CompositeTreasuryStrategy } from "../treasury-composite-strategy";
 import type { TreasuryStrategy } from "../../../types/treasury";
 
@@ -18,7 +17,7 @@ describe("CompositeTreasuryStrategy", () => {
   const createMockStrategy = (
     name: string,
     behavior: "success" | "null" | "error",
-    config = mockTreasuryConfigs.basic
+    config = mockTreasuryConfigs.basic,
   ): TreasuryStrategy => {
     return {
       fetchTreasuryConfig: vi.fn(async () => {
@@ -37,7 +36,7 @@ describe("CompositeTreasuryStrategy", () => {
   describe("constructor", () => {
     it("should throw error when no strategies provided", () => {
       expect(() => new CompositeTreasuryStrategy()).toThrow(
-        "CompositeTreasuryStrategy requires at least one strategy"
+        "CompositeTreasuryStrategy requires at least one strategy",
       );
     });
 
@@ -50,7 +49,7 @@ describe("CompositeTreasuryStrategy", () => {
       const strategy1 = createMockStrategy("Strategy1", "success");
       const strategy2 = createMockStrategy("Strategy2", "success");
       expect(
-        () => new CompositeTreasuryStrategy(strategy1, strategy2)
+        () => new CompositeTreasuryStrategy(strategy1, strategy2),
       ).not.toThrow();
     });
   });
@@ -65,7 +64,7 @@ describe("CompositeTreasuryStrategy", () => {
 
       const result = await composite.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toEqual(mockTreasuryConfigs.basic);
@@ -80,7 +79,7 @@ describe("CompositeTreasuryStrategy", () => {
 
       const result = await composite.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toEqual(mockTreasuryConfigs.basic);
@@ -95,7 +94,7 @@ describe("CompositeTreasuryStrategy", () => {
 
       const result = await composite.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toEqual(mockTreasuryConfigs.basic);
@@ -110,7 +109,7 @@ describe("CompositeTreasuryStrategy", () => {
 
       const result = await composite.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toBeNull();
@@ -124,15 +123,15 @@ describe("CompositeTreasuryStrategy", () => {
       const composite = new CompositeTreasuryStrategy(strategy1, strategy2);
 
       await expect(
-        composite.fetchTreasuryConfig("xion1treasury", mockClient)
+        composite.fetchTreasuryConfig("xion1treasury", mockClient),
       ).rejects.toThrow("All treasury strategies failed");
 
       await expect(
-        composite.fetchTreasuryConfig("xion1treasury", mockClient)
+        composite.fetchTreasuryConfig("xion1treasury", mockClient),
       ).rejects.toThrow("Strategy1 failed");
 
       await expect(
-        composite.fetchTreasuryConfig("xion1treasury", mockClient)
+        composite.fetchTreasuryConfig("xion1treasury", mockClient),
       ).rejects.toThrow("Strategy2 failed");
     });
 
@@ -141,7 +140,7 @@ describe("CompositeTreasuryStrategy", () => {
       const composite = new CompositeTreasuryStrategy(strategy);
 
       await expect(
-        composite.fetchTreasuryConfig("xion1custom", mockClient)
+        composite.fetchTreasuryConfig("xion1custom", mockClient),
       ).rejects.toThrow("xion1custom");
     });
 
@@ -152,12 +151,12 @@ describe("CompositeTreasuryStrategy", () => {
       const composite = new CompositeTreasuryStrategy(
         strategy1,
         strategy2,
-        strategy3
+        strategy3,
       );
 
       const result = await composite.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toEqual(mockTreasuryConfigs.basic);
@@ -175,11 +174,11 @@ describe("CompositeTreasuryStrategy", () => {
 
       expect(strategy1.fetchTreasuryConfig).toHaveBeenCalledWith(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
       expect(strategy2.fetchTreasuryConfig).toHaveBeenCalledWith(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
     });
 
@@ -190,7 +189,7 @@ describe("CompositeTreasuryStrategy", () => {
       const composite = new CompositeTreasuryStrategy(
         strategy1,
         strategy2,
-        strategy3
+        strategy3,
       );
 
       await composite.fetchTreasuryConfig("xion1treasury", mockClient);
@@ -209,12 +208,12 @@ describe("CompositeTreasuryStrategy", () => {
         strategy1,
         strategy2,
         strategy3,
-        strategy4
+        strategy4,
       );
 
       const result = await composite.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toEqual(mockTreasuryConfigs.basic);
@@ -232,7 +231,7 @@ describe("CompositeTreasuryStrategy", () => {
 
       const result = await composite.fetchTreasuryConfig(
         "xion1treasury",
-        mockClient
+        mockClient,
       );
 
       expect(result).toEqual(mockTreasuryConfigs.basic);

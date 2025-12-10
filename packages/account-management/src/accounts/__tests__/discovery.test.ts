@@ -260,9 +260,7 @@ describe("discovery.ts - Account Existence Checking", () => {
         },
       ];
 
-      mockStrategy.fetchSmartAccounts = vi
-        .fn()
-        .mockResolvedValue(mockAccounts);
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue(mockAccounts);
 
       const result = await checkAccountExists(
         mockStrategy,
@@ -326,11 +324,7 @@ describe("discovery.ts - Account Existence Checking", () => {
         },
       ]);
 
-      const result = await checkAccountExists(
-        mockStrategy,
-        specialAuth,
-        "JWT",
-      );
+      const result = await checkAccountExists(mockStrategy, specialAuth, "JWT");
 
       expect(result.exists).toBe(true);
     });
@@ -443,9 +437,7 @@ describe("discovery.ts - Account Existence Checking", () => {
       const timeoutError = new Error("Request timeout");
       timeoutError.name = "TimeoutError";
 
-      mockStrategy.fetchSmartAccounts = vi
-        .fn()
-        .mockRejectedValue(timeoutError);
+      mockStrategy.fetchSmartAccounts = vi.fn().mockRejectedValue(timeoutError);
 
       const result = await checkAccountExists(
         mockStrategy,
@@ -462,9 +454,7 @@ describe("discovery.ts - Account Existence Checking", () => {
       const networkError = new Error("Failed to fetch");
       networkError.name = "NetworkError";
 
-      mockStrategy.fetchSmartAccounts = vi
-        .fn()
-        .mockRejectedValue(networkError);
+      mockStrategy.fetchSmartAccounts = vi.fn().mockRejectedValue(networkError);
 
       const result = await checkAccountExists(
         mockStrategy,

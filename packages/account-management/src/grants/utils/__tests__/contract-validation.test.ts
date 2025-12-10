@@ -15,20 +15,22 @@ import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 // Mock @burnt-labs/signers
 vi.mock("@burnt-labs/signers", () => ({
-  validateBech32Address: vi.fn((address: string, context: string, prefix: string) => {
-    // Simple mock validation
-    if (!address) {
-      throw new Error(`Invalid ${context}: cannot be empty`);
-    }
-    if (!address.startsWith(prefix + "1")) {
-      throw new Error(
-        `Invalid ${context}: expected prefix "${prefix}", got "${address.split("1")[0]}"`,
-      );
-    }
-    if (address.length < 10) {
-      throw new Error(`Invalid ${context}: address too short`);
-    }
-  }),
+  validateBech32Address: vi.fn(
+    (address: string, context: string, prefix: string) => {
+      // Simple mock validation
+      if (!address) {
+        throw new Error(`Invalid ${context}: cannot be empty`);
+      }
+      if (!address.startsWith(prefix + "1")) {
+        throw new Error(
+          `Invalid ${context}: expected prefix "${prefix}", got "${address.split("1")[0]}"`,
+        );
+      }
+      if (address.length < 10) {
+        throw new Error(`Invalid ${context}: address too short`);
+      }
+    },
+  ),
 }));
 
 // Mock CosmWasmClient
@@ -41,7 +43,10 @@ vi.mock("@cosmjs/cosmwasm-stargate", () => ({
 describe("contract-validation", () => {
   describe("validateContractAddressFormat", () => {
     it("should return undefined for valid address", () => {
-      const error = validateContractAddressFormat("xion1contractaddress123", "xion");
+      const error = validateContractAddressFormat(
+        "xion1contractaddress123",
+        "xion",
+      );
       expect(error).toBeUndefined();
     });
 
@@ -150,10 +155,14 @@ describe("contract-validation", () => {
         "xion1contract0987654321",
       ];
 
-      const result = await validateContractGrants(contracts, "xion1granter123", {
-        expectedPrefix: "xion",
-        skipOnChainVerification: true,
-      });
+      const result = await validateContractGrants(
+        contracts,
+        "xion1granter123",
+        {
+          expectedPrefix: "xion",
+          skipOnChainVerification: true,
+        },
+      );
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -165,10 +174,14 @@ describe("contract-validation", () => {
         "cosmos1wrongprefix", // Wrong prefix
       ];
 
-      const result = await validateContractGrants(contracts, "xion1granter123", {
-        expectedPrefix: "xion",
-        skipOnChainVerification: true,
-      });
+      const result = await validateContractGrants(
+        contracts,
+        "xion1granter123",
+        {
+          expectedPrefix: "xion",
+          skipOnChainVerification: true,
+        },
+      );
 
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
@@ -192,7 +205,9 @@ describe("contract-validation", () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].index).toBe(1);
-      expect(result.errors[0].error).toContain("cannot be the same as the granter");
+      expect(result.errors[0].error).toContain(
+        "cannot be the same as the granter",
+      );
     });
 
     it("should verify contracts exist on-chain when rpcUrl provided", async () => {
@@ -205,10 +220,14 @@ describe("contract-validation", () => {
         "xion1contract2missing",
       ];
 
-      const result = await validateContractGrants(contracts, "xion1granter123", {
-        expectedPrefix: "xion",
-        rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
-      });
+      const result = await validateContractGrants(
+        contracts,
+        "xion1granter123",
+        {
+          expectedPrefix: "xion",
+          rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+        },
+      );
 
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
@@ -217,15 +236,17 @@ describe("contract-validation", () => {
     });
 
     it("should skip on-chain verification when skipOnChainVerification=true", async () => {
-      const contracts: ContractGrantDescription[] = [
-        "xion1contract123456",
-      ];
+      const contracts: ContractGrantDescription[] = ["xion1contract123456"];
 
-      const result = await validateContractGrants(contracts, "xion1granter123", {
-        expectedPrefix: "xion",
-        rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
-        skipOnChainVerification: true,
-      });
+      const result = await validateContractGrants(
+        contracts,
+        "xion1granter123",
+        {
+          expectedPrefix: "xion",
+          rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+          skipOnChainVerification: true,
+        },
+      );
 
       expect(result.valid).toBe(true);
       expect(mockClient.getContract).not.toHaveBeenCalled();
@@ -239,10 +260,14 @@ describe("contract-validation", () => {
         },
       ];
 
-      const result = await validateContractGrants(contracts, "xion1granter123", {
-        expectedPrefix: "xion",
-        skipOnChainVerification: true,
-      });
+      const result = await validateContractGrants(
+        contracts,
+        "xion1granter123",
+        {
+          expectedPrefix: "xion",
+          skipOnChainVerification: true,
+        },
+      );
 
       expect(result.valid).toBe(true);
     });
@@ -277,10 +302,14 @@ describe("contract-validation", () => {
         "invalid", // Invalid format - should not check on-chain
       ];
 
-      const result = await validateContractGrants(contracts, "xion1granter123", {
-        expectedPrefix: "xion",
-        rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
-      });
+      const result = await validateContractGrants(
+        contracts,
+        "xion1granter123",
+        {
+          expectedPrefix: "xion",
+          rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+        },
+      );
 
       expect(result.valid).toBe(false);
       // Should not have attempted on-chain verification for invalid address
@@ -299,7 +328,9 @@ describe("contract-validation", () => {
       ];
 
       const formatted = formatValidationErrors(errors);
-      expect(formatted).toContain("Invalid contract grant configuration (1 error)");
+      expect(formatted).toContain(
+        "Invalid contract grant configuration (1 error)",
+      );
       expect(formatted).toContain("Contract 1 (xion1bad)");
       expect(formatted).toContain("Invalid address format");
     });
@@ -319,7 +350,9 @@ describe("contract-validation", () => {
       ];
 
       const formatted = formatValidationErrors(errors);
-      expect(formatted).toContain("Invalid contract grant configuration (2 errors)");
+      expect(formatted).toContain(
+        "Invalid contract grant configuration (2 errors)",
+      );
       expect(formatted).toContain("Contract 1 (xion1bad1): Error 1");
       expect(formatted).toContain("Contract 2 (xion1bad2): Error 2");
     });
@@ -341,9 +374,7 @@ describe("contract-validation", () => {
     });
 
     it("should not throw for valid contracts", async () => {
-      const contracts: ContractGrantDescription[] = [
-        "xion1contract123456",
-      ];
+      const contracts: ContractGrantDescription[] = ["xion1contract123456"];
 
       await expect(
         validateContractGrantsOrThrow(contracts, "xion1granter123", {
@@ -354,9 +385,7 @@ describe("contract-validation", () => {
     });
 
     it("should throw with formatted error for invalid contracts", async () => {
-      const contracts: ContractGrantDescription[] = [
-        "cosmos1wrongprefix",
-      ];
+      const contracts: ContractGrantDescription[] = ["cosmos1wrongprefix"];
 
       await expect(
         validateContractGrantsOrThrow(contracts, "xion1granter123", {
@@ -367,10 +396,7 @@ describe("contract-validation", () => {
     });
 
     it("should include all errors in thrown message", async () => {
-      const contracts: ContractGrantDescription[] = [
-        "",
-        "cosmos1wrong",
-      ];
+      const contracts: ContractGrantDescription[] = ["", "cosmos1wrong"];
 
       await expect(
         validateContractGrantsOrThrow(contracts, "xion1granter123", {
@@ -399,10 +425,14 @@ describe("contract-validation", () => {
 
       const contracts: ContractGrantDescription[] = ["xion1contract123456"];
 
-      const result = await validateContractGrants(contracts, "xion1granter123", {
-        expectedPrefix: "xion",
-        rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
-      });
+      const result = await validateContractGrants(
+        contracts,
+        "xion1granter123",
+        {
+          expectedPrefix: "xion",
+          rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+        },
+      );
 
       expect(result.valid).toBe(false);
       expect(result.errors[0].error).toContain("Failed to verify contract");

@@ -27,7 +27,8 @@ describe("normalizeSecp256k1PublicKey - Regression Tests", () => {
     });
 
     it("should convert hex to base64", () => {
-      const hexPubkey = "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
+      const hexPubkey =
+        "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
       const expectedBase64 = "AjXd9gVDhhiQ3UX5SI7aCbb3olSwvxqYCZpf3hBfo09W";
 
       const result = normalizeSecp256k1PublicKey(hexPubkey);
@@ -42,12 +43,14 @@ describe("normalizeSecp256k1PublicKey - Regression Tests", () => {
       const testCases = [
         {
           name: "compressed hex (02 prefix)",
-          input: "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56",
+          input:
+            "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56",
           expectedBase64: "AjXd9gVDhhiQ3UX5SI7aCbb3olSwvxqYCZpf3hBfo09W",
         },
         {
           name: "compressed hex (03 prefix)",
-          input: "03e47d5e1e3e23c8b25d98d2dcb10e5efc37dd4399bb9fb2a0f9ff6192e4d27ade",
+          input:
+            "03e47d5e1e3e23c8b25d98d2dcb10e5efc37dd4399bb9fb2a0f9ff6192e4d27ade",
           expectedBase64: "A+R9Xh4+I8iyXZjS3LEOXvw33UOZu5+yoPn/YZLk0nre",
         },
         {
@@ -63,7 +66,10 @@ describe("normalizeSecp256k1PublicKey - Regression Tests", () => {
         // REGRESSION TEST: All inputs must normalize to base64
         expect(result, `Failed for ${name}`).toBe(expectedBase64);
         expect(result.length, `Wrong length for ${name}`).toBe(44);
-        expect(/^A[A-Za-z0-9+/]{43}$/.test(result), `Invalid format for ${name}`).toBe(true);
+        expect(
+          /^A[A-Za-z0-9+/]{43}$/.test(result),
+          `Invalid format for ${name}`,
+        ).toBe(true);
       });
     });
   });
@@ -110,7 +116,8 @@ describe("normalizeSecp256k1PublicKey - Regression Tests", () => {
 
   describe("Salt Calculation Consistency", () => {
     it("should ensure same normalized format produces same salt input", () => {
-      const hexPubkey = "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
+      const hexPubkey =
+        "0235ddf60543861890dd45f9488eda09b6f7a254b0bf1a98099a5fde105fa34f56";
       const base64Pubkey = "AjXd9gVDhhiQ3UX5SI7aCbb3olSwvxqYCZpf3hBfo09W";
 
       const normalizedFromHex = normalizeSecp256k1PublicKey(hexPubkey);
@@ -131,7 +138,8 @@ describe("normalizeSecp256k1PublicKey - Regression Tests", () => {
       // This test serves as documentation
       const bugExample = {
         description: "The bug was in createAccount.ts line ~230",
-        before: "const formattedPubkey = formatSecp256k1Pubkey(pubkeyHex); // ❌ Converted to hex",
+        before:
+          "const formattedPubkey = formatSecp256k1Pubkey(pubkeyHex); // ❌ Converted to hex",
         after: "const formattedPubkey = normalizedPubkey; // ✅ Keep as base64",
         impact: [
           "xion.js calculated salt from base64",

@@ -2,7 +2,7 @@
  * Mock grant responses for testing authorization flows
  */
 
-import { TEST_ADDRESSES } from './addresses.js';
+import { TEST_ADDRESSES } from "./addresses.js";
 
 export interface GrantsResponse {
   grants: Array<{

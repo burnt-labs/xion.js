@@ -23,7 +23,7 @@ describe("ExternalSignerConnector", () => {
       const config = createMockConnectorConfig(
         "test-connector",
         "Test Connector",
-        null
+        null,
       );
       const connector = new ExternalSignerConnector(config);
 
@@ -42,7 +42,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -66,7 +66,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig, {
         isReady: true,
@@ -81,7 +81,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig, {
         isReady: false,
@@ -98,18 +98,28 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
-      const config = createMockConnectorConfig("eth-wallet", "EthWallet", signerConfig);
+      const config = createMockConnectorConfig(
+        "eth-wallet",
+        "EthWallet",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
 
-      expect(result.authenticator).toBe(TEST_AUTHENTICATORS.ethWallet.toLowerCase());
+      expect(result.authenticator).toBe(
+        TEST_AUTHENTICATORS.ethWallet.toLowerCase(),
+      );
       expect(result.displayAddress).toBe(TEST_AUTHENTICATORS.ethWallet);
       expect(result.signMessage).toBeDefined();
-      expect(result.metadata?.authenticatorType).toBe(AUTHENTICATOR_TYPE.EthWallet);
-      expect(result.metadata?.ethereumAddress).toBe(TEST_AUTHENTICATORS.ethWallet);
+      expect(result.metadata?.authenticatorType).toBe(
+        AUTHENTICATOR_TYPE.EthWallet,
+      );
+      expect(result.metadata?.ethereumAddress).toBe(
+        TEST_AUTHENTICATORS.ethWallet,
+      );
       expect(result.metadata?.connectionType).toBe("signer");
     });
 
@@ -117,28 +127,38 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWalletUppercase,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
-      const config = createMockConnectorConfig("eth-wallet", "EthWallet", signerConfig);
+      const config = createMockConnectorConfig(
+        "eth-wallet",
+        "EthWallet",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
 
       // Authenticator should be lowercased
       expect(result.authenticator).toBe(
-        TEST_AUTHENTICATORS.ethWalletUppercase.toLowerCase()
+        TEST_AUTHENTICATORS.ethWalletUppercase.toLowerCase(),
       );
       // Display address should preserve original case
-      expect(result.displayAddress).toBe(TEST_AUTHENTICATORS.ethWalletUppercase);
+      expect(result.displayAddress).toBe(
+        TEST_AUTHENTICATORS.ethWalletUppercase,
+      );
     });
 
     it("should use authenticator as display address for EthWallet", async () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
-      const config = createMockConnectorConfig("eth-wallet", "EthWallet", signerConfig);
+      const config = createMockConnectorConfig(
+        "eth-wallet",
+        "EthWallet",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -150,9 +170,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
-      const config = createMockConnectorConfig("eth-wallet", "EthWallet", signerConfig);
+      const config = createMockConnectorConfig(
+        "eth-wallet",
+        "EthWallet",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -167,9 +191,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        INVALID_SIGNATURES.ethWalletWrongLength
+        INVALID_SIGNATURES.ethWalletWrongLength,
       );
-      const config = createMockConnectorConfig("eth-wallet", "EthWallet", signerConfig);
+      const config = createMockConnectorConfig(
+        "eth-wallet",
+        "EthWallet",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -181,9 +209,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWalletWithoutPrefix
+        TEST_SIGNATURES.ethWalletWithoutPrefix,
       );
-      const config = createMockConnectorConfig("eth-wallet", "EthWallet", signerConfig);
+      const config = createMockConnectorConfig(
+        "eth-wallet",
+        "EthWallet",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -205,7 +237,11 @@ describe("ExternalSignerConnector", () => {
         },
       };
 
-      const config = createMockConnectorConfig("eth-wallet", "EthWallet", signerConfig);
+      const config = createMockConnectorConfig(
+        "eth-wallet",
+        "EthWallet",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -221,9 +257,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Secp256K1,
         TEST_AUTHENTICATORS.secp256k1Hex,
-        TEST_SIGNATURES.secp256k1
+        TEST_SIGNATURES.secp256k1,
       );
-      const config = createMockConnectorConfig("secp256k1", "Secp256K1", signerConfig);
+      const config = createMockConnectorConfig(
+        "secp256k1",
+        "Secp256K1",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -231,7 +271,9 @@ describe("ExternalSignerConnector", () => {
       expect(result.authenticator).toBe(TEST_AUTHENTICATORS.secp256k1Hex);
       expect(result.displayAddress).toBe(TEST_AUTHENTICATORS.secp256k1Hex);
       expect(result.signMessage).toBeDefined();
-      expect(result.metadata?.authenticatorType).toBe(AUTHENTICATOR_TYPE.Secp256K1);
+      expect(result.metadata?.authenticatorType).toBe(
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
       expect(result.metadata?.connectionType).toBe("signer");
     });
 
@@ -239,9 +281,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Secp256K1,
         TEST_AUTHENTICATORS.secp256k1Hex,
-        TEST_SIGNATURES.secp256k1
+        TEST_SIGNATURES.secp256k1,
       );
-      const config = createMockConnectorConfig("secp256k1", "Secp256K1", signerConfig);
+      const config = createMockConnectorConfig(
+        "secp256k1",
+        "Secp256K1",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -257,15 +303,19 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Secp256K1,
         TEST_AUTHENTICATORS.secp256k1Hex,
-        INVALID_SIGNATURES.secp256k1WrongLength
+        INVALID_SIGNATURES.secp256k1WrongLength,
       );
-      const config = createMockConnectorConfig("secp256k1", "Secp256K1", signerConfig);
+      const config = createMockConnectorConfig(
+        "secp256k1",
+        "Secp256K1",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
 
       await expect(result.signMessage(TEST_MESSAGE)).rejects.toThrow(
-        /Invalid Secp256K1 signature format/
+        /Invalid Secp256K1 signature format/,
       );
     });
 
@@ -273,9 +323,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Secp256K1,
         TEST_AUTHENTICATORS.secp256k1Hex,
-        TEST_SIGNATURES.secp256k1Base64
+        TEST_SIGNATURES.secp256k1Base64,
       );
-      const config = createMockConnectorConfig("secp256k1", "Secp256K1", signerConfig);
+      const config = createMockConnectorConfig(
+        "secp256k1",
+        "Secp256K1",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -287,13 +341,18 @@ describe("ExternalSignerConnector", () => {
     });
 
     it("should not lowercase Secp256K1 authenticator", async () => {
-      const pubkeyWithUppercase = "02ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890";
+      const pubkeyWithUppercase =
+        "02ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890";
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Secp256K1,
         pubkeyWithUppercase,
-        TEST_SIGNATURES.secp256k1
+        TEST_SIGNATURES.secp256k1,
       );
-      const config = createMockConnectorConfig("secp256k1", "Secp256K1", signerConfig);
+      const config = createMockConnectorConfig(
+        "secp256k1",
+        "Secp256K1",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -306,9 +365,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Secp256K1,
         TEST_AUTHENTICATORS.secp256k1Hex,
-        TEST_SIGNATURES.secp256k1
+        TEST_SIGNATURES.secp256k1,
       );
-      const config = createMockConnectorConfig("secp256k1", "Secp256K1", signerConfig);
+      const config = createMockConnectorConfig(
+        "secp256k1",
+        "Secp256K1",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -328,7 +391,11 @@ describe("ExternalSignerConnector", () => {
         },
       };
 
-      const config = createMockConnectorConfig("secp256k1", "Secp256K1", signerConfig);
+      const config = createMockConnectorConfig(
+        "secp256k1",
+        "Secp256K1",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -344,7 +411,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.JWT,
         TEST_AUTHENTICATORS.jwt,
-        TEST_SIGNATURES.jwt
+        TEST_SIGNATURES.jwt,
       );
       const config = createMockConnectorConfig("jwt", "JWT", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -362,7 +429,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.JWT,
         TEST_AUTHENTICATORS.jwt,
-        TEST_SIGNATURES.jwt
+        TEST_SIGNATURES.jwt,
       );
       const config = createMockConnectorConfig("jwt", "JWT", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -379,7 +446,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.JWT,
         jwtWithUppercase,
-        TEST_SIGNATURES.jwt
+        TEST_SIGNATURES.jwt,
       );
       const config = createMockConnectorConfig("jwt", "JWT", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -395,9 +462,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Passkey,
         TEST_AUTHENTICATORS.passkey,
-        TEST_SIGNATURES.passkey
+        TEST_SIGNATURES.passkey,
       );
-      const config = createMockConnectorConfig("passkey", "Passkey", signerConfig);
+      const config = createMockConnectorConfig(
+        "passkey",
+        "Passkey",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -405,7 +476,9 @@ describe("ExternalSignerConnector", () => {
       expect(result.authenticator).toBe(TEST_AUTHENTICATORS.passkey);
       expect(result.displayAddress).toBe(TEST_AUTHENTICATORS.passkey);
       expect(result.signMessage).toBeDefined();
-      expect(result.metadata?.authenticatorType).toBe(AUTHENTICATOR_TYPE.Passkey);
+      expect(result.metadata?.authenticatorType).toBe(
+        AUTHENTICATOR_TYPE.Passkey,
+      );
       expect(result.metadata?.connectionType).toBe("signer");
     });
 
@@ -413,9 +486,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Passkey,
         TEST_AUTHENTICATORS.passkey,
-        TEST_SIGNATURES.passkey
+        TEST_SIGNATURES.passkey,
       );
-      const config = createMockConnectorConfig("passkey", "Passkey", signerConfig);
+      const config = createMockConnectorConfig(
+        "passkey",
+        "Passkey",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -431,9 +508,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Ed25519,
         TEST_AUTHENTICATORS.ed25519,
-        TEST_SIGNATURES.ed25519
+        TEST_SIGNATURES.ed25519,
       );
-      const config = createMockConnectorConfig("ed25519", "Ed25519", signerConfig);
+      const config = createMockConnectorConfig(
+        "ed25519",
+        "Ed25519",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -441,7 +522,9 @@ describe("ExternalSignerConnector", () => {
       expect(result.authenticator).toBe(TEST_AUTHENTICATORS.ed25519);
       expect(result.displayAddress).toBe(TEST_AUTHENTICATORS.ed25519);
       expect(result.signMessage).toBeDefined();
-      expect(result.metadata?.authenticatorType).toBe(AUTHENTICATOR_TYPE.Ed25519);
+      expect(result.metadata?.authenticatorType).toBe(
+        AUTHENTICATOR_TYPE.Ed25519,
+      );
       expect(result.metadata?.connectionType).toBe("signer");
     });
 
@@ -449,9 +532,13 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Ed25519,
         TEST_AUTHENTICATORS.ed25519,
-        TEST_SIGNATURES.ed25519
+        TEST_SIGNATURES.ed25519,
       );
-      const config = createMockConnectorConfig("ed25519", "Ed25519", signerConfig);
+      const config = createMockConnectorConfig(
+        "ed25519",
+        "Ed25519",
+        signerConfig,
+      );
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
@@ -470,7 +557,7 @@ describe("ExternalSignerConnector", () => {
       const connector = new ExternalSignerConnector(config);
 
       await expect(connector.connect()).rejects.toThrow(
-        /Failed to connect to Test/
+        /Failed to connect to Test/,
       );
     });
 
@@ -479,7 +566,7 @@ describe("ExternalSignerConnector", () => {
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
         TEST_SIGNATURES.ethWallet,
-        true // shouldThrow
+        true, // shouldThrow
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -493,7 +580,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        INVALID_SIGNATURES.empty
+        INVALID_SIGNATURES.empty,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -507,7 +594,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -520,7 +607,7 @@ describe("ExternalSignerConnector", () => {
 
       // Try to sign - should fail
       await expect(result.signMessage(TEST_MESSAGE)).rejects.toThrow(
-        /Signer not connected/
+        /Signer not connected/,
       );
     });
   });
@@ -530,7 +617,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -544,7 +631,7 @@ describe("ExternalSignerConnector", () => {
 
       // Try to use the signMessage function - should fail
       await expect(result.signMessage(TEST_MESSAGE)).rejects.toThrow(
-        /Signer not connected/
+        /Signer not connected/,
       );
     });
 
@@ -552,7 +639,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -572,7 +659,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -593,35 +680,39 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Secp256K1,
         TEST_AUTHENTICATORS.secp256k1Hex,
-        TEST_SIGNATURES.secp256k1
+        TEST_SIGNATURES.secp256k1,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
 
-      expect(result.metadata?.authenticatorType).toBe(AUTHENTICATOR_TYPE.Secp256K1);
+      expect(result.metadata?.authenticatorType).toBe(
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
     });
 
     it("should include ethereumAddress in metadata for EthWallet", async () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.EthWallet,
         TEST_AUTHENTICATORS.ethWallet,
-        TEST_SIGNATURES.ethWallet
+        TEST_SIGNATURES.ethWallet,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
 
       const result = await connector.connect();
 
-      expect(result.metadata?.ethereumAddress).toBe(TEST_AUTHENTICATORS.ethWallet);
+      expect(result.metadata?.ethereumAddress).toBe(
+        TEST_AUTHENTICATORS.ethWallet,
+      );
     });
 
     it("should not include ethereumAddress for non-EthWallet types", async () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.Secp256K1,
         TEST_AUTHENTICATORS.secp256k1Hex,
-        TEST_SIGNATURES.secp256k1
+        TEST_SIGNATURES.secp256k1,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);
@@ -635,7 +726,7 @@ describe("ExternalSignerConnector", () => {
       const signerConfig = createMockSignerConfig(
         AUTHENTICATOR_TYPE.JWT,
         TEST_AUTHENTICATORS.jwt,
-        TEST_SIGNATURES.jwt
+        TEST_SIGNATURES.jwt,
       );
       const config = createMockConnectorConfig("test", "Test", signerConfig);
       const connector = new ExternalSignerConnector(config);

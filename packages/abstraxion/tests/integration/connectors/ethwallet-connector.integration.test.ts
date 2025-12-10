@@ -63,7 +63,10 @@ describe("EthWallet Connector - Integration Tests", () => {
       async () => {
         // 1. Create EthWallet connector
         const testIndex = Math.floor(Math.random() * 1000) + 1000;
-        const connector = createTestEthWalletConnector(TEST_MNEMONIC, testIndex);
+        const connector = createTestEthWalletConnector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
 
         console.log("✓ Step 1: EthWallet connector created");
 
@@ -145,7 +148,10 @@ describe("EthWallet Connector - Integration Tests", () => {
       "should handle existing XION account for ETH address",
       async () => {
         const testIndex = Math.floor(Math.random() * 1000) + 1100;
-        const connector = createTestEthWalletConnector(TEST_MNEMONIC, testIndex);
+        const connector = createTestEthWalletConnector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
 
         // First run - create account
         const orchestrator1 = new ConnectionOrchestrator({
@@ -459,7 +465,10 @@ describe("EthWallet Connector - Integration Tests", () => {
         });
 
         await expect(
-          orchestrator.connectAndSetup(connector, connectorResult.authenticator),
+          orchestrator.connectAndSetup(
+            connector,
+            connectorResult.authenticator,
+          ),
         ).rejects.toThrow();
 
         console.log("✓ Network failures handled gracefully");

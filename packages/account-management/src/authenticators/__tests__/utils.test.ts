@@ -6,7 +6,10 @@ import {
   validateNewAuthenticator,
 } from "../utils";
 import { createJwtAuthenticatorIdentifier } from "../jwt";
-import type { Authenticator, SmartAccountWithCodeId } from "../../types/authenticator";
+import type {
+  Authenticator,
+  SmartAccountWithCodeId,
+} from "../../types/authenticator";
 
 describe("authenticator-utils", () => {
   describe("isDuplicateAuthenticator", () => {

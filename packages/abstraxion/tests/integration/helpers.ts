@@ -5,9 +5,18 @@
 
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { stringToPath, Sha256, Secp256k1 } from "@cosmjs/crypto";
-import { SigningStargateClient, StargateClient, type Account } from "@cosmjs/stargate";
+import {
+  SigningStargateClient,
+  StargateClient,
+  type Account,
+} from "@cosmjs/stargate";
 import type { EncodeObject } from "@cosmjs/proto-signing";
-import { AUTHENTICATOR_TYPE, customAccountFromAny, isValidHex, fromHex } from "@burnt-labs/signers";
+import {
+  AUTHENTICATOR_TYPE,
+  customAccountFromAny,
+  isValidHex,
+  fromHex,
+} from "@burnt-labs/signers";
 import { getTestConfig, TEST_MNEMONIC } from "./fixtures";
 import { Wallet, HDNodeWallet, toUtf8Bytes } from "ethers";
 import { toHex } from "@cosmjs/encoding";
@@ -33,13 +42,12 @@ export function generateTestMnemonic(): string {
   return TEST_MNEMONIC;
 }
 
-
 /**
  * Create a Secp256k1 wallet from mnemonic
  */
 export async function createSecp256k1Wallet(
   mnemonic: string = TEST_MNEMONIC,
-  accountIndex: number = 0
+  accountIndex: number = 0,
 ) {
   const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: "xion",
@@ -63,7 +71,7 @@ export async function createSecp256k1Wallet(
  */
 export async function createEthWallet(
   mnemonic: string = TEST_MNEMONIC,
-  accountIndex: number = 0
+  accountIndex: number = 0,
 ) {
   const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: "xion",
@@ -89,23 +97,25 @@ export async function createEthWallet(
 /**
  * Helper to extract SignerConfig from connector connection result
  * This is needed because ConnectorConnectionResult has authenticatorType in metadata
- * 
+ *
  * @throws Error if authenticatorType is missing from metadata
- * 
+ *
  * NOTE: This extracts signMessage from connector result, which is already wrapped by ExternalSignerConnector.
  * For use with SignerController, use createRawSignerConfig() instead to avoid double-wrapping.
  */
 export function getSignerConfigFromConnectorResult(
-  result: Awaited<ReturnType<ExternalSignerConnector["connect"]>>
+  result: Awaited<ReturnType<ExternalSignerConnector["connect"]>>,
 ): SignerConfig {
   const authenticatorType = result.metadata?.authenticatorType;
   if (!authenticatorType) {
     // Provide helpful error message with available metadata keys
-    const metadataKeys = result.metadata ? Object.keys(result.metadata).join(", ") : "none";
+    const metadataKeys = result.metadata
+      ? Object.keys(result.metadata).join(", ")
+      : "none";
     throw new Error(
       `authenticatorType not found in connector result metadata. ` +
-      `Available metadata keys: ${metadataKeys}. ` +
-      `This usually means the connector did not properly set authenticatorType in its connect() method.`
+        `Available metadata keys: ${metadataKeys}. ` +
+        `This usually means the connector did not properly set authenticatorType in its connect() method.`,
     );
   }
   return {
@@ -122,7 +132,7 @@ export function getSignerConfigFromConnectorResult(
  */
 export function createSecp256k1GetSignerConfig(
   mnemonic: string = TEST_MNEMONIC,
-  accountIndex: number = 0
+  accountIndex: number = 0,
 ): () => Promise<SignerConfig> {
   // Cache SignerConfig to ensure consistent keypair (same pattern as connector)
   let cachedSignerConfig: SignerConfig | null = null;
@@ -141,11 +151,19 @@ export function createSecp256k1GetSignerConfig(
     const [account] = await wallet.getAccounts();
 
     // Get private key for signing
-    const { Slip10, Slip10Curve, stringToPath: pathToArray } = await import("@cosmjs/crypto");
+    const {
+      Slip10,
+      Slip10Curve,
+      stringToPath: pathToArray,
+    } = await import("@cosmjs/crypto");
     const { Bip39, EnglishMnemonic } = await import("@cosmjs/crypto");
     const mnemonicObj = new EnglishMnemonic(mnemonic);
     const seed = await Bip39.mnemonicToSeed(mnemonicObj);
-    const { privkey } = Slip10.derivePath(Slip10Curve.Secp256k1, seed, pathToArray(`m/44'/118'/0'/0/${accountIndex}`));
+    const { privkey } = Slip10.derivePath(
+      Slip10Curve.Secp256k1,
+      seed,
+      pathToArray(`m/44'/118'/0'/0/${accountIndex}`),
+    );
 
     // Compress pubkey to match AA API expectations (33 bytes = 66 hex chars)
     const uncompressedPubkey = account.pubkey;
@@ -163,47 +181,57 @@ export function createSecp256k1GetSignerConfig(
       authenticator: pubkeyBase64, // Use base64 (matches AA API normalization)
       async signMessage(hexMessage: string): Promise<string> {
         // DEBUG: Log what we're signing
-        console.log("[createSecp256k1GetSignerConfig] DEBUG - Signing message:");
+        console.log(
+          "[createSecp256k1GetSignerConfig] DEBUG - Signing message:",
+        );
         console.log("  Hex message received:", hexMessage);
         console.log("  Pubkey hex:", pubkeyHex);
         console.log("  Pubkey base64 (authenticator):", pubkeyBase64);
-        
+
         // Validate hex format (consistent with EthWallet)
         if (!hexMessage.startsWith("0x")) {
           throw new Error(
-            `Invalid message format: expected hex string with 0x prefix, got: ${hexMessage.substring(0, 50)}...`
+            `Invalid message format: expected hex string with 0x prefix, got: ${hexMessage.substring(0, 50)}...`,
           );
         }
 
         // Remove 0x prefix and convert hex to bytes
         const messageHex = hexMessage.slice(2);
         const messageBytes = Buffer.from(messageHex, "hex");
-        
+
         // DEBUG: Log message bytes
-        console.log("[createSecp256k1GetSignerConfig] DEBUG - Message processing:");
+        console.log(
+          "[createSecp256k1GetSignerConfig] DEBUG - Message processing:",
+        );
         console.log("  Message hex (without 0x):", messageHex);
         console.log("  Message bytes length:", messageBytes.length);
-        console.log("  Message bytes (first 20):", Array.from(messageBytes.slice(0, 20)));
-        
+        console.log(
+          "  Message bytes (first 20):",
+          Array.from(messageBytes.slice(0, 20)),
+        );
+
         // Sign the message (AA API expects signature over sha256(message bytes))
         const digest = new Sha256(messageBytes).digest();
         console.log("[createSecp256k1GetSignerConfig] DEBUG - Digest:");
         console.log("  Digest length:", digest.length);
         console.log("  Digest (first 20):", Array.from(digest.slice(0, 20)));
-        
+
         const signature = await Secp256k1.createSignature(digest, privkey);
 
         // Return signature as base64 (r + s, 64 bytes)
         // ExternalSignerConnector will format this to hex via formatSecp256k1Signature
-        const signatureBytes = new Uint8Array([...signature.r(32), ...signature.s(32)]);
+        const signatureBytes = new Uint8Array([
+          ...signature.r(32),
+          ...signature.s(32),
+        ]);
         const signatureBase64 = Buffer.from(signatureBytes).toString("base64");
-        
+
         // DEBUG: Log signature
         console.log("[createSecp256k1GetSignerConfig] DEBUG - Signature:");
         console.log("  Signature bytes length:", signatureBytes.length);
         console.log("  Signature base64:", signatureBase64);
         console.log("  Signature base64 length:", signatureBase64.length);
-        
+
         return signatureBase64;
       },
     };
@@ -218,7 +246,7 @@ export function createSecp256k1GetSignerConfig(
  */
 export function createEthWalletGetSignerConfig(
   mnemonic: string = TEST_MNEMONIC,
-  accountIndex: number = 0
+  accountIndex: number = 0,
 ): () => Promise<SignerConfig> {
   // Cache SignerConfig to ensure consistent keypair (same pattern as connector)
   let cachedSignerConfig: SignerConfig | null = null;
@@ -232,7 +260,7 @@ export function createEthWalletGetSignerConfig(
     const ethWallet = HDNodeWallet.fromPhrase(
       mnemonic,
       undefined,
-      `m/44'/60'/0'/0/${accountIndex}`
+      `m/44'/60'/0'/0/${accountIndex}`,
     );
 
     const ethAddress = ethWallet.address.toLowerCase();
@@ -268,18 +296,21 @@ export function createEthWalletGetSignerConfig(
  * Create a test Secp256K1 connector using the real ExternalSignerConnector architecture
  * This matches how real connectors work (like Turnkey) - providing a SignerConfig
  * instead of manually implementing crypto operations.
- * 
+ *
  * This uses the same pattern as useTurnkeyRawAPI - providing a getSignerConfig function
  * that returns a SignerConfig with authenticator and signMessage.
- * 
+ *
  * Uses createSecp256k1GetSignerConfig() to reuse the same logic.
  */
 export function createTestSecp256k1Connector(
   mnemonic: string = TEST_MNEMONIC,
-  accountIndex: number = 0
+  accountIndex: number = 0,
 ): ExternalSignerConnector {
   // Reuse the same getSignerConfig logic (no duplication)
-  const getSignerConfig = createSecp256k1GetSignerConfig(mnemonic, accountIndex);
+  const getSignerConfig = createSecp256k1GetSignerConfig(
+    mnemonic,
+    accountIndex,
+  );
 
   // Use the real ExternalSignerConnector - just like Turnkey does
   return new ExternalSignerConnector({
@@ -293,16 +324,19 @@ export function createTestSecp256k1Connector(
  * Create a test EthWallet connector using the real ExternalSignerConnector architecture
  * This matches how real connectors work (like Turnkey) - providing a SignerConfig
  * instead of manually implementing crypto operations.
- * 
+ *
  * Uses ethers.js for real Ethereum message signing (personal_sign)
  * Uses createEthWalletGetSignerConfig() to reuse the same logic.
  */
 export function createTestEthWalletConnector(
   mnemonic: string = TEST_MNEMONIC,
-  accountIndex: number = 0
+  accountIndex: number = 0,
 ): ExternalSignerConnector {
   // Reuse the same getSignerConfig logic (no duplication)
-  const getSignerConfig = createEthWalletGetSignerConfig(mnemonic, accountIndex);
+  const getSignerConfig = createEthWalletGetSignerConfig(
+    mnemonic,
+    accountIndex,
+  );
 
   // Use the real ExternalSignerConnector - just like Turnkey does
   return new ExternalSignerConnector({
@@ -326,13 +360,14 @@ class TestCosmWasmClient extends CosmWasmClient {
    * This ensures the custom getAccount() method is used
    */
   public static override async create(
-    tmClient: any
+    tmClient: any,
   ): Promise<TestCosmWasmClient> {
     return new TestCosmWasmClient(tmClient);
   }
 
   public async getAccount(searchAddress: string): Promise<Account | null> {
-    const account = await this.forceGetQueryClient().auth.account(searchAddress);
+    const account =
+      await this.forceGetQueryClient().auth.account(searchAddress);
     if (!account) {
       return null;
     }
@@ -363,12 +398,12 @@ export async function createTestStargateClient() {
  */
 export async function createTestSigningClient(
   mnemonic: string = TEST_MNEMONIC,
-  accountIndex: number = 0
+  accountIndex: number = 0,
 ) {
   const config = getTestConfig();
   const { wallet, address } = await createSecp256k1Wallet(
     mnemonic,
-    accountIndex
+    accountIndex,
   );
 
   const client = await SigningStargateClient.connectWithSigner(
@@ -379,7 +414,7 @@ export async function createTestSigningClient(
         amount: config.gasPrice.replace(/[^\d.]/g, ""),
         denom: config.gasPrice.replace(/[\d.]/g, ""),
       } as any,
-    }
+    },
   );
 
   return { client, address, wallet };
@@ -391,7 +426,7 @@ export async function createTestSigningClient(
 export async function waitForTxConfirmation(
   client: StargateClient,
   txHash: string,
-  timeoutMs: number = 30000
+  timeoutMs: number = 30000,
 ): Promise<any> {
   const start = Date.now();
   const pollInterval = 1000; // Poll every second
@@ -409,9 +444,7 @@ export async function waitForTxConfirmation(
     await sleep(pollInterval);
   }
 
-  throw new Error(
-    `Transaction ${txHash} not confirmed within ${timeoutMs}ms`
-  );
+  throw new Error(`Transaction ${txHash} not confirmed within ${timeoutMs}ms`);
 }
 
 /**
@@ -439,13 +472,15 @@ export function isValidXionAddress(address: string): boolean {
  */
 export function validateSignature(
   signature: string,
-  expectedLength: number
+  expectedLength: number,
 ): boolean {
   try {
     let decoded: Uint8Array;
 
     // Remove 0x prefix if present
-    const normalizedSignature = signature.startsWith('0x') ? signature.slice(2) : signature;
+    const normalizedSignature = signature.startsWith("0x")
+      ? signature.slice(2)
+      : signature;
 
     // Check if hex format using utility from @burnt-labs/signers
     if (isValidHex(normalizedSignature)) {
@@ -469,7 +504,7 @@ export function createTestTransferMsg(
   fromAddress: string,
   toAddress: string,
   amount: string = "10000",
-  denom: string = "uxion"
+  denom: string = "uxion",
 ): EncodeObject {
   return {
     typeUrl: "/cosmos.bank.v1beta1.MsgSend",
@@ -496,7 +531,7 @@ export function createTestTransferMsg(
 export function createUserMapUpdateMsg(
   sender: string,
   contractAddress: string,
-  testIdentifier?: string
+  testIdentifier?: string,
 ): EncodeObject {
   const testId = testIdentifier || `test-${Date.now()}`;
 
@@ -557,7 +592,7 @@ export function createMockStorageStrategy(): StorageStrategy {
 export function simulateStorageEvent(
   key: string,
   newValue: string | null,
-  oldValue: string | null = null
+  oldValue: string | null = null,
 ) {
   // Check if we're in a browser-like environment with dispatchEvent
   if (typeof globalThis.dispatchEvent === "function") {
@@ -575,7 +610,7 @@ export function simulateStorageEvent(
     // Tests that use this should be skipped or mocked differently
     console.warn(
       "simulateStorageEvent: dispatchEvent not available in Node.js environment. " +
-        "Multi-tab storage event tests should be run in a browser environment or mocked."
+        "Multi-tab storage event tests should be run in a browser environment or mocked.",
     );
   }
 }
@@ -597,7 +632,7 @@ export function cleanupTestStorage() {
 export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
-  initialDelayMs: number = 1000
+  initialDelayMs: number = 1000,
 ): Promise<T> {
   let lastError: Error | undefined;
 
@@ -621,7 +656,7 @@ export async function retryWithBackoff<T>(
  */
 export async function getAccountBalance(
   address: string,
-  denom: string = "uxion"
+  denom: string = "uxion",
 ): Promise<string> {
   const client = await createTestStargateClient();
   const balance = await client.getBalance(address, denom);
@@ -632,7 +667,7 @@ export async function getAccountBalance(
  * Check if treasury contract exists and is accessible
  */
 export async function checkTreasuryContract(
-  treasuryAddress: string
+  treasuryAddress: string,
 ): Promise<boolean> {
   const client = await createTestStargateClient();
   try {
@@ -664,13 +699,16 @@ export function parseGasPrice(gasPrice: string): {
  * Create a mock SessionManager for testing
  * Implements the full SessionManager interface from @burnt-labs/account-management
  */
-export function createMockSessionManager(storageStrategy: ReturnType<typeof createMockStorageStrategy>) {
+export function createMockSessionManager(
+  storageStrategy: ReturnType<typeof createMockStorageStrategy>,
+) {
   // In-memory keypair storage (since we can't serialize/deserialize the wallet easily)
   let sessionKeypair: any = undefined;
 
   return {
     getSession: async (key: string) => storageStrategy.getItem(key),
-    setSession: async (key: string, value: string) => storageStrategy.setItem(key, value),
+    setSession: async (key: string, value: string) =>
+      storageStrategy.setItem(key, value),
     removeSession: async (key: string) => storageStrategy.removeItem(key),
     clearSessions: async () => {
       await storageStrategy.removeItem("abstraxion_session");
@@ -710,13 +748,13 @@ export function createMockSessionManager(storageStrategy: ReturnType<typeof crea
       if (!granter) {
         throw new Error("No granter found in storage");
       }
-      
+
       // Use real grant verification function
       const grantCheck = await checkStorageGrants(granter, storageStrategy);
       if (!grantCheck.grantsExist) {
         throw new Error("Grants not found in storage");
       }
-      
+
       // Note: This checks storage grants, not on-chain grants
       // For full on-chain verification, we would need to query the chain
       // but that's expensive for integration tests, so storage check is acceptable
@@ -735,7 +773,7 @@ export function createMockSessionManager(storageStrategy: ReturnType<typeof crea
 /**
  * Create a SignerController for testing
  * Extracted to shared helper to reduce duplication across test files
- * 
+ *
  * @param options - Configuration options
  * @returns Configured SignerController instance
  */
@@ -776,7 +814,9 @@ export function createTestSignerController(options: {
     // Range: 1-2 billion (1 billion possibilities, ~1 in a billion collision chance)
     getSignerConfig: createSecp256k1GetSignerConfig(
       TEST_MNEMONIC,
-      accountIndex !== undefined ? accountIndex : Math.floor(Math.random() * 1_000_000_000) + 1_000_000_000
+      accountIndex !== undefined
+        ? accountIndex
+        : Math.floor(Math.random() * 1_000_000_000) + 1_000_000_000,
     ),
   };
 
@@ -803,12 +843,12 @@ export function createTestSignerController(options: {
           // Always ensure feeGranter is set from config if not explicitly provided
           feeGranter: grantConfig.feeGranter || config.feeGranter,
         }
-      : (treasuryAddress || config.treasuryAddress
+      : treasuryAddress || config.treasuryAddress
         ? {
             treasury: treasuryAddress || config.treasuryAddress,
             feeGranter: config.feeGranter,
           }
-        : undefined),
+        : undefined,
   };
 
   return new SignerController(controllerConfig);

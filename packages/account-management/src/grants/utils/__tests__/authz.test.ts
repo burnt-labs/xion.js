@@ -1,6 +1,6 @@
 /**
  * Grant Utilities Tests - authz.ts
- * 
+ *
  * Focus: Security-critical contract grant validation
  * Goal: Ensure contract grants cannot be misconfigured (contract === granter)
  */
@@ -27,9 +27,9 @@ describe("authz.test.ts - Security & Edge Cases", () => {
 
       it("should throw InvalidContractGrantError for account missing id property", () => {
         const accountWithoutId: any = { otherProperty: "value" };
-        expect(() =>
-          isContractGrantConfigValid([], accountWithoutId)
-        ).toThrow(InvalidContractGrantError);
+        expect(() => isContractGrantConfigValid([], accountWithoutId)).toThrow(
+          InvalidContractGrantError,
+        );
       });
 
       it("should throw InvalidContractGrantError for account.id as null", () => {
@@ -37,8 +37,8 @@ describe("authz.test.ts - Security & Edge Cases", () => {
         expect(() =>
           isContractGrantConfigValid(
             [{ address: "xion1contract123456789abcdefghijklmnopqrstuv" }],
-            accountWithNullId
-          )
+            accountWithNullId,
+          ),
         ).toThrow(InvalidContractGrantError);
       });
 
@@ -47,8 +47,8 @@ describe("authz.test.ts - Security & Edge Cases", () => {
         expect(() =>
           isContractGrantConfigValid(
             [{ address: "xion1contract123456789abcdefghijklmnopqrstuv" }],
-            accountWithUndefinedId
-          )
+            accountWithUndefinedId,
+          ),
         ).toThrow(InvalidContractGrantError);
       });
     });
@@ -204,39 +204,45 @@ describe("authz.test.ts - Security & Edge Cases", () => {
       it("should handle contract as number", () => {
         const contracts: any[] = [123];
         // Function handles gracefully with try-catch, returns false
-        expect(() => isContractGrantConfigValid(contracts, mockAccount)).not.toThrow();
+        expect(() =>
+          isContractGrantConfigValid(contracts, mockAccount),
+        ).not.toThrow();
       });
 
       it("should handle contract as boolean", () => {
         const contracts: any[] = [true];
         // Function handles gracefully with try-catch, returns false
-        expect(() => isContractGrantConfigValid(contracts, mockAccount)).not.toThrow();
+        expect(() =>
+          isContractGrantConfigValid(contracts, mockAccount),
+        ).not.toThrow();
       });
 
       it("should handle contract as array", () => {
         const contracts: any[] = [[{ address: "xion1contract" }]];
         // Function handles gracefully with try-catch, returns false
-        expect(() => isContractGrantConfigValid(contracts, mockAccount)).not.toThrow();
+        expect(() =>
+          isContractGrantConfigValid(contracts, mockAccount),
+        ).not.toThrow();
       });
 
       it("should throw InvalidContractGrantError for contract object with wrong shape (missing address)", () => {
         const contracts: any[] = [{ wrongProperty: "value" }];
         expect(() =>
-          isContractGrantConfigValid(contracts, mockAccount)
+          isContractGrantConfigValid(contracts, mockAccount),
         ).toThrow(InvalidContractGrantError);
       });
 
       it("should throw InvalidContractGrantError for null contract in array", () => {
         const contracts: any[] = [null];
         expect(() =>
-          isContractGrantConfigValid(contracts, mockAccount)
+          isContractGrantConfigValid(contracts, mockAccount),
         ).toThrow(InvalidContractGrantError);
       });
 
       it("should throw InvalidContractGrantError for undefined contract in array", () => {
         const contracts: any[] = [undefined];
         expect(() =>
-          isContractGrantConfigValid(contracts, mockAccount)
+          isContractGrantConfigValid(contracts, mockAccount),
         ).toThrow(InvalidContractGrantError);
       });
 
@@ -346,4 +352,3 @@ describe("authz.test.ts - Security & Edge Cases", () => {
     });
   });
 });
-

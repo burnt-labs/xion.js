@@ -1,10 +1,10 @@
 #!/usr/bin/env tsx
 /**
  * Generate TypeScript types from AA API OpenAPI schema
- * 
- * Usage: 
+ *
+ * Usage:
  *   pnpm tsx scripts/generate-aa-api-types.ts [testnet|mainnet|custom-url]
- * 
+ *
  * This script:
  * 1. Fetches OpenAPI schema from AA API endpoint
  * 2. Generates TypeScript types using openapi-typescript
@@ -27,7 +27,10 @@ const AA_API_URLS = {
   local: "http://localhost:8787",
 };
 
-const OUTPUT_DIR = path.join(__dirname, "../packages/signers/src/types/generated");
+const OUTPUT_DIR = path.join(
+  __dirname,
+  "../packages/signers/src/types/generated",
+);
 const TYPES_FILE = path.join(OUTPUT_DIR, "api.generated.ts");
 const METADATA_FILE = path.join(OUTPUT_DIR, "metadata.json");
 
@@ -46,17 +49,19 @@ interface SchemaInfo {
 async function fetchSchema(baseUrl: string): Promise<any> {
   const schemaUrl = `${baseUrl}/openapi.json`;
   console.log(`📡 Fetching OpenAPI schema from ${schemaUrl}...`);
-  
+
   const response = await fetch(schemaUrl);
   if (!response.ok) {
-    throw new Error(`Failed to fetch schema: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch schema: ${response.status} ${response.statusText}`,
+    );
   }
-  
+
   const schema = await response.json();
   console.log(`✅ Schema fetched successfully`);
   console.log(`   Version: ${schema.info?.version || "unknown"}`);
   console.log(`   Title: ${schema.info?.title || "unknown"}`);
-  
+
   return schema;
 }
 
@@ -65,25 +70,27 @@ async function fetchSchema(baseUrl: string): Promise<any> {
  */
 async function generateTypes(schema: any, outputFile: string): Promise<void> {
   console.log(`🔨 Generating TypeScript types...`);
-  
+
   // Write schema to temp file
   const tempSchemaFile = path.join(__dirname, "../temp-openapi-schema.json");
   await writeFile(tempSchemaFile, JSON.stringify(schema, null, 2), "utf-8");
-  
+
   try {
     // Use openapi-typescript to generate types
     // Note: This requires openapi-typescript to be installed
     const command = `npx --yes openapi-typescript "${tempSchemaFile}" -o "${outputFile}"`;
-    
+
     execSync(command, {
       stdio: "inherit",
       cwd: path.join(__dirname, ".."),
     });
-    
+
     console.log(`✅ Types generated: ${outputFile}`);
   } catch (error) {
     // Fallback: Generate types manually from schema paths
-    console.warn("⚠️  openapi-typescript not available, generating types manually...");
+    console.warn(
+      "⚠️  openapi-typescript not available, generating types manually...",
+    );
     await generateTypesManually(schema, outputFile);
   } finally {
     // Clean up temp file
@@ -98,7 +105,10 @@ async function generateTypes(schema: any, outputFile: string): Promise<void> {
  * Manually generate types from OpenAPI schema paths
  * This is a fallback if openapi-typescript is not available
  */
-async function generateTypesManually(schema: any, outputFile: string): Promise<void> {
+async function generateTypesManually(
+  schema: any,
+  outputFile: string,
+): Promise<void> {
   const types: string[] = [];
   types.push(`/**
  * AUTO-GENERATED TYPES FROM OPENAPI SCHEMA
@@ -111,11 +121,11 @@ async function generateTypesManually(schema: any, outputFile: string): Promise<v
 
   // Extract types from schema paths
   const paths = schema.paths || {};
-  
+
   // Helper to convert OpenAPI schema to TypeScript type
   const schemaToType = (schemaObj: any, name: string): string => {
     if (!schemaObj) return "any";
-    
+
     if (schemaObj.type === "string") return "string";
     if (schemaObj.type === "number") return "number";
     if (schemaObj.type === "integer") return "number";
@@ -127,43 +137,56 @@ async function generateTypesManually(schema: any, outputFile: string): Promise<v
     if (schemaObj.type === "object" || schemaObj.properties) {
       const props = schemaObj.properties || {};
       const required = schemaObj.required || [];
-      const propTypes = Object.entries(props).map(([key, value]: [string, any]) => {
-        const isOptional = !required.includes(key);
-        const type = schemaToType(value, `${name}${key.charAt(0).toUpperCase() + key.slice(1)}`);
-        return `  ${key}${isOptional ? "?" : ""}: ${type};`;
-      });
+      const propTypes = Object.entries(props).map(
+        ([key, value]: [string, any]) => {
+          const isOptional = !required.includes(key);
+          const type = schemaToType(
+            value,
+            `${name}${key.charAt(0).toUpperCase() + key.slice(1)}`,
+          );
+          return `  ${key}${isOptional ? "?" : ""}: ${type};`;
+        },
+      );
       return `{\n${propTypes.join("\n")}\n}`;
     }
-    
+
     return "any";
   };
 
   // Extract response types from paths
   const responseTypes = new Map<string, any>();
-  
+
   for (const [pathKey, pathValue] of Object.entries(paths)) {
     const path = pathValue as any;
     for (const [method, operation] of Object.entries(path)) {
       if (method === "get" || method === "post") {
         const op = operation as any;
-        
+
         // Extract response types
         if (op.responses?.["200"]?.content?.["application/json"]?.schema) {
           const schema = op.responses["200"].content["application/json"].schema;
-          const typeName = pathKey.split("/").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "Response";
+          const typeName =
+            pathKey
+              .split("/")
+              .pop()
+              ?.replace(/[^a-zA-Z0-9]/g, "") || "Response";
           const responseTypeName = `${typeName.charAt(0).toUpperCase() + typeName.slice(1)}Response`;
-          
+
           if (!responseTypes.has(responseTypeName)) {
             responseTypes.set(responseTypeName, schema);
           }
         }
-        
+
         // Extract request types
         if (op.requestBody?.content?.["application/json"]?.schema) {
           const schema = op.requestBody.content["application/json"].schema;
-          const typeName = pathKey.split("/").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "Request";
+          const typeName =
+            pathKey
+              .split("/")
+              .pop()
+              ?.replace(/[^a-zA-Z0-9]/g, "") || "Request";
           const requestTypeName = `${typeName.charAt(0).toUpperCase() + typeName.slice(1)}Request`;
-          
+
           if (!responseTypes.has(requestTypeName)) {
             responseTypes.set(requestTypeName, schema);
           }
@@ -233,7 +256,11 @@ export type ErrorResponse = {
 /**
  * Write metadata file
  */
-async function writeMetadata(schema: any, baseUrl: string, targetEnv: string): Promise<void> {
+async function writeMetadata(
+  schema: any,
+  baseUrl: string,
+  targetEnv: string,
+): Promise<void> {
   const metadata = {
     generated_at: new Date().toISOString(),
     schema_version: schema.info?.version || "unknown",
@@ -248,7 +275,8 @@ async function writeMetadata(schema: any, baseUrl: string, targetEnv: string): P
 
 async function main() {
   const targetEnv = process.argv[2] || "testnet";
-  const baseUrl = AA_API_URLS[targetEnv as keyof typeof AA_API_URLS] || targetEnv;
+  const baseUrl =
+    AA_API_URLS[targetEnv as keyof typeof AA_API_URLS] || targetEnv;
 
   console.log(`🚀 Generating AA API types for: ${targetEnv}`);
   console.log(`📍 Base URL: ${baseUrl}\n`);
@@ -278,9 +306,10 @@ async function main() {
     console.log(`   - ${METADATA_FILE}`);
     console.log(`\n💡 Next steps:`);
     console.log(`   1. Review generated types`);
-    console.log(`   2. Update signers/src/types/api.ts to import from ./generated/api`);
+    console.log(
+      `   2. Update signers/src/types/api.ts to import from ./generated/api`,
+    );
     console.log(`   3. Run 'pnpm build' to verify types compile correctly`);
-
   } catch (error: any) {
     console.error(`❌ Error: ${error.message}`);
     if (error.stack) {
@@ -291,4 +320,3 @@ async function main() {
 }
 
 main();
-

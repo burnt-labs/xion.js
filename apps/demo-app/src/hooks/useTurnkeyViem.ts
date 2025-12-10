@@ -37,7 +37,7 @@ export function useTurnkeyViem() {
     }
 
     const ethereumAddress = ethAccount.address;
-    
+
     // Create Viem account once - it will be reused for all signMessage calls
     // This avoids recreating the account on every signature operation
     const viemAccount = await createAccount({
@@ -55,7 +55,7 @@ export function useTurnkeyViem() {
       signMessage: async (hexMessage: string) => {
         if (!hexMessage.startsWith("0x")) {
           throw new Error(
-            `Invalid message format: expected hex string with 0x prefix, got: ${hexMessage.substring(0, 50)}...`
+            `Invalid message format: expected hex string with 0x prefix, got: ${hexMessage.substring(0, 50)}...`,
           );
         }
 

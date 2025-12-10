@@ -5,7 +5,12 @@
 
 import { describe, it, expect } from "vitest";
 import { ConnectorType } from "../../src/connectors/types";
-import type { Connector, ConnectorMetadata, SignerConfig, ConnectorConnectionResult } from "../../src/connectors/types";
+import type {
+  Connector,
+  ConnectorMetadata,
+  SignerConfig,
+  ConnectorConnectionResult,
+} from "../../src/connectors/types";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 import { TEST_AUTHENTICATORS, TEST_SIGNATURES } from "./test-utils";
 
@@ -164,18 +169,18 @@ describe("Connector Types", () => {
         },
       };
 
-      expect(result.metadata?.authenticatorType).toBe(AUTHENTICATOR_TYPE.EthWallet);
-      expect(result.metadata?.ethereumAddress).toBe(TEST_AUTHENTICATORS.ethWallet);
+      expect(result.metadata?.authenticatorType).toBe(
+        AUTHENTICATOR_TYPE.EthWallet,
+      );
+      expect(result.metadata?.ethereumAddress).toBe(
+        TEST_AUTHENTICATORS.ethWallet,
+      );
       expect(result.metadata?.connectionType).toBe("signer");
     });
 
     it("should support all legacy connectionType values", () => {
-      const connectionTypes: Array<"metamask" | "shuttle" | "okx" | "signer"> = [
-        "metamask",
-        "shuttle",
-        "okx",
-        "signer",
-      ];
+      const connectionTypes: Array<"metamask" | "shuttle" | "okx" | "signer"> =
+        ["metamask", "shuttle", "okx", "signer"];
 
       connectionTypes.forEach((connectionType) => {
         const result: ConnectorConnectionResult = {
@@ -269,8 +274,14 @@ describe("Connector Types", () => {
 
     it("should return boolean from isAvailable", async () => {
       const connectorAvailable: Connector = {
-        metadata: { id: "1", name: "Available", type: ConnectorType.EXTERNAL_SIGNER },
-        async isAvailable() { return true; },
+        metadata: {
+          id: "1",
+          name: "Available",
+          type: ConnectorType.EXTERNAL_SIGNER,
+        },
+        async isAvailable() {
+          return true;
+        },
         async connect() {
           return { authenticator: "test", signMessage: async () => "sig" };
         },
@@ -278,8 +289,14 @@ describe("Connector Types", () => {
       };
 
       const connectorUnavailable: Connector = {
-        metadata: { id: "2", name: "Unavailable", type: ConnectorType.EXTERNAL_SIGNER },
-        async isAvailable() { return false; },
+        metadata: {
+          id: "2",
+          name: "Unavailable",
+          type: ConnectorType.EXTERNAL_SIGNER,
+        },
+        async isAvailable() {
+          return false;
+        },
         async connect() {
           return { authenticator: "test", signMessage: async () => "sig" };
         },
@@ -292,8 +309,14 @@ describe("Connector Types", () => {
 
     it("should return ConnectorConnectionResult from connect", async () => {
       const connector: Connector = {
-        metadata: { id: "test", name: "Test", type: ConnectorType.EXTERNAL_SIGNER },
-        async isAvailable() { return true; },
+        metadata: {
+          id: "test",
+          name: "Test",
+          type: ConnectorType.EXTERNAL_SIGNER,
+        },
+        async isAvailable() {
+          return true;
+        },
         async connect() {
           return {
             authenticator: TEST_AUTHENTICATORS.ethWallet.toLowerCase(),

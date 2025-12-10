@@ -16,7 +16,7 @@ import { normalizeHexPrefix } from "./hex-validation";
 export function verifyEthWalletSignature(
   message: string,
   signature: string,
-  expectedAddress: string
+  expectedAddress: string,
 ): boolean {
   try {
     // Normalize signature: remove any existing 0x prefix, then add it back
@@ -48,7 +48,7 @@ export function verifyEthWalletSignature(
 export async function verifySecp256k1Signature(
   message: string,
   signature: string,
-  publicKey: string
+  publicKey: string,
 ): Promise<boolean> {
   // Parse signature - hex format (with or without 0x prefix)
   const signatureHex = normalizeHexPrefix(signature);
@@ -75,7 +75,9 @@ export async function verifySecp256k1Signature(
   }
 
   if (pubkeyBytes.length !== 33 && pubkeyBytes.length !== 65) {
-    throw new Error(`Public key must be 33 or 65 bytes, got ${pubkeyBytes.length}`);
+    throw new Error(
+      `Public key must be 33 or 65 bytes, got ${pubkeyBytes.length}`,
+    );
   }
 
   // Hash the message (plain string → UTF-8 bytes → SHA256)

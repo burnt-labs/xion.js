@@ -84,7 +84,10 @@ export class SignerController extends BaseController {
       // Try to restore existing session (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
 
-      if (isSessionRestored(restorationResult) && restorationResult.signingClient) {
+      if (
+        isSessionRestored(restorationResult) &&
+        restorationResult.signingClient
+      ) {
         // Session restored successfully - extract AccountInfo using type-safe helper
         const accountInfo = getAccountInfoFromRestored(restorationResult);
 
