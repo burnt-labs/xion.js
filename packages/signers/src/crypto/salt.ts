@@ -1,29 +1,35 @@
 /**
- * Salt calculation utilities
- * Pure cryptographic functions for calculating deterministic salts for smart account creation
+ * Salt calculation utilities for XION abstract accounts
+ *
+ * Deterministic salt calculation for CREATE2 address derivation.
+ * Must remain consistent with AA-API and smart contracts.
+ *
+ * @see ./README.md for detailed specifications and cross-repository references
  */
 
 import { sha256 } from "@cosmjs/crypto";
 import { fromHex, toHex } from "@cosmjs/encoding";
-import { validateAndDecodeHex, validateEthereumAddress } from "./hex-validation";
+import { validateAndDecodeHex, validateEthereumAddress, normalizeHexPrefix } from "./hex-validation";
 import type { AuthenticatorType } from "../types/account";
 import { AUTHENTICATOR_TYPE } from "../types/account";
 
 /**
  * Calculate salt for EthWallet authenticator
  *
- * Salt is sha256(address_bytes) where address is the hex Ethereum address
+ * Hashes the binary address bytes (20 bytes), not the hex string.
+ * Formula: `SHA256(address_bytes)`
  *
- * @param address - Ethereum address (with or without 0x prefix)
- * @returns Salt as hex string
+ * @param address - Ethereum address (with or without 0x prefix, any case)
+ * @returns Salt as 64-character hex string (32 bytes)
+ * @see ./README.md for detailed specifications
  */
 export function calculateEthWalletSalt(address: string): string {
-  // Remove 0x prefix and normalize to lowercase
+  // Remove 0x prefix using shared utility, then normalize to lowercase
   // Ethereum addresses are case-insensitive (EIP-55 checksum is optional)
-  const addressHex = address.replace(/^0x/i, "").toLowerCase();
+  const addressHex = normalizeHexPrefix(address).toLowerCase();
 
   // Validate using our wrapper which uses CosmJS
-  validateEthereumAddress(`0x${addressHex}`, "Ethereum address");
+  validateEthereumAddress(`0x${addressHex}`);
 
   // Decode hex using CosmJS (validates format)
   const addressBinary = fromHex(addressHex);
@@ -36,12 +42,14 @@ export function calculateEthWalletSalt(address: string): string {
 }
 
 /**
- * Calculate salt for Secp256k1 authenticator
+ * Calculate salt for Secp256k1 authenticator (Cosmos wallets: Keplr, Leap, etc.)
  *
- * Salt is sha256(pubkey_string) where pubkey is the hex public key
+ * Hashes UTF-8 bytes of the base64 pubkey STRING (44 bytes), not the decoded pubkey bytes (33 bytes).
+ * Formula: `SHA256(UTF8_encode(base64_pubkey_string))`
  *
- * @param pubkey - Secp256k1 public key as hex string
- * @returns Salt as hex string
+ * @param pubkey - Secp256k1 public key as base64 string (normalized, 44 chars)
+ * @returns Salt as 64-character hex string (32 bytes)
+ * @see ./README.md for detailed specifications and normalizeSecp256k1PublicKey usage
  */
 export function calculateSecp256k1Salt(pubkey: string): string {
   // Runtime type validation for defense-in-depth
@@ -57,10 +65,11 @@ export function calculateSecp256k1Salt(pubkey: string): string {
 /**
  * Calculate salt for JWT authenticator
  *
- * Salt is sha256(jwt_string) where jwt is the JWT token or identifier
+ * Formula: `SHA256(UTF8_encode(jwt_string))`
  *
  * @param jwt - JWT token or identifier (e.g., "aud.sub" format)
- * @returns Salt as hex string
+ * @returns Salt as 64-character hex string (32 bytes)
+ * @see ./README.md for detailed specifications
  */
 export function calculateJWTSalt(jwt: string): string {
   // Runtime type validation for defense-in-depth
@@ -107,18 +116,10 @@ export function calculateSalt(
 
 /**
  * Convert hex salt string to Uint8Array
- * Used by AA API for address calculation with instantiate2Address
  *
  * @param hexSalt - Salt as hex string (64 hex chars = 32 bytes)
- * @returns Salt as Uint8Array
+ * @returns Salt as Uint8Array (32 bytes)
  * @throws Error if hex salt is invalid format or wrong length
- *
- * @example
- * ```typescript
- * const salt = calculateEthWalletSalt("0x1234...");
- * const saltBytes = hexSaltToUint8Array(salt);
- * // Use saltBytes with instantiate2Address
- * ```
  */
 export function hexSaltToUint8Array(hexSalt: string): Uint8Array {
   // Use CosmJS-based validation and decoding

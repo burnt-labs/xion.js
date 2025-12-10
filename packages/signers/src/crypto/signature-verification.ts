@@ -5,11 +5,13 @@ import { normalizeHexPrefix } from "./hex-validation";
 
 /**
  * Verify Ethereum wallet signature
+ *
  * @param message - The message that was signed (typically the smart account address)
- * @param signature - The signature to verify (hex format, with or without 0x)
+ * @param signature - The signature to verify (hex format, with or without 0x prefix)
  * @param expectedAddress - The Ethereum address that should have signed
  * @returns true if valid, false otherwise
  * @throws Error if signature format is invalid
+ * @see ./README.md for detailed specifications
  */
 export function verifyEthWalletSignature(
   message: string,
@@ -30,64 +32,55 @@ export function verifyEthWalletSignature(
 }
 
 /**
- * Verify Secp256k1 signature (Cosmos wallets)
- * @param message - The message that was signed (hex format with 0x prefix, or bech32 string for backward compatibility).
- *                 For account creation, this is hex-encoded UTF-8 bytes of the bech32 address.
- *                 For transaction signing, this is hex-encoded transaction bytes.
- * @param signature - The signature to verify (hex format, with or without 0x)
- * @param publicKey - The public key (base64 or hex format)
- * @returns true if valid, false otherwise
+ * Verify Secp256k1 signature (Cosmos wallets: Keplr, Leap, Cosmostation)
+ *
+ * Verifies signature over SHA256(UTF-8(message)). Matches the smart contract verification
+ * during account instantiation.
+ *
+ * @param message - Message that was signed (plain string, typically bech32 address like "xion1...")
+ * @param signature - Signature in hex format (with or without 0x prefix, must be exactly 64 bytes)
+ * @param publicKey - Public key in base64 format (must be exactly 33 or 65 bytes when decoded)
+ * @returns true if signature is valid, false otherwise
  * @throws Error if signature or public key format is invalid
+ * @see ./README.md for detailed specifications
+ *
  */
 export async function verifySecp256k1Signature(
   message: string,
   signature: string,
   publicKey: string
 ): Promise<boolean> {
-  // Parse signature - normalize hex prefix and decode
+  // Parse signature - hex format (with or without 0x prefix)
   const signatureHex = normalizeHexPrefix(signature);
   let signatureBytes: Uint8Array;
 
   try {
     signatureBytes = fromHex(signatureHex);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to decode signature: ${message}`);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to decode signature: ${errorMsg}`);
   }
 
   if (signatureBytes.length !== 64) {
     throw new Error(`Signature must be 64 bytes, got ${signatureBytes.length}`);
   }
 
-  // Parse public key (handles both base64 and hex)
+  // Parse public key - base64 format only
   let pubkeyBytes: Uint8Array;
-  // Check for hex first (with or without 0x prefix)
-  if (/^(0x)?[0-9a-fA-F]+$/.test(publicKey)) {
-    // Hex format - normalize prefix and decode
-    const pubkeyHex = normalizeHexPrefix(publicKey);
-    pubkeyBytes = Buffer.from(pubkeyHex, "hex");
-  } else if (/^[A-Za-z0-9+/]+=*$/.test(publicKey)) {
-    // Base64 format
+  try {
     pubkeyBytes = Buffer.from(publicKey, "base64");
-  } else {
-    throw new Error("Public key must be in hex or base64 format");
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to decode public key: ${errorMsg}`);
   }
 
   if (pubkeyBytes.length !== 33 && pubkeyBytes.length !== 65) {
     throw new Error(`Public key must be 33 or 65 bytes, got ${pubkeyBytes.length}`);
   }
 
-  // Hash the message (same as smart contract does)
-  // Handle both hex format (with 0x prefix) and string format (for backward compatibility)
-  let messageBytes: Uint8Array;
-  if (message.startsWith("0x")) {
-    // Hex format: normalize prefix and decode hex to bytes
-    const messageHex = normalizeHexPrefix(message);
-    messageBytes = fromHex(messageHex);
-  } else {
-    // String format (bech32 address): convert string to UTF-8 bytes (backward compatibility)
-    messageBytes = Buffer.from(message, "utf8");
-  }
+  // Hash the message (plain string → UTF-8 bytes → SHA256)
+  // This matches the smart contract verification logic
+  const messageBytes = Buffer.from(message, "utf8");
   const messageHash = sha256(messageBytes);
 
   // Verify the signature

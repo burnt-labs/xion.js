@@ -6,13 +6,19 @@
 /**
  * Normalize an Ethereum address to lowercase format with 0x prefix
  *
+ * Accepts addresses with OR without "0x" prefix for backward compatibility.
+ * Auto-adds "0x" prefix if missing, then validates the format.
+ *
  * @param address - The Ethereum address to normalize (with or without 0x prefix)
- * @returns Normalized address in lowercase with 0x prefix
+ * @returns Normalized address in lowercase with 0x prefix (always includes "0x")
  * @throws Error if the address is empty or invalid format
  *
  * @example
  * ```ts
  * normalizeEthereumAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0")
+ * // Returns: "0x742d35cc6634c0532925a3b844bc9e7595f0beb0"
+ *
+ * normalizeEthereumAddress("742d35Cc6634C0532925a3b844Bc9e7595f0bEb0")
  * // Returns: "0x742d35cc6634c0532925a3b844bc9e7595f0beb0"
  * ```
  */
@@ -22,14 +28,21 @@ export function normalizeEthereumAddress(address: string): string {
     throw new Error("Ethereum address cannot be empty");
   }
 
-  // Validate the address format: must be 0x + 40 hex characters (42 total)
-  if (!/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
+  // Auto-add 0x prefix if missing (backward compatibility with main branch)
+  // This ensures addresses work with OR without the prefix
+  let normalized = trimmed.toLowerCase();
+  if (!normalized.startsWith("0x")) {
+    normalized = `0x${normalized}`;
+  }
+
+  // Validate final format: must be exactly 0x + 40 hex characters
+  if (!/^0x[a-f0-9]{40}$/.test(normalized)) {
     throw new Error(
-      `Invalid Ethereum address format. Expected 0x followed by 40 hex characters, got: ${trimmed}`
+      `Invalid Ethereum address format. Expected 40 hex characters (20 bytes), got: ${trimmed}`
     );
   }
 
-  return trimmed.toLowerCase();
+  return normalized;
 }
 
 /**
@@ -57,9 +70,20 @@ export function normalizeSecp256k1PublicKey(pubkey: string): string {
     throw new Error("Public key cannot be empty");
   }
 
-  // If it's already in base64 format (starts with 'A' and matches pattern), return as-is
+  // If it's already in base64 format (starts with 'A' and matches pattern), validate and return
   // Base64-encoded compressed secp256k1 public key (33 bytes = 44 base64 chars with padding)
   if (/^A[A-Za-z0-9+/]{43}$/.test(trimmed)) {
+    // Validate that it's actually decodable base64
+    try {
+      const decoded = Buffer.from(trimmed, "base64");
+      // Verify it decodes to valid secp256k1 key length (33 or 65 bytes)
+      if (decoded.length !== 33 && decoded.length !== 65) {
+        throw new Error(`Decoded key must be 33 or 65 bytes, got ${decoded.length}`);
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Invalid base64 pubkey: ${message}`);
+    }
     return trimmed;
   }
 

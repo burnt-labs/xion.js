@@ -4,6 +4,7 @@
  */
 
 import type { AuthenticatorType } from "../types/account";
+import { ETH_ADDRESS_PATTERN } from "./hex-validation";
 
 /**
  * Check if a string is a valid JWT token
@@ -45,7 +46,7 @@ export function isJWTToken(str: string): boolean {
  * @returns True if valid Ethereum address format
  */
 export function isEthereumAddress(str: string): boolean {
-  return /^0x[a-fA-F0-9]{40}$/.test(str);
+  return ETH_ADDRESS_PATTERN.test(str);
 }
 
 /**
@@ -63,13 +64,23 @@ export function isEthereumAddress(str: string): boolean {
  */
 export function isSecp256k1PublicKey(str: string): boolean {
   // Check base64 format first (primary use case for /cosmos.crypto.secp256k1.PubKey)
-  const isBase64 = /^A[A-Za-z0-9+\/]{43}$/.test(str);
+  // Must actually validate it's decodable, not just pattern matching
+  if (/^A[A-Za-z0-9+\/]{43}$/.test(str)) {
+    try {
+      const decoded = Buffer.from(str, "base64");
+      // Must decode to 33 or 65 bytes for valid secp256k1 key
+      return decoded.length === 33 || decoded.length === 65;
+    } catch {
+      return false;
+    }
+  }
+
   // Compressed: 66 hex characters starting with 02 or 03
   const isCompressed = /^0[23][0-9a-fA-F]{64}$/.test(str);
   // Uncompressed: 130 hex characters starting with 04
   const isUncompressed = /^04[0-9a-fA-F]{128}$/.test(str);
 
-  return isBase64 || isCompressed || isUncompressed;
+  return isCompressed || isUncompressed;
 }
 
 /**

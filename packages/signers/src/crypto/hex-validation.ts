@@ -18,9 +18,9 @@ import { fromBech32, toBech32, normalizeBech32 } from "@cosmjs/encoding";
 export const HEX_PATTERN = /^[0-9a-fA-F]+$/;
 
 /**
- * Ethereum address pattern (40 hex characters, with or without 0x prefix)
+ * Ethereum address pattern (40 hex characters, requires 0x prefix)
  */
-export const ETH_ADDRESS_PATTERN = /^(0x)?[0-9a-fA-F]{40}$/;
+export const ETH_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 /**
  * Bech32 address pattern (prefix + separator + data)
@@ -163,12 +163,9 @@ export function validateHexString(
  * Validates Ethereum address format (40 hex characters, case-insensitive)
  * Uses CosmJS's fromHex for validation
  */
-export function validateEthereumAddress(
-  address: string,
-  context = "Ethereum address",
-): void {
+export function validateEthereumAddress(address: string): void {
   if (!address) {
-    throw new Error(`Invalid ${context}: cannot be empty`);
+    throw new Error("Invalid Ethereum address: cannot be empty");
   }
 
   const normalized = address.replace(/^0x/i, "");
@@ -176,7 +173,7 @@ export function validateEthereumAddress(
   // Validate hex format and length (must be exactly 40 hex chars = 20 bytes)
   if (!/^[0-9a-fA-F]{40}$/.test(normalized)) {
     throw new Error(
-      `Invalid ${context}: expected 40 hex characters (20 bytes), ` +
+      `Invalid Ethereum address: expected 40 hex characters (20 bytes), ` +
         `got "${normalized.substring(0, 20)}..."`,
     );
   }
@@ -186,7 +183,7 @@ export function validateEthereumAddress(
     fromHex(normalized);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid ${context}: ${message}`);
+    throw new Error(`Invalid Ethereum address: ${message}`);
   }
 }
 
@@ -256,6 +253,28 @@ export function normalizeHexPrefix(hexString: string): string {
     normalized = normalized.slice(2);
   }
   return normalized;
+}
+
+/**
+ * Ensure hex string has "0x" prefix
+ * Safely adds "0x" prefix if missing, handles duplicate prefixes
+ * This makes formatting functions idempotent - safe to call multiple times
+ *
+ * @param hexString - Hex string with or without "0x" prefix
+ * @returns Hex string with exactly one "0x" prefix
+ *
+ * @example
+ * ```ts
+ * ensureHexPrefix("742d35cc...")  // Returns: "0x742d35cc..."
+ * ensureHexPrefix("0x742d35cc...") // Returns: "0x742d35cc..."
+ * ensureHexPrefix("0x0x742d35cc...") // Returns: "0x742d35cc..." (removes duplicate)
+ * ```
+ */
+export function ensureHexPrefix(hexString: string): string {
+  // First normalize to remove any duplicate 0x prefixes
+  const normalized = normalizeHexPrefix(hexString);
+  // Then add single 0x prefix
+  return `0x${normalized}`;
 }
 
 /**
