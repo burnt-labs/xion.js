@@ -1,8 +1,11 @@
 name: Build
 
 on:
-  push:
   pull_request:
+  push:
+    branches:
+      - main
+      - develop
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}

@@ -30,6 +30,7 @@
     "@types/node": "^20",
     "@types/react": "^18.2.47",
     "autoprefixer": "^10.4.13",
+    "dotenv": "^16.4.5",
     "ethers": "^6",
     "postcss": "^8.4.20",
     "react": "^18.2.0",
