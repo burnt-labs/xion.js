@@ -7,6 +7,20 @@ on:
       - main
       - develop
   workflow_dispatch:
+    inputs:
+      aa_api_environment:
+        description: 'AA API environment for type generation'
+        required: false
+        type: choice
+        options:
+          - testnet
+          - mainnet
+          - local
+        default: 'testnet'
+      aa_api_custom_url:
+        description: 'Custom AA API URL (overrides environment selection)'
+        required: false
+        type: string
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 

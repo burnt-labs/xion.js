@@ -11,9 +11,10 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "types": ["vite/client", "vitest/globals"]
   },
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]
