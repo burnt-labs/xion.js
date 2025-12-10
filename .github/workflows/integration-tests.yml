@@ -55,6 +55,10 @@ jobs:
       - name: 🔄 Install Dependencies
         run: pnpm install
 
+      - name: 🔨 Generate AA API Types
+        run: |
+          pnpm generate:types || echo "Type generation failed, continuing with existing types"
+
       - name: 🏗️ Build
         run: pnpm build
 

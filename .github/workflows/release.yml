@@ -63,6 +63,11 @@ jobs:
         id: install-dependencies
         run: pnpm install
 
+      - name: 🔨 Generate AA API Types
+        id: generate-types
+        run: |
+          pnpm generate:types || echo "Type generation failed, continuing with existing types"
+
       - name: 🏗️ Build
         id: build-the-mono-repo
         run: |
