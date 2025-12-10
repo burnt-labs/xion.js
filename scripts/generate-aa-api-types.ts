@@ -28,7 +28,7 @@ const AA_API_URLS = {
 };
 
 const OUTPUT_DIR = path.join(__dirname, "../packages/signers/src/types/generated");
-const TYPES_FILE = path.join(OUTPUT_DIR, "api.ts");
+const TYPES_FILE = path.join(OUTPUT_DIR, "api.generated.ts");
 const METADATA_FILE = path.join(OUTPUT_DIR, "metadata.json");
 
 interface SchemaInfo {

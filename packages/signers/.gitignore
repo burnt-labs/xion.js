@@ -1,6 +1,5 @@
 # Generated AA API types
-# NOTE: These files ARE committed to ensure deterministic builds.
-# They should be regenerated when the AA-API contract changes.
-# Use: pnpm generate:types
-# CI validates these match the live API schema.
+# api.generated.ts is auto-generated from OpenAPI schema (gitignored, regenerated in CI)
+# api.ts is the wrapper that extracts types from api.generated.ts (committed)
+src/types/generated/api.generated.ts
 

@@ -65,8 +65,7 @@ jobs:
 
       - name: 🔨 Generate AA API Types
         id: generate-types
-        run: |
-          pnpm generate:types || echo "Type generation failed, continuing with existing types"
+        run: pnpm generate:types
 
       - name: 🏗️ Build
         id: build-the-mono-repo
