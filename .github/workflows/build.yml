@@ -51,7 +51,18 @@ jobs:
         run: pnpm install
 
       - name: 🔨 Generate AA API Types
-        run: pnpm generate:types
+        run: |
+          # Determine which AA API URL to use for type generation
+          if [ -n "${{ github.event.inputs.aa_api_custom_url }}" ]; then
+            echo "Using custom AA API URL: ${{ github.event.inputs.aa_api_custom_url }}"
+            pnpm tsx scripts/generate-aa-api-types.ts "${{ github.event.inputs.aa_api_custom_url }}"
+          elif [ -n "${{ github.event.inputs.aa_api_environment }}" ]; then
+            echo "Using AA API environment: ${{ github.event.inputs.aa_api_environment }}"
+            pnpm generate:types:${{ github.event.inputs.aa_api_environment }}
+          else
+            echo "Using default AA API environment: testnet"
+            pnpm generate:types
+          fi
 
       - name: 🏗️ Build
         run: pnpm build

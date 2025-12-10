@@ -19,7 +19,11 @@ export default defineConfig({
     testTimeout: 120000, // 2 minutes for network operations
     hookTimeout: 120000,
     teardownTimeout: 30000,
-    include: ["tests/integration/**/*.integration.test.ts"],
+    include: [
+      "tests/integration/**/*.integration.test.ts",
+      "tests/integration/**/*.diagnostic.test.ts",
+      "tests/integration/**/*.test.ts",
+    ],
     exclude: ["node_modules", "dist", "src/**/*.test.ts"],
     coverage: {
       enabled: false, // Disable coverage for integration tests
