@@ -1,280 +1,36 @@
 name: 🚀 CI
 
+# Main CI workflow that orchestrates other workflows
+# Individual workflows (unit-tests, integration-tests, build) run independently
+# This workflow can be used to run multiple checks together if needed
+
 on:
   push:
   pull_request:
   workflow_dispatch:
-    inputs:
-      aa_api_url:
-        description: 'Custom AA API URL to test against (optional)'
-        required: false
-        type: string
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
-  # Validate dependency versions (CosmJS consistency)
-  validate-deps:
-    name: 🔍 Validate Dependencies
+  # This workflow now delegates to separate workflow files:
+  # - unit-tests.yml: Runs unit tests on every push/PR
+  # - integration-tests.yml: Runs integration tests on main branch or manual trigger
+  # - build.yml: Builds the monorepo
+  # - dependency-validation.yml: Validates dependency versions
+  # - release.yml: Handles releases
+  
+  # Note: GitHub Actions doesn't support calling other workflows directly,
+  # so these workflows run independently based on their own triggers.
+  # This file is kept for reference and can be removed if not needed.
+  
+  ci-complete:
+    name: ✅ CI Complete
     runs-on: ubuntu-latest
     steps:
-      - name: ⬇️ Checkout
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: 🥡 Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8.9.0
-
-      - name: 🔍 Validate CosmJS Versions
+      - name: ✅ All CI checks run via separate workflows
         run: |
-          echo "Checking CosmJS version consistency across all packages..."
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-            const cosmjsPackages = [
-              '@cosmjs/amino',
-              '@cosmjs/cosmwasm-stargate',
-              '@cosmjs/crypto',
-              '@cosmjs/encoding',
-              '@cosmjs/math',
-              '@cosmjs/proto-signing',
-              '@cosmjs/stargate',
-              '@cosmjs/tendermint-rpc',
-              '@cosmjs/utils',
-              'cosmjs-types'
-            ];
-            
-            const versions = {};
-            const packageDirs = ['packages', 'apps'];
-            
-            function findPackageJson(dir) {
-              const files = [];
-              function walk(currentDir) {
-                const entries = fs.readdirSync(currentDir, { withFileTypes: true });
-                for (const entry of entries) {
-                  const fullPath = path.join(currentDir, entry.name);
-                  if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== 'dist') {
-                    walk(fullPath);
-                  } else if (entry.name === 'package.json') {
-                    files.push(fullPath);
-                  }
-                }
-              }
-              walk(dir);
-              return files;
-            }
-            
-            for (const pkgDir of packageDirs) {
-              if (!fs.existsSync(pkgDir)) continue;
-              for (const pkgJsonPath of findPackageJson(pkgDir)) {
-                const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-                const deps = { ...pkgJson.dependencies, ...pkgJson.devDependencies };
-                for (const cosmjsPkg of cosmjsPackages) {
-                  if (deps[cosmjsPkg]) {
-                    const version = deps[cosmjsPkg];
-                    if (!versions[cosmjsPkg]) {
-                      versions[cosmjsPkg] = [];
-                    }
-                    versions[cosmjsPkg].push({ pkg: pkgJson.name, version });
-                  }
-                }
-              }
-            }
-            
-            let hasMismatch = false;
-            for (const [pkg, entries] of Object.entries(versions)) {
-              const uniqueVersions = [...new Set(entries.map(e => e.version))];
-              if (uniqueVersions.length > 1) {
-                console.error(\`❌ Version mismatch for \${pkg}:\`);
-                entries.forEach(e => console.error(\`  - \${e.pkg}: \${e.version}\`));
-                hasMismatch = true;
-              } else {
-                console.log(\`✅ \${pkg}: \${uniqueVersions[0]}\`);
-              }
-            }
-            
-            if (hasMismatch) {
-              console.error('\\n❌ CosmJS version mismatches detected!');
-              console.error('All packages must use the same CosmJS versions.');
-              console.error('Update pnpm.overrides in root package.json to enforce consistency.');
-              process.exit(1);
-            } else {
-              console.log('\\n✅ All CosmJS packages have consistent versions!');
-            }
-          "
-
-  release:
-    name: 🚀 Release
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [lts/*]
-        pnpm-version: [8.9.0]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: ⬇️ Checkout
-        id: checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
-          fetch-depth: 0
-
-      - name: 🟢 Setup node
-        id: setup-node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: 🥡 Setup pnpm
-        id: setup-pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ matrix.pnpm-version }}
-          run_install: false
-
-      - name: 🎈 Get pnpm store directory
-        id: get-pnpm-cache-dir
-        run: |
-          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: 🔆 Cache pnpm modules
-        uses: actions/cache@v3
-        id: pnpm-cache
-        with:
-          path: ${{ steps.get-pnpm-cache-dir.outputs.pnpm_cache_dir }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: 🧩 Install Dependencies
-        id: install-dependencies
-        run: pnpm install
-
-      - name: 🏗️ Build
-        id: build-the-mono-repo
-        run: |
-          pnpm build
-
-  test:
-    name: 🧪 Unit Tests
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [lts/*]
-        pnpm-version: [8.9.0]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: ⬇️ Checkout
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: 🥡 Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ matrix.pnpm-version }}
-
-      - name: 🔄 Install Dependencies
-        run: pnpm install
-
-      - name: 🔨 Generate AA API Types
-        run: |
-          pnpm generate:types || echo "Type generation failed, continuing with existing types"
-
-      - name: 🏗️ Build
-        id: build-the-mono-repo
-        run: |
-          pnpm build
-
-      - name: 🧪 Run Unit Tests
-        env:
-          NODE_ENV: test
-          CI: true
-        run: |
-          # Run unit tests (with mocks, no external dependencies)
-          pnpm test -- --testPathIgnorePatterns=integration
-
-      - name: Check Prettier
-        run: pnpm run prettier-check
-
-  integration-test:
-    name: 🧪 Integration Tests (Testnet)
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [lts/*]
-        pnpm-version: [8.9.0]
-    runs-on: ${{ matrix.os }}
-    # Only run integration tests on main branch or when explicitly triggered
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    steps:
-      - name: ⬇️ Checkout
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: 🥡 Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ matrix.pnpm-version }}
-
-      - name: 🔄 Install Dependencies
-        run: pnpm install
-
-      - name: 🏗️ Build
-        run: pnpm build
-
-      - name: 📝 Load Test Environment
-        run: |
-          # Load .env.test file (non-sensitive defaults)
-          if [ -f .env.test ]; then
-            set -a
-            source .env.test
-            set +a
-          fi
-
-      - name: 🧪 Run Integration Tests
-        env:
-          # Testnet configuration (from .env.test)
-          XION_TESTNET_CHAIN_ID: xion-testnet-2
-          XION_TESTNET_RPC_URL: https://rpc.xion-testnet-2.burnt.com:443
-          XION_TESTNET_REST_URL: https://api.xion-testnet-2.burnt.com:443
-          XION_TESTNET_GAS_PRICE: 0.001uxion
-          XION_TESTNET_FEE_GRANTER: xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x
-          # AA API URL can be overridden via workflow input or secret
-          XION_TESTNET_AA_API_URL: ${{ github.event.inputs.aa_api_url || secrets.XION_TESTNET_AA_API_URL || 'https://aa-api.xion-testnet-2.burnt.com' }}
-          XION_TESTNET_TREASURY_ADDRESS: xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw
-
-          # Sensitive values from GitHub Secrets
-          XION_TESTNET_INDEXER_URL: ${{ secrets.XION_TESTNET_INDEXER_URL }}
-          XION_TESTNET_TREASURY_INDEXER_URL: ${{ secrets.XION_TESTNET_TREASURY_INDEXER_URL }}
-          
-          # Test configuration
-          NODE_ENV: test
-          CI: true
-          TEST_TIMEOUT: 30000
-          INTEGRATION_TEST_TIMEOUT: 120000
-        run: |
-          # Run integration tests (connect to testnet)
-          # Test orchestrator flows
-          pnpm --filter @burnt-labs/account-management test:integration || true
-          # Test SignerController flows
-          pnpm --filter @burnt-labs/abstraxion test:integration || true
-          # Run any other integration tests
-          pnpm test -- --testPathPattern=integration --testTimeout=120000
+          echo "Unit tests: See unit-tests.yml workflow"
+          echo "Integration tests: See integration-tests.yml workflow"
+          echo "Build: See build.yml workflow"
+          echo "Dependency validation: See dependency-validation.yml workflow"
 
