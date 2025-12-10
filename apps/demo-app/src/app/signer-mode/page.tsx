@@ -12,6 +12,8 @@ import Link from "next/link";
 import { SendTokens } from "@/components/SendTokens";
 import { useTurnkeyAuth } from "./providers";
 
+// Prevent static generation - this page requires runtime env vars
+export const dynamic = 'force-dynamic';
 export default function SignerModePage() {
   const {
     authState,

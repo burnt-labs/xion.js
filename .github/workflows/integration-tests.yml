@@ -1,4 +1,4 @@
-name: 🧪 Integration Tests
+name: Integration Tests
 
 on:
   workflow_dispatch:
@@ -31,7 +31,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   integration-test:
-    name: 🧪 Integration Tests (${{ github.event.inputs.test_environment || 'testnet' }})
+    name: Run integration tests (${{ github.event.inputs.test_environment || 'testnet' }})
     strategy:
       matrix:
         os: [ubuntu-latest]

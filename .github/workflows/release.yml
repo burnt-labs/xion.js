@@ -1,6 +1,6 @@
 # This workflow will release the packages with Changesets
 
-name: 🚀 Release
+name: Release
 
 on:
   push:
@@ -16,7 +16,7 @@ env:
 
 jobs:
   release:
-    name: 🚀 Release
+    name: Publish to npm
     strategy:
       matrix:
         os: [ubuntu-latest]

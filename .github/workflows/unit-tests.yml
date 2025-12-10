@@ -1,4 +1,4 @@
-name: 🧪 Unit Tests
+name: Unit Tests
 
 on:
   push:
@@ -9,7 +9,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   test:
-    name: 🧪 Unit Tests
+    name: Run unit tests
     strategy:
       matrix:
         os: [ubuntu-latest]
