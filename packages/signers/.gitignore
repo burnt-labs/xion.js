@@ -1,4 +1,6 @@
-# Generated AA API types (regenerated in CI)
-src/types/generated/api.ts
-src/types/generated/metadata.json
+# Generated AA API types
+# NOTE: These files ARE committed to ensure deterministic builds.
+# They should be regenerated when the AA-API contract changes.
+# Use: pnpm generate:types
+# CI validates these match the live API schema.
 
