@@ -32,7 +32,7 @@ export type CreateEthWalletRequest = {
 };
 
 export type CreateSecp256k1Request = {
-  pubkey: string;
+  pubKey: string;
   signature: string;
 };
 
