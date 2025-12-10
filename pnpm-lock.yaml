@@ -132,6 +132,9 @@ importers:
       eslint-config-next:
         specifier: 14.0.4
         version: 14.0.4(eslint@8.57.1)(typescript@5.9.2)
+      eslint-plugin-turbo:
+        specifier: ^1.10.12
+        version: 1.13.4(eslint@8.57.1)
       postcss:
         specifier: ^8.4.20
         version: 8.5.6
@@ -497,6 +500,9 @@ importers:
         specifier: ^5.1.0
         version: 5.2.0(eslint@8.57.1)(prettier@3.6.2)(typescript@5.9.2)
       eslint-config-turbo:
+        specifier: ^1.10.12
+        version: 1.13.4(eslint@8.57.1)
+      eslint-plugin-turbo:
         specifier: ^1.10.12
         version: 1.13.4(eslint@8.57.1)
       rimraf:
@@ -11212,7 +11218,7 @@ packages:
     resolution: {integrity: sha512-zIHwmZPRshsCdpMDyVsqGmgyP0yT8GAgXUnkdAoJisxvf33k7yO6OuoKmcTGuXPWSsm8Oh88nZicRLA9Y0rUeA==}
     engines: {node: '>=12'}
     dependencies:
-      dotenv: 16.4.7
+      dotenv: 16.6.1
     dev: false
 
   /dotenv@16.0.3:
@@ -11228,7 +11234,6 @@ packages:
   /dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
-    dev: true
 
   /dotenv@8.6.0:
     resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
