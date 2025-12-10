@@ -179,6 +179,7 @@ describe("ConnectionOrchestrator", () => {
         connector: mockConnector,
         authenticator: undefined,
         chainId: baseConfig.chainId,
+        rpcUrl: baseConfig.rpcUrl,
         accountStrategy: mockAccountStrategy,
         accountCreationConfig: undefined,
         sessionManager: mockSessionManager,

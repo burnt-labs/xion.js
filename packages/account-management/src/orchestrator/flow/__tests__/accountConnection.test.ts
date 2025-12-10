@@ -59,6 +59,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
     mockParams = {
       connector: mockConnector,
       chainId: "xion-testnet-1",
+      rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
       accountStrategy: mockAccountStrategy,
       sessionManager: mockSessionManager,
     };
@@ -180,6 +181,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         "abc123",
         "xion1feegranter",
         "xion",
+        "https://rpc.xion-testnet-1.burnt.com",
       );
       expect(result.smartAccountAddress).toBe("xion1newaccount");
       expect(result.connectionInfo.metadata?.codeId).toBe(789);
@@ -232,7 +234,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         "def456",
         "xion1feegranter",
         "xion",
-        
+        "https://rpc.xion-testnet-1.burnt.com",
       );
       expect(result.smartAccountAddress).toBe("xion1newcosmosaccount");
     });
