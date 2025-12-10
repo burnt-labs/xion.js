@@ -42,7 +42,6 @@
     "generate:types:local": "tsx ../../scripts/generate-aa-api-types.ts local"
   },
   "dependencies": {
-    "account-abstraction-api": "file:../../../account-abstraction-api",
     "@burnt-labs/constants": "workspace:*",
     "@cosmjs/amino": "^0.36.0",
     "@cosmjs/cosmwasm-stargate": "^0.36.0",
