@@ -34,6 +34,8 @@ export default defineConfig({
     coverage: {
       enabled: false,
     },
+    // Don't fail when no unit tests are found (all tests are integration tests)
+    passWithNoTests: true,
     server: {
       deps: {
         inline: ["@github/webauthn-json"],

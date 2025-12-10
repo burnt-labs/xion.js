@@ -141,6 +141,7 @@ jobs:
           NODE_ENV: test
 
       - name: 🧪 Run Integration Tests
+        id: run-tests
         env:
           # Test environment from config file
           TEST_ENVIRONMENT: ${{ steps.config.outputs.test_environment }}
@@ -180,9 +181,89 @@ jobs:
           echo "RPC URL: $XION_TESTNET_RPC_URL"
           echo ""
 
-          # Run integration tests
-          pnpm --filter @burnt-labs/account-management test:integration || true
-          pnpm --filter @burnt-labs/abstraxion test:integration || true
+          # Run integration tests and capture results
+          set +e  # Don't exit on error
+
+          pnpm --filter @burnt-labs/account-management test:integration 2>&1 | tee account-management-results.txt
+          ACCOUNT_MGMT_EXIT=$?
+
+          pnpm --filter @burnt-labs/abstraxion test:integration 2>&1 | tee abstraxion-results.txt
+          ABSTRAXION_EXIT=$?
+
+          # Parse test results to count failures
+          TOTAL_FAILED=0
+          TOTAL_PASSED=0
+
+          # Extract test counts from vitest output (looks for "Tests  X failed | Y passed")
+          if [ -f account-management-results.txt ]; then
+            FAILED=$(grep -oP 'Tests\s+\K\d+(?=\s+failed)' account-management-results.txt | head -1 || echo "0")
+            PASSED=$(grep -oP 'failed \| \K\d+(?=\s+passed)' account-management-results.txt | head -1 || echo "0")
+            TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
+            TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
+          fi
+
+          if [ -f abstraxion-results.txt ]; then
+            FAILED=$(grep -oP 'Tests\s+\K\d+(?=\s+failed)' abstraxion-results.txt | head -1 || echo "0")
+            PASSED=$(grep -oP 'failed \| \K\d+(?=\s+passed)' abstraxion-results.txt | head -1 || echo "0")
+            TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
+            TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
+          fi
+
+          echo "total_failed=$TOTAL_FAILED" >> $GITHUB_OUTPUT
+          echo "total_passed=$TOTAL_PASSED" >> $GITHUB_OUTPUT
+
+          echo ""
+          echo "📊 Test Summary:"
+          echo "  Total Passed: $TOTAL_PASSED"
+          echo "  Total Failed: $TOTAL_FAILED"
+
+          # Fail if more than 10 tests failed
+          if [ $TOTAL_FAILED -gt 10 ]; then
+            echo "❌ More than 10 tests failed ($TOTAL_FAILED), marking workflow as failed"
+            echo "test_status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          elif [ $TOTAL_FAILED -gt 0 ]; then
+            echo "⚠️  Some tests failed ($TOTAL_FAILED), but within acceptable threshold (≤10)"
+            echo "test_status=warning" >> $GITHUB_OUTPUT
+          else
+            echo "✅ All tests passed!"
+            echo "test_status=success" >> $GITHUB_OUTPUT
+          fi
+
+          set -e
+
+      - name: 💬 Post Test Results Comment
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const totalPassed = '${{ steps.run-tests.outputs.total_passed }}' || '0';
+            const totalFailed = '${{ steps.run-tests.outputs.total_failed }}' || '0';
+            const testStatus = '${{ steps.run-tests.outputs.test_status }}' || 'unknown';
+
+            let emoji = '✅';
+            let statusText = 'All tests passed';
+
+            if (testStatus === 'failed') {
+              emoji = '❌';
+              statusText = 'Too many failures (>10)';
+            } else if (testStatus === 'warning') {
+              emoji = '⚠️';
+              statusText = 'Some tests failed (≤10)';
+            }
+
+            const noteText = totalFailed > 0
+              ? '\n\n> **Note:** Some integration test failures are expected due to testnet instability (network issues, indexer delays, fee grant limits, etc.).\n> The workflow only fails if more than 10 tests fail.\n'
+              : '';
+
+            const body = `## ${emoji} Integration Test Results\n\n**Status:** ${statusText}\n\n- ✅ Passed: ${totalPassed}\n- ❌ Failed: ${totalFailed}${noteText}\n---\n*Environment: ${{ steps.config.outputs.test_environment }}*\n*AA-API: ${{ steps.config.outputs.aa_api_url }}*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
 
       - name: 🛑 Stop AA API Dev Server
         if: always() && steps.start-aa-api.outputs.pid != ''
