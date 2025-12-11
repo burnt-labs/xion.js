@@ -148,22 +148,24 @@ jobs:
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
           fi
 
-          # Extract test summary for PR comment (last ~20 lines of each output)
+          # Extract test summary for PR comment (only clean summary lines)
           TEST_SUMMARY=""
 
           if [ -f account-management-results.txt ]; then
-            ACCT_MGMT_SUMMARY=$(grep -a -E "Test Files|Tests|Time" account-management-results.txt 2>/dev/null | tail -5 || echo "No summary available")
+            # Filter to only include clean summary lines (Test Files, Tests, Duration, Start at)
+            ACCT_MGMT_SUMMARY=$(grep -a -E "^\s*(Test Files|Tests|Start at|Duration)" account-management-results.txt 2>/dev/null | head -4 || echo "No summary available")
             TEST_SUMMARY="${TEST_SUMMARY}**@burnt-labs/account-management:**\n\`\`\`\n${ACCT_MGMT_SUMMARY}\n\`\`\`\n\n"
           fi
 
           if [ -f abstraxion-results.txt ]; then
-            ABSTRAXION_SUMMARY=$(grep -a -E "Test Files|Tests|Time" abstraxion-results.txt 2>/dev/null | tail -5 || echo "No summary available")
+            # Filter to only include clean summary lines (Test Files, Tests, Duration, Start at)
+            ABSTRAXION_SUMMARY=$(grep -a -E "^\s*(Test Files|Tests|Start at|Duration)" abstraxion-results.txt 2>/dev/null | head -4 || echo "No summary available")
             TEST_SUMMARY="${TEST_SUMMARY}**@burnt-labs/abstraxion:**\n\`\`\`\n${ABSTRAXION_SUMMARY}\n\`\`\`"
           fi
 
-          # Save summary for PR comment
+          # Save summary for PR comment - use base64 encoding to safely pass special characters
           echo "test_summary<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$TEST_SUMMARY" >> $GITHUB_OUTPUT
+          echo -e "$TEST_SUMMARY" | base64 -w 0 >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           echo "total_failed=$TOTAL_FAILED" >> $GITHUB_OUTPUT
@@ -192,25 +194,28 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const testSummary = '${{ steps.run-tests.outputs.test_summary }}';
+            const testSummaryBase64 = '${{ steps.run-tests.outputs.test_summary }}';
             const totalFailed = parseInt('${{ steps.run-tests.outputs.total_failed }}', 10) || 0;
             const testStatus = '${{ steps.run-tests.outputs.test_status }}' || 'unknown';
 
             // Skip if no test summary available
-            if (!testSummary || testSummary.trim() === '') {
+            if (!testSummaryBase64 || testSummaryBase64.trim() === '') {
               console.log('No test results available, skipping comment');
               return;
             }
+
+            // Decode base64 test summary
+            const testSummary = Buffer.from(testSummaryBase64, 'base64').toString('utf-8');
 
             let emoji = '✅';
             let statusText = 'All tests passed';
 
             if (testStatus === 'failed') {
               emoji = '❌';
-              statusText = `Too many failures (${totalFailed} > 10)`;
+              statusText = 'Too many failures (' + totalFailed + ' > 10)';
             } else if (testStatus === 'warning') {
               emoji = '⚠️';
-              statusText = `Some tests failed (${totalFailed} ≤ 10)`;
+              statusText = 'Some tests failed (' + totalFailed + ' ≤ 10)';
             }
 
             const noteText = totalFailed > 0
