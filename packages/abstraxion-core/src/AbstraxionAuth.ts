@@ -224,7 +224,7 @@ export class AbstraxionAuth {
   /**
    * Get GranteeSignerClient for the temp keypair.
    */
-  async getSigner(): Promise<GranteeSignerClient> {
+  async getSigner(gasPrice?: GasPrice): Promise<GranteeSignerClient> {
     try {
       if (this.client) {
         return this.client;
@@ -323,6 +323,7 @@ export class AbstraxionAuth {
       await this.configureUrlAndRedirect(dashboardUrl, userAddress);
     } catch (error) {
       // Error is thrown and handled by caller
+      throw error;
     }
   }
 

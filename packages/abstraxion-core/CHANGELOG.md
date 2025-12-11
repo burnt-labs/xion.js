@@ -93,6 +93,16 @@
 
 - Updated dependencies:
   - `@burnt-labs/constants@*`
+## 1.0.0-alpha.61
+
+### Minor Changes
+
+- [#316](https://github.com/burnt-labs/xion.js/pull/316) [`0a7eb51`](https://github.com/burnt-labs/xion.js/commit/0a7eb5105e15494e9aa9b9397b99324067217435) Thanks [@BurntVal](https://github.com/BurntVal)! - Fix React Native Authentication Callback Flow
+
+### Patch Changes
+
+- [#317](https://github.com/burnt-labs/xion.js/pull/317) [`79ee437`](https://github.com/burnt-labs/xion.js/commit/79ee437c11d45bdc877f6d232248bc555e22fd05) Thanks [@btspoony](https://github.com/btspoony)! - Core changes:
+  - Added gas price configuration to the AbstraxionAuth's getSigner method
 
 ## 1.0.0-alpha.60
 
