@@ -5,6 +5,18 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./testing": {
+      "import": "./dist/testing/index.mjs",
+      "require": "./dist/testing/index.js",
+      "types": "./dist/testing/index.d.ts"
+    }
+  },
   "license": "MIT",
   "scripts": {
     "build": "tsup",
@@ -12,7 +24,11 @@
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
     "clean": "rimraf ./dist",
-    "test": "vitest"
+    "test": "vitest",
+    "test:unit": "vitest run src",
+    "test:coverage": "vitest run --coverage src",
+    "test:integration": "vitest run tests/integration --config vitest.config.integration.ts",
+    "test:integration:watch": "vitest tests/integration --config vitest.config.integration.ts"
   },
   "dependencies": {
     "@burnt-labs/abstraxion-core": "workspace:*",
@@ -25,8 +41,10 @@
   },
   "devDependencies": {
     "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/test-utils": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
+    "@vitest/coverage-v8": "^1.6.1",
     "eslint": "^8.48.0",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.5",

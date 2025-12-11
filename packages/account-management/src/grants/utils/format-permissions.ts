@@ -8,6 +8,15 @@ import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import { TransferAuthorization } from "cosmjs-types/ibc/applications/transfer/v1/authz";
+import {
+  AuthorizationTypes,
+  type DecodedReadableAuthorization,
+  type HumanContractExecAuth,
+} from "@burnt-labs/abstraxion-core";
+
+// Re-export types from abstraxion-core for backward compatibility
+export type { DecodedReadableAuthorization, HumanContractExecAuth };
+export { AuthorizationTypes };
 
 export const DENOM_DECIMALS = {
   xion: 6,
@@ -20,22 +29,40 @@ export const DENOM_DISPLAY_MAP = {
 } as const;
 
 /**
- * Parses a coin string (e.g., "1000000uxion") into denom and amount
+ * Parses a coin string (e.g., "1000000uxion" or "1000000uxion,2000000usdc") into denom and amount
  */
 export function parseCoinString(coinStr: string): Coin[] {
   const trimmed = coinStr.trim();
   if (!trimmed) return [];
 
-  // Match pattern like "1000000uxion" or "1000000 uxion"
-  const match = trimmed.match(/^(\d+)\s*([a-zA-Z][a-zA-Z0-9/]*)$/);
-  if (!match) return [];
+  // Check if the string contains commas that are part of number formatting (not coin separators)
+  // Pattern: digit(s), comma, digit(s), letter (e.g., "1,000uxion" or "1,000,000uxion")
+  // This indicates number formatting within a single coin, not multiple coins
+  // Valid multi-coin strings like "1000000uxion,2000000usdc" have a letter before the comma, so won't match
+  const commaInFormattedNumber = /\d,\d+[a-zA-Z]/;
+  if (commaInFormattedNumber.test(trimmed)) {
+    return [];
+  }
 
-  return [
-    {
-      amount: match[1],
-      denom: match[2],
-    },
-  ];
+  // Split by commas and parse each coin
+  const coinStrings = trimmed
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  const coins: Coin[] = [];
+
+  for (const singleCoinStr of coinStrings) {
+    // Match pattern like "1000000uxion" or "1000000 uxion"
+    const match = singleCoinStr.match(/^(\d+)\s*([a-zA-Z][a-zA-Z0-9/]*)$/);
+    if (match) {
+      coins.push({
+        amount: match[1],
+        denom: match[2],
+      });
+    }
+  }
+
+  return coins;
 }
 
 /**
@@ -160,52 +187,12 @@ export const CosmosAuthzPermission: { [key: string]: string } = {
 };
 
 /**
- * Authorization types enum (should match abstraxion-core)
- */
-export enum AuthorizationTypes {
-  Generic = "GenericAuthorization",
-  Send = "SendAuthorization",
-  Stake = "StakeAuthorization",
-  ContractExecution = "ContractExecutionAuthorization",
-  IbcTransfer = "TransferAuthorization",
-}
-
-/**
- * Decoded authorization with human-readable type
- */
-export interface DecodedReadableAuthorization {
-  type: AuthorizationTypes;
-  data:
-    | GenericAuthorization
-    | SendAuthorization
-    | TransferAuthorization
-    | StakeAuthorization
-    | HumanContractExecAuth
-    | null;
-}
-
-/**
- * Human-readable contract execution authorization
- */
-export interface HumanContractExecAuth {
-  grants: {
-    address: string;
-    limitType?: string;
-    maxCalls?: string;
-    maxFunds?: Coin[];
-    filterType?: string;
-    messages?: Uint8Array[];
-    keys?: string[];
-  }[];
-}
-
-/**
  * Permission description for display to users
  */
 export interface PermissionDescription {
   authorizationDescription: string;
   dappDescription?: string;
-  contracts?: string[];
+  contracts?: (string | undefined)[];
 }
 
 /**
@@ -222,7 +209,7 @@ export function generatePermissionDescriptions(
 ): PermissionDescription[] {
   return decodedGrants.map((decodedGrant) => {
     let description: string;
-    const contracts: string[] = [];
+    const contracts: (string | undefined)[] = [];
 
     switch (decodedGrant.type) {
       case AuthorizationTypes.Generic: {
@@ -232,12 +219,23 @@ export function generatePermissionDescriptions(
         break;
       }
       case AuthorizationTypes.Send: {
-        const spendLimit = (decodedGrant.data as SendAuthorization).spendLimit
+        const sendAuth = decodedGrant.data as SendAuthorization;
+
+        // Validate spend limits - only negative amounts are invalid (throw error)
+        // Invalid/NaN amounts will be handled gracefully by formatXionAmount
+        for (const limit of sendAuth.spendLimit) {
+          const numAmount = Number(limit.amount);
+          if (!isNaN(numAmount) && numAmount < 0) {
+            throw new Error(
+              `Invalid SendAuthorization: spend limit has invalid amount "${limit.amount}" for denom "${limit.denom}"`,
+            );
+          }
+        }
+
+        const spendLimit = sendAuth.spendLimit
           .map((limit: Coin) => formatXionAmount(limit.amount, limit.denom))
           .join(", ");
-        const allowList = (
-          decodedGrant.data as SendAuthorization
-        ).allowList.join(", ");
+        const allowList = sendAuth.allowList.join(", ");
         description = `Permission to send tokens with spend limit: ${spendLimit} ${allowList && `and allow list: ${allowList}`}`;
         break;
       }
@@ -281,9 +279,27 @@ export function generatePermissionDescriptions(
       }
       case AuthorizationTypes.ContractExecution: {
         description = "Permission to execute smart contracts";
-        (decodedGrant.data as HumanContractExecAuth)?.grants.map((grant) => {
-          if (grant.address === account) {
-            throw new Error("Misconfigured treasury contract");
+        const contractAuth = decodedGrant.data as HumanContractExecAuth;
+
+        // Handle empty grants gracefully - return empty contracts array
+        if (!contractAuth?.grants || contractAuth.grants.length === 0) {
+          break;
+        }
+
+        // Case-insensitive comparison for bech32 addresses
+        const normalizedAccount = account.toLowerCase();
+        contractAuth.grants.forEach((grant) => {
+          // Handle missing address gracefully - include undefined in contracts array
+          if (!grant.address) {
+            contracts.push(undefined);
+            return;
+          }
+
+          // Still throw for critical security issue: contract address equals account
+          if (grant.address.toLowerCase() === normalizedAccount) {
+            throw new Error(
+              `Misconfigured treasury contract: contract address "${grant.address}" cannot be the same as granter account "${account}"`,
+            );
           }
           contracts.push(grant.address);
         });

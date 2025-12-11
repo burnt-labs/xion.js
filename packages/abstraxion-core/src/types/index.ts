@@ -21,6 +21,10 @@ export interface Grant {
   expiration: string;
 }
 
+/**
+ * Treasury grant configuration returned from treasury contract
+ * Matches the GrantConfig struct in contracts/contracts/treasury/src/grant.rs
+ */
 export interface TreasuryGrantConfig {
   description: string;
   authorization: {

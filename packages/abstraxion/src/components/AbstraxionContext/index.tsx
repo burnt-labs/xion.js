@@ -63,9 +63,55 @@ export interface AbstraxionContextProps {
   login: () => Promise<void>;
 }
 
-export const AbstraxionContext = createContext<AbstraxionContextProps>(
-  {} as AbstraxionContextProps,
-);
+/**
+ * Default context value used before provider mounts
+ * All functions throw errors to catch improper usage
+ */
+const defaultContextValue: AbstraxionContextProps = {
+  // State - all false/empty until provider mounts
+  isConnected: false,
+  isConnecting: false,
+  isInitializing: true,
+  isReturningFromAuth: false,
+  isLoggingIn: false,
+  abstraxionError: "",
+  abstraxionAccount: undefined,
+  granterAddress: "",
+  signingClient: undefined,
+
+  // Config - empty defaults (will be overridden by provider)
+  chainId: "",
+  rpcUrl: "",
+  restUrl: "",
+  gasPrice: "",
+  contracts: undefined,
+  stake: false,
+  bank: undefined,
+  treasury: undefined,
+  feeGranter: undefined,
+  indexerUrl: undefined,
+  indexerAuthToken: undefined,
+  treasuryIndexerUrl: undefined,
+
+  // Authentication
+  authMode: "redirect",
+  authentication: undefined,
+
+  // Actions - throw errors if called before provider mounts
+  logout: async () => {
+    throw new Error(
+      "AbstraxionContext: logout() called before provider mounted. Wrap your component tree with <AbstraxionProvider>.",
+    );
+  },
+  login: async () => {
+    throw new Error(
+      "AbstraxionContext: login() called before provider mounted. Wrap your component tree with <AbstraxionProvider>.",
+    );
+  },
+};
+
+export const AbstraxionContext =
+  createContext<AbstraxionContextProps>(defaultContextValue);
 
 export function AbstraxionProvider({
   children,
@@ -159,11 +205,9 @@ export function AbstraxionProvider({
     });
 
     // Initialize controller (restores session, checks redirect callbacks, etc.)
-    controller.initialize().catch((error) => {
-      console.error(
-        "[AbstraxionContext] Controller initialization error:",
-        error,
-      );
+    controller.initialize().catch(() => {
+      // Initialization errors are handled by controller's state machine
+      // Error state will be reflected in isError/abstraxionError context values
     });
 
     return () => {
@@ -203,13 +247,11 @@ export function AbstraxionProvider({
   const abstraxionError = isError ? controllerState.error : "";
 
   const login = useCallback(async () => {
-    console.log("[AbstraxionContext] login() called");
     // Login function - delegates to controller who handles errors
     await controller.connect();
   }, [controller]);
 
   const logout = useCallback(async () => {
-    console.log("[AbstraxionContext] logout() called");
     // Logout function - delegates to controller who handles errors
     await controller.disconnect();
   }, [controller]);

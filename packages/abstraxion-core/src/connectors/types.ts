@@ -34,7 +34,10 @@ export interface SignerConfig {
    * - Passkey: WebAuthn signature
    * - Secp256K1: Base64-encoded signature (standard Cosmos format) or hex string
    *
-   * @param message - Message to sign (format depends on authenticatorType)
+   * @param message - Hex-encoded message to sign (with 0x prefix).
+   *                 For string messages (e.g., bech32 addresses), this should be hex-encoded UTF-8 bytes.
+   *                 For transaction signing, this should be hex-encoded transaction bytes.
+   *                 Callers are responsible for converting strings to hex before calling this function.
    * @returns Signature (format depends on authenticatorType)
    */
   signMessage: (message: string) => Promise<string>;
@@ -94,7 +97,10 @@ export interface ConnectorConnectionResult {
 
   /**
    * Signing function for messages
-   * @param hexMessage - Message to sign (hex string, with or without 0x prefix)
+   * @param hexMessage - Hex-encoded message to sign (with 0x prefix).
+   *                    For string messages (e.g., bech32 addresses), this should be hex-encoded UTF-8 bytes.
+   *                    For transaction signing, this should be hex-encoded transaction bytes.
+   *                    Callers are responsible for converting strings to hex before calling this function.
    * @returns Signature as hex string
    */
   signMessage: (hexMessage: string) => Promise<string>;

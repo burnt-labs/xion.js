@@ -8,7 +8,11 @@ import type {
   ConnectorConnectionResult,
   StorageStrategy,
 } from "@burnt-labs/abstraxion-core";
-import { AAClient, createSignerFromSigningFunction } from "@burnt-labs/signers";
+import {
+  AAClient,
+  createSignerFromSigningFunction,
+  type AASigner,
+} from "@burnt-labs/signers";
 import {
   AUTHENTICATOR_TYPE,
   type AuthenticatorType,
@@ -20,7 +24,6 @@ import {
   buildGrantMessages,
   createCompositeTreasuryStrategy,
   generateTreasuryGrants as generateTreasuryGrantMessages,
-  isContractGrantConfigValid,
 } from "../../index";
 import type { GrantConfig } from "../types";
 
@@ -162,15 +165,15 @@ export async function createGrants(
 
   // Validate contract grant configurations
   if (contracts && contracts.length > 0) {
-    const isValid = isContractGrantConfigValid(contracts, {
-      id: smartAccountAddress,
-    } as any);
+    const { validateContractGrantsOrThrow } = await import(
+      "../../grants/utils/contract-validation"
+    );
 
-    if (!isValid) {
-      throw new Error(
-        "Invalid contract grant configuration: Contract address cannot be the same as the granter account",
-      );
-    }
+    await validateContractGrantsOrThrow(contracts, smartAccountAddress, {
+      expectedPrefix: "xion", // TODO: Derive from chainId or config
+      rpcUrl: rpcUrl,
+      skipOnChainVerification: false, // Verify contracts exist
+    });
   }
 
   // 1. Build grant messages - query treasury contract or use manual configs
@@ -189,7 +192,6 @@ export async function createGrants(
       );
       needsDeployFeeGrant = true;
     } catch (error) {
-      console.warn("[orchestrator] Failed to query treasury contract:", error);
       // Fall back to manual configs
     }
   }
@@ -233,7 +235,7 @@ export async function createGrants(
 
   // Create signer using smartAccountAddress (granter address)
   // Note: connectionResult.displayAddress is the authenticator/wallet address, NOT the smart account address
-  const signer = createSignerFromSigningFunction({
+  const signer: AASigner = createSignerFromSigningFunction({
     smartAccountAddress,
     authenticatorIndex,
     authenticatorType,
@@ -241,7 +243,7 @@ export async function createGrants(
   });
 
   // 3. Create AAClient
-  const client = await AAClient.connectWithSigner(rpcUrl, signer as any, {
+  const client = await AAClient.connectWithSigner(rpcUrl, signer, {
     gasPrice: GasPrice.fromString(gasPrice),
   });
 
@@ -312,14 +314,12 @@ export async function createGrants(
 
   // 6. Sign and broadcast transaction
   try {
-    const result = await client.signAndBroadcast(
+    await client.signAndBroadcast(
       smartAccountAddress,
       messagesToSign,
       feeToUse,
       "Create grants for abstraxion",
     );
-
-    console.log("[orchestrator] → Transaction hash:", result.transactionHash);
 
     // 7. Store granter address
     await storageStrategy.setItem(

@@ -18,7 +18,8 @@ module.exports = {
     "@vercel/style-guide/eslint/browser",
     "@vercel/style-guide/eslint/react",
     "@vercel/style-guide/eslint/next",
-    "eslint-config-turbo",
+    // Disabled due to pnpm resolution issues with eslint-plugin-turbo in CI
+    // "eslint-config-turbo",
   ].map(require.resolve),
   parserOptions: {
     project,

@@ -3,11 +3,13 @@ import {
   isDuplicateAuthenticator,
   deduplicateAccountsById,
   findBestMatchingAuthenticator,
-  createJwtAuthenticatorIdentifier,
   validateNewAuthenticator,
-} from "./authenticator-utils";
-import { Authenticator } from "../indexer-strategies/types";
-import { SmartAccountWithCodeId } from "../indexer-strategies/types";
+} from "../utils";
+import { createJwtAuthenticatorIdentifier } from "../jwt";
+import type {
+  Authenticator,
+  SmartAccountWithCodeId,
+} from "../../types/authenticator";
 
 describe("authenticator-utils", () => {
   describe("isDuplicateAuthenticator", () => {

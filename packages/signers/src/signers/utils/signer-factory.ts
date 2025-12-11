@@ -6,10 +6,13 @@
 
 import { Buffer } from "buffer";
 import { OfflineDirectSigner } from "@cosmjs/proto-signing";
-import { StdSignature } from "@cosmjs/amino";
 import { AAEthSigner, PersonalSignFn } from "../eth-signer";
 import { AADirectSigner, SignArbitraryFn } from "../direct-signer";
-import { AUTHENTICATOR_TYPE, type AuthenticatorType } from "../../crypto";
+import {
+  AUTHENTICATOR_TYPE,
+  type AuthenticatorType,
+} from "../../types/account";
+import { normalizeHexPrefix, fromHex } from "../../crypto/hex-validation";
 
 /**
  * Parameters for creating a signer from a signing function
@@ -27,6 +30,11 @@ export interface CreateSignerParams {
   /**
    * Signing function that takes hex message and returns hex signature
    * This is the unified interface from connectors
+   *
+   * @param hexMessage - Hex-encoded message (with 0x prefix).
+   *                    For string messages (e.g., bech32 addresses), this should be hex-encoded UTF-8 bytes.
+   *                    For transaction signing, this should be hex-encoded transaction bytes.
+   *                    Callers are responsible for converting strings to hex before calling this function.
    */
   signMessage: (hexMessage: string) => Promise<string>;
 }
@@ -108,23 +116,26 @@ function createDirectSigner(
     signerAddr: string,
     data: string | Uint8Array,
   ) => {
-    // Convert data to hex
+    // Convert data to hex with 0x prefix (as expected by signMessage)
     const hexMessage =
       typeof data === "string"
-        ? Buffer.from(data, "utf8").toString("hex")
-        : Buffer.from(data).toString("hex");
+        ? `0x${Buffer.from(data, "utf8").toString("hex")}`
+        : `0x${Buffer.from(data).toString("hex")}`;
 
-    // Use signing function (returns hex signature)
+    // Use signing function (returns hex signature, may or may not have 0x prefix)
     const signatureHex = await signMessage(hexMessage);
 
     // Convert hex signature to StdSignature format
-    const signatureBytes = Buffer.from(signatureHex, "hex");
+    // Use proper utility to remove 0x prefix (handles duplicates and edge cases)
+    const signatureHexWithoutPrefix = normalizeHexPrefix(signatureHex);
+    // Use CosmJS fromHex to decode (validates hex format)
+    const signatureBytes = fromHex(signatureHexWithoutPrefix);
     return {
       pub_key: {
         type: "tendermint/PubKeySecp256k1",
         value: "",
       },
-      signature: signatureBytes.toString("base64"),
+      signature: Buffer.from(signatureBytes).toString("base64"),
     };
   };
 

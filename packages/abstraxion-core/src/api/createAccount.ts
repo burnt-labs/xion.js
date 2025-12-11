@@ -8,18 +8,117 @@ import {
   calculateSalt,
   calculateSmartAccountAddress,
   AUTHENTICATOR_TYPE,
-  utf8ToHex,
   formatSecp256k1Signature,
-  formatSecp256k1Pubkey,
+  normalizeSecp256k1PublicKey,
+  normalizeEthereumAddress,
+  utf8ToHexWithPrefix,
 } from "@burnt-labs/signers";
+import { StargateClient } from "@cosmjs/stargate";
 import { createEthWalletAccountV2, createSecp256k1AccountV2 } from "./client";
 import type { CreateAccountResponse } from "@burnt-labs/signers";
 
 /**
+ * Wait for transaction confirmation by polling getTx
+ * Graceful fallback: if transaction not found after 3 attempts, waits 2s and continues
+ * If RPC connection fails, continues immediately without waiting
+ * Memory leak safe: all timeouts are properly cleaned up
+ */
+async function waitForTxConfirmation(
+  rpcUrl: string,
+  txHash: string,
+): Promise<void> {
+  let client: StargateClient | null = null;
+  const maxAttempts = 3;
+  const pollIntervalMs = 1000;
+  const timeoutIds: NodeJS.Timeout[] = [];
+
+  // Helper to create timeout with cleanup tracking
+  const createTimeout = (ms: number): Promise<void> => {
+    return new Promise((resolve) => {
+      const timeoutId = setTimeout(() => {
+        const index = timeoutIds.indexOf(timeoutId);
+        if (index > -1) {
+          timeoutIds.splice(index, 1);
+        }
+        resolve();
+      }, ms);
+      timeoutIds.push(timeoutId);
+    });
+  };
+
+  // Cleanup function to clear all pending timeouts
+  const cleanupTimeouts = () => {
+    timeoutIds.forEach((timeoutId) => {
+      clearTimeout(timeoutId);
+    });
+    timeoutIds.length = 0;
+  };
+
+  try {
+    client = await StargateClient.connect(rpcUrl);
+
+    // Check immediately (attempt 1)
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const result = await client.getTx(txHash);
+        if (result) {
+          cleanupTimeouts();
+          return;
+        }
+      } catch (error) {
+        // Transaction not found yet, continue to next attempt
+      }
+
+      if (attempt < maxAttempts) {
+        await createTimeout(pollIntervalMs);
+      }
+    }
+
+    // Reached max attempts without finding transaction
+    await createTimeout(2000);
+  } catch (error) {
+    // RPC connection failed - cleanup and continue immediately
+    cleanupTimeouts();
+  } finally {
+    cleanupTimeouts();
+    if (client) {
+      try {
+        client.disconnect();
+      } catch (error) {
+        // Ignore disconnect errors
+      }
+    }
+  }
+}
+
+/**
+ * Simple sleep function to prevent account sequence errors
+ * Temporary replacement for waitForTxConfirmation to reduce latency
+ * Memory leak safe: timeout is properly tracked and cleaned up
+ */
+async function simpleSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    const timeoutId = setTimeout(() => {
+      resolve();
+    }, ms);
+
+    // Ensure cleanup even if promise is abandoned
+    // This is a safeguard, though in practice the timeout will complete normally
+    if (typeof timeoutId === "object" && "unref" in timeoutId) {
+      // In Node.js, allow the process to exit without waiting for this timeout
+      (timeoutId as NodeJS.Timeout).unref();
+    }
+  });
+}
+
+/**
  * Create account via AA API v2 for EthWallet type
- * Handles the full flow: calculate address → sign → create
  *
- * Uses local address calculation (no API call needed for prepare step)
+ * Flow: normalize address → calculate salt/address → sign address → create via API
+ *
+ * @param signMessageFn - Signs hex messages (with 0x prefix)
+ * @param rpcUrl - Optional RPC URL for transaction confirmation
+ * @see @burnt-labs/signers/src/crypto/README.md for salt calculation details
  */
 export async function createEthWalletAccount(
   aaApiUrl: string,
@@ -28,7 +127,7 @@ export async function createEthWalletAccount(
   checksum: string,
   feeGranter: string,
   addressPrefix: string,
-  logPrefix: string = "[aaApi]",
+  rpcUrl?: string,
 ): Promise<CreateAccountResponse> {
   // Validate feeGranter starts with addressPrefix
   if (!feeGranter.startsWith(addressPrefix)) {
@@ -37,13 +136,11 @@ export async function createEthWalletAccount(
     );
   }
 
-  console.log(
-    `${logPrefix} Creating account for Ethereum address:`,
-    ethereumAddress,
-  );
+  // Normalize address (matches AA API normalization)
+  const normalizedAddress = normalizeEthereumAddress(ethereumAddress);
 
-  // Step 1: Calculate address locally (using @signers crypto utilities)
-  const salt = calculateSalt(AUTHENTICATOR_TYPE.EthWallet, ethereumAddress);
+  // Calculate smart account address via CREATE2
+  const salt = calculateSalt(AUTHENTICATOR_TYPE.EthWallet, normalizedAddress);
   const calculatedAddress = calculateSmartAccountAddress({
     checksum,
     creator: feeGranter,
@@ -51,41 +148,47 @@ export async function createEthWalletAccount(
     prefix: addressPrefix,
   });
 
-  // Step 2: Sign the calculated address
-  // Convert address to hex for personal_sign - externalSignerConnector will add 0x prefix
-  const messageHex = utf8ToHex(calculatedAddress);
-  const signature = await signMessageFn(messageHex);
+  // Sign the calculated address (hex format with 0x prefix)
+  const addressHex = utf8ToHexWithPrefix(calculatedAddress);
+  const signature = await signMessageFn(addressHex);
 
-  // Step 3: Create account via v2 API
-  // Signature is already formatted by ExternalSignerConnector (validated and includes 0x prefix)
+  // Create account via v2 API
   const result = await createEthWalletAccountV2(aaApiUrl, {
-    address: ethereumAddress.toLowerCase(),
+    address: normalizedAddress,
     signature: signature,
   });
 
-  console.log(
-    `${logPrefix} Account created successfully:`,
-    result.account_address,
-    `(tx: ${result.transaction_hash})`,
-  );
+  // Short sleep to prevent sequence errors
+  if (rpcUrl && result.transaction_hash) {
+    // try {
+    //   await waitForTxConfirmation(rpcUrl, result.transaction_hash);
+    // } catch (error) {
+    //   // Confirmation failed - continue anyway
+    // }
+    //TODO: test more thoroughly if account sequence errors can be avoided without this sleep
+    await simpleSleep(500); // 500ms sleep instead of polling
+  }
 
   return result;
 }
 
 /**
  * Create account via AA API v2 for Secp256K1 type (Cosmos wallets)
- * Handles the full flow: calculate address → sign → create
  *
- * Uses local address calculation (no API call needed for prepare step)
+ * Flow: normalize pubkey → calculate salt/address → sign address → create via API
+ *
+ * @param signMessageFn - Signs hex messages (with 0x prefix)
+ * @param rpcUrl - Optional RPC URL for transaction confirmation
+ * @see @burnt-labs/signers/src/crypto/README.md for salt calculation details
  */
 export async function createSecp256k1Account(
   aaApiUrl: string,
-  pubkeyHex: string,
-  signMessageFn: (message: string) => Promise<string>,
+  pubkey: string,
+  signMessageFn: (hexMessage: string) => Promise<string>,
   checksum: string,
   feeGranter: string,
   addressPrefix: string,
-  logPrefix: string = "[aaApi]",
+  rpcUrl?: string,
 ): Promise<CreateAccountResponse> {
   // Validate feeGranter starts with addressPrefix
   if (!feeGranter.startsWith(addressPrefix)) {
@@ -94,10 +197,13 @@ export async function createSecp256k1Account(
     );
   }
 
-  console.log(`${logPrefix} Creating account for Secp256K1 pubkey`);
+  // Normalize pubkey to base64 (matches AA API normalization)
+  const normalizedPubkey = normalizeSecp256k1PublicKey(pubkey);
 
-  // Step 1: Calculate address locally (using @signers crypto utilities)
-  const salt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, pubkeyHex);
+  // Calculate smart account address via CREATE2
+  // CRITICAL: Salt must be calculated from the SAME format that AA-API will use
+  // Both xion.js and AA-API calculate: SHA256(UTF8(base64_pubkey_string))
+  const salt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
   const calculatedAddress = calculateSmartAccountAddress({
     checksum,
     creator: feeGranter,
@@ -105,24 +211,31 @@ export async function createSecp256k1Account(
     prefix: addressPrefix,
   });
 
-  // Step 2: Sign the calculated address
-  const signatureResponse = await signMessageFn(calculatedAddress);
+  // Sign the calculated address (hex format with 0x prefix)
+  const addressHex = utf8ToHexWithPrefix(calculatedAddress);
+  const signatureResponse = await signMessageFn(addressHex);
 
-  // Format signature and pubkey for AA API v2 (convert base64 to hex, ensure no 0x prefix)
+  // Format signature and pubkey for AA API v2
   const formattedSignature = formatSecp256k1Signature(signatureResponse);
-  const formattedPubkey = formatSecp256k1Pubkey(pubkeyHex);
+  // Send normalized base64 pubkey to AA-API (not converted to hex)
+  // AA-API will calculate salt from this same base64 string, ensuring address match
+  const formattedPubkey = normalizedPubkey;
 
-  // Step 3: Create account via v2 API
+  // Create account via v2 API
   const result = await createSecp256k1AccountV2(aaApiUrl, {
-    pubkey: formattedPubkey,
+    pubKey: formattedPubkey,
     signature: formattedSignature,
   });
 
-  console.log(
-    `${logPrefix} Account created successfully:`,
-    result.account_address,
-    `(tx: ${result.transaction_hash})`,
-  );
+  // Short sleep to prevent sequence errors
+  if (rpcUrl && result.transaction_hash) {
+    // try {
+    //   await waitForTxConfirmation(rpcUrl, result.transaction_hash);
+    // } catch (error) {
+    //   // Confirmation failed - continue anyway
+    // }
+    await simpleSleep(250); // 250ms sleep instead of polling
+  }
 
   return result;
 }

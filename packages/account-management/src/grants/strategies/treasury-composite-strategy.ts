@@ -7,6 +7,7 @@
  */
 
 import type { TreasuryStrategy, TreasuryConfig } from "../../types/treasury";
+import type { ContractQueryClient } from "../discovery";
 
 /**
  * Composite Treasury Strategy
@@ -27,48 +28,45 @@ export class CompositeTreasuryStrategy implements TreasuryStrategy {
 
   async fetchTreasuryConfig(
     treasuryAddress: string,
-    client: any, // AAClient from @burnt-labs/signers
+    client: ContractQueryClient,
   ): Promise<TreasuryConfig | null> {
-    console.log(
-      `[CompositeTreasuryStrategy] Trying ${this.strategies.length} strategies for treasury: ${treasuryAddress}`,
-    );
+    const errors: Array<{ strategy: string; error: Error }> = [];
 
     for (let i = 0; i < this.strategies.length; i++) {
       const strategy = this.strategies[i];
       const strategyName = strategy.constructor.name;
 
       try {
-        console.log(
-          `[CompositeTreasuryStrategy] Attempting strategy ${i + 1}/${this.strategies.length}: ${strategyName}`,
-        );
-
         const result = await strategy.fetchTreasuryConfig(
           treasuryAddress,
           client,
         );
 
         if (result) {
-          console.log(
-            `[CompositeTreasuryStrategy] ✅ Strategy ${strategyName} succeeded`,
-          );
           return result;
         }
-
-        console.log(
-          `[CompositeTreasuryStrategy] Strategy ${strategyName} returned null, trying next...`,
-        );
       } catch (error) {
-        console.warn(
-          `[CompositeTreasuryStrategy] Strategy ${strategyName} failed:`,
-          error,
-        );
-        // Continue to next strategy
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        errors.push({
+          strategy: strategyName,
+          error: error instanceof Error ? error : new Error(errorMessage),
+        });
+        // Continue to next strategy on error
       }
     }
 
-    console.error(
-      `[CompositeTreasuryStrategy] ❌ All ${this.strategies.length} strategies failed`,
-    );
+    // If all strategies failed, throw aggregated error
+    if (errors.length === this.strategies.length) {
+      const errorMessages = errors
+        .map((e) => `${e.strategy}: ${e.error.message}`)
+        .join("; ");
+      throw new Error(
+        `All treasury strategies failed for ${treasuryAddress}: ${errorMessages}`,
+      );
+    }
+
+    // Some strategies succeeded but returned null (treasury not found)
     return null;
   }
 }

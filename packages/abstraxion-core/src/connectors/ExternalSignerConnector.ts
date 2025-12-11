@@ -17,7 +17,6 @@ import {
   AUTHENTICATOR_TYPE,
   type AuthenticatorType,
   formatEthSignature,
-  formatHexMessage,
   formatSecp256k1Signature,
 } from "@burnt-labs/signers";
 
@@ -69,8 +68,7 @@ export class ExternalSignerConnector implements Connector {
       const signerConfig = await this.config.getSignerConfig();
       this.signerConfig = signerConfig;
 
-      // EthWallet: addresses must be lowercase for consistency with smart account lookup
-      // Other types: pass through as-is (Passkey, JWT, Secp256K1 use their native formats)
+      // Normalize authenticator identifier
       const normalizedAuthenticator =
         signerConfig.authenticatorType === AUTHENTICATOR_TYPE.EthWallet
           ? signerConfig.authenticator.toLowerCase()
@@ -85,21 +83,14 @@ export class ExternalSignerConnector implements Connector {
         const authenticatorType = this.signerConfig.authenticatorType;
 
         if (authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
-          // EthWallet: Format message (ensure 0x prefix) and validate signature format
-          const formattedMessage = formatHexMessage(message);
-          const signature =
-            await this.signerConfig.signMessage(formattedMessage);
-
-          // Format and validate signature: Returns signature with "0x" prefix and validates length (132 chars = 0x + 130 hex)
+          const signature = await this.signerConfig.signMessage(message);
+          // Format and validate: 0x prefix, 132 chars (65 bytes)
           return formatEthSignature(signature);
         } else if (authenticatorType === AUTHENTICATOR_TYPE.Secp256K1) {
-          // Secp256K1: Pass message as-is, format and validate signature (hex without 0x prefix)
           const signature = await this.signerConfig.signMessage(message);
-
-          // Format signature (convert base64 to hex if needed, ensure no 0x prefix)
           const formattedSignature = formatSecp256k1Signature(signature);
 
-          // Validate signature format: should be 128 hex chars (64 bytes)
+          // Validate: 128 hex chars (64 bytes, no recovery byte)
           if (formattedSignature.length !== 128) {
             throw new Error(
               `Invalid Secp256K1 signature format: expected 128 hex characters (64 bytes), got ${formattedSignature.length}`,
@@ -108,14 +99,12 @@ export class ExternalSignerConnector implements Connector {
 
           return formattedSignature;
         } else {
-          // Passkey, Ed25519: Pass through as-is (TODO: full validation support and creation support.)
+          // Passkey, Ed25519: Pass through (TODO: full validation)
           return await this.signerConfig.signMessage(message);
         }
       };
 
       // Get display address
-      // EthWallet: Use the Ethereum address (0x...) for display
-      // Other types: Use the normalized identifier (Passkey credential, JWT identifier, Secp256K1 pubkey)
       const displayAddress =
         signerConfig.authenticatorType === AUTHENTICATOR_TYPE.EthWallet
           ? signerConfig.authenticator
@@ -134,10 +123,9 @@ export class ExternalSignerConnector implements Connector {
           connectionType: "signer",
         },
       };
-    } catch (error: any) {
-      throw new Error(
-        `Failed to connect to ${this.config.name}: ${error.message || error}`,
-      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to connect to ${this.config.name}: ${message}`);
     }
   }
 

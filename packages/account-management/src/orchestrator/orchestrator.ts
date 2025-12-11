@@ -131,6 +131,7 @@ export class ConnectionOrchestrator {
       connector,
       authenticator,
       chainId: this.config.chainId,
+      rpcUrl: this.config.rpcUrl,
       accountStrategy: this.config.accountStrategy,
       accountCreationConfig: this.config.accountCreationConfig,
       sessionManager: this.config.sessionManager,
@@ -197,25 +198,24 @@ export class ConnectionOrchestrator {
       if (!grantResult.success) {
         throw new Error(`Failed to create grants: ${grantResult.error}`);
       }
-
-      // Create signing client after grants are created/verified
-      const signingClient = await this.createSigningClient(
-        connectionResult.sessionKeypair,
-        connectionResult.smartAccountAddress,
-        connectionResult.granteeAddress,
-      );
-
-      return {
-        ...connectionResult,
-        signingClient,
-      };
     } else {
       // No grants needed - just store granter
       await this.config.sessionManager.setGranter(
         connectionResult.smartAccountAddress,
       );
-      return connectionResult;
     }
+
+    // Always create signing client after connection (with or without grants)
+    const signingClient = await this.createSigningClient(
+      connectionResult.sessionKeypair,
+      connectionResult.smartAccountAddress,
+      connectionResult.granteeAddress,
+    );
+
+    return {
+      ...connectionResult,
+      signingClient,
+    };
   }
 
   /**

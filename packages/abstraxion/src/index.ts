@@ -43,6 +43,7 @@ export type {
   ConnectorMetadata,
   ConnectorConnectionResult,
   ConnectorConfig,
+  SignerConfig,
 } from "@burnt-labs/abstraxion-core";
 export { ConnectorType } from "@burnt-labs/abstraxion-core";
 

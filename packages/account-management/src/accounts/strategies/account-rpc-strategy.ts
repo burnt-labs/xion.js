@@ -93,8 +93,11 @@ export class RpcAccountStrategy implements IndexerStrategy {
         },
       ];
     } catch (error) {
-      console.error("[RpcAccountStrategy] Failed to query chain:", error);
-      return [];
+      // Re-throw error instead of silently returning empty array
+      // Caller (composite strategy) will handle fallback
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(`RPC account strategy failed: ${errorMessage}`);
     }
   }
 
@@ -114,7 +117,7 @@ export class RpcAccountStrategy implements IndexerStrategy {
   ): Promise<
     Array<{
       id: string;
-      type: string;
+      type: AuthenticatorType;
       authenticator: string;
       authenticatorIndex: number;
     }>
@@ -144,7 +147,7 @@ export class RpcAccountStrategy implements IndexerStrategy {
             // Format: {"EthWallet":{"address":"0x..."}} or {"Secp256K1":{"pubkey":"..."}}
             let authenticatorData: any;
             let authenticatorString: string;
-            let authenticatorType: string;
+            let authenticatorType: AuthenticatorType;
 
             if (typeof authResponse === "string") {
               // Response is base64-encoded
@@ -182,7 +185,9 @@ export class RpcAccountStrategy implements IndexerStrategy {
               authenticator: authenticatorString,
               authenticatorIndex: id,
             };
-          } catch (error: any) {
+          } catch (error: unknown) {
+            // Silently return null for authenticators that can't be decoded
+            // This is expected for some authenticator types
             return null;
           }
         }),
@@ -194,7 +199,7 @@ export class RpcAccountStrategy implements IndexerStrategy {
       );
 
       return validAuthenticators;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If the query fails, the contract likely doesn't exist
       // This is normal for addresses that haven't been instantiated yet
       return [];

@@ -1,5 +1,5 @@
 import { SmartAccountWithCodeId } from "./authenticator";
-import type { AuthenticatorType } from "../authenticators/type-detection";
+import type { AuthenticatorType } from "@burnt-labs/signers";
 
 // Re-export for convenience
 export type { SmartAccountWithCodeId };

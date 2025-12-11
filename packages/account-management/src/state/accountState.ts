@@ -109,6 +109,11 @@ export function accountStateReducer(
   state: AccountState,
   action: AccountStateAction,
 ): AccountState {
+  // Handle null/undefined actions gracefully
+  if (!action || typeof action !== "object" || !("type" in action)) {
+    return state;
+  }
+
   switch (action.type) {
     case "INITIALIZE":
       return { status: "initializing" };

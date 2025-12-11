@@ -36,6 +36,9 @@ export interface AccountConnectionParams {
   /** Chain ID */
   chainId: string;
 
+  /** RPC URL for transaction confirmation */
+  rpcUrl: string;
+
   /** Account discovery strategy */
   accountStrategy: CompositeAccountStrategy;
 
@@ -59,6 +62,7 @@ export async function connectAccount(
     connector,
     authenticator,
     chainId,
+    rpcUrl,
     accountStrategy,
     accountCreationConfig,
     sessionManager,
@@ -87,7 +91,6 @@ export async function connectAccount(
     accountStrategy,
     authenticatorToUse,
     authenticatorType,
-    "[orchestrator]",
   );
 
   if (accountCheck.exists && accountCheck.smartAccountAddress) {
@@ -119,7 +122,7 @@ export async function connectAccount(
         smartAccountContract.checksum,
         feeGranter,
         smartAccountContract.addressPrefix,
-        "[orchestrator]",
+        rpcUrl, // Pass RPC URL to wait for confirmation internally
       );
 
       smartAccountAddress = result.account_address;
@@ -130,9 +133,10 @@ export async function connectAccount(
       const pubkeyFromMetadata =
         connectionResult.metadata?.pubkey || authenticatorToUse;
 
-      const signFn = async (message: string) => {
-        // Cosmos wallets expect plain text, not hex
-        return await connectionResult.signMessage(message);
+      const signFn = async (hexMessage: string) => {
+        // createSecp256k1Account passes hex-encoded messages (with 0x prefix)
+        // The connector's signMessage expects hex format (consistent with EthWallet)
+        return await connectionResult.signMessage(hexMessage);
       };
 
       const result = await createSecp256k1Account(
@@ -142,7 +146,7 @@ export async function connectAccount(
         smartAccountContract.checksum,
         feeGranter,
         smartAccountContract.addressPrefix,
-        "[orchestrator]",
+        rpcUrl, // Pass RPC URL to wait for confirmation internally
       );
 
       smartAccountAddress = result.account_address;

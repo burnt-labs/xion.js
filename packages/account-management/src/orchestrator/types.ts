@@ -93,8 +93,8 @@ export type SessionRestorationResult =
 export function isSessionRestored(result: SessionRestorationResult): result is {
   restored: true;
 } & AccountInfo & {
-  signingClient?: GranteeSignerClient;
-} {
+    signingClient?: GranteeSignerClient;
+  } {
   return result.restored === true;
 }
 
