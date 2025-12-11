@@ -4,6 +4,56 @@
 
 The `Abstraxion` component and UI-related functionality have been moved from `@burnt-labs/abstraxion` to `@burnt-labs/ui`. The `@abstraxion` package is now UI-less and focuses on core logic and state management.
 
+## 🎉 Good News: Backward Compatible!
+
+**The `Abstraxion` component wrapper is now backward compatible!**
+
+### What Changed
+
+| What Changed | Old Behavior (main) | New Behavior (this PR) | Breaking? |
+|--------------|-------------------|----------------------|-----------|
+| **Import location** | `@burnt-labs/abstraxion` | `@burnt-labs/ui` | ⚠️ **Yes** - Update imports |
+| **CSS import** | `@burnt-labs/abstraxion/dist/index.css` | `@burnt-labs/ui/dist/index.css` | ⚠️ **Yes** - Update CSS path |
+| **`useModal()` hook** | ✅ Available | ❌ Removed | ⚠️ **Yes** - Not needed anymore |
+| **`Abstraxion` props** | Only `onClose` required | `onClose` required, `isOpen` **optional** | ✅ **No** - Still works! |
+| **Modal state** | Managed internally | Auto-managed OR externally controlled | ✅ **No** - Auto-managed by default |
+
+### Quick Migration Checklist
+
+**Minimal migration (old apps work with just import changes):**
+- [ ] Install `@burnt-labs/ui` package: `npm install @burnt-labs/ui`
+- [ ] Update import: `@burnt-labs/abstraxion` → `@burnt-labs/ui` (for `Abstraxion` component)
+- [ ] Update CSS: `@burnt-labs/abstraxion/dist/index.css` → `@burnt-labs/ui/dist/index.css`
+- [ ] Remove `useModal()` import (not needed - modal auto-shows when connecting)
+- [ ] **Done!** Old code works without other changes
+
+**Optional: Upgrade to new patterns for more control:**
+- [ ] Add `isOpen` prop to `<Abstraxion>` for external control (optional)
+- [ ] Or migrate to `useAbstraxionModal` hook for full control (recommended)
+
+### Migration Examples
+
+**Old apps work with just import changes:**
+```diff
+- import { AbstraxionProvider, Abstraxion, useModal } from "@burnt-labs/abstraxion";
+- import "@burnt-labs/abstraxion/dist/index.css";
++ import { AbstraxionProvider } from "@burnt-labs/abstraxion";
++ import { Abstraxion } from "@burnt-labs/ui";
++ import "@burnt-labs/ui/dist/index.css";
+
+function App() {
+-  const [showModal, setShowModal] = useModal();
+  return (
+    <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
+-      <Abstraxion onClose={() => setShowModal(false)} />
++      <Abstraxion onClose={() => console.log('Modal closed')} />
+    </AbstraxionProvider>
+  );
+}
+```
+
+**That's it!** The modal now auto-shows when connecting, just like before.
+
 ## What's Available
 
 - ✅ `useAbstraxionModal` hook in `@burnt-labs/ui` - **Recommended approach**
@@ -79,24 +129,86 @@ export default function App() {
 
 ## Migration from Old Component
 
-### Before
+### Before (Old API - main branch)
 
 ```tsx
-import { AbstraxionProvider, Abstraxion } from "@burnt-labs/abstraxion";
+import { AbstraxionProvider, Abstraxion, useModal } from "@burnt-labs/abstraxion";
 import "@burnt-labs/abstraxion/dist/index.css";
 
 function App() {
-  const [isOpen, setIsOpen] = useState(false);
+  // OLD: Modal state was managed by AbstraxionContext via useModal hook
+  const [showModal, setShowModal] = useModal();
+
   return (
     <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
-      <Abstraxion onClose={() => setIsOpen(false)} isOpen={isOpen} />
+      {/* OLD: Only required onClose prop - modal controlled its own visibility */}
+      <Abstraxion onClose={() => setShowModal(false)} />
+      <button onClick={() => setShowModal(true)}>Click here</button>
+    </AbstraxionProvider>
+  );
+}
+```
+
+### After - Option 1: Minimal Migration (Component Wrapper - Backward Compatible)
+
+**Easiest migration path** - just update imports, modal auto-shows when connecting:
+
+```tsx
+import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { Abstraxion } from "@burnt-labs/ui";
+import "@burnt-labs/ui/dist/index.css";
+
+function App() {
+  // No need for useModal() or useState!
+  // Modal automatically shows when connecting, just like before
+
+  return (
+    <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
+      {/* isOpen prop is optional - auto-managed by default */}
+      <Abstraxion onClose={() => console.log('Modal closed')} />
+    </AbstraxionProvider>
+  );
+}
+```
+
+**Benefits:**
+- ✅ Minimal code changes
+- ✅ No `useModal()` needed
+- ✅ Modal auto-shows when connecting
+- ✅ Works exactly like the old API
+
+### After - Option 2: Controlled Component (More Control)
+
+If you want manual control over when the modal opens:
+
+```tsx
+import { useState } from "react";
+import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { Abstraxion } from "@burnt-labs/ui";
+import "@burnt-labs/ui/dist/index.css";
+
+function App() {
+  // Optional: Control modal state manually
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
+      {/* Pass isOpen for external control */}
+      <Abstraxion isOpen={isOpen} onClose={() => setIsOpen(false)} />
       <button onClick={() => setIsOpen(true)}>Click here</button>
     </AbstraxionProvider>
   );
 }
 ```
 
-### After (Recommended - Hook Approach)
+**Benefits:**
+- ✅ Full control over modal visibility
+- ✅ Can sync with URL, localStorage, routing, etc.
+- ✅ Better for complex UX flows
+
+### After - Option 3: Hook Approach (Recommended - Maximum Control)
+
+Best option for full control and access to all features:
 
 ```tsx
 import { AbstraxionProvider, useAbstraxionAccount } from "@burnt-labs/abstraxion";
@@ -107,6 +219,8 @@ function AppContent() {
   const accountState = useAbstraxionAccount();
   const { Modal, LoadingOverlay, openModal } = useAbstraxionModal(accountState, {
     autoShowOnConnecting: true,
+    showSuccessState: true,
+    onConnectSuccess: () => console.log('Connected!'),
   });
 
   return (
@@ -127,25 +241,112 @@ function App() {
 }
 ```
 
-### After (Alternative - Component Wrapper)
+**Benefits:**
+- ✅ All benefits of controlled approach
+- ✅ Access to success callbacks
+- ✅ Customizable auto-show behavior
+- ✅ Full control over loading states
+- ✅ Easiest to test and customize
 
-If you prefer the simple component approach, you can still use the `Abstraxion` component wrapper:
+## Why the New API is Better
 
-```tsx
-import { AbstraxionProvider } from "@burnt-labs/abstraxion";
-import { Abstraxion } from "@burnt-labs/ui";
-import "@burnt-labs/ui/dist/index.css";
+**The `Abstraxion` component is backward compatible, but we still recommend upgrading to the new patterns for better control and flexibility.**
 
-function App() {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
-      <Abstraxion onClose={() => setIsOpen(false)} isOpen={isOpen} />
-      <button onClick={() => setIsOpen(true)}>Click here</button>
-    </AbstraxionProvider>
-  );
-}
-```
+### Problems with the Old API (Solved in New Version)
+
+1. **Hidden State Management** ❌
+   ```tsx
+   // OLD: Where does showModal live? How does it work?
+   const [showModal, setShowModal] = useModal(); // Magic context state
+   ```
+   - State was hidden inside context, making it hard to reason about
+   - Developers couldn't easily integrate with their own state management
+   - Poor TypeScript inference for state origin
+
+2. **Tight Coupling** ❌
+   ```tsx
+   // OLD: Abstraxion component controlled its own visibility
+   <Abstraxion onClose={() => setShowModal(false)} />
+   ```
+   - Component and state management were inseparable
+   - Couldn't use different UI libraries with same state logic
+   - React Native users had to work around web-only modal state
+
+3. **Limited Flexibility** ❌
+   - Couldn't integrate with URL state (e.g., `?modal=open`)
+   - Couldn't sync with animation libraries
+   - Couldn't persist modal state to localStorage
+   - Hard to test in isolation
+
+4. **SSR/Hydration Issues** ❌
+   - Context state during server-side rendering caused hydration mismatches
+   - Initial state unclear during SSR
+
+### Benefits of the New API
+
+1. **Explicit State Control** ✅
+   ```tsx
+   // NEW: Crystal clear where state lives
+   const [isOpen, setIsOpen] = useState(false);
+   ```
+   - State is locally managed (standard React pattern)
+   - Easy to understand and debug
+   - Works with any state management solution
+
+2. **Separation of Concerns** ✅
+   ```tsx
+   // NEW: Logic and UI are separate
+   const accountState = useAbstraxionAccount(); // Logic (from @abstraxion)
+   const { Modal } = useAbstraxionModal(accountState); // UI (from @ui)
+   ```
+   - `@burnt-labs/abstraxion` = Pure logic, no UI dependencies
+   - `@burnt-labs/ui` = UI components that accept state
+   - React Native can use `@burnt-labs/abstraxion` + their own UI
+
+3. **Full Flexibility** ✅
+   ```tsx
+   // Examples of what's now possible:
+
+   // Sync with URL
+   const [isOpen, setIsOpen] = useSearchParams('modal');
+
+   // Sync with router
+   useEffect(() => {
+     if (pathname === '/connect') setIsOpen(true);
+   }, [pathname]);
+
+   // Sync with localStorage
+   const [isOpen, setIsOpen] = useLocalStorage('modal-open', false);
+
+   // Integrate with animation library
+   const controls = useAnimation();
+   useEffect(() => {
+     if (isOpen) controls.start('visible');
+   }, [isOpen]);
+   ```
+
+4. **Better SSR** ✅
+   - No hidden context state during SSR
+   - Clear initial state on server and client
+   - Proper hydration
+
+5. **Easier Testing** ✅
+   ```tsx
+   // NEW: Easy to test with controlled props
+   render(<Abstraxion isOpen={true} onClose={mockClose} />);
+   ```
+
+### Our Recommendation: **Don't Go Back**
+
+The new API is superior in every way. While it requires migration work, it's a one-time cost that pays dividends:
+
+- ✅ **Cleaner architecture**: Separation of state and UI
+- ✅ **More flexible**: Works with any state management approach
+- ✅ **Better DX**: Explicit, predictable, testable
+- ✅ **Future-proof**: Easier to extend and customize
+
+**Migration effort**: ~5 minutes per app (just add `useState` and `isOpen` prop)
+**Long-term benefit**: Infinite (better maintainability, flexibility, testability)
 
 ## Hook API
 
@@ -361,6 +562,133 @@ import type {
 ### Success state not showing
 - Ensure `showSuccessState` is true (default)
 - Check that connection actually succeeds (`isConnected` becomes true)
+
+## Side-by-Side Comparison
+
+### Complete Example: Old vs New
+
+#### ⚠️ OLD API (main branch)
+```tsx
+import { AbstraxionProvider, Abstraxion, useModal } from "@burnt-labs/abstraxion";
+import "@burnt-labs/abstraxion/dist/index.css";
+
+function App() {
+  // Modal state managed by context
+  const [showModal, setShowModal] = useModal();
+
+  return (
+    <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
+      {/* Only onClose prop */}
+      <Abstraxion onClose={() => setShowModal(false)} />
+      <button onClick={() => setShowModal(true)}>Connect</button>
+    </AbstraxionProvider>
+  );
+}
+```
+
+**Limitations:**
+- ⚠️ Hidden state in context (hard to debug)
+- ⚠️ Tight coupling (can't use different UI)
+- ⚠️ Can't integrate with URL/localStorage/routing
+- ⚠️ SSR hydration issues
+- ⚠️ Hard to test in isolation
+
+#### ✅ NEW API (this PR) - Backward Compatible Component
+
+**Easiest migration** - just change imports, no code changes needed:
+
+```tsx
+import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { Abstraxion } from "@burnt-labs/ui";
+import "@burnt-labs/ui/dist/index.css";
+
+function App() {
+  // No useModal() needed! Modal auto-manages itself
+
+  return (
+    <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
+      {/* isOpen is optional - auto-shows when connecting */}
+      <Abstraxion onClose={() => console.log('closed')} />
+    </AbstraxionProvider>
+  );
+}
+```
+
+**Benefits over old API:**
+- ✅ No `useModal()` dependency
+- ✅ Modal auto-shows when connecting
+- ✅ Auto-closes when done
+- ✅ Success state display
+- ✅ Better loading states
+- ✅ Works with both redirect and signer modes
+
+#### ✅ NEW API (this PR) - Controlled Component (Optional)
+
+**More control** - if you need manual modal control:
+
+```tsx
+import { useState } from "react";
+import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { Abstraxion } from "@burnt-labs/ui";
+import "@burnt-labs/ui/dist/index.css";
+
+function App() {
+  // Optional: Control modal state manually
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
+      {/* Both isOpen and onClose props */}
+      <Abstraxion isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <button onClick={() => setIsOpen(true)}>Connect</button>
+    </AbstraxionProvider>
+  );
+}
+```
+
+**Extra benefits:**
+- ✅ Full control over modal visibility
+- ✅ Can sync with URL, localStorage, routing, etc.
+- ✅ Better for complex UX flows
+
+#### ✅ NEW API (this PR) - Hook Approach (RECOMMENDED)
+```tsx
+import { AbstraxionProvider, useAbstraxionAccount } from "@burnt-labs/abstraxion";
+import { useAbstraxionModal } from "@burnt-labs/ui";
+import "@burnt-labs/ui/dist/index.css";
+
+function AppContent() {
+  const accountState = useAbstraxionAccount();
+  const { Modal, LoadingOverlay, openModal } = useAbstraxionModal(accountState, {
+    autoShowOnConnecting: true,
+    showSuccessState: true,
+  });
+
+  return (
+    <>
+      <button onClick={openModal}>Connect</button>
+      <Modal />
+      <LoadingOverlay />
+    </>
+  );
+}
+
+function App() {
+  return (
+    <AbstraxionProvider config={{ chainId: "xion-testnet-1" }}>
+      <AppContent />
+    </AbstraxionProvider>
+  );
+}
+```
+
+**Extra Benefits:**
+- ✅ All benefits of component approach
+- ✅ Full control over modal behavior
+- ✅ Access to loading states
+- ✅ Success callbacks
+- ✅ Auto-show on connecting
+- ✅ Customizable success duration
 
 ## Support
 
