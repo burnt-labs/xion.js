@@ -397,6 +397,7 @@ The return value from `useAbstraxionAccount()` hook.
 ```typescript
 interface UseAbstraxionModalOptions {
   defaultOpen?: boolean; // Default: false
+  isOpen?: boolean; // External control of modal state (overrides internal state)
   autoShowOnConnecting?: boolean; // Default: true
   showSuccessState?: boolean; // Default: true
   successDuration?: number; // Default: 2000ms
@@ -426,8 +427,7 @@ interface UseAbstraxionModalReturn {
 The hook automatically shows the modal when connecting starts (if `autoShowOnConnecting` is true):
 
 ```tsx
-const { Modal, LoadingOverlay } = useAbstraxionModal({
-  accountState,
+const { Modal, LoadingOverlay } = useAbstraxionModal(accountState, {
   autoShowOnConnecting: true, // Modal shows automatically when connecting
 });
 ```
@@ -446,8 +446,7 @@ The `LoadingOverlay` component shows different states:
 After successful connection, shows a success message with checkmark:
 
 ```tsx
-const { Modal } = useAbstraxionModal({
-  accountState,
+const { Modal } = useAbstraxionModal(accountState, {
   showSuccessState: true,
   successDuration: 2000, // Show success for 2 seconds
 });
@@ -458,8 +457,7 @@ const { Modal } = useAbstraxionModal({
 Display custom error messages:
 
 ```tsx
-const { Modal } = useAbstraxionModal({
-  accountState,
+const { Modal } = useAbstraxionModal(accountState, {
   error: "Connection failed. Please try again.",
 });
 ```
@@ -469,8 +467,7 @@ const { Modal } = useAbstraxionModal({
 ### Custom Success Callback
 
 ```tsx
-const { Modal, LoadingOverlay } = useAbstraxionModal({
-  accountState,
+const { Modal, LoadingOverlay } = useAbstraxionModal(accountState, {
   onConnectSuccess: () => {
     // Redirect or update UI after successful connection
     router.push("/dashboard");
@@ -481,8 +478,7 @@ const { Modal, LoadingOverlay } = useAbstraxionModal({
 ### Manual Modal Control
 
 ```tsx
-const { Modal, openModal, closeModal, isOpen } = useAbstraxionModal({
-  accountState,
+const { Modal, openModal, closeModal, isOpen } = useAbstraxionModal(accountState, {
   autoShowOnConnecting: false, // Manual control
 });
 
@@ -495,8 +491,7 @@ const { Modal, openModal, closeModal, isOpen } = useAbstraxionModal({
 ### Without Success State
 
 ```tsx
-const { Modal, LoadingOverlay } = useAbstraxionModal({
-  accountState,
+const { Modal, LoadingOverlay } = useAbstraxionModal(accountState, {
   showSuccessState: false, // Don't show success, just close modal
   onConnectSuccess: () => {
     // Handle success yourself
@@ -531,9 +526,7 @@ function MyComponent() {
 ```tsx
 function MyComponent() {
   const accountState = useAbstraxionAccount();
-  const { Modal, LoadingOverlay, openModal } = useAbstraxionModal({
-    accountState,
-  });
+  const { Modal, LoadingOverlay, openModal } = useAbstraxionModal(accountState);
 
   return (
     <>

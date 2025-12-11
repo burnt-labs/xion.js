@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "../dialog";
 import { Button } from "../button";
 import { Spinner } from "../icons/spinner";
@@ -166,6 +166,8 @@ export function useAbstraxionModal(
 
   // Track connection state changes
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     // Only auto-manage if not externally controlled
     if (externalIsOpen !== undefined) return;
 
@@ -186,7 +188,7 @@ export function useAbstraxionModal(
         setShowSuccess(true);
         onConnectSuccess?.();
         // Auto-close after success duration
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           setShowSuccess(false);
           setInternalIsOpen(false);
         }, successDuration);
@@ -200,6 +202,13 @@ export function useAbstraxionModal(
     if (!accountState.isConnected) {
       setShowSuccess(false);
     }
+
+    // Cleanup timeout on unmount or dependency changes
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [
     accountState.isConnecting,
     accountState.isConnected,
@@ -297,10 +306,8 @@ export function useAbstraxionModal(
     const {
       title,
       description,
-      borderColor,
       bgColor,
       borderBgColor,
-      spinnerColor,
       textColor,
       progressColor,
     } = getLoadingContent();
