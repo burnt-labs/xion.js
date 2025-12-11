@@ -133,83 +133,42 @@ jobs:
           pnpm --filter @burnt-labs/abstraxion test:integration 2>&1 | tee abstraxion-results.txt
           ABSTRAXION_EXIT=$?
 
-          # Parse test results to count failures
+          # Parse test results to count failures (for workflow control)
           TOTAL_FAILED=0
-          TOTAL_PASSED=0
 
-          # Function to extract test counts from vitest output
-          # Vitest formats: "Test Files  X failed | Y passed" or "Tests  X failed | Y passed"
-          extract_counts() {
-            local file=$1
-
-            # Initialize with defaults
-            local failed=0
-            local passed=0
-
-            # Use -a flag to treat file as text even if it contains binary data
-            # Try pattern 1: "Test Files  X failed | Y passed (Z)"
-            local temp_failed=$(grep -a -oP 'Test Files\s+\K\d+(?=\s+failed)' "$file" 2>/dev/null | head -1 || echo "")
-            local temp_passed=$(grep -a -oP 'Test Files\s+\d+\s+failed \| \K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
-
-            # Try pattern 2: "Tests  X failed | Y passed"
-            if [ -z "$temp_failed" ]; then
-              temp_failed=$(grep -a -oP 'Tests\s+\K\d+(?=\s+failed)' "$file" 2>/dev/null | head -1 || echo "")
-            fi
-            if [ -z "$temp_passed" ]; then
-              temp_passed=$(grep -a -oP 'Tests\s+\d+\s+failed \| \K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
-            fi
-
-            # Try pattern 3: Just "X passed" (no failures)
-            if [ -z "$temp_passed" ]; then
-              temp_passed=$(grep -a -oP 'Tests\s+\K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
-            fi
-
-            # Try pattern 4: "Test Files  X passed" (no failures)
-            if [ -z "$temp_passed" ]; then
-              temp_passed=$(grep -a -oP 'Test Files\s+\K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
-            fi
-
-            # Assign only if not empty
-            [ -n "$temp_failed" ] && failed=$temp_failed
-            [ -n "$temp_passed" ] && passed=$temp_passed
-
-            echo "$failed $passed"
-          }
-
+          # Extract just the number of failed tests using simple grep
           if [ -f account-management-results.txt ]; then
-            echo "=== Parsing account-management results ==="
-            grep -a -i "test" account-management-results.txt | grep -a -E "(passed|failed)" | head -5
-            read FAILED PASSED <<< $(extract_counts account-management-results.txt)
-            # Ensure values are numeric
-            FAILED=${FAILED:-0}
-            PASSED=${PASSED:-0}
-            echo "Account Management: $PASSED passed, $FAILED failed"
+            FAILED=$(grep -a -oP 'Tests\s+\K\d+(?=\s+failed)' account-management-results.txt 2>/dev/null | head -1 || echo "0")
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
-            TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
           fi
 
           if [ -f abstraxion-results.txt ]; then
-            echo "=== Parsing abstraxion results ==="
-            grep -a -i "test" abstraxion-results.txt | grep -a -E "(passed|failed)" | head -5
-            read FAILED PASSED <<< $(extract_counts abstraxion-results.txt)
-            # Ensure values are numeric
-            FAILED=${FAILED:-0}
-            PASSED=${PASSED:-0}
-            echo "Abstraxion: $PASSED passed, $FAILED failed"
+            FAILED=$(grep -a -oP 'Tests\s+\K\d+(?=\s+failed)' abstraxion-results.txt 2>/dev/null | head -1 || echo "0")
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
-            TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
           fi
 
-          # Ensure outputs have valid numeric values
-          TOTAL_FAILED=${TOTAL_FAILED:-0}
-          TOTAL_PASSED=${TOTAL_PASSED:-0}
+          # Extract test summary for PR comment (last ~20 lines of each output)
+          TEST_SUMMARY=""
+
+          if [ -f account-management-results.txt ]; then
+            ACCT_MGMT_SUMMARY=$(grep -a -E "Test Files|Tests|Time" account-management-results.txt 2>/dev/null | tail -5 || echo "No summary available")
+            TEST_SUMMARY="${TEST_SUMMARY}**@burnt-labs/account-management:**\n\`\`\`\n${ACCT_MGMT_SUMMARY}\n\`\`\`\n\n"
+          fi
+
+          if [ -f abstraxion-results.txt ]; then
+            ABSTRAXION_SUMMARY=$(grep -a -E "Test Files|Tests|Time" abstraxion-results.txt 2>/dev/null | tail -5 || echo "No summary available")
+            TEST_SUMMARY="${TEST_SUMMARY}**@burnt-labs/abstraxion:**\n\`\`\`\n${ABSTRAXION_SUMMARY}\n\`\`\`"
+          fi
+
+          # Save summary for PR comment
+          echo "test_summary<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$TEST_SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
           echo "total_failed=$TOTAL_FAILED" >> $GITHUB_OUTPUT
-          echo "total_passed=$TOTAL_PASSED" >> $GITHUB_OUTPUT
 
           echo ""
           echo "📊 Test Summary:"
-          echo "  Total Passed: $TOTAL_PASSED"
           echo "  Total Failed: $TOTAL_FAILED"
 
           # Fail if more than 10 tests failed
@@ -232,20 +191,13 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const totalPassed = '${{ steps.run-tests.outputs.total_passed }}' || '0';
-            const totalFailed = '${{ steps.run-tests.outputs.total_failed }}' || '0';
+            const testSummary = `${{ steps.run-tests.outputs.test_summary }}`;
+            const totalFailed = parseInt('${{ steps.run-tests.outputs.total_failed }}', 10) || 0;
             const testStatus = '${{ steps.run-tests.outputs.test_status }}' || 'unknown';
 
-            // Additional safety check for empty strings
-            const passed = totalPassed.trim() === '' ? '0' : totalPassed;
-            const failed = totalFailed.trim() === '' ? '0' : totalFailed;
-
-            const failedCount = parseInt(failed, 10) || 0;
-            const passedCount = parseInt(passed, 10) || 0;
-
-            // Skip posting if no tests ran
-            if (passedCount === 0 && failedCount === 0) {
-              console.log('No tests ran, skipping comment');
+            // Skip if no test summary available
+            if (!testSummary || testSummary.trim() === '') {
+              console.log('No test results available, skipping comment');
               return;
             }
 
@@ -254,17 +206,22 @@ jobs:
 
             if (testStatus === 'failed') {
               emoji = '❌';
-              statusText = 'Too many failures (>10)';
+              statusText = `Too many failures (${totalFailed} > 10)`;
             } else if (testStatus === 'warning') {
               emoji = '⚠️';
-              statusText = 'Some tests failed (≤10)';
+              statusText = `Some tests failed (${totalFailed} ≤ 10)`;
             }
 
-            const noteText = failedCount > 0
-              ? '\n\n> **Note:** Some integration test failures are expected due to testnet instability (network issues, indexer delays, fee grant limits, etc.).\n> The workflow only fails if more than 10 tests fail.\n'
+            const noteText = totalFailed > 0
+              ? '\n\n> **Note:** Some integration test failures are expected due to testnet instability (network issues, indexer delays, fee grant limits, etc.). The workflow only fails if more than 10 tests fail.'
               : '';
 
-            const body = `## ${emoji} Integration Test Results\n\n**Status:** ${statusText}\n\n- ✅ Passed: ${passed}\n- ❌ Failed: ${failed}${noteText}\n---\n*Environment: ${{ steps.config.outputs.test_environment }}*\n*AA-API: ${{ steps.config.outputs.aa_api_url }}*`;
+            const body = `## ${emoji} Integration Test Results\n\n` +
+              `**Status:** ${statusText}\n\n` +
+              `${testSummary}` +
+              `${noteText}\n\n` +
+              `---\n` +
+              `*Environment: ${{ steps.config.outputs.test_environment }}* | *AA-API: ${{ steps.config.outputs.aa_api_url }}*`;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,

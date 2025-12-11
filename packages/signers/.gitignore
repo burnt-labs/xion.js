@@ -1,5 +1,4 @@
 # Generated AA API types
-# api.generated.ts is auto-generated from OpenAPI schema (gitignored, regenerated in CI)
-# api.ts is the wrapper that extracts types from api.generated.ts (committed)
-src/types/generated/api.generated.ts
+# Both api.generated.ts (raw OpenAPI types) and api.ts (wrapper) are now committed
+# This allows schema drift detection and full visibility of API changes in PRs
 
