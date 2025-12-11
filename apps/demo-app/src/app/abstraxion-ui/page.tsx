@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
-import { useAbstraxionAccount, useAbstraxionSigningClient } from "@burnt-labs/abstraxion";
+import {
+  useAbstraxionAccount,
+  useAbstraxionSigningClient,
+} from "@burnt-labs/abstraxion";
 import { Abstraxion } from "@burnt-labs/ui";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
@@ -32,8 +35,16 @@ export default function AbstraxionUIPage(): JSX.Element {
           Abstraxion UI Component Demo
         </h1>
         <p className="max-w-md text-sm text-gray-400">
-          This demo showcases the <code className="rounded bg-gray-800 px-1 py-0.5 text-xs">Abstraxion</code> component from <code className="rounded bg-gray-800 px-1 py-0.5 text-xs">@burnt-labs/ui</code>.
-          The component handles all modal and loading overlay states automatically.
+          This demo showcases the{" "}
+          <code className="rounded bg-gray-800 px-1 py-0.5 text-xs">
+            Abstraxion
+          </code>{" "}
+          component from{" "}
+          <code className="rounded bg-gray-800 px-1 py-0.5 text-xs">
+            @burnt-labs/ui
+          </code>
+          . The component handles all modal and loading overlay states
+          automatically.
         </p>
       </div>
 
@@ -91,9 +102,15 @@ export default function AbstraxionUIPage(): JSX.Element {
             💡 Using Abstraxion Component
           </p>
           <p className="text-xs text-gray-300">
-            The <code className="rounded bg-gray-800 px-1 py-0.5">Abstraxion</code> component from <code className="rounded bg-gray-800 px-1 py-0.5">@burnt-labs/ui</code> automatically handles:
+            The{" "}
+            <code className="rounded bg-gray-800 px-1 py-0.5">Abstraxion</code>{" "}
+            component from{" "}
+            <code className="rounded bg-gray-800 px-1 py-0.5">
+              @burnt-labs/ui
+            </code>{" "}
+            automatically handles:
           </p>
-          <ul className="mt-2 ml-4 list-disc space-y-1 text-xs text-gray-400">
+          <ul className="ml-4 mt-2 list-disc space-y-1 text-xs text-gray-400">
             <li>Modal display and management</li>
             <li>Loading overlays for all connection states</li>
             <li>Success state display</li>
@@ -107,7 +124,8 @@ export default function AbstraxionUIPage(): JSX.Element {
             >
               loading-states demo
             </Link>{" "}
-            to see the difference between manual hook usage and the component approach.
+            to see the difference between manual hook usage and the component
+            approach.
           </p>
         </div>
       </div>
@@ -124,4 +142,3 @@ export default function AbstraxionUIPage(): JSX.Element {
     </main>
   );
 }
-

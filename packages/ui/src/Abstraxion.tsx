@@ -80,4 +80,3 @@ export const Abstraxion: React.FC<AbstraxionProps> = ({ isOpen, onClose }) => {
     </>
   );
 };
-

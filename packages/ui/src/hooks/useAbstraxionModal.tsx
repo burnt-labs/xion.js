@@ -34,40 +34,40 @@ export interface UseAbstraxionModalOptions {
    * @default false
    */
   defaultOpen?: boolean;
-  
+
   /**
    * External control of modal open state (if provided, overrides internal state)
    */
   isOpen?: boolean;
-  
+
   /**
    * Whether to automatically show the modal when connecting
    * @default true
    */
   autoShowOnConnecting?: boolean;
-  
+
   /**
    * Whether to show success state after connection
    * @default true
    */
   showSuccessState?: boolean;
-  
+
   /**
    * Duration to show success state before auto-closing (ms)
    * @default 2000
    */
   successDuration?: number;
-  
+
   /**
    * Custom error message to display
    */
   error?: string;
-  
+
   /**
    * Callback when modal closes
    */
   onClose?: () => void;
-  
+
   /**
    * Callback when connection succeeds
    */
@@ -79,27 +79,27 @@ export interface UseAbstraxionModalReturn {
    * Whether the modal is currently open
    */
   isOpen: boolean;
-  
+
   /**
    * Function to open the modal
    */
   openModal: () => void;
-  
+
   /**
    * Function to close the modal
    */
   closeModal: () => void;
-  
+
   /**
    * Function to toggle the modal
    */
   toggleModal: () => void;
-  
+
   /**
    * The modal component to render
    */
   Modal: React.ComponentType;
-  
+
   /**
    * Loading overlay component (for full-screen overlays)
    */
@@ -108,23 +108,23 @@ export interface UseAbstraxionModalReturn {
 
 /**
  * Hook for managing Abstraxion authentication modal with loading states
- * 
+ *
  * This hook provides a complete modal experience with loading states, success display,
  * and error handling. It's designed to work with the `useAbstraxionAccount` hook
  * from `@burnt-labs/abstraxion`.
- * 
+ *
  * @example
  * ```tsx
  * import { useAbstraxionModal } from "@burnt-labs/ui";
  * import { useAbstraxionAccount } from "@burnt-labs/abstraxion";
- * 
+ *
  * function MyComponent() {
  *   const accountState = useAbstraxionAccount();
  *   const { Modal, LoadingOverlay, openModal } = useAbstraxionModal({
  *     accountState,
  *     autoShowOnConnecting: true,
  *   });
- *   
+ *
  *   return (
  *     <>
  *       <button onClick={openModal}>Connect</button>
@@ -137,7 +137,7 @@ export interface UseAbstraxionModalReturn {
  */
 export function useAbstraxionModal(
   accountState: AbstraxionAccountState,
-  options: UseAbstraxionModalOptions = {}
+  options: UseAbstraxionModalOptions = {},
 ): UseAbstraxionModalReturn {
   const {
     defaultOpen = false,
@@ -151,7 +151,7 @@ export function useAbstraxionModal(
   } = options;
 
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
-  
+
   // Use external isOpen if provided, otherwise use internal state
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const [showSuccess, setShowSuccess] = useState(false);
@@ -168,7 +168,7 @@ export function useAbstraxionModal(
   useEffect(() => {
     // Only auto-manage if not externally controlled
     if (externalIsOpen !== undefined) return;
-    
+
     // Show modal when connecting starts (if autoShowOnConnecting is true)
     if (autoShowOnConnecting && accountState.isConnecting && !wasConnecting) {
       setInternalIsOpen(true);
@@ -176,7 +176,11 @@ export function useAbstraxionModal(
     }
 
     // Handle successful connection
-    if (wasConnecting && accountState.isConnected && !accountState.isConnecting) {
+    if (
+      wasConnecting &&
+      accountState.isConnected &&
+      !accountState.isConnecting
+    ) {
       setWasConnecting(false);
       if (showSuccessState) {
         setShowSuccess(true);
@@ -267,7 +271,8 @@ export function useAbstraxionModal(
       if (accountState.isConnecting) {
         return {
           title: "Establishing Connection",
-          description: "Connecting to your XION account and verifying permissions",
+          description:
+            "Connecting to your XION account and verifying permissions",
           borderColor: "ui-border-blue-500/50",
           bgColor: "ui-bg-blue-500/20",
           borderBgColor: "ui-border-blue-500/40",
@@ -278,7 +283,8 @@ export function useAbstraxionModal(
       }
       return {
         title: "Initializing Application",
-        description: "Checking for existing authentication and restoring session",
+        description:
+          "Checking for existing authentication and restoring session",
         borderColor: "ui-border-yellow-500/50",
         bgColor: "ui-bg-yellow-500/20",
         borderBgColor: "ui-border-yellow-500/40",
@@ -310,13 +316,18 @@ export function useAbstraxionModal(
           {/* DialogHeader equivalent */}
           <div className="ui-flex ui-flex-col ui-space-y-1.5 ui-text-center sm:ui-text-left">
             {/* DialogTitle equivalent */}
-            <h2 className={cn("ui-text-lg ui-font-semibold ui-leading-none ui-tracking-tight", textColor)}>
+            <h2
+              className={cn(
+                "ui-text-lg ui-font-semibold ui-leading-none ui-tracking-tight",
+                textColor,
+              )}
+            >
               {title}
             </h2>
             {/* DialogDescription equivalent */}
             <p className="ui-text-neutral-500 ui-text-sm">{description}</p>
           </div>
-          
+
           <div className="ui-flex ui-flex-col ui-items-center ui-justify-center ui-gap-6 ui-py-8">
             <div
               className={`ui-flex ui-h-16 ui-w-16 ui-items-center ui-justify-center ui-rounded-full ui-border-4 ${borderBgColor} ${bgColor}`}
@@ -325,7 +336,7 @@ export function useAbstraxionModal(
                 <Spinner />
               </div>
             </div>
-            
+
             {accountState.isLoggingIn && (
               <>
                 <div className="ui-flex ui-items-center ui-justify-center ui-gap-2">
@@ -338,7 +349,7 @@ export function useAbstraxionModal(
                 </p>
               </>
             )}
-            
+
             {accountState.isInitializing && (
               <div className="ui-w-full ui-max-w-xs">
                 <div className="ui-h-2 ui-w-full ui-rounded-full ui-bg-white/5">
@@ -378,7 +389,9 @@ export function useAbstraxionModal(
                   <span className="ui-font-bold ui-text-lg ui-leading-[21.6px] ui-text-red-400">
                     Error Message
                   </span>
-                  <p className="ui-text-base ui-font-bold ui-text-red-400">{error}</p>
+                  <p className="ui-text-base ui-font-bold ui-text-red-400">
+                    {error}
+                  </p>
                 </div>
                 <Button onClick={closeModal} fullWidth>
                   Close
@@ -439,7 +452,6 @@ export function useAbstraxionModal(
               </DialogHeader>
 
               <div className="ui-flex ui-flex-col ui-gap-4 ui-items-center ui-justify-center ui-py-8">
-
                 {accountState.isLoading ? (
                   <div className="ui-flex ui-flex-col ui-items-center ui-gap-4">
                     <div className="ui-w-8 ui-h-8">
@@ -453,7 +465,8 @@ export function useAbstraxionModal(
                           : "Loading..."}
                     </p>
                   </div>
-                ) : accountState.isConnected && accountState.data.bech32Address ? (
+                ) : accountState.isConnected &&
+                  accountState.data.bech32Address ? (
                   <div className="ui-flex ui-flex-col ui-gap-4 ui-w-full">
                     <div className="ui-p-4 ui-bg-white/5 ui-rounded-lg">
                       <p className="ui-text-xs ui-text-neutral-400 ui-mb-1">
@@ -463,7 +476,11 @@ export function useAbstraxionModal(
                         {accountState.data.bech32Address}
                       </p>
                     </div>
-                    <Button onClick={accountState.logout} structure="destructive" fullWidth>
+                    <Button
+                      onClick={accountState.logout}
+                      structure="destructive"
+                      fullWidth
+                    >
                       Disconnect
                     </Button>
                   </div>
@@ -497,4 +514,3 @@ export function useAbstraxionModal(
     LoadingOverlay,
   };
 }
-

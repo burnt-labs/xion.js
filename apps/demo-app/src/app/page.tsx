@@ -26,12 +26,14 @@ export default function Page(): JSX.Element {
           </Button>
         </Link>
       </div>
-      <p className="text-center text-xs text-gray-500 mt-4">
+      <p className="mt-4 text-center text-xs text-gray-500">
         <strong>Loading States</strong> shows manual hook usage with custom UI.
         <br />
-        <strong>Abstraxion UI Component</strong> demonstrates the pre-built modal component.
+        <strong>Abstraxion UI Component</strong> demonstrates the pre-built
+        modal component.
         <br />
-        <strong>Signer Mode</strong> allows wallet connections without dashboard redirect.
+        <strong>Signer Mode</strong> allows wallet connections without dashboard
+        redirect.
       </p>
     </main>
   );
