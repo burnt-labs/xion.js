@@ -12,16 +12,8 @@ on:
           - testnet
           - mainnet
         default: 'testnet'
-      aa_api_mode:
-        description: 'AA API mode'
-        required: false
-        type: choice
-        options:
-          - live-url
-          - dev-server
-        default: 'live-url'
       aa_api_url:
-        description: 'Custom AA API URL (only used when aa_api_mode is live-url)'
+        description: 'Custom AA API URL to use for integration tests'
         required: false
         type: string
   push:
@@ -72,20 +64,15 @@ jobs:
           fi
 
           TEST_ENV="${{ github.event.inputs.test_environment || 'testnet' }}"
-          AA_API_MODE="${{ github.event.inputs.aa_api_mode || 'live-url' }}"
 
           echo "test_environment=$TEST_ENV" >> $GITHUB_OUTPUT
-          echo "aa_api_mode=$AA_API_MODE" >> $GITHUB_OUTPUT
 
           # Load configuration from JSON file
           chmod +x .github/scripts/load-test-config.sh
           source .github/scripts/load-test-config.sh "$TEST_ENV"
 
           # Override AA-API URL if specified
-          if [ "$AA_API_MODE" == "dev-server" ]; then
-            FINAL_AA_API_URL="http://localhost:8787"
-            echo "Using AA-API dev server: $FINAL_AA_API_URL"
-          elif [ -n "${{ github.event.inputs.aa_api_url }}" ]; then
+          if [ -n "${{ github.event.inputs.aa_api_url }}" ]; then
             FINAL_AA_API_URL="${{ github.event.inputs.aa_api_url }}"
             echo "Using custom AA-API URL: $FINAL_AA_API_URL"
           else
@@ -95,50 +82,6 @@ jobs:
 
           echo "aa_api_url=$FINAL_AA_API_URL" >> $GITHUB_OUTPUT
           echo "XION_AA_API_URL=$FINAL_AA_API_URL" >> $GITHUB_ENV
-
-      - name: 🚀 Start AA API Dev Server (if needed)
-        id: start-aa-api
-        if: steps.config.outputs.aa_api_mode == 'dev-server'
-        run: |
-          # Navigate to account-abstraction-api directory
-          cd ../account-abstraction-api || cd ../../account-abstraction-api || (echo "❌ account-abstraction-api directory not found" && exit 1)
-
-          echo "Starting AA API dev server..."
-          npm run dev > /tmp/aa-api.log 2>&1 &
-          AA_API_PID=$!
-          echo "pid=$AA_API_PID" >> $GITHUB_OUTPUT
-
-          # Wait for server to be ready (health check)
-          echo "Waiting for AA API to be ready..."
-          for i in {1..30}; do
-            if curl -f http://localhost:8787/healthz > /dev/null 2>&1; then
-              echo "✅ AA API is ready!"
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "❌ AA API failed to start"
-              cat /tmp/aa-api.log
-              exit 1
-            fi
-            sleep 2
-          done
-
-          echo "AA API started successfully on http://localhost:8787"
-        env:
-          # Sensitive values from GitHub secrets (required for dev-server mode)
-          STYTCH_PROJECT_ID: ${{ secrets.STYTCH_PROJECT_ID }}
-          STYTCH_SECRET: ${{ secrets.STYTCH_SECRET }}
-
-          # Public defaults from config file (already loaded)
-          FEE_GRANTER_ADDRESS: ${{ env.XION_FEE_GRANTER }}
-          STYTCH_API_URL: ${{ env.AA_API_STYTCH_API_URL }}
-          CHECKSUM: ${{ env.AA_API_CHECKSUM }}
-          CODE_ID: ${{ env.AA_API_CODE_ID }}
-          ADDRESS_PREFIX: ${{ env.XION_ADDRESS_PREFIX }}
-          GAS_PRICE: ${{ env.XION_GAS_PRICE }}
-          GAS_ADJUSTMENT: ${{ env.XION_GAS_ADJUSTMENT }}
-          XION_RPC_URL: ${{ env.XION_RPC_URL }}
-          NODE_ENV: test
 
       - name: 🧪 Run Integration Tests
         id: run-tests
@@ -296,12 +239,3 @@ jobs:
               repo: context.repo.repo,
               body: body
             });
-
-      - name: 🛑 Stop AA API Dev Server
-        if: always() && steps.start-aa-api.outputs.pid != ''
-        run: |
-          if [ -n "${{ steps.start-aa-api.outputs.pid }}" ]; then
-            echo "Stopping AA API dev server (PID: ${{ steps.start-aa-api.outputs.pid }})"
-            kill ${{ steps.start-aa-api.outputs.pid }} || true
-            sleep 2
-          fi

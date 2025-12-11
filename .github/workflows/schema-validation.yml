@@ -1,0 +1,151 @@
+name: OpenAPI Schema Validation
+
+on:
+  pull_request:
+    # Run on all PRs to catch AA API schema changes
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      aa_api_url:
+        description: 'AA API URL to validate against'
+        required: false
+        type: string
+        default: 'https://aa-api.xion-testnet-2.burnt.com'
+  schedule:
+    # Run daily at 00:00 UTC to catch schema drift
+    - cron: '0 0 * * *'
+
+jobs:
+  validate-schema:
+    name: Validate Generated Types Against OpenAPI Schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.9.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine AA API URL
+        id: config
+        run: |
+          # Use workflow input if provided, otherwise use testnet default
+          if [ -n "${{ github.event.inputs.aa_api_url }}" ]; then
+            AA_API_URL="${{ github.event.inputs.aa_api_url }}"
+          else
+            AA_API_URL="https://aa-api.xion-testnet-2.burnt.com"
+          fi
+
+          echo "aa_api_url=$AA_API_URL" >> $GITHUB_OUTPUT
+          echo "Using AA-API URL: $AA_API_URL"
+
+      - name: Backup Current Generated Types
+        run: |
+          echo "Backing up current generated types..."
+          cp -r packages/signers/src/types/generated /tmp/generated-backup
+          echo "✅ Backup created"
+
+      - name: Generate Types from Live AA API
+        run: |
+          echo "Generating types from live AA API: ${{ steps.config.outputs.aa_api_url }}"
+
+          # Use the generate script with the AA API URL
+          pnpm tsx scripts/generate-aa-api-types.ts "${{ steps.config.outputs.aa_api_url }}"
+
+          echo "✅ Types generated successfully"
+
+      - name: Compare Generated Types
+        id: compare
+        run: |
+          echo "Comparing generated types with committed types..."
+
+          # Check if there are differences
+          if ! diff -r packages/signers/src/types/generated /tmp/generated-backup > /tmp/schema-diff.txt; then
+            echo "schema_changed=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Schema validation detected differences!"
+            echo ""
+            echo "Diff summary:"
+            head -50 /tmp/schema-diff.txt
+            echo ""
+            echo "Full diff saved to artifact"
+          else
+            echo "schema_changed=false" >> $GITHUB_OUTPUT
+            echo "✅ Generated types match committed types - schema is in sync!"
+          fi
+
+      - name: Upload Diff Artifact
+        if: steps.compare.outputs.schema_changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-diff
+          path: /tmp/schema-diff.txt
+
+      - name: Post Schema Drift Comment
+        if: github.event_name == 'pull_request' && steps.compare.outputs.schema_changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## ⚠️  OpenAPI Schema Drift Detected
+
+            The generated types in this PR differ from what would be generated from the current AA-API OpenAPI schema.
+
+            **AA-API URL:** \`${{ steps.config.outputs.aa_api_url }}\`
+
+            This could mean:
+            - The AA-API schema has changed and types need to be regenerated
+            - The committed types are out of sync with the schema
+            - There are manual modifications to generated types (not recommended)
+
+            ### Action Required
+
+            If the AA-API schema has intentionally changed:
+            1. Run \`pnpm generate:types\` in the signers package
+            2. Review the changes
+            3. Commit the updated types
+
+            If the types are correct and the schema hasn't changed, this might be a false positive.
+
+            ---
+            *Schema validation artifacts are available in the workflow run.*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Fail on Schema Drift (strict mode)
+        if: steps.compare.outputs.schema_changed == 'true' && github.event_name == 'schedule'
+        run: |
+          echo "❌ Schema drift detected in scheduled run - failing workflow"
+          echo "This indicates the AA-API schema has changed without updating the generated types"
+          exit 1
+
+      - name: Schema Validation Summary
+        run: |
+          echo ""
+          echo "📊 Schema Validation Summary:"
+          echo "  AA-API URL: ${{ steps.config.outputs.aa_api_url }}"
+          echo "  Schema Changed: ${{ steps.compare.outputs.schema_changed }}"
+          echo ""
+
+          if [ "${{ steps.compare.outputs.schema_changed }}" == "true" ]; then
+            echo "⚠️  Schema validation detected differences (non-blocking for PRs)"
+          else
+            echo "✅ Schema is in sync!"
+          fi
