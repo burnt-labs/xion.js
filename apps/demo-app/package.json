@@ -41,6 +41,7 @@
     "@types/react": "^18.2.47",
     "@types/react-dom": "^18.2.18",
     "eslint-config-next": "14.0.4",
+    "eslint-plugin-turbo": "^1.10.12",
     "postcss": "^8.4.20",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.2.2",

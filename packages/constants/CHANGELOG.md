@@ -1,5 +1,55 @@
 # @burnt-labs/constants
 
+## UNRELEASED
+
+### Minor Changes
+
+- Add synchronous chain configuration utilities and fee granter support
+
+  # New Features
+
+  ## Synchronous Chain Info Utilities
+
+  New synchronous alternatives to `fetchConfig()` for when chain ID is already known:
+
+  ```typescript
+  // Get chain info by chain ID
+  getChainInfo(chainId: string): ChainInfo | undefined
+
+  // Get fee granter address for chain
+  getFeeGranter(chainId: string): string
+
+  // Get RPC URL for chain
+  getRpcUrl(chainId: string): string | undefined
+
+  // Get REST URL for chain
+  getRestUrl(chainId: string): string | undefined
+  ```
+
+  ## Fee Granter Configuration
+  - Added fee granter addresses for supported networks:
+    - `xion-mainnet-1`: `xion12q9q752mta5fvwjj2uevqpuku9y60j33j9rll0`
+    - `xion-testnet-2`: `xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x`
+  - `fetchConfig()` now returns `feeGranter` in response
+
+  # Migration Guide
+
+  Instead of fetching config from RPC when you already have the chain ID:
+
+  ```typescript
+  // Before
+  const config = await fetchConfig(rpcUrl);
+  const restUrl = config.restUrl;
+
+  // After (no async needed)
+  const restUrl = getRestUrl(chainId);
+  const feeGranter = getFeeGranter(chainId);
+  ```
+
+### Patch Changes
+
+- Updated dependencies
+
 ## 0.1.0-alpha.19
 
 ### Minor Changes

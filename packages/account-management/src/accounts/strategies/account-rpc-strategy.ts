@@ -11,8 +11,16 @@
  */
 
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { calculateSalt, calculateSmartAccountAddress, AUTHENTICATOR_TYPE, type AuthenticatorType } from "@burnt-labs/signers";
-import type { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
+import {
+  calculateSalt,
+  calculateSmartAccountAddress,
+  AUTHENTICATOR_TYPE,
+  type AuthenticatorType,
+} from "@burnt-labs/signers";
+import type {
+  IndexerStrategy,
+  SmartAccountWithCodeId,
+} from "../../types/indexer";
 import { Buffer } from "buffer";
 
 export interface RpcAccountStrategyConfig {
@@ -64,7 +72,11 @@ export class RpcAccountStrategy implements IndexerStrategy {
 
       // 5. Query authenticators directly (more reliable than getContract)
       // getContract() can fail with protobuf errors on some contract types
-      const authenticators = await this.queryAuthenticators(client, calculatedAddress, loginAuthenticator);
+      const authenticators = await this.queryAuthenticators(
+        client,
+        calculatedAddress,
+        loginAuthenticator,
+      );
 
       if (!authenticators || authenticators.length === 0) {
         // If query failed, contract likely doesn't exist (this is normal)
@@ -73,14 +85,19 @@ export class RpcAccountStrategy implements IndexerStrategy {
 
       // 6. Return smart account with authenticators
       // Use configured codeId (same as AA API and Dashboard)
-      return [{
-        id: calculatedAddress,
-        codeId: this.config.codeId,
-        authenticators: authenticators,
-      }];
+      return [
+        {
+          id: calculatedAddress,
+          codeId: this.config.codeId,
+          authenticators: authenticators,
+        },
+      ];
     } catch (error) {
-      console.error("[RpcAccountStrategy] Failed to query chain:", error);
-      return [];
+      // Re-throw error instead of silently returning empty array
+      // Caller (composite strategy) will handle fallback
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(`RPC account strategy failed: ${errorMessage}`);
     }
   }
 
@@ -97,7 +114,14 @@ export class RpcAccountStrategy implements IndexerStrategy {
     client: CosmWasmClient,
     contractAddress: string,
     loginAuthenticator: string,
-  ): Promise<Array<{ id: string; type: string; authenticator: string; authenticatorIndex: number }>> {
+  ): Promise<
+    Array<{
+      id: string;
+      type: AuthenticatorType;
+      authenticator: string;
+      authenticatorIndex: number;
+    }>
+  > {
     try {
       // Step 1: Query all authenticator IDs
       const idsResponse = await client.queryContractSmart(contractAddress, {
@@ -112,19 +136,24 @@ export class RpcAccountStrategy implements IndexerStrategy {
       const authenticators = await Promise.all(
         idsResponse.map(async (id: number) => {
           try {
-            const authResponse = await client.queryContractSmart(contractAddress, {
-              authenticator_by_i_d: { id },
-            });
+            const authResponse = await client.queryContractSmart(
+              contractAddress,
+              {
+                authenticator_by_i_d: { id },
+              },
+            );
 
             // Parse the authenticator data (it's base64-encoded JSON)
             // Format: {"EthWallet":{"address":"0x..."}} or {"Secp256K1":{"pubkey":"..."}}
             let authenticatorData: any;
             let authenticatorString: string;
-            let authenticatorType: string;
+            let authenticatorType: AuthenticatorType;
 
-            if (typeof authResponse === 'string') {
+            if (typeof authResponse === "string") {
               // Response is base64-encoded
-              const decoded = Buffer.from(authResponse, 'base64').toString('utf-8');
+              const decoded = Buffer.from(authResponse, "base64").toString(
+                "utf-8",
+              );
               authenticatorData = JSON.parse(decoded);
             } else {
               // Response is already JSON
@@ -156,17 +185,21 @@ export class RpcAccountStrategy implements IndexerStrategy {
               authenticator: authenticatorString,
               authenticatorIndex: id,
             };
-          } catch (error: any) {
+          } catch (error: unknown) {
+            // Silently return null for authenticators that can't be decoded
+            // This is expected for some authenticator types
             return null;
           }
-        })
+        }),
       );
 
       // Filter out null results
-      const validAuthenticators = authenticators.filter((auth): auth is NonNullable<typeof auth> => auth !== null);
+      const validAuthenticators = authenticators.filter(
+        (auth): auth is NonNullable<typeof auth> => auth !== null,
+      );
 
       return validAuthenticators;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If the query fails, the contract likely doesn't exist
       // This is normal for addresses that haven't been instantiated yet
       return [];

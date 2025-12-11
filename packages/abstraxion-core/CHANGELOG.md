@@ -1,5 +1,99 @@
 # @burnt-labs/abstraxion-core
 
+## UNRELEASED
+
+### Major Changes
+
+- Connector architecture and AA API v2 integration
+
+  # New Features
+
+  ## Connector System
+
+  New connector-based architecture for flexible authentication:
+
+  ```typescript
+  // Connector types
+  export interface Connector {
+    type: ConnectorType;
+    metadata: ConnectorMetadata;
+    connect(): Promise<ConnectorConnectionResult>;
+    disconnect(): Promise<void>;
+  }
+
+  // External signer connector
+  export class ExternalSignerConnector implements Connector {
+    // Connect using external auth providers (Turnkey, Privy, etc.)
+  }
+
+  // Connector registry
+  export class ConnectorRegistry {
+    registerConnector(connector: Connector): void;
+    getConnector(type: ConnectorType): Connector | undefined;
+  }
+  ```
+
+  ## AA API v2 Client
+  - New `api/client.ts` - HTTP client for AA API v2
+  - New `api/createAccount.ts` - Account creation utilities
+  - Supports both POST and GET account creation methods
+  - Enhanced error handling and validation
+
+  ## Configuration Validation
+  - New `config/validation.ts` - Configuration schema validation
+  - Type-safe configuration with runtime checks
+  - Improved error messages for misconfigurations
+
+  ## Enhanced AbstraxionAuth
+  - Improved authentication flow with better state management
+  - Support for multiple authentication modes
+  - Enhanced grant verification and validation
+
+  ## GranteeSignerClient Improvements
+  - Additional utility methods for account management
+  - Better integration with connector system
+  - Improved error handling
+
+  # API Changes
+
+  **New exports:**
+
+  ```typescript
+  // Connectors
+  export * from "./connectors";
+  -Connector -
+    ConnectorType -
+    ConnectorMetadata -
+    ConnectorConfig -
+    ConnectorConnectionResult -
+    ExternalSignerConnector -
+    ConnectorRegistry;
+
+  // API utilities
+  export * from "./api";
+  -createAAClient - createAccount;
+
+  // Configuration
+  export * from "./config";
+  -validateConfig;
+
+  // Config utilities
+  export { fetchConfig, clearConfigCache } from "./utils/configUtils";
+  ```
+
+  **Import path fixes:**
+  - Fixed relative imports to use correct paths (removed `@/` aliases in exports)
+
+  # Internal Improvements
+  - Enhanced test coverage with mock data utilities
+  - Better TypeScript configuration
+  - Improved build output with tsup
+
+### Patch Changes
+
+- Updated dependencies:
+  - `@burnt-labs/constants@*`
+
 ## 1.0.0-alpha.60
 
 ### Major Changes

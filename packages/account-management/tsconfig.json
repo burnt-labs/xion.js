@@ -4,6 +4,8 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": ".",
+    "module": "esnext",
+    "target": "es2020",
     "paths": {
       "@/*": ["src/*"]
     }

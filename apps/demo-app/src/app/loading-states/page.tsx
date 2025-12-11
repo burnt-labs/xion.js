@@ -1,6 +1,9 @@
 "use client";
 import { useEffect } from "react";
-import { useAbstraxionAccount, useAbstraxionSigningClient } from "@burnt-labs/abstraxion";
+import {
+  useAbstraxionAccount,
+  useAbstraxionSigningClient,
+} from "@burnt-labs/abstraxion";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";
@@ -357,10 +360,10 @@ export default function UILessPage(): JSX.Element {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
           {/* Priority order: Auth callback > logging in > regular connecting > isInitializing */}
           {isReturningFromAuth ? (
-            <div className="mx-4 max-w-sm rounded-lg border border-purple-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+            <div className="mx-4 max-w-sm rounded-lg border border-purple-500/50 bg-black/80 p-8 text-center shadow-2xl backdrop-blur-xl">
               <div className="mb-6">
                 <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-purple-500/40 bg-purple-500/20">
-                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-purple-400 border-r-transparent"></div>
+                  <div className="border-3 h-8 w-8 animate-spin rounded-full border-solid border-purple-400 border-r-transparent"></div>
                 </div>
               </div>
               <p className="text-lg font-bold text-purple-400">
@@ -371,10 +374,10 @@ export default function UILessPage(): JSX.Element {
               </p>
             </div>
           ) : isLoggingIn ? (
-            <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+            <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 p-8 text-center shadow-2xl backdrop-blur-xl">
               <div className="mb-6">
                 <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/40 bg-blue-500/20">
-                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-blue-400 border-r-transparent"></div>
+                  <div className="border-3 h-8 w-8 animate-spin rounded-full border-solid border-blue-400 border-r-transparent"></div>
                 </div>
               </div>
               <p className="text-lg font-bold text-blue-400">
@@ -393,22 +396,24 @@ export default function UILessPage(): JSX.Element {
               </p>
             </div>
           ) : isConnecting && !isReturningFromAuth ? (
-            <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+            <div className="mx-4 max-w-sm rounded-lg border border-blue-500/50 bg-black/80 p-8 text-center shadow-2xl backdrop-blur-xl">
               <div className="mb-6">
                 <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-blue-500/40 bg-blue-500/20">
-                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-blue-400 border-r-transparent"></div>
+                  <div className="border-3 h-8 w-8 animate-spin rounded-full border-solid border-blue-400 border-r-transparent"></div>
                 </div>
               </div>
-              <p className="text-lg font-bold text-blue-400">Establishing Connection</p>
+              <p className="text-lg font-bold text-blue-400">
+                Establishing Connection
+              </p>
               <p className="mt-3 text-sm text-gray-300">
                 Connecting to your XION account and verifying permissions
               </p>
             </div>
           ) : isInitializing ? (
-            <div className="mx-4 max-w-sm rounded-lg border border-yellow-500/50 bg-black/80 backdrop-blur-xl p-8 text-center shadow-2xl">
+            <div className="mx-4 max-w-sm rounded-lg border border-yellow-500/50 bg-black/80 p-8 text-center shadow-2xl backdrop-blur-xl">
               <div className="mb-6">
                 <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full border-4 border-yellow-500/40 bg-yellow-500/20">
-                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-solid border-yellow-400 border-r-transparent"></div>
+                  <div className="border-3 h-8 w-8 animate-spin rounded-full border-solid border-yellow-400 border-r-transparent"></div>
                 </div>
               </div>
               <p className="text-lg font-bold text-yellow-400">

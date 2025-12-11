@@ -1,0 +1,69 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      aa_api_environment:
+        description: 'AA API environment for type generation'
+        required: false
+        type: choice
+        options:
+          - testnet
+          - mainnet
+          - local
+        default: 'testnet'
+      aa_api_custom_url:
+        description: 'Custom AA API URL (overrides environment selection)'
+        required: false
+        type: string
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  build:
+    name: Build packages
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [lts/*]
+        pnpm-version: [8.9.0]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: 🥡 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ matrix.pnpm-version }}
+
+      - name: 🔄 Install Dependencies
+        run: pnpm install
+
+      - name: 🔨 Generate AA API Types
+        run: |
+          # Determine which AA API URL to use for type generation
+          if [ -n "${{ github.event.inputs.aa_api_custom_url }}" ]; then
+            echo "Using custom AA API URL: ${{ github.event.inputs.aa_api_custom_url }}"
+            pnpm tsx scripts/generate-aa-api-types.ts "${{ github.event.inputs.aa_api_custom_url }}"
+          elif [ -n "${{ github.event.inputs.aa_api_environment }}" ]; then
+            echo "Using AA API environment: ${{ github.event.inputs.aa_api_environment }}"
+            pnpm generate:types:${{ github.event.inputs.aa_api_environment }}
+          else
+            echo "Using default AA API environment: testnet"
+            pnpm generate:types
+          fi
+
+      - name: 🏗️ Build
+        run: pnpm build
+

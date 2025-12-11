@@ -1,4 +1,61 @@
-# @burnt-labs/signers [DEPRECATED]
+# @burnt-labs/signers
+
+## UNRELEASED
+
+### Major Changes
+
+- **Package un-deprecated** - Package is now actively maintained and enhanced with new features
+
+  # Breaking Changes
+
+  ## Removed deprecation warnings
+  - Package deprecation removed - now actively maintained
+  - Console warnings removed
+
+  # New Features
+
+  ## Passkey Signer Support
+  - New `AAPasskeySigner` for WebAuthn/passkey authentication
+  - Built-in WebAuthn utilities for credential creation and verification
+
+  ## Signer Factory
+  - New `createSignerFromSigningFunction` utility for custom signer creation
+  - `CreateSignerParams` type for flexible signer configuration
+  - Simplifies integration of custom signing functions
+
+  ## Crypto Utilities
+  - Exported crypto utilities for smart account creation:
+    - Address generation and validation
+    - Salt generation for deterministic account addresses
+    - Signature utilities
+  - Previously internal, now part of public API
+
+  ## AA API v2 Support
+  - New API types for Account Abstraction API v2 interactions
+  - Enhanced type safety for AA API communication
+  - Fee grant types from `abstractaccount/v1`
+
+  ## Enhanced Signers
+  - Improved `AADirectSigner` with additional functionality
+  - Updated `AAEthSigner` for better Ethereum integration
+  - Refined `AbstractAccountJWTSigner` for JWT authentication
+
+  # API Changes
+
+  **New exports:**
+  - `AAPasskeySigner` - WebAuthn/passkey signer
+  - `createSignerFromSigningFunction` - Signer factory function
+  - `CreateSignerParams` - Factory configuration type
+  - Crypto utilities: `crypto/*`
+  - API types: `api/types`
+
+  **Removed:**
+  - Query utilities (`interfaces/queries.ts`) - moved to other packages
+  - Fragment utilities (`interfaces/fragments.ts`)
+
+### Patch Changes
+
+- Updated dependencies
 
 ## 0.1.0-alpha.14
 

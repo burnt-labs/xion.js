@@ -19,7 +19,7 @@ export function validateUrl(url: string, fieldName: string): void {
  */
 export function validateChainId(chainId: string): void {
   if (!chainId || chainId.trim().length === 0) {
-    throw new Error('Chain ID is required');
+    throw new Error("Chain ID is required");
   }
 }
 
@@ -28,9 +28,9 @@ export function validateChainId(chainId: string): void {
  */
 export function validateRpcUrl(rpcUrl: string): void {
   if (!rpcUrl || rpcUrl.trim().length === 0) {
-    throw new Error('RPC URL is required');
+    throw new Error("RPC URL is required");
   }
-  validateUrl(rpcUrl, 'RPC URL');
+  validateUrl(rpcUrl, "RPC URL");
 }
 
 /**
@@ -39,12 +39,14 @@ export function validateRpcUrl(rpcUrl: string): void {
  */
 export function validateGasPrice(gasPrice: string): void {
   if (!gasPrice || gasPrice.trim().length === 0) {
-    throw new Error('Gas price is required');
+    throw new Error("Gas price is required");
   }
 
   const match = gasPrice.match(/^([\d.]+)(.+)$/);
   if (!match) {
-    throw new Error(`Invalid gas price format: ${gasPrice}. Expected format: "0.001uxion"`);
+    throw new Error(
+      `Invalid gas price format: ${gasPrice}. Expected format: "0.001uxion"`,
+    );
   }
 
   const amount = parseFloat(match[1]);
@@ -56,13 +58,15 @@ export function validateGasPrice(gasPrice: string): void {
 /**
  * Validate that an AA API URL is provided (for signer/browser modes)
  */
-export function validateAaApiUrl(aaApiUrl: string | undefined, mode: string): void {
-  if ((mode === 'signer' || mode === 'direct') && !aaApiUrl) {
-    throw new Error('AA API URL is required for signer and direct modes');
+export function validateAaApiUrl(
+  aaApiUrl: string | undefined,
+  mode: string,
+): void {
+  if ((mode === "signer" || mode === "direct") && !aaApiUrl) {
+    throw new Error("AA API URL is required for signer and direct modes");
   }
 
   if (aaApiUrl) {
-    validateUrl(aaApiUrl, 'AA API URL');
+    validateUrl(aaApiUrl, "AA API URL");
   }
 }
-

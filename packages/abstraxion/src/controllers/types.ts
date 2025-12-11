@@ -3,8 +3,11 @@
  * Controllers coordinate between the state machine, orchestrator, and React components
  */
 
-import type { AccountState, AccountStateAction } from '@burnt-labs/account-management';
-import type { NormalizedAbstraxionConfig } from '../types';
+import type {
+  AccountState,
+  AccountStateAction,
+} from "@burnt-labs/account-management";
+import type { NormalizedAbstraxionConfig } from "../types";
 
 /**
  * State subscription callback
@@ -87,4 +90,3 @@ export interface ControllerConfig {
 export type ControllerFactory = (
   config: NormalizedAbstraxionConfig,
 ) => Controller;
-

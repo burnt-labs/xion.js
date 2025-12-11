@@ -4,7 +4,7 @@
  */
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
-import type { AuthenticatorType } from "../../authenticators/type-detection";
+import type { AuthenticatorType } from "@burnt-labs/signers";
 
 interface NumiaAuthenticatorResp {
   type: string;
@@ -59,34 +59,38 @@ export class NumiaAccountStrategy implements IndexerStrategy {
       const response = await fetch(url, { headers });
 
       if (!response.ok) {
-        // 404 means no accounts found
+        // 404 means no accounts found (not an error)
         if (response.status === 404) {
           return [];
         }
-        console.error("[NumiaAccountStrategy] Request failed:", response.status, response.statusText);
-        throw new Error(`Indexer request failed: ${response.statusText}`);
+        throw new Error(
+          `Numia indexer request failed: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data: NumiaSmartAccountResp[] = await response.json();
 
-      const results = data?.map(({ smart_account, code_id, authenticators }) => ({
-        id: smart_account,
-        codeId: Number(code_id),
-        authenticators: authenticators.map(
-          ({ authenticator, authenticator_index, type }) => ({
-            id: `${smart_account}-${authenticator_index}`,
-            authenticator,
-            authenticatorIndex: Number(authenticator_index),
-            type,
-          }),
-        ),
-      })) || [];
+      const results =
+        data?.map(({ smart_account, code_id, authenticators }) => ({
+          id: smart_account,
+          codeId: Number(code_id),
+          authenticators: authenticators.map(
+            ({ authenticator, authenticator_index, type }) => ({
+              id: `${smart_account}-${authenticator_index}`,
+              authenticator,
+              authenticatorIndex: Number(authenticator_index),
+              type: type as AuthenticatorType,
+            }),
+          ),
+        })) || [];
 
       return results;
     } catch (error) {
-      console.error('[NumiaAccountStrategy] Error fetching smart accounts:', error);
-      // Return empty array on error - let the app decide whether to create new account
-      return [];
+      // Re-throw error instead of silently returning empty array
+      // Caller (composite strategy) will handle fallback
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(`Numia account strategy failed: ${errorMessage}`);
     }
   }
 }

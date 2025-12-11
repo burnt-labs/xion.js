@@ -41,25 +41,34 @@ export interface CreateCompositeAccountStrategyConfig {
  *
  */
 export function createCompositeAccountStrategy(
-  config: CreateCompositeAccountStrategyConfig
+  config: CreateCompositeAccountStrategyConfig,
 ): CompositeAccountStrategy {
   const strategies = [];
 
   // Add indexer strategy if configured (fast)
   if (config.indexer) {
-    const indexerType = 'type' in config.indexer ? config.indexer.type : 'numia';
+    const indexerType =
+      "type" in config.indexer ? config.indexer.type : "numia";
 
-    if (indexerType === 'subquery') {
+    if (indexerType === "subquery") {
       // Subquery indexer
-      const subqueryConfig = config.indexer as { type: 'subquery'; url: string; codeId: number };
+      const subqueryConfig = config.indexer as {
+        type: "subquery";
+        url: string;
+        codeId: number;
+      };
       strategies.push(
-        new SubqueryAccountStrategy(subqueryConfig.url, subqueryConfig.codeId)
+        new SubqueryAccountStrategy(subqueryConfig.url, subqueryConfig.codeId),
       );
     } else {
       // Numia indexer (default)
-      const numiaConfig = config.indexer as { type?: 'numia'; url: string; authToken?: string };
+      const numiaConfig = config.indexer as {
+        type?: "numia";
+        url: string;
+        authToken?: string;
+      };
       strategies.push(
-        new NumiaAccountStrategy(numiaConfig.url, numiaConfig.authToken)
+        new NumiaAccountStrategy(numiaConfig.url, numiaConfig.authToken),
       );
     }
   }

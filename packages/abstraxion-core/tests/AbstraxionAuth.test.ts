@@ -1,5 +1,6 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { AbstraxionAuth } from "../src/AbstraxionAuth";
@@ -7,20 +8,18 @@ import {
   mockAccountAddress,
   mockGrantsResponse,
   mockLegacyConfig,
-} from "./mockData/grantResponses";
-import {
   MockRedirectStrategy,
   MockStorageStrategy,
-} from "./mockData/mockStrategies";
+} from "@burnt-labs/test-utils/mocks";
 
 // Add fetch polyfill for Node.js environment
 if (typeof fetch === "undefined") {
-  global.fetch = jest.fn();
+  global.fetch = vi.fn();
 }
 
 // Mock fetchConfig from @burnt-labs/constants
-jest.mock("@burnt-labs/constants", () => ({
-  fetchConfig: jest.fn().mockResolvedValue({
+vi.mock("@burnt-labs/constants", () => ({
+  fetchConfig: vi.fn().mockResolvedValue({
     dashboardUrl: "https://settings.testnet.burnt.com",
   }),
 }));
@@ -44,7 +43,7 @@ const configureAbstraxionAuthInstance = (abstraxionAuth: AbstraxionAuth) => {
 
 describe("AbstraxionAuth", () => {
   let abstraxionAuth: AbstraxionAuth;
-  let cosmwasmClient: jest.Mocked<CosmWasmClient>;
+  let cosmwasmClient: any;
   let mockStorage: MockStorageStrategy;
   let mockRedirect: MockRedirectStrategy;
 
@@ -56,17 +55,19 @@ describe("AbstraxionAuth", () => {
       new MockRedirectStrategy(),
     );
 
-    cosmwasmClient = jest.createMockFromModule("@cosmjs/cosmwasm-stargate");
-    abstraxionAuth.getCosmWasmClient = jest
+    // Create a mock CosmWasmClient
+    cosmwasmClient = {
+      queryContractSmart: vi.fn(),
+    };
+
+    abstraxionAuth.getCosmWasmClient = vi
       .fn()
       .mockResolvedValue(cosmwasmClient);
-
-    cosmwasmClient.queryContractSmart = jest.fn();
-    // abstraxionAuth.decodeAuthorization = jest.fn();
+    // abstraxionAuth.decodeAuthorization = vi.fn();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockStorage.clear();
     mockRedirect.reset();
   });
@@ -82,19 +83,19 @@ describe("AbstraxionAuth", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
       // Simulate undefined keypair and granter
-      const getLocalKeypairMock = jest
+      const getLocalKeypairMock = vi
         .spyOn(abstraxionAuth, "getLocalKeypair")
         .mockResolvedValueOnce(undefined);
-      const getGranterMock = jest
+      const getGranterMock = vi
         .spyOn(abstraxionAuth, "getGranter")
         .mockResolvedValueOnce("");
 
-      const generateAndStoreTempAccountMock = jest
+      const generateAndStoreTempAccountMock = vi
         .spyOn(abstraxionAuth, "generateAndStoreTempAccount")
         .mockResolvedValueOnce({
           getAccounts: () => Promise.resolve([{ address: "keypairAddress" }]),
         } as any);
-      const pollForGrantsMock = jest.spyOn(abstraxionAuth, "pollForGrants");
+      const pollForGrantsMock = vi.spyOn(abstraxionAuth, "pollForGrants");
 
       // Call the function
       await abstraxionAuth.login();
@@ -112,19 +113,19 @@ describe("AbstraxionAuth", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
       // Simulate mock keypair and granter address
-      const getLocalKeypairMock = jest
+      const getLocalKeypairMock = vi
         .spyOn(abstraxionAuth, "getLocalKeypair")
         .mockResolvedValueOnce({
           getAccounts: () => Promise.resolve([{ address: "keypairAddress" }]),
         } as any);
-      const getGranterMock = jest
+      const getGranterMock = vi
         .spyOn(abstraxionAuth, "getGranter")
         .mockResolvedValueOnce("granterAddress");
 
-      const pollForGrantsMock = jest
+      const pollForGrantsMock = vi
         .spyOn(abstraxionAuth, "pollForGrants")
         .mockResolvedValueOnce(true);
-      const generateAndStoreTempAccountMock = jest.spyOn(
+      const generateAndStoreTempAccountMock = vi.spyOn(
         abstraxionAuth,
         "generateAndStoreTempAccount",
       );
@@ -259,7 +260,7 @@ describe("AbstraxionAuth", () => {
 
   //     // Mock the CosmWasmClient for treasury queries
   //     const mockCosmWasmClient = {
-  //       queryContractSmart: jest
+  //       queryContractSmart: vi
   //         .fn()
   //         .mockResolvedValueOnce(["/cosmos.bank.v1beta1.MsgSend"]) // First call for grant_config_type_urls
   //         .mockResolvedValueOnce({
@@ -274,12 +275,12 @@ describe("AbstraxionAuth", () => {
   //     };
 
   //     // Mock the getCosmWasmClient method
-  //     jest
+  //     vi
   //       .spyOn(mainnetAbstraxionAuth, "getCosmWasmClient")
   //       .mockResolvedValue(mockCosmWasmClient as any);
 
   //     // Mock the fetch call to return a real grants response
-  //     global.fetch = jest.fn().mockImplementation((url) => {
+  //     global.fetch = vi.fn().mockImplementation((url) => {
   //       if (url.toString().includes("/cosmos/authz/v1beta1/grants")) {
   //         return Promise.resolve({
   //           json: () => Promise.resolve(realGrantsResponse),
@@ -356,7 +357,7 @@ describe("AbstraxionAuth", () => {
 
   //     // Mock the CosmWasmClient for treasury queries
   //     const mockCosmWasmClient = {
-  //       queryContractSmart: jest
+  //       queryContractSmart: vi
   //         .fn()
   //         .mockResolvedValueOnce(["/cosmos.bank.v1beta1.MsgSend"]) // First call for grant_config_type_urls
   //         .mockResolvedValueOnce({
@@ -372,12 +373,12 @@ describe("AbstraxionAuth", () => {
   //     };
 
   //     // Mock the getCosmWasmClient method
-  //     jest
+  //     vi
   //       .spyOn(mainnetAbstraxionAuth, "getCosmWasmClient")
   //       .mockResolvedValue(mockCosmWasmClient as any);
 
   //     // Mock the fetch call to return a real grants response
-  //     global.fetch = jest.fn().mockImplementation((url) => {
+  //     global.fetch = vi.fn().mockImplementation((url) => {
   //       if (url.toString().includes("/cosmos/authz/v1beta1/grants")) {
   //         return Promise.resolve({
   //           json: () => Promise.resolve(realGrantsResponse),
@@ -433,7 +434,7 @@ describe("AbstraxionAuth", () => {
 
   //     // Mock the CosmWasmClient for treasury queries
   //     const mockCosmWasmClient = {
-  //       queryContractSmart: jest
+  //       queryContractSmart: vi
   //         .fn()
   //         .mockResolvedValueOnce(["/cosmos.bank.v1beta1.MsgSend"]) // First call for grant_config_type_urls
   //         .mockResolvedValueOnce({
@@ -449,12 +450,12 @@ describe("AbstraxionAuth", () => {
   //     };
 
   //     // Mock the getCosmWasmClient method
-  //     jest
+  //     vi
   //       .spyOn(mainnetAbstraxionAuth, "getCosmWasmClient")
   //       .mockResolvedValue(mockCosmWasmClient as any);
 
   //     // Mock the fetch call to return an empty grants response
-  //     global.fetch = jest.fn().mockImplementation((url) => {
+  //     global.fetch = vi.fn().mockImplementation((url) => {
   //       if (url.toString().includes("/cosmos/authz/v1beta1/grants")) {
   //         return Promise.resolve({
   //           json: () => Promise.resolve(emptyGrantsResponse),
@@ -560,7 +561,7 @@ describe("AbstraxionAuth", () => {
   //     };
   //     // Mock the CosmWasmClient for treasury queries
   //     const mockCosmWasmClient = {
-  //       queryContractSmart: jest
+  //       queryContractSmart: vi
   //         .fn()
   //         .mockResolvedValueOnce([
   //           "/cosmos.bank.v1beta1.MsgSend",
@@ -589,12 +590,12 @@ describe("AbstraxionAuth", () => {
   //     };
 
   //     // Mock the getCosmWasmClient method
-  //     jest
+  //     vi
   //       .spyOn(mainnetAbstraxionAuth, "getCosmWasmClient")
   //       .mockResolvedValue(mockCosmWasmClient as any);
 
   //     // Mock the fetch call to return grants response
-  //     global.fetch = jest.fn().mockImplementation((url) => {
+  //     global.fetch = vi.fn().mockImplementation((url) => {
   //       if (url.toString().includes("/cosmos/authz/v1beta1/grants")) {
   //         return Promise.resolve({
   //           json: () => Promise.resolve(grantsResponse),
@@ -622,16 +623,16 @@ describe("AbstraxionAuth", () => {
         getAccounts: () => Promise.resolve([{ address: "testAddress" }]),
       } as any;
 
-      jest
-        .spyOn(abstraxionAuth, "getLocalKeypair")
-        .mockResolvedValue(mockKeypair);
-      jest.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("testGranter");
-      jest.spyOn(abstraxionAuth, "pollForGrants").mockResolvedValue(true);
-      jest.spyOn(abstraxionAuth, "setGranter").mockResolvedValue();
-      jest.spyOn(abstraxionAuth, "triggerAuthStateChange").mockImplementation();
+      vi.spyOn(abstraxionAuth, "getLocalKeypair").mockResolvedValue(
+        mockKeypair,
+      );
+      vi.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("testGranter");
+      vi.spyOn(abstraxionAuth, "pollForGrants").mockResolvedValue(true);
+      vi.spyOn(abstraxionAuth, "setGranter").mockResolvedValue();
+      vi.spyOn(abstraxionAuth, "triggerAuthStateChange").mockImplementation();
 
       // Mock the redirect strategy's cleanUrlParameters method
-      const cleanUrlParametersMock = jest
+      const cleanUrlParametersMock = vi
         .spyOn(abstraxionAuth["redirectStrategy"], "cleanUrlParameters")
         .mockResolvedValue();
 
@@ -648,17 +649,16 @@ describe("AbstraxionAuth", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
       // Mock failed login scenario
-      jest
-        .spyOn(abstraxionAuth, "getLocalKeypair")
-        .mockResolvedValue(undefined);
-      jest.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("");
-      jest
-        .spyOn(abstraxionAuth, "generateAndStoreTempAccount")
-        .mockResolvedValue();
-      jest.spyOn(abstraxionAuth, "redirectToDashboard").mockResolvedValue();
+      vi.spyOn(abstraxionAuth, "getLocalKeypair").mockResolvedValue(undefined);
+      vi.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("");
+      vi.spyOn(
+        abstraxionAuth,
+        "generateAndStoreTempAccount",
+      ).mockResolvedValue();
+      vi.spyOn(abstraxionAuth, "redirectToDashboard").mockResolvedValue();
 
       // Mock the redirect strategy's cleanUrlParameters method
-      const cleanUrlParametersMock = jest
+      const cleanUrlParametersMock = vi
         .spyOn(abstraxionAuth["redirectStrategy"], "cleanUrlParameters")
         .mockResolvedValue();
 

@@ -7,7 +7,7 @@ import {
   rawSecp256k1PubkeyToRawAddress,
   serializeSignDoc,
 } from "@cosmjs/amino";
-import { assert, isNonNullObject } from "@cosmjs/utils";
+import { isNonNullObject } from "@cosmjs/utils";
 import type { HdPath, Secp256k1Keypair } from "@cosmjs/crypto";
 import {
   Argon2id,
@@ -41,6 +41,29 @@ import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { makeADR36AminoSignDoc } from "./utils";
 
 const serializationTypeV1 = "directsecp256k1hdwallet-v1";
+
+/**
+ * Type for React Native quick-crypto pbkdf2 function
+ */
+interface QuickCrypto {
+  pbkdf2(
+    password: string,
+    salt: Uint8Array,
+    iterations: number,
+    keylen: number,
+    digest: string,
+    callback: (err: Error | null, derivedKey: Uint8Array) => void,
+  ): void;
+}
+
+/**
+ * Type guard to check if quickCrypto is available and properly typed
+ */
+function isQuickCrypto(value: unknown): value is QuickCrypto {
+  if (typeof value !== "object" || value === null) return false;
+  const crypto = value as Record<string, unknown>;
+  return typeof crypto.pbkdf2 === "function";
+}
 
 /**
  * A KDF configuration that is not very strong but can be used on the main thread.
@@ -94,6 +117,56 @@ function isDerivationJson(thing: unknown): thing is DerivationInfoJson {
   if (!isNonNullObject(thing)) return false;
   if (typeof (thing as DerivationInfoJson).hdPath !== "string") return false;
   if (typeof (thing as DerivationInfoJson).prefix !== "string") return false;
+  return true;
+}
+
+/**
+ * Type guard for serialization root object
+ */
+function isSerializationRoot(
+  value: unknown,
+): value is { readonly type: string } {
+  return (
+    isNonNullObject(value) &&
+    typeof (value as Record<string, unknown>).type === "string"
+  );
+}
+
+/**
+ * Type guard for encrypted serialization
+ */
+function isEncryptedSerialization(value: unknown): value is {
+  readonly type: string;
+  readonly data: string;
+  readonly encryption: EncryptionConfiguration;
+} {
+  if (!isNonNullObject(value)) return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.type === "string" &&
+    typeof obj.data === "string" &&
+    isNonNullObject(obj.encryption)
+  );
+}
+
+/**
+ * Type guard for decrypted wallet document
+ */
+function isDecryptedDocument(value: unknown): value is {
+  readonly mnemonic: { readonly data: string };
+  readonly accounts: readonly Secp256k1Derivation[];
+} {
+  if (!isNonNullObject(value)) return false;
+  const obj = value as Record<string, unknown>;
+
+  // Check mnemonic structure
+  if (!isNonNullObject(obj.mnemonic)) return false;
+  const mnemonic = obj.mnemonic as Record<string, unknown>;
+  if (typeof mnemonic.data !== "string") return false;
+
+  // Check accounts array
+  if (!Array.isArray(obj.accounts)) return false;
+
   return true;
 }
 
@@ -162,13 +235,18 @@ export class SignArbSecp256k1HdWallet {
     serialization: string,
     password: string,
   ): Promise<SignArbSecp256k1HdWallet> {
-    const root = JSON.parse(serialization) as { readonly type: string };
-    if (!isNonNullObject(root))
-      throw new Error("Root document is not an object.");
-    if (root.type === serializationTypeV1) {
+    const parsed: unknown = JSON.parse(serialization);
+
+    if (!isSerializationRoot(parsed)) {
+      throw new Error(
+        "Invalid serialization format: root document is not a valid object with type field.",
+      );
+    }
+
+    if (parsed.type === serializationTypeV1) {
       return this.deserializeTypeV1(serialization, password);
     }
-    throw new Error("Unsupported serialization type");
+    throw new Error(`Unsupported serialization type: ${parsed.type}`);
   }
 
   /**
@@ -184,47 +262,56 @@ export class SignArbSecp256k1HdWallet {
     serialization: string,
     encryptionKey: Uint8Array,
   ): Promise<SignArbSecp256k1HdWallet> {
-    const root = JSON.parse(serialization) as {
-      readonly type: string;
-      readonly data: string;
-      readonly encryption: EncryptionConfiguration;
-    };
-    if (!isNonNullObject(root))
-      throw new Error("Root document is not an object.");
-    const untypedRoot = root;
-    switch (untypedRoot.type) {
+    const parsed: unknown = JSON.parse(serialization);
+
+    if (!isEncryptedSerialization(parsed)) {
+      throw new Error(
+        "Invalid encrypted serialization format: missing required fields.",
+      );
+    }
+
+    switch (parsed.type) {
       case serializationTypeV1: {
         const decryptedBytes = await decrypt(
-          fromBase64(untypedRoot.data),
+          fromBase64(parsed.data),
           encryptionKey,
-          untypedRoot.encryption,
+          parsed.encryption,
         );
-        const decryptedDocument = JSON.parse(fromUtf8(decryptedBytes)) as {
-          mnemonic: { data: string };
-          accounts: readonly Secp256k1Derivation[];
-        };
-        const { mnemonic, accounts } = decryptedDocument;
-        assert(typeof mnemonic.data === "string");
-        if (!Array.isArray(accounts))
+
+        const decryptedParsed: unknown = JSON.parse(fromUtf8(decryptedBytes));
+
+        if (!isDecryptedDocument(decryptedParsed)) {
+          throw new Error(
+            "Invalid decrypted document format: missing mnemonic or accounts.",
+          );
+        }
+
+        const { mnemonic, accounts } = decryptedParsed;
+
+        if (!Array.isArray(accounts)) {
           throw new Error("Property 'accounts' is not an array");
+        }
+
         if (!accounts.every((account) => isDerivationJson(account))) {
           throw new Error("Account is not in the correct format.");
         }
-        const firstPrefix = (accounts[0] as unknown as Secp256k1Derivation)
-          .prefix;
+
+        const firstPrefix = accounts[0].prefix;
         if (!accounts.every(({ prefix }) => prefix === firstPrefix)) {
           throw new Error("Accounts do not all have the same prefix");
         }
+
         const hdPaths = accounts.map(({ hdPath }: { hdPath: string }) =>
           stringToPath(hdPath),
         );
+
         return this.fromMnemonic(mnemonic.data, {
           hdPaths,
           prefix: firstPrefix,
         });
       }
       default:
-        throw new Error("Unsupported serialization type");
+        throw new Error(`Unsupported serialization type: ${parsed.type}`);
     }
   }
 
@@ -240,20 +327,31 @@ export class SignArbSecp256k1HdWallet {
           global.navigator?.product === "ReactNative"
         ) {
           // Use injected crypto implementation
-          const quickCrypto = (global as any).quickCrypto;
-          if (!quickCrypto?.pbkdf2)
+          const globalObj = global as Record<string, unknown>;
+          const quickCrypto = globalObj.quickCrypto;
+
+          if (!isQuickCrypto(quickCrypto)) {
             throw new Error(
               "quickCrypto not available globally, please install react-native-quick-crypto",
             );
+          }
 
-          return new Promise((resolve, reject) => {
+          // Validate outputLength is a number
+          const outputLength = configuration.params.outputLength;
+          if (typeof outputLength !== "number") {
+            throw new Error(
+              `Invalid outputLength: expected number, got ${typeof outputLength}`,
+            );
+          }
+
+          return new Promise<Uint8Array>((resolve, reject) => {
             quickCrypto.pbkdf2(
               password,
               cosmjsSalt,
               100000,
-              configuration.params.outputLength,
+              outputLength,
               "sha256",
-              (err: any, key: any) => {
+              (err, key) => {
                 if (err) {
                   reject(err);
                 } else {
@@ -279,12 +377,21 @@ export class SignArbSecp256k1HdWallet {
     serialization: string,
     password: string,
   ): Promise<SignArbSecp256k1HdWallet> {
-    const root = JSON.parse(serialization) as {
-      readonly kdf: KdfConfiguration;
-    };
-    if (!isNonNullObject(root))
+    const parsed: unknown = JSON.parse(serialization);
+
+    if (!isNonNullObject(parsed)) {
       throw new Error("Root document is not an object.");
-    const encryptionKey = await this.executeKdf(password, root.kdf);
+    }
+
+    const root = parsed as Record<string, unknown>;
+    if (!isNonNullObject(root.kdf)) {
+      throw new Error("Missing or invalid KDF configuration.");
+    }
+
+    const encryptionKey = await this.executeKdf(
+      password,
+      root.kdf as KdfConfiguration,
+    );
     return this.deserializeWithEncryptionKey(serialization, encryptionKey);
   }
 

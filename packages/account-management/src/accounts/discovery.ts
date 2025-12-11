@@ -3,9 +3,9 @@
  * Functions for checking if smart accounts exist
  */
 
-import type { CompositeAccountStrategy } from '../accounts/index';
-import type { Authenticator } from '../types/authenticator';
-import type { AuthenticatorType } from '../authenticators/type-detection';
+import type { CompositeAccountStrategy } from "../accounts/index";
+import type { Authenticator } from "../types/authenticator";
+import type { AuthenticatorType } from "@burnt-labs/signers";
 
 /**
  * Result of account existence check
@@ -16,26 +16,28 @@ export interface AccountExistenceResult {
   smartAccountAddress?: string;
   codeId?: number;
   authenticatorIndex?: number;
+  error?: string; // Error message if account check failed (distinguishes from "not found")
 }
 
 /**
  * Check if account exists using the account strategy
  * Returns account details if found
- * 
+ *
  * @param accountStrategy - The account strategy to use for discovery
  * @param authenticator - The authenticator string (address, pubkey, JWT, etc.)
  * @param authenticatorType - Authenticator type. Required because the type is always known from context
  *                            (wallet connection, signer config, etc.) when checking for accounts.
- * @param logPrefix - Optional log prefix for debugging
  */
 export async function checkAccountExists(
   accountStrategy: CompositeAccountStrategy,
   authenticator: string,
   authenticatorType: AuthenticatorType,
-  logPrefix: string = '[account-discovery]'
 ): Promise<AccountExistenceResult> {
   try {
-    const accounts = await accountStrategy.fetchSmartAccounts(authenticator, authenticatorType);
+    const accounts = await accountStrategy.fetchSmartAccounts(
+      authenticator,
+      authenticatorType,
+    );
 
     if (accounts.length === 0) {
       return {
@@ -52,17 +54,10 @@ export async function checkAccountExists(
         // For EthWallet, compare lowercase addresses
         // For Secp256K1, compare base64 pubkeys
         return auth.authenticator.toLowerCase() === authenticator.toLowerCase();
-      }
+      },
     );
 
     const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
-
-    console.log(`${logPrefix} ✅ Found existing account:`, {
-      smartAccount: existingAccount.id,
-      codeId: existingAccount.codeId,
-      authenticators: existingAccount.authenticators.length,
-      authenticatorIndex,
-    });
 
     return {
       exists: true,
@@ -72,11 +67,11 @@ export async function checkAccountExists(
       authenticatorIndex,
     };
   } catch (error) {
-    console.warn(`${logPrefix} Error checking account exists:`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       exists: false,
       accounts: [],
+      error: errorMessage,
     };
   }
 }
-

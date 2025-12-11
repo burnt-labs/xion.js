@@ -1,7 +1,16 @@
 import { DirectSignResponse, makeSignBytes } from "@cosmjs/proto-signing";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { sha256 } from "@cosmjs/crypto";
-import { get } from "@github/webauthn-json/browser-ponyfill";
+
+/**
+ * Lazy-load webauthn-json to avoid Node.js import errors
+ * This allows the package to be imported in test environments without failing
+ * The import only happens when passkey signing is actually used
+ */
+async function loadWebAuthnGet() {
+  const { get } = await import("@github/webauthn-json/browser-ponyfill");
+  return get;
+}
 import { AAccountData, AASigner } from "../interfaces/AASigner";
 import { AAAlgo } from "../interfaces";
 import { registeredCredentials } from "./utils/webauthn-utils";
@@ -46,6 +55,8 @@ export class AAPasskeySigner extends AASigner {
       },
     };
 
+    // Lazy-load the webauthn get function only when needed
+    const get = await loadWebAuthnGet();
     const publicKeyCredential = await get(options);
     const pubKeyJson = publicKeyCredential.toJSON();
     const pubKeyCredArray = new TextEncoder().encode(

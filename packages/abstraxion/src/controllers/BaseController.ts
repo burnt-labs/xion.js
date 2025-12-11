@@ -3,9 +3,12 @@
  * Abstract class that controllers can extend
  */
 
-import { accountStateReducer } from '@burnt-labs/account-management';
-import type { AccountState, AccountStateAction } from '@burnt-labs/account-management';
-import type { Controller, StateSubscription, Unsubscribe } from './types';
+import { accountStateReducer } from "@burnt-labs/account-management";
+import type {
+  AccountState,
+  AccountStateAction,
+} from "@burnt-labs/account-management";
+import type { Controller, StateSubscription, Unsubscribe } from "./types";
 
 /**
  * Base controller implementation
@@ -15,7 +18,7 @@ export abstract class BaseController implements Controller {
   private state: AccountState;
   private subscribers: Set<StateSubscription> = new Set();
 
-  constructor(initialState: AccountState = { status: 'idle' }) {
+  constructor(initialState: AccountState = { status: "idle" }) {
     this.state = initialState;
   }
 
@@ -33,10 +36,10 @@ export abstract class BaseController implements Controller {
    */
   subscribe(callback: StateSubscription): Unsubscribe {
     this.subscribers.add(callback);
-    
+
     // Immediately call with current state
     callback(this.state);
-    
+
     return () => {
       this.subscribers.delete(callback);
     };
@@ -58,7 +61,7 @@ export abstract class BaseController implements Controller {
   protected setState(newState: AccountState): void {
     this.state = newState;
     // Notify all subscribers
-    this.subscribers.forEach(callback => callback(newState));
+    this.subscribers.forEach((callback) => callback(newState));
   }
 
   /**
@@ -86,4 +89,3 @@ export abstract class BaseController implements Controller {
     this.subscribers.clear();
   }
 }
-

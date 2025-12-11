@@ -4,7 +4,7 @@
  */
 
 import { instantiate2Address } from "@cosmjs/cosmwasm-stargate";
-import { Buffer } from "buffer";
+import { validateAndDecodeHex, validateAddressPrefix } from "./hex-validation";
 
 /**
  * Calculate the deterministic smart account address using instantiate2
@@ -13,9 +13,9 @@ import { Buffer } from "buffer";
  * Given the same inputs, this will always produce the same address.
  *
  * @param config - Configuration for address calculation
- * @param config.checksum - Contract checksum as hex string
+ * @param config.checksum - Contract checksum as hex string (64 hex chars = 32 bytes)
  * @param config.creator - Creator address (fee granter)
- * @param config.salt - Salt as hex string
+ * @param config.salt - Salt as hex string (64 hex chars = 32 bytes)
  * @param config.prefix - Address prefix (e.g., "xion")
  * @returns Calculated bech32 address
  */
@@ -25,8 +25,18 @@ export function calculateSmartAccountAddress(config: {
   salt: string;
   prefix: string;
 }): string {
-  const checksumBytes = Uint8Array.from(Buffer.from(config.checksum, "hex"));
-  const saltBytes = Uint8Array.from(Buffer.from(config.salt, "hex"));
+  // Validate and decode checksum using CosmJS utilities
+  const checksumBytes = validateAndDecodeHex(config.checksum, "checksum", {
+    exactByteLength: 32,
+  });
+
+  // Validate and decode salt using CosmJS utilities
+  const saltBytes = validateAndDecodeHex(config.salt, "salt", {
+    exactByteLength: 32,
+  });
+
+  // Validate prefix format
+  validateAddressPrefix(config.prefix, "address prefix");
 
   return instantiate2Address(
     checksumBytes,

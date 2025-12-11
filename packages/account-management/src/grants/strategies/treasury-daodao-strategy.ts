@@ -11,7 +11,13 @@
  * Based on dashboard's src/treasury-strategies/daodao-treasury-strategy.ts
  */
 
-import type { TreasuryStrategy, TreasuryConfig, GrantConfigByTypeUrl, TreasuryParams } from "../../types/treasury";
+import type {
+  TreasuryStrategy,
+  TreasuryConfig,
+  GrantConfigByTypeUrl,
+  TreasuryParams,
+} from "../../types/treasury";
+import type { ContractQueryClient } from "../discovery";
 
 // Helper to validate URLs for security
 function isUrlSafe(url?: string): boolean {
@@ -20,7 +26,7 @@ function isUrlSafe(url?: string): boolean {
   try {
     const parsed = new URL(url);
     // Only allow http and https protocols
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
   }
@@ -81,11 +87,9 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
 
   async fetchTreasuryConfig(
     treasuryAddress: string,
-    client: any, // AAClient from @burnt-labs/signers
+    client: ContractQueryClient,
   ): Promise<TreasuryConfig | null> {
     try {
-      console.log(`[DaoDaoTreasuryStrategy] Querying indexer for treasury: ${treasuryAddress}`);
-
       // Get chain ID from client
       const chainId = await client.getChainId();
 
@@ -94,7 +98,10 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
 
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.config.timeout,
+      );
 
       try {
         const response = await fetch(indexerUrl, {
@@ -117,16 +124,19 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
         );
 
         // Extract and validate params from the response
+        // Note: DaoDao indexer may return display_url, but contract uses metadata
+        const metadataValue =
+          validatedData.params.metadata ||
+          validatedData.params.display_url ||
+          "";
         const params: TreasuryParams = {
-          display_url: isUrlSafe(validatedData.params.display_url)
-            ? validatedData.params.display_url || ""
-            : "",
           redirect_url: isUrlSafe(validatedData.params.redirect_url)
             ? validatedData.params.redirect_url || ""
             : "",
           icon_url: isUrlSafe(validatedData.params.icon_url)
             ? validatedData.params.icon_url || ""
             : "",
+          metadata: isUrlSafe(metadataValue) ? metadataValue : "",
         };
 
         return {
@@ -143,8 +153,14 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
         throw error;
       }
     } catch (error) {
-      console.debug("[DaoDaoTreasuryStrategy] Failed to fetch treasury config:", error);
-      return null;
+      // Re-throw timeout errors
+      if (error instanceof Error && error.name === "AbortError") {
+        throw error;
+      }
+      // Re-throw other errors instead of returning null
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(`DaoDao treasury strategy failed: ${errorMessage}`);
     }
   }
 
@@ -156,6 +172,8 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
       throw new Error("Invalid indexer response: not an object");
     }
 
+    // Safe to cast to Record after checking typeof === "object"
+    // TODO: Consider adding end-to-end typing with zod or io-ts for full runtime validation
     const response = data as Record<string, unknown>;
 
     // Validate the top-level structure
@@ -168,12 +186,14 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
     }
 
     // Validate each grant config
+    // Safe to cast after validation above
     const grantConfigs = response.grantConfigs as Record<string, unknown>;
     for (const [typeUrl, config] of Object.entries(grantConfigs)) {
       if (!config || typeof config !== "object") {
         throw new Error(`Invalid grant config for ${typeUrl}`);
       }
 
+      // Safe to cast after typeof check
       const grantConfig = config as Record<string, unknown>;
 
       // Check required fields
@@ -184,6 +204,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
         throw new Error(`Missing authorization for ${typeUrl}`);
       }
 
+      // Safe to cast after typeof check
       const auth = grantConfig.authorization as Record<string, unknown>;
       if (typeof auth.type_url !== "string" || typeof auth.value !== "string") {
         throw new Error(`Invalid authorization format for ${typeUrl}`);
@@ -210,6 +231,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
       result.push({
         authorization: config.authorization,
         description: config.description,
+        optional: config.optional ?? false, // Default to false if not provided
         allowance: config.allowance || { type_url: "", value: "" },
         maxDuration: config.maxDuration,
       });

@@ -110,11 +110,14 @@ export async function generateTreasuryGrants(
   }
 
   // Default expiration: 3 months from now
-  const expirationTime = expiration || BigInt(
-    Math.floor(
-      new Date(new Date().setMonth(new Date().getMonth() + 3)).getTime() / 1000,
-    ),
-  );
+  const expirationTime =
+    expiration ||
+    BigInt(
+      Math.floor(
+        new Date(new Date().setMonth(new Date().getMonth() + 3)).getTime() /
+          1000,
+      ),
+    );
 
   // Fetch treasury configuration using strategy
   const treasuryConfig = await strategy.fetchTreasuryConfig(
@@ -128,13 +131,21 @@ export async function generateTreasuryGrants(
     );
   }
 
-  if (!treasuryConfig.grantConfigs || treasuryConfig.grantConfigs.length === 0) {
+  if (
+    !treasuryConfig.grantConfigs ||
+    treasuryConfig.grantConfigs.length === 0
+  ) {
     throw new Error("No grant configs found in treasury contract");
   }
 
   // Build grant messages from raw authorization values
   const grantMessages = treasuryConfig.grantConfigs.map((grantConfig) => {
-    return constructTreasuryGrantMessage(grantConfig, granter, grantee, expirationTime);
+    return constructTreasuryGrantMessage(
+      grantConfig,
+      granter,
+      grantee,
+      expirationTime,
+    );
   });
 
   return grantMessages;
@@ -371,7 +382,9 @@ export function buildGrantMessages(params: {
 
   // Add contract grants
   if (contracts && contracts.length > 0) {
-    messages.push(generateContractGrant(expiration, grantee, granter, contracts));
+    messages.push(
+      generateContractGrant(expiration, grantee, granter, contracts),
+    );
   }
 
   // Add bank grants
@@ -386,4 +399,3 @@ export function buildGrantMessages(params: {
 
   return messages;
 }
-

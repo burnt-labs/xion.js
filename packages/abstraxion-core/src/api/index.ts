@@ -3,8 +3,8 @@
  * Types are exported from @burnt-labs/signers
  */
 
-export * from './client';
-export * from './createAccount';
+export * from "./client";
+export * from "./createAccount";
 
 // Re-export API types from @burnt-labs/signers for convenience
 export type {
@@ -16,5 +16,3 @@ export type {
   CreateAccountResponse,
   AccountType,
 } from "@burnt-labs/signers";
-
-

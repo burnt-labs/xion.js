@@ -3,7 +3,7 @@
  * Abstracts away differences between Cosmos wallets, Ethereum wallets, and external signers
  */
 
-import type { AuthenticatorType } from '@burnt-labs/signers';
+import type { AuthenticatorType } from "@burnt-labs/signers";
 
 /**
  * Configuration for a session signer
@@ -13,7 +13,7 @@ export interface SignerConfig {
   /**
    * Authenticator type - always known from the signer provider
    * Examples: 'EthWallet' for Ethereum signers, 'Passkey' for WebAuthn, etc.
-   * 
+   *
    * @see AUTHENTICATOR_TYPE for available types
    */
   authenticatorType: AuthenticatorType;
@@ -34,7 +34,10 @@ export interface SignerConfig {
    * - Passkey: WebAuthn signature
    * - Secp256K1: Base64-encoded signature (standard Cosmos format) or hex string
    *
-   * @param message - Message to sign (format depends on authenticatorType)
+   * @param message - Hex-encoded message to sign (with 0x prefix).
+   *                 For string messages (e.g., bech32 addresses), this should be hex-encoded UTF-8 bytes.
+   *                 For transaction signing, this should be hex-encoded transaction bytes.
+   *                 Callers are responsible for converting strings to hex before calling this function.
    * @returns Signature (format depends on authenticatorType)
    */
   signMessage: (message: string) => Promise<string>;
@@ -46,11 +49,11 @@ export interface SignerConfig {
  */
 export enum ConnectorType {
   /** Cosmos wallet connector (Keplr, Leap, OKX, etc.) */
-  COSMOS_WALLET = 'cosmos-wallet',
+  COSMOS_WALLET = "cosmos-wallet",
   /** Ethereum wallet connector (MetaMask, etc.) */
-  ETHEREUM_WALLET = 'ethereum-wallet',
+  ETHEREUM_WALLET = "ethereum-wallet",
   /** External signer connector (Turnkey, Privy, Web3Auth, etc.) */
-  EXTERNAL_SIGNER = 'external-signer',
+  EXTERNAL_SIGNER = "external-signer",
 }
 
 /**
@@ -85,7 +88,7 @@ export interface ConnectorConnectionResult {
    * - Ethereum wallets: 0x... Ethereum address
    * - Cosmos wallets: bech32 wallet address
    * - External signers: authenticator identifier
-   * 
+   *
    * Note: This is different from the smart account address (granter address) which is
    * discovered/created during account connection. The smart account address is returned
    * separately in ConnectionResult.smartAccountAddress.
@@ -94,7 +97,10 @@ export interface ConnectorConnectionResult {
 
   /**
    * Signing function for messages
-   * @param hexMessage - Message to sign (hex string, with or without 0x prefix)
+   * @param hexMessage - Hex-encoded message to sign (with 0x prefix).
+   *                    For string messages (e.g., bech32 addresses), this should be hex-encoded UTF-8 bytes.
+   *                    For transaction signing, this should be hex-encoded transaction bytes.
+   *                    Callers are responsible for converting strings to hex before calling this function.
    * @returns Signature as hex string
    */
   signMessage: (hexMessage: string) => Promise<string>;
@@ -111,18 +117,18 @@ export interface ConnectorConnectionResult {
     ethereumAddress?: string;
     /** Public key (for Cosmos wallets) */
     pubkey?: string;
-    /** 
+    /**
      * @deprecated Use `connector.metadata.type` (ConnectorType enum) and `connector.metadata.id` instead.
      * This field is kept for backward compatibility with legacy dashboard code.
      * Connection type for grant creation (legacy naming: 'shuttle' = Cosmos wallets, 'okx' = OKX wallet, 'metamask' = MetaMask, 'signer' = external signers)
      */
-    connectionType?: 'metamask' | 'shuttle' | 'okx' | 'signer';
-    /** 
+    connectionType?: "metamask" | "shuttle" | "okx" | "signer";
+    /**
      * Authenticator index in the smart account (set during account discovery/creation)
      * Indicates which authenticator in the smart account is being used
      */
     authenticatorIndex?: number;
-    /** 
+    /**
      * Code ID of the smart account contract (set during account creation)
      * Only present for newly created accounts
      */
@@ -170,4 +176,3 @@ export interface ConnectorConfig {
   /** Additional configuration based on type */
   config?: Record<string, any>;
 }
-

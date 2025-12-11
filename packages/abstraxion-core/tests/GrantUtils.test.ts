@@ -1,5 +1,6 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {
   isLimitValid,

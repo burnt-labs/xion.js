@@ -22,7 +22,10 @@ export {
   useAbstraxionClient,
 } from "./hooks";
 
-export type { ContractGrantDescription, SpendLimit } from "./components/AbstraxionContext";
+export type {
+  ContractGrantDescription,
+  SpendLimit,
+} from "./components/AbstraxionContext";
 export type {
   AbstraxionAccount,
   AbstraxionAccountState,
@@ -40,6 +43,7 @@ export type {
   ConnectorMetadata,
   ConnectorConnectionResult,
   ConnectorConfig,
+  SignerConfig,
 } from "@burnt-labs/abstraxion-core";
 export { ConnectorType } from "@burnt-labs/abstraxion-core";
 

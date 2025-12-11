@@ -4,21 +4,35 @@
  * - accountConnection.ts: Connector connection & account discovery/creation
  * - grantCreation.ts: Authorization grant creation
  * - sessionRestoration.ts: Session restoration logic
- * 
+ *
  * This orchestrator unifies all connector flows: session restoration, grant creation, account discovery
  * It delegates implementation to the separate flow modules while coordinating the overall sequence.
  */
 
-import type { Connector, ConnectorConnectionResult, SignArbSecp256k1HdWallet } from '@burnt-labs/abstraxion-core';
-import type { StorageStrategy } from '@burnt-labs/abstraxion-core';
-import { GranteeSignerClient } from '@burnt-labs/abstraxion-core';
-import { GasPrice } from '@cosmjs/stargate';
-import type { SessionManager, GrantConfig, ConnectionResult, SessionRestorationResult, AccountCreationConfig } from './types';
-import type { CompositeAccountStrategy } from '../accounts';
-import { restoreSession } from './flow/sessionRestoration';
-import { connectAccount } from './flow/accountConnection';
-import { createGrants, checkStorageGrants, type GrantCreationResult } from './flow/grantCreation';
-import { initiateRedirect, completeRedirect } from './flow/redirectFlow';
+import type {
+  Connector,
+  ConnectorConnectionResult,
+  SignArbSecp256k1HdWallet,
+} from "@burnt-labs/abstraxion-core";
+import type { StorageStrategy } from "@burnt-labs/abstraxion-core";
+import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import { GasPrice } from "@cosmjs/stargate";
+import type {
+  SessionManager,
+  GrantConfig,
+  ConnectionResult,
+  SessionRestorationResult,
+  AccountCreationConfig,
+} from "./types";
+import type { CompositeAccountStrategy } from "../accounts";
+import { restoreSession } from "./flow/sessionRestoration";
+import { connectAccount } from "./flow/accountConnection";
+import {
+  createGrants,
+  checkStorageGrants,
+  type GrantCreationResult,
+} from "./flow/grantCreation";
+import { initiateRedirect, completeRedirect } from "./flow/redirectFlow";
 
 /**
  * Configuration for ConnectionOrchestrator
@@ -26,32 +40,31 @@ import { initiateRedirect, completeRedirect } from './flow/redirectFlow';
 export interface ConnectionOrchestratorConfig {
   /** Session manager for keypair and granter storage */
   sessionManager: SessionManager;
-  
+
   /** Storage strategy for accessing stored values (web: localStorage, React Native: AsyncStorage) */
   storageStrategy: StorageStrategy;
-  
+
   /** Account discovery strategy (CompositeAccountStrategy from @burnt-labs/account-management) */
   accountStrategy?: CompositeAccountStrategy;
-  
+
   /** Grant configuration */
   grantConfig?: GrantConfig;
-  
+
   /** Account creation configuration (required if accounts need to be created) */
   accountCreationConfig?: AccountCreationConfig;
-  
+
   /** Chain ID */
   chainId: string;
-  
+
   /** RPC URL */
   rpcUrl: string;
-  
+
   /** Gas price (e.g., "0.001uxion") */
   gasPrice: string;
-  
+
   /** Dashboard URL for redirect flow (optional, will be fetched from RPC if not provided) */
   dashboardUrl?: string;
 }
-
 
 /**
  * Connection Orchestrator
@@ -68,15 +81,19 @@ export class ConnectionOrchestrator {
    * Restore an existing session if valid
    * Checks for stored keypair and granter, then verifies grants on-chain
    * Optionally creates a signing client if createSigningClient is true
-   * 
+   *
    * @param createSigningClient - If true, creates signing client for restored session
    */
-  async restoreSession(createSigningClient = false): Promise<SessionRestorationResult> {
-    const signingClientConfig = createSigningClient ? {
-      rpcUrl: this.config.rpcUrl,
-      gasPrice: this.config.gasPrice,
-      treasuryAddress: this.config.grantConfig?.treasury,
-    } : undefined;
+  async restoreSession(
+    createSigningClient = false,
+  ): Promise<SessionRestorationResult> {
+    const signingClientConfig = createSigningClient
+      ? {
+          rpcUrl: this.config.rpcUrl,
+          gasPrice: this.config.gasPrice,
+          treasuryAddress: this.config.grantConfig?.treasury,
+        }
+      : undefined;
 
     return restoreSession(this.config.sessionManager, signingClientConfig);
   }
@@ -95,7 +112,7 @@ export class ConnectionOrchestrator {
 
   /**
    * Connect via a connector and discover/create smart account
-   * 
+   *
    * @param connector - The connector to use
    * @param authenticator - Optional authenticator string (if already known)
    * @returns Connection result with smart account address and connection info
@@ -105,13 +122,16 @@ export class ConnectionOrchestrator {
     authenticator?: string,
   ): Promise<ConnectionResult> {
     if (!this.config.accountStrategy) {
-      throw new Error('Account strategy is required for connect() but was not provided');
+      throw new Error(
+        "Account strategy is required for connect() but was not provided",
+      );
     }
-    
+
     return connectAccount({
       connector,
       authenticator,
       chainId: this.config.chainId,
+      rpcUrl: this.config.rpcUrl,
       accountStrategy: this.config.accountStrategy,
       accountCreationConfig: this.config.accountCreationConfig,
       sessionManager: this.config.sessionManager,
@@ -120,7 +140,7 @@ export class ConnectionOrchestrator {
 
   /**
    * Create grants for a connected account
-   * 
+   *
    * @param smartAccountAddress - Smart account address (granter)
    * @param connectionResult - Connection result from connector
    * @param granteeAddress - Session key address (grantee)
@@ -132,7 +152,7 @@ export class ConnectionOrchestrator {
     granteeAddress: string,
   ): Promise<GrantCreationResult> {
     if (!this.config.grantConfig) {
-      throw new Error('Grant config is required but not provided');
+      throw new Error("Grant config is required but not provided");
     }
 
     return createGrants({
@@ -154,49 +174,54 @@ export class ConnectionOrchestrator {
     authenticator?: string,
   ): Promise<ConnectionResult> {
     if (!this.config.accountStrategy) {
-      throw new Error('Account strategy is required for connectAndSetup() but was not provided');
+      throw new Error(
+        "Account strategy is required for connectAndSetup() but was not provided",
+      );
     }
-    
+
     // 1. Connect and discover account
     const connectionResult = await this.connect(connector, authenticator);
 
     // 2. Create grants if configured
-    if (this.config.grantConfig?.treasury || 
-        this.config.grantConfig?.contracts?.length ||
-        this.config.grantConfig?.bank?.length ||
-        this.config.grantConfig?.stake) {
+    if (
+      this.config.grantConfig?.treasury ||
+      this.config.grantConfig?.contracts?.length ||
+      this.config.grantConfig?.bank?.length ||
+      this.config.grantConfig?.stake
+    ) {
       const grantResult = await this.createGrants(
         connectionResult.smartAccountAddress,
         connectionResult.connectionInfo,
         connectionResult.granteeAddress,
       );
-      
+
       if (!grantResult.success) {
         throw new Error(`Failed to create grants: ${grantResult.error}`);
       }
-      
-      // Create signing client after grants are created/verified
-      const signingClient = await this.createSigningClient(
-        connectionResult.sessionKeypair,
-        connectionResult.smartAccountAddress,
-        connectionResult.granteeAddress,
-      );
-      
-      return {
-        ...connectionResult,
-        signingClient,
-      };
     } else {
       // No grants needed - just store granter
-      await this.config.sessionManager.setGranter(connectionResult.smartAccountAddress);
-      return connectionResult;
+      await this.config.sessionManager.setGranter(
+        connectionResult.smartAccountAddress,
+      );
     }
+
+    // Always create signing client after connection (with or without grants)
+    const signingClient = await this.createSigningClient(
+      connectionResult.sessionKeypair,
+      connectionResult.smartAccountAddress,
+      connectionResult.granteeAddress,
+    );
+
+    return {
+      ...connectionResult,
+      signingClient,
+    };
   }
 
   /**
    * Initiate redirect flow
    * Uses AbstraxionAuth.redirectToDashboard() if available
-   * 
+   *
    * @returns Dashboard URL for state dispatch
    */
   async initiateRedirect(): Promise<{ dashboardUrl: string }> {

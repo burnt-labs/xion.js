@@ -33,7 +33,7 @@ export interface CreateCompositeTreasuryStrategyConfig {
  *
  */
 export function createCompositeTreasuryStrategy(
-  config: CreateCompositeTreasuryStrategyConfig = {}
+  config: CreateCompositeTreasuryStrategyConfig = {},
 ): CompositeTreasuryStrategy {
   const strategies = [];
 
@@ -42,7 +42,7 @@ export function createCompositeTreasuryStrategy(
     strategies.push(
       new DaoDaoTreasuryStrategy({
         indexerUrl: config.daodao.indexerUrl,
-      })
+      }),
     );
   }
 
@@ -54,8 +54,8 @@ export function createCompositeTreasuryStrategy(
 
   if (strategies.length === 0) {
     throw new Error(
-      'createCompositeTreasuryStrategy: At least one strategy must be enabled. ' +
-      'Either provide daodao config or set includeDirectQuery to true.'
+      "createCompositeTreasuryStrategy: At least one strategy must be enabled. " +
+        "Either provide daodao config or set includeDirectQuery to true.",
     );
   }
 

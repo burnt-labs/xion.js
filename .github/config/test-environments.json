@@ -1,0 +1,65 @@
+{
+  "$schema": "./test-environments.schema.json",
+  "description": "Test environment configurations for xion.js integration tests",
+  "version": "1.0.0",
+  "environments": {
+    "testnet": {
+      "name": "XION Testnet 2",
+      "chainId": "xion-testnet-2",
+      "rpcUrl": "https://rpc.xion-testnet-2.burnt.com:443",
+      "restUrl": "https://api.xion-testnet-2.burnt.com:443",
+      "gasPrice": "0.001uxion",
+      "gasAdjustment": "1.6",
+      "aaApiUrl": {
+        "liveUrl": "https://aa-api.xion-testnet-2.burnt.com",
+        "devServerPort": 8787,
+        "description": "Use liveUrl for deployed API, or start dev server on devServerPort"
+      },
+      "treasuryAddress": "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw",
+      "addressPrefix": "xion",
+      "feeGranter": "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
+      "description": "Public testnet for development and testing"
+    },
+    "mainnet": {
+      "name": "XION Mainnet",
+      "chainId": "xion-mainnet-1",
+      "rpcUrl": "https://rpc.xion-mainnet-1.burnt.com:443",
+      "restUrl": "https://api.xion-mainnet-1.burnt.com:443",
+      "gasPrice": "0.001uxion",
+      "gasAdjustment": "1.6",
+      "addressPrefix": "xion",
+      "treasuryAddress": "fill in later -- TODO: add treasury address",
+      "feeGranter": "fill in later -- TODO: add fee granter address",
+      "aaApiUrl": {
+        "devServerPort": 8787,
+        "description": "AA-API URL must be set via XION_MAINNET_AA_API_URL secret. Dev server not recommended for mainnet."
+      },
+      "description": "Production mainnet - public configuration",
+      "note": "AA-API URL and indexer URLs must be set via GitHub secrets (XION_MAINNET_AA_API_URL, XION_MAINNET_INDEXER_URL, XION_MAINNET_TREASURY_INDEXER_URL)"
+    }
+  },
+  "aaApiDevServer": {
+    "description": "Configuration for running AA-API dev server in CI (when aa_api_mode=dev-server)",
+    "note": "Only STYTCH_PROJECT_ID and STYTCH_SECRET must be set via GitHub secrets. FEE_GRANTER_ADDRESS comes from environment config.",
+    "defaults": {
+      "checksum": "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
+      "codeId": "1",
+      "stytchApiUrl": "https://test.stytch.com",
+      "addressPrefix": "xion",
+      "gasPrice": "0.001uxion",
+      "gasAdjustment": "1.6",
+      "port": 8787
+    },
+    "requiredSecrets": [
+      "STYTCH_PROJECT_ID",
+      "STYTCH_SECRET"
+    ]
+  },
+  "testConfig": {
+    "timeout": {
+      "unit": 30000,
+      "integration": 120000
+    },
+    "nodeEnv": "test"
+  }
+}

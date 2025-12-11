@@ -1,5 +1,199 @@
 # @burnt-labs/abstraxion
 
+## UNRELEASED
+
+### Major Changes
+
+- Complete architecture overhaul with connector-based design and state machine
+
+  # Breaking Changes
+
+  ## Removed Components and UI
+  - All UI components removed: `<Abstraxion />`, `<AbstraxionSignin />`, `<Connected />`, `<Loading />`, `<ErrorDisplay />`
+  - CSS import no longer needed - package is now UI-less
+  - `@burnt-labs/ui` dependency removed
+  - `useModal` hook removed - implement your own authentication UI
+
+  ## Configuration Changes
+
+  `AbstraxionProvider` now requires a single `config` object:
+
+  ```tsx
+  // Before
+  <AbstraxionProvider
+    rpcUrl="..."
+    restUrl="..."
+    contracts={[...]}
+    stake={true}
+    bank={[...]}
+    treasury="xion1..."
+    indexerUrl="..."
+    gasPrice="0.001uxion"
+    dashboardUrl="..."
+    callbackUrl="..."
+  >
+
+  // After
+  <AbstraxionProvider
+    config={{
+      chainId: "xion-testnet-1", // REQUIRED
+      // rpcUrl, restUrl, gasPrice auto-filled from chainId
+      contracts: [...],
+      stake: true,
+      bank: [...],
+      treasury: "xion1...",
+      feeGranter: "xion1...",
+      authentication: {
+        type: "redirect", // or "signer"
+        // mode-specific options
+      }
+    }}
+  >
+  ```
+
+  **Key changes:**
+  - `chainId` now required
+  - `rpcUrl`, `restUrl`, `gasPrice` optional (auto-filled)
+  - `dashboardUrl` moved to `authentication.dashboardUrl`
+  - `callbackUrl` moved to `authentication.callbackUrl`
+  - `indexerUrl` moved to `authentication.indexer`
+
+  ## Hook Changes
+
+  **`useAbstraxionSigningClient`:**
+  - No longer returns `logout` (moved to `useAbstraxionAccount`)
+  - Returns pre-configured `client` from state
+
+  ```tsx
+  // Before
+  const { client, signArb, logout } = useAbstraxionSigningClient();
+
+  // After
+  const { client, signArb } = useAbstraxionSigningClient();
+  const { logout } = useAbstraxionAccount();
+  await logout(); // now async
+  ```
+
+  ## Context Changes
+
+  **Removed from `AbstraxionContext`:**
+  - All setter functions (`setIsConnected`, `setIsConnecting`, `setAbstraxionError`, `setAbstraxionAccount`, `showModal`, `setShowModal`, `setGranterAddress`, `setDashboardUrl`)
+
+  **Added to `AbstraxionContext`:**
+  - `chainId`, `restUrl`, `signingClient`, `authMode`, `authentication`, `feeGranter`, `indexerUrl`, `indexerAuthToken`, `treasuryIndexerUrl`
+
+  **Changed:**
+  - `logout` now async - returns `Promise<void>`
+  - State values now read-only (derived from controller)
+
+  ## Export Changes
+
+  **Removed:**
+  - `Abstraxion` component
+  - `abstraxionAuth` singleton
+  - `useModal` hook
+
+  **Added:**
+  - New config types: `AbstraxionConfig`, `NormalizedAbstraxionConfig`, `AuthenticationConfig`, `RedirectAuthentication`, `SignerAuthentication`
+  - Re-exported: `Connector`, `ConnectorType`, `AUTHENTICATOR_TYPE`, `OfflineDirectSigner`
+
+  # New Features
+
+  ## Signer Mode
+
+  New authentication mode supporting external providers (Turnkey, Privy, Web3Auth) and direct wallet connections (MetaMask, Keplr) without dashboard redirect:
+
+  ```tsx
+  <AbstraxionProvider
+    config={{
+      chainId: "xion-testnet-2",
+      authentication: {
+        type: "signer",
+        aaApiUrl: "https://aa-api......com",
+        getSignerConfig: async () => {
+          const signer = await yourAuthProvider.getSigner();
+          return {
+            authenticatorId: "...",
+            authenticatorType: AUTHENTICATOR_TYPE.SECP256K1,
+            account: signer,
+          };
+        },
+        smartAccountContract: {
+          codeId: 12,
+          salt: "0",
+          msg: {},
+        },
+        // Optional indexers for fast queries
+        indexer: {
+          type: "numia", // or "subquery"
+          url: "https://xion-testnet.numia.xyz",
+          authToken: "...",
+        },
+        treasuryIndexer: {
+          url: "https://indexer.daodao.zone",
+        },
+      },
+    }}
+  />
+  ```
+
+  ## Redirect Mode
+
+  Traditional dashboard OAuth flow still supported (default if no `authentication` config):
+
+  ```tsx
+  <AbstraxionProvider
+    config={{
+      chainId: "xion-testnet-1",
+      authentication: {
+        type: "redirect",
+        // dashboardUrl auto-fetched for standard networks
+        callbackUrl: "http://localhost:3000/callback",
+      },
+    }}
+  />
+  ```
+
+  ## Controller Architecture
+  - New controller pattern with state machine for connection lifecycle
+  - `RedirectController` for OAuth flow
+  - `SignerController` for external signers
+  - Handles state transitions, session restoration, account creation/discovery
+
+  ## Indexer Support
+  - Numia and Subquery indexers for fast account discovery (signer mode)
+  - DaoDao treasury indexer for fast grant config queries
+  - Falls back to RPC if no indexer configured
+
+  # Migration Guide
+  1. **Update provider:**
+
+     ```tsx
+     <AbstraxionProvider config={{ chainId: "xion-testnet-1", contracts }} />
+     ```
+
+  2. **Remove CSS import:**
+
+     ```tsx
+     // Remove: import "@burnt-labs/abstraxion/dist/index.css";
+     ```
+
+  3. **Replace useModal:**
+
+     ```tsx
+     // Use login from useAbstraxionAccount instead
+     const { login } = useAbstraxionAccount();
+     ```
+
+  4. **Update hook usage:**
+
+     ```tsx
+     const { client, signArb } = useAbstraxionSigningClient();
+     const { logout } = useAbstraxionAccount();
+     ```
+
+  5. **Optional - implement signer mode for custom auth**
+
 ## 1.0.0-alpha.68
 
 ### Minor Changes

@@ -13,6 +13,8 @@ export interface AbstraxionAccountState {
   isLoading: boolean;
   isReturningFromAuth: boolean;
   isLoggingIn: boolean;
+  isError: boolean;
+  error: string;
   login: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -25,12 +27,16 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     isInitializing,
     isReturningFromAuth,
     isLoggingIn,
+    abstraxionError,
     login,
     logout,
   } = useContext(AbstraxionContext);
 
   // isLoading is true if the account is initializing, connecting, or in transition state (isConnecting is true when the user is in login or in callback)
   const isLoading = isInitializing || isConnecting;
+
+  // isError is true when there's an error message
+  const isError = !!abstraxionError;
 
   return {
     data: {
@@ -44,5 +50,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     isLoggingIn,
     isConnecting,
     isReturningFromAuth,
+    isError,
+    error: abstraxionError,
   };
 };

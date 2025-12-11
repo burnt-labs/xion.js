@@ -3,16 +3,16 @@
  * Allows selection between different signing methods
  */
 
-import { useTurnkeyViem } from './useTurnkeyViem';
-import { useTurnkeyRawAPI } from './useTurnkeyRawAPI';
+import { useTurnkeyViem } from "./useTurnkeyViem";
+import { useTurnkeyRawAPI } from "./useTurnkeyRawAPI";
 
-export type TurnkeySigningMethod = 'viem' | 'raw-api';
+export type TurnkeySigningMethod = "viem" | "raw-api";
 
-export function useTurnkeyForAbstraxion(method: TurnkeySigningMethod = 'viem') {
+export function useTurnkeyForAbstraxion(method: TurnkeySigningMethod = "viem") {
   switch (method) {
-    case 'viem':
+    case "viem":
       return useTurnkeyViem();
-    case 'raw-api':
+    case "raw-api":
       return useTurnkeyRawAPI();
     default:
       throw new Error(`Unknown Turnkey signing method: ${method}`);
