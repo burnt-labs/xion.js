@@ -151,7 +151,8 @@ jobs:
           # Extract test summary for PR comment (only clean summary lines)
           if [ -f account-management-results.txt ]; then
             # Filter to only include clean summary lines (Test Files, Tests, Duration, Start at)
-            ACCT_MGMT_SUMMARY=$(grep -a -E "^\s*(Test Files|Tests|Start at|Duration)" account-management-results.txt 2>/dev/null | head -4 || echo "No summary available")
+            # Use a more flexible pattern that matches the Vitest output format
+            ACCT_MGMT_SUMMARY=$(grep -a -E "Test Files|Tests.*failed|Tests.*passed|Start at|Duration" account-management-results.txt 2>/dev/null | grep -v "Error:" | tail -4 || echo "No summary available")
             echo "acct_mgmt_summary<<EOF_ACCT" >> $GITHUB_OUTPUT
             echo "$ACCT_MGMT_SUMMARY" >> $GITHUB_OUTPUT
             echo "EOF_ACCT" >> $GITHUB_OUTPUT
@@ -161,7 +162,8 @@ jobs:
 
           if [ -f abstraxion-results.txt ]; then
             # Filter to only include clean summary lines (Test Files, Tests, Duration, Start at)
-            ABSTRAXION_SUMMARY=$(grep -a -E "^\s*(Test Files|Tests|Start at|Duration)" abstraxion-results.txt 2>/dev/null | head -4 || echo "No summary available")
+            # Use a more flexible pattern that matches the Vitest output format
+            ABSTRAXION_SUMMARY=$(grep -a -E "Test Files|Tests.*failed|Tests.*passed|Start at|Duration" abstraxion-results.txt 2>/dev/null | grep -v "Error:" | tail -4 || echo "No summary available")
             echo "abstraxion_summary<<EOF_ABS" >> $GITHUB_OUTPUT
             echo "$ABSTRAXION_SUMMARY" >> $GITHUB_OUTPUT
             echo "EOF_ABS" >> $GITHUB_OUTPUT
