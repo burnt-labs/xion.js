@@ -142,26 +142,35 @@ jobs:
           extract_counts() {
             local file=$1
 
+            # Initialize with defaults
+            local failed=0
+            local passed=0
+
             # Try pattern 1: "Test Files  X failed | Y passed (Z)"
-            local failed=$(grep -oP 'Test Files\s+\K\d+(?=\s+failed)' "$file" | head -1 || echo "")
-            local passed=$(grep -oP 'failed \| \K\d+(?=\s+passed)' "$file" | head -1 || echo "")
+            local temp_failed=$(grep -oP 'Test Files\s+\K\d+(?=\s+failed)' "$file" 2>/dev/null | head -1 || echo "")
+            local temp_passed=$(grep -oP 'Test Files\s+\d+\s+failed \| \K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
 
             # Try pattern 2: "Tests  X failed | Y passed"
-            if [ -z "$failed" ]; then
-              failed=$(grep -oP 'Tests\s+\K\d+(?=\s+failed)' "$file" | head -1 || echo "")
+            if [ -z "$temp_failed" ]; then
+              temp_failed=$(grep -oP 'Tests\s+\K\d+(?=\s+failed)' "$file" 2>/dev/null | head -1 || echo "")
             fi
-            if [ -z "$passed" ]; then
-              passed=$(grep -oP 'Tests\s+.*failed \| \K\d+(?=\s+passed)' "$file" | head -1 || echo "")
-            fi
-
-            # Try pattern 3: Just "X passed"
-            if [ -z "$passed" ]; then
-              passed=$(grep -oP 'Tests\s+\K\d+(?=\s+passed)' "$file" | head -1 || echo "")
+            if [ -z "$temp_passed" ]; then
+              temp_passed=$(grep -oP 'Tests\s+\d+\s+failed \| \K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
             fi
 
-            # Default to 0 if nothing found
-            failed=${failed:-0}
-            passed=${passed:-0}
+            # Try pattern 3: Just "X passed" (no failures)
+            if [ -z "$temp_passed" ]; then
+              temp_passed=$(grep -oP 'Tests\s+\K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
+            fi
+
+            # Try pattern 4: "Test Files  X passed" (no failures)
+            if [ -z "$temp_passed" ]; then
+              temp_passed=$(grep -oP 'Test Files\s+\K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
+            fi
+
+            # Assign only if not empty
+            [ -n "$temp_failed" ] && failed=$temp_failed
+            [ -n "$temp_passed" ] && passed=$temp_passed
 
             echo "$failed $passed"
           }
@@ -170,6 +179,9 @@ jobs:
             echo "=== Parsing account-management results ==="
             grep -i "test" account-management-results.txt | grep -E "(passed|failed)" | head -5
             read FAILED PASSED <<< $(extract_counts account-management-results.txt)
+            # Ensure values are numeric
+            FAILED=${FAILED:-0}
+            PASSED=${PASSED:-0}
             echo "Account Management: $PASSED passed, $FAILED failed"
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
             TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
@@ -179,10 +191,17 @@ jobs:
             echo "=== Parsing abstraxion results ==="
             grep -i "test" abstraxion-results.txt | grep -E "(passed|failed)" | head -5
             read FAILED PASSED <<< $(extract_counts abstraxion-results.txt)
+            # Ensure values are numeric
+            FAILED=${FAILED:-0}
+            PASSED=${PASSED:-0}
             echo "Abstraxion: $PASSED passed, $FAILED failed"
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
             TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
           fi
+
+          # Ensure outputs have valid numeric values
+          TOTAL_FAILED=${TOTAL_FAILED:-0}
+          TOTAL_PASSED=${TOTAL_PASSED:-0}
 
           echo "total_failed=$TOTAL_FAILED" >> $GITHUB_OUTPUT
           echo "total_passed=$TOTAL_PASSED" >> $GITHUB_OUTPUT
@@ -216,6 +235,10 @@ jobs:
             const totalFailed = '${{ steps.run-tests.outputs.total_failed }}' || '0';
             const testStatus = '${{ steps.run-tests.outputs.test_status }}' || 'unknown';
 
+            // Additional safety check for empty strings
+            const passed = totalPassed.trim() === '' ? '0' : totalPassed;
+            const failed = totalFailed.trim() === '' ? '0' : totalFailed;
+
             let emoji = '✅';
             let statusText = 'All tests passed';
 
@@ -227,11 +250,14 @@ jobs:
               statusText = 'Some tests failed (≤10)';
             }
 
-            const noteText = totalFailed > 0
+            const failedCount = parseInt(failed, 10) || 0;
+            const passedCount = parseInt(passed, 10) || 0;
+
+            const noteText = failedCount > 0
               ? '\n\n> **Note:** Some integration test failures are expected due to testnet instability (network issues, indexer delays, fee grant limits, etc.).\n> The workflow only fails if more than 10 tests fail.\n'
               : '';
 
-            const body = `## ${emoji} Integration Test Results\n\n**Status:** ${statusText}\n\n- ✅ Passed: ${totalPassed}\n- ❌ Failed: ${totalFailed}${noteText}\n---\n*Environment: ${{ steps.config.outputs.test_environment }}*\n*AA-API: ${{ steps.config.outputs.aa_api_url }}*`;
+            const body = `## ${emoji} Integration Test Results\n\n**Status:** ${statusText}\n\n- ✅ Passed: ${passed}\n- ❌ Failed: ${failed}${noteText}\n---\n*Environment: ${{ steps.config.outputs.test_environment }}*\n*AA-API: ${{ steps.config.outputs.aa_api_url }}*`;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,

@@ -75,10 +75,42 @@ jobs:
         run: |
           echo "Comparing generated types with committed types..."
 
-          # Check if there are differences
-          if ! diff -r packages/signers/src/types/generated /tmp/generated-backup > /tmp/schema-diff.txt; then
+          # Compare only TypeScript files, excluding metadata.json
+          # Metadata contains timestamps and source env labels that always differ
+          SCHEMA_CHANGED=false
+
+          # Compare all .ts files in the generated directory
+          for ts_file in packages/signers/src/types/generated/*.ts; do
+            if [ -f "$ts_file" ]; then
+              backup_file="/tmp/generated-backup/$(basename "$ts_file")"
+              if [ ! -f "$backup_file" ]; then
+                echo "⚠️  New file detected: $(basename "$ts_file")"
+                SCHEMA_CHANGED=true
+              elif ! diff "$ts_file" "$backup_file" > /tmp/schema-diff-$(basename "$ts_file").txt 2>&1; then
+                echo "⚠️  Changes detected in: $(basename "$ts_file")"
+                SCHEMA_CHANGED=true
+              fi
+            fi
+          done
+
+          # Check for deleted files
+          for backup_file in /tmp/generated-backup/*.ts; do
+            if [ -f "$backup_file" ]; then
+              current_file="packages/signers/src/types/generated/$(basename "$backup_file")"
+              if [ ! -f "$current_file" ]; then
+                echo "⚠️  File deleted: $(basename "$backup_file")"
+                SCHEMA_CHANGED=true
+              fi
+            fi
+          done
+
+          if [ "$SCHEMA_CHANGED" = true ]; then
             echo "schema_changed=true" >> $GITHUB_OUTPUT
-            echo "⚠️  Schema validation detected differences!"
+
+            # Combine all diffs into one file
+            cat /tmp/schema-diff-*.txt > /tmp/schema-diff.txt 2>/dev/null || echo "No diff files generated" > /tmp/schema-diff.txt
+
+            echo "⚠️  Schema validation detected type differences!"
             echo ""
             echo "Diff summary:"
             head -50 /tmp/schema-diff.txt
@@ -87,6 +119,7 @@ jobs:
           else
             echo "schema_changed=false" >> $GITHUB_OUTPUT
             echo "✅ Generated types match committed types - schema is in sync!"
+            echo "   (metadata.json differences are ignored)"
           fi
 
       - name: Upload Diff Artifact
