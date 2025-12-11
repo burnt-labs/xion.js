@@ -157,7 +157,7 @@ jobs:
         with:
           script: |
             const body = '## ⚠️ AA-API Schema Drift\n\n' +
-              '**Generated types don\'t match the live schema.**\n\n' +
+              '**Generated types don' + "'" + 't match the live schema.**\n\n' +
               '**Action:** Run `pnpm generate:types` in `packages/signers`, review changes, and commit.\n\n' +
               '<details>\n' +
               '<summary>Details</summary>\n\n' +
