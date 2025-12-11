@@ -76,6 +76,3 @@ jobs:
           # This runs all tests except those in tests/integration/ directories
           pnpm test
 
-      - name: ✨ Check Prettier
-        run: pnpm run prettier-check
-

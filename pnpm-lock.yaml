@@ -682,6 +682,9 @@ importers:
         specifier: ^18.2.18
         version: 18.3.7(@types/react@18.3.24)
     devDependencies:
+      '@burnt-labs/abstraxion':
+        specifier: workspace:*
+        version: link:../abstraxion
       '@burnt-labs/eslint-config-custom':
         specifier: workspace:*
         version: link:../eslint-config-custom

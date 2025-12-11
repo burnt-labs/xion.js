@@ -8,7 +8,11 @@ export * from "./button";
 export * from "./modal";
 export * from "./dialog";
 export * from "./popover";
+export { Abstraxion } from "./Abstraxion";
+export type { AbstraxionProps } from "./Abstraxion";
 
+// hooks
+export * from "./hooks/useAbstraxionModal";
 // icons
 export * from "./icons/chevronDown";
 export * from "./icons/close";
@@ -21,3 +25,4 @@ export * from "./icons/passkey";
 export * from "./icons/email";
 export * from "./icons/ethereumLogo";
 export * from "./icons/trash";
+export * from "./icons/error";

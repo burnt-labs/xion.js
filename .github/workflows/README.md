@@ -14,7 +14,19 @@ Automated CI/CD workflows for the xion.js monorepo.
 - Install dependencies
 - Build packages
 - Run unit tests (excludes integration)
-- Check formatting
+```
+
+---
+
+### ✨ Format Check (`format.yml`)
+
+**Triggers**: All pushes, PRs, manual
+**Purpose**: Verify code formatting with Prettier
+
+```bash
+# What it does
+- Install dependencies
+- Check code formatting with Prettier
 ```
 
 ---
@@ -224,6 +236,7 @@ git push
 .github/
 ├── workflows/
 │   ├── unit-tests.yml           # Fast unit tests
+│   ├── format.yml               # Code formatting check
 │   ├── integration-tests.yml    # Blockchain integration tests
 │   ├── build.yml                # Build verification
 │   ├── dependency-validation.yml
