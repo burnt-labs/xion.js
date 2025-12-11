@@ -79,6 +79,9 @@ jobs:
           # Metadata contains timestamps and source env labels that always differ
           SCHEMA_CHANGED=false
 
+          # Initialize the diff output file
+          > /tmp/schema-diff.txt
+
           # Compare all .ts files in the generated directory
           for ts_file in packages/signers/src/types/generated/*.ts; do
             if [ -f "$ts_file" ]; then
@@ -86,9 +89,23 @@ jobs:
               if [ ! -f "$backup_file" ]; then
                 echo "⚠️  New file detected: $(basename "$ts_file")"
                 SCHEMA_CHANGED=true
-              elif ! diff "$ts_file" "$backup_file" > /tmp/schema-diff-$(basename "$ts_file").txt 2>&1; then
+                {
+                  echo "=== NEW FILE: $(basename "$ts_file") ==="
+                  echo ""
+                  head -30 "$ts_file"
+                  echo ""
+                  echo "... (truncated)"
+                  echo ""
+                } >> /tmp/schema-diff.txt
+              elif ! diff "$ts_file" "$backup_file" > /tmp/temp-diff.txt 2>&1; then
                 echo "⚠️  Changes detected in: $(basename "$ts_file")"
                 SCHEMA_CHANGED=true
+                {
+                  echo "=== CHANGES IN: $(basename "$ts_file") ==="
+                  echo ""
+                  cat /tmp/temp-diff.txt
+                  echo ""
+                } >> /tmp/schema-diff.txt
               fi
             fi
           done
@@ -100,6 +117,10 @@ jobs:
               if [ ! -f "$current_file" ]; then
                 echo "⚠️  File deleted: $(basename "$backup_file")"
                 SCHEMA_CHANGED=true
+                {
+                  echo "=== DELETED FILE: $(basename "$backup_file") ==="
+                  echo ""
+                } >> /tmp/schema-diff.txt
               fi
             fi
           done
@@ -107,13 +128,14 @@ jobs:
           if [ "$SCHEMA_CHANGED" = true ]; then
             echo "schema_changed=true" >> $GITHUB_OUTPUT
 
-            # Combine all diffs into one file
-            cat /tmp/schema-diff-*.txt > /tmp/schema-diff.txt 2>/dev/null || echo "No diff files generated" > /tmp/schema-diff.txt
-
             echo "⚠️  Schema validation detected type differences!"
             echo ""
             echo "Diff summary:"
-            head -50 /tmp/schema-diff.txt
+            if [ -s /tmp/schema-diff.txt ]; then
+              head -50 /tmp/schema-diff.txt
+            else
+              echo "(No detailed diff available)"
+            fi
             echo ""
             echo "Full diff saved to artifact"
           else
@@ -164,12 +186,23 @@ jobs:
               body: body
             });
 
-      - name: Fail on Schema Drift (strict mode)
-        if: steps.compare.outputs.schema_changed == 'true' && github.event_name == 'schedule'
+      - name: Fail on Schema Drift
+        if: steps.compare.outputs.schema_changed == 'true'
         run: |
-          echo "❌ Schema drift detected in scheduled run - failing workflow"
-          echo "This indicates the AA-API schema has changed without updating the generated types"
-          exit 1
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "❌ Schema drift detected in scheduled run - failing workflow"
+            echo "This indicates the AA-API schema has changed without updating the generated types"
+            exit 1
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "⚠️  Schema drift detected in PR"
+            echo "Please regenerate types using 'pnpm generate:types' if the schema changes are intentional"
+            echo "Failing workflow to ensure types are in sync"
+            exit 1
+          else
+            echo "⚠️  Schema drift detected on push to main/develop"
+            echo "This should not happen - types should be regenerated before merging"
+            exit 1
+          fi
 
       - name: Schema Validation Summary
         run: |

@@ -146,26 +146,27 @@ jobs:
             local failed=0
             local passed=0
 
+            # Use -a flag to treat file as text even if it contains binary data
             # Try pattern 1: "Test Files  X failed | Y passed (Z)"
-            local temp_failed=$(grep -oP 'Test Files\s+\K\d+(?=\s+failed)' "$file" 2>/dev/null | head -1 || echo "")
-            local temp_passed=$(grep -oP 'Test Files\s+\d+\s+failed \| \K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
+            local temp_failed=$(grep -a -oP 'Test Files\s+\K\d+(?=\s+failed)' "$file" 2>/dev/null | head -1 || echo "")
+            local temp_passed=$(grep -a -oP 'Test Files\s+\d+\s+failed \| \K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
 
             # Try pattern 2: "Tests  X failed | Y passed"
             if [ -z "$temp_failed" ]; then
-              temp_failed=$(grep -oP 'Tests\s+\K\d+(?=\s+failed)' "$file" 2>/dev/null | head -1 || echo "")
+              temp_failed=$(grep -a -oP 'Tests\s+\K\d+(?=\s+failed)' "$file" 2>/dev/null | head -1 || echo "")
             fi
             if [ -z "$temp_passed" ]; then
-              temp_passed=$(grep -oP 'Tests\s+\d+\s+failed \| \K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
+              temp_passed=$(grep -a -oP 'Tests\s+\d+\s+failed \| \K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
             fi
 
             # Try pattern 3: Just "X passed" (no failures)
             if [ -z "$temp_passed" ]; then
-              temp_passed=$(grep -oP 'Tests\s+\K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
+              temp_passed=$(grep -a -oP 'Tests\s+\K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
             fi
 
             # Try pattern 4: "Test Files  X passed" (no failures)
             if [ -z "$temp_passed" ]; then
-              temp_passed=$(grep -oP 'Test Files\s+\K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
+              temp_passed=$(grep -a -oP 'Test Files\s+\K\d+(?=\s+passed)' "$file" 2>/dev/null | head -1 || echo "")
             fi
 
             # Assign only if not empty
@@ -177,7 +178,7 @@ jobs:
 
           if [ -f account-management-results.txt ]; then
             echo "=== Parsing account-management results ==="
-            grep -i "test" account-management-results.txt | grep -E "(passed|failed)" | head -5
+            grep -a -i "test" account-management-results.txt | grep -a -E "(passed|failed)" | head -5
             read FAILED PASSED <<< $(extract_counts account-management-results.txt)
             # Ensure values are numeric
             FAILED=${FAILED:-0}
@@ -189,7 +190,7 @@ jobs:
 
           if [ -f abstraxion-results.txt ]; then
             echo "=== Parsing abstraxion results ==="
-            grep -i "test" abstraxion-results.txt | grep -E "(passed|failed)" | head -5
+            grep -a -i "test" abstraxion-results.txt | grep -a -E "(passed|failed)" | head -5
             read FAILED PASSED <<< $(extract_counts abstraxion-results.txt)
             # Ensure values are numeric
             FAILED=${FAILED:-0}
@@ -239,6 +240,15 @@ jobs:
             const passed = totalPassed.trim() === '' ? '0' : totalPassed;
             const failed = totalFailed.trim() === '' ? '0' : totalFailed;
 
+            const failedCount = parseInt(failed, 10) || 0;
+            const passedCount = parseInt(passed, 10) || 0;
+
+            // Skip posting if no tests ran
+            if (passedCount === 0 && failedCount === 0) {
+              console.log('No tests ran, skipping comment');
+              return;
+            }
+
             let emoji = '✅';
             let statusText = 'All tests passed';
 
@@ -249,9 +259,6 @@ jobs:
               emoji = '⚠️';
               statusText = 'Some tests failed (≤10)';
             }
-
-            const failedCount = parseInt(failed, 10) || 0;
-            const passedCount = parseInt(passed, 10) || 0;
 
             const noteText = failedCount > 0
               ? '\n\n> **Note:** Some integration test failures are expected due to testnet instability (network issues, indexer delays, fee grant limits, etc.).\n> The workflow only fails if more than 10 tests fail.\n'
