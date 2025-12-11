@@ -137,13 +137,14 @@ jobs:
           TOTAL_FAILED=0
 
           # Extract just the number of failed tests using simple grep
+          # Format: "Tests  9 failed | 169 passed | 4 skipped (182)"
           if [ -f account-management-results.txt ]; then
-            FAILED=$(grep -a -oP 'Tests\s+\K\d+(?=\s+failed)' account-management-results.txt 2>/dev/null | head -1 || echo "0")
+            FAILED=$(grep -a 'Tests' account-management-results.txt 2>/dev/null | grep -oP '\d+(?=\s+failed)' | head -1 || echo "0")
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
           fi
 
           if [ -f abstraxion-results.txt ]; then
-            FAILED=$(grep -a -oP 'Tests\s+\K\d+(?=\s+failed)' abstraxion-results.txt 2>/dev/null | head -1 || echo "0")
+            FAILED=$(grep -a 'Tests' abstraxion-results.txt 2>/dev/null | grep -oP '\d+(?=\s+failed)' | head -1 || echo "0")
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
           fi
 
@@ -191,7 +192,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const testSummary = `${{ steps.run-tests.outputs.test_summary }}`;
+            const testSummary = '${{ steps.run-tests.outputs.test_summary }}';
             const totalFailed = parseInt('${{ steps.run-tests.outputs.total_failed }}', 10) || 0;
             const testStatus = '${{ steps.run-tests.outputs.test_status }}' || 'unknown';
 
@@ -216,12 +217,12 @@ jobs:
               ? '\n\n> **Note:** Some integration test failures are expected due to testnet instability (network issues, indexer delays, fee grant limits, etc.). The workflow only fails if more than 10 tests fail.'
               : '';
 
-            const body = `## ${emoji} Integration Test Results\n\n` +
-              `**Status:** ${statusText}\n\n` +
-              `${testSummary}` +
-              `${noteText}\n\n` +
-              `---\n` +
-              `*Environment: ${{ steps.config.outputs.test_environment }}* | *AA-API: ${{ steps.config.outputs.aa_api_url }}*`;
+            const body = '## ' + emoji + ' Integration Test Results\n\n' +
+              '**Status:** ' + statusText + '\n\n' +
+              testSummary +
+              noteText + '\n\n' +
+              '---\n' +
+              '*Environment: ${{ steps.config.outputs.test_environment }}* | *AA-API: ${{ steps.config.outputs.aa_api_url }}*';
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
