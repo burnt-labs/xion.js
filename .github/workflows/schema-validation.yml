@@ -64,7 +64,9 @@ jobs:
           echo "Generating types from live AA API: ${{ steps.config.outputs.aa_api_url }}"
 
           # Use the generate script with the AA API URL
-          pnpm tsx scripts/generate-aa-api-types.ts "${{ steps.config.outputs.aa_api_url }}"
+          # The script is in the root, tsx is in signers package
+          cd packages/signers
+          pnpm exec tsx ../../scripts/generate-aa-api-types.ts "${{ steps.config.outputs.aa_api_url }}"
 
           echo "✅ Types generated successfully"
 
