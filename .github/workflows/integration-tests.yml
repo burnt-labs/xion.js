@@ -194,17 +194,49 @@ jobs:
           TOTAL_FAILED=0
           TOTAL_PASSED=0
 
-          # Extract test counts from vitest output (looks for "Tests  X failed | Y passed")
+          # Function to extract test counts from vitest output
+          # Vitest formats: "Test Files  X failed | Y passed" or "Tests  X failed | Y passed"
+          extract_counts() {
+            local file=$1
+
+            # Try pattern 1: "Test Files  X failed | Y passed (Z)"
+            local failed=$(grep -oP 'Test Files\s+\K\d+(?=\s+failed)' "$file" | head -1 || echo "")
+            local passed=$(grep -oP 'failed \| \K\d+(?=\s+passed)' "$file" | head -1 || echo "")
+
+            # Try pattern 2: "Tests  X failed | Y passed"
+            if [ -z "$failed" ]; then
+              failed=$(grep -oP 'Tests\s+\K\d+(?=\s+failed)' "$file" | head -1 || echo "")
+            fi
+            if [ -z "$passed" ]; then
+              passed=$(grep -oP 'Tests\s+.*failed \| \K\d+(?=\s+passed)' "$file" | head -1 || echo "")
+            fi
+
+            # Try pattern 3: Just "X passed"
+            if [ -z "$passed" ]; then
+              passed=$(grep -oP 'Tests\s+\K\d+(?=\s+passed)' "$file" | head -1 || echo "")
+            fi
+
+            # Default to 0 if nothing found
+            failed=${failed:-0}
+            passed=${passed:-0}
+
+            echo "$failed $passed"
+          }
+
           if [ -f account-management-results.txt ]; then
-            FAILED=$(grep -oP 'Tests\s+\K\d+(?=\s+failed)' account-management-results.txt | head -1 || echo "0")
-            PASSED=$(grep -oP 'failed \| \K\d+(?=\s+passed)' account-management-results.txt | head -1 || echo "0")
+            echo "=== Parsing account-management results ==="
+            grep -i "test" account-management-results.txt | grep -E "(passed|failed)" | head -5
+            read FAILED PASSED <<< $(extract_counts account-management-results.txt)
+            echo "Account Management: $PASSED passed, $FAILED failed"
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
             TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
           fi
 
           if [ -f abstraxion-results.txt ]; then
-            FAILED=$(grep -oP 'Tests\s+\K\d+(?=\s+failed)' abstraxion-results.txt | head -1 || echo "0")
-            PASSED=$(grep -oP 'failed \| \K\d+(?=\s+passed)' abstraxion-results.txt | head -1 || echo "0")
+            echo "=== Parsing abstraxion results ==="
+            grep -i "test" abstraxion-results.txt | grep -E "(passed|failed)" | head -5
+            read FAILED PASSED <<< $(extract_counts abstraxion-results.txt)
+            echo "Abstraxion: $PASSED passed, $FAILED failed"
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
             TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
           fi
