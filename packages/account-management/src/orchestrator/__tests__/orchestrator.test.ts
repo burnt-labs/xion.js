@@ -296,28 +296,6 @@ describe("ConnectionOrchestrator", () => {
       expect(initiateRedirect).toHaveBeenCalledWith(
         mockSessionManager,
         baseConfig.rpcUrl,
-        undefined,
-      );
-    });
-
-    it("should pass dashboardUrl when configured", async () => {
-      const { initiateRedirect } = await import("../flow/redirectFlow");
-      (initiateRedirect as any).mockResolvedValueOnce({
-        dashboardUrl: "https://custom.dashboard.com",
-      });
-
-      orchestrator = new ConnectionOrchestrator({
-        ...baseConfig,
-        sessionManager: mockSessionManager,
-        dashboardUrl: "https://custom.dashboard.com",
-      });
-
-      await orchestrator.initiateRedirect();
-
-      expect(initiateRedirect).toHaveBeenCalledWith(
-        mockSessionManager,
-        baseConfig.rpcUrl,
-        "https://custom.dashboard.com",
       );
     });
   });

@@ -78,17 +78,7 @@ describe("redirectFlow", () => {
       expect(mockSessionManager.redirectToDashboard).toHaveBeenCalledOnce();
     });
 
-    it("should return provided dashboardUrl when specified", async () => {
-      const result = await initiateRedirect(
-        mockSessionManager,
-        "https://rpc.example.com",
-        "https://custom.dashboard.com",
-      );
-
-      expect(result.dashboardUrl).toBe("https://custom.dashboard.com");
-    });
-
-    it("should fetch dashboardUrl from RPC when not provided", async () => {
+    it("should fetch dashboardUrl from RPC", async () => {
       const { fetchConfig } = await import("@burnt-labs/abstraxion-core");
       (fetchConfig as any).mockResolvedValueOnce({
         dashboardUrl: "https://fetched.dashboard.com",
