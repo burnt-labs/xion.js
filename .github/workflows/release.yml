@@ -17,6 +17,8 @@ env:
 jobs:
   release:
     name: Publish to npm
+    permissions:
+      id-token: write
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -98,4 +100,3 @@ jobs:
           setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ env.NPM_TOKEN }}
