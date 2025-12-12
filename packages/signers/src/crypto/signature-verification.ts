@@ -1,6 +1,7 @@
 import { verifyMessage as ethersVerifyMessage } from "ethers";
 import { Secp256k1, Secp256k1Signature, sha256 } from "@cosmjs/crypto";
-import { fromHex } from "@cosmjs/encoding";
+import { fromHex, toBech32 } from "@cosmjs/encoding";
+import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
 import { normalizeHexPrefix } from "./hex-validation";
 
 /**
@@ -34,8 +35,9 @@ export function verifyEthWalletSignature(
 /**
  * Verify Secp256k1 signature (Cosmos wallets: Keplr, Leap, Cosmostation)
  *
- * Verifies signature over SHA256(UTF-8(message)). Matches the smart contract verification
- * during account instantiation.
+ * Tries two verification methods
+ * 1. Plain SHA256(UTF-8(message)) - for programmatic signers
+ * 2. ADR-036 wrapped - for Keplr/Leap/OKX signArbitrary
  *
  * @param message - Message that was signed (plain string, typically bech32 address like "xion1...")
  * @param signature - Signature in hex format (with or without 0x prefix, must be exactly 64 bytes)
@@ -80,12 +82,81 @@ export async function verifySecp256k1Signature(
     );
   }
 
+  // Try direct verification first (plain SHA256)
   // Hash the message (plain string → UTF-8 bytes → SHA256)
   // This matches the smart contract verification logic
   const messageBytes = Buffer.from(message, "utf8");
   const messageHash = sha256(messageBytes);
 
-  // Verify the signature
   const sig = Secp256k1Signature.fromFixedLength(signatureBytes);
-  return await Secp256k1.verifySignature(sig, messageHash, pubkeyBytes);
+  const directVerification = await Secp256k1.verifySignature(
+    sig,
+    messageHash,
+    pubkeyBytes,
+  );
+
+  if (directVerification) {
+    return true;
+  }
+
+  // If direct verification failed, try ADR-036 verification
+  // This matches the smart contract's fallback behavior (sign_arb::verify)
+  // ADR-036 format wraps the message in a SignDoc structure
+  try {
+    const adr036Hash = wrapMessageADR036(messageBytes, pubkeyBytes);
+    const adr036Verification = await Secp256k1.verifySignature(
+      sig,
+      adr036Hash,
+      pubkeyBytes,
+    );
+    return adr036Verification;
+  } catch (error: unknown) {
+    // If ADR-036 verification fails, return false
+    return false;
+  }
+}
+
+/**
+ * Wrap message in ADR-036 format for signature verification
+ * Matches the smart contract's sign_arb::wrap_message function
+ *
+ * @param messageBytes - The message bytes to wrap
+ * @param pubkeyBytes - Public key bytes (for deriving signer address)
+ * @returns SHA256 hash of the ADR-036 wrapped message
+ */
+function wrapMessageADR036(
+  messageBytes: Uint8Array,
+  pubkeyBytes: Uint8Array,
+): Uint8Array {
+  // Derive signer address from public key
+  // Using CosmJS utilities to match the smart contract's derive_addr logic
+  const signerAddress = toBech32(
+    "xion",
+    rawSecp256k1PubkeyToRawAddress(pubkeyBytes),
+  );
+
+  // Encode message as base64
+  const msgBase64 = Buffer.from(messageBytes).toString("base64");
+
+  // Create ADR-036 SignDoc envelope
+  // This matches the smart contract's format exactly
+  const envelope = JSON.stringify({
+    account_number: "0",
+    chain_id: "",
+    fee: { amount: [], gas: "0" },
+    memo: "",
+    msgs: [
+      {
+        type: "sign/MsgSignData",
+        value: {
+          data: msgBase64,
+          signer: signerAddress,
+        },
+      },
+    ],
+    sequence: "0",
+  });
+
+  // Hash the envelope
+  return sha256(Buffer.from(envelope, "utf8"));
 }

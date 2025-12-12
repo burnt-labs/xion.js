@@ -6,6 +6,7 @@
 export * from "./authenticator";
 export * from "./grants";
 export * from "./indexer";
+export * from "./treasury";
 
 /**
  * Smart account contract configuration
