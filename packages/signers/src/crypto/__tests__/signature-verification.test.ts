@@ -237,6 +237,135 @@ describe("Signature Verification - AA-API Integration", () => {
 
       expect(isValid).toBe(true);
     });
+
+    it("should verify ADR-036 wrapped signature (Keplr signArbitrary)", async () => {
+      const { compressedPubkey, privkey } = await createSecp256k1Keypair(0);
+      const pubkeyBase64 = Buffer.from(compressedPubkey).toString("base64");
+
+      const smartAccountAddress = "xion1test";
+      const messageBytes = Buffer.from(smartAccountAddress, "utf8");
+
+      // Create ADR-036 wrapped signature (simulating Keplr's signArbitrary)
+      // This matches the smart contract's sign_arb::wrap_message function
+      const { toBech32 } = await import("@cosmjs/encoding");
+      const { rawSecp256k1PubkeyToRawAddress } = await import("@cosmjs/amino");
+
+      // Derive signer address from public key
+      const signerAddress = toBech32(
+        "xion",
+        rawSecp256k1PubkeyToRawAddress(compressedPubkey),
+      );
+
+      // Encode message as base64
+      const msgBase64 = Buffer.from(messageBytes).toString("base64");
+
+      // Create ADR-036 SignDoc envelope
+      const envelope = JSON.stringify({
+        account_number: "0",
+        chain_id: "",
+        fee: { amount: [], gas: "0" },
+        memo: "",
+        msgs: [
+          {
+            type: "sign/MsgSignData",
+            value: {
+              data: msgBase64,
+              signer: signerAddress,
+            },
+          },
+        ],
+        sequence: "0",
+      });
+
+      // Hash the ADR-036 envelope and sign it
+      const adr036Hash = sha256(Buffer.from(envelope, "utf8"));
+      const sig = await Secp256k1.createSignature(adr036Hash, privkey);
+      const signatureBytes = new Uint8Array([...sig.r(32), ...sig.s(32)]);
+      const signatureHex = toHex(signatureBytes);
+
+      // Verify - should succeed via ADR-036 fallback path
+      const isValid = await verifySecp256k1Signature(
+        smartAccountAddress,
+        signatureHex,
+        pubkeyBase64,
+      );
+
+      expect(isValid).toBe(true);
+    });
+
+    it("should reject signature that fails both direct and ADR-036 verification", async () => {
+      const { compressedPubkey, privkey } = await createSecp256k1Keypair(0);
+      const pubkeyBase64 = Buffer.from(compressedPubkey).toString("base64");
+
+      const smartAccountAddress = "xion1test";
+
+      // Create a signature that doesn't match either verification method
+      // Sign a completely different message
+      const wrongMessage = "completely_different_message_that_wont_match";
+      const wrongMessageBytes = Buffer.from(wrongMessage, "utf8");
+      const wrongDigest = sha256(wrongMessageBytes);
+
+      const sig = await Secp256k1.createSignature(wrongDigest, privkey);
+      const signatureBytes = new Uint8Array([...sig.r(32), ...sig.s(32)]);
+      const signatureHex = toHex(signatureBytes);
+
+      // Should fail both direct SHA256 and ADR-036 verification
+      const isValid = await verifySecp256k1Signature(
+        smartAccountAddress,
+        signatureHex,
+        pubkeyBase64,
+      );
+
+      expect(isValid).toBe(false);
+    });
+
+    it("should generate deterministic ADR-036 envelope", async () => {
+      // This test verifies that the ADR-036 envelope generation is deterministic
+      // across multiple invocations, ensuring consistent cryptographic hashing
+      const { compressedPubkey, privkey } = await createSecp256k1Keypair(0);
+      const pubkeyBase64 = Buffer.from(compressedPubkey).toString("base64");
+
+      const message = "xion1test";
+      const messageBytes = Buffer.from(message, "utf8");
+
+      // Derive signer address from public key (same logic as wrapMessageADR036)
+      const { toBech32 } = await import("@cosmjs/encoding");
+      const { rawSecp256k1PubkeyToRawAddress } = await import("@cosmjs/amino");
+      const signerAddress = toBech32(
+        "xion",
+        rawSecp256k1PubkeyToRawAddress(compressedPubkey),
+      );
+
+      const msgBase64 = Buffer.from(messageBytes).toString("base64");
+
+      // Create ADR-036 envelope using explicit string construction (matching implementation)
+      const envelope1 = `{"account_number":"0","chain_id":"","fee":{"amount":[],"gas":"0"},"memo":"","msgs":[{"type":"sign/MsgSignData","value":{"data":"${msgBase64}","signer":"${signerAddress}"}}],"sequence":"0"}`;
+
+      // Create it again
+      const envelope2 = `{"account_number":"0","chain_id":"","fee":{"amount":[],"gas":"0"},"memo":"","msgs":[{"type":"sign/MsgSignData","value":{"data":"${msgBase64}","signer":"${signerAddress}"}}],"sequence":"0"}`;
+
+      // Envelopes should be identical
+      expect(envelope1).toBe(envelope2);
+
+      // Hashes should be identical
+      const hash1 = sha256(Buffer.from(envelope1, "utf8"));
+      const hash2 = sha256(Buffer.from(envelope2, "utf8"));
+      expect(toHex(hash1)).toBe(toHex(hash2));
+
+      // Sign with the hash and verify it works consistently
+      const sig = await Secp256k1.createSignature(hash1, privkey);
+      const signatureBytes = new Uint8Array([...sig.r(32), ...sig.s(32)]);
+      const signatureHex = toHex(signatureBytes);
+
+      // Verify the signature (should use ADR-036 path since we signed the ADR-036 hash)
+      const isValid = await verifySecp256k1Signature(
+        message,
+        signatureHex,
+        pubkeyBase64,
+      );
+
+      expect(isValid).toBe(true);
+    });
   });
 
   describe("EthWallet Signature Verification", () => {

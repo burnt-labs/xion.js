@@ -5,11 +5,11 @@
  */
 
 import { decodeAuthorization } from "@burnt-labs/abstraxion-core";
-import type { TreasuryStrategy } from "../types/treasury";
 import type {
+  TreasuryStrategy,
   PermissionDescription,
-  DecodedReadableAuthorization,
-} from "./utils/format-permissions";
+} from "../types/treasury";
+import type { DecodedReadableAuthorization } from "./utils/format-permissions";
 import { generatePermissionDescriptions } from "./utils/format-permissions";
 
 /**

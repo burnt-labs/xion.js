@@ -304,6 +304,53 @@ Authenticator::Secp256K1 { pubkey } => {
 }
 ```
 
+### ADR-036 Signature Verification
+
+For Cosmos wallet compatibility (Keplr, Leap, OKX), signature verification supports two methods:
+
+1. **Direct verification**: Plain SHA256(UTF-8(message)) - for programmatic signers
+2. **ADR-036 wrapped verification**: Signs an ADR-036 envelope - for wallet `signArbitrary` method
+
+The verification function automatically tries both methods, with direct verification first.
+
+#### How It Works
+
+When you call `verifySecp256k1Signature()`, the function:
+
+1. **Tries direct verification first** (fastest path)
+   - Computes SHA256(UTF-8(message))
+   - Verifies signature against this hash
+   - Used by: Custom signers, testing utilities, programmatic implementations
+
+2. **Falls back to ADR-036 verification** (if direct fails)
+   - Wraps message in ADR-036 SignDoc envelope
+   - Computes SHA256(envelope)
+   - Verifies signature against this hash
+   - Used by: Keplr, Leap, OKX wallet extensions via `signArbitrary`
+
+#### ADR-036 Envelope Format
+
+The ADR-036 envelope follows the Cosmos SDK's SignDoc structure:
+
+```json
+{
+  "account_number": "0",
+  "chain_id": "",
+  "fee": { "amount": [], "gas": "0" },
+  "memo": "",
+  "msgs": [
+    {
+      "type": "sign/MsgSignData",
+      "value": {
+        "data": "<base64-encoded-message>",
+        "signer": "<bech32-address-derived-from-pubkey>"
+      }
+    }
+  ],
+  "sequence": "0"
+}
+```
+
 ### EthWallet Signature Verification
 
 Verifies Ethereum wallet signatures using ECDSA signature recovery.
