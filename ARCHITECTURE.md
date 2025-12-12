@@ -71,9 +71,9 @@ Connectors handle the low-level wallet/signer integration:
 
 ```typescript
 enum ConnectorType {
-  COSMOS_WALLET = "cosmos-wallet",      // Keplr, Leap, OKX
-  ETHEREUM_WALLET = "ethereum-wallet",  // MetaMask
-  EXTERNAL_SIGNER = "external-signer",  // Turnkey, Privy, Web3Auth
+  COSMOS_WALLET = "cosmos-wallet", // Keplr, Leap, OKX
+  ETHEREUM_WALLET = "ethereum-wallet", // MetaMask
+  EXTERNAL_SIGNER = "external-signer", // Turnkey, Privy, Web3Auth
 }
 ```
 
@@ -82,24 +82,25 @@ enum ConnectorType {
 ```typescript
 const turnkeyConnector = new ExternalSignerConnector({
   metadata: {
-    id: 'turnkey',
-    name: 'Turnkey',
+    id: "turnkey",
+    name: "Turnkey",
     type: ConnectorType.EXTERNAL_SIGNER,
   },
   signerConfig: {
-    authenticatorType: 'EthWallet',
-    authenticator: '0x123...', // Ethereum address
+    authenticatorType: "EthWallet",
+    authenticator: "0x123...", // Ethereum address
     signMessage: async (hexMessage) => {
       // Sign with Turnkey
       return signature;
-    }
-  }
+    },
+  },
 });
 ```
 
 ### Why Connectors?
 
 **Separation of concerns**: Wallet integration logic is isolated from business logic. This allows:
+
 - Adding new wallets without changing core logic
 - Testing without real wallets
 - Consistent interface across different signer types (Cosmos, Ethereum, external)
@@ -133,13 +134,13 @@ The orchestrator delegates to specialized flow modules:
 
 ```typescript
 const orchestrator = new ConnectionOrchestrator({
-  sessionManager,        // Manages keypair and granter storage
-  storageStrategy,       // localStorage or AsyncStorage
-  accountStrategy,       // How to discover/create accounts
-  grantConfig,           // What grants to create
-  chainId: 'xion-testnet-1',
-  rpcUrl: 'https://rpc.xion-testnet-1.burnt.com',
-  gasPrice: '0.001uxion'
+  sessionManager, // Manages keypair and granter storage
+  storageStrategy, // localStorage or AsyncStorage
+  accountStrategy, // How to discover/create accounts
+  grantConfig, // What grants to create
+  chainId: "xion-testnet-1",
+  rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+  gasPrice: "0.001uxion",
 });
 
 // Try to restore existing session
@@ -156,6 +157,7 @@ if (!restored.success) {
 ### Why an Orchestrator?
 
 **Complex coordination**: The connection flow has many steps with conditional logic:
+
 - Session might already exist (skip connection)
 - Grants might exist (skip grant creation)
 - Account might not exist (trigger creation)
@@ -226,6 +228,7 @@ class SignerController extends BaseController {
 ### Why Controllers?
 
 **React integration**: Controllers handle React-specific concerns:
+
 - **State updates**: Trigger re-renders when connection state changes
 - **Suspense/SSR**: Handle server-side rendering and hydration
 - **Cleanup**: Clean up resources when component unmounts
@@ -282,10 +285,10 @@ if (isReturningFromRedirect()) {
 
 // 3. User clicks "Login"
 await controller.login();
-  // → Controller saves state to localStorage
-  // → Controller redirects to dashboard URL with config
-  // → Dashboard authenticates user and creates grants
-  // → Dashboard redirects back to app with success param
+// → Controller saves state to localStorage
+// → Controller redirects to dashboard URL with config
+// → Dashboard authenticates user and creates grants
+// → Dashboard redirects back to app with success param
 
 // 4. App loads again, controller detects redirect
 // → Restores state from localStorage
@@ -298,6 +301,7 @@ await controller.login();
 ### 1. Separation of Concerns
 
 Each layer has a single responsibility:
+
 - **Connectors**: Wallet/signer integration
 - **Orchestrator**: Business logic and flow coordination
 - **Controllers**: React state management
@@ -307,6 +311,7 @@ This makes the codebase easier to understand, test, and modify.
 ### 2. Dependency Direction
 
 Dependencies flow downward:
+
 - Controllers depend on orchestrator and connectors
 - Orchestrator depends on connectors
 - Connectors have no dependencies on other layers
@@ -324,6 +329,7 @@ This allows reuse across different platforms.
 ### 4. Testability
 
 Each layer can be tested independently:
+
 - **Connector tests**: Mock wallet APIs
 - **Orchestrator tests**: Mock connectors and storage
 - **Controller tests**: Mock orchestrator
@@ -331,6 +337,7 @@ Each layer can be tested independently:
 ### 5. Extensibility
 
 New functionality can be added without modifying existing code:
+
 - **New connector**: Implement `Connector` interface
 - **New account strategy**: Implement `AccountStrategy` interface
 - **New controller mode**: Extend `BaseController`
@@ -375,16 +382,19 @@ xion.js/
 ### Redirect Mode (RedirectController)
 
 **Best for**:
+
 - Consumer-facing applications
 - Apps that want minimal integration work
 - Apps that trust the dashboard for authentication
 
 **Pros**:
+
 - Hosted authentication UI
 - No wallet integration needed
 - Supports Web3Auth, Passkeys, email login
 
 **Cons**:
+
 - Requires redirect (disrupts UX)
 - Less control over UI/flow
 - Requires dashboard deployment
@@ -392,18 +402,21 @@ xion.js/
 ### Signer Mode (SignerController)
 
 **Best for**:
+
 - Apps with existing authentication
 - Apps that want custom UI/UX
 - Apps using Turnkey, Privy, or custom signers
 - Mobile apps (React Native)
 
 **Pros**:
+
 - Full control over UI/flow
 - No redirect required
 - Headless integration
 - Works in React Native
 
 **Cons**:
+
 - More integration work
 - Need to implement connector for each signer
 - Handle wallet connection UI yourself
@@ -417,6 +430,7 @@ The three-layer architecture provides:
 3. **Controllers**: Manage React state and lifecycle
 
 This separation makes the codebase:
+
 - **Maintainable**: Each layer has clear responsibilities
 - **Testable**: Layers can be tested independently
 - **Extensible**: New functionality can be added without breaking changes

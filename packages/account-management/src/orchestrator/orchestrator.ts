@@ -222,10 +222,7 @@ export class ConnectionOrchestrator {
    * @returns Dashboard URL for state dispatch
    */
   async initiateRedirect(): Promise<{ dashboardUrl: string }> {
-    return initiateRedirect(
-      this.config.sessionManager,
-      this.config.rpcUrl,
-    );
+    return initiateRedirect(this.config.sessionManager, this.config.rpcUrl);
   }
 
   /**

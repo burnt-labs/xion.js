@@ -72,7 +72,10 @@ export abstract class BaseController implements Controller {
    * @param callback - Subscriber callback
    * @param state - Current state to pass to callback
    */
-  private notifySubscriber(callback: StateSubscription, state: AccountState): void {
+  private notifySubscriber(
+    callback: StateSubscription,
+    state: AccountState,
+  ): void {
     try {
       callback(state);
     } catch (error) {

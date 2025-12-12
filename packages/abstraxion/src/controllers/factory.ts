@@ -61,11 +61,7 @@ export function createController(
     );
 
     // Delegate to SignerController's factory method
-    return SignerController.fromConfig(
-      config,
-      storageStrategy,
-      abstraxionAuth,
-    );
+    return SignerController.fromConfig(config, storageStrategy, abstraxionAuth);
   } else {
     throw new Error(`Unknown authentication mode: ${authMode}`);
   }

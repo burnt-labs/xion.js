@@ -226,7 +226,10 @@ export class RedirectController extends BaseController {
       // Try to restore session using orchestrator (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
 
-      if (isSessionRestored(restorationResult) && restorationResult.signingClient) {
+      if (
+        isSessionRestored(restorationResult) &&
+        restorationResult.signingClient
+      ) {
         // Session restored successfully - extract AccountInfo using type guard
         const accountInfo = getAccountInfoFromRestored(restorationResult);
 

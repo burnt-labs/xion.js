@@ -96,12 +96,7 @@ export function createGrantConfigFromConfig(
   config: NormalizedAbstraxionConfig,
   signerAuth: SignerAuthentication,
 ): GrantConfig | undefined {
-  if (
-    !config.treasury &&
-    !config.contracts &&
-    !config.bank &&
-    !config.stake
-  ) {
+  if (!config.treasury && !config.contracts && !config.bank && !config.stake) {
     return undefined;
   }
 

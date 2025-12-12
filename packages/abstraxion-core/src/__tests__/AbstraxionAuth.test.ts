@@ -9,7 +9,10 @@ import {
   MockRedirectStrategy,
   MockStorageStrategy,
 } from "@burnt-labs/test-utils/mocks";
-import { mockGrantsResponse, mockLegacyConfig } from "./fixtures/grantResponses";
+import {
+  mockGrantsResponse,
+  mockLegacyConfig,
+} from "./fixtures/grantResponses";
 
 // Add fetch polyfill for Node.js environment
 if (typeof fetch === "undefined") {

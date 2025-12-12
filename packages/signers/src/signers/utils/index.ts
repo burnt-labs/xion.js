@@ -3,7 +3,7 @@ import { Account } from "@cosmjs/stargate";
 import { Any } from "../../types/generated/google/protobuf/any";
 import { BaseAccount } from "cosmjs-types/cosmos/auth/v1beta1/auth";
 import { AuthInfo, SignerInfo } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { decodePubkey} from "@cosmjs/proto-signing";
+import { decodePubkey } from "@cosmjs/proto-signing";
 import { coins, StdFee, type Pubkey } from "@cosmjs/amino";
 import { Uint64 } from "@cosmjs/math";
 import { AbstractAccount } from "../../types/generated/abstractaccount/v1/account";
