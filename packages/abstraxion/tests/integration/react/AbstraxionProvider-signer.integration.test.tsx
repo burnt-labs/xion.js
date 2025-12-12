@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, waitFor, screen } from "@testing-library/react";
-import { AbstraxionProvider } from "../../../src/components/AbstraxionContext";
+import { AbstraxionProvider } from "../../../src/AbstraxionProvider";
 import { useAbstraxionAccount } from "../../../src/hooks/useAbstraxionAccount";
 import { getTestConfig } from "../fixtures";
 import {

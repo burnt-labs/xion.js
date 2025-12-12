@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   createEthWalletAccount,
   createSecp256k1Account,
-} from "../../src/api/createAccount";
+} from "../createAccount";
 import {
   ETH_WALLET_TEST_DATA,
   SECP256K1_TEST_DATA,

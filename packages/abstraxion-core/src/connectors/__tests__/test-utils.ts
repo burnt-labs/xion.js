@@ -4,9 +4,9 @@
  */
 
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
-import type { SignerConfig, Connector } from "../../src/connectors/types";
-import { ConnectorType } from "../../src/connectors/types";
-import type { ExternalSignerConnectorConfig } from "../../src/connectors/ExternalSignerConnector";
+import type { SignerConfig, Connector } from "../types";
+import { ConnectorType } from "../types";
+import type { ExternalSignerConnectorConfig } from "../ExternalSignerConnector";
 
 /**
  * Valid test signatures for different authenticator types

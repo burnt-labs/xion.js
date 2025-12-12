@@ -7,14 +7,26 @@ export default defineConfig({
     environment: "node",
     setupFiles: [
       "../test-utils/src/vitest/setup.ts", // Shared webauthn and global mocks
-      "./tests/setup.ts", // Package-specific setup
+      "./src/__tests__/setup.ts", // Package-specific setup
     ],
-    include: ["tests/**/*.test.ts"],
+    // Explicitly include tests in __tests__ directories
+    include: [
+      "**/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+    ],
+    exclude: ["node_modules", "dist", ".next", ".turbo", "tests"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
       include: ["src/**/*.ts"],
-      exclude: ["src/types/**", "src/**/index.ts", "src/**/*.d.ts"],
+      exclude: [
+        "src/types/**",
+        "src/**/index.ts",
+        "src/**/*.d.ts",
+        "src/**/__tests__/**",
+        "**/*.test.ts",
+        "**/*.config.ts",
+      ],
       thresholds: {
         lines: 50,
         functions: 50,

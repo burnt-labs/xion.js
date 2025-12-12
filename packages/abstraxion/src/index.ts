@@ -1,6 +1,6 @@
-export { AbstraxionProvider } from "./components/AbstraxionContext";
-export { AbstraxionContext } from "./components/AbstraxionContext";
-export type { AbstraxionContextProps } from "./components/AbstraxionContext";
+export { AbstraxionProvider } from "./AbstraxionProvider";
+export { AbstraxionContext } from "./AbstraxionProvider";
+export type { AbstraxionContextProps } from "./AbstraxionProvider";
 export type {
   AbstraxionConfig,
   NormalizedAbstraxionConfig,
@@ -25,7 +25,7 @@ export {
 export type {
   ContractGrantDescription,
   SpendLimit,
-} from "./components/AbstraxionContext";
+} from "./AbstraxionProvider";
 export type {
   AbstraxionAccount,
   AbstraxionAccountState,

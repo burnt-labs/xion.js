@@ -12,6 +12,8 @@ import type {
 import {
   ConnectionOrchestrator,
   isSessionRestorationError,
+  isSessionRestored,
+  getAccountInfoFromRestored,
 } from "@burnt-labs/account-management";
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
@@ -65,16 +67,54 @@ function isReturningFromRedirect(): boolean {
  * Handles OAuth flow via dashboard redirect
  */
 export class RedirectController extends BaseController {
-  private config: RedirectControllerConfig;
   private abstraxionAuth: AbstraxionAuth;
   private orchestrator: ConnectionOrchestrator;
+
+  /**
+   * Factory method to create RedirectController from NormalizedAbstraxionConfig
+   * Handles all config transformation internally
+   */
+  static fromConfig(
+    config: import("../types").NormalizedAbstraxionConfig,
+    storageStrategy: StorageStrategy,
+    redirectStrategy: RedirectStrategy,
+  ): RedirectController {
+    // For redirect mode, ensure at least one grant parameter is present
+    // This ensures the dashboard shows AbstraxionGrant and redirects back
+    // If no grant config is provided, use a minimal bank grant as fallback
+    const hasGrantConfig =
+      config.treasury || config.contracts || config.bank || config.stake;
+    const fallbackBank = hasGrantConfig
+      ? undefined
+      : [{ denom: "uxion", amount: "0.1" }];
+
+    const redirectConfig: RedirectControllerConfig = {
+      chainId: config.chainId,
+      rpcUrl: config.rpcUrl,
+      gasPrice: config.gasPrice,
+      redirect: {
+        type: "redirect",
+        callbackUrl:
+          config.authentication?.type === "redirect"
+            ? config.authentication.callbackUrl
+            : undefined,
+      },
+      storageStrategy,
+      redirectStrategy,
+      treasury: config.treasury,
+      bank: config.bank || fallbackBank,
+      stake: config.stake,
+      contracts: config.contracts,
+    };
+
+    return new RedirectController(redirectConfig);
+  }
 
   constructor(config: RedirectControllerConfig) {
     // Always start in 'initializing' state for consistent SSR/client behavior
     // This ensures UI immediately shows loading state and doesn't assume readiness
     // The initialize() method will handle transitioning to connecting if returning from auth
     super(config.initialState || { status: "initializing" });
-    this.config = config;
 
     // Create AbstraxionAuth instance
     this.abstraxionAuth = new AbstraxionAuth(
@@ -92,7 +132,6 @@ export class RedirectController extends BaseController {
       config.treasury, // Pass treasury so it's included in redirect URL
       // indexerUrl, indexerAuthToken, treasuryIndexerUrl omitted - not used in redirect mode
       config.gasPrice, // Pass gasPrice for signing client creation
-      config.redirect.dashboardUrl, // Pass dashboardUrl if provided (for custom networks)
     );
 
     // Create grant config
@@ -142,15 +181,13 @@ export class RedirectController extends BaseController {
         // Use orchestrator to complete redirect flow
         const result = await this.orchestrator.completeRedirect();
 
-        if (
-          !result.keypair ||
-          !result.granterAddress ||
-          !result.signingClient
-        ) {
+        // Type guard to ensure we have a successful restoration
+        if (!isSessionRestored(result) || !result.signingClient) {
           throw new Error("Failed to complete redirect flow");
         }
 
         const accounts = await result.keypair.getAccounts();
+        // expected, dashboard only ever returns one account
         const granteeAddress = accounts[0].address;
 
         const accountInfo: AccountInfo = {
@@ -189,18 +226,9 @@ export class RedirectController extends BaseController {
       // Try to restore session using orchestrator (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
 
-      if (restorationResult.restored && restorationResult.signingClient) {
-        // Session restored successfully - restorationResult contains AccountInfo fields when restored: true
-        const accountInfo: AccountInfo = {
-          keypair: (restorationResult as { restored: true } & AccountInfo)
-            .keypair,
-          granterAddress: (
-            restorationResult as { restored: true } & AccountInfo
-          ).granterAddress,
-          granteeAddress: (
-            restorationResult as { restored: true } & AccountInfo
-          ).granteeAddress,
-        };
+      if (isSessionRestored(restorationResult) && restorationResult.signingClient) {
+        // Session restored successfully - extract AccountInfo using type guard
+        const accountInfo = getAccountInfoFromRestored(restorationResult);
 
         this.dispatch({
           type: "SET_CONNECTED",

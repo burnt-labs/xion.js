@@ -1,7 +1,7 @@
 import type {
   ContractGrantDescription,
   SpendLimit,
-} from "./components/AbstraxionContext";
+} from "./AbstraxionProvider";
 import type {
   SmartAccountContractConfig,
   UserIndexerConfig,
@@ -18,13 +18,6 @@ import type { SignerConfig } from "@burnt-labs/abstraxion-core";
  */
 export interface RedirectAuthentication {
   type: "redirect";
-  /**
-   * Dashboard URL (optional, only needed for custom networks not in the constants map).
-   * For standard networks (xion-mainnet-1, xion-testnet-1), the dashboard URL is automatically
-   * fetched from RPC based on the network ID. Only provide this if you're using a custom
-   * network or a custom dashboard deployment.
-   */
-  dashboardUrl?: string;
   callbackUrl?: string;
 }
 

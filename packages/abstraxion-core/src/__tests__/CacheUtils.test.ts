@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { fetchConfig, clearConfigCache } from "../src/utils/configUtils";
+import { fetchConfig, clearConfigCache } from "../utils/configUtils";
 import {
   fetchTreasuryDataFromIndexer,
   clearTreasuryCache,
-} from "../src/utils/grant/query";
+} from "../utils/grant/query";
 import * as constants from "@burnt-labs/constants";
 
 // Mock the constants module

@@ -20,6 +20,12 @@ import type { Connector, StorageStrategy } from "@burnt-labs/abstraxion-core";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { SignerAuthentication } from "../types";
+import {
+  createAccountStrategyFromConfig,
+  createGrantConfigFromConfig,
+  createAccountCreationConfigFromConfig,
+} from "../utils/normalizeAbstraxionConfig";
+import { isSessionManager } from "./typeGuards";
 
 /**
  * Configuration for SignerController
@@ -52,6 +58,58 @@ export class SignerController extends BaseController {
   private config: SignerControllerConfig;
   private orchestrator: ConnectionOrchestrator;
   private connector: Connector | null = null;
+
+  /**
+   * Factory method to create SignerController from NormalizedAbstraxionConfig
+   * Handles all config transformation and validation internally
+   */
+  static fromConfig(
+    config: import("../types").NormalizedAbstraxionConfig,
+    storageStrategy: StorageStrategy,
+    abstraxionAuth: import("@burnt-labs/abstraxion-core").AbstraxionAuth,
+  ): SignerController {
+    if (config.authentication?.type !== "signer") {
+      throw new Error("Signer authentication config required for signer mode");
+    }
+
+    // Validate that AbstraxionAuth implements SessionManager interface
+    if (!isSessionManager(abstraxionAuth)) {
+      throw new Error(
+        "AbstraxionAuth does not implement SessionManager interface",
+      );
+    }
+
+    const signerAuth = config.authentication;
+    const smartAccountContract = signerAuth.smartAccountContract;
+
+    if (smartAccountContract && !config.feeGranter) {
+      throw new Error(
+        "feeGranter is required in AbstraxionConfig when using signer mode with smartAccountContract",
+      );
+    }
+
+    // Use utility functions to create configs
+    const accountStrategy = createAccountStrategyFromConfig(config, signerAuth);
+    const grantConfig = createGrantConfigFromConfig(config, signerAuth);
+    const accountCreationConfig = createAccountCreationConfigFromConfig(
+      config,
+      signerAuth,
+    );
+
+    const signerConfig: SignerControllerConfig = {
+      chainId: config.chainId,
+      rpcUrl: config.rpcUrl,
+      gasPrice: config.gasPrice,
+      signer: signerAuth,
+      accountStrategy,
+      grantConfig,
+      accountCreationConfig,
+      sessionManager: abstraxionAuth,
+      storageStrategy,
+    };
+
+    return new SignerController(signerConfig);
+  }
 
   constructor(config: SignerControllerConfig) {
     // Always start in 'initializing' state for consistent SSR/client behavior
@@ -161,6 +219,7 @@ export class SignerController extends BaseController {
 
       // 5. Dispatch success
       const accounts = await sessionKeypair.getAccounts();
+      //TODO: fix this to allow multiple accounts long term
       const granteeAddress = accounts[0].address;
 
       const accountInfo: AccountInfo = {

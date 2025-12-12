@@ -37,8 +37,8 @@ export abstract class BaseController implements Controller {
   subscribe(callback: StateSubscription): Unsubscribe {
     this.subscribers.add(callback);
 
-    // Immediately call with current state
-    callback(this.state);
+    // Immediately call with current state (with error boundary)
+    this.notifySubscriber(callback, this.state);
 
     return () => {
       this.subscribers.delete(callback);
@@ -60,8 +60,25 @@ export abstract class BaseController implements Controller {
    */
   protected setState(newState: AccountState): void {
     this.state = newState;
-    // Notify all subscribers
-    this.subscribers.forEach((callback) => callback(newState));
+    // Notify all subscribers (with error boundaries)
+    this.subscribers.forEach((callback) => {
+      this.notifySubscriber(callback, newState);
+    });
+  }
+
+  /**
+   * Safely notify a single subscriber with error boundary
+   * Logs errors without disrupting other subscribers
+   * @param callback - Subscriber callback
+   * @param state - Current state to pass to callback
+   */
+  private notifySubscriber(callback: StateSubscription, state: AccountState): void {
+    try {
+      callback(state);
+    } catch (error) {
+      console.error("[BaseController] Error in state subscriber:", error);
+      // Continue execution - don't let one bad subscriber break others
+    }
   }
 
   /**

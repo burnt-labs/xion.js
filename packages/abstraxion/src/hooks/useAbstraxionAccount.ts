@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AbstraxionContext } from "@/src/components/AbstraxionContext";
+import { AbstraxionContext } from "@/src/AbstraxionProvider";
 
 export interface AbstraxionAccount {
   bech32Address: string;

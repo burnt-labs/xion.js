@@ -3,14 +3,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
  * @vitest-environment jsdom
  */
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { AbstraxionAuth } from "../src/AbstraxionAuth";
+import { AbstraxionAuth } from "../AbstraxionAuth";
 import {
   mockAccountAddress,
-  mockGrantsResponse,
-  mockLegacyConfig,
   MockRedirectStrategy,
   MockStorageStrategy,
 } from "@burnt-labs/test-utils/mocks";
+import { mockGrantsResponse, mockLegacyConfig } from "./fixtures/grantResponses";
 
 // Add fetch polyfill for Node.js environment
 if (typeof fetch === "undefined") {

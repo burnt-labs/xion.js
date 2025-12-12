@@ -9,15 +9,18 @@ import {
   AccountStateGuards,
   extractIndexerAuthToken,
 } from "@burnt-labs/account-management";
-import type { Controller } from "../../controllers";
-import { createController } from "../../utils/controllerFactory";
-import { RedirectController, SignerController } from "../../controllers";
+import type { Controller } from "./controllers";
+import {
+  createController,
+  RedirectController,
+  SignerController,
+} from "./controllers";
 import type {
   AbstraxionConfig,
   AuthenticationConfig,
   NormalizedAbstraxionConfig,
-} from "../../types";
-import { normalizeAbstraxionConfig } from "../../utils/normalizeAbstraxionConfig";
+} from "./types";
+import { normalizeAbstraxionConfig } from "./utils/normalizeAbstraxionConfig";
 
 export type SpendLimit = { denom: string; amount: string };
 

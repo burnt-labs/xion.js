@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { GranteeSignerClient } from "../src/GranteeSignerClient";
+import { GranteeSignerClient } from "../GranteeSignerClient";
 import type { OfflineSigner } from "@cosmjs/proto-signing";
 import type { CometClient } from "@cosmjs/tendermint-rpc";
 

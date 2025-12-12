@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { CacheManager } from "../src/utils/cache/CacheManager";
+import { CacheManager } from "../utils/cache/CacheManager";
 import { MockTimer } from "@burnt-labs/test-utils/helpers";
 
 describe("CacheManager", () => {

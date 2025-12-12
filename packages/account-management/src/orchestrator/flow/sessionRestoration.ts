@@ -46,6 +46,7 @@ export async function restoreSession(
 
     // If we get here, grants are valid so Get grantee address from keypair
     const accounts = await storedKeypair.getAccounts();
+    //TODO: fix this to allow multiple accounts long term
     const granteeAddress = accounts[0].address;
 
     const result: SessionRestorationResult = {

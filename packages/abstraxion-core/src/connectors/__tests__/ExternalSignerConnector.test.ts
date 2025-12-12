@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { ExternalSignerConnector } from "../../src/connectors/ExternalSignerConnector";
-import { ConnectorType } from "../../src/connectors/types";
+import { ExternalSignerConnector } from "../ExternalSignerConnector";
+import { ConnectorType } from "../types";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 import {
   createMockConnectorConfig,

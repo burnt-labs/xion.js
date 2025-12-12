@@ -61,9 +61,6 @@ export interface ConnectionOrchestratorConfig {
 
   /** Gas price (e.g., "0.001uxion") */
   gasPrice: string;
-
-  /** Dashboard URL for redirect flow (optional, will be fetched from RPC if not provided) */
-  dashboardUrl?: string;
 }
 
 /**
@@ -228,7 +225,6 @@ export class ConnectionOrchestrator {
     return initiateRedirect(
       this.config.sessionManager,
       this.config.rpcUrl,
-      this.config.dashboardUrl,
     );
   }
 

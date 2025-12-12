@@ -10,11 +10,6 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./testing": {
-      "import": "./dist/testing/index.mjs",
-      "require": "./dist/testing/index.js",
-      "types": "./dist/testing/index.d.ts"
     }
   },
   "license": "MIT",

@@ -12,7 +12,7 @@ import {
   createEthWalletAccountV2,
   createSecp256k1AccountV2,
   createJWTAccountV2,
-} from "../../src/api/client";
+} from "../client";
 import type { ErrorResponse } from "@burnt-labs/signers";
 
 describe("API Client - Error Parsing", () => {

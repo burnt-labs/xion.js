@@ -67,7 +67,6 @@ const ethWallet = ETH_WALLET_TEST_DATA.address;
 **The `/fixtures` subpath has been removed.** Mock data is now colocated with the packages that define the types:
 
 - **Account/Authenticator fixtures** → [`@burnt-labs/signers/testing`](../signers/src/testing/)
-- **Treasury/Grant fixtures** → [`@burnt-labs/account-management/testing`](../account-management/src/testing/)
 
 **Migration:** If you were using `@burnt-labs/test-utils/fixtures`, update your imports to the new package-specific locations.
 
@@ -98,10 +97,6 @@ import {
   mockAuthenticators,
   mockSmartAccounts,
 } from "@burnt-labs/signers/testing";
-import {
-  mockTreasuryConfigs,
-  mockGrantConfigs,
-} from "@burnt-labs/account-management/testing";
 
 // ❌ Old (no longer works)
 import { mockAuthenticators } from "@burnt-labs/test-utils/fixtures";
@@ -123,7 +118,6 @@ signers → test-utils (devDependency)
 
 ```
 signers/testing → signers/types ✅
-account-management/testing → account-management/types ✅
 test files → package/testing ✅
 ```
 
@@ -159,13 +153,11 @@ If you're using deprecated fixtures:
    ```typescript
    // New (recommended)
    import { mockAuthenticators } from "@burnt-labs/signers/testing";
-   import { mockTreasuryConfigs } from "@burnt-labs/account-management/testing";
    ```
 
 3. **Build the source packages:**
    ```bash
    cd packages/signers && pnpm build
-   cd packages/account-management && pnpm build
    ```
 
 ## Development

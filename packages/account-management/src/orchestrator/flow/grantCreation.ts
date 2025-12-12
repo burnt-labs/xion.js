@@ -14,7 +14,6 @@ import {
   type AASigner,
 } from "@burnt-labs/signers";
 import {
-  AUTHENTICATOR_TYPE,
   type AuthenticatorType,
 } from "@burnt-labs/signers";
 import { GasPrice } from "@cosmjs/stargate";

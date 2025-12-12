@@ -15,7 +15,6 @@ import type {
 import { ConnectorType } from "./types";
 import {
   AUTHENTICATOR_TYPE,
-  type AuthenticatorType,
   formatEthSignature,
   formatSecp256k1Signature,
 } from "@burnt-labs/signers";

@@ -34,7 +34,6 @@ export class AbstraxionAuth {
   indexerAuthToken?: string;
   treasuryIndexerUrl?: string;
   gasPrice?: string;
-  dashboardUrl?: string;
 
   // Signer
   private client?: GranteeSignerClient;
@@ -80,7 +79,6 @@ export class AbstraxionAuth {
    * @param {string} indexerAuthToken - authentication token for indexer API requests
    * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
    * @param {string} gasPrice - Gas price string (e.g., "0.001uxion"). Defaults to "0.001uxion" if not provided.
-   * @param {string} dashboardUrl - Custom dashboard URL (optional, only needed for custom networks not in the constants map)
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -93,7 +91,6 @@ export class AbstraxionAuth {
     indexerAuthToken?: string,
     treasuryIndexerUrl?: string,
     gasPrice?: string,
-    dashboardUrl?: string,
   ) {
     this.rpcUrl = rpc;
     this.grantContracts = grantContracts;
@@ -105,7 +102,6 @@ export class AbstraxionAuth {
     this.indexerAuthToken = indexerAuthToken;
     this.treasuryIndexerUrl = treasuryIndexerUrl;
     this.gasPrice = gasPrice;
-    this.dashboardUrl = dashboardUrl;
   }
 
   /**
@@ -171,7 +167,7 @@ export class AbstraxionAuth {
    *
    * @param {string} address - account address of the granter wallet (XION Meta Account).
    */
-  private async setGranter(address: string): Promise<void> {
+  async setGranter(address: string): Promise<void> {
     await this.storageStrategy.setItem("xion-authz-granter-account", address);
   }
 
@@ -302,7 +298,7 @@ export class AbstraxionAuth {
 
   /**
    * Get dashboard url and redirect in order to issue claim with XION meta account for local keypair.
-   * Uses configured dashboardUrl if provided, otherwise fetches from RPC based on network ID.
+   * Fetches dashboard URL from RPC based on network ID.
    */
   async redirectToDashboard() {
     try {
@@ -311,14 +307,9 @@ export class AbstraxionAuth {
       }
       const userAddress = await this.getKeypairAddress();
 
-      // Use configured dashboardUrl if provided, otherwise fetch from RPC
-      let dashboardUrl: string;
-      if (this.dashboardUrl) {
-        dashboardUrl = this.dashboardUrl;
-      } else {
-        const config = await fetchConfig(this.rpcUrl);
-        dashboardUrl = config.dashboardUrl;
-      }
+      // Fetch dashboard URL from RPC based on network ID
+      const config = await fetchConfig(this.rpcUrl);
+      const dashboardUrl = config.dashboardUrl;
 
       await this.configureUrlAndRedirect(dashboardUrl, userAddress);
     } catch (error) {

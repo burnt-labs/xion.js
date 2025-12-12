@@ -1,10 +1,23 @@
-import type { AbstraxionConfig, NormalizedAbstraxionConfig } from "../types";
+import type {
+  AbstraxionConfig,
+  NormalizedAbstraxionConfig,
+  SignerAuthentication,
+} from "../types";
 import {
   getFeeGranter,
   getRpcUrl,
   getRestUrl,
   xionGasValues,
 } from "@burnt-labs/constants";
+import type {
+  GrantConfig,
+  AccountCreationConfig,
+  CompositeAccountStrategy,
+} from "@burnt-labs/account-management";
+import {
+  createCompositeAccountStrategy,
+  convertIndexerConfig,
+} from "@burnt-labs/account-management";
 
 /**
  * Normalize AbstraxionConfig by filling in defaults based on chainId - Synchronous!!
@@ -48,5 +61,81 @@ export function normalizeAbstraxionConfig(
     restUrl,
     gasPrice,
     feeGranter: feeGranter || undefined,
+  };
+}
+
+/**
+ * Create account strategy from normalized config
+ * Handles indexer and RPC strategy configuration for smart account discovery
+ */
+export function createAccountStrategyFromConfig(
+  config: NormalizedAbstraxionConfig,
+  signerAuth: SignerAuthentication,
+): CompositeAccountStrategy {
+  const smartAccountContract = signerAuth.smartAccountContract;
+
+  return createCompositeAccountStrategy({
+    indexer: convertIndexerConfig(signerAuth.indexer, smartAccountContract),
+    rpc: smartAccountContract
+      ? {
+          rpcUrl: config.rpcUrl,
+          checksum: smartAccountContract.checksum,
+          creator: config.feeGranter || "",
+          prefix: smartAccountContract.addressPrefix,
+          codeId: smartAccountContract.codeId,
+        }
+      : undefined,
+  });
+}
+
+/**
+ * Create grant config from normalized config
+ * Extracts grant-related fields and adds treasury indexer URL
+ */
+export function createGrantConfigFromConfig(
+  config: NormalizedAbstraxionConfig,
+  signerAuth: SignerAuthentication,
+): GrantConfig | undefined {
+  if (
+    !config.treasury &&
+    !config.contracts &&
+    !config.bank &&
+    !config.stake
+  ) {
+    return undefined;
+  }
+
+  return {
+    treasury: config.treasury,
+    contracts: config.contracts,
+    bank: config.bank,
+    stake: config.stake,
+    feeGranter: config.feeGranter,
+    daodaoIndexerUrl: signerAuth.treasuryIndexer?.url,
+  };
+}
+
+/**
+ * Create account creation config from normalized config
+ * Handles smart account contract configuration for account creation
+ */
+export function createAccountCreationConfigFromConfig(
+  config: NormalizedAbstraxionConfig,
+  signerAuth: SignerAuthentication,
+): AccountCreationConfig | undefined {
+  const smartAccountContract = signerAuth.smartAccountContract;
+
+  if (!smartAccountContract || !config.feeGranter) {
+    return undefined;
+  }
+
+  return {
+    aaApiUrl: signerAuth.aaApiUrl || "",
+    smartAccountContract: {
+      codeId: smartAccountContract.codeId,
+      checksum: smartAccountContract.checksum,
+      addressPrefix: smartAccountContract.addressPrefix,
+    },
+    feeGranter: config.feeGranter,
   };
 }

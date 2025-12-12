@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { ConnectorRegistry } from "../../src/connectors/ConnectorRegistry";
-import { ConnectorType } from "../../src/connectors/types";
+import { ConnectorRegistry } from "../ConnectorRegistry";
+import { ConnectorType } from "../types";
 import { createSimpleMockConnector } from "./test-utils";
 
 describe("ConnectorRegistry", () => {

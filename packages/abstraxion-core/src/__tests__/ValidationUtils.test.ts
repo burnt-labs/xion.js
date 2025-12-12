@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   validateTreasuryGrantConfig,
   validateTreasuryIndexerResponse,
-} from "../src/utils/grant/validation";
-import { TreasuryValidationError } from "../src/utils/grant/errors";
+} from "../utils/grant/validation";
+import { TreasuryValidationError } from "../utils/grant/errors";
 
 describe("Treasury Grant Validation", () => {
   describe("validateTreasuryGrantConfig", () => {

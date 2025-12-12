@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useAbstraxionSigningClient } from "../../../src/hooks/useAbstraxionSigningClient";
 import { useAbstraxionAccount } from "../../../src/hooks/useAbstraxionAccount";
-import { AbstraxionProvider } from "../../../src/components/AbstraxionContext";
+import { AbstraxionProvider } from "../../../src/AbstraxionProvider";
 import { getTestConfig } from "../fixtures";
 import {
   createTestSecp256k1Connector,

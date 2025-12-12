@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { TextDecoder, TextEncoder } from "node:util";
-import { SignArbSecp256k1HdWallet } from "../src/SignArbSecp256k1HdWallet";
+import { SignArbSecp256k1HdWallet } from "../SignArbSecp256k1HdWallet";
 import { AccountData } from "@cosmjs/proto-signing";
 import { serializeSignDoc } from "@cosmjs/amino";
 import { Secp256k1, Secp256k1Signature, Sha256 } from "@cosmjs/crypto";
-import { makeADR36AminoSignDoc } from "../src/utils";
+import { makeADR36AminoSignDoc } from "../utils";
 
 // Polyfill TextEncoder/TextDecoder for Node.js test environment
 global.TextEncoder = TextEncoder;

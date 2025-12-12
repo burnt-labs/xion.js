@@ -40,6 +40,10 @@ export interface RpcAccountStrategyConfig {
  * Direct Chain Indexer Strategy
  * Calculates predicted address and queries chain directly (no indexer needed)
  *
+ * TODO / NOTE : This strategy might not work for more complex scenarios like 
+ * meta accounts where the authenticator in question has been removed or added to other accounts.
+ * 
+ * Only to be used as a backup, indexers are the preferred way to find accounts.
  */
 export class RpcAccountStrategy implements IndexerStrategy {
   private config: RpcAccountStrategyConfig;

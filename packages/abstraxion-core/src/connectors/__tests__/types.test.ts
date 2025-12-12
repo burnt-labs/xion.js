@@ -4,13 +4,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { ConnectorType } from "../../src/connectors/types";
+import { ConnectorType } from "../types";
 import type {
   Connector,
   ConnectorMetadata,
   SignerConfig,
   ConnectorConnectionResult,
-} from "../../src/connectors/types";
+} from "../types";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 import { TEST_AUTHENTICATORS, TEST_SIGNATURES } from "./test-utils";
 

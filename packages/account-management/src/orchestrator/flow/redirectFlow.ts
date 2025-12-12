@@ -11,14 +11,12 @@ import type { SessionManager, SessionRestorationResult } from "../types";
  * Requires SessionManager with redirectToDashboard() method
  *
  * @param sessionManager - Session manager that supports redirect flow
- * @param rpcUrl - RPC URL for fetching config (used as fallback if dashboardUrl not provided)
- * @param dashboardUrl - Optional dashboard URL (if not provided, will be fetched from RPC)
+ * @param rpcUrl - RPC URL for fetching dashboard URL from network config
  * @returns Dashboard URL for state dispatch
  */
 export async function initiateRedirect(
   sessionManager: SessionManager,
   rpcUrl: string,
-  dashboardUrl?: string,
 ): Promise<{ dashboardUrl: string }> {
   // Check if sessionManager supports redirect
   if (!sessionManager.redirectToDashboard) {
@@ -31,11 +29,7 @@ export async function initiateRedirect(
   // Use AbstraxionAuth's redirectToDashboard() which handles all URL building
   await sessionManager.redirectToDashboard();
 
-  // Return configured dashboard URL if provided, otherwise fetch from RPC as fallback
-  if (dashboardUrl) {
-    return { dashboardUrl };
-  }
-
+  // Fetch dashboard URL from RPC based on network config
   const config = await fetchConfig(rpcUrl);
   return { dashboardUrl: config.dashboardUrl || "" };
 }

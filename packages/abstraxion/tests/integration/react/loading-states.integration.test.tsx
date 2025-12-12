@@ -23,7 +23,7 @@ import {
   useAbstraxionSigningClient,
   useAbstraxionClient,
 } from "../../../src/hooks";
-import { AbstraxionProvider } from "../../../src/components/AbstraxionContext";
+import { AbstraxionProvider } from "../../../src/AbstraxionProvider";
 import { getTestConfig } from "../fixtures";
 import {
   createTestSecp256k1Connector,

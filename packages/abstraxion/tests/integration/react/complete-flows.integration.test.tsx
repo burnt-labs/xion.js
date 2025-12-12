@@ -15,7 +15,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { renderHook, act, waitFor, screen } from "@testing-library/react";
-import { AbstraxionProvider } from "../../../src/components/AbstraxionContext";
+import { AbstraxionProvider } from "../../../src/AbstraxionProvider";
 import { useAbstraxionAccount } from "../../../src/hooks/useAbstraxionAccount";
 import { useAbstraxionClient } from "../../../src/hooks/useAbstraxionClient";
 import { useAbstraxionSigningClient } from "../../../src/hooks/useAbstraxionSigningClient";
