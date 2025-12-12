@@ -100,4 +100,5 @@ jobs:
           setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: false
           NPM_TOKEN: ''
