@@ -42,7 +42,7 @@ export function verifyEthWalletSignature(
  * @param message - Message that was signed (plain string, typically bech32 address like "xion1...")
  * @param signature - Signature in hex format (with or without 0x prefix, must be exactly 64 bytes)
  * @param publicKey - Public key in base64 format (must be exactly 33 or 65 bytes when decoded)
- * @returns true if signature is valid, false otherwise
+ * @returns true if signature is valid via either method, false if both methods fail
  * @throws Error if signature or public key format is invalid
  * @see ./README.md for detailed specifications
  *
@@ -104,14 +104,9 @@ export async function verifySecp256k1Signature(
   // ADR-036 format wraps the message in a SignDoc structure
   try {
     const adr036Hash = wrapMessageADR036(messageBytes, pubkeyBytes);
-    const adr036Verification = await Secp256k1.verifySignature(
-      sig,
-      adr036Hash,
-      pubkeyBytes,
-    );
-    return adr036Verification;
+    return await Secp256k1.verifySignature(sig, adr036Hash, pubkeyBytes);
   } catch (error: unknown) {
-    // If ADR-036 verification fails, return false
+    // In all cases, treat as verification failure rather than throwing
     return false;
   }
 }
@@ -138,24 +133,9 @@ function wrapMessageADR036(
   // Encode message as base64
   const msgBase64 = Buffer.from(messageBytes).toString("base64");
 
-  // Create ADR-036 SignDoc envelope
-  // This matches the smart contract's format exactly
-  const envelope = JSON.stringify({
-    account_number: "0",
-    chain_id: "",
-    fee: { amount: [], gas: "0" },
-    memo: "",
-    msgs: [
-      {
-        type: "sign/MsgSignData",
-        value: {
-          data: msgBase64,
-          signer: signerAddress,
-        },
-      },
-    ],
-    sequence: "0",
-  });
+  // Create ADR-036 SignDoc envelope using explicit string construction
+  // Field order matches Cosmos SDK's canonical JSON representation
+  const envelope = `{"account_number":"0","chain_id":"","fee":{"amount":[],"gas":"0"},"memo":"","msgs":[{"type":"sign/MsgSignData","value":{"data":"${msgBase64}","signer":"${signerAddress}"}}],"sequence":"0"}`;
 
   // Hash the envelope
   return sha256(Buffer.from(envelope, "utf8"));

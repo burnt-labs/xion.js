@@ -13,6 +13,7 @@ import {
   type DecodedReadableAuthorization,
   type HumanContractExecAuth,
 } from "@burnt-labs/abstraxion-core";
+import type { PermissionDescription } from "../../types/treasury";
 
 // Re-export types from abstraxion-core for backward compatibility
 export type { DecodedReadableAuthorization, HumanContractExecAuth };
@@ -185,15 +186,6 @@ export const CosmosAuthzPermission: { [key: string]: string } = {
   "/cosmwasm.wasm.v1.MsgClearAdmin":
     "clear the admin of smart contracts on your behalf",
 };
-
-/**
- * Permission description for display to users
- */
-export interface PermissionDescription {
-  authorizationDescription: string;
-  dappDescription?: string;
-  contracts?: (string | undefined)[];
-}
 
 /**
  * Generate human-readable permission descriptions from decoded grants

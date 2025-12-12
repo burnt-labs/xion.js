@@ -56,7 +56,7 @@ export interface TreasuryStrategy {
 export interface PermissionDescription {
   authorizationDescription: string;
   dappDescription?: string;
-  contracts?: string[];
+  contracts?: (string | undefined)[];
 }
 
 export interface FormattedDescriptions {
