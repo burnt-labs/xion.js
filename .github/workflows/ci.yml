@@ -1,98 +1,34 @@
 name: 🚀 CI
 
+# Main CI workflow that orchestrates other workflows
+# Individual workflows (unit-tests, integration-tests, build) run independently
+# This workflow can be used to run multiple checks together if needed
+
 on:
-  push:
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
-  release:
-    name: 🚀 Release
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [lts/*]
-        pnpm-version: [8.9.0]
-    runs-on: ${{ matrix.os }}
+  # This workflow now delegates to separate workflow files:
+  # - unit-tests.yml: Runs unit tests on every push/PR
+  # - integration-tests.yml: Runs integration tests on main branch or manual trigger
+  # - build.yml: Builds the monorepo
+  # - dependency-validation.yml: Validates dependency versions
+  # - release.yml: Handles releases
+  
+  # Note: GitHub Actions doesn't support calling other workflows directly,
+  # so these workflows run independently based on their own triggers.
+  # This file is kept for reference and can be removed if not needed.
+  
+  ci-complete:
+    name: ✅ CI Complete
+    runs-on: ubuntu-latest
     steps:
-      - name: ⬇️ Checkout
-        id: checkout
-        uses: actions/checkout@v2.3.3
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
-          fetch-depth: 0
-
-      - name: 🟢 Setup node
-        id: setup-node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: 🥡 Setup pnpm
-        id: setup-pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ matrix.pnpm-version }}
-          run_install: false
-
-      - name: 🎈 Get pnpm store directory
-        id: get-pnpm-cache-dir
+      - name: ✅ All CI checks run via separate workflows
         run: |
-          echo "::set-output name=pnpm_cache_dir::$(pnpm store path)"
+          echo "Unit tests: See unit-tests.yml workflow"
+          echo "Integration tests: See integration-tests.yml workflow"
+          echo "Build: See build.yml workflow"
+          echo "Dependency validation: See dependency-validation.yml workflow"
 
-      - name: 🔆 Cache pnpm modules
-        uses: actions/cache@v3
-        id: pnpm-cache
-        with:
-          path: ${{ steps.get-pnpm-cache-dir.outputs.pnpm_cache_dir }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: 🧩 Install Dependencies
-        id: install-dependencies
-        run: pnpm install
-
-      - name: 🏗️ Build
-        id: build-the-mono-repo
-        run: |
-          pnpm build
-
-  test:
-    name: 🧪 Run Tests
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [lts/*]
-        pnpm-version: [8.9.0]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: ⬇️ Checkout
-        uses: actions/checkout@v2.3.3
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: 🥡 Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ matrix.pnpm-version }}
-
-      - name: 🔄 Install Dependencies
-        run: pnpm install
-
-      - name: 🏗️ Build
-        id: build-the-mono-repo
-        run: |
-          pnpm build
-
-      - name: 🧪 Run Tests
-        run: pnpm test
-
-      - name: Check Prettier
-        run: pnpm run prettier-check

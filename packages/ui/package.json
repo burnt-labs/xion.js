@@ -16,9 +16,11 @@
     "clean": "rimraf ./dist"
   },
   "peerDependencies": {
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "@burnt-labs/abstraxion": "workspace:*"
   },
   "devDependencies": {
+    "@burnt-labs/abstraxion": "workspace:*",
     "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",

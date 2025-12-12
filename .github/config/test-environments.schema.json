@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Test Environments Configuration",
+  "description": "Schema for xion.js test environment configurations",
+  "type": "object",
+  "required": ["environments"],
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "environments": {
+      "type": "object",
+      "properties": {
+        "testnet": {
+          "$ref": "#/definitions/environment"
+        },
+        "mainnet": {
+          "$ref": "#/definitions/environment"
+        },
+        "local": {
+          "$ref": "#/definitions/environment"
+        }
+      }
+    },
+    "aaApiServer": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "testConfig": {
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "number"
+            },
+            "integration": {
+              "type": "number"
+            }
+          }
+        },
+        "nodeEnv": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "environment": {
+      "type": "object",
+      "required": ["name", "chainId"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable environment name"
+        },
+        "chainId": {
+          "type": "string",
+          "description": "Blockchain chain ID"
+        },
+        "rpcUrl": {
+          "type": "string",
+          "description": "RPC endpoint URL"
+        },
+        "restUrl": {
+          "type": "string",
+          "description": "REST API endpoint URL"
+        },
+        "gasPrice": {
+          "type": "string",
+          "description": "Gas price (e.g., 0.001uxion)"
+        },
+        "gasAdjustment": {
+          "type": "string",
+          "description": "Gas adjustment multiplier"
+        },
+        "aaApiUrl": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Account Abstraction API URL (simple string)"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "liveUrl": {
+                  "type": "string",
+                  "description": "Live deployed AA-API URL"
+                },
+                "devServerPort": {
+                  "type": "number",
+                  "description": "Port for local dev server"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "description": "AA-API configuration object"
+            }
+          ],
+          "description": "Account Abstraction API URL or configuration"
+        },
+        "treasuryAddress": {
+          "type": "string",
+          "description": "Treasury contract address"
+        },
+        "addressPrefix": {
+          "type": "string",
+          "description": "Bech32 address prefix"
+        },
+        "feeGranter": {
+          "type": "string",
+          "description": "Fee granter address"
+        },
+        "indexerUrl": {
+          "type": "string",
+          "description": "Indexer URL (optional)"
+        },
+        "treasuryIndexerUrl": {
+          "type": "string",
+          "description": "Treasury indexer URL (optional)"
+        },
+        "description": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

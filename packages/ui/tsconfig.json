@@ -1,5 +1,10 @@
 {
   "extends": "@burnt-labs/tsconfig/react-library.json",
+  "compilerOptions": {
+    "paths": {
+      "@burnt-labs/abstraxion": ["../abstraxion/src/index.ts"]
+    }
+  },
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]
 }

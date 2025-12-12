@@ -1,4 +1,4 @@
-# @burnt-labs/signers [DEPRECATED]
+# @burnt-labs/signers
 
 ## 0.1.0-alpha.14
 

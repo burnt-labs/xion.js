@@ -1,0 +1,55 @@
+{
+  "name": "@burnt-labs/test-utils",
+  "version": "1.0.0-alpha.1",
+  "description": "Shared test utilities and helpers for xion.js packages",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./mocks": {
+      "types": "./src/mocks/index.ts",
+      "default": "./src/mocks/index.ts"
+    },
+    "./builders": {
+      "types": "./src/builders/index.ts",
+      "default": "./src/builders/index.ts"
+    },
+    "./helpers": {
+      "types": "./src/helpers/index.ts",
+      "default": "./src/helpers/index.ts"
+    },
+    "./vitest": {
+      "types": "./src/vitest/index.ts",
+      "default": "./src/vitest/index.ts"
+    },
+    "./vitest/setup": {
+      "types": "./src/vitest/setup.ts",
+      "default": "./src/vitest/setup.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@burnt-labs/constants": "workspace:*",
+    "@cosmjs/amino": "^0.36.0",
+    "@cosmjs/cosmwasm-stargate": "^0.36.0",
+    "@cosmjs/crypto": "^0.36.0",
+    "@cosmjs/encoding": "^0.36.0",
+    "@cosmjs/proto-signing": "^0.36.0",
+    "@cosmjs/stargate": "^0.36.0",
+    "cosmjs-types": "^0.9.0"
+  },
+  "devDependencies": {
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
+    "@types/node": "^20",
+    "typescript": "^5.2.2",
+    "vitest": "^1.0.0"
+  }
+}

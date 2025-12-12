@@ -1,6 +1,6 @@
 # This workflow will release the packages with Changesets
 
-name: 🚀 Release
+name: Release
 
 on:
   push:
@@ -16,7 +16,7 @@ env:
 
 jobs:
   release:
-    name: 🚀 Release
+    name: Publish to npm
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -62,6 +62,10 @@ jobs:
       - name: 🧩 Install Dependencies
         id: install-dependencies
         run: pnpm install
+
+      - name: 🔨 Generate AA API Types
+        id: generate-types
+        run: pnpm generate:types
 
       - name: 🏗️ Build
         id: build-the-mono-repo

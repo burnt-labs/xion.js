@@ -3,7 +3,7 @@
     "experimentalDecorators": true,
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -14,7 +14,8 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "declaration": true
+    "declaration": true,
+    "resolveJsonModule": true
   },
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]

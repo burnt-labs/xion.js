@@ -1,0 +1,210 @@
+name: OpenAPI Schema Validation
+
+on:
+  pull_request:
+    # Run on all PRs to catch AA API schema changes
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      aa_api_url:
+        description: 'AA API URL to validate against'
+        required: false
+        type: string
+        default: 'https://aa-api.xion-testnet-2.burnt.com'
+  schedule:
+    # Run daily at 00:00 UTC to catch schema drift
+    - cron: '0 0 * * *'
+
+jobs:
+  validate-schema:
+    name: Validate Generated Types Against OpenAPI Schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.9.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine AA API URL
+        id: config
+        run: |
+          # Use workflow input if provided, otherwise use testnet default
+          if [ -n "${{ github.event.inputs.aa_api_url }}" ]; then
+            AA_API_URL="${{ github.event.inputs.aa_api_url }}"
+          else
+            AA_API_URL="https://aa-api.xion-testnet-2.burnt.com"
+          fi
+
+          echo "aa_api_url=$AA_API_URL" >> $GITHUB_OUTPUT
+          echo "Using AA-API URL: $AA_API_URL"
+
+      - name: Backup Current Generated Types
+        run: |
+          echo "Backing up current generated types..."
+          cp -r packages/signers/src/types/generated /tmp/generated-backup
+          echo "✅ Backup created"
+
+      - name: Generate Types from Live AA API
+        run: |
+          echo "Generating types from live AA API: ${{ steps.config.outputs.aa_api_url }}"
+
+          # Use the generate script with the AA API URL
+          # The script is in the root, tsx is in signers package
+          cd packages/signers
+          pnpm exec tsx ../../scripts/generate-aa-api-types.ts "${{ steps.config.outputs.aa_api_url }}"
+
+          echo "✅ Types generated successfully"
+
+      - name: Compare Generated Types
+        id: compare
+        run: |
+          echo "Comparing generated types with committed types..."
+
+          # Compare only TypeScript files, excluding metadata.json
+          # Metadata contains timestamps and source env labels that always differ
+          SCHEMA_CHANGED=false
+
+          # Initialize the diff output file
+          > /tmp/schema-diff.txt
+
+          # Compare all .ts files in the generated directory
+          for ts_file in packages/signers/src/types/generated/*.ts; do
+            if [ -f "$ts_file" ]; then
+              backup_file="/tmp/generated-backup/$(basename "$ts_file")"
+              if [ ! -f "$backup_file" ]; then
+                echo "⚠️  New file detected: $(basename "$ts_file")"
+                SCHEMA_CHANGED=true
+                {
+                  echo "=== NEW FILE: $(basename "$ts_file") ==="
+                  echo ""
+                  head -30 "$ts_file"
+                  echo ""
+                  echo "... (truncated)"
+                  echo ""
+                } >> /tmp/schema-diff.txt
+              elif ! diff "$ts_file" "$backup_file" > /tmp/temp-diff.txt 2>&1; then
+                echo "⚠️  Changes detected in: $(basename "$ts_file")"
+                SCHEMA_CHANGED=true
+                {
+                  echo "=== CHANGES IN: $(basename "$ts_file") ==="
+                  echo ""
+                  cat /tmp/temp-diff.txt
+                  echo ""
+                } >> /tmp/schema-diff.txt
+              fi
+            fi
+          done
+
+          # Check for deleted files
+          for backup_file in /tmp/generated-backup/*.ts; do
+            if [ -f "$backup_file" ]; then
+              current_file="packages/signers/src/types/generated/$(basename "$backup_file")"
+              if [ ! -f "$current_file" ]; then
+                echo "⚠️  File deleted: $(basename "$backup_file")"
+                SCHEMA_CHANGED=true
+                {
+                  echo "=== DELETED FILE: $(basename "$backup_file") ==="
+                  echo ""
+                } >> /tmp/schema-diff.txt
+              fi
+            fi
+          done
+
+          if [ "$SCHEMA_CHANGED" = true ]; then
+            echo "schema_changed=true" >> $GITHUB_OUTPUT
+
+            echo "⚠️  Schema validation detected type differences!"
+            echo ""
+            echo "Diff summary:"
+            if [ -s /tmp/schema-diff.txt ]; then
+              head -50 /tmp/schema-diff.txt
+            else
+              echo "(No detailed diff available)"
+            fi
+            echo ""
+            echo "Full diff saved to artifact"
+          else
+            echo "schema_changed=false" >> $GITHUB_OUTPUT
+            echo "✅ Generated types match committed types - schema is in sync!"
+            echo "   (metadata.json differences are ignored)"
+          fi
+
+      - name: Upload Diff Artifact
+        if: steps.compare.outputs.schema_changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-diff
+          path: /tmp/schema-diff.txt
+
+      - name: Post Schema Drift Comment
+        if: github.event_name == 'pull_request' && steps.compare.outputs.schema_changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = '## ⚠️ AA-API Schema Drift\n\n' +
+              '**Generated types don' + "'" + 't match the live schema.**\n\n' +
+              '**Action:** Run `pnpm generate:types` in `packages/signers`, review changes, and commit.\n\n' +
+              '<details>\n' +
+              '<summary>Details</summary>\n\n' +
+              '**AA-API URL:** `${{ steps.config.outputs.aa_api_url }}`\n\n' +
+              '**Possible causes:**\n' +
+              '- AA-API schema changed\n' +
+              '- Types are out of sync\n' +
+              '- Manual modifications to generated types\n\n' +
+              '**If this is a false positive,** the types are correct and no action is needed.\n\n' +
+              '*Diff available in workflow artifacts.*\n' +
+              '</details>';
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Fail on Schema Drift
+        if: steps.compare.outputs.schema_changed == 'true'
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "❌ Schema drift detected in scheduled run - failing workflow"
+            echo "This indicates the AA-API schema has changed without updating the generated types"
+            exit 1
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "⚠️  Schema drift detected in PR"
+            echo "Please regenerate types using 'pnpm generate:types' if the schema changes are intentional"
+            echo "Failing workflow to ensure types are in sync"
+            exit 1
+          else
+            echo "⚠️  Schema drift detected on push to main/develop"
+            echo "This should not happen - types should be regenerated before merging"
+            exit 1
+          fi
+
+      - name: Schema Validation Summary
+        run: |
+          echo ""
+          echo "📊 Schema Validation Summary:"
+          echo "  AA-API URL: ${{ steps.config.outputs.aa_api_url }}"
+          echo "  Schema Changed: ${{ steps.compare.outputs.schema_changed }}"
+          echo ""
+
+          if [ "${{ steps.compare.outputs.schema_changed }}" == "true" ]; then
+            echo "⚠️  Schema validation detected differences (non-blocking for PRs)"
+          else
+            echo "✅ Schema is in sync!"
+          fi

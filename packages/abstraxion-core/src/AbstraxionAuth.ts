@@ -1,5 +1,6 @@
 import { GasPrice } from "@cosmjs/stargate";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import type { AccountData } from "@cosmjs/proto-signing";
 import type {
   ContractGrantDescription,
   DecodedReadableAuthorization,
@@ -30,6 +31,9 @@ export class AbstraxionAuth {
   callbackUrl?: string;
   treasury?: string;
   indexerUrl?: string;
+  indexerAuthToken?: string;
+  treasuryIndexerUrl?: string;
+  gasPrice?: string;
 
   // Signer
   private client?: GranteeSignerClient;
@@ -71,7 +75,10 @@ export class AbstraxionAuth {
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
    * @param {string} treasury - treasury contract instance address
-   * @param {string} indexerUrl - custom indexer URL to use instead of default
+   * @param {string} indexerUrl - custom indexer URL to use instead of default (for account discovery)
+   * @param {string} indexerAuthToken - authentication token for indexer API requests
+   * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
+   * @param {string} gasPrice - Gas price string (e.g., "0.001uxion"). Defaults to "0.001uxion" if not provided.
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -81,6 +88,9 @@ export class AbstraxionAuth {
     callbackUrl?: string,
     treasury?: string,
     indexerUrl?: string,
+    indexerAuthToken?: string,
+    treasuryIndexerUrl?: string,
+    gasPrice?: string,
   ) {
     this.rpcUrl = rpc;
     this.grantContracts = grantContracts;
@@ -89,6 +99,9 @@ export class AbstraxionAuth {
     this.callbackUrl = callbackUrl;
     this.treasury = treasury;
     this.indexerUrl = indexerUrl;
+    this.indexerAuthToken = indexerAuthToken;
+    this.treasuryIndexerUrl = treasuryIndexerUrl;
+    this.gasPrice = gasPrice;
   }
 
   /**
@@ -154,7 +167,7 @@ export class AbstraxionAuth {
    *
    * @param {string} address - account address of the granter wallet (XION Meta Account).
    */
-  private async setGranter(address: string): Promise<void> {
+  async setGranter(address: string): Promise<void> {
     await this.storageStrategy.setItem("xion-authz-granter-account", address);
   }
 
@@ -229,18 +242,20 @@ export class AbstraxionAuth {
 
       const granteeAddress = await this.abstractAccount
         .getAccounts()
-        .then((accounts: any) => {
+        .then((accounts: readonly AccountData[]) => {
           if (accounts.length === 0) {
             throw new Error("No account found.");
           }
           return accounts[0].address;
         });
 
+      // Use configured gasPrice
+      const gasPriceString = this.gasPrice || "0.001uxion";
       const directClient = await GranteeSignerClient.connectWithSigner(
         this.rpcUrl,
         this.abstractAccount,
         {
-          gasPrice: gasPrice || GasPrice.fromString("0uxion"),
+          gasPrice: GasPrice.fromString(gasPriceString),
           granterAddress,
           granteeAddress,
           treasuryAddress: this.treasury,
@@ -250,7 +265,6 @@ export class AbstraxionAuth {
       this.client = directClient;
       return directClient;
     } catch (error) {
-      console.warn("Something went wrong getting signer: ", error);
       this.client = undefined;
       throw error;
     }
@@ -277,7 +291,6 @@ export class AbstraxionAuth {
       this.cosmwasmQueryClient = cosmwasmClient;
       return cosmwasmClient;
     } catch (error) {
-      console.warn("Something went wrong getting cosmwasm client: ", error);
       this.cosmwasmQueryClient = undefined;
       throw error;
     }
@@ -285,14 +298,24 @@ export class AbstraxionAuth {
 
   /**
    * Get dashboard url and redirect in order to issue claim with XION meta account for local keypair.
+   * Fetches dashboard URL from RPC based on network ID.
    */
   async redirectToDashboard() {
-    if (!this.rpcUrl) {
-      throw new Error("AbstraxionAuth needs to be configured.");
+    try {
+      if (!this.rpcUrl) {
+        throw new Error("AbstraxionAuth needs to be configured.");
+      }
+      const userAddress = await this.getKeypairAddress();
+
+      // Fetch dashboard URL from RPC based on network ID
+      const config = await fetchConfig(this.rpcUrl);
+      const dashboardUrl = config.dashboardUrl;
+
+      await this.configureUrlAndRedirect(dashboardUrl, userAddress);
+    } catch (error) {
+      // Error is thrown and handled by caller
+      throw error;
     }
-    const userAddress = await this.getKeypairAddress();
-    const { dashboardUrl } = await fetchConfig(this.rpcUrl);
-    await this.configureUrlAndRedirect(dashboardUrl, userAddress);
   }
 
   /**
@@ -327,8 +350,6 @@ export class AbstraxionAuth {
 
       const queryString = urlParams.toString();
       await this.redirectStrategy.redirect(`${dashboardUrl}?${queryString}`);
-    } else {
-      console.warn("Window not defined. Cannot redirect to dashboard");
     }
   }
 
@@ -375,7 +396,7 @@ export class AbstraxionAuth {
       cosmwasmClient,
       this.treasury,
       this.rpcUrl,
-      this.indexerUrl,
+      this.treasuryIndexerUrl,
     );
 
     const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
@@ -474,7 +495,7 @@ export class AbstraxionAuth {
               cosmwasmClient,
               this.treasury,
               this.rpcUrl,
-              this.indexerUrl,
+              this.treasuryIndexerUrl,
             ),
           ]);
 
@@ -486,7 +507,6 @@ export class AbstraxionAuth {
         }
 
         if (data.grants.length === 0) {
-          console.warn("No grants found.");
           return false;
         }
 
@@ -509,13 +529,11 @@ export class AbstraxionAuth {
 
         return validGrant && isValid;
       } catch (error) {
-        console.warn("Error fetching grants: ", error);
         const delay = Math.pow(2, retries) * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
         retries++;
       }
     }
-    console.warn("Max retries exceeded, giving up.");
     return false;
   }
 
@@ -566,7 +584,6 @@ export class AbstraxionAuth {
       const granter = await this.getGranter();
 
       if (!keypair || !granter) {
-        console.warn("Missing keypair or granter, cannot authenticate.");
         return;
       }
 
@@ -585,8 +602,9 @@ export class AbstraxionAuth {
         );
       }
     } catch (error) {
-      console.warn("Something went wrong during authentication:", error);
       await this.logout();
+      // Re-throw the error so that authenticate() rejects and callers can handle it
+      throw error;
     }
   }
 
@@ -596,52 +614,89 @@ export class AbstraxionAuth {
    * If both exist, polls for grants and updates the authentication state if successful.
    * If not, generates a new keypair and redirects to the dashboard for grant issuance.
    *
-   * @returns {Promise<void>} - A Promise that resolves once the login process is complete.
    * @throws {Error} - If the login process encounters an error.
    */
   async login(): Promise<void> {
     try {
       if (this.isLoginInProgress) {
-        console.warn("Login is already in progress.");
         return;
       }
       this.isLoginInProgress = true;
-      // Get local keypair and granter address from either URL param (if new) or this.storageStrategy (if existing)
-      const keypair = await this.getLocalKeypair();
-      const storedGranter = await this.getGranter();
-      const urlGranter = await this.redirectStrategy.getUrlParameter("granter");
-      const granter = storedGranter || urlGranter;
 
-      // If both exist, we can assume user is either 1. already logged in and grants have been created for the temp key, or 2. been redirected with the granter url param
-      // In either case, we poll for grants and make the appropriate state changes to reflect a "logged in" state
-      if (keypair && granter) {
-        const accounts = await keypair.getAccounts();
-        const keypairAddress = accounts[0].address;
-        const pollSuccess = await this.pollForGrants(keypairAddress, granter);
-        if (!pollSuccess) {
-          throw new Error("Poll was unsuccessful. Please try again");
-        }
-
-        this.setGranter(granter);
-        this.abstractAccount = keypair;
-        this.triggerAuthStateChange(true);
-
-        // Clean URL parameters after successful authentication
-        await this.redirectStrategy.cleanUrlParameters?.([
-          "granted",
-          "granter",
-        ]);
-      } else {
-        // If there isn't an existing keypair, or there isn't a granter in either this.storageStrategy or the url params, we want to start from scratch
-        // Generate new keypair and redirect to dashboard
-        await this.newKeypairFlow();
-      }
-      return;
+      await this.performLogin();
     } catch (error) {
-      console.warn("Something went wrong during login: ", error);
       throw error;
     } finally {
       this.isLoginInProgress = false;
+    }
+  }
+
+  /**
+   * Completes login after redirect callback and returns keypair and granter.
+   * Specifically designed for redirect flow to avoid reading from storage (prevents Client/Server inconsistencies).
+   *
+   * @returns {Promise<{ keypair: SignArbSecp256k1HdWallet; granter: string } | undefined>}
+   *   - Returns { keypair, granter } when login completes successfully (after redirect callback)
+   *   - Returns undefined when redirecting to dashboard (user will leave page) or login already in progress
+   * @throws {Error} - If the login process encounters an error.
+   */
+  async completeLogin(): Promise<
+    { keypair: SignArbSecp256k1HdWallet; granter: string } | undefined
+  > {
+    try {
+      if (this.isLoginInProgress) {
+        return undefined;
+      }
+      this.isLoginInProgress = true;
+
+      const result = await this.performLogin();
+      return result;
+    } catch (error) {
+      throw error;
+    } finally {
+      this.isLoginInProgress = false;
+    }
+  }
+
+  /**
+   * Internal login logic shared by login() and completeLogin()
+   * @returns {Promise<{ keypair: SignArbSecp256k1HdWallet; granter: string } | undefined>}
+   *   - Returns { keypair, granter } when login completes successfully
+   *   - Returns undefined when redirecting to dashboard
+   */
+  private async performLogin(): Promise<
+    { keypair: SignArbSecp256k1HdWallet; granter: string } | undefined
+  > {
+    // Get local keypair and granter address from either URL param (if new) or this.storageStrategy (if existing)
+    const keypair = await this.getLocalKeypair();
+    const storedGranter = await this.getGranter();
+    const urlGranter = await this.redirectStrategy.getUrlParameter("granter");
+    const granter = storedGranter || urlGranter;
+
+    // If both exist, we can assume user is either 1. already logged in and grants have been created for the temp key, or 2. been redirected with the granter url param
+    // In either case, we poll for grants and make the appropriate state changes to reflect a "logged in" state
+    if (keypair && granter) {
+      const accounts = await keypair.getAccounts();
+      const keypairAddress = accounts[0].address;
+      const pollSuccess = await this.pollForGrants(keypairAddress, granter);
+      if (!pollSuccess) {
+        throw new Error("Poll for grants was unsuccessful. Please try again");
+      }
+
+      await this.setGranter(granter);
+      this.abstractAccount = keypair;
+      this.triggerAuthStateChange(true);
+
+      // Clean URL parameters after successful authentication
+      await this.redirectStrategy.cleanUrlParameters?.(["granted", "granter"]);
+
+      // Return values directly - on Redirect this means we dont have to read from storage which causes some Client/Server inconsistencies
+      return { keypair, granter };
+    } else {
+      // If there isn't an existing keypair, or there isn't a granter in either this.storageStrategy or the url params, we want to start from scratch
+      // Generate new keypair and redirect to dashboard
+      await this.newKeypairFlow();
+      return undefined; // Redirecting, so return undefined
     }
   }
 
@@ -653,10 +708,6 @@ export class AbstraxionAuth {
       await this.generateAndStoreTempAccount();
       await this.redirectToDashboard();
     } catch (error) {
-      console.warn(
-        "Something went wrong trying to create a new keypair: ",
-        error,
-      );
       throw error;
     }
   }
