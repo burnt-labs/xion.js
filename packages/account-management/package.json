@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/account-management",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Smart account management utilities for XION - authenticators, grants, and queries",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

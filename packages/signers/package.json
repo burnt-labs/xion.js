@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/signers",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Smart account signing implementations and authenticator interfaces for XION",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -11,7 +11,9 @@
     "@burnt-labs/tsconfig": "0.0.0",
     "@burnt-labs/ui": "0.0.0",
     "@burnt-labs/abstraxion-core": "1.0.0-alpha.29",
-    "@burnt-labs/abstraxion-react-native": "0.1.0"
+    "@burnt-labs/abstraxion-react-native": "0.1.0",
+    "@burnt-labs/account-management": "1.0.0-alpha.1",
+    "@burnt-labs/test-utils": "1.0.0-alpha.1"
   },
   "changesets": [
     "beige-suns-tell",
@@ -21,6 +23,7 @@
     "calm-coats-approve",
     "chilly-files-wash",
     "chilly-lamps-float",
+    "clear-papers-greet",
     "clever-vans-drop",
     "common-bobcats-ask",
     "cuddly-feet-end",
