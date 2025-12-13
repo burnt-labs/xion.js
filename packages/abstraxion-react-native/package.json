@@ -2,6 +2,11 @@
   "name": "@burnt-labs/abstraxion-react-native",
   "version": "1.0.0-alpha.12",
   "description": "React Native implementation of Abstraxion for XION blockchain",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burnt-labs/xion.js",
+    "directory": "packages/abstraxion-react-native"
+  },
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

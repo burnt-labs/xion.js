@@ -2,6 +2,11 @@
   "name": "@burnt-labs/signers",
   "version": "1.0.0-alpha.3",
   "description": "Smart account signing implementations and authenticator interfaces for XION",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burnt-labs/xion.js",
+    "directory": "packages/signers"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
