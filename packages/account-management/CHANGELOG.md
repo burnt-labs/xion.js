@@ -1,5 +1,17 @@
 # @burnt-labs/account-management
 
+## 1.0.0-alpha.3
+
+### Minor Changes
+
+- [#326](https://github.com/burnt-labs/xion.js/pull/326) [`45e3a7b`](https://github.com/burnt-labs/xion.js/commit/45e3a7b6cb83b5fb812a382e09073285f32303d5) Thanks [@ertemann](https://github.com/ertemann)! - expose extra type and add ADR wrap to secpk1 verifcation so to allow signers like keplr/okx
+
+### Patch Changes
+
+- Updated dependencies [[`45e3a7b`](https://github.com/burnt-labs/xion.js/commit/45e3a7b6cb83b5fb812a382e09073285f32303d5)]:
+  - @burnt-labs/signers@1.0.0-alpha.3
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.63
+
 ## 1.0.0-alpha.2
 
 ### Minor Changes
