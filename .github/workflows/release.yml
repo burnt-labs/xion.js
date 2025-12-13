@@ -8,58 +8,38 @@ on:
       - main
   workflow_dispatch:
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
-
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:
     name: Publish to npm
     permissions:
       id-token: write
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [lts/*]
-        pnpm-version: [8.9.0]
-    runs-on: ${{ matrix.os }}
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout
         id: checkout
-        uses: actions/checkout@v2.3.3
+        uses: actions/checkout@v6
         with:
-          token: ${{ env.GITHUB_TOKEN }}
           fetch-depth: 0
-          persist-credentials: false
-
-      - name: 🟢 Setup node
-        id: setup-node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
 
       - name: 🥡 Setup pnpm
         id: setup-pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: ${{ matrix.pnpm-version }}
           run_install: false
 
-      - name: 🎈 Get pnpm store directory
-        id: get-pnpm-cache-dir
-        run: |
-          echo "::set-output name=pnpm_cache_dir::$(pnpm store path)"
-
-      - name: 🔆 Cache pnpm modules
-        uses: actions/cache@v3
-        id: pnpm-cache
+      - name: 🟢 Setup node
+        id: setup-node
+        uses: actions/setup-node@v4
         with:
-          path: ${{ steps.get-pnpm-cache-dir.outputs.pnpm_cache_dir }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: 🧩 Install Dependencies
         id: install-dependencies
@@ -71,18 +51,12 @@ jobs:
 
       - name: 🏗️ Build
         id: build-the-mono-repo
-        run: |
-          pnpm build
+        run: pnpm build
 
-      - name: Load SSH signing key
+      - name: 🔐 Configure git signing
         run: |
           echo "${{ secrets.SSH_SIGNING_PK }}" > /tmp/.git_signing_key
           chmod 600 /tmp/.git_signing_key
-        shell: bash
-
-      - name: Set git user
-        shell: bash
-        run: |
           git config user.name "isburnt"
           git config user.email "197779235+isburnt@users.noreply.github.com"
           git config commit.gpgsign true
@@ -99,6 +73,4 @@ jobs:
           commit: "chore: update versions"
           setupGitUser: false
         env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: false
-          NPM_TOKEN: ''
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
