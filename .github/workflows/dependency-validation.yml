@@ -19,43 +19,23 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8.9.0
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: lts/*
+          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Run circular dependency tests
-        run: |
-          cd packages/signers
-          pnpm test src/__tests__/circular-deps.test.ts
-        continue-on-error: false
+        run: pnpm --filter @burnt-labs/signers test src/__tests__/circular-deps.test.ts
 
       - name: Run AA API type validation tests
-        run: |
-          cd packages/signers
-          pnpm test src/__tests__/aa-api-types.test.ts
-        continue-on-error: false
-
-      - name: Check for circular dependencies
-        run: |
-          echo "✅ No circular dependencies detected"
-          echo "✅ AA API types validated"
-
-      - name: Validate type exports
-        run: |
-          cd packages/signers
-          # Skip strict type checking in CI - it's covered by the build workflow
-          # This workflow focuses on dependency structure validation
-          echo "✅ Type export validation is handled by the build workflow"
+        run: pnpm --filter @burnt-labs/signers test src/__tests__/aa-api-types.test.ts
