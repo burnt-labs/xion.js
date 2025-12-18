@@ -15,6 +15,9 @@ export type { CreateSignerParams } from "./signers/utils/signer-factory";
 // Crypto utilities for smart account creation
 export * from "./crypto";
 
+// Fee and gas calculation utilities
+export * from "./fees";
+
 // Domain types (source of truth for account types)
 export * from "./types/account";
 

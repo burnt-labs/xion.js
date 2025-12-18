@@ -10,6 +10,7 @@ export * from "./authenticator-validation";
 export * from "./normalize";
 export * from "./signature-verification";
 export * from "./hex-validation";
+export * from "./encoding";
 
 // Re-export types from the types module for backward compatibility
 export type {

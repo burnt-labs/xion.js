@@ -423,6 +423,9 @@ importers:
 
   packages/account-management:
     dependencies:
+      '@braintree/sanitize-url':
+        specifier: ^7.1.0
+        version: 7.1.1
       '@burnt-labs/abstraxion-core':
         specifier: workspace:*
         version: link:../abstraxion-core
@@ -3467,6 +3470,10 @@ packages:
   /@bcoe/v8-coverage@0.2.3:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
+
+  /@braintree/sanitize-url@7.1.1:
+    resolution: {integrity: sha512-i1L7noDNxtFyL5DmZafWy1wRVhGehQmzZaz1HiN5e7iylJMSZR7ekOV7NsIqa5qBldlLrsKv4HbgFUVlQrz8Mw==}
+    dev: false
 
   /@changesets/apply-release-plan@7.0.13:
     resolution: {integrity: sha512-BIW7bofD2yAWoE8H4V40FikC+1nNFEKBisMECccS16W1rt6qqhNTBDmIw5HaqmMgtLNz9e7oiALiEUuKrQ4oHg==}
