@@ -3,4 +3,4 @@
 "@burnt-labs/signers": minor
 ---
 
-expose extra type and add ADR wrap to secpk1 verifcation so to allow signers like keplr/okx
+expose extra type and add ADR wrap to secp256k1 verification so to allow signers like keplr/okx
