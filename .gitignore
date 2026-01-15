@@ -28,6 +28,9 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+# .env.test is now committed with non-sensitive defaults
+# Use .env.test.local to override sensitive values locally (gitignored)
+.env.test.local
 
 # turbo
 .turbo

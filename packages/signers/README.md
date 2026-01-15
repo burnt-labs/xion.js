@@ -1,28 +1,16 @@
-# @burnt-labs/signers [DEPRECATED]
+# @burnt-labs/signers
 
-> ⚠️ **DEPRECATED**: This package is deprecated and will no longer receive updates or maintenance.
+Smart account signing implementations and authenticator interfaces for XION blockchain.
 
-## Deprecation Notice
+> ⚠️ **INTERNAL ONLY**: This package provides utillities for the creation of the abstraxionSigningClient. If you want to use Smart accounts through Xion in your application then please use Abstraxion and the useAbstraxionSigningClient directly.
 
-The `@burnt-labs/signers` package has been deprecated and is no longer under active development. Users of this package should prepare to migrate to alternative solutions.
+## Overview
 
-## Migration
+This package provides signing implementations for XION smart accounts, supporting multiple authenticator types:
 
-If you are currently using this package, please contact the Burnt Labs team for guidance on the recommended migration path and alternative solutions.
+- **JWT Signer** - Email/social authentication via JWT tokens
+- **Ethereum Signer** - MetaMask and other Ethereum wallets
+- **Direct Signer** - Cosmos wallets (Keplr, Leap, OKX)
+- **Passkey Signer** - WebAuthn/FIDO2 passkeys
 
-## Exported Components
-
-This package previously exported the following components:
-
-- `AAClient`
-- `AADirectSigner`
-- `AbstractAccountJWTSigner`
-- `AAEthSigner`
-- `AASigner`
-- `AADefaultSigner`
-- `AAAlgo`
-- `customAccountFromAny`
-
-## Support
-
-For any questions or assistance with migration, please reach out to the Burnt Labs team.
+it also has references to needed Crypto operations for the creation of Smart accounts.

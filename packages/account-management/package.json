@@ -1,0 +1,55 @@
+{
+  "name": "@burnt-labs/account-management",
+  "version": "1.0.0-alpha.3",
+  "description": "Smart account management utilities for XION - authenticators, grants, and queries",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burnt-labs/xion.js",
+    "directory": "packages/account-management"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/",
+    "dev": "tsup --watch",
+    "check-types": "tsc --noEmit",
+    "clean": "rimraf ./dist",
+    "test": "vitest",
+    "test:unit": "vitest run src",
+    "test:coverage": "vitest run --coverage src",
+    "test:integration": "vitest run tests/integration --config vitest.config.integration.ts",
+    "test:integration:watch": "vitest tests/integration --config vitest.config.integration.ts"
+  },
+  "dependencies": {
+    "@burnt-labs/abstraxion-core": "workspace:*",
+    "@burnt-labs/signers": "workspace:*",
+    "@cosmjs/cosmwasm-stargate": "^0.36.0",
+    "@cosmjs/proto-signing": "^0.36.0",
+    "@cosmjs/stargate": "^0.36.0",
+    "camelcase-keys": "^9.1.3",
+    "cosmjs-types": "^0.9.0"
+  },
+  "devDependencies": {
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/test-utils": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
+    "@types/node": "^20",
+    "@vitest/coverage-v8": "^1.6.1",
+    "eslint": "^8.48.0",
+    "prettier": "^3.0.3",
+    "rimraf": "^5.0.5",
+    "tsup": "^6.0.1",
+    "typescript": "^5.2.2",
+    "vitest": "^1.0.0"
+  }
+}

@@ -113,22 +113,52 @@ const REST_URLS = {
   "xion-testnet-2": "https://api.xion-testnet-2.burnt.com:443",
 };
 
-export async function fetchConfig(rpcUrl: string) {
-  try {
-    const fetchReq = await fetch(`${rpcUrl}/status`);
-    if (!fetchReq.ok) {
-      throw new Error("Something went wrong querying RPC");
-    }
+const FEE_GRANTERS: Record<string, string> = {
+  "xion-mainnet-1": "xion12q9q752mta5fvwjj2uevqpuku9y60j33j9rll0",
+  "xion-testnet-1": "",
+  "xion-testnet-2": "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
+};
 
-    const data = (await fetchReq.json()) as RpcStatusResponse;
-    const networkId = data.result.node_info.network;
+// Synchronous alternatives to fetchConfig() - use these when you already know the chain ID
+export function getChainInfo(chainId: string): ChainInfo | undefined {
+  if (chainId === mainnetChainInfo.chainId) return mainnetChainInfo;
+  if (chainId === testnetChainInfo.chainId) return testnetChainInfo;
+  if (chainId === testChainInfo.chainId) return testChainInfo;
+  return undefined;
+}
 
-    const dashboardUrl =
-      DASHBOARD_URLS[networkId as keyof typeof DASHBOARD_URLS];
-    const restUrl = REST_URLS[networkId as keyof typeof REST_URLS];
-    if (!dashboardUrl || !restUrl) throw new Error("Network not found.");
-    return { dashboardUrl, restUrl, networkId };
-  } catch (error) {
-    throw error;
+export function getFeeGranter(chainId: string): string {
+  return FEE_GRANTERS[chainId] || "";
+}
+
+export function getRpcUrl(chainId: string): string | undefined {
+  const chainInfo = getChainInfo(chainId);
+  return chainInfo?.rpc;
+}
+
+export function getRestUrl(chainId: string): string | undefined {
+  const chainInfo = getChainInfo(chainId);
+  return chainInfo?.rest;
+}
+
+export async function fetchConfig(rpcUrl: string): Promise<{
+  dashboardUrl: string;
+  restUrl: string;
+  networkId: string;
+  feeGranter: string;
+}> {
+  const fetchReq = await fetch(`${rpcUrl}/status`);
+  if (!fetchReq.ok) {
+    throw new Error("Something went wrong querying RPC");
   }
+
+  const data = (await fetchReq.json()) as RpcStatusResponse;
+  const networkId = data.result.node_info.network;
+
+  const dashboardUrl = DASHBOARD_URLS[networkId as keyof typeof DASHBOARD_URLS];
+  const restUrl = REST_URLS[networkId as keyof typeof REST_URLS];
+  const feeGranter = FEE_GRANTERS[networkId] || "";
+
+  if (!dashboardUrl || !restUrl) throw new Error("Network not found.");
+  return { dashboardUrl, restUrl, networkId, feeGranter };
 }

@@ -17,6 +17,7 @@ import {
   GasPrice,
   type SignerData,
   type StdFee,
+  Coin,
 } from "@cosmjs/stargate";
 import { AuthInfo, Fee, TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx";
@@ -107,6 +108,10 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       return null;
     }
     return customAccountFromAny(account);
+  }
+
+  public async getAllBalances(address: string): Promise<readonly Coin[]> {
+    return this.forceGetQueryClient().bank.allBalances(address);
   }
 
   private transformForMsgExec(

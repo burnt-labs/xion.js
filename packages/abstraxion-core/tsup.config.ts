@@ -8,5 +8,6 @@ export default defineConfig((options: Options) => ({
   dts: true,
   minify: false,
   clean: true,
+  tsconfig: "./tsconfig.json",
   ...options,
 }));

@@ -1,6 +1,11 @@
 {
   "name": "@burnt-labs/ui",
-  "version": "0.1.0-alpha.17",
+  "version": "1.0.0-alpha.19",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burnt-labs/xion.js",
+    "directory": "packages/ui"
+  },
   "sideEffects": [
     "**/*.css"
   ],
@@ -16,9 +21,11 @@
     "clean": "rimraf ./dist"
   },
   "peerDependencies": {
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "@burnt-labs/abstraxion": "workspace:*"
   },
   "devDependencies": {
+    "@burnt-labs/abstraxion": "workspace:*",
     "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",

@@ -62,6 +62,7 @@ export const fetchTreasuryDataFromIndexer = async (
       console.debug(
         `Fetching treasury data from indexer for ${treasuryAddress}`,
       );
+
       const response = await fetch(indexerUrl);
       if (!response.ok) {
         throw new IndexerResponseError(

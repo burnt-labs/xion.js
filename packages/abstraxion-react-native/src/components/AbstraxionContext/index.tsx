@@ -116,6 +116,23 @@ export function AbstraxionProvider({
     configureInstance();
   }, [configureInstance]);
 
+  // Set up React state callback for WebBrowser redirect completion
+  useEffect(() => {
+    const redirectStrategy = abstraxionAuth["redirectStrategy"] as any;
+    if (redirectStrategy.setReactStateCallback) {
+      redirectStrategy.setReactStateCallback(
+        (params: { granter?: string | null }) => {
+          if (params.granter) {
+            setIsReturningFromAuth(true);
+            setIsConnecting(true);
+            setIsInitializing(false);
+            setShowModal(true);
+          }
+        },
+      );
+    }
+  }, []);
+
   useEffect(() => {
     const unsubscribe = abstraxionAuth.subscribeToAuthStateChange(
       async (newState: boolean) => {
@@ -142,6 +159,7 @@ export function AbstraxionProvider({
             // Ensure to clear any active states
             setIsLoggingIn(false);
             setIsConnecting(false);
+            setIsReturningFromAuth(false);
           }
         }
       },
@@ -150,7 +168,7 @@ export function AbstraxionProvider({
     return () => {
       unsubscribe?.();
     };
-  }, [isConnected, abstraxionAuth]);
+  }, [isConnected, abstraxionAuth, abstraxionAccount, granterAddress]);
 
   const persistAuthenticateState = useCallback(async () => {
     // Quick check: if we can immediately determine auth state, do so - lowers load time on refresh (never goes into connecting state/flow)
@@ -203,7 +221,7 @@ export function AbstraxionProvider({
     } catch (error) {
       throw error; // Re-throw to allow handling by the caller
     } finally {
-      // Keep isLoggingIn true until auth state change sets isConnecting (only for manual login)
+      setIsLoggingIn(false);
     }
   }
 

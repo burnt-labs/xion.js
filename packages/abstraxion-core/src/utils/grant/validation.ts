@@ -48,6 +48,8 @@ export const validateTreasuryIndexerResponse = (
     );
   }
 
+  // Type-safe iteration through response object
+  // TODO: Consider adding end-to-end typing with zod (or something else) for treasury indexer responses
   const response = data as Record<string, unknown>;
   const validatedResponse: Record<string, TreasuryGrantConfig> = {};
 

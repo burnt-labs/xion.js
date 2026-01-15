@@ -1,44 +1,83 @@
 {
   "name": "@burnt-labs/signers",
-  "version": "0.1.0-alpha.14",
+  "version": "1.0.0-alpha.3",
+  "description": "Smart account signing implementations and authenticator interfaces for XION",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burnt-labs/xion.js",
+    "directory": "packages/signers"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./crypto": {
+      "types": "./dist/crypto/index.d.ts",
+      "import": "./dist/crypto/index.mjs",
+      "require": "./dist/crypto/index.js"
+    },
+    "./types/account": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.mjs",
+      "require": "./dist/testing/index.js"
+    }
+  },
   "license": "MIT",
-  "deprecated": "This package is deprecated and will no longer receive updates. Please contact the Burnt Labs team for alternative solutions.",
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist",
+    "test": "vitest",
+    "test:deps": "vitest run src/__tests__/circular-deps.test.ts",
+    "generate:types": "tsx ../../scripts/generate-aa-api-types.ts testnet",
+    "generate:types:testnet": "tsx ../../scripts/generate-aa-api-types.ts testnet",
+    "generate:types:mainnet": "tsx ../../scripts/generate-aa-api-types.ts mainnet",
+    "generate:types:local": "tsx ../../scripts/generate-aa-api-types.ts local"
   },
   "dependencies": {
-    "@apollo/client": "^3.8.8",
-    "@cosmjs/amino": "^0.32.4",
-    "@cosmjs/cosmwasm-stargate": "^0.32.4",
-    "@cosmjs/crypto": "^0.32.4",
-    "@cosmjs/encoding": "^0.32.4",
-    "@cosmjs/math": "^0.32.4",
-    "@cosmjs/proto-signing": "^0.32.4",
-    "@cosmjs/stargate": "^0.32.4",
-    "@cosmjs/tendermint-rpc": "^0.32.4",
-    "@cosmjs/utils": "^0.32.4",
-    "@protobuf-ts/runtime": "^2.9.3",
+    "@burnt-labs/constants": "workspace:*",
+    "@cosmjs/amino": "^0.36.0",
+    "@cosmjs/cosmwasm-stargate": "^0.36.0",
+    "@cosmjs/crypto": "^0.36.0",
+    "@cosmjs/encoding": "^0.36.0",
+    "@cosmjs/math": "^0.36.0",
+    "@cosmjs/proto-signing": "^0.36.0",
+    "@cosmjs/stargate": "^0.36.0",
+    "@cosmjs/tendermint-rpc": "^0.36.0",
+    "@cosmjs/utils": "^0.36.0",
+    "@github/webauthn-json": "^2.1.1",
+    "@protobuf-ts/runtime": "^2.9.4",
     "bech32": "^2.0.0",
+    "buffer": "^6.0.3",
     "cosmjs-types": "^0.9.0",
-    "stytch": "^9.0.6"
+    "ethers": "^6.15.0",
+    "long": "^5.2.3",
+    "protobufjs": "^7.2.4"
   },
   "devDependencies": {
-    "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/test-utils": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
     "eslint": "^8.48.0",
-    "long": "^5.2.3",
     "prettier": "^3.0.3",
-    "protobufjs": "^7.2.5",
     "rimraf": "^5.0.5",
     "tsup": "^6.0.1",
-    "typescript": "^5.2.2"
+    "tsx": "^4.7.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
   }
 }

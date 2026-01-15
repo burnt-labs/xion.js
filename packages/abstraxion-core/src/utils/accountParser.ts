@@ -25,10 +25,12 @@ function accountFromBaseAccount(input: AbstractAccount) {
 }
 
 /**
- * Custom implementation of AccountParser. This is supposed to support the most relevant
- * common Cosmos SDK account types and AbstractAccount account types.
- * @param input encoded account from the chain
- * @returns decoded account
+ * Custom account parser supporting XION AbstractAccount type
+ *
+ * Handles `/abstractaccount.v1.AbstractAccount` in addition to standard Cosmos SDK types
+ *
+ * @param input - Encoded account from chain
+ * @returns Decoded account
  */
 export function customAccountFromAny(input: Any): Account {
   const { typeUrl, value } = input;
