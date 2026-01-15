@@ -8,7 +8,7 @@ const mockTreasuryConfigs = {
   basic: {
     redirect_url: "https://dashboard.burnt.com",
     icon_url: "https://dashboard.burnt.com/icon.png",
-    metadata: "Test Treasury",
+    metadata: '{"name": "Test Treasury"}', // metadata is a JSON string
   },
 };
 

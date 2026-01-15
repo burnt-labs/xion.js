@@ -13,7 +13,7 @@ const mockTreasuryParams = {
   basic: {
     redirect_url: "https://dashboard.burnt.com",
     icon_url: "https://dashboard.burnt.com/icon.png",
-    metadata: "Test Treasury",
+    metadata: '{"name": "Test Treasury"}', // metadata is a JSON string
   },
 };
 
@@ -171,7 +171,7 @@ describe("DaoDaoTreasuryStrategy", () => {
           params: {
             redirect_url: "javascript:alert(1)",
             icon_url: "https://example.com/icon.png",
-            metadata: "test",
+            metadata: '{"test": true}',
           },
         }),
       });

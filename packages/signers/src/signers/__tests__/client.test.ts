@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { AAClient } from "../signers/utils/client";
-import { AASigner } from "../interfaces";
+import { AAClient } from "../utils/client";
+import { AASigner } from "../../interfaces";
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
@@ -61,9 +61,12 @@ vi.mock("cosmjs-types/cosmos/tx/v1beta1/tx", () => ({
   },
   Fee: { fromPartial: vi.fn() },
   SignDoc: { fromPartial: vi.fn((arg) => arg) },
+  SignerInfo: {
+    fromPartial: vi.fn((arg) => arg),
+  },
 }));
 
-vi.mock("../../../signers/signers/utils", async (importOriginal) => {
+vi.mock("../utils/index", async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,

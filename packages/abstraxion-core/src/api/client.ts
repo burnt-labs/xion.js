@@ -15,6 +15,63 @@ import type {
 } from "@burnt-labs/signers";
 
 /**
+ * Fetches from the AA API with automatic retry on gateway timeouts
+ * Retries on 502/504 errors which can occur when account creation takes longer than gateway timeout
+ *
+ * This is specifically designed for AA API account creation endpoints that may timeout
+ * at the gateway level while the blockchain transaction still completes successfully.
+ *
+ * @param url - The AA API endpoint URL
+ * @param options - Fetch options (method, headers, body, etc.)
+ * @param maxRetries - Maximum number of retry attempts (default: 2)
+ * @param retryDelay - Delay in milliseconds between retries (default: 2000ms)
+ * @returns Response object
+ */
+export async function fetchAAApiWithGatewayRetry(
+  url: string,
+  options: RequestInit = {},
+  maxRetries: number = 2,
+  retryDelay: number = 2000,
+): Promise<Response> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      // Retry on gateway timeouts (502/504)
+      if (
+        !response.ok &&
+        (response.status === 502 || response.status === 504) &&
+        attempt < maxRetries
+      ) {
+        console.warn(
+          `[AA-API] Gateway timeout (${response.status}), retrying (attempt ${attempt}/${maxRetries})...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        continue;
+      }
+
+      // Return response (caller will check response.ok)
+      return response;
+    } catch (error: any) {
+      // If this was the last attempt, throw the error
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      // Network error, retry
+      console.warn(
+        `[AA-API] Network error, retrying (attempt ${attempt}/${maxRetries})...`,
+        error?.message || error,
+      );
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
+  }
+
+  // This should never be reached, but TypeScript needs it
+  throw new Error("Failed to fetch after all retries");
+}
+
+/**
  * Type guard for ErrorResponse from AA API
  * Checks if response matches the ErrorResponse schema from  generated types
  */
@@ -145,7 +202,7 @@ export async function createEthWalletAccountV2(
   request: CreateEthWalletRequest,
 ): Promise<CreateAccountResponse> {
   const url = `${aaApiUrl}/api/v2/accounts/create/ethwallet`;
-  const response = await fetch(url, {
+  const response = await fetchAAApiWithGatewayRetry(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
@@ -171,7 +228,7 @@ export async function createSecp256k1AccountV2(
   aaApiUrl: string,
   request: CreateSecp256k1Request,
 ): Promise<CreateAccountResponse> {
-  const response = await fetch(`${aaApiUrl}/api/v2/accounts/create/secp256k1`, {
+  const response = await fetchAAApiWithGatewayRetry(`${aaApiUrl}/api/v2/accounts/create/secp256k1`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),

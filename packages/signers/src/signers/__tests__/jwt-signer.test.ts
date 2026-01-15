@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { AbstractAccountJWTSigner } from "../signers/jwt-signer";
+import { AbstractAccountJWTSigner } from "../jwt-signer";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 
 describe("AbstractAccountJWTSigner", () => {
@@ -44,6 +44,7 @@ describe("AbstractAccountJWTSigner", () => {
       undefined as any,
       mockIndex,
       mockToken,
+      mockApiUrl,
     );
     const accounts = await signer.getAccounts();
     expect(accounts).toHaveLength(0);
@@ -54,6 +55,7 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       mockToken,
+      mockApiUrl,
     );
     const mockSignDoc = SignDoc.fromPartial({
       bodyBytes: new Uint8Array([1, 2, 3]),
@@ -88,10 +90,11 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       undefined,
+      mockApiUrl,
     );
     const mockSignDoc = SignDoc.fromPartial({});
     await expect(signer.signDirect("user", mockSignDoc)).rejects.toThrow(
-      "stytch session token is undefined",
+      "Session token is undefined. Please authenticate first.",
     );
   });
 
@@ -100,12 +103,17 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       mockToken,
+      mockApiUrl,
     );
     const mockSignDoc = SignDoc.fromPartial({});
-    (global.fetch as any).mockResolvedValue({ ok: false });
+    (global.fetch as any).mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => "Unauthorized"
+    });
 
     await expect(signer.signDirect("user", mockSignDoc)).rejects.toThrow(
-      "Failed to authenticate with stytch",
+      "JWT authentication failed (401): Unauthorized",
     );
   });
 
@@ -114,6 +122,7 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       mockToken,
+      mockApiUrl,
     );
     const mockSignDoc = SignDoc.fromPartial({});
     (global.fetch as any).mockResolvedValue({
@@ -122,7 +131,7 @@ describe("AbstractAccountJWTSigner", () => {
     });
 
     await expect(signer.signDirect("user", mockSignDoc)).rejects.toThrow(
-      "No session_jwt in response",
+      "No session_jwt in response from authentication service",
     );
   });
 
@@ -131,6 +140,7 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       mockToken,
+      mockApiUrl,
     );
     const message = "hello world";
 
@@ -157,6 +167,7 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       mockToken,
+      mockApiUrl,
     );
     const message = "hello world";
     const customToken = "custom-token";
@@ -182,9 +193,10 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       undefined,
+      mockApiUrl,
     );
     await expect(signer.signDirectArb("msg")).rejects.toThrow(
-      "stytch session token is undefined",
+      "Session token is undefined. Please authenticate first.",
     );
   });
 
@@ -193,11 +205,16 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       mockToken,
+      mockApiUrl,
     );
-    (global.fetch as any).mockResolvedValue({ ok: false });
+    (global.fetch as any).mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => "Unauthorized"
+    });
 
     await expect(signer.signDirectArb("msg")).rejects.toThrow(
-      "Failed to authenticate with stytch",
+      "JWT authentication failed (401): Unauthorized",
     );
   });
 
@@ -206,6 +223,7 @@ describe("AbstractAccountJWTSigner", () => {
       mockAccount,
       mockIndex,
       mockToken,
+      mockApiUrl,
     );
     (global.fetch as any).mockResolvedValue({
       ok: true,
@@ -213,7 +231,7 @@ describe("AbstractAccountJWTSigner", () => {
     });
 
     await expect(signer.signDirectArb("msg")).rejects.toThrow(
-      "No session_jwt in response",
+      "No session_jwt in response from authentication service",
     );
   });
 });

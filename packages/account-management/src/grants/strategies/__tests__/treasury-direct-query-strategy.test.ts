@@ -66,7 +66,7 @@ const mockTreasuryParams = {
   basic: {
     redirect_url: "https://dashboard.burnt.com",
     icon_url: "https://dashboard.burnt.com/icon.png",
-    metadata: "Test Treasury",
+    metadata: '{"name": "Test Treasury"}', // metadata is a JSON string
   },
 };
 
@@ -114,11 +114,8 @@ describe("DirectQueryTreasuryStrategy", () => {
 
       expect(result).toBeDefined();
       expect(result?.grantConfigs).toHaveLength(2);
-      // metadata is validated as URL, so "Test Treasury" gets sanitized to ""
-      expect(result?.params).toEqual({
-        ...mockTreasuryParams.basic,
-        metadata: "", // Non-URL metadata gets sanitized
-      });
+      // metadata is returned as-is (JSON string)
+      expect(result?.params).toEqual(mockTreasuryParams.basic);
     });
 
     it("should return null when no grant configs found", async () => {
@@ -217,7 +214,7 @@ describe("DirectQueryTreasuryStrategy", () => {
       expect(result?.params).toEqual({
         redirect_url: "",
         icon_url: "",
-        metadata: "",
+        metadata: "{}", // Default to empty JSON object
       });
     });
 
@@ -257,7 +254,7 @@ describe("DirectQueryTreasuryStrategy", () => {
       // Invalid URLs should be sanitized to empty strings
       expect(result?.params.redirect_url).toBe("");
       expect(result?.params.icon_url).toBe("https://example.com/icon.png");
-      expect(result?.params.metadata).toBe(""); // metadata is validated as URL
+      expect(result?.params.metadata).toBe("test"); // metadata is NOT validated as URL (it's a JSON string)
     });
 
     it("should accept valid http and https URLs", async () => {
