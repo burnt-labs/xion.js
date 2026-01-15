@@ -125,10 +125,11 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
 
         // Extract and validate params from the response
         // Note: DaoDao indexer may return display_url, but contract uses metadata
+        // metadata is a JSON string (not a URL), validated by contract with serde_json::from_str
         const metadataValue =
           validatedData.params.metadata ||
           validatedData.params.display_url ||
-          "";
+          "{}"; // Default to empty JSON object
         const params: TreasuryParams = {
           redirect_url: isUrlSafe(validatedData.params.redirect_url)
             ? validatedData.params.redirect_url || ""
@@ -136,7 +137,9 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
           icon_url: isUrlSafe(validatedData.params.icon_url)
             ? validatedData.params.icon_url || ""
             : "",
-          metadata: isUrlSafe(metadataValue) ? metadataValue : "",
+          // metadata is a JSON string containing structured data (e.g., {"is_oauth2_app": true})
+          // DO NOT validate as URL - contract validates as valid JSON
+          metadata: metadataValue,
         };
 
         return {

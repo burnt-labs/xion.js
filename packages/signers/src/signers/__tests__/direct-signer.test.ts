@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { AADirectSigner, SignArbitraryFn } from "../direct-signer";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { OfflineDirectSigner } from "@cosmjs/proto-signing";

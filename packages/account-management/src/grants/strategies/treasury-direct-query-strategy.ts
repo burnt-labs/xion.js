@@ -103,17 +103,20 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
       )) as TreasuryParams;
 
       // Validate URLs for security
+      // metadata is a JSON string (not a URL), validated by contract with serde_json::from_str
       return {
         redirect_url: isUrlSafe(params.redirect_url) ? params.redirect_url : "",
         icon_url: isUrlSafe(params.icon_url) ? params.icon_url : "",
-        metadata: isUrlSafe(params.metadata) ? params.metadata : "",
+        // metadata is a JSON string containing structured data (e.g., {"is_oauth2_app": true})
+        // DO NOT validate as URL - contract validates as valid JSON
+        metadata: params.metadata || "{}",
       };
     } catch (error) {
       // Return safe defaults on error (params are optional)
       return {
         redirect_url: "",
         icon_url: "",
-        metadata: "",
+        metadata: "{}",
       };
     }
   }

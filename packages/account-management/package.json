@@ -31,6 +31,7 @@
     "test:integration:watch": "vitest tests/integration --config vitest.config.integration.ts"
   },
   "dependencies": {
+    "@braintree/sanitize-url": "^7.1.0",
     "@burnt-labs/abstraxion-core": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
     "@cosmjs/cosmwasm-stargate": "^0.36.0",

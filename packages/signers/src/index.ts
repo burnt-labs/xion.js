@@ -7,6 +7,12 @@ export {
   AADefaultSigner,
   AAAlgo,
   type AAccountData,
+  type AddAuthenticator,
+  type AddJwtAuthenticator,
+  type AddSecp256K1Authenticator,
+  type AddEd25519Authenticator,
+  type AddEthWalletAuthenticator,
+  type RemoveAuthenticator,
 } from "./interfaces";
 export { customAccountFromAny } from "./signers/utils";
 export { createSignerFromSigningFunction } from "./signers/utils/signer-factory";
@@ -14,6 +20,9 @@ export type { CreateSignerParams } from "./signers/utils/signer-factory";
 
 // Crypto utilities for smart account creation
 export * from "./crypto";
+
+// Fee and gas calculation utilities
+export * from "./fees";
 
 // Domain types (source of truth for account types)
 export * from "./types/account";

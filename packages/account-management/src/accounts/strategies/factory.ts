@@ -6,9 +6,11 @@
 import { NumiaAccountStrategy } from "./account-numia-strategy";
 import { SubqueryAccountStrategy } from "./account-subquery-strategy";
 import { RpcAccountStrategy } from "./account-rpc-strategy";
+import { AAApiAccountStrategy } from "./account-aa-api-strategy";
 import { EmptyAccountStrategy } from "./account-empty-strategy";
 import { CompositeAccountStrategy } from "./account-composite-strategy";
 import type { RpcAccountStrategyConfig } from "./account-rpc-strategy";
+import type { AAApiAccountStrategyConfig } from "./account-aa-api-strategy";
 import type { AccountIndexerConfig } from "../../types/indexer";
 
 export interface CreateCompositeAccountStrategyConfig {
@@ -24,6 +26,13 @@ export interface CreateCompositeAccountStrategyConfig {
   indexer?: AccountIndexerConfig;
 
   /**
+   * AA-API configuration for canonical account lookups
+   * Provides reliable fallback when indexers are unavailable
+   * Note: V1 API only supports JWT authenticators (aud.sub format)
+   */
+  aaApi?: AAApiAccountStrategyConfig;
+
+  /**
    * RPC configuration for reliable on-chain account lookups
    * If provided, RpcAccountStrategy will be used as a fallback
    */
@@ -33,8 +42,15 @@ export interface CreateCompositeAccountStrategyConfig {
 /**
  * Creates a CompositeAccountStrategy with automatic fallback chain:
  * 1. Indexer strategy (Numia or Subquery, if configured) - Fast indexer queries
- * 2. RpcAccountStrategy (if RPC config provided) - Reliable on-chain queries
- * 3. EmptyAccountStrategy (always included) - Returns empty for new accounts
+ * 2. AA-API strategy (if configured) - Canonical account state fallback
+ * 3. RpcAccountStrategy (if RPC config provided) - Reliable on-chain queries
+ * 4. EmptyAccountStrategy (always included) - Returns empty for new accounts
+ *
+ * Recommended fallback chain for production:
+ * - Numia (fast, comprehensive)
+ * - AA-API (canonical, reliable)
+ * - RPC (on-chain verification)
+ * - Empty (new account creation)
  *
  * @param config - Configuration for the strategies to include
  * @returns CompositeAccountStrategy with configured fallback chain
@@ -71,6 +87,11 @@ export function createCompositeAccountStrategy(
         new NumiaAccountStrategy(numiaConfig.url, numiaConfig.authToken),
       );
     }
+  }
+
+  // Add AA-API strategy if configured (canonical source fallback)
+  if (config.aaApi) {
+    strategies.push(new AAApiAccountStrategy(config.aaApi));
   }
 
   // Add RPC strategy if configured (reliable fallback)

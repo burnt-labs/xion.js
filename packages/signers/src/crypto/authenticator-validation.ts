@@ -87,7 +87,15 @@ export function isSecp256k1PublicKey(str: string): boolean {
  * Detect the authenticator type from a credential string
  *
  * Auto-detects the type based on format validation.
- * Priority order: JWT > Ethereum > Secp256k1
+ *
+ * **Note**: This function is primarily a fallback. Applications should store and pass
+ * the authenticator type directly (e.g., via `ConnectionType` → `AuthenticatorType` mapping)
+ * rather than relying on string format detection.
+ *
+ * Priority order:
+ * 1. JWT Token (3 parts: header.payload.signature)
+ * 2. Ethereum Address (0x followed by 40 hex chars)
+ * 3. Secp256k1 Public Key (base64 or hex encoded)
  *
  * @param credential - Credential string to analyze
  * @returns Detected authenticator type, or null if unrecognized

@@ -8,6 +8,7 @@ import { CompositeAccountStrategy } from "../account-composite-strategy";
 import { NumiaAccountStrategy } from "../account-numia-strategy";
 import { SubqueryAccountStrategy } from "../account-subquery-strategy";
 import { RpcAccountStrategy } from "../account-rpc-strategy";
+import { AAApiAccountStrategy } from "../account-aa-api-strategy";
 import { EmptyAccountStrategy } from "../account-empty-strategy";
 
 describe("createCompositeAccountStrategy", () => {
@@ -126,10 +127,128 @@ describe("createCompositeAccountStrategy", () => {
       expect((subqueryStrategy as any).codeId).toBe(42);
     });
 
+    it("should include AAApiAccountStrategy when aaApi configured", () => {
+      const strategy = createCompositeAccountStrategy({
+        aaApi: {
+          baseURL: "https://aa-api.example.com",
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      expect(strategies[0]).toBeInstanceOf(AAApiAccountStrategy);
+      expect(strategies[1]).toBeInstanceOf(EmptyAccountStrategy);
+    });
+
+    it("should pass baseURL to AAApiAccountStrategy", () => {
+      const strategy = createCompositeAccountStrategy({
+        aaApi: {
+          baseURL: "https://aa-api.example.com",
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      const aaApiStrategy = strategies[0] as AAApiAccountStrategy;
+      expect((aaApiStrategy as any).config.baseURL).toBe(
+        "https://aa-api.example.com",
+      );
+    });
+
+    it("should pass version to AAApiAccountStrategy", () => {
+      const strategy = createCompositeAccountStrategy({
+        aaApi: {
+          baseURL: "https://aa-api.example.com",
+          version: "v2",
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      const aaApiStrategy = strategies[0] as AAApiAccountStrategy;
+      expect((aaApiStrategy as any).config.version).toBe("v2");
+    });
+
+    it("should default to v1 when version not specified", () => {
+      const strategy = createCompositeAccountStrategy({
+        aaApi: {
+          baseURL: "https://aa-api.example.com",
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      const aaApiStrategy = strategies[0] as AAApiAccountStrategy;
+      expect((aaApiStrategy as any).config.version).toBe("v1");
+    });
+
+    it("should create fallback chain: Indexer -> AA-API -> Empty", () => {
+      const strategy = createCompositeAccountStrategy({
+        indexer: {
+          type: "numia",
+          url: "https://indexer.example.com",
+        },
+        aaApi: {
+          baseURL: "https://aa-api.example.com",
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      expect(strategies).toHaveLength(3);
+      expect(strategies[0]).toBeInstanceOf(NumiaAccountStrategy);
+      expect(strategies[1]).toBeInstanceOf(AAApiAccountStrategy);
+      expect(strategies[2]).toBeInstanceOf(EmptyAccountStrategy);
+    });
+
+    it("should create fallback chain: AA-API -> RPC -> Empty", () => {
+      const strategy = createCompositeAccountStrategy({
+        aaApi: {
+          baseURL: "https://aa-api.example.com",
+        },
+        rpc: {
+          rpcUrl: "https://rpc.example.com",
+          checksum: "0".repeat(64),
+          creator: "xion1creator",
+          prefix: "xion",
+          codeId: 1,
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      expect(strategies).toHaveLength(3);
+      expect(strategies[0]).toBeInstanceOf(AAApiAccountStrategy);
+      expect(strategies[1]).toBeInstanceOf(RpcAccountStrategy);
+      expect(strategies[2]).toBeInstanceOf(EmptyAccountStrategy);
+    });
+
+    it("should create full fallback chain: Indexer -> AA-API -> RPC -> Empty", () => {
+      const strategy = createCompositeAccountStrategy({
+        indexer: {
+          type: "numia",
+          url: "https://indexer.example.com",
+        },
+        aaApi: {
+          baseURL: "https://aa-api.example.com",
+          version: "v1",
+        },
+        rpc: {
+          rpcUrl: "https://rpc.example.com",
+          checksum: "0".repeat(64),
+          creator: "xion1creator",
+          prefix: "xion",
+          codeId: 1,
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      expect(strategies).toHaveLength(4);
+      expect(strategies[0]).toBeInstanceOf(NumiaAccountStrategy);
+      expect(strategies[1]).toBeInstanceOf(AAApiAccountStrategy);
+      expect(strategies[2]).toBeInstanceOf(RpcAccountStrategy);
+      expect(strategies[3]).toBeInstanceOf(EmptyAccountStrategy);
+    });
+
     it("should always include EmptyAccountStrategy as last fallback", () => {
       const configs = [
         {},
         { indexer: { type: "numia" as const, url: "https://test.com" } },
+        { aaApi: { baseURL: "https://aa-api.example.com" } },
         {
           rpc: {
             rpcUrl: "https://rpc.com",
@@ -141,6 +260,17 @@ describe("createCompositeAccountStrategy", () => {
         },
         {
           indexer: { type: "numia" as const, url: "https://test.com" },
+          rpc: {
+            rpcUrl: "https://rpc.com",
+            checksum: "0",
+            creator: "x",
+            prefix: "x",
+            codeId: 1,
+          },
+        },
+        {
+          indexer: { type: "numia" as const, url: "https://test.com" },
+          aaApi: { baseURL: "https://aa-api.example.com" },
           rpc: {
             rpcUrl: "https://rpc.com",
             checksum: "0",
@@ -168,6 +298,13 @@ describe("createCompositeAccountStrategy", () => {
 
     it("should handle undefined indexer", () => {
       const strategy = createCompositeAccountStrategy({ indexer: undefined });
+      const strategies = (strategy as any).strategies;
+      expect(strategies).toHaveLength(1);
+      expect(strategies[0]).toBeInstanceOf(EmptyAccountStrategy);
+    });
+
+    it("should handle undefined aaApi", () => {
+      const strategy = createCompositeAccountStrategy({ aaApi: undefined });
       const strategies = (strategy as any).strategies;
       expect(strategies).toHaveLength(1);
       expect(strategies[0]).toBeInstanceOf(EmptyAccountStrategy);

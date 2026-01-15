@@ -9,6 +9,7 @@
  * - Building grant messages (grants/)
  * - Querying treasury contracts (grants/strategies/)
  * - Connection orchestration (orchestrator/)
+ * - Caching and URL validation utilities (utils/)
  */
 
 // Authenticator utilities
@@ -28,6 +29,9 @@ export * from "./orchestrator";
 
 // State machine (shared between React packages)
 export * from "./state/accountState";
+
+// Utility functions (URL validation)
+export * from "./utils/url";
 
 // Types
 export * from "./types";

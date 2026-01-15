@@ -1,43 +1,37 @@
 # xion.js
 
-This is the official xion.js repo.
+Official XION JavaScript SDK monorepo.
 
-## What's inside?
+## Packages
 
-### Apps and Packages
+- `abstraxion`: Account abstraction React package for XION
+- `abstraxion-core`: Core account abstraction logic
+- `abstraxion-react-native`: React Native support for account abstraction
+- `account-management`: Account management utilities
+- `signers`: Account abstraction signers and Cryptographic utillities built on CosmJS
+- `constants`: Shared constants
+- `ui`: React component library with Tailwind CSS
 
-- `demo-app`: a [Next.js](https://nextjs.org/) app with [Tailwind CSS](https://tailwindcss.com/)
-- `abstraxion`: account abstraction react package built for XION
-- `constants`: utility package for shared constants
-- `signers`: utility package for account abstraction classes built on top of cosmjs
-- `ui`: a React component library with [Tailwind CSS](https://tailwindcss.com/)
-- `eslint-config-custom`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `tsconfig`: `tsconfig.json`s used throughout the monorepo
+## Apps
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+- `demo-app`: Next.js demo application
 
-### Building packages/ui
+## Development
 
-This example is setup to build `packages/ui` and output the transpiled source and compiled styles to `dist/`. This was chosen to make sharing one `tailwind.config.js` as easy as possible, and to ensure only the CSS that is used by the current application and its dependencies is generated.
-
-Another option is to consume `packages/ui` directly from source without building. If using this option, you will need to update your `tailwind.config.js` to be aware of your package locations, so it can find all usages of the `tailwindcss` class names.
-
-For example, in [tailwind.config.js](packages/tailwind-config/tailwind.config.js):
-
-```js
-  content: [
-    // app content
-    `src/**/*.{js,ts,jsx,tsx}`,
-    // include packages if not transpiling
-    "../../packages/**/*.{js,ts,jsx,tsx}",
-  ],
+```bash
+pnpm dev      # Start all packages in dev mode
+pnpm build    # Build all packages
+pnpm lint     # Lint code
+pnpm format   # Format code
+pnpm test     # Run tests
 ```
 
-### Utilities Used
+## Publishing
 
-This Turborepo has some additional tools already setup for you:
+```bash
+pnpm changeset          # Create a changeset
+pnpm version:packages   # Version packages
+pnpm publish:packages   # Publish to npm
+```
 
-- [Tailwind CSS](https://tailwindcss.com/) for styles
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+Built with [Turborepo](https://turbo.build/repo), [TypeScript](https://www.typescriptlang.org/), and [Tailwind CSS](https://tailwindcss.com/).
