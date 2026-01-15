@@ -30,8 +30,7 @@ export * from "./orchestrator";
 // State machine (shared between React packages)
 export * from "./state/accountState";
 
-// Utility functions (cache, URL validation)
-export * from "./utils/cache";
+// Utility functions (URL validation)
 export * from "./utils/url";
 
 // Types
