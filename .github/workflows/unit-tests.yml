@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Build & Test
 
 on:
   pull_request:
@@ -25,32 +25,26 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  test:
-    name: Run unit tests
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [lts/*]
-        pnpm-version: [8.9.0]
-    runs-on: ${{ matrix.os }}
+  build-and-test:
+    name: Build and run unit tests
+    runs-on: ubuntu-latest
     steps:
-      - name: ⬇️ Checkout
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: 🥡 Setup pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ matrix.pnpm-version }}
 
-      - name: 🔄 Install Dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install Dependencies
         run: pnpm install
 
-      - name: 🔨 Generate AA API Types
+      - name: Generate AA API Types
         run: |
           # Determine which AA API URL to use for type generation
           if [ -n "${{ github.event.inputs.aa_api_custom_url }}" ]; then
@@ -60,19 +54,16 @@ jobs:
             echo "Using AA API environment: ${{ github.event.inputs.aa_api_environment }}"
             pnpm generate:types:${{ github.event.inputs.aa_api_environment }}
           else
-            echo "Using default AA API environment: testnet"
             pnpm generate:types
           fi
 
-      - name: 🏗️ Build
+      - name: Build
         run: pnpm build
 
-      - name: 🧪 Run Unit Tests
+      - name: Run Unit Tests
         env:
           NODE_ENV: test
           CI: true
         run: |
           # Run unit tests (vitest configs exclude integration tests)
-          # This runs all tests except those in tests/integration/ directories
           pnpm test
-
