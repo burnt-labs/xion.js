@@ -23,7 +23,7 @@ export function getDomainAndProtocol(url: string | undefined): string {
     const u = new URL(url || "");
     return u.protocol + "//" + u.hostname;
   } catch {
-    return (url || "").trim();
+    return "";
   }
 }
 
@@ -51,6 +51,11 @@ export function isUrlSafe(url: string | undefined): boolean {
   try {
     // Sanitize the URL using @braintree/sanitize-url
     const sanitizedUrl = sanitizeUrl(url);
+
+    // Check if sanitizer replaced URL with about:blank (indicates dangerous URL)
+    if (sanitizedUrl === "about:blank") {
+      return false;
+    }
 
     // Normalize the original URL to handle trailing slashes
     const normalizedUrl = new URL(url).href;

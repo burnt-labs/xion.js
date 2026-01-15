@@ -253,7 +253,7 @@ export async function createJWTAccountV2(
   aaApiUrl: string,
   request: CreateJWTRequest,
 ): Promise<CreateAccountResponse> {
-  const response = await fetch(`${aaApiUrl}/api/v2/accounts/create/jwt`, {
+  const response = await fetchAAApiWithGatewayRetry(`${aaApiUrl}/api/v2/accounts/create/jwt`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
