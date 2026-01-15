@@ -113,21 +113,6 @@ export interface paths {
                                     status: string;
                                     url?: string;
                                 };
-                                stytch: {
-                                    status: string;
-                                    service?: string;
-                                    error?: string;
-                                    services?: {
-                                        stytch: {
-                                            status: string;
-                                            initialized: boolean;
-                                        };
-                                        signer: {
-                                            status: string;
-                                            initialized: boolean;
-                                        };
-                                    };
-                                };
                             };
                         };
                     };
@@ -146,21 +131,6 @@ export interface paths {
                                     status: string;
                                     url?: string;
                                     error?: string;
-                                };
-                                stytch: {
-                                    status: string;
-                                    service?: string;
-                                    error?: string;
-                                    services?: {
-                                        stytch: {
-                                            status: string;
-                                            initialized: boolean;
-                                        };
-                                        signer: {
-                                            status: string;
-                                            initialized: boolean;
-                                        };
-                                    };
                                 };
                             };
                         };
@@ -235,66 +205,6 @@ export interface paths {
                 };
             };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/jwt-accounts/simulate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Run Simulate for create a new abstract account */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Account created successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            amount: {
-                                denom: string;
-                                amount: string;
-                            }[];
-                            gas: string;
-                            granter?: string;
-                            payer?: string;
-                        };
-                    };
-                };
-                /** @description Failed to simulate create account */
-                502: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error: {
-                                message: string;
-                                errors?: {
-                                    message: string;
-                                }[];
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -537,83 +447,6 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/sessions/wrap-jwt": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Stytch JWT with additional claims */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        session_jwt: string;
-                        session_duration_minutes?: number;
-                        session_custom_claims?: unknown;
-                    };
-                };
-            };
-            responses: {
-                /** @description Retrieved JWT successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            data: {
-                                session_jwt: string;
-                            };
-                        };
-                    };
-                };
-                /** @description Validation Error */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            name: string;
-                            issues: {
-                                code: string;
-                                message: string;
-                                recieved?: unknown;
-                                path: string[];
-                            }[];
-                        };
-                    };
-                };
-                /** @description Session failed */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                            errors: string[];
-                        };
-                    };
-                };
-            };
-        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1146,9 +979,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab */
+                            /**
+                             * @description Deterministic smart account address
+                             * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                             */
                             address: string;
-                            /** @example JWT */
+                            /**
+                             * @description Type of authenticator used
+                             * @example EthWallet
+                             */
                             authenticator_type: string;
                         };
                     };
@@ -1205,8 +1044,16 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab */
+                            /**
+                             * @description Deterministic smart account address
+                             * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                             */
                             address: string;
+                            /**
+                             * @description Type of authenticator used
+                             * @example EthWallet
+                             */
+                            authenticator_type: string;
                         };
                     };
                 };
@@ -1262,9 +1109,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab */
+                            /**
+                             * @description Deterministic smart account address
+                             * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                             */
                             address: string;
-                            /** @example Secp256K1 */
+                            /**
+                             * @description Type of authenticator used
+                             * @example EthWallet
+                             */
                             authenticator_type: string;
                         };
                     };
@@ -1321,11 +1174,20 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab */
+                            /**
+                             * @description Smart account address
+                             * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                             */
                             address: string;
-                            /** @example 123 */
+                            /**
+                             * @description Smart account contract code ID
+                             * @example 123
+                             */
                             codeId: number;
-                            /** @example JWT */
+                            /**
+                             * @description Type of authenticator
+                             * @example EthWallet
+                             */
                             authenticatorType: string;
                         };
                     };
@@ -1414,11 +1276,20 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab */
+                            /**
+                             * @description Smart account address
+                             * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                             */
                             address: string;
-                            /** @example 123 */
+                            /**
+                             * @description Smart account contract code ID
+                             * @example 123
+                             */
                             codeId: number;
-                            /** @example EthWallet */
+                            /**
+                             * @description Type of authenticator
+                             * @example EthWallet
+                             */
                             authenticatorType: string;
                         };
                     };
@@ -1507,11 +1378,20 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab */
+                            /**
+                             * @description Smart account address
+                             * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                             */
                             address: string;
-                            /** @example 123 */
+                            /**
+                             * @description Smart account contract code ID
+                             * @example 123
+                             */
                             codeId: number;
-                            /** @example Secp256K1 */
+                            /**
+                             * @description Type of authenticator
+                             * @example EthWallet
+                             */
                             authenticatorType: string;
                         };
                     };
@@ -1560,6 +1440,96 @@ export interface paths {
                                 errors?: {
                                     message: string;
                                 }[];
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/schema/info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get API schema metadata and version information for type generation and validation */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Schema information */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /**
+                             * @description API version (semver)
+                             * @example 1.0.0
+                             */
+                            version: string;
+                            /**
+                             * @description OpenAPI specification version
+                             * @example 3.0.0
+                             */
+                            openapi_version: string;
+                            /**
+                             * @description Number of documented endpoints
+                             * @example 22
+                             */
+                            endpoints: number;
+                            /**
+                             * @description URL to fetch the full OpenAPI schema
+                             * @example /openapi.json
+                             */
+                            schema_url: string;
+                            /**
+                             * @description URL to interactive API documentation
+                             * @example /
+                             */
+                            documentation_url: string;
+                            /**
+                             * @description Current deployment environment (testnet, mainnet, or local)
+                             * @example testnet
+                             */
+                            current_environment: string;
+                            /**
+                             * @description Current API base URL
+                             * @example https://aa-api.xion-testnet-2.burnt.com
+                             */
+                            current_url: string;
+                            /**
+                             * @description Node environment (development, production)
+                             * @example production
+                             */
+                            node_env: string;
+                        };
+                    };
+                };
+                /** @description Bad request - Host header is missing */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
                             };
                         };
                     };
