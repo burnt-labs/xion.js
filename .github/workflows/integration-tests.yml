@@ -26,70 +26,51 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   integration-test:
     name: Run integration tests (${{ github.event.inputs.test_environment || 'testnet' }})
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [lts/*]
-        pnpm-version: [8.9.0]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
-      - name: ⬇️ Checkout
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: 🥡 Setup pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ matrix.pnpm-version }}
 
-      - name: 🔄 Install Dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install Dependencies
         run: pnpm install
 
-      - name: 🔨 Generate AA API Types
+      - name: Generate AA API Types
         run: pnpm generate:types
 
-      - name: 🏗️ Build
+      - name: Build
         run: pnpm build
 
-      - name: 📝 Load Test Configuration
+      - name: Load Test Configuration
         id: config
         run: |
-          # Install jq if not available
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
-
           TEST_ENV="${{ github.event.inputs.test_environment || 'testnet' }}"
-
           echo "test_environment=$TEST_ENV" >> $GITHUB_OUTPUT
 
-          # Load configuration from JSON file
           chmod +x .github/scripts/load-test-config.sh
           source .github/scripts/load-test-config.sh "$TEST_ENV"
 
-          # Override AA-API URL if specified
           if [ -n "${{ github.event.inputs.aa_api_url }}" ]; then
             FINAL_AA_API_URL="${{ github.event.inputs.aa_api_url }}"
-            echo "Using custom AA-API URL: $FINAL_AA_API_URL"
           else
             FINAL_AA_API_URL="$XION_AA_API_URL"
-            echo "Using configured AA-API URL: $FINAL_AA_API_URL"
           fi
 
           echo "aa_api_url=$FINAL_AA_API_URL" >> $GITHUB_OUTPUT
           echo "XION_AA_API_URL=$FINAL_AA_API_URL" >> $GITHUB_ENV
 
-      - name: 🧪 Run Integration Tests
+      - name: Run Integration Tests
         id: run-tests
         env:
-          # Test environment from config file
           TEST_ENVIRONMENT: ${{ steps.config.outputs.test_environment }}
-
-          # Testnet configuration (loaded from test-environments.json)
           XION_TESTNET_CHAIN_ID: ${{ env.XION_TESTNET_CHAIN_ID }}
           XION_TESTNET_RPC_URL: ${{ env.XION_TESTNET_RPC_URL }}
           XION_TESTNET_REST_URL: ${{ env.XION_TESTNET_REST_URL }}
@@ -99,8 +80,6 @@ jobs:
           XION_TESTNET_TREASURY_ADDRESS: ${{ env.XION_TESTNET_TREASURY_ADDRESS }}
           XION_TESTNET_INDEXER_URL: ${{ secrets.XION_TESTNET_INDEXER_URL }}
           XION_TESTNET_TREASURY_INDEXER_URL: ${{ secrets.XION_TESTNET_TREASURY_INDEXER_URL }}
-
-          # Mainnet configuration (loaded from test-environments.json, sensitive URLs from secrets)
           XION_MAINNET_CHAIN_ID: ${{ env.XION_MAINNET_CHAIN_ID }}
           XION_MAINNET_RPC_URL: ${{ env.XION_MAINNET_RPC_URL }}
           XION_MAINNET_REST_URL: ${{ env.XION_MAINNET_REST_URL }}
@@ -110,22 +89,16 @@ jobs:
           XION_MAINNET_AA_API_URL: ${{ secrets.XION_MAINNET_AA_API_URL }}
           XION_MAINNET_INDEXER_URL: ${{ secrets.XION_MAINNET_INDEXER_URL }}
           XION_MAINNET_TREASURY_INDEXER_URL: ${{ secrets.XION_MAINNET_TREASURY_INDEXER_URL }}
-
-          # Test configuration
           TEST_TIMEOUT: ${{ env.TEST_TIMEOUT }}
           INTEGRATION_TEST_TIMEOUT: ${{ env.INTEGRATION_TEST_TIMEOUT }}
           NODE_ENV: test
           CI: true
         run: |
-          echo "🧪 Running integration tests"
+          echo "Running integration tests"
           echo "Environment: $TEST_ENVIRONMENT"
           echo "AA-API URL: ${{ steps.config.outputs.aa_api_url }}"
-          echo "Chain ID: $XION_TESTNET_CHAIN_ID"
-          echo "RPC URL: $XION_TESTNET_RPC_URL"
-          echo ""
 
-          # Run integration tests and capture results
-          set +e  # Don't exit on error
+          set +e
 
           pnpm --filter @burnt-labs/account-management test:integration 2>&1 | tee account-management-results.txt
           ACCOUNT_MGMT_EXIT=$?
@@ -133,11 +106,8 @@ jobs:
           pnpm --filter @burnt-labs/abstraxion test:integration 2>&1 | tee abstraxion-results.txt
           ABSTRAXION_EXIT=$?
 
-          # Parse test results to count failures (for workflow control)
           TOTAL_FAILED=0
 
-          # Extract just the number of failed tests using simple grep
-          # Format: "Tests  9 failed | 169 passed | 4 skipped (182)"
           if [ -f account-management-results.txt ]; then
             FAILED=$(grep -a 'Tests' account-management-results.txt 2>/dev/null | grep -oP '\d+(?=\s+failed)' | head -1 || echo "0")
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
@@ -148,10 +118,7 @@ jobs:
             TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
           fi
 
-          # Extract test summary for PR comment (only clean summary lines)
           if [ -f account-management-results.txt ]; then
-            # Filter to only include clean summary lines (Test Files, Tests, Duration, Start at)
-            # Use a more flexible pattern that matches the Vitest output format
             ACCT_MGMT_SUMMARY=$(grep -a -E "Test Files|Tests.*failed|Tests.*passed|Start at|Duration" account-management-results.txt 2>/dev/null | grep -v "Error:" | tail -4 || echo "No summary available")
             echo "acct_mgmt_summary<<EOF_ACCT" >> $GITHUB_OUTPUT
             echo "$ACCT_MGMT_SUMMARY" >> $GITHUB_OUTPUT
@@ -161,8 +128,6 @@ jobs:
           fi
 
           if [ -f abstraxion-results.txt ]; then
-            # Filter to only include clean summary lines (Test Files, Tests, Duration, Start at)
-            # Use a more flexible pattern that matches the Vitest output format
             ABSTRAXION_SUMMARY=$(grep -a -E "Test Files|Tests.*failed|Tests.*passed|Start at|Duration" abstraxion-results.txt 2>/dev/null | grep -v "Error:" | tail -4 || echo "No summary available")
             echo "abstraxion_summary<<EOF_ABS" >> $GITHUB_OUTPUT
             echo "$ABSTRAXION_SUMMARY" >> $GITHUB_OUTPUT
@@ -173,26 +138,18 @@ jobs:
 
           echo "total_failed=$TOTAL_FAILED" >> $GITHUB_OUTPUT
 
-          echo ""
-          echo "📊 Test Summary:"
-          echo "  Total Failed: $TOTAL_FAILED"
-
-          # Fail if more than 10 tests failed
           if [ $TOTAL_FAILED -gt 10 ]; then
-            echo "❌ More than 10 tests failed ($TOTAL_FAILED), marking workflow as failed"
             echo "test_status=failed" >> $GITHUB_OUTPUT
             exit 1
           elif [ $TOTAL_FAILED -gt 0 ]; then
-            echo "⚠️  Some tests failed ($TOTAL_FAILED), but within acceptable threshold (≤10)"
             echo "test_status=warning" >> $GITHUB_OUTPUT
           else
-            echo "✅ All tests passed!"
             echo "test_status=success" >> $GITHUB_OUTPUT
           fi
 
           set -e
 
-      - name: 💬 Post Test Results Comment
+      - name: Post Test Results Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
@@ -202,14 +159,12 @@ jobs:
             const totalFailed = parseInt('${{ steps.run-tests.outputs.total_failed }}', 10) || 0;
             const testStatus = '${{ steps.run-tests.outputs.test_status }}' || 'unknown';
 
-            // Skip if no test summary available
             if ((!acctMgmtSummary || acctMgmtSummary.trim() === '') &&
                 (!abstraxionSummary || abstraxionSummary.trim() === '')) {
               console.log('No test results available, skipping comment');
               return;
             }
 
-            // Build test summary from separate package results
             let testSummaryParts = [];
             if (acctMgmtSummary && acctMgmtSummary !== 'No results') {
               testSummaryParts.push('**@burnt-labs/account-management:**\n```\n' + acctMgmtSummary + '\n```');
@@ -231,7 +186,7 @@ jobs:
             }
 
             const noteText = totalFailed > 0
-              ? '\n\n> **Note:** Some integration test failures are expected due to testnet instability (network issues, indexer delays, fee grant limits, etc.). The workflow only fails if more than 10 tests fail.'
+              ? '\n\n> **Note:** Some integration test failures are expected due to testnet instability.'
               : '';
 
             const body = '## ' + emoji + ' Integration Test Results\n\n' +
