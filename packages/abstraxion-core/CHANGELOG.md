@@ -1,5 +1,14 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.64
+
+### Patch Changes
+
+- [#332](https://github.com/burnt-labs/xion.js/pull/332) [`4b572f0`](https://github.com/burnt-labs/xion.js/commit/4b572f0937ce567ea40868b6b63987d933f6ca9a) Thanks [@ertemann](https://github.com/ertemann)! - Additions and cleanup from dashboard migration
+
+- Updated dependencies [[`4b572f0`](https://github.com/burnt-labs/xion.js/commit/4b572f0937ce567ea40868b6b63987d933f6ca9a)]:
+  - @burnt-labs/signers@1.0.0-alpha.4
+
 ## 1.0.0-alpha.63
 
 ### Patch Changes

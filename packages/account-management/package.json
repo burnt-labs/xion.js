@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/account-management",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "description": "Smart account management utilities for XION - authenticators, grants, and queries",
   "repository": {
     "type": "git",
