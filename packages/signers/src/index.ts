@@ -2,7 +2,6 @@ export { GasPrice } from "@cosmjs/stargate";
 export { AAClient } from "./signers/utils/client";
 export { AADirectSigner } from "./signers/direct-signer";
 export { AAEthSigner } from "./signers/eth-signer";
-export { AbstractAccountJWTSigner } from "./signers/jwt-signer";
 export {
   AASigner,
   AADefaultSigner,
