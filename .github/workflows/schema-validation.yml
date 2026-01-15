@@ -11,8 +11,6 @@ on:
         required: false
         type: string
         default: 'https://aa-api.xion-testnet-2.burnt.com'
-  schedule:
-    - cron: '0 0 * * *'
 
 jobs:
   validate-schema:
