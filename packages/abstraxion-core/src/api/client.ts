@@ -228,11 +228,14 @@ export async function createSecp256k1AccountV2(
   aaApiUrl: string,
   request: CreateSecp256k1Request,
 ): Promise<CreateAccountResponse> {
-  const response = await fetchAAApiWithGatewayRetry(`${aaApiUrl}/api/v2/accounts/create/secp256k1`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
+  const response = await fetchAAApiWithGatewayRetry(
+    `${aaApiUrl}/api/v2/accounts/create/secp256k1`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    },
+  );
 
   if (!response.ok) {
     const errorMessage = await parseApiError(
@@ -253,11 +256,14 @@ export async function createJWTAccountV2(
   aaApiUrl: string,
   request: CreateJWTRequest,
 ): Promise<CreateAccountResponse> {
-  const response = await fetchAAApiWithGatewayRetry(`${aaApiUrl}/api/v2/accounts/create/jwt`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
+  const response = await fetchAAApiWithGatewayRetry(
+    `${aaApiUrl}/api/v2/accounts/create/jwt`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    },
+  );
 
   if (!response.ok) {
     const errorMessage = await parseApiError(

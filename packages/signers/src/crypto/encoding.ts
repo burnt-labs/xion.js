@@ -30,9 +30,7 @@ export function encodeHex(bytes: Buffer | Uint8Array): string {
  * const base64 = getHumanReadablePubkey(pubkey); // "SGVsbG8="
  * ```
  */
-export function getHumanReadablePubkey(
-  pubkey: Uint8Array | undefined,
-): string {
+export function getHumanReadablePubkey(pubkey: Uint8Array | undefined): string {
   if (!pubkey) {
     return "";
   }

@@ -43,8 +43,7 @@ export function getGasCalculation(
 ): StdFee {
   const gasPrice = formatGasPrice(chainInfo);
 
-  const gasAdjustment =
-    config?.gasAdjustment ?? xionGasValues.gasAdjustment;
+  const gasAdjustment = config?.gasAdjustment ?? xionGasValues.gasAdjustment;
   const gasAdjustmentMargin =
     config?.gasAdjustmentMargin ?? xionGasValues.gasAdjustmentMargin;
 

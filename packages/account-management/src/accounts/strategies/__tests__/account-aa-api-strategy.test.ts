@@ -75,7 +75,9 @@ describe("AAApiAccountStrategy", () => {
         statusText: "Not Found",
       } as Response);
 
-      const result = await strategy.fetchSmartAccounts("test-project.nonexistent");
+      const result = await strategy.fetchSmartAccounts(
+        "test-project.nonexistent",
+      );
 
       expect(result).toEqual([]);
     });

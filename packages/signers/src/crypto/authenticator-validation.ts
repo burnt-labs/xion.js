@@ -35,7 +35,6 @@ export function isJWTToken(str: string): boolean {
   return true;
 }
 
-
 /**
  * Check if a string is a valid Ethereum address
  *
