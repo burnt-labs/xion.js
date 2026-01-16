@@ -4,6 +4,7 @@ export { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 export { StorageStrategy, RedirectStrategy } from "./types/strategyTypes";
 export * from "./types";
 export * from "./utils/grant";
+export { CacheManager } from "./utils/cache/CacheManager";
 export { fetchConfig, clearConfigCache } from "./utils/configUtils";
 export * from "./connectors";
 export * from "./api";

@@ -13,6 +13,7 @@ import type {
 } from "../../types/treasury";
 import type { ContractQueryClient } from "../discovery";
 import type { TreasuryGrantConfig } from "@burnt-labs/abstraxion-core";
+import { CacheManager } from "@burnt-labs/abstraxion-core";
 
 // Helper to validate URLs for security
 function isUrlSafe(url: string): boolean {
@@ -32,7 +33,35 @@ function isUrlSafe(url: string): boolean {
  * Queries treasury contract directly via RPC (no indexer needed)
  */
 export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
+  private cache: CacheManager<TreasuryConfig>;
+
+  constructor() {
+    this.cache = new CacheManager<TreasuryConfig>({
+      ttl: 5 * 60 * 1000, // 5 minutes (shorter TTL for fallback strategy)
+      debugLabel: "direct-query-treasury",
+    });
+  }
+
   async fetchTreasuryConfig(
+    treasuryAddress: string,
+    client: ContractQueryClient,
+  ): Promise<TreasuryConfig | null> {
+    // Get chain ID from client
+    const chainId = await client.getChainId();
+    const cacheKey = `${treasuryAddress}:${chainId}`;
+
+    // Note: We don't cache null results (empty treasury configs)
+    // as they should be re-queried in case configs are added later
+    const result = await this.queryContract(treasuryAddress, client);
+    if (!result) {
+      return null;
+    }
+
+    // Cache successful results
+    return await this.cache.get(cacheKey, async () => result);
+  }
+
+  private async queryContract(
     treasuryAddress: string,
     client: ContractQueryClient,
   ): Promise<TreasuryConfig | null> {
