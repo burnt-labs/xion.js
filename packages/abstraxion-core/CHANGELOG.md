@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.65
+
+### Patch Changes
+
+- [#336](https://github.com/burnt-labs/xion.js/pull/336) [`00fb815`](https://github.com/burnt-labs/xion.js/commit/00fb815df96b5707714dfd4bfe9f39d636c8b5b1) Thanks [@BurntSpooky](https://github.com/BurntSpooky)! - fix(abstraxion-core): decode ABCI grants to REST format for legacy validation
+
 ## 1.0.0-alpha.64
 
 ### Patch Changes
