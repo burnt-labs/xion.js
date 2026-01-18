@@ -89,6 +89,7 @@ describe("DirectQueryTreasuryStrategy", () => {
     // Create mock client with queryContractSmart method
     mockClient = {
       queryContractSmart: vi.fn(),
+      getChainId: vi.fn().mockResolvedValue("xion-testnet-1"),
     };
 
     strategy = new DirectQueryTreasuryStrategy();

@@ -12,6 +12,8 @@ import {
   AuthorizationTypes,
   type DecodedReadableAuthorization,
   type HumanContractExecAuth,
+  formatCoinArray as formatCoinArrayCore,
+  parseCoinString as parseCoinStringCore,
 } from "@burnt-labs/abstraxion-core";
 import type { PermissionDescription } from "../../types/treasury";
 
@@ -31,47 +33,15 @@ export const DENOM_DISPLAY_MAP = {
 
 /**
  * Parses a coin string (e.g., "1000000uxion" or "1000000uxion,2000000usdc") into denom and amount
+ * Re-exported from @burnt-labs/abstraxion-core for convenience
  */
-export function parseCoinString(coinStr: string): Coin[] {
-  const trimmed = coinStr.trim();
-  if (!trimmed) return [];
-
-  // Check if the string contains commas that are part of number formatting (not coin separators)
-  // Pattern: digit(s), comma, digit(s), letter (e.g., "1,000uxion" or "1,000,000uxion")
-  // This indicates number formatting within a single coin, not multiple coins
-  // Valid multi-coin strings like "1000000uxion,2000000usdc" have a letter before the comma, so won't match
-  const commaInFormattedNumber = /\d,\d+[a-zA-Z]/;
-  if (commaInFormattedNumber.test(trimmed)) {
-    return [];
-  }
-
-  // Split by commas and parse each coin
-  const coinStrings = trimmed
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-  const coins: Coin[] = [];
-
-  for (const singleCoinStr of coinStrings) {
-    // Match pattern like "1000000uxion" or "1000000 uxion"
-    const match = singleCoinStr.match(/^(\d+)\s*([a-zA-Z][a-zA-Z0-9/]*)$/);
-    if (match) {
-      coins.push({
-        amount: match[1],
-        denom: match[2],
-      });
-    }
-  }
-
-  return coins;
-}
+export const parseCoinString = parseCoinStringCore;
 
 /**
  * Formats an array of Coin objects into a comma-separated string
+ * Re-exported from @burnt-labs/abstraxion-core for convenience
  */
-export function formatCoinArray(coins: Coin[]): string {
-  return coins.map((coin) => `${coin.amount}${coin.denom}`).join(",");
-}
+export const formatCoinArray = formatCoinArrayCore;
 
 /**
  * Formats a coin string (e.g. "1000000uxion") into a human readable format (e.g. "1 XION")

@@ -39,3 +39,64 @@ jobs:
 
       - name: Run AA API type validation tests
         run: pnpm --filter @burnt-labs/signers test src/__tests__/aa-api-types.test.ts
+
+      - name: Check @cosmjs version consistency across packages
+        run: |
+          echo "🔍 Checking @cosmjs version consistency across all packages..."
+
+          # Collect all @cosmjs packages and their versions
+          COSMJS_VERSIONS=""
+          for pkg_file in packages/*/package.json; do
+            versions=$(jq -r '
+              [(.dependencies // {}), (.peerDependencies // {})] |
+              add |
+              to_entries[] |
+              select(.key | startswith("@cosmjs/")) |
+              "\(.key)=\(.value)"
+            ' "$pkg_file" 2>/dev/null)
+
+            if [ -n "$versions" ]; then
+              COSMJS_VERSIONS="$COSMJS_VERSIONS$versions"$'\n'
+            fi
+          done
+
+          # Remove empty lines and sort
+          COSMJS_VERSIONS=$(echo "$COSMJS_VERSIONS" | grep -v '^$' | sort -u)
+
+          if [ -z "$COSMJS_VERSIONS" ]; then
+            echo "⚠️  No @cosmjs dependencies found"
+            exit 0
+          fi
+
+          # Check each @cosmjs package for version consistency
+          echo "$COSMJS_VERSIONS" | cut -d= -f1 | sort -u | while read package; do
+            versions=$(echo "$COSMJS_VERSIONS" | grep "^${package}=" | cut -d= -f2 | sort -u)
+            version_count=$(echo "$versions" | wc -l | tr -d ' ')
+
+            if [ "$version_count" -gt 1 ]; then
+              echo ""
+              echo "❌ Inconsistent versions detected for $package:"
+              echo "$versions" | while read version; do
+                echo "  Version: $version"
+                for pkg_file in packages/*/package.json; do
+                  if grep -q "\"$package\": \"$version\"" "$pkg_file"; then
+                    echo "    - $pkg_file"
+                  fi
+                done
+              done
+              exit 1
+            fi
+          done
+
+          echo ""
+          echo "✅ All @cosmjs packages use consistent versions across the monorepo:"
+          COMMON_VERSION=$(echo "$COSMJS_VERSIONS" | head -1 | cut -d= -f2)
+          echo "   Version: $COMMON_VERSION"
+
+      - name: Summary
+        if: success()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ All dependency validation checks passed!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

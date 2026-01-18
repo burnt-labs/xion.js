@@ -18,6 +18,7 @@ import type {
   TreasuryParams,
 } from "../../types/treasury";
 import type { ContractQueryClient } from "../discovery";
+import { CacheManager } from "@burnt-labs/abstraxion-core";
 
 // Helper to validate URLs for security
 function isUrlSafe(url?: string): boolean {
@@ -77,21 +78,43 @@ export interface DaoDaoTreasuryStrategyConfig {
  */
 export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
   private config: DaoDaoTreasuryStrategyConfig;
+  private cache: CacheManager<TreasuryConfig>;
 
   constructor(config: DaoDaoTreasuryStrategyConfig) {
     this.config = {
       timeout: 30000, // 30 seconds default
       ...config,
     };
+    this.cache = new CacheManager<TreasuryConfig>({
+      ttl: 10 * 60 * 1000, // 10 minutes
+      debugLabel: "daodao-treasury",
+    });
   }
 
   async fetchTreasuryConfig(
     treasuryAddress: string,
     client: ContractQueryClient,
   ): Promise<TreasuryConfig | null> {
+    // Get chain ID from client
+    const chainId = await client.getChainId();
+    const cacheKey = `${treasuryAddress}:${chainId}`;
+
+    // Errors will be thrown and propagated (not cached)
+    // Only successful results are cached
+    return await this.cache.get(cacheKey, async () => {
+      const result = await this.fetchFromIndexer(treasuryAddress, chainId);
+      if (!result) {
+        throw new Error("Treasury config not found");
+      }
+      return result;
+    });
+  }
+
+  private async fetchFromIndexer(
+    treasuryAddress: string,
+    chainId: string,
+  ): Promise<TreasuryConfig | null> {
     try {
-      // Get chain ID from client
-      const chainId = await client.getChainId();
 
       // Use the /all endpoint to get everything in one call
       const indexerUrl = `${this.config.indexerUrl}/${chainId}/contract/${treasuryAddress}/xion/treasury/all`;
