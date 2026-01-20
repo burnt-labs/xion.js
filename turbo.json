@@ -17,6 +17,14 @@
     "test": {
       "env": [".env.test.local", ".env.test", ".env"]
     },
+    "test:integration": {
+      "env": [".env.test.local", ".env.test", ".env"]
+    },
+    "test:integration:watch": {
+      "cache": false,
+      "persistent": true,
+      "env": [".env.test.local", ".env.test", ".env"]
+    },
     "lint": {
       "dependsOn": ["^build"]
     },
