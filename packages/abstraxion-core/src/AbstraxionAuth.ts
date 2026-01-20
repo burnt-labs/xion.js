@@ -75,9 +75,6 @@ export class AbstraxionAuth {
    * @param {string} treasury - treasury contract instance address
    * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
    * @param {string} gasPrice - Gas price string (e.g., "0.001uxion"). Defaults to "0.001uxion" if not provided.
-   *
-   * @deprecated indexerUrl and indexerAuthToken parameters were removed - they were never used.
-   * Account indexer config is handled by account-management package via SignerController.
    */
   configureAbstraxionInstance(
     rpc: string,
