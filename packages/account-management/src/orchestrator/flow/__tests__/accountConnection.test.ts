@@ -22,7 +22,8 @@ vi.mock("../../../accounts/discovery", () => ({
 }));
 
 vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
+  const actual =
+    await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
   return {
     ...actual,
     createEthWalletAccount: vi.fn(),

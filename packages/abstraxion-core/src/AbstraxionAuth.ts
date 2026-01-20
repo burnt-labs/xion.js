@@ -384,7 +384,9 @@ export class AbstraxionAuth {
     }
 
     if (!this.treasuryIndexerUrl) {
-      throw new Error("Treasury indexer URL is required when using treasury mode");
+      throw new Error(
+        "Treasury indexer URL is required when using treasury mode",
+      );
     }
 
     // Use the new combined function to get treasury grant configs directly
@@ -483,7 +485,9 @@ export class AbstraxionAuth {
         // If treasury mode, fetch both chain grants and treasury configs in parallel
         if (this.treasury) {
           if (!this.treasuryIndexerUrl) {
-            throw new Error("Treasury indexer URL is required when using treasury mode");
+            throw new Error(
+              "Treasury indexer URL is required when using treasury mode",
+            );
           }
 
           const cosmwasmClient =
