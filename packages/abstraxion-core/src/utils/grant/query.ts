@@ -49,14 +49,14 @@ export const fetchTreasuryDataFromIndexer = async (
       );
 
       // Use shared low-level indexer fetcher
-      const rawData = await fetchFromDaoDaoIndexer<TreasuryIndexerResponse>(
+      const indexerData = await fetchFromDaoDaoIndexer<TreasuryIndexerResponse>(
         treasuryAddress,
         networkId,
         "grantConfigs",
         { indexerUrl },
       );
 
-      const grantConfigsData = validateTreasuryIndexerResponse(rawData);
+      const grantConfigsData = validateTreasuryIndexerResponse(indexerData);
       return grantConfigsData;
     } catch (error) {
       // Log and re-throw to prevent caching of failed requests
@@ -92,7 +92,7 @@ export function getTreasuryCacheManager(): CacheManager<TreasuryIndexerResponse>
  *
  * @param {CosmWasmClient} client - The CosmWasm client (used for fallback if indexer fails).
  * @param {string} treasuryAddress - The address of the treasury contract.
- * @param {string} rpcUrl - The RPC URL used to determine the network ID.
+ * @param {string} rpcUrl - The RPC URL used to determine the network ID and as fallback if indexer fails.
  * @param {string} indexerUrl - Indexer URL (required, must come from environment config).
  * @returns {Promise<TreasuryGrantConfig[]>} - A promise that resolves to an array of TreasuryGrantConfig objects.
  */
