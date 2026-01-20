@@ -29,3 +29,6 @@ export * from "./types/account";
 
 // API types for AA API v2 interactions
 export * from "./types/api";
+
+// Generated protobuf types (source of truth)
+export { AbstractAccount } from "./types/generated/abstractaccount/v1/account";

@@ -18,7 +18,10 @@ import type {
   TreasuryParams,
 } from "../../types/treasury";
 import type { ContractQueryClient } from "../discovery";
-import { CacheManager } from "@burnt-labs/abstraxion-core";
+import {
+  CacheManager,
+  fetchFromDaoDaoIndexer,
+} from "@burnt-labs/abstraxion-core";
 
 // Helper to validate URLs for security
 function isUrlSafe(url?: string): boolean {
@@ -115,75 +118,49 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
     chainId: string,
   ): Promise<TreasuryConfig | null> {
     try {
-
-      // Use the /all endpoint to get everything in one call
-      const indexerUrl = `${this.config.indexerUrl}/${chainId}/contract/${treasuryAddress}/xion/treasury/all`;
-
-      // Add timeout to prevent hanging requests
-      const controller = new AbortController();
-      const timeoutId = setTimeout(
-        () => controller.abort(),
-        this.config.timeout,
+      // Use shared low-level indexer fetcher from abstraxion-core
+      const data = await fetchFromDaoDaoIndexer<TreasuryIndexerAllResponse>(
+        treasuryAddress,
+        chainId,
+        "all",
+        {
+          indexerUrl: this.config.indexerUrl,
+          timeout: this.config.timeout,
+        },
       );
 
-      try {
-        const response = await fetch(indexerUrl, {
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
+      const validatedData = this.validateAllResponse(data);
 
-        if (!response.ok) {
-          throw new Error(
-            `DaoDao indexer returned ${response.status}: ${response.statusText}`,
-          );
-        }
+      // Transform grant configs from the response
+      const grantConfigs = this.transformAllResponseGrants(
+        validatedData.grantConfigs,
+      );
 
-        const data = await response.json();
-        const validatedData = this.validateAllResponse(data);
+      // Extract and validate params from the response
+      // Note: DaoDao indexer may return display_url, but contract uses metadata
+      // metadata is a JSON string (not a URL), validated by contract with serde_json::from_str
+      const metadataValue =
+        validatedData.params.metadata ||
+        validatedData.params.display_url ||
+        "{}"; // Default to empty JSON object
+      const params: TreasuryParams = {
+        redirect_url: isUrlSafe(validatedData.params.redirect_url)
+          ? validatedData.params.redirect_url || ""
+          : "",
+        icon_url: isUrlSafe(validatedData.params.icon_url)
+          ? validatedData.params.icon_url || ""
+          : "",
+        // metadata is a JSON string containing structured data (e.g., {"is_oauth2_app": true})
+        // DO NOT validate as URL - contract validates as valid JSON
+        metadata: metadataValue,
+      };
 
-        // Transform grant configs from the response
-        const grantConfigs = this.transformAllResponseGrants(
-          validatedData.grantConfigs,
-        );
-
-        // Extract and validate params from the response
-        // Note: DaoDao indexer may return display_url, but contract uses metadata
-        // metadata is a JSON string (not a URL), validated by contract with serde_json::from_str
-        const metadataValue =
-          validatedData.params.metadata ||
-          validatedData.params.display_url ||
-          "{}"; // Default to empty JSON object
-        const params: TreasuryParams = {
-          redirect_url: isUrlSafe(validatedData.params.redirect_url)
-            ? validatedData.params.redirect_url || ""
-            : "",
-          icon_url: isUrlSafe(validatedData.params.icon_url)
-            ? validatedData.params.icon_url || ""
-            : "",
-          // metadata is a JSON string containing structured data (e.g., {"is_oauth2_app": true})
-          // DO NOT validate as URL - contract validates as valid JSON
-          metadata: metadataValue,
-        };
-
-        return {
-          grantConfigs,
-          params,
-        };
-      } catch (error) {
-        clearTimeout(timeoutId);
-        if (error instanceof Error && error.name === "AbortError") {
-          throw new Error(
-            `DaoDao indexer request timed out after ${this.config.timeout}ms`,
-          );
-        }
-        throw error;
-      }
+      return {
+        grantConfigs,
+        params,
+      };
     } catch (error) {
-      // Re-throw timeout errors
-      if (error instanceof Error && error.name === "AbortError") {
-        throw error;
-      }
-      // Re-throw other errors instead of returning null
+      // Re-throw errors instead of returning null
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       throw new Error(`DaoDao treasury strategy failed: ${errorMessage}`);

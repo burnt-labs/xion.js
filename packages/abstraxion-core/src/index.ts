@@ -9,3 +9,12 @@ export { fetchConfig, clearConfigCache } from "./utils/configUtils";
 export * from "./connectors";
 export * from "./api";
 export * from "./config";
+
+// Re-export utilities from signers for convenience
+export { customAccountFromAny } from "@burnt-labs/signers";
+
+// Shared indexer utilities
+export {
+  fetchFromDaoDaoIndexer,
+  type TreasuryIndexerConfig,
+} from "./utils/indexer/treasury-indexer";

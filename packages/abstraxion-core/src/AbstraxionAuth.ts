@@ -30,8 +30,6 @@ export class AbstraxionAuth {
   bank?: SpendLimit[];
   callbackUrl?: string;
   treasury?: string;
-  indexerUrl?: string;
-  indexerAuthToken?: string;
   treasuryIndexerUrl?: string;
   gasPrice?: string;
 
@@ -75,10 +73,11 @@ export class AbstraxionAuth {
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
    * @param {string} treasury - treasury contract instance address
-   * @param {string} indexerUrl - custom indexer URL to use instead of default (for account discovery)
-   * @param {string} indexerAuthToken - authentication token for indexer API requests
    * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
    * @param {string} gasPrice - Gas price string (e.g., "0.001uxion"). Defaults to "0.001uxion" if not provided.
+   *
+   * @deprecated indexerUrl and indexerAuthToken parameters were removed - they were never used.
+   * Account indexer config is handled by account-management package via SignerController.
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -87,8 +86,6 @@ export class AbstraxionAuth {
     bank?: SpendLimit[],
     callbackUrl?: string,
     treasury?: string,
-    indexerUrl?: string,
-    indexerAuthToken?: string,
     treasuryIndexerUrl?: string,
     gasPrice?: string,
   ) {
@@ -98,8 +95,6 @@ export class AbstraxionAuth {
     this.bank = bank;
     this.callbackUrl = callbackUrl;
     this.treasury = treasury;
-    this.indexerUrl = indexerUrl;
-    this.indexerAuthToken = indexerAuthToken;
     this.treasuryIndexerUrl = treasuryIndexerUrl;
     this.gasPrice = gasPrice;
   }
@@ -391,6 +386,10 @@ export class AbstraxionAuth {
       throw new Error("RPC URL is required to determine the network ID");
     }
 
+    if (!this.treasuryIndexerUrl) {
+      throw new Error("Treasury indexer URL is required when using treasury mode");
+    }
+
     // Use the new combined function to get treasury grant configs directly
     const treasuryGrantConfigs = await getTreasuryGrantConfigs(
       cosmwasmClient,
@@ -486,6 +485,10 @@ export class AbstraxionAuth {
 
         // If treasury mode, fetch both chain grants and treasury configs in parallel
         if (this.treasury) {
+          if (!this.treasuryIndexerUrl) {
+            throw new Error("Treasury indexer URL is required when using treasury mode");
+          }
+
           const cosmwasmClient =
             this.cosmwasmQueryClient || (await this.getCosmWasmClient());
 

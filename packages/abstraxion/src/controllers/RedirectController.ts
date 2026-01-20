@@ -16,6 +16,7 @@ import {
   getAccountInfoFromRestored,
 } from "@burnt-labs/account-management";
 import type { AccountInfo } from "@burnt-labs/account-management";
+import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { RedirectAuthentication } from "../types";
@@ -122,7 +123,11 @@ export class RedirectController extends BaseController {
       config.redirectStrategy,
     );
 
-    // Configure AbstraxionAuth
+    // Configure AbstraxionAuth with default treasury indexer URL
+    const treasuryIndexerUrl = config.treasury
+      ? getDaoDaoIndexerUrl(config.chainId)
+      : undefined;
+
     this.abstraxionAuth.configureAbstraxionInstance(
       config.rpcUrl,
       config.contracts, // Pass contracts if provided
@@ -130,7 +135,7 @@ export class RedirectController extends BaseController {
       config.bank, // Pass bank (or minimal fallback) if provided
       config.redirect.callbackUrl,
       config.treasury, // Pass treasury so it's included in redirect URL
-      // indexerUrl, indexerAuthToken, treasuryIndexerUrl omitted - not used in redirect mode
+      treasuryIndexerUrl, // Default DaoDao indexer URL for treasury grant queries
       config.gasPrice, // Pass gasPrice for signing client creation
     );
 
