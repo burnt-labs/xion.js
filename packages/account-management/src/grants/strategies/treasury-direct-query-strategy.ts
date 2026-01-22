@@ -41,7 +41,7 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
   async fetchTreasuryConfig(
     treasuryAddress: string,
     client: ContractQueryClient,
-  ): Promise<TreasuryConfig | null> {
+  ): Promise<TreasuryConfig> {
     const chainId = await client.getChainId();
     const cacheKey = `${treasuryAddress}:${chainId}`;
 

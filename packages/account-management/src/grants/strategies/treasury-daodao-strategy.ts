@@ -97,10 +97,10 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
   async fetchTreasuryConfig(
     treasuryAddress: string,
     client: ContractQueryClient,
-  ): Promise<TreasuryConfig | null> {
+  ): Promise<TreasuryConfig> {
     const chainId = await client.getChainId();
     const cacheKey = `${treasuryAddress}:${chainId}`;
-    
+
     // Note: We don't cache null results (empty treasury configs)
     return await this.cache.get(cacheKey, async () => {
       const result = await this.fetchFromIndexer(treasuryAddress, chainId);
