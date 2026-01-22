@@ -29,7 +29,7 @@ export class CompositeTreasuryStrategy implements TreasuryStrategy {
   async fetchTreasuryConfig(
     treasuryAddress: string,
     client: ContractQueryClient,
-  ): Promise<TreasuryConfig | null> {
+  ): Promise<TreasuryConfig> {
     const errors: Array<{ strategy: string; error: Error }> = [];
 
     for (let i = 0; i < this.strategies.length; i++) {
@@ -67,6 +67,6 @@ export class CompositeTreasuryStrategy implements TreasuryStrategy {
     }
 
     // Some strategies succeeded but returned null (treasury not found)
-    return null;
+    throw new Error(`Treasury config not found for ${treasuryAddress}`);
   }
 }
