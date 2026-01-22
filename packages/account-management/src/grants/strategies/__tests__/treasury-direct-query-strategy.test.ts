@@ -119,15 +119,12 @@ describe("DirectQueryTreasuryStrategy", () => {
       expect(result?.params).toEqual(mockTreasuryParams.basic);
     });
 
-    it("should return null when no grant configs found", async () => {
+    it("should throw error when no grant configs found", async () => {
       mockClient.queryContractSmart.mockResolvedValueOnce([]);
 
-      const result = await strategy.fetchTreasuryConfig(
-        "xion1treasury",
-        mockClient,
-      );
-
-      expect(result).toBeNull();
+      await expect(
+        strategy.fetchTreasuryConfig("xion1treasury", mockClient),
+      ).rejects.toThrow("Treasury config not found");
     });
 
     it("should handle contract not found error", async () => {
