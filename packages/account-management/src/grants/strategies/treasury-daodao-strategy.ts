@@ -22,6 +22,12 @@ import {
   CacheManager,
   fetchFromDaoDaoIndexer,
 } from "@burnt-labs/abstraxion-core";
+import type {
+  GrantConfig,
+  FeeConfig,
+  Params,
+  TreasuryAny as Any,
+} from "@burnt-labs/xion-types";
 
 // Helper to validate URLs for security
 function isUrlSafe(url?: string): boolean {
@@ -36,18 +42,11 @@ function isUrlSafe(url?: string): boolean {
   }
 }
 
-// DaoDao indexer response formats
-interface TreasuryIndexerGrantConfig {
-  authorization: {
-    type_url: string;
-    value: string; // base64 encoded
-  };
-  description: string;
-  optional?: boolean;
-  allowance?: {
-    type_url: string;
-    value: string;
-  };
+// DaoDao indexer response formats (/all endpoint)
+// Extends base GrantConfig with indexer-specific fields
+interface TreasuryIndexerGrantConfig extends GrantConfig {
+  // Additional fields from indexer (not in base contract)
+  allowance?: Any;
   maxDuration?: number;
 }
 
@@ -55,16 +54,11 @@ interface TreasuryIndexerAllResponse {
   grantConfigs: {
     [typeUrl: string]: TreasuryIndexerGrantConfig;
   };
-  params: {
-    icon_url?: string;
-    redirect_url?: string;
-    metadata?: string;
-    display_url?: string;
-  };
-  feeConfig?: unknown;
-  admin?: string;
+  params: Params;
+  feeConfig?: FeeConfig | null;
+  admin?: string | null;
   pendingAdmin?: string | null;
-  balances?: Record<string, unknown>;
+  balances?: Record<string, string>;
 }
 
 export interface DaoDaoTreasuryStrategyConfig {
@@ -135,12 +129,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
       );
 
       // Extract and validate params from the response
-      // Note: DaoDao indexer may return display_url, but contract uses metadata
       // metadata is a JSON string (not a URL), validated by contract with serde_json::from_str
-      const metadataValue =
-        validatedData.params.metadata ||
-        validatedData.params.display_url ||
-        "{}"; // Default to empty JSON object
       const params: TreasuryParams = {
         redirect_url: isUrlSafe(validatedData.params.redirect_url)
           ? validatedData.params.redirect_url || ""
@@ -150,7 +139,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
           : "",
         // metadata is a JSON string containing structured data (e.g., {"is_oauth2_app": true})
         // DO NOT validate as URL - contract validates as valid JSON
-        metadata: metadataValue,
+        metadata: validatedData.params.metadata || "{}",
       };
 
       return {
