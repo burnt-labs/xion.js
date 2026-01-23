@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/constants",
-  "version": "0.1.0-alpha.20",
+  "version": "0.1.0-alpha.21",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
