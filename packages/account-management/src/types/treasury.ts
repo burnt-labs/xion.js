@@ -45,12 +45,13 @@ export interface TreasuryStrategy {
    * Fetch treasury configuration for a given contract address
    * @param treasuryAddress The treasury contract address
    * @param client The Cosmos client for querying chain data (must have queryContractSmart method)
-   * @returns Treasury configuration or null if not found/failed
+   * @returns Treasury configuration
+   * @throws Error if treasury config not found or fetch fails
    */
   fetchTreasuryConfig(
     treasuryAddress: string,
     client: any, // AAClient from @burnt-labs/signers (avoiding circular dependency)
-  ): Promise<TreasuryConfig | null>;
+  ): Promise<TreasuryConfig>;
 }
 
 export interface PermissionDescription {

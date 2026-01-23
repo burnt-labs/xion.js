@@ -29,7 +29,7 @@ export class CompositeTreasuryStrategy implements TreasuryStrategy {
   async fetchTreasuryConfig(
     treasuryAddress: string,
     client: ContractQueryClient,
-  ): Promise<TreasuryConfig | null> {
+  ): Promise<TreasuryConfig> {
     const errors: Array<{ strategy: string; error: Error }> = [];
 
     for (let i = 0; i < this.strategies.length; i++) {
@@ -42,9 +42,8 @@ export class CompositeTreasuryStrategy implements TreasuryStrategy {
           client,
         );
 
-        if (result) {
-          return result;
-        }
+        // Return the first successful result
+        return result;
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
@@ -57,16 +56,11 @@ export class CompositeTreasuryStrategy implements TreasuryStrategy {
     }
 
     // If all strategies failed, throw aggregated error
-    if (errors.length === this.strategies.length) {
-      const errorMessages = errors
-        .map((e) => `${e.strategy}: ${e.error.message}`)
-        .join("; ");
-      throw new Error(
-        `All treasury strategies failed for ${treasuryAddress}: ${errorMessages}`,
-      );
-    }
-
-    // Some strategies succeeded but returned null (treasury not found)
-    return null;
+    const errorMessages = errors
+      .map((e) => `${e.strategy}: ${e.error.message}`)
+      .join("; ");
+    throw new Error(
+      `All treasury strategies failed for ${treasuryAddress}: ${errorMessages}`,
+    );
   }
 }

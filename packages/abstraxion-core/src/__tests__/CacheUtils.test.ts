@@ -196,6 +196,9 @@ describe("Treasury Data Caching", () => {
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(global.fetch).toHaveBeenCalledWith(
         `${mockIndexerUrl}/${mockNetworkId}/contract/${mockTreasuryAddress}/xion/treasury/grantConfigs`,
+        expect.objectContaining({
+          signal: expect.any(AbortSignal),
+        }),
       );
     });
 
@@ -261,11 +264,19 @@ describe("Treasury Data Caching", () => {
       expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
-    it("should use default indexer URL when not provided", async () => {
-      await fetchTreasuryDataFromIndexer(mockTreasuryAddress, mockRpcUrl);
+    it("should use provided indexer URL", async () => {
+      const customIndexerUrl = "https://custom-indexer.example.com";
+      await fetchTreasuryDataFromIndexer(
+        mockTreasuryAddress,
+        mockRpcUrl,
+        customIndexerUrl,
+      );
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `https://daodaoindexer.burnt.com/${mockNetworkId}/contract/${mockTreasuryAddress}/xion/treasury/grantConfigs`,
+        `${customIndexerUrl}/${mockNetworkId}/contract/${mockTreasuryAddress}/xion/treasury/grantConfigs`,
+        expect.objectContaining({
+          signal: expect.any(AbortSignal),
+        }),
       );
     });
 
@@ -292,14 +303,14 @@ describe("Treasury Data Caching", () => {
         statusText: "Not Found",
       });
 
-      // Should throw IndexerResponseError
+      // Should throw error with proper message
       await expect(
         fetchTreasuryDataFromIndexer(
           mockTreasuryAddress,
           mockRpcUrl,
           mockIndexerUrl,
         ),
-      ).rejects.toThrow("Failed to fetch treasury data: Not Found");
+      ).rejects.toThrow("DaoDao indexer responded with 404: Not Found");
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });

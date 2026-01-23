@@ -1,9 +1,6 @@
 /**
  * Direct Query Treasury Strategy
- * Fetches treasury configurations directly from the smart contract via RPC
- * This is the fallback approach when indexers are unavailable
- *
- * Based on dashboard's src/treasury-strategies/direct-query-treasury-strategy.ts
+ * Fetches treasury configs directly from smart contract via RPC (fallback when indexers unavailable)
  */
 
 import type {
@@ -13,8 +10,8 @@ import type {
 } from "../../types/treasury";
 import type { ContractQueryClient } from "../discovery";
 import type { TreasuryGrantConfig } from "@burnt-labs/abstraxion-core";
+import { CacheManager } from "@burnt-labs/abstraxion-core";
 
-// Helper to validate URLs for security
 function isUrlSafe(url: string): boolean {
   if (!url) return false;
 
@@ -32,7 +29,33 @@ function isUrlSafe(url: string): boolean {
  * Queries treasury contract directly via RPC (no indexer needed)
  */
 export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
+  private cache: CacheManager<TreasuryConfig>;
+
+  constructor() {
+    this.cache = new CacheManager<TreasuryConfig>({
+      ttl: 5 * 60 * 1000, // 5 minutes (shorter TTL for fallback strategy)
+      debugLabel: "direct-query-treasury",
+    });
+  }
+
   async fetchTreasuryConfig(
+    treasuryAddress: string,
+    client: ContractQueryClient,
+  ): Promise<TreasuryConfig> {
+    const chainId = await client.getChainId();
+    const cacheKey = `${treasuryAddress}:${chainId}`;
+
+    // Note: We don't cache null results (empty treasury configs)
+    return await this.cache.get(cacheKey, async () => {
+      const result = await this.queryContract(treasuryAddress, client);
+      if (!result) {
+        throw new Error("Treasury config not found");
+      }
+      return result;
+    });
+  }
+
+  private async queryContract(
     treasuryAddress: string,
     client: ContractQueryClient,
   ): Promise<TreasuryConfig | null> {

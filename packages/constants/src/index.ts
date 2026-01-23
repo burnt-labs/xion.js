@@ -119,6 +119,12 @@ const FEE_GRANTERS: Record<string, string> = {
   "xion-testnet-2": "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
 };
 
+const DAODAO_INDEXER_URLS: Record<string, string> = {
+  "xion-mainnet-1": "https://daodaoindexer.burnt.com",
+  "xion-testnet-1": "https://daodaoindexer.burnt.com",
+  "xion-testnet-2": "https://daodaoindexer.burnt.com",
+};
+
 // Synchronous alternatives to fetchConfig() - use these when you already know the chain ID
 export function getChainInfo(chainId: string): ChainInfo | undefined {
   if (chainId === mainnetChainInfo.chainId) return mainnetChainInfo;
@@ -129,6 +135,10 @@ export function getChainInfo(chainId: string): ChainInfo | undefined {
 
 export function getFeeGranter(chainId: string): string {
   return FEE_GRANTERS[chainId] || "";
+}
+
+export function getDaoDaoIndexerUrl(chainId: string): string {
+  return DAODAO_INDEXER_URLS[chainId] || "https://daodaoindexer.burnt.com";
 }
 
 export function getRpcUrl(chainId: string): string | undefined {

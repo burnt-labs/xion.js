@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { customAccountFromAny } from "../accountParser";
+import { customAccountFromAny } from "../index";
 import { Any } from "cosmjs-types/google/protobuf/any";
 import { BaseAccount } from "cosmjs-types/cosmos/auth/v1beta1/auth";
 

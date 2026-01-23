@@ -112,3 +112,6 @@ export interface DecodedReadableAuthorization {
     | HumanContractExecAuth
     | null;
 }
+
+// Re-export generated protobuf types from signers
+export { AbstractAccount } from "@burnt-labs/signers";

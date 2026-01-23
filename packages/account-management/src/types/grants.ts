@@ -3,14 +3,11 @@ import type {
   PeriodicAllowance,
 } from "cosmjs-types/cosmos/feegrant/v1beta1/feegrant";
 
-export type SpendLimit = { denom: string; amount: string };
-
-export type ContractGrantDescription =
-  | string
-  | {
-      address: string;
-      amounts: SpendLimit[];
-    };
+// Re-export types from abstraxion-core (source of truth)
+export type {
+  SpendLimit,
+  ContractGrantDescription,
+} from "@burnt-labs/abstraxion-core";
 
 export interface BaseAllowance {
   "@type": string;

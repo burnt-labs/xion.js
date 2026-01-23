@@ -6,7 +6,6 @@
 
 import { BrowserStorageStrategy, BrowserRedirectStrategy } from "../strategies";
 import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
-import { extractIndexerAuthToken } from "@burnt-labs/account-management";
 import type { Controller } from "./index";
 import { RedirectController, SignerController } from "./index";
 import type { NormalizedAbstraxionConfig } from "../types";
@@ -42,11 +41,11 @@ export function createController(
       config.authentication?.type === "signer"
         ? config.authentication
         : undefined;
-    const indexerConfig = signerAuth?.indexer;
     const treasuryIndexerConfig = signerAuth?.treasuryIndexer;
-    const indexerAuthToken = extractIndexerAuthToken(indexerConfig);
 
-    // Configure AbstraxionAuth with indexer for signer mode
+    // Configure AbstraxionAuth for signer mode
+    // Note: Account indexer (Numia/Subquery) is handled by SignerController via account-management,
+    // not by AbstraxionAuth
     abstraxionAuth.configureAbstraxionInstance(
       config.rpcUrl,
       config.contracts,
@@ -54,8 +53,6 @@ export function createController(
       config.bank,
       undefined, // callbackUrl - not used in signer mode
       config.treasury,
-      indexerConfig?.url,
-      indexerAuthToken,
       treasuryIndexerConfig?.url,
       config.gasPrice,
     );

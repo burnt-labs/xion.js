@@ -7,6 +7,7 @@ import {
   getFeeGranter,
   getRpcUrl,
   getRestUrl,
+  getDaoDaoIndexerUrl,
   xionGasValues,
 } from "@burnt-labs/constants";
 import type {
@@ -91,6 +92,7 @@ export function createAccountStrategyFromConfig(
 /**
  * Create grant config from normalized config
  * Extracts grant-related fields and adds treasury indexer URL
+ * If treasuryIndexer is not provided, uses default based on chainId
  */
 export function createGrantConfigFromConfig(
   config: NormalizedAbstraxionConfig,
@@ -100,13 +102,17 @@ export function createGrantConfigFromConfig(
     return undefined;
   }
 
+  // Use provided treasury indexer URL or default to chainId-based URL
+  const daodaoIndexerUrl =
+    signerAuth.treasuryIndexer?.url || getDaoDaoIndexerUrl(config.chainId);
+
   return {
     treasury: config.treasury,
     contracts: config.contracts,
     bank: config.bank,
     stake: config.stake,
     feeGranter: config.feeGranter,
-    daodaoIndexerUrl: signerAuth.treasuryIndexer?.url,
+    daodaoIndexerUrl,
   };
 }
 

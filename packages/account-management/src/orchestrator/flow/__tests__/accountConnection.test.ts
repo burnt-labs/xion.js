@@ -21,10 +21,15 @@ vi.mock("../../../accounts/discovery", () => ({
   checkAccountExists: vi.fn(),
 }));
 
-vi.mock("@burnt-labs/abstraxion-core", () => ({
-  createEthWalletAccount: vi.fn(),
-  createSecp256k1Account: vi.fn(),
-}));
+vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
+  return {
+    ...actual,
+    createEthWalletAccount: vi.fn(),
+    createSecp256k1Account: vi.fn(),
+  };
+});
 
 describe("accountConnection.ts - Account Connection Flow", () => {
   let mockConnector: any;

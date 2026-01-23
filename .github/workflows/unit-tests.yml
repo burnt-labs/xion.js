@@ -66,4 +66,4 @@ jobs:
           CI: true
         run: |
           # Run unit tests (vitest configs exclude integration tests)
-          pnpm test
+          pnpm test:unit
