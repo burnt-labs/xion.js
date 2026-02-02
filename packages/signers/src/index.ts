@@ -2,6 +2,7 @@ export { GasPrice } from "@cosmjs/stargate";
 export { AAClient } from "./signers/utils/client";
 export { AADirectSigner } from "./signers/direct-signer";
 export { AAEthSigner } from "./signers/eth-signer";
+export { AAZKEmailSigner } from "./signers/zk-email-signer";
 export {
   AASigner,
   AADefaultSigner,
@@ -12,6 +13,7 @@ export {
   type AddSecp256K1Authenticator,
   type AddEd25519Authenticator,
   type AddEthWalletAuthenticator,
+  type AddZKEmailAuthenticator,
   type RemoveAuthenticator,
 } from "./interfaces";
 export { customAccountFromAny } from "./signers/utils";

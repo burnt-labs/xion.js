@@ -107,6 +107,7 @@ export function calculateSalt(
     case AUTHENTICATOR_TYPE.Passkey:
     case AUTHENTICATOR_TYPE.Ed25519:
     case AUTHENTICATOR_TYPE.Sr25519:
+    case AUTHENTICATOR_TYPE.ZKEmail:
       // For now, these use the same salt calculation as Secp256K1
       // (sha256 of the credential string)
       // Can be extended with specific implementations later
