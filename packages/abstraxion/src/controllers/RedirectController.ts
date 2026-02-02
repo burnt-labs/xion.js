@@ -17,6 +17,8 @@ import {
 } from "@burnt-labs/account-management";
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
+import type { EncodeObject } from "@cosmjs/proto-signing";
+import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { RedirectAuthentication } from "../types";
@@ -316,6 +318,34 @@ export class RedirectController extends BaseController {
 
     // Reset state
     this.dispatch({ type: "RESET" });
+  }
+
+  /**
+   * Sign and broadcast a transaction with the user's direct authenticator (meta-account)
+   *
+   * **Not supported in redirect mode.**
+   *
+   * Redirect mode cannot support direct signing because:
+   * 1. The user's authenticator (wallet/passkey) is only available during the redirect flow
+   * 2. After redirect, only the session keypair is stored locally
+   * 3. Direct signing would require another redirect, disrupting UX
+   *
+   * For requireAuth transactions, use signer mode (external wallets) or iframe mode instead.
+   *
+   * @throws Error indicating that redirect mode doesn't support direct signing
+   */
+  async signWithMetaAccount(
+    _signerAddress: string,
+    _messages: readonly EncodeObject[],
+    _fee: StdFee | "auto" | number,
+    _memo?: string,
+  ): Promise<DeliverTxResponse> {
+    throw new Error(
+      "Direct signing is not supported with redirect mode. " +
+        "Redirect mode only has access to the session key after authentication. " +
+        "Use signer mode (external wallets like Turnkey, Privy, etc.) or iframe mode " +
+        "for transactions that require direct authenticator signing (requireAuth: true).",
+    );
   }
 
   /**

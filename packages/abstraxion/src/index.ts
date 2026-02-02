@@ -36,6 +36,7 @@ export type {
   GrantsResponse,
   Grant,
   TreasuryGrantConfig,
+  TransactionOptions,
 } from "@burnt-labs/abstraxion-core";
 
 // Re-export IframeMessageType and MessageTarget (enums - both type and value)

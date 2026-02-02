@@ -118,3 +118,27 @@ export { AbstractAccount } from "@burnt-labs/signers";
 
 // Iframe communication types
 export * from "./iframe";
+
+/**
+ * Options for transaction signing that control signer behavior
+ *
+ * These options allow apps to override the default session key signing
+ * behavior on a per-transaction basis, enabling security-critical operations
+ * to require explicit user approval.
+ */
+export interface TransactionOptions {
+  /**
+   * When true, bypasses the session key and requires user's direct authenticator
+   * signature (wallet popup for external wallets, passkey prompt, etc.)
+   *
+   * **Limitations:**
+   * - Not supported with redirect mode (throws error)
+   * - Transaction fees are NOT paid by session key's fee grant
+   *   (user's smart account pays directly)
+   * - Iframe mode: Still in development
+   *
+   * @default false - Uses session key for signing (existing behavior)
+   *
+   */
+  requireAuth?: boolean;
+}

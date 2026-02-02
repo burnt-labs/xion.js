@@ -31,6 +31,8 @@ import type {
   StorageStrategy,
 } from "@burnt-labs/abstraxion-core";
 import { GasPrice } from "@cosmjs/stargate";
+import type { EncodeObject } from "@cosmjs/proto-signing";
+import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
 import type { IframeAuthentication, NormalizedAbstraxionConfig } from "../types";
@@ -379,6 +381,23 @@ export class IframeController extends BaseController {
    */
   getGranteeAddress(): string | null {
     return this.granteeAddress;
+  }
+
+  /**
+   * Sign and broadcast a transaction with the user's direct authenticator (meta-account)
+   *
+   * @throws Error indicating that iframe direct signing is not yet available
+   */
+  async signWithMetaAccount(
+    _signerAddress: string,
+    _messages: readonly EncodeObject[],
+    _fee: StdFee | "auto" | number,
+    _memo?: string,
+  ): Promise<DeliverTxResponse> {
+    throw new Error(
+      "Iframe direct signing is not yet implemented. Coming in Phase 2. " +
+        "For now, use signer mode (external wallets) for requireAuth transactions.",
+    );
   }
 
   /**
