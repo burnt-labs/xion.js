@@ -63,11 +63,6 @@ export function createSignerFromSigningFunction(
       signMessage,
     );
   }
-  if (authenticatorType === AUTHENTICATOR_TYPE.ZKEmail) {
-    throw new Error(
-      "ZKEmail signer cannot be created from a signing function. Use new AAZKEmailSigner(abstractAccount, authenticatorIndex, proof, publicInputs) directly.",
-    );
-  }
   return createDirectSigner(
     smartAccountAddress,
     authenticatorIndex,
