@@ -1,5 +1,16 @@
 # @burnt-labs/signers
 
+## 1.0.0-alpha.5
+
+### Patch Changes
+
+- [#335](https://github.com/burnt-labs/xion.js/pull/335) [`6bf65b7`](https://github.com/burnt-labs/xion.js/commit/6bf65b758e6c6064d591e6ff694431b497b3e114) Thanks [@ertemann](https://github.com/ertemann)! - Consolidate some more code, add cache for treasury to better serve dashboard
+
+- [#341](https://github.com/burnt-labs/xion.js/pull/341) [`70481a8`](https://github.com/burnt-labs/xion.js/commit/70481a85beba828767f71f6b7eb1374e2ceee0bc) Thanks [@Kushal7788](https://github.com/Kushal7788)! - Added zk-email signer and it's types
+
+- Updated dependencies [[`6bf65b7`](https://github.com/burnt-labs/xion.js/commit/6bf65b758e6c6064d591e6ff694431b497b3e114)]:
+  - @burnt-labs/constants@0.1.0-alpha.21
+
 ## 1.0.0-alpha.4
 
 ### Patch Changes
