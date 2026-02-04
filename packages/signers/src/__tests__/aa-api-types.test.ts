@@ -45,9 +45,10 @@ describe("AA API Type Imports", () => {
       "JWT",
       "Passkey",
       "Sr25519",
+      "ZKEmail",
     ];
 
-    expect(validTypes.length).toBe(6);
+    expect(validTypes.length).toBe(7);
   });
 
   it("should import SmartAccount type correctly", () => {
