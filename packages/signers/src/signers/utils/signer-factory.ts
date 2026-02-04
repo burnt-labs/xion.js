@@ -62,12 +62,13 @@ export function createSignerFromSigningFunction(
       authenticatorIndex,
       signMessage,
     );
+  } else {
+    return createDirectSigner(
+      smartAccountAddress,
+      authenticatorIndex,
+      signMessage,
+    );
   }
-  return createDirectSigner(
-    smartAccountAddress,
-    authenticatorIndex,
-    signMessage,
-  );
 }
 
 /**
