@@ -58,7 +58,7 @@ export interface AbstraxionContextProps {
   treasuryIndexerUrl?: string;
 
   // Authentication
-  authMode: "signer" | "redirect";
+  authMode: "signer" | "redirect" | "iframe";
   authentication?: AuthenticationConfig;
 
   // Actions
