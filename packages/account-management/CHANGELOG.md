@@ -1,5 +1,13 @@
 # @burnt-labs/account-management
 
+## 1.0.0-alpha.7
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.67
+  - @burnt-labs/signers@1.0.0-alpha.6
+
 ## 1.0.0-alpha.6
 
 ### Patch Changes
