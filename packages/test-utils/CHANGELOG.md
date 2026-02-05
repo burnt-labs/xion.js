@@ -1,5 +1,12 @@
 # @burnt-labs/test-utils
 
+## 1.0.0-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [[`847ad14`](https://github.com/burnt-labs/xion.js/commit/847ad14b0d6c75f9f3272723176638ac246c4597)]:
+  - @burnt-labs/constants@0.1.0-alpha.22
+
 ## 1.0.0-alpha.3
 
 ### Patch Changes
