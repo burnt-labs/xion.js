@@ -19,6 +19,11 @@
     "tsup": "^6.0.1",
     "typescript": "^5.2.2"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burnt-labs/xion.js",
+    "directory": "packages/constants"
+  },
   "publishConfig": {
     "access": "public"
   }
