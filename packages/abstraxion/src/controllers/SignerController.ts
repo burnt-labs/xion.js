@@ -4,7 +4,11 @@
  * Uses ConnectionOrchestrator to handle the full connection flow
  */
 
-import { ExternalSignerConnector } from "@burnt-labs/abstraxion-core";
+import {
+  ExternalSignerConnector,
+  type ConnectorConnectionResult,
+  type TransactionOptions,
+} from "@burnt-labs/abstraxion-core";
 import {
   ConnectionOrchestrator,
   SessionManager,
@@ -17,6 +21,15 @@ import {
   getAccountInfoFromRestored,
 } from "@burnt-labs/account-management";
 import type { Connector, StorageStrategy } from "@burnt-labs/abstraxion-core";
+import {
+  AAClient,
+  createSignerFromSigningFunction,
+  type AASigner,
+  type AuthenticatorType,
+} from "@burnt-labs/signers";
+import { GasPrice } from "@cosmjs/stargate";
+import type { EncodeObject } from "@cosmjs/proto-signing";
+import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { SignerAuthentication } from "../types";
@@ -58,6 +71,7 @@ export class SignerController extends BaseController {
   private config: SignerControllerConfig;
   private orchestrator: ConnectionOrchestrator;
   private connector: Connector | null = null;
+  private connectionInfo: ConnectorConnectionResult | null = null; // signmessage and authenticator metadata needed for direct signing
 
   /**
    * Factory method to create SignerController from NormalizedAbstraxionConfig
@@ -211,13 +225,16 @@ export class SignerController extends BaseController {
         signerConfig.authenticator,
       );
 
-      // 4. Get session keypair for account info
+      // 4. Store connection info for direct signing
+      this.connectionInfo = connectionResult.connectionInfo;
+
+      // 6. Get session keypair for account info
       const sessionKeypair = await this.config.sessionManager.getLocalKeypair();
       if (!sessionKeypair) {
         throw new Error("Session keypair not found after connection");
       }
 
-      // 5. Dispatch success
+      // 7. Dispatch success
       const accounts = await sessionKeypair.getAccounts();
       //TODO: fix this to allow multiple accounts long term
       const granteeAddress = accounts[0].address;
@@ -258,6 +275,67 @@ export class SignerController extends BaseController {
   }
 
   /**
+   * Sign and broadcast a transaction with the user's direct authenticator (meta-account)
+   * Bypasses the session key and requires explicit user approval via wallet popup
+   *
+   * Uses the same AAClient pattern as grant creation (see grantCreation.ts)
+   *
+   * @param signerAddress - The smart account address (should match the connected account)
+   * @param messages - Transaction messages to sign
+   * @param fee - Transaction fee (StdFee or "auto" or gas amount)
+   * @param memo - Optional transaction memo
+   * @returns Transaction result
+   * @throws Error if connectionInfo is not available or signing fails
+   */
+  async signWithMetaAccount(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    fee: StdFee | "auto" | number,
+    memo?: string,
+  ): Promise<DeliverTxResponse> {
+    // Validate connectionInfo is available
+    if (!this.connectionInfo) {
+      throw new Error(
+        "No authenticator available for direct signing. Please reconnect your wallet.",
+      );
+    }
+
+    // Extract authenticator type and index from connection metadata
+    const authenticatorIndex =
+      this.connectionInfo.metadata?.authenticatorIndex ?? 0;
+    const authenticatorType = this.connectionInfo.metadata?.authenticatorType as
+      | AuthenticatorType
+      | undefined;
+
+    if (!authenticatorType) {
+      throw new Error(
+        "Authenticator type not found in connection metadata. Please reconnect your wallet.",
+      );
+    }
+
+    // Create signer using the AAClient pattern (same as grantCreation.ts)
+    const signer: AASigner = createSignerFromSigningFunction({
+      smartAccountAddress: signerAddress,
+      authenticatorIndex,
+      authenticatorType,
+      signMessage: this.connectionInfo.signMessage,
+    });
+
+    // Create AAClient with the direct signer
+    const client = await AAClient.connectWithSigner(
+      this.config.rpcUrl,
+      signer,
+      {
+        gasPrice: GasPrice.fromString(this.config.gasPrice),
+      },
+    );
+
+    // Sign and broadcast the transaction
+    // Note: Fees are paid directly by the smart account, not via fee grants
+    return client.signAndBroadcast(signerAddress, [...messages], fee, memo);
+  }
+
+  /**
    * Disconnect and cleanup
    */
   async disconnect(): Promise<void> {
@@ -273,6 +351,9 @@ export class SignerController extends BaseController {
       }
       this.connector = null;
     }
+
+    // Clear connection info
+    this.connectionInfo = null;
 
     // Cleanup session
     try {

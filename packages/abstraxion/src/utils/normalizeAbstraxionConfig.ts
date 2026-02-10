@@ -8,6 +8,7 @@ import {
   getRpcUrl,
   getRestUrl,
   getDaoDaoIndexerUrl,
+  getIframeUrl,
   xionGasValues,
 } from "@burnt-labs/constants";
 import type {
@@ -36,12 +37,19 @@ export function normalizeAbstraxionConfig(
   const defaultRpcUrl = getRpcUrl(chainId);
   const defaultRestUrl = getRestUrl(chainId);
   const defaultFeeGranter = getFeeGranter(chainId);
+  const defaultIframeUrl = getIframeUrl(chainId);
 
   // Use provided values or defaults
   const rpcUrl = config.rpcUrl || defaultRpcUrl;
   const restUrl = config.restUrl || defaultRestUrl;
   const gasPrice = config.gasPrice || xionGasValues.gasPrice;
   const feeGranter = config.feeGranter || defaultFeeGranter;
+
+  // Set iframe URL default if using iframe authentication
+  if (config.authentication?.type === "iframe") {
+    config.authentication.iframeUrl =
+      config.authentication.iframeUrl || defaultIframeUrl;
+  }
 
   // Validate required fields
   if (!rpcUrl) {
