@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-01-15T12:31:27.163Z",
-  "schema_version": "1.0.0",
+  "generated_at": "2026-02-11T14:06:11.495Z",
+  "schema_version": "2.0.0",
   "schema_title": "Account Abstraction API",
   "schema_url": "https://aa-api.xion-testnet-2.burnt.com/openapi.json",
   "source_env": "testnet"

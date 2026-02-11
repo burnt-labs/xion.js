@@ -1,0 +1,46 @@
+name: Deploy Demo App
+
+on:
+  push:
+    branches:
+      - fix/xionjs-demo-deploy
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v6
+
+      - name: 🥡 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: 🟢 Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: 🧩 Install Dependencies
+        run: pnpm install
+
+      - name: 🔨 Generate AA API Types
+        run: pnpm generate:types
+
+      - name: 🏗️ Build
+        run: pnpm turbo build --filter=demo-app...
+
+      - name: 🚀 Deploy to Cloudflare
+        run: pnpm --filter demo-app run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
