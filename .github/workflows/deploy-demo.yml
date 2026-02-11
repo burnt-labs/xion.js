@@ -42,5 +42,5 @@ jobs:
       - name: 🚀 Deploy to Cloudflare
         run: pnpm --filter demo-app run deploy
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.BURNT_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.BURNT_CLOUDFLARE_ACCOUNT_ID }}
