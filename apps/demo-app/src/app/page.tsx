@@ -25,6 +25,11 @@ export default function Page(): JSX.Element {
             SIGNER MODE
           </Button>
         </Link>
+        <Link href="/direct-signing-demo">
+          <Button fullWidth structure="base">
+            DIRECT SIGNING DEMO
+          </Button>
+        </Link>
       </div>
       <p className="mt-4 text-center text-xs text-gray-500">
         <strong>Loading States</strong> shows manual hook usage with custom UI.
@@ -34,6 +39,9 @@ export default function Page(): JSX.Element {
         <br />
         <strong>Signer Mode</strong> allows wallet connections without dashboard
         redirect.
+        <br />
+        <strong>Direct Signing Demo</strong> compares session key vs direct
+        signing modes.
       </p>
     </main>
   );

@@ -1,3 +1,7 @@
 export { useAbstraxionAccount } from "./useAbstraxionAccount";
-export { useAbstraxionSigningClient } from "./useAbstraxionSigningClient";
+export {
+  useAbstraxionSigningClient,
+  type UseAbstraxionSigningClientOptions,
+  type UseAbstraxionSigningClientReturn,
+} from "./useAbstraxionSigningClient";
 export { useAbstraxionClient } from "./useAbstraxionClient";

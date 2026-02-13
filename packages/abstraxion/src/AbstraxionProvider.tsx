@@ -3,6 +3,7 @@ import { createContext, useCallback, useEffect, useState, useRef } from "react";
 import {
   SignArbSecp256k1HdWallet,
   GranteeSignerClient,
+  type ConnectorConnectionResult,
 } from "@burnt-labs/abstraxion-core";
 import type { AccountState } from "@burnt-labs/account-management";
 import {
@@ -61,6 +62,13 @@ export interface AbstraxionContextProps {
   authMode: "signer" | "redirect" | "iframe";
   authentication?: AuthenticationConfig;
 
+  /**
+   * Connection info for direct signing (signer mode only)
+   * Contains signMessage function and authenticator metadata
+   * Used by useAbstraxionSigningClient({ requireAuth: true })
+   */
+  connectionInfo?: ConnectorConnectionResult;
+
   // Actions
   logout: () => Promise<void>;
   login: () => Promise<void>;
@@ -99,6 +107,7 @@ const defaultContextValue: AbstraxionContextProps = {
   // Authentication
   authMode: "redirect",
   authentication: undefined,
+  connectionInfo: undefined,
 
   // Actions - throw errors if called before provider mounts
   logout: async () => {
@@ -249,6 +258,15 @@ export function AbstraxionProvider({
   const signingClient = isConnected ? controllerState.signingClient : undefined;
   const abstraxionError = isError ? controllerState.error : "";
 
+  // Get connection info from SignerController for direct signing
+  // Only available in signer mode when connected
+  const connectionInfo =
+    isConnected &&
+    controller instanceof SignerController &&
+    controller.getConnectionInfo
+      ? controller.getConnectionInfo()
+      : undefined;
+
   const login = useCallback(async () => {
     // Login function - delegates to controller who handles errors
     await controller.connect();
@@ -290,6 +308,7 @@ export function AbstraxionProvider({
         // Authentication
         authMode,
         authentication,
+        connectionInfo,
 
         // Actions
         login,

@@ -7,6 +7,7 @@ import type {
   AccountState,
   AccountStateAction,
 } from "@burnt-labs/account-management";
+import type { ConnectorConnectionResult } from "@burnt-labs/abstraxion-core";
 import type { NormalizedAbstraxionConfig } from "../types";
 
 /**
@@ -60,6 +61,13 @@ export interface Controller {
    * Disconnect and reset state
    */
   disconnect(): Promise<void>;
+
+  /**
+   * Get connection info for direct signing (optional)
+   * Only available in signer mode after successful connection
+   * Returns undefined for redirect/iframe modes
+   */
+  getConnectionInfo?(): ConnectorConnectionResult | undefined;
 
   /**
    * Cleanup resources (unsubscribe listeners, etc.)

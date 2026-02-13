@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import type { AAClient } from "@burnt-labs/abstraxion";
+
+/**
+ * Signing client type that supports both session key and direct signing
+ * Both GranteeSignerClient and AAClient have the same getAllBalances signature
+ */
+type SigningClient = GranteeSignerClient | AAClient;
 
 interface UseGetBalanceReturn {
   balance: string | null;
@@ -10,12 +17,12 @@ interface UseGetBalanceReturn {
 /**
  * Hook for fetching account balance
  * @param accountAddress - The bech32 address to fetch balance for
- * @param client - The signing client
+ * @param client - The signing client (supports both GranteeSignerClient and AAClient)
  * @returns Balance in XION, loading state, and refetch function
  */
 export function useGetBalance(
   accountAddress: string | undefined,
-  client: GranteeSignerClient | undefined,
+  client: SigningClient | undefined,
 ): UseGetBalanceReturn {
   const [balance, setBalance] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,14 +49,18 @@ export function useGetBalance(
 
       try {
         setIsLoading(true);
-        const balances = await client.getAllBalances(accountAddress);
-        const xionBalance = balances.find((b) => b.denom === "uxion");
+        // Cast to any to access getAllBalances which is inherited from StargateClient
+        // but not properly exposed in the AAClient type definition
+        const balances = await (client as any).getAllBalances(accountAddress);
+        const xionBalance = balances.find(
+          (b: { denom: string }) => b.denom === "uxion",
+        );
 
         if (xionBalance) {
           // Convert uxion to XION (divide by 1,000,000)
-          const xionAmount = (parseInt(xionBalance.amount) / 1_000_000).toFixed(
-            6,
-          );
+          const xionAmount = (
+            parseInt(xionBalance.amount as string) / 1_000_000
+          ).toFixed(6);
           setBalance(xionAmount);
         } else {
           setBalance("0");

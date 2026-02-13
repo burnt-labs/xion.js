@@ -7,7 +7,6 @@
 import {
   ExternalSignerConnector,
   type ConnectorConnectionResult,
-  type TransactionOptions,
 } from "@burnt-labs/abstraxion-core";
 import {
   ConnectionOrchestrator,
@@ -21,15 +20,6 @@ import {
   getAccountInfoFromRestored,
 } from "@burnt-labs/account-management";
 import type { Connector, StorageStrategy } from "@burnt-labs/abstraxion-core";
-import {
-  AAClient,
-  createSignerFromSigningFunction,
-  type AASigner,
-  type AuthenticatorType,
-} from "@burnt-labs/signers";
-import { GasPrice } from "@cosmjs/stargate";
-import type { EncodeObject } from "@cosmjs/proto-signing";
-import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { SignerAuthentication } from "../types";
@@ -275,70 +265,21 @@ export class SignerController extends BaseController {
   }
 
   /**
-   * Sign and broadcast a transaction with the user's direct authenticator (meta-account)
-   * Bypasses the session key and requires explicit user approval via wallet popup
-   *
-   * Uses the same AAClient pattern as grant creation (see grantCreation.ts)
-   *
-   * @param signerAddress - The smart account address (should match the connected account)
-   * @param messages - Transaction messages to sign
-   * @param fee - Transaction fee (StdFee or "auto" or gas amount)
-   * @param memo - Optional transaction memo
-   * @returns Transaction result
-   * @throws Error if connectionInfo is not available or signing fails
+   * Get connection info for direct signing
+   * Returns the connector connection result which includes signMessage function
+   * Used by useAbstraxionSigningClient to create AAClient for direct signing
    */
-  async signWithMetaAccount(
-    signerAddress: string,
-    messages: readonly EncodeObject[],
-    fee: StdFee | "auto" | number,
-    memo?: string,
-  ): Promise<DeliverTxResponse> {
-    // Validate connectionInfo is available
-    if (!this.connectionInfo) {
-      throw new Error(
-        "No authenticator available for direct signing. Please reconnect your wallet.",
-      );
-    }
-
-    // Extract authenticator type and index from connection metadata
-    const authenticatorIndex =
-      this.connectionInfo.metadata?.authenticatorIndex ?? 0;
-    const authenticatorType = this.connectionInfo.metadata?.authenticatorType as
-      | AuthenticatorType
-      | undefined;
-
-    if (!authenticatorType) {
-      throw new Error(
-        "Authenticator type not found in connection metadata. Please reconnect your wallet.",
-      );
-    }
-
-    // Create signer using the AAClient pattern (same as grantCreation.ts)
-    const signer: AASigner = createSignerFromSigningFunction({
-      smartAccountAddress: signerAddress,
-      authenticatorIndex,
-      authenticatorType,
-      signMessage: this.connectionInfo.signMessage,
-    });
-
-    // Create AAClient with the direct signer
-    const client = await AAClient.connectWithSigner(
-      this.config.rpcUrl,
-      signer,
-      {
-        gasPrice: GasPrice.fromString(this.config.gasPrice),
-      },
-    );
-
-    // Sign and broadcast the transaction
-    // Note: Fees are paid directly by the smart account, not via fee grants
-    return client.signAndBroadcast(signerAddress, [...messages], fee, memo);
+  getConnectionInfo(): ConnectorConnectionResult | undefined {
+    return this.connectionInfo ?? undefined;
   }
 
   /**
    * Disconnect and cleanup
    */
   async disconnect(): Promise<void> {
+    // Clear connection info
+    this.connectionInfo = null;
+
     // Disconnect connector if connected
     if (this.connector) {
       try {
