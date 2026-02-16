@@ -61,12 +61,26 @@ export interface SignerAuthentication {
 }
 
 /**
+ * Iframe authentication (embedded auth via dashboard iframe)
+ *
+ * This is the consolidated replacement for the deprecated @burnt-labs/xion-auth-sdk.
+ * Uses an embedded iframe to handle authentication and transaction signing.
+ */
+export interface IframeAuthentication {
+  type: "iframe";
+  iframeUrl?: string;
+  containerElement?: HTMLElement;
+  alwaysVisible?: boolean;
+}
+
+/**
  * Authentication configuration - defines how users authenticate
  * Type-safe union ensures only compatible options can be combined
  */
 export type AuthenticationConfig =
   | RedirectAuthentication
-  | SignerAuthentication;
+  | SignerAuthentication
+  | IframeAuthentication;
 
 // ============================================================================
 // Configuration Types

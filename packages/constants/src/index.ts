@@ -125,6 +125,12 @@ const DAODAO_INDEXER_URLS: Record<string, string> = {
   "xion-testnet-2": "https://daodaoindexer.burnt.com",
 };
 
+const IFRAME_URLS: Record<string, string> = {
+  "xion-mainnet-1": "https://settings.mainnet.burnt.com/iframe",
+  "xion-testnet-1": "https://settings.testnet.burnt.com/iframe",
+  "xion-testnet-2": "https://auth.testnet.burnt.com/iframe",
+};
+
 // Synchronous alternatives to fetchConfig() - use these when you already know the chain ID
 export function getChainInfo(chainId: string): ChainInfo | undefined {
   if (chainId === mainnetChainInfo.chainId) return mainnetChainInfo;
@@ -149,6 +155,10 @@ export function getRpcUrl(chainId: string): string | undefined {
 export function getRestUrl(chainId: string): string | undefined {
   const chainInfo = getChainInfo(chainId);
   return chainInfo?.rest;
+}
+
+export function getIframeUrl(chainId: string): string | undefined {
+  return IFRAME_URLS[chainId];
 }
 
 export async function fetchConfig(rpcUrl: string): Promise<{

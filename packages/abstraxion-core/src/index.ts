@@ -10,6 +10,11 @@ export * from "./connectors";
 export * from "./api";
 export * from "./config";
 
+// Messaging and events
+export { MessageChannelManager } from "./messaging/MessageChannelManager";
+export { TypedEventEmitter } from "./events/TypedEventEmitter";
+export type { EventHandler } from "./events/TypedEventEmitter";
+
 // Re-export utilities from signers for convenience
 export { customAccountFromAny } from "@burnt-labs/signers";
 

@@ -13,6 +13,7 @@ export type {
   AuthenticationConfig,
   RedirectAuthentication,
   SignerAuthentication,
+  IframeAuthentication,
 } from "./types";
 
 export type { OfflineDirectSigner } from "@cosmjs/proto-signing";
@@ -35,7 +36,11 @@ export type {
   GrantsResponse,
   Grant,
   TreasuryGrantConfig,
+  TransactionOptions,
 } from "@burnt-labs/abstraxion-core";
+
+// Re-export IframeMessageType and MessageTarget (enums - both type and value)
+export { IframeMessageType, MessageTarget } from "@burnt-labs/abstraxion-core";
 
 // Re-export connector types for convenience (consumers need these when implementing connectors)
 export type {
