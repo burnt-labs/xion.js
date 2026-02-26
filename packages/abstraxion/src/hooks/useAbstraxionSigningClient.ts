@@ -111,9 +111,9 @@ export const useAbstraxionSigningClient = (
     }
 
     // Check for unsupported modes
-    if (authMode === "redirect") {
+    if (authMode === "redirect" || authMode === "popup") {
       setError(
-        "Direct signing (requireAuth: true) is not supported with redirect mode. Use signer or iframe mode instead.",
+        `Direct signing (requireAuth: true) is not supported with ${authMode} mode. Use signer or iframe mode instead.`,
       );
       setAaClient(undefined);
       return;

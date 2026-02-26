@@ -29,6 +29,7 @@ export class AbstraxionAuth {
   stake?: boolean;
   bank?: SpendLimit[];
   callbackUrl?: string;
+  authAppUrl?: string;
   treasury?: string;
   treasuryIndexerUrl?: string;
   gasPrice?: string;
@@ -75,6 +76,7 @@ export class AbstraxionAuth {
    * @param {string} treasury - treasury contract instance address
    * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
    * @param {string} gasPrice - Gas price string (e.g., "0.001uxion"). Defaults to "0.001uxion" if not provided.
+   * @param {string} authAppUrl - optional override for the auth app URL (dashboard). When provided, skips the fetchConfig RPC call.
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -85,12 +87,14 @@ export class AbstraxionAuth {
     treasury?: string,
     treasuryIndexerUrl?: string,
     gasPrice?: string,
+    authAppUrl?: string,
   ) {
     this.rpcUrl = rpc;
     this.grantContracts = grantContracts;
     this.stake = stake;
     this.bank = bank;
     this.callbackUrl = callbackUrl;
+    this.authAppUrl = authAppUrl;
     this.treasury = treasury;
     this.treasuryIndexerUrl = treasuryIndexerUrl;
     this.gasPrice = gasPrice;
@@ -299,11 +303,11 @@ export class AbstraxionAuth {
       }
       const userAddress = await this.getKeypairAddress();
 
-      // Fetch dashboard URL from RPC based on network ID
-      const config = await fetchConfig(this.rpcUrl);
-      const dashboardUrl = config.dashboardUrl;
+      // Use authAppUrl override if provided, otherwise fetch from network config
+      const authAppUrl =
+        this.authAppUrl || (await fetchConfig(this.rpcUrl)).dashboardUrl;
 
-      await this.configureUrlAndRedirect(dashboardUrl, userAddress);
+      await this.configureUrlAndRedirect(authAppUrl, userAddress);
     } catch (error) {
       // Error is thrown and handled by caller
       throw error;

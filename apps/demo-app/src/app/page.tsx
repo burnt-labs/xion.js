@@ -30,6 +30,11 @@ export default function Page(): JSX.Element {
             DIRECT SIGNING DEMO
           </Button>
         </Link>
+        <Link href="/popup-demo">
+          <Button fullWidth structure="base">
+            POPUP AUTH DEMO
+          </Button>
+        </Link>
       </div>
       <p className="mt-4 text-center text-xs text-gray-500">
         <strong>Loading States</strong> shows manual hook usage with custom UI.
@@ -42,6 +47,9 @@ export default function Page(): JSX.Element {
         <br />
         <strong>Direct Signing Demo</strong> compares session key vs direct
         signing modes.
+        <br />
+        <strong>Popup Auth Demo</strong> opens the auth app in a popup window
+        — dApp stays loaded.
       </p>
     </main>
   );

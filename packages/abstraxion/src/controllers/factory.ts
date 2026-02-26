@@ -7,7 +7,7 @@
 import { BrowserStorageStrategy, BrowserRedirectStrategy } from "../strategies";
 import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
 import type { Controller } from "./index";
-import { RedirectController, SignerController } from "./index";
+import { RedirectController, SignerController, PopupController } from "./index";
 import type { NormalizedAbstraxionConfig } from "../types";
 
 /**
@@ -24,12 +24,9 @@ export function createController(
   const redirectStrategy = new BrowserRedirectStrategy();
 
   if (authMode === "redirect") {
-    // Delegate to RedirectController's factory method
-    return RedirectController.fromConfig(
-      config,
-      storageStrategy,
-      redirectStrategy,
-    );
+    return RedirectController.fromConfig(config, storageStrategy, redirectStrategy);
+  } else if (authMode === "popup") {
+    return PopupController.fromConfig(config, storageStrategy, redirectStrategy);
   } else if (authMode === "signer") {
     // Signer mode: create AbstraxionAuth with full configuration
     const abstraxionAuth = new AbstraxionAuth(

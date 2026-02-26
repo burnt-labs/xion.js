@@ -14,11 +14,26 @@ import type { SignerConfig } from "@burnt-labs/abstraxion-core";
 
 /**
  * Redirect authentication (dashboard OAuth flow)
- * This is the default if no authentication config is provided
+ * This is the default if no authentication config is provided.
+ * Navigates the current page to the auth app and returns with ?granted=true.
  */
 export interface RedirectAuthentication {
   type: "redirect";
+  /** Callback URL to return to after auth. Defaults to the current page URL. */
   callbackUrl?: string;
+  /** Auth app base URL override. Defaults to the chain-specific value from network config. */
+  authAppUrl?: string;
+}
+
+/**
+ * Popup authentication (dashboard OAuth flow in a popup window)
+ * The user stays on the dApp page. Auth happens in a separate popup tab which
+ * postMessages CONNECT_SUCCESS back to the opener and closes itself.
+ */
+export interface PopupAuthentication {
+  type: "popup";
+  /** Auth app base URL override. Defaults to the chain-specific value from network config. */
+  authAppUrl?: string;
 }
 
 /**
@@ -79,6 +94,7 @@ export interface IframeAuthentication {
  */
 export type AuthenticationConfig =
   | RedirectAuthentication
+  | PopupAuthentication
   | SignerAuthentication
   | IframeAuthentication;
 

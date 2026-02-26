@@ -101,6 +101,10 @@ export class RedirectController extends BaseController {
           config.authentication?.type === "redirect"
             ? config.authentication.callbackUrl
             : undefined,
+        authAppUrl:
+          config.authentication?.type === "redirect"
+            ? config.authentication.authAppUrl
+            : undefined,
       },
       storageStrategy,
       redirectStrategy,
@@ -139,6 +143,7 @@ export class RedirectController extends BaseController {
       config.treasury, // Pass treasury so it's included in redirect URL
       treasuryIndexerUrl, // Default DaoDao indexer URL for treasury grant queries
       config.gasPrice, // Pass gasPrice for signing client creation
+      config.redirect.authAppUrl, // Optional override for the auth app URL
     );
 
     // Create grant config

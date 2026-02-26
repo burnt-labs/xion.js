@@ -59,7 +59,7 @@ export interface AbstraxionContextProps {
   treasuryIndexerUrl?: string;
 
   // Authentication
-  authMode: "signer" | "redirect" | "iframe";
+  authMode: "signer" | "redirect" | "iframe" | "popup";
   authentication?: AuthenticationConfig;
 
   /**
@@ -168,8 +168,11 @@ export function AbstraxionProvider({
       ? authentication.treasuryIndexer
       : undefined;
 
-  // Determine authentication mode - defaults to redirect unless set in config
-  const authMode = authentication?.type || "redirect";
+  const authMode = (authentication?.type || "redirect") as
+    | "signer"
+    | "redirect"
+    | "iframe"
+    | "popup";
 
   if (!controllerRef.current) {
     // First render: Create controller with normalized config
