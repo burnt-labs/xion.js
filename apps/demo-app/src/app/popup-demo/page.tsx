@@ -147,37 +147,40 @@ export default function PopupDemoPage(): JSX.Element {
           </div>
         )}
 
-        {/* Connected: session key send */}
+        {/* Connected: signing cards side by side */}
         {isConnected && account.bech32Address && (
-          <SessionKeySendCard accountAddress={account.bech32Address} />
+          <div className="flex w-full gap-4">
+            <SessionKeySendCard accountAddress={account.bech32Address} />
+            <DirectSigningCard accountAddress={account.bech32Address} />
+          </div>
         )}
 
         {/* Compare with redirect */}
         <div className="w-full rounded-lg border border-gray-600/30 bg-gray-800/50 p-4">
           <p className="mb-2 text-xs font-semibold text-gray-400">
-            Popup vs Redirect
+            Session Key vs Direct Signing
           </p>
           <div className="overflow-auto text-xs text-gray-300">
             <table className="w-full">
               <thead>
                 <tr className="text-left text-gray-500">
                   <th className="pb-2 pr-4">Feature</th>
-                  <th className="pb-2 pr-4">Popup</th>
-                  <th className="pb-2">Redirect</th>
+                  <th className="pb-2 pr-4">Session Key</th>
+                  <th className="pb-2">Direct (requireAuth)</th>
                 </tr>
               </thead>
               <tbody className="space-y-1">
                 {[
-                  ["Navigate to auth", "window.open()", "window.location.href"],
-                  ["dApp page", "stays loaded", "navigates away"],
-                  ["Return result", "postMessage", "redirect + URL param"],
-                  ["App state", "preserved", "full page reload"],
-                  ["Mobile webviews", "may be blocked", "works everywhere"],
-                ].map(([feature, popup, redirect]) => (
+                  ["Signs with", "grantee keypair", "meta-account (via popup)"],
+                  ["User sees", "nothing (silent)", "approval popup"],
+                  ["Gas payment", "fee grant (gasless)", "user pays from balance"],
+                  ["Use case", "normal operations", "security-critical ops"],
+                  ["On-chain signer", "Authz Exec / Grantee", "Direct / meta-account"],
+                ].map(([feature, sessionKey, direct]) => (
                   <tr key={feature}>
                     <td className="py-0.5 pr-4 text-gray-500">{feature}</td>
-                    <td className="py-0.5 pr-4 text-indigo-300">{popup}</td>
-                    <td className="py-0.5 text-gray-400">{redirect}</td>
+                    <td className="py-0.5 pr-4 text-green-300">{sessionKey}</td>
+                    <td className="py-0.5 text-amber-300">{direct}</td>
                   </tr>
                 ))}
               </tbody>
@@ -247,7 +250,7 @@ function SessionKeySendCard({
         <p className="text-xs text-gray-500">
           Client:{" "}
           {client ? (
-            <span className="text-green-400">GranteeSignerClient ✓</span>
+            <span className="text-green-400">GranteeSignerClient</span>
           ) : (
             <span className="text-yellow-400">Not ready</span>
           )}
@@ -255,7 +258,7 @@ function SessionKeySendCard({
       </div>
 
       <Button fullWidth onClick={handleSend} disabled={isSending || !client} structure="base">
-        {isSending ? "SENDING..." : "SEND 0.001 XION TO SELF"}
+        {isSending ? "SENDING..." : "SEND 0.001 XION"}
       </Button>
 
       {txHash && (
@@ -273,3 +276,91 @@ function SessionKeySendCard({
   );
 }
 
+/**
+ * Direct signing card — opens a dashboard popup for approval, user pays gas
+ */
+function DirectSigningCard({
+  accountAddress,
+}: {
+  accountAddress: string;
+}) {
+  const { client, error } = useAbstraxionSigningClient({ requireAuth: true });
+  const [isSending, setIsSending] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [txError, setTxError] = useState<string | null>(null);
+
+  const handleSend = async () => {
+    if (!client || !accountAddress) return;
+    setIsSending(true);
+    setTxHash(null);
+    setTxError(null);
+    try {
+      const result = await client.sendTokens(
+        accountAddress,
+        accountAddress, // send to self for demo
+        [{ denom: "uxion", amount: "1000" }],
+        "auto",
+        "Popup demo: direct signing (user pays gas)",
+      );
+      setTxHash(result.transactionHash);
+    } catch (err: any) {
+      setTxError(err.message || "Transaction failed");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <div className="flex-1 space-y-3 rounded-lg border border-amber-500/30 bg-gray-900/50 p-4">
+      <div className="flex items-center gap-2">
+        <div className="h-3 w-3 rounded-full bg-amber-500" />
+        <h3 className="font-semibold text-amber-400">Direct Signing</h3>
+      </div>
+
+      <div className="space-y-1 text-xs text-gray-400">
+        <p><strong>Hook:</strong> useAbstraxionSigningClient({"{"} requireAuth: true {"}"})</p>
+        <p><strong>Signs with:</strong> meta-account (popup approval)</p>
+        <p><strong>Gas:</strong> user pays from balance</p>
+      </div>
+
+      <div className="border-t border-white/10 pt-2">
+        <p className="text-xs text-gray-500">
+          Client:{" "}
+          {error ? (
+            <span className="text-red-400">{error}</span>
+          ) : client ? (
+            <span className="text-amber-400">PopupSigningClient</span>
+          ) : (
+            <span className="text-yellow-400">Not ready</span>
+          )}
+        </p>
+      </div>
+
+      <Button
+        fullWidth
+        onClick={handleSend}
+        disabled={isSending || !client || !!error}
+        structure="base"
+        className="border-amber-500/50 hover:border-amber-400"
+      >
+        {isSending ? "SIGNING..." : "SEND 0.001 XION"}
+      </Button>
+
+      <p className="text-center text-xs text-gray-500">
+        Opens approval popup
+      </p>
+
+      {txHash && (
+        <div className="rounded border border-amber-500/20 bg-amber-500/10 p-2">
+          <p className="text-xs text-amber-400">Success!</p>
+          <p className="truncate text-xs text-gray-400">Hash: {txHash}</p>
+        </div>
+      )}
+      {txError && (
+        <div className="rounded border border-red-500/20 bg-red-500/10 p-2">
+          <p className="text-xs text-red-400">Error: {txError}</p>
+        </div>
+      )}
+    </div>
+  );
+}

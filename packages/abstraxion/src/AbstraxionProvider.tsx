@@ -69,6 +69,13 @@ export interface AbstraxionContextProps {
    */
   connectionInfo?: ConnectorConnectionResult;
 
+  /**
+   * The active controller instance.
+   * Hooks use instanceof narrowing to access mode-specific capabilities
+   * (e.g. PopupController.promptAndSign for direct signing in popup mode).
+   */
+  controller?: Controller;
+
   // Actions
   logout: () => Promise<void>;
   login: () => Promise<void>;
@@ -108,6 +115,7 @@ const defaultContextValue: AbstraxionContextProps = {
   authMode: "redirect",
   authentication: undefined,
   connectionInfo: undefined,
+  controller: undefined,
 
   // Actions - throw errors if called before provider mounts
   logout: async () => {
@@ -312,6 +320,7 @@ export function AbstraxionProvider({
         authMode,
         authentication,
         connectionInfo,
+        controller,
 
         // Actions
         login,

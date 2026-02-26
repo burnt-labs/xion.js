@@ -72,7 +72,9 @@ export class IframeController extends BaseController {
   private granteeWallet: SignArbSecp256k1HdWallet | null = null;
   private granteeAddress: string | null = null;
   private signingClient: GranteeSignerClient | null = null;
-  private eventEmitter = new TypedEventEmitter<IframeSDKEvents>();
+  private eventEmitter = new TypedEventEmitter<
+    IframeSDKEvents & Record<string, unknown>
+  >();
 
   /**
    * Factory method to create IframeController from NormalizedAbstraxionConfig

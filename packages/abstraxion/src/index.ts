@@ -63,3 +63,6 @@ export { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 
 // Re-export AAClient for direct signing (consumers need this when using requireAuth: true)
 export { AAClient } from "@burnt-labs/signers";
+
+// PopupSigningClient for direct signing in popup mode
+export { PopupSigningClient } from "./controllers/PopupSigningClient";

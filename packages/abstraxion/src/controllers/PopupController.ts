@@ -261,19 +261,103 @@ export class PopupController extends BaseController {
   }
 
   /**
-   * Direct signing not supported in popup mode (same constraint as redirect)
+   * Open a signing popup and wait for the dashboard to sign + broadcast.
+   *
+   * The dashboard shows a SignTransactionView (approve / deny). On approve it
+   * signs with the user's meta-account authenticator, broadcasts, and sends
+   * the txHash back via postMessage. This is the popup-mode equivalent of the
+   * external-wallet approval prompt in signer mode.
    */
-  async signWithMetaAccount(
-    _signerAddress: string,
-    _messages: readonly EncodeObject[],
-    _fee: StdFee | "auto" | number,
-    _memo?: string,
+  async promptAndSign(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    fee: StdFee | "auto" | number,
+    memo?: string,
   ): Promise<DeliverTxResponse> {
-    throw new Error(
-      "Direct signing is not supported in popup mode. " +
-        "Use signer mode (external wallets like Turnkey, Privy, etc.) " +
-        "for transactions that require requireAuth: true.",
+    const authAppUrl =
+      this.config.popup.authAppUrl ||
+      (await fetchConfig(this.config.rpcUrl)).dashboardUrl;
+
+    if (!authAppUrl) {
+      throw new Error(
+        "Could not determine auth app URL for signing popup. " +
+          "Provide authAppUrl in your authentication config.",
+      );
+    }
+
+    const authAppOrigin = new URL(authAppUrl).origin;
+
+    // Encode transaction payload as base64 JSON
+    const txPayload = JSON.stringify({ messages, fee, memo });
+    const txEncoded = btoa(txPayload);
+
+    const url = new URL(authAppUrl);
+    url.searchParams.set("mode", "sign");
+    url.searchParams.set("tx", txEncoded);
+    url.searchParams.set("granter", signerAddress);
+    url.searchParams.set("redirect_uri", window.location.origin);
+
+    const popup = window.open(
+      url.toString(),
+      "xion-sign-popup",
+      "width=460,height=720,resizable=yes,scrollbars=yes,status=no,location=yes",
     );
+
+    if (!popup) {
+      throw new Error(
+        "Signing popup was blocked by the browser. Please allow popups for this site.",
+      );
+    }
+
+    return new Promise<DeliverTxResponse>((resolve, reject) => {
+      const messageHandler = (event: MessageEvent) => {
+        if (event.origin !== authAppOrigin) return;
+
+        const data = event.data as {
+          type?: string;
+          txHash?: string;
+          message?: string;
+        };
+
+        if (data?.type === "SIGN_SUCCESS" && data.txHash) {
+          cleanup();
+          resolve({
+            code: 0,
+            transactionHash: data.txHash,
+            events: [],
+            height: 0,
+            gasUsed: BigInt(0),
+            gasWanted: BigInt(0),
+            msgResponses: [],
+            txIndex: 0,
+          });
+        }
+
+        if (data?.type === "SIGN_REJECTED") {
+          cleanup();
+          reject(new Error("Transaction was rejected by user"));
+        }
+
+        if (data?.type === "SIGN_ERROR") {
+          cleanup();
+          reject(new Error(data.message || "Transaction signing failed"));
+        }
+      };
+
+      const closedCheck = setInterval(() => {
+        if (popup.closed) {
+          cleanup();
+          reject(new Error("Signing popup was closed"));
+        }
+      }, 500);
+
+      const cleanup = () => {
+        clearInterval(closedCheck);
+        window.removeEventListener("message", messageHandler);
+      };
+
+      window.addEventListener("message", messageHandler);
+    });
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
