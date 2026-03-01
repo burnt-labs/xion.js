@@ -180,7 +180,7 @@ function DirectSigningCard({
   }, [client, accountAddress]);
 
   const handleSend = async () => {
-    if (!client || !accountAddress) return;
+    if (!client || !accountAddress || !("simulate" in client)) return;
 
     setIsSending(true);
     setTxHash(null);

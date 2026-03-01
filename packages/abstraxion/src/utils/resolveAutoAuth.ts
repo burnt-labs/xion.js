@@ -21,9 +21,14 @@ export function isMobileOrStandalone(): boolean {
     return false;
   }
 
+  const hasMobileUA = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  const isTouchDevice = navigator.maxTouchPoints > 0;
+  const isNarrow = window.innerWidth < 1024;
+  const isPortraitRatio = window.innerHeight > window.innerWidth;
+
   const isMobile =
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    (navigator.maxTouchPoints > 0 && window.innerWidth < 768);
+    hasMobileUA || (isTouchDevice && (isNarrow || isPortraitRatio));
 
   const isStandalone = window.matchMedia(
     "(display-mode: standalone)",
