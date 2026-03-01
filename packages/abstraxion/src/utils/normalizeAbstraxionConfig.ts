@@ -3,6 +3,7 @@ import type {
   NormalizedAbstraxionConfig,
   SignerAuthentication,
 } from "../types";
+import { resolveAutoAuth } from "./resolveAutoAuth";
 import {
   getFeeGranter,
   getRpcUrl,
@@ -31,6 +32,12 @@ import {
 export function normalizeAbstraxionConfig(
   config: AbstraxionConfig,
 ): NormalizedAbstraxionConfig {
+  // Resolve "auto" → "popup" or "redirect" based on device before anything else
+  const resolvedAuthentication = resolveAutoAuth(config.authentication);
+  if (resolvedAuthentication !== config.authentication) {
+    config = { ...config, authentication: resolvedAuthentication };
+  }
+
   const { chainId } = config;
 
   // Get defaults from constants based on chainId

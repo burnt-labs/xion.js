@@ -8,13 +8,20 @@ export type {
   TreasuryIndexerConfig,
 } from "./types";
 
-// New authentication types
+// Authentication types
 export type {
   AuthenticationConfig,
   RedirectAuthentication,
+  PopupAuthentication,
+  AutoAuthentication,
   SignerAuthentication,
   IframeAuthentication,
+  SignResult,
+  SigningClient,
 } from "./types";
+
+// Auto-detection utility for devs who want custom mode resolution
+export { isMobileOrStandalone } from "./utils/resolveAutoAuth";
 
 export type { OfflineDirectSigner } from "@cosmjs/proto-signing";
 export {
@@ -66,3 +73,6 @@ export { AAClient } from "@burnt-labs/signers";
 
 // PopupSigningClient for direct signing in popup mode
 export { PopupSigningClient } from "./controllers/PopupSigningClient";
+
+// RedirectSigningClient for direct signing in redirect mode
+export { RedirectSigningClient } from "./controllers/RedirectSigningClient";

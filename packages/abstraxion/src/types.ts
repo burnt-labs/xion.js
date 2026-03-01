@@ -76,6 +76,19 @@ export interface SignerAuthentication {
 }
 
 /**
+ * Auto authentication — resolves to popup on desktop, redirect on mobile/PWA.
+ * The resolution happens during config normalization so all downstream code
+ * (controllers, hooks, provider) only ever sees "popup" or "redirect".
+ */
+export interface AutoAuthentication {
+  type: "auto";
+  /** Auth app base URL override (used by both popup and redirect paths). */
+  authAppUrl?: string;
+  /** Callback URL for the redirect fallback. Defaults to the current page URL. */
+  callbackUrl?: string;
+}
+
+/**
  * Iframe authentication (embedded auth via dashboard iframe)
  *
  * This is the consolidated replacement for the deprecated @burnt-labs/xion-auth-sdk.
@@ -95,6 +108,7 @@ export interface IframeAuthentication {
 export type AuthenticationConfig =
   | RedirectAuthentication
   | PopupAuthentication
+  | AutoAuthentication
   | SignerAuthentication
   | IframeAuthentication;
 
@@ -185,3 +199,46 @@ export interface NormalizedAbstraxionConfig
   /** Gas price - always present after normalization */
   gasPrice: string;
 }
+
+// ============================================================================
+// Signing Client Types
+// ============================================================================
+
+// Re-import concrete client types so we can build the union here.
+// Consumers should use `SigningClient` instead of building the union themselves.
+import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import type { AAClient } from "@burnt-labs/signers";
+import type { PopupSigningClient } from "./controllers/PopupSigningClient";
+import type { RedirectSigningClient } from "./controllers/RedirectSigningClient";
+
+/**
+ * Union of all signing client types returned by `useAbstraxionSigningClient`.
+ *
+ * Import this instead of importing individual client types:
+ * ```ts
+ * import type { SigningClient } from "@burnt-labs/abstraxion";
+ * ```
+ *
+ * Which concrete type you get depends on the authentication mode and `requireAuth`:
+ * - `GranteeSignerClient` — session key signing (default, gasless)
+ * - `AAClient` — direct signing in signer mode (external wallet)
+ * - `PopupSigningClient` — direct signing in popup mode (dashboard popup)
+ * - `RedirectSigningClient` — direct signing in redirect mode (dashboard redirect)
+ */
+export type SigningClient =
+  | GranteeSignerClient
+  | AAClient
+  | PopupSigningClient
+  | RedirectSigningClient;
+
+// ============================================================================
+// Signing Result Types
+// ============================================================================
+
+/**
+ * Result from a redirect-based signing flow.
+ * Populated after returning from the dashboard signing redirect.
+ */
+export type SignResult =
+  | { success: true; transactionHash: string }
+  | { success: false; error: string };

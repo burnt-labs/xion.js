@@ -19,9 +19,10 @@ import type { AccountInfo } from "@burnt-labs/account-management";
 import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import type { EncodeObject } from "@cosmjs/proto-signing";
 import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
+import { fetchConfig } from "@burnt-labs/constants";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
-import type { RedirectAuthentication } from "../types";
+import type { RedirectAuthentication, SignResult } from "../types";
 
 /**
  * Configuration for RedirectController
@@ -72,6 +73,8 @@ function isReturningFromRedirect(): boolean {
 export class RedirectController extends BaseController {
   private abstraxionAuth: AbstraxionAuth;
   private orchestrator: ConnectionOrchestrator;
+  private config: RedirectControllerConfig;
+  private signResult_: SignResult | null = null;
 
   /**
    * Factory method to create RedirectController from NormalizedAbstraxionConfig
@@ -122,6 +125,7 @@ export class RedirectController extends BaseController {
     // This ensures UI immediately shows loading state and doesn't assume readiness
     // The initialize() method will handle transitioning to connecting if returning from auth
     super(config.initialState || { status: "initializing" });
+    this.config = config;
 
     // Create AbstraxionAuth instance
     this.abstraxionAuth = new AbstraxionAuth(
@@ -182,6 +186,9 @@ export class RedirectController extends BaseController {
    * Checks for redirect callback, attempts to restore session
    */
   async initialize(): Promise<void> {
+    // Check for signing result return (tx_hash / sign_rejected / sign_error)
+    this.detectSignResult();
+
     // Check if we're returning from dashboard redirect FIRST
     // If so, transition from initializing to connecting
     if (this.isReturningFromRedirect()) {
@@ -326,31 +333,98 @@ export class RedirectController extends BaseController {
   }
 
   /**
-   * Sign and broadcast a transaction with the user's direct authenticator (meta-account)
+   * Redirect to the dashboard signing view for direct signing.
    *
-   * **Not supported in redirect mode.**
-   *
-   * Redirect mode cannot support direct signing because:
-   * 1. The user's authenticator (wallet/passkey) is only available during the redirect flow
-   * 2. After redirect, only the session keypair is stored locally
-   * 3. Direct signing would require another redirect, disrupting UX
-   *
-   * For requireAuth transactions, use signer mode (external wallets) or iframe mode instead.
-   *
-   * @throws Error indicating that redirect mode doesn't support direct signing
+   * The page navigates away — the returned Promise never resolves on this page load.
+   * After the dashboard signs + broadcasts, it redirects back with `?tx_hash=<hash>`
+   * (or `?sign_rejected=true` / `?sign_error=<msg>`). On the next page load,
+   * `initialize()` picks up the result and exposes it via `getSignResult()`.
    */
-  async signWithMetaAccount(
-    _signerAddress: string,
-    _messages: readonly EncodeObject[],
-    _fee: StdFee | "auto" | number,
-    _memo?: string,
+  async promptAndSign(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    fee: StdFee | "auto" | number,
+    memo?: string,
   ): Promise<DeliverTxResponse> {
-    throw new Error(
-      "Direct signing is not supported with redirect mode. " +
-        "Redirect mode only has access to the session key after authentication. " +
-        "Use signer mode (external wallets like Turnkey, Privy, etc.) or iframe mode " +
-        "for transactions that require direct authenticator signing (requireAuth: true).",
+    const authAppUrl =
+      this.config.redirect.authAppUrl ||
+      (await fetchConfig(this.config.rpcUrl)).dashboardUrl;
+
+    if (!authAppUrl) {
+      throw new Error(
+        "Could not determine auth app URL for signing redirect. " +
+          "Provide authAppUrl in your authentication config.",
+      );
+    }
+
+    // Save pending sign context so we can correlate the return
+    sessionStorage.setItem(
+      "xion_pending_sign",
+      JSON.stringify({
+        returnUrl: window.location.href,
+        timestamp: Date.now(),
+      }),
     );
+
+    // Build signing URL (same params as PopupController.promptAndSign)
+    const url = new URL(authAppUrl);
+    url.searchParams.set("mode", "sign");
+    url.searchParams.set(
+      "tx",
+      btoa(JSON.stringify({ messages, fee, memo })),
+    );
+    url.searchParams.set("granter", signerAddress);
+    url.searchParams.set("redirect_uri", window.location.href);
+
+    // Navigate away
+    window.location.href = url.toString();
+
+    // Return a never-resolving promise (page is navigating away)
+    return new Promise(() => {});
+  }
+
+  /**
+   * Get the result from a redirect signing flow (populated after returning
+   * from the dashboard signing redirect). Returns null if no result is pending.
+   */
+  getSignResult(): SignResult | null {
+    return this.signResult_;
+  }
+
+  /**
+   * Clear the sign result after the consumer has handled it.
+   */
+  clearSignResult(): void {
+    this.signResult_ = null;
+  }
+
+  /**
+   * Detect signing result from URL query params after a signing redirect return.
+   * Stores the result and cleans the params from the URL.
+   */
+  private detectSignResult(): void {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const txHash = params.get("tx_hash");
+    const signRejected = params.get("sign_rejected");
+    const signError = params.get("sign_error");
+
+    if (!txHash && !signRejected && !signError) return;
+
+    this.signResult_ = txHash
+      ? { success: true, transactionHash: txHash }
+      : { success: false, error: signError || "Transaction rejected" };
+
+    // Clean signing params from URL
+    params.delete("tx_hash");
+    params.delete("sign_rejected");
+    params.delete("sign_error");
+    const cleanSearch = params.toString();
+    const cleanUrl =
+      window.location.pathname + (cleanSearch ? `?${cleanSearch}` : "");
+    window.history.replaceState({}, "", cleanUrl);
+    sessionStorage.removeItem("xion_pending_sign");
   }
 
   /**

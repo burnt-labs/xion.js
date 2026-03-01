@@ -1,12 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
-import type { AAClient } from "@burnt-labs/abstraxion";
-
-/**
- * Signing client type that supports both session key and direct signing
- * Both GranteeSignerClient and AAClient have the same sendTokens signature
- */
-type SigningClient = GranteeSignerClient | AAClient;
+import type { SigningClient } from "@burnt-labs/abstraxion";
 
 interface UseSendTokensReturn {
   sendTokens: (

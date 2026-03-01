@@ -1,5 +1,4 @@
-import { useContext, useMemo, useState, useEffect } from "react";
-import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import { useContext, useMemo, useState, useEffect, useCallback } from "react";
 import {
   AAClient,
   createSignerFromSigningFunction,
@@ -9,6 +8,9 @@ import {
 import { AbstraxionContext } from "@/src/AbstraxionProvider";
 import { PopupController } from "@/src/controllers/PopupController";
 import { PopupSigningClient } from "@/src/controllers/PopupSigningClient";
+import { RedirectController } from "@/src/controllers/RedirectController";
+import { RedirectSigningClient } from "@/src/controllers/RedirectSigningClient";
+import type { SigningClient, SignResult } from "@/src/types";
 
 /**
  * Options for useAbstraxionSigningClient hook
@@ -40,16 +42,10 @@ export interface UseAbstraxionSigningClientOptions {
  */
 export interface UseAbstraxionSigningClientReturn {
   /**
-   * Signing client
-   * - GranteeSignerClient when requireAuth is false/undefined (session key signing)
-   * - AAClient when requireAuth is true in signer mode (direct signing)
-   * - PopupSigningClient when requireAuth is true in popup mode (dashboard approval)
+   * Signing client — the concrete type depends on auth mode and `requireAuth`.
+   * Use the exported `SigningClient` type for your own type annotations.
    */
-  readonly client:
-    | GranteeSignerClient
-    | AAClient
-    | PopupSigningClient
-    | undefined;
+  readonly client: SigningClient | undefined;
 
   /**
    * Sign arbitrary message function (from session keypair)
@@ -69,6 +65,19 @@ export interface UseAbstraxionSigningClientReturn {
    * Only set when requireAuth is true and connection info is missing
    */
   readonly error: string | undefined;
+
+  /**
+   * Result from a redirect signing flow (populated after returning from the
+   * dashboard signing redirect). null when no result is pending.
+   * Only relevant for redirect mode with requireAuth: true.
+   */
+  readonly signResult: SignResult | null;
+
+  /**
+   * Clear the signResult after consuming it.
+   * Only available when signResult is non-null.
+   */
+  readonly clearSignResult: (() => void) | undefined;
 }
 
 /**
@@ -106,9 +115,11 @@ export const useAbstraxionSigningClient = (
 
   const requireAuth = options?.requireAuth ?? false;
 
-  // Narrow controller to PopupController when in popup mode
+  // Narrow controller to mode-specific types
   const popupController =
     controller instanceof PopupController ? controller : undefined;
+  const redirectController =
+    controller instanceof RedirectController ? controller : undefined;
 
   // State for AAClient (created async, signer mode only)
   const [aaClient, setAaClient] = useState<AAClient | undefined>(undefined);
@@ -121,6 +132,23 @@ export const useAbstraxionSigningClient = (
     }
     return new PopupSigningClient(popupController, granterAddress);
   }, [requireAuth, popupController, granterAddress]);
+
+  // RedirectSigningClient for redirect mode (synchronous)
+  const redirectSigningClient = useMemo(() => {
+    if (!requireAuth || !redirectController || !granterAddress) {
+      return undefined;
+    }
+    return new RedirectSigningClient(redirectController, granterAddress);
+  }, [requireAuth, redirectController, granterAddress]);
+
+  // Read sign result from RedirectController (populated after signing redirect return)
+  const signResult = useMemo<SignResult | null>(() => {
+    return redirectController?.getSignResult() ?? null;
+  }, [redirectController, redirectController?.getSignResult()]);
+
+  const clearSignResult = useCallback(() => {
+    redirectController?.clearSignResult();
+  }, [redirectController]);
 
   // Create AAClient when requireAuth is true and in signer mode
   useEffect(() => {
@@ -144,12 +172,16 @@ export const useAbstraxionSigningClient = (
       return;
     }
 
-    // Check for unsupported modes
+    // Redirect mode: handled by RedirectSigningClient (above)
     if (authMode === "redirect") {
-      setError(
-        "Direct signing (requireAuth: true) is not supported with redirect mode. Use signer or popup mode instead.",
-      );
       setAaClient(undefined);
+      if (!redirectController) {
+        setError(
+          "Direct signing requires an active connection. Please ensure you are logged in.",
+        );
+      } else {
+        setError(undefined);
+      }
       return;
     }
 
@@ -241,6 +273,20 @@ export const useAbstraxionSigningClient = (
         signArb: undefined,
         rpcUrl,
         error,
+        signResult: null,
+        clearSignResult: undefined,
+      };
+    }
+
+    // Redirect mode: return RedirectSigningClient + signResult
+    if (authMode === "redirect") {
+      return {
+        client: redirectSigningClient,
+        signArb: undefined,
+        rpcUrl,
+        error,
+        signResult,
+        clearSignResult: signResult ? clearSignResult : undefined,
       };
     }
 
@@ -250,6 +296,8 @@ export const useAbstraxionSigningClient = (
       signArb: undefined, // signArb not available for direct signing
       rpcUrl,
       error,
+      signResult: null,
+      clearSignResult: undefined,
     };
   }
 
@@ -259,5 +307,7 @@ export const useAbstraxionSigningClient = (
     signArb: abstraxionAccount?.signArb,
     rpcUrl,
     error: undefined,
+    signResult: null,
+    clearSignResult: undefined,
   };
 };
