@@ -1,5 +1,17 @@
 # @burnt-labs/constants
 
+## 0.1.0-alpha.22
+
+### Patch Changes
+
+- [#342](https://github.com/burnt-labs/xion.js/pull/342) [`847ad14`](https://github.com/burnt-labs/xion.js/commit/847ad14b0d6c75f9f3272723176638ac246c4597) Thanks [@justinbarry](https://github.com/justinbarry)! - Add missing repository field to package.json to fix npm publish provenance verification
+
+## 0.1.0-alpha.21
+
+### Patch Changes
+
+- [#335](https://github.com/burnt-labs/xion.js/pull/335) [`6bf65b7`](https://github.com/burnt-labs/xion.js/commit/6bf65b758e6c6064d591e6ff694431b497b3e114) Thanks [@ertemann](https://github.com/ertemann)! - Consolidate some more code, add cache for treasury to better serve dashboard
+
 ## 0.1.0-alpha.20
 
 ### Minor Changes

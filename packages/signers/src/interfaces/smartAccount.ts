@@ -36,6 +36,7 @@ export enum AAAlgo {
   ETHWALLET = "EthWallet",
   passkey = "Passkey",
   Passkey = "passkey",
+  ZKEmail = "ZKEmail",
 }
 
 export interface AddSecp256K1Authenticator {
@@ -87,6 +88,23 @@ export interface AddJwtAuthenticator {
   };
 }
 
+/**
+ * ZKEmail authenticator: proves control via zero-knowledge DKIM verification.
+ * The proof/signature format is chain-specific; adjust fields to match your AA API.
+ */
+export interface AddZKEmailAuthenticator {
+  add_auth_method: {
+    add_authenticator: {
+      ZKEmail: {
+        id: number;
+        email_salt: string;
+        allowed_email_hosts: string[];
+        signature: string; //base64 encoded
+      };
+    };
+  };
+}
+
 export interface RemoveAuthenticator {
   remove_auth_method: {
     id: number;
@@ -97,4 +115,5 @@ export type AddAuthenticator =
   | AddSecp256K1Authenticator
   | AddEd25519Authenticator
   | AddEthWalletAuthenticator
-  | AddJwtAuthenticator;
+  | AddJwtAuthenticator
+  | AddZKEmailAuthenticator;

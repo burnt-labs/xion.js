@@ -15,7 +15,8 @@ export type AuthenticatorType =
   | "Ed25519"
   | "JWT"
   | "Passkey"
-  | "Sr25519";
+  | "Sr25519"
+  | "ZKEmail";
 
 /**
  * Authenticator type constants
@@ -28,6 +29,7 @@ export const AUTHENTICATOR_TYPE = Object.freeze({
   JWT: "JWT" as const, // Social logins (Google, Stytch, etc.)
   Passkey: "Passkey" as const, // WebAuthn/Passkey
   Sr25519: "Sr25519" as const, // Sr25519 curve (Polkadot, etc.)
+  ZKEmail: "ZKEmail" as const, // Zero-knowledge email (DKIM) verification
 });
 
 /**

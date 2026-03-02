@@ -12,6 +12,7 @@ export {
   type AddSecp256K1Authenticator,
   type AddEd25519Authenticator,
   type AddEthWalletAuthenticator,
+  type AddZKEmailAuthenticator,
   type RemoveAuthenticator,
 } from "./interfaces";
 export { customAccountFromAny } from "./signers/utils";

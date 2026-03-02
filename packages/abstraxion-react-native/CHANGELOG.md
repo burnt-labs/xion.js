@@ -1,5 +1,21 @@
 # @burnt-labs/abstraxion-react-native
 
+## 1.0.0-alpha.16
+
+### Patch Changes
+
+- Updated dependencies [[`847ad14`](https://github.com/burnt-labs/xion.js/commit/847ad14b0d6c75f9f3272723176638ac246c4597)]:
+  - @burnt-labs/constants@0.1.0-alpha.22
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.67
+
+## 1.0.0-alpha.15
+
+### Patch Changes
+
+- Updated dependencies [[`6bf65b7`](https://github.com/burnt-labs/xion.js/commit/6bf65b758e6c6064d591e6ff694431b497b3e114)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.66
+  - @burnt-labs/constants@0.1.0-alpha.21
+
 ## 1.0.0-alpha.14
 
 ### Patch Changes

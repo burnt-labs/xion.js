@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/constants",
-  "version": "0.1.0-alpha.20",
+  "version": "0.1.0-alpha.22",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,6 +18,11 @@
     "rimraf": "^5.0.5",
     "tsup": "^6.0.1",
     "typescript": "^5.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burnt-labs/xion.js",
+    "directory": "packages/constants"
   },
   "publishConfig": {
     "access": "public"
