@@ -10,6 +10,8 @@ import { PopupController } from "@/src/controllers/PopupController";
 import { PopupSigningClient } from "@/src/controllers/PopupSigningClient";
 import { RedirectController } from "@/src/controllers/RedirectController";
 import { RedirectSigningClient } from "@/src/controllers/RedirectSigningClient";
+import { IframeController } from "@/src/controllers/IframeController";
+import { IframeSigningClient } from "@/src/controllers/IframeSigningClient";
 import type { SigningClient, SignResult } from "@/src/types";
 
 /**
@@ -120,6 +122,8 @@ export const useAbstraxionSigningClient = (
     controller instanceof PopupController ? controller : undefined;
   const redirectController =
     controller instanceof RedirectController ? controller : undefined;
+  const iframeController =
+    controller instanceof IframeController ? controller : undefined;
 
   // State for AAClient (created async, signer mode only)
   const [aaClient, setAaClient] = useState<AAClient | undefined>(undefined);
@@ -140,6 +144,14 @@ export const useAbstraxionSigningClient = (
     }
     return new RedirectSigningClient(redirectController, granterAddress);
   }, [requireAuth, redirectController, granterAddress]);
+
+  // IframeSigningClient for iframe mode (synchronous)
+  const iframeSigningClient = useMemo(() => {
+    if (!requireAuth || !iframeController || !granterAddress) {
+      return undefined;
+    }
+    return new IframeSigningClient(iframeController, granterAddress);
+  }, [requireAuth, iframeController, granterAddress]);
 
   // Read sign result from RedirectController (populated after signing redirect return)
   const signResult = useMemo<SignResult | null>(() => {
@@ -185,11 +197,16 @@ export const useAbstraxionSigningClient = (
       return;
     }
 
+    // Iframe mode: handled by IframeSigningClient (above)
     if (authMode === "iframe") {
-      setError(
-        "Direct signing (requireAuth: true) is not yet supported with iframe mode. This feature is planned for a future release.",
-      );
       setAaClient(undefined);
+      if (!iframeController) {
+        setError(
+          "Direct signing requires an active connection. Please ensure you are logged in.",
+        );
+      } else {
+        setError(undefined);
+      }
       return;
     }
 
@@ -287,6 +304,18 @@ export const useAbstraxionSigningClient = (
         error,
         signResult,
         clearSignResult: signResult ? clearSignResult : undefined,
+      };
+    }
+
+    // Iframe mode: return IframeSigningClient
+    if (authMode === "iframe") {
+      return {
+        client: iframeSigningClient,
+        signArb: undefined,
+        rpcUrl,
+        error,
+        signResult: null,
+        clearSignResult: undefined,
       };
     }
 

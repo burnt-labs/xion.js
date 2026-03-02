@@ -89,16 +89,25 @@ export interface AutoAuthentication {
 }
 
 /**
- * Iframe authentication (embedded auth via dashboard iframe)
+ * Iframe authentication (inline embedded dashboard iframe)
  *
- * This is the consolidated replacement for the deprecated @burnt-labs/xion-auth-sdk.
- * Uses an embedded iframe to handle authentication and transaction signing.
+ * Renders the full dashboard app inside an inline iframe. The dApp controls
+ * sizing and positioning via the containerElement's CSS.
+ *
+ * The iframe handles login, grant approval, and shows a minimal "Connected"
+ * state after auth. Communication uses postMessage (CONNECT_SUCCESS,
+ * CONNECT_REJECTED, DISCONNECTED).
  */
 export interface IframeAuthentication {
   type: "iframe";
+  /** Dashboard URL for the iframe. Defaults to chain-specific value from constants. */
   iframeUrl?: string;
+  /**
+   * DOM element to mount the iframe in. The iframe fills 100% width/height
+   * of this container — control sizing via the container's CSS.
+   * Must be set before calling connect().
+   */
   containerElement?: HTMLElement;
-  alwaysVisible?: boolean;
 }
 
 /**
@@ -210,6 +219,7 @@ import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 import type { AAClient } from "@burnt-labs/signers";
 import type { PopupSigningClient } from "./controllers/PopupSigningClient";
 import type { RedirectSigningClient } from "./controllers/RedirectSigningClient";
+import type { IframeSigningClient } from "./controllers/IframeSigningClient";
 
 /**
  * Union of all signing client types returned by `useAbstraxionSigningClient`.
@@ -224,12 +234,14 @@ import type { RedirectSigningClient } from "./controllers/RedirectSigningClient"
  * - `AAClient` — direct signing in signer mode (external wallet)
  * - `PopupSigningClient` — direct signing in popup mode (dashboard popup)
  * - `RedirectSigningClient` — direct signing in redirect mode (dashboard redirect)
+ * - `IframeSigningClient` — direct signing in iframe mode (dashboard iframe)
  */
 export type SigningClient =
   | GranteeSignerClient
   | AAClient
   | PopupSigningClient
-  | RedirectSigningClient;
+  | RedirectSigningClient
+  | IframeSigningClient;
 
 // ============================================================================
 // Signing Result Types

@@ -1,43 +1,64 @@
 /**
  * Iframe Controller
- * Embedded iframe-based authentication flow
+ * Inline iframe-based authentication flow
  *
- * This controller manages authentication and transaction signing via an embedded iframe,
- * replacing the deprecated @burnt-labs/xion-auth-sdk package.
+ * Renders the full dashboard app inside an inline iframe. The dApp controls
+ * where and how big the iframe is via a container element. Authentication
+ * and grant approval happen inside the iframe UI.
+ *
+ * Communication uses MessageChannelManager for request-response (CONNECT,
+ * DISCONNECT) — each request gets its own isolated MessageChannel with
+ * targetOrigin enforcement and timeouts.
+ *
+ * The one raw postMessage kept is DISCONNECTED (iframe → SDK), which is
+ * push-direction (user clicked disconnect inside the iframe). It validates
+ * event.origin.
  *
  * The iframe handles:
  * - User authentication (Stytch OAuth, Passkey, MetaMask, Keplr, etc.)
- * - Transaction signing with user's authenticator
  * - Grant permission UI
+ * - Post-connect "Connected" state with disconnect button
  *
  * The SDK (this controller) handles:
  * - Iframe lifecycle management
- * - MessageChannel communication
- * - Local session keypair generation
+ * - Local session keypair generation (via AbstraxionAuth)
  * - GranteeSignerClient creation
+ * - MessageChannel-based CONNECT / DISCONNECT
+ * - IFRAME_READY handshake (waits for dashboard to mount before sending requests)
+ * - Session restoration with on-chain grant verification (via orchestrator)
  */
 
 import {
+  AbstraxionAuth,
   MessageChannelManager,
-  SignArbSecp256k1HdWallet,
   GranteeSignerClient,
   TypedEventEmitter,
-  IframeMessageType,
 } from "@burnt-labs/abstraxion-core";
 import type {
-  ConnectResponse,
-  RequestGrantResponse,
+  SignArbSecp256k1HdWallet,
   IframeSDKEvents,
+  ConnectPayload,
+  ConnectResponse,
   StorageStrategy,
+  RedirectStrategy,
 } from "@burnt-labs/abstraxion-core";
+import { IframeMessageType } from "@burnt-labs/abstraxion-core";
 import { GasPrice } from "@cosmjs/stargate";
+import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import type { EncodeObject } from "@cosmjs/proto-signing";
 import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
+import {
+  ConnectionOrchestrator,
+  isSessionRestorationError,
+  isSessionRestored,
+  getAccountInfoFromRestored,
+} from "@burnt-labs/account-management";
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
 import type { IframeAuthentication, NormalizedAbstraxionConfig } from "../types";
 
-const KEYPAIR_STORAGE_KEY = "xion_abstraxion_grantee_keypair";
+// Push-direction message type: iframe → SDK (user clicked disconnect inside iframe)
+const DISCONNECTED = "DISCONNECTED";
 
 /**
  * Configuration for IframeController
@@ -53,20 +74,33 @@ export interface IframeControllerConfig {
   iframe: IframeAuthentication;
   /** Treasury address for grants */
   treasury?: string;
+  /** Bank spend limits */
+  bank?: Array<{ denom: string; amount: string }>;
+  /** Enable staking grants */
+  stake?: boolean;
+  /** Contract grant configurations */
+  contracts?: Array<
+    | string
+    | { address: string; amounts: Array<{ denom: string; amount: string }> }
+  >;
   /** Storage strategy */
   storageStrategy: StorageStrategy;
+  /** Redirect strategy (required by AbstraxionAuth, not used for actual redirects) */
+  redirectStrategy: RedirectStrategy;
 }
 
 /**
  * Iframe Controller
- * Handles embedded iframe-based authentication flow
+ * Handles inline iframe-based authentication flow
  */
 export class IframeController extends BaseController {
   private config: IframeControllerConfig;
+  private abstraxionAuth: AbstraxionAuth;
+  private orchestrator: ConnectionOrchestrator;
+  private initializePromise: Promise<void> | null = null;
   private iframe: HTMLIFrameElement | null = null;
+  /** Handles all request-response communication with the iframe */
   private messageManager: MessageChannelManager;
-  private iframeReady = false;
-  private iframeReadyPromise: Promise<void> | null = null;
   private iframeOrigin: string;
   private granterAddress: string | null = null;
   private granteeWallet: SignArbSecp256k1HdWallet | null = null;
@@ -75,6 +109,8 @@ export class IframeController extends BaseController {
   private eventEmitter = new TypedEventEmitter<
     IframeSDKEvents & Record<string, unknown>
   >();
+  private disconnectListener: ((event: MessageEvent) => void) | null = null;
+  private iframeReadyListener: ((event: MessageEvent) => void) | null = null;
 
   /**
    * Factory method to create IframeController from NormalizedAbstraxionConfig
@@ -82,6 +118,7 @@ export class IframeController extends BaseController {
   static fromConfig(
     config: NormalizedAbstraxionConfig,
     storageStrategy: StorageStrategy,
+    redirectStrategy: RedirectStrategy,
   ): IframeController {
     if (config.authentication?.type !== "iframe") {
       throw new Error("Iframe authentication config required for iframe mode");
@@ -93,7 +130,11 @@ export class IframeController extends BaseController {
       gasPrice: config.gasPrice,
       iframe: config.authentication,
       treasury: config.treasury,
+      bank: config.bank,
+      stake: config.stake,
+      contracts: config.contracts,
       storageStrategy,
+      redirectStrategy,
     };
 
     return new IframeController(iframeConfig);
@@ -117,6 +158,47 @@ export class IframeController extends BaseController {
     } catch {
       throw new Error("Invalid iframe URL in configuration");
     }
+
+    // Create AbstraxionAuth for keypair/session management (same as Popup/Redirect controllers)
+    this.abstraxionAuth = new AbstraxionAuth(
+      config.storageStrategy,
+      config.redirectStrategy,
+    );
+
+    const treasuryIndexerUrl = config.treasury
+      ? getDaoDaoIndexerUrl(config.chainId)
+      : undefined;
+
+    this.abstraxionAuth.configureAbstraxionInstance(
+      config.rpcUrl,
+      config.contracts,
+      config.stake,
+      config.bank,
+      undefined, // callbackUrl — not used in iframe mode
+      config.treasury,
+      treasuryIndexerUrl,
+      config.gasPrice,
+    );
+
+    // Create orchestrator for session restoration (same pattern as Redirect/Signer/Popup controllers)
+    const grantConfig =
+      config.treasury || config.contracts || config.bank || config.stake
+        ? {
+            treasury: config.treasury,
+            contracts: config.contracts,
+            bank: config.bank,
+            stake: config.stake,
+          }
+        : undefined;
+
+    this.orchestrator = new ConnectionOrchestrator({
+      sessionManager: this.abstraxionAuth,
+      storageStrategy: config.storageStrategy,
+      grantConfig,
+      chainId: config.chainId,
+      rpcUrl: config.rpcUrl,
+      gasPrice: config.gasPrice,
+    });
   }
 
   /**
@@ -140,55 +222,57 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Initialize the controller
-   * Attempts to restore existing session if available
+   * Initialize: attempt to restore a prior session from storage.
+   * Uses orchestrator.restoreSession() — same pattern as Redirect/Signer/Popup controllers.
+   * Verifies grants on-chain before restoring session.
+   * Idempotent: returns the same promise if called while already initializing
+   * (guards against React strict-mode double-invocation)
    */
   async initialize(): Promise<void> {
+    if (this.initializePromise) return this.initializePromise;
+    this.initializePromise = this.doInitialize();
+    return this.initializePromise;
+  }
+
+  private async doInitialize(): Promise<void> {
     try {
-      // Try to load stored session
-      const storedGranter = await this.config.storageStrategy.getItem(
-        "xion_abstraxion_granter",
-      );
-      const storedKeypair = await this.config.storageStrategy.getItem(
-        KEYPAIR_STORAGE_KEY,
-      );
+      // Restore session via orchestrator (verifies grants on-chain, creates signing client)
+      const restorationResult = await this.orchestrator.restoreSession(true);
 
-      if (storedGranter && storedKeypair) {
-        try {
-          // Restore keypair
-          this.granteeWallet = await SignArbSecp256k1HdWallet.deserialize(
-            storedKeypair,
-            "xion-abstraxion",
-          );
-          const accounts = await this.granteeWallet.getAccounts();
-          this.granteeAddress = accounts[0]?.address || null;
-          this.granterAddress = storedGranter;
+      if (
+        isSessionRestored(restorationResult) &&
+        restorationResult.signingClient
+      ) {
+        const accountInfo = getAccountInfoFromRestored(restorationResult);
 
-          // Create signing client
-          const signingClient = await this.createSigningClient();
-          if (signingClient) {
-            this.signingClient = signingClient;
+        // Keep instance vars for public API (getAddress, getGranteeAddress, getSigningClient)
+        this.granterAddress = accountInfo.granterAddress;
+        this.granteeWallet = accountInfo.keypair;
+        this.granteeAddress = accountInfo.granteeAddress;
+        this.signingClient = restorationResult.signingClient;
 
-            const accountInfo: AccountInfo = {
-              keypair: this.granteeWallet,
-              granterAddress: this.granterAddress,
-              granteeAddress: this.granteeAddress!,
-            };
+        this.dispatch({
+          type: "SET_CONNECTED",
+          account: accountInfo,
+          signingClient: restorationResult.signingClient,
+        });
 
-            this.dispatch({
-              type: "SET_CONNECTED",
-              account: accountInfo,
-              signingClient,
-            });
-            return;
-          }
-        } catch {
-          // Clear invalid session data
-          await this.clearStoredSession();
-        }
+        // Try to mount the iframe showing the "Connected" view.
+        // containerElement may not be set yet (React ref timing),
+        // in which case setContainerElement() will handle it later.
+        this.mountConnectedIframe();
+        return;
       }
 
-      // No valid session - go to idle
+      if (isSessionRestorationError(restorationResult)) {
+        this.dispatch({
+          type: "SET_ERROR",
+          error: restorationResult.error,
+        });
+        return;
+      }
+
+      // No session to restore — transition to idle
       this.dispatch({ type: "RESET" });
     } catch (error) {
       console.error("[IframeController] Initialization error:", error);
@@ -203,8 +287,13 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Connect using the iframe
-   * Opens the authentication iframe and waits for user to complete auth flow
+   * Connect using the inline iframe
+   *
+   * 1. Generates grantee keypair via AbstraxionAuth (needed for URL params)
+   * 2. Builds iframe URL with mode=inline and grant params
+   * 3. Creates/updates iframe element
+   * 4. Waits for IFRAME_READY (dashboard React app mounted)
+   * 5. Sends CONNECT via MessageChannelManager and waits for response
    */
   async connect(): Promise<void> {
     if (this.getState().status === "connected") {
@@ -215,73 +304,51 @@ export class IframeController extends BaseController {
     this.dispatch({ type: "START_CONNECT" });
 
     try {
-      // Initialize iframe if not already done
+      // Generate keypair via AbstraxionAuth (same storage as other controllers)
+      this.granteeWallet =
+        await this.abstraxionAuth.generateAndStoreTempAccount();
+      this.granteeAddress =
+        await this.abstraxionAuth.getKeypairAddress();
+
+      // Build iframe URL with all params
+      const iframeUrl = this.buildIframeUrl();
+
+      // Register the IFRAME_READY listener BEFORE creating/updating the iframe
+      // to eliminate the race where a fast-booting dashboard sends IFRAME_READY
+      // before the listener exists.
+      const readyPromise = this.waitForIframeReady();
+
+      // Initialize iframe if not done, or update src
       if (!this.iframe) {
-        await this.initializeIframe();
+        this.initializeIframe(iframeUrl);
+      } else {
+        this.iframe.src = iframeUrl;
       }
 
-      // Wait for iframe to be ready
-      await this.waitForIframeReady();
+      // Wait for the dashboard's IframeMessageHandler to mount
+      await readyPromise;
 
-      // Get or create local grantee keypair
-      await this.getOrCreateGranteeWallet();
-
-      // Build grant params if treasury is configured
-      const grantParams = this.config.treasury
-        ? {
-            treasuryAddress: this.config.treasury,
-            grantee: this.granteeAddress!,
-          }
-        : undefined;
-
-      // Send connect request to iframe
+      // Send CONNECT via MessageChannel — the dashboard's IframeMessageHandler
+      // returns a Promise that resolves when auth + grants complete
       const response = await this.messageManager.sendRequest<
-        { grantParams?: { treasuryAddress: string; grantee: string } },
+        ConnectPayload,
         ConnectResponse
       >(
         this.iframe!,
         IframeMessageType.CONNECT,
-        { grantParams },
+        {
+          grantParams: this.config.treasury
+            ? {
+                treasuryAddress: this.config.treasury,
+                grantee: this.granteeAddress!,
+              }
+            : undefined,
+        },
         this.iframeOrigin,
-        300000, // 5 minute timeout for user to authenticate
+        300_000, // 5 min — user needs time for auth + grant approval
       );
 
-      this.granterAddress = response.address;
-
-      // Store session
-      await this.config.storageStrategy.setItem(
-        "xion_abstraxion_granter",
-        response.address,
-      );
-
-      // Emit authenticated event
-      this.eventEmitter.emit("authenticated", { address: response.address });
-
-      // If grant was requested and succeeded, emit grantApproved
-      if (grantParams) {
-        this.eventEmitter.emit("grantApproved", {
-          treasuryAddress: grantParams.treasuryAddress,
-        });
-      }
-
-      // Create signing client
-      const signingClient = await this.createSigningClient();
-      if (!signingClient) {
-        throw new Error("Failed to create signing client");
-      }
-      this.signingClient = signingClient;
-
-      const accountInfo: AccountInfo = {
-        keypair: this.granteeWallet!,
-        granterAddress: this.granterAddress,
-        granteeAddress: this.granteeAddress!,
-      };
-
-      this.dispatch({
-        type: "SET_CONNECTED",
-        account: accountInfo,
-        signingClient,
-      });
+      await this.completeConnection(response.address);
     } catch (error) {
       console.error("[IframeController] Connection error:", error);
       const errorMessage =
@@ -296,71 +363,49 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Disconnect and cleanup
+   * Disconnect and cleanup (SDK-initiated)
+   *
+   * Sends DISCONNECT via MessageChannelManager to the dashboard. The dashboard's
+   * IframeMessageHandler calls xionDisconnect() and responds via the port.
+   * Falls back to cleanup on timeout (dashboard may be unresponsive).
    */
   async disconnect(): Promise<void> {
-    // Send disconnect to iframe if available
-    if (this.iframe && this.iframeReady) {
+    if (this.iframe?.contentWindow && this.getState().status === "connected") {
       try {
         await this.messageManager.sendRequest(
           this.iframe,
           IframeMessageType.DISCONNECT,
           {},
           this.iframeOrigin,
-          5000,
+          5_000, // Short timeout — disconnect is fast
         );
       } catch (error) {
-        console.error("[IframeController] Error disconnecting:", error);
+        // Dashboard may be unresponsive — proceed with cleanup
+        console.warn(
+          "[IframeController] Disconnect request failed, cleaning up anyway:",
+          error instanceof Error ? error.message : error,
+        );
       }
+
+      // Remove the iframe from DOM so the dashboard's internal re-render
+      // (from xionDisconnect) is not visible. connect() will create a fresh one.
+      this.removeIframe();
     }
 
-    // Clear stored session
-    await this.clearStoredSession();
-
-    // Clear local state
-    this.granterAddress = null;
-    this.granteeWallet = null;
-    this.granteeAddress = null;
-    this.signingClient = null;
-
-    // Emit disconnected event
-    this.eventEmitter.emit("disconnected", {});
-
-    // Reset state
-    this.dispatch({ type: "RESET" });
+    // Dashboard has cleared its state — now clear SDK state
+    await this.handleDisconnect();
   }
 
   /**
-   * Request treasury grants
-   * Opens the iframe to show grant permissions and deploy fee grant
+   * Set the container element for the iframe.
+   * Must be called before connect() — typically from a React ref callback.
    */
-  async requestGrant(
-    treasuryAddress: string,
-    grantee: string,
-  ): Promise<RequestGrantResponse> {
-    if (!this.iframe || !this.iframeReady) {
-      throw new Error("Iframe not ready. Call connect() first.");
-    }
+  setContainerElement(element: HTMLElement): void {
+    this.config.iframe = { ...this.config.iframe, containerElement: element };
 
-    try {
-      const response = await this.messageManager.sendRequest<
-        { treasuryAddress: string; grantee: string },
-        RequestGrantResponse
-      >(
-        this.iframe,
-        IframeMessageType.REQUEST_GRANT,
-        { treasuryAddress, grantee },
-        this.iframeOrigin,
-        120000, // 2 minute timeout
-      );
-
-      this.eventEmitter.emit("grantApproved", { treasuryAddress });
-      return response;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to request grant";
-      this.eventEmitter.emit("error", { error: errorMessage });
-      throw error;
+    // If session was restored before the container was available, mount now
+    if (this.getState().status === "connected" && !this.iframe) {
+      this.mountConnectedIframe();
     }
   }
 
@@ -386,214 +431,254 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Sign and broadcast a transaction with the user's direct authenticator (meta-account)
+   * Sign and broadcast a transaction with the user's direct authenticator (meta-account).
    *
-   * @throws Error indicating that iframe direct signing is not yet available
+   * Sends SIGN_AND_BROADCAST via MessageChannelManager to the dashboard iframe,
+   * which shows a signing approval UI and broadcasts the transaction.
    */
   async signWithMetaAccount(
-    _signerAddress: string,
-    _messages: readonly EncodeObject[],
-    _fee: StdFee | "auto" | number,
-    _memo?: string,
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    fee: StdFee | "auto" | number,
+    memo?: string,
   ): Promise<DeliverTxResponse> {
-    throw new Error(
-      "Iframe direct signing is not yet implemented. Coming in Phase 2. " +
-        "For now, use signer mode (external wallets) for requireAuth transactions.",
+    if (!this.iframe?.contentWindow) {
+      throw new Error(
+        "Iframe is not available. Ensure the iframe is mounted and the user is connected.",
+      );
+    }
+
+    const response = await this.messageManager.sendRequest<
+      { transaction: { messages: readonly EncodeObject[]; fee: StdFee | "auto" | number; memo?: string } },
+      { signedTx: DeliverTxResponse }
+    >(
+      this.iframe,
+      IframeMessageType.SIGN_AND_BROADCAST,
+      { transaction: { messages, fee, memo } },
+      this.iframeOrigin,
+      300_000, // 5 min — user needs time to review and approve
     );
+
+    return response.signedTx;
   }
 
   /**
    * Cleanup resources
    */
   destroy(): void {
+    // Remove disconnect listener
+    if (this.disconnectListener) {
+      window.removeEventListener("message", this.disconnectListener);
+      this.disconnectListener = null;
+    }
+
+    // Remove IFRAME_READY listener
+    if (this.iframeReadyListener) {
+      window.removeEventListener("message", this.iframeReadyListener);
+      this.iframeReadyListener = null;
+    }
+
     // Remove iframe from DOM
     if (this.iframe && this.iframe.parentNode) {
       this.iframe.parentNode.removeChild(this.iframe);
     }
     this.iframe = null;
-    this.iframeReady = false;
-    this.iframeReadyPromise = null;
 
     // Clear event listeners
     this.eventEmitter.removeAllListeners();
+
+    // Cleanup orchestrator
+    this.orchestrator.destroy();
 
     super.destroy();
   }
 
   /**
-   * Generate or retrieve the grantee keypair
+   * Remove the iframe from DOM and clean up its event listener.
+   * Used during SDK-initiated disconnect to prevent a visible re-render
+   * before connect() creates a fresh iframe.
    */
-  private async getOrCreateGranteeWallet(): Promise<SignArbSecp256k1HdWallet> {
-    if (this.granteeWallet) {
-      return this.granteeWallet;
+  private removeIframe(): void {
+    if (this.disconnectListener) {
+      window.removeEventListener("message", this.disconnectListener);
+      this.disconnectListener = null;
+    }
+    if (this.iframe?.parentNode) {
+      this.iframe.parentNode.removeChild(this.iframe);
+    }
+    this.iframe = null;
+  }
+
+  // ─── Private helpers ────────────────────────────────────────────────────────
+
+  /**
+   * Mount the iframe showing the dashboard's "Connected" view.
+   * Used after restoring a session from storage on page refresh.
+   * Only sets mode=inline (no grantee/treasury — grant is already done).
+   */
+  private mountConnectedIframe(): void {
+    if (!this.config.iframe.containerElement) {
+      return; // Container not available yet — setContainerElement() will retry
+    }
+    if (this.iframe) {
+      return; // Already mounted
     }
 
-    // Try to load from storage
-    const stored = await this.config.storageStrategy.getItem(
-      KEYPAIR_STORAGE_KEY,
-    );
-    if (stored) {
-      try {
-        this.granteeWallet = await SignArbSecp256k1HdWallet.deserialize(
-          stored,
-          "xion-abstraxion",
-        );
-        const accounts = await this.granteeWallet.getAccounts();
-        this.granteeAddress = accounts[0]?.address || null;
-        return this.granteeWallet;
-      } catch {
-        // Invalid stored data, generate new
-        await this.config.storageStrategy.removeItem(KEYPAIR_STORAGE_KEY);
-      }
-    }
-
-    // Generate new keypair
-    this.granteeWallet = await SignArbSecp256k1HdWallet.generate(12, {
-      prefix: "xion",
-    });
-    const accounts = await this.granteeWallet.getAccounts();
-    this.granteeAddress = accounts[0]?.address || null;
-
-    // Persist to storage
-    const serialized = await this.granteeWallet.serialize("xion-abstraxion");
-    await this.config.storageStrategy.setItem(KEYPAIR_STORAGE_KEY, serialized);
-
-    return this.granteeWallet;
+    const url = new URL(this.config.iframe.iframeUrl!);
+    url.searchParams.set("mode", "inline");
+    url.searchParams.set("redirect_uri", window.location.origin);
+    this.initializeIframe(url.toString());
   }
 
   /**
-   * Create a GranteeSignerClient for signing transactions
+   * Build the iframe URL with all required query params
    */
-  private async createSigningClient(): Promise<GranteeSignerClient | null> {
-    if (!this.granterAddress || !this.granteeWallet || !this.granteeAddress) {
-      return null;
+  private buildIframeUrl(): string {
+    const url = new URL(this.config.iframe.iframeUrl!);
+
+    url.searchParams.set("mode", "inline");
+    url.searchParams.set("grantee", this.granteeAddress!);
+    url.searchParams.set("redirect_uri", window.location.origin);
+
+    if (this.config.treasury) {
+      url.searchParams.set("treasury", this.config.treasury);
+    }
+    if (this.config.bank) {
+      url.searchParams.set("bank", JSON.stringify(this.config.bank));
+    }
+    if (this.config.stake) {
+      url.searchParams.set("stake", "true");
+    }
+    if (this.config.contracts) {
+      url.searchParams.set("contracts", JSON.stringify(this.config.contracts));
     }
 
-    try {
-      return await GranteeSignerClient.connectWithSigner(
-        this.config.rpcUrl,
-        this.granteeWallet,
-        {
-          granterAddress: this.granterAddress,
-          granteeAddress: this.granteeAddress,
-          treasuryAddress: this.config.treasury,
-          gasPrice: GasPrice.fromString(this.config.gasPrice),
-        },
-      );
-    } catch (error) {
-      console.error("[IframeController] Failed to create signing client:", error);
-      return null;
-    }
+    return url.toString();
   }
 
   /**
-   * Clear stored session data
-   */
-  private async clearStoredSession(): Promise<void> {
-    await this.config.storageStrategy.removeItem("xion_abstraxion_granter");
-    await this.config.storageStrategy.removeItem(KEYPAIR_STORAGE_KEY);
-  }
-
-  /**
-   * Initialize the iframe and mount it to the DOM
-   */
-  private async initializeIframe(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // Create iframe element
-      const iframe = document.createElement("iframe");
-
-      // Set iframe attributes
-      iframe.src = this.config.iframe.iframeUrl!;
-      iframe.style.position = "fixed";
-      iframe.style.top = "0";
-      iframe.style.left = "0";
-      iframe.style.width = "100%";
-      iframe.style.height = "100%";
-      iframe.style.border = "none";
-      iframe.style.zIndex = "999999";
-      iframe.style.display = this.config.iframe.alwaysVisible
-        ? "block"
-        : "none";
-      iframe.allow =
-        "publickey-credentials-get *; clipboard-read; clipboard-write";
-
-      // Listen for modal state changes to show/hide iframe
-      if (!this.config.iframe.alwaysVisible) {
-        const handleModalStateChange = (event: MessageEvent) => {
-          if (event.data.type === "MODAL_STATE_CHANGE" && this.iframe) {
-            this.iframe.style.display = event.data.isOpen ? "block" : "none";
-          }
-        };
-        window.addEventListener("message", handleModalStateChange);
-      }
-
-      // Set up IFRAME_READY listener
-      this.setupIframeReadyListener();
-
-      // Wait for iframe to load
-      iframe.onload = () => {
-        this.iframe = iframe;
-        resolve();
-      };
-
-      iframe.onerror = () => {
-        reject(new Error("Failed to load authentication iframe"));
-      };
-
-      // Mount iframe to DOM
-      const container =
-        this.config.iframe.containerElement || document.body;
-      container.appendChild(iframe);
-    });
-  }
-
-  /**
-   * Set up the IFRAME_READY listener
-   */
-  private setupIframeReadyListener(): void {
-    if (this.iframeReadyPromise) {
-      return;
-    }
-
-    this.iframeReadyPromise = new Promise((resolve) => {
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data.type === "IFRAME_READY") {
-          this.iframeReady = true;
-          window.removeEventListener("message", handleMessage);
-          this.eventEmitter.emit("ready", {});
-
-          resolve();
-        }
-      };
-
-      window.addEventListener("message", handleMessage);
-
-      // Timeout fallback
-      setTimeout(() => {
-        if (!this.iframeReady) {
-          window.removeEventListener("message", handleMessage);
-          console.warn(
-            "[IframeController] Iframe ready timeout - proceeding anyway",
-          );
-          this.iframeReady = true;
-          resolve();
-        }
-      }, 5000);
-    });
-  }
-
-  /**
-   * Wait for iframe to signal it's ready
+   * Wait for the iframe's IframeMessageHandler to mount.
+   * The dashboard sends IFRAME_READY via postMessage once it's ready
+   * to accept MessageChannel requests.
    */
   private waitForIframeReady(): Promise<void> {
-    if (this.iframeReady) {
-      return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error("Iframe did not become ready within 30s"));
+      }, 30_000);
+
+      const handler = (event: MessageEvent) => {
+        if (event.origin !== this.iframeOrigin) return;
+        if (event.data?.type === "IFRAME_READY") {
+          cleanup();
+          resolve();
+        }
+      };
+
+      const cleanup = () => {
+        window.removeEventListener("message", handler);
+        this.iframeReadyListener = null;
+        clearTimeout(timeout);
+      };
+
+      this.iframeReadyListener = handler;
+      window.addEventListener("message", handler);
+    });
+  }
+
+  /**
+   * Initialize the iframe element and mount it to the container
+   */
+  private initializeIframe(src: string): void {
+    const container = this.config.iframe.containerElement;
+    if (!container) {
+      throw new Error(
+        "containerElement is required for iframe mode. " +
+          "Provide a DOM element where the iframe should be mounted.",
+      );
     }
 
-    if (!this.iframeReadyPromise) {
-      this.setupIframeReadyListener();
-    }
+    const iframe = document.createElement("iframe");
+    iframe.src = src;
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+    iframe.allow =
+      "publickey-credentials-get *; clipboard-read; clipboard-write";
 
-    return this.iframeReadyPromise!;
+    container.appendChild(iframe);
+    this.iframe = iframe;
+
+    // Listen for DISCONNECTED messages from iframe (user clicked disconnect inside iframe).
+    // This is the one raw postMessage we keep — it's push-direction and validates origin.
+    this.disconnectListener = (event: MessageEvent) => {
+      if (event.origin !== this.iframeOrigin) return;
+      if (event.data?.type === DISCONNECTED) {
+        if (this.getState().status === "connected") {
+          // User clicked disconnect inside the iframe.
+          // Remove iframe to prevent double-render, then clear SDK state.
+          // Auto-connect will create a fresh iframe.
+          this.removeIframe();
+          this.handleDisconnect();
+        }
+      }
+    };
+    window.addEventListener("message", this.disconnectListener);
+  }
+
+  /**
+   * Complete connection after receiving address from MessageChannel CONNECT response
+   * Stores granter via AbstraxionAuth and creates GranteeSignerClient (same as Popup/Redirect)
+   */
+  private async completeConnection(granterAddress: string): Promise<void> {
+    this.granterAddress = granterAddress;
+
+    // Store granter via AbstraxionAuth (same storage key as other controllers)
+    await this.abstraxionAuth.setGranter(granterAddress);
+
+    // Sync in-memory state for getSigner()
+    this.abstraxionAuth.abstractAccount = this.granteeWallet!;
+
+    // Emit authenticated event
+    this.eventEmitter.emit("authenticated", { address: granterAddress });
+
+    // Create signing client via AbstraxionAuth
+    const signingClient = await this.abstraxionAuth.getSigner(
+      GasPrice.fromString(this.config.gasPrice),
+    );
+    this.signingClient = signingClient;
+
+    const accountInfo: AccountInfo = {
+      keypair: this.granteeWallet!,
+      granterAddress: this.granterAddress,
+      granteeAddress: this.granteeAddress!,
+    };
+
+    this.dispatch({
+      type: "SET_CONNECTED",
+      account: accountInfo,
+      signingClient,
+    });
+  }
+
+  /**
+   * Handle disconnect — shared between SDK-initiated and iframe-initiated
+   */
+  private async handleDisconnect(): Promise<void> {
+    // Clear session via AbstraxionAuth (same storage keys as other controllers)
+    await this.abstraxionAuth.logout();
+
+    // Clear local state
+    this.granterAddress = null;
+    this.granteeWallet = null;
+    this.granteeAddress = null;
+    this.signingClient = null;
+
+    // Emit disconnected event
+    this.eventEmitter.emit("disconnected", {});
+
+    // Reset state
+    this.dispatch({ type: "RESET" });
   }
 }

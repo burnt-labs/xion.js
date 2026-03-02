@@ -76,3 +76,9 @@ export { PopupSigningClient } from "./controllers/PopupSigningClient";
 
 // RedirectSigningClient for direct signing in redirect mode
 export { RedirectSigningClient } from "./controllers/RedirectSigningClient";
+
+// IframeSigningClient for direct signing in iframe mode
+export { IframeSigningClient } from "./controllers/IframeSigningClient";
+
+// IframeController for inline iframe mode (consumers need instanceof check for setContainerElement)
+export { IframeController } from "./controllers/IframeController";

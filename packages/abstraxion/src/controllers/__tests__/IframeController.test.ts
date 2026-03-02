@@ -1,5 +1,5 @@
 /**
- * Unit tests for IframeController signWithMetaAccount
+ * Unit tests for IframeController
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -9,6 +9,18 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
   return {
     ...actual,
+    AbstraxionAuth: vi.fn().mockImplementation(() => ({
+      configureAbstraxionInstance: vi.fn(),
+      getLocalKeypair: vi.fn(),
+      getGranter: vi.fn(),
+      setGranter: vi.fn(),
+      generateAndStoreTempAccount: vi.fn(),
+      getKeypairAddress: vi.fn(),
+      getSigner: vi.fn(),
+      authenticate: vi.fn(),
+      logout: vi.fn(),
+      abstractAccount: undefined,
+    })),
     MessageChannelManager: vi.fn().mockImplementation(() => ({
       sendRequest: vi.fn(),
     })),
@@ -42,6 +54,18 @@ vi.mock("@burnt-labs/account-management", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
+    ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
+      restoreSession: vi.fn().mockResolvedValue({ restored: false }),
+      destroy: vi.fn(),
+    })),
+  };
+});
+
+vi.mock("@burnt-labs/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@burnt-labs/constants")>();
+  return {
+    ...actual,
+    getDaoDaoIndexerUrl: vi.fn().mockReturnValue("https://indexer.example.com"),
   };
 });
 
@@ -56,12 +80,18 @@ describe("IframeController", () => {
       gasPrice: "0.001uxion",
       iframe: {
         type: "iframe",
-        iframeUrl: "https://dashboard.xion.burnt.com/iframe",
+        iframeUrl: "https://dashboard.xion.burnt.com",
       },
       storageStrategy: {
         getItem: vi.fn(),
         setItem: vi.fn(),
         removeItem: vi.fn(),
+      },
+      redirectStrategy: {
+        getCurrentUrl: vi.fn().mockResolvedValue("http://localhost"),
+        redirect: vi.fn(),
+        getUrlParameter: vi.fn().mockResolvedValue(null),
+        cleanUrlParameters: vi.fn(),
       },
     };
 
@@ -98,6 +128,16 @@ describe("IframeController", () => {
         expect((error as Error).message).toContain("signer mode");
         expect((error as Error).message).toContain("requireAuth");
       }
+    });
+  });
+
+  describe("connect", () => {
+    it("should throw if containerElement is not provided", async () => {
+      const controller = createController();
+
+      await expect(controller.connect()).rejects.toThrow(
+        "containerElement is required",
+      );
     });
   });
 });

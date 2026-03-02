@@ -35,6 +35,11 @@ export default function Page(): JSX.Element {
             POPUP AUTH DEMO
           </Button>
         </Link>
+        <Link href="/inline-demo">
+          <Button fullWidth structure="base">
+            INLINE IFRAME DEMO
+          </Button>
+        </Link>
       </div>
       <p className="mt-4 text-center text-xs text-gray-500">
         <strong>Loading States</strong> shows manual hook usage with custom UI.
