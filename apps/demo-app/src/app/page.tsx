@@ -53,8 +53,8 @@ export default function Page(): JSX.Element {
         <strong>Direct Signing Demo</strong> compares session key vs direct
         signing modes.
         <br />
-        <strong>Popup Auth Demo</strong> opens the auth app in a popup window
-        — dApp stays loaded.
+        <strong>Popup Auth Demo</strong> opens the auth app in a popup window —
+        dApp stays loaded.
       </p>
     </main>
   );

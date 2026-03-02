@@ -126,7 +126,9 @@ describe("Treasury grant comparison — session restoration bug", () => {
       );
 
       // All chain grants are Unsupported → no type match → comparison fails
-      expect(decodedChain.every((d) => d.type === AuthorizationTypes.Unsupported)).toBe(true);
+      expect(
+        decodedChain.every((d) => d.type === AuthorizationTypes.Unsupported),
+      ).toBe(true);
       expect(
         compareChainGrantsToTreasuryGrants(decodedChain, decodedTreasury),
       ).toBe(false);

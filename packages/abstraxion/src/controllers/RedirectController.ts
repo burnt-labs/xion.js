@@ -369,6 +369,29 @@ export class RedirectController extends BaseController {
   }
 
   /**
+   * Direct signing is not supported with redirect mode.
+   *
+   * Redirect mode cannot perform direct signing because the session key
+   * does not have access to the user's direct authenticator. Use signer mode
+   * with `requireAuth: true` for direct signing, or iframe mode for
+   * interactive signing via the dashboard.
+   *
+   * @throws Always throws an error explaining the limitation
+   */
+  async signWithMetaAccount(
+    _signerAddress: string,
+    _messages: readonly EncodeObject[],
+    _fee: StdFee | "auto" | number,
+    _memo?: string,
+  ): Promise<DeliverTxResponse> {
+    throw new Error(
+      "Direct signing is not supported with redirect mode. " +
+        "Redirect mode uses a session key and cannot access the user's direct authenticator for signing. " +
+        "For transactions requiring the user's direct signer mode, use iframe mode or signer mode with requireAuth: true.",
+    );
+  }
+
+  /**
    * Redirect to the dashboard signing view for direct signing.
    *
    * The page navigates away — the returned Promise never resolves on this page load.
@@ -405,10 +428,7 @@ export class RedirectController extends BaseController {
     // Build signing URL (same params as PopupController.promptAndSign)
     const url = new URL(authAppUrl);
     url.searchParams.set("mode", "sign");
-    url.searchParams.set(
-      "tx",
-      btoa(JSON.stringify({ messages, fee, memo })),
-    );
+    url.searchParams.set("tx", btoa(JSON.stringify({ messages, fee, memo })));
     url.searchParams.set("granter", signerAddress);
     url.searchParams.set("redirect_uri", window.location.href);
 

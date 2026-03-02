@@ -55,7 +55,10 @@ import {
 } from "@burnt-labs/account-management";
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
-import type { IframeAuthentication, NormalizedAbstraxionConfig } from "../types";
+import type {
+  IframeAuthentication,
+  NormalizedAbstraxionConfig,
+} from "../types";
 
 // Push-direction message type: iframe → SDK (user clicked disconnect inside iframe)
 const DISCONNECTED = "DISCONNECTED";
@@ -307,8 +310,7 @@ export class IframeController extends BaseController {
       // Generate keypair via AbstraxionAuth (same storage as other controllers)
       this.granteeWallet =
         await this.abstraxionAuth.generateAndStoreTempAccount();
-      this.granteeAddress =
-        await this.abstraxionAuth.getKeypairAddress();
+      this.granteeAddress = await this.abstraxionAuth.getKeypairAddress();
 
       // Build iframe URL with all params
       const iframeUrl = this.buildIframeUrl();
@@ -449,7 +451,13 @@ export class IframeController extends BaseController {
     }
 
     const response = await this.messageManager.sendRequest<
-      { transaction: { messages: readonly EncodeObject[]; fee: StdFee | "auto" | number; memo?: string } },
+      {
+        transaction: {
+          messages: readonly EncodeObject[];
+          fee: StdFee | "auto" | number;
+          memo?: string;
+        };
+      },
       { signedTx: DeliverTxResponse }
     >(
       this.iframe,

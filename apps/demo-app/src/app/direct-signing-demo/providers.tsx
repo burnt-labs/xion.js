@@ -15,9 +15,7 @@ const MetamaskAuthContext = createContext<MetamaskAuthContextType | null>(null);
 export function useMetamaskAuth() {
   const context = useContext(MetamaskAuthContext);
   if (!context) {
-    throw new Error(
-      "useMetamaskAuth must be used within MetamaskAuthProvider",
-    );
+    throw new Error("useMetamaskAuth must be used within MetamaskAuthProvider");
   }
   return context;
 }

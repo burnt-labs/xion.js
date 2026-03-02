@@ -7,7 +7,12 @@
 import { BrowserStorageStrategy, BrowserRedirectStrategy } from "../strategies";
 import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
 import type { Controller } from "./index";
-import { RedirectController, SignerController, PopupController, IframeController } from "./index";
+import {
+  RedirectController,
+  SignerController,
+  PopupController,
+  IframeController,
+} from "./index";
 import type { NormalizedAbstraxionConfig } from "../types";
 
 /**
@@ -24,9 +29,17 @@ export function createController(
   const redirectStrategy = new BrowserRedirectStrategy();
 
   if (authMode === "redirect") {
-    return RedirectController.fromConfig(config, storageStrategy, redirectStrategy);
+    return RedirectController.fromConfig(
+      config,
+      storageStrategy,
+      redirectStrategy,
+    );
   } else if (authMode === "popup") {
-    return PopupController.fromConfig(config, storageStrategy, redirectStrategy);
+    return PopupController.fromConfig(
+      config,
+      storageStrategy,
+      redirectStrategy,
+    );
   } else if (authMode === "signer") {
     // Signer mode: create AbstraxionAuth with full configuration
     const abstraxionAuth = new AbstraxionAuth(
@@ -57,7 +70,11 @@ export function createController(
     // Delegate to SignerController's factory method
     return SignerController.fromConfig(config, storageStrategy, abstraxionAuth);
   } else if (authMode === "iframe") {
-    return IframeController.fromConfig(config, storageStrategy, redirectStrategy);
+    return IframeController.fromConfig(
+      config,
+      storageStrategy,
+      redirectStrategy,
+    );
   } else {
     throw new Error(`Unknown authentication mode: ${authMode}`);
   }

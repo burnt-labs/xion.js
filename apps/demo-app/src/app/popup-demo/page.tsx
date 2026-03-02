@@ -46,9 +46,9 @@ export default function PopupDemoPage(): JSX.Element {
         </h1>
         <p className="max-w-md text-sm text-gray-400">
           Authentication happens in a{" "}
-          <span className="font-semibold text-white">popup window</span>.
-          You stay on this page while the auth app handles login and grant
-          approval. The popup closes automatically when done.
+          <span className="font-semibold text-white">popup window</span>. You
+          stay on this page while the auth app handles login and grant approval.
+          The popup closes automatically when done.
         </p>
       </div>
 
@@ -70,9 +70,7 @@ export default function PopupDemoPage(): JSX.Element {
               <div className="flex items-center gap-1">
                 <div
                   className={`h-2 w-2 rounded-full ${
-                    value
-                      ? `animate-pulse bg-${color}-400`
-                      : "bg-gray-600"
+                    value ? `animate-pulse bg-${color}-400` : "bg-gray-600"
                   }`}
                 />
                 <span
@@ -90,9 +88,7 @@ export default function PopupDemoPage(): JSX.Element {
         {/* Connect / Disconnect button */}
         <Button
           fullWidth
-          onClick={
-            isConnected && account.bech32Address ? logout : handleLogin
-          }
+          onClick={isConnected && account.bech32Address ? logout : handleLogin}
           structure={isConnected ? "outlined" : "base"}
           disabled={isLoading}
           className={`transition-all duration-200 ${
@@ -173,9 +169,17 @@ export default function PopupDemoPage(): JSX.Element {
                 {[
                   ["Signs with", "grantee keypair", "meta-account (via popup)"],
                   ["User sees", "nothing (silent)", "approval popup"],
-                  ["Gas payment", "fee grant (gasless)", "user pays from balance"],
+                  [
+                    "Gas payment",
+                    "fee grant (gasless)",
+                    "user pays from balance",
+                  ],
                   ["Use case", "normal operations", "security-critical ops"],
-                  ["On-chain signer", "Authz Exec / Grantee", "Direct / meta-account"],
+                  [
+                    "On-chain signer",
+                    "Authz Exec / Grantee",
+                    "Direct / meta-account",
+                  ],
                 ].map(([feature, sessionKey, direct]) => (
                   <tr key={feature}>
                     <td className="py-0.5 pr-4 text-gray-500">{feature}</td>
@@ -202,11 +206,7 @@ export default function PopupDemoPage(): JSX.Element {
 /**
  * Session key signing card — uses the grantee keypair, gasless via fee grant
  */
-function SessionKeySendCard({
-  accountAddress,
-}: {
-  accountAddress: string;
-}) {
+function SessionKeySendCard({ accountAddress }: { accountAddress: string }) {
   const { client } = useAbstraxionSigningClient();
   const [isSending, setIsSending] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -241,9 +241,15 @@ function SessionKeySendCard({
       </div>
 
       <div className="space-y-1 text-xs text-gray-400">
-        <p><strong>Hook:</strong> useAbstraxionSigningClient()</p>
-        <p><strong>Signs with:</strong> grantee keypair (no popup)</p>
-        <p><strong>Gas:</strong> fee grant (gasless)</p>
+        <p>
+          <strong>Hook:</strong> useAbstraxionSigningClient()
+        </p>
+        <p>
+          <strong>Signs with:</strong> grantee keypair (no popup)
+        </p>
+        <p>
+          <strong>Gas:</strong> fee grant (gasless)
+        </p>
       </div>
 
       <div className="border-t border-white/10 pt-2">
@@ -257,7 +263,12 @@ function SessionKeySendCard({
         </p>
       </div>
 
-      <Button fullWidth onClick={handleSend} disabled={isSending || !client} structure="base">
+      <Button
+        fullWidth
+        onClick={handleSend}
+        disabled={isSending || !client}
+        structure="base"
+      >
         {isSending ? "SENDING..." : "SEND 0.001 XION"}
       </Button>
 
@@ -279,11 +290,7 @@ function SessionKeySendCard({
 /**
  * Direct signing card — opens a dashboard popup for approval, user pays gas
  */
-function DirectSigningCard({
-  accountAddress,
-}: {
-  accountAddress: string;
-}) {
+function DirectSigningCard({ accountAddress }: { accountAddress: string }) {
   const { client, error } = useAbstraxionSigningClient({ requireAuth: true });
   const [isSending, setIsSending] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -318,9 +325,16 @@ function DirectSigningCard({
       </div>
 
       <div className="space-y-1 text-xs text-gray-400">
-        <p><strong>Hook:</strong> useAbstraxionSigningClient({"{"} requireAuth: true {"}"})</p>
-        <p><strong>Signs with:</strong> meta-account (popup approval)</p>
-        <p><strong>Gas:</strong> user pays from balance</p>
+        <p>
+          <strong>Hook:</strong> useAbstraxionSigningClient({"{"} requireAuth:
+          true {"}"})
+        </p>
+        <p>
+          <strong>Signs with:</strong> meta-account (popup approval)
+        </p>
+        <p>
+          <strong>Gas:</strong> user pays from balance
+        </p>
       </div>
 
       <div className="border-t border-white/10 pt-2">
@@ -346,9 +360,7 @@ function DirectSigningCard({
         {isSending ? "SIGNING..." : "SEND 0.001 XION"}
       </Button>
 
-      <p className="text-center text-xs text-gray-500">
-        Opens approval popup
-      </p>
+      <p className="text-center text-xs text-gray-500">Opens approval popup</p>
 
       {txHash && (
         <div className="rounded border border-amber-500/20 bg-amber-500/10 p-2">

@@ -38,7 +38,10 @@ export function useMetamask(): UseMetamaskReturn {
   const [error, setError] = useState<string | undefined>(undefined);
 
   // Check if MetaMask is available
-  const isMetaMaskAvailable = typeof window !== "undefined" && !!window.ethereum && !!(window.ethereum as any).isMetaMask;
+  const isMetaMaskAvailable =
+    typeof window !== "undefined" &&
+    !!window.ethereum &&
+    !!(window.ethereum as any).isMetaMask;
 
   // Handle account changes
   useEffect(() => {
@@ -60,7 +63,10 @@ export function useMetamask(): UseMetamaskReturn {
     window.ethereum?.on?.("accountsChanged", handleAccountsChanged);
 
     return () => {
-      window.ethereum?.removeListener?.("accountsChanged", handleAccountsChanged);
+      window.ethereum?.removeListener?.(
+        "accountsChanged",
+        handleAccountsChanged,
+      );
     };
   }, [isMetaMaskAvailable]);
 

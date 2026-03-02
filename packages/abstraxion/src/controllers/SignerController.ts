@@ -20,6 +20,14 @@ import {
   getAccountInfoFromRestored,
 } from "@burnt-labs/account-management";
 import type { Connector, StorageStrategy } from "@burnt-labs/abstraxion-core";
+import type { EncodeObject } from "@cosmjs/proto-signing";
+import { GasPrice } from "@cosmjs/stargate";
+import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
+import {
+  AAClient,
+  createSignerFromSigningFunction,
+  type AuthenticatorType,
+} from "@burnt-labs/signers";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { SignerAuthentication } from "../types";
@@ -271,6 +279,50 @@ export class SignerController extends BaseController {
    */
   getConnectionInfo(): ConnectorConnectionResult | undefined {
     return this.connectionInfo ?? undefined;
+  }
+
+  /**
+   * Sign and broadcast a transaction using the user's direct authenticator (meta-account).
+   *
+   * Uses the connectionInfo from connect() to create an AAClient and sign
+   * the transaction directly with the user's authenticator.
+   */
+  async signWithMetaAccount(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    fee: StdFee | "auto" | number,
+    memo?: string,
+  ): Promise<DeliverTxResponse> {
+    if (!this.connectionInfo) {
+      throw new Error(
+        "No authenticator available for direct signing. Please reconnect your wallet.",
+      );
+    }
+
+    const authenticatorType = this.connectionInfo.metadata?.authenticatorType;
+    if (!authenticatorType) {
+      throw new Error(
+        "Authenticator type not found in connection metadata. Please reconnect your wallet.",
+      );
+    }
+
+    const authenticatorIndex =
+      this.connectionInfo.metadata?.authenticatorIndex ?? 0;
+
+    const signer = createSignerFromSigningFunction({
+      smartAccountAddress: signerAddress,
+      authenticatorIndex,
+      authenticatorType: authenticatorType as AuthenticatorType,
+      signMessage: this.connectionInfo.signMessage,
+    });
+
+    const client = await AAClient.connectWithSigner(
+      this.config.rpcUrl,
+      signer,
+      { gasPrice: GasPrice.fromString(this.config.gasPrice) },
+    );
+
+    return client.signAndBroadcast(signerAddress, messages, fee, memo);
   }
 
   /**

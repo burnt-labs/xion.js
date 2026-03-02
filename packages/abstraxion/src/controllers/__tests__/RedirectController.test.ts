@@ -65,9 +65,7 @@ describe("RedirectController", () => {
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",
         ),
-      ).rejects.toThrow(
-        "Direct signing is not supported with redirect mode.",
-      );
+      ).rejects.toThrow("Direct signing is not supported with redirect mode.");
     });
 
     it("should explain why redirect mode cannot support direct signing", async () => {

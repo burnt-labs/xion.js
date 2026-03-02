@@ -33,8 +33,6 @@ export default function PopupDemoLayout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <AbstraxionProvider config={autoModeConfig}>
-      {children}
-    </AbstraxionProvider>
+    <AbstraxionProvider config={autoModeConfig}>{children}</AbstraxionProvider>
   );
 }

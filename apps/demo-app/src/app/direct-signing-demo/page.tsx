@@ -159,9 +159,9 @@ function DirectSigningCard({
         const balances = await queryClient.getAllBalances(accountAddress);
         const xionBalance = balances.find((b) => b.denom === "uxion");
         if (xionBalance) {
-          const xionAmount = (
-            parseInt(xionBalance.amount) / 1_000_000
-          ).toFixed(6);
+          const xionAmount = (parseInt(xionBalance.amount) / 1_000_000).toFixed(
+            6,
+          );
           setBalance(xionAmount);
         } else {
           setBalance("0");
@@ -430,9 +430,9 @@ export default function DirectSigningDemoPage() {
         Direct Signing Demo
       </h1>
       <p className="max-w-lg text-center text-gray-400">
-        This demo shows the difference between <strong>session key signing</strong>{" "}
-        (default, gasless) and <strong>direct signing</strong> (wallet popup, user
-        pays gas).
+        This demo shows the difference between{" "}
+        <strong>session key signing</strong> (default, gasless) and{" "}
+        <strong>direct signing</strong> (wallet popup, user pays gas).
       </p>
 
       {!isConnected && (

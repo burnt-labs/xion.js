@@ -30,9 +30,7 @@ export function isMobileOrStandalone(): boolean {
   const isMobile =
     hasMobileUA || (isTouchDevice && (isNarrow || isPortraitRatio));
 
-  const isStandalone = window.matchMedia(
-    "(display-mode: standalone)",
-  ).matches;
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
 
   return isMobile || isStandalone;
 }

@@ -25,7 +25,8 @@ vi.mock("@cosmjs/stargate", () => ({
 }));
 
 vi.mock("@burnt-labs/account-management", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@burnt-labs/account-management")>();
+  const actual =
+    await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
     ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
@@ -41,10 +42,7 @@ vi.mock("@burnt-labs/account-management", async (importOriginal) => {
 import { SignerController } from "../SignerController";
 import type { SignerControllerConfig } from "../SignerController";
 import type { ConnectorConnectionResult } from "@burnt-labs/abstraxion-core";
-import {
-  AAClient,
-  createSignerFromSigningFunction,
-} from "@burnt-labs/signers";
+import { AAClient, createSignerFromSigningFunction } from "@burnt-labs/signers";
 
 describe("SignerController", () => {
   const mockSessionManager = {
@@ -114,7 +112,9 @@ describe("SignerController", () => {
 
       // Simulate a connection by setting connectionInfo without authenticatorType
       // Access private property for testing
-      (controller as unknown as { connectionInfo: ConnectorConnectionResult }).connectionInfo = {
+      (
+        controller as unknown as { connectionInfo: ConnectorConnectionResult }
+      ).connectionInfo = {
         authenticator: "0x1234567890abcdef",
         signMessage: vi.fn(),
         metadata: {
@@ -144,17 +144,23 @@ describe("SignerController", () => {
       });
 
       // Mock AAClient.connectWithSigner
-      (AAClient.connectWithSigner as ReturnType<typeof vi.fn>).mockResolvedValue({
+      (
+        AAClient.connectWithSigner as ReturnType<typeof vi.fn>
+      ).mockResolvedValue({
         signAndBroadcast: mockSignAndBroadcast,
       });
 
       // Mock createSignerFromSigningFunction
       const mockSigner = { type: "mock-signer" };
-      (createSignerFromSigningFunction as ReturnType<typeof vi.fn>).mockReturnValue(mockSigner);
+      (
+        createSignerFromSigningFunction as ReturnType<typeof vi.fn>
+      ).mockReturnValue(mockSigner);
 
       // Set up valid connectionInfo
       const mockSignMessage = vi.fn().mockResolvedValue("0xsignature");
-      (controller as unknown as { connectionInfo: ConnectorConnectionResult }).connectionInfo = {
+      (
+        controller as unknown as { connectionInfo: ConnectorConnectionResult }
+      ).connectionInfo = {
         authenticator: "0x1234567890abcdef",
         signMessage: mockSignMessage,
         metadata: {
@@ -163,10 +169,11 @@ describe("SignerController", () => {
         },
       };
 
-      const messages = [
-        { typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} },
-      ];
-      const fee = { amount: [{ denom: "uxion", amount: "1000" }], gas: "200000" };
+      const messages = [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }];
+      const fee = {
+        amount: [{ denom: "uxion", amount: "1000" }],
+        gas: "200000",
+      };
       const memo = "Test memo";
 
       const result = await controller.signWithMetaAccount(
@@ -216,16 +223,22 @@ describe("SignerController", () => {
         transactionHash: "0xabc123",
       });
 
-      (AAClient.connectWithSigner as ReturnType<typeof vi.fn>).mockResolvedValue({
+      (
+        AAClient.connectWithSigner as ReturnType<typeof vi.fn>
+      ).mockResolvedValue({
         signAndBroadcast: mockSignAndBroadcast,
       });
 
       const mockSigner = { type: "mock-signer" };
-      (createSignerFromSigningFunction as ReturnType<typeof vi.fn>).mockReturnValue(mockSigner);
+      (
+        createSignerFromSigningFunction as ReturnType<typeof vi.fn>
+      ).mockReturnValue(mockSigner);
 
       // Set up connectionInfo without authenticatorIndex
       const mockSignMessage = vi.fn().mockResolvedValue("0xsignature");
-      (controller as unknown as { connectionInfo: ConnectorConnectionResult }).connectionInfo = {
+      (
+        controller as unknown as { connectionInfo: ConnectorConnectionResult }
+      ).connectionInfo = {
         authenticator: "base64pubkey",
         signMessage: mockSignMessage,
         metadata: {
@@ -254,7 +267,9 @@ describe("SignerController", () => {
       const controller = createController();
 
       // Set up connectionInfo
-      (controller as unknown as { connectionInfo: ConnectorConnectionResult }).connectionInfo = {
+      (
+        controller as unknown as { connectionInfo: ConnectorConnectionResult }
+      ).connectionInfo = {
         authenticator: "0x1234567890abcdef",
         signMessage: vi.fn(),
         metadata: {

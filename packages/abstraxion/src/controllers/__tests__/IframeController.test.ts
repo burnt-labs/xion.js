@@ -6,7 +6,8 @@ import { describe, it, expect, vi } from "vitest";
 
 // Mock the external dependencies before importing the controller
 vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
+  const actual =
+    await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
   return {
     ...actual,
     AbstraxionAuth: vi.fn().mockImplementation(() => ({
@@ -51,7 +52,8 @@ vi.mock("@cosmjs/stargate", async (importOriginal) => {
 });
 
 vi.mock("@burnt-labs/account-management", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@burnt-labs/account-management")>();
+  const actual =
+    await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
     ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
@@ -99,7 +101,7 @@ describe("IframeController", () => {
   };
 
   describe("signWithMetaAccount", () => {
-    it("should throw 'not yet implemented' error", async () => {
+    it("should throw when iframe is not available", async () => {
       const controller = createController();
 
       await expect(
@@ -109,7 +111,7 @@ describe("IframeController", () => {
           "auto",
         ),
       ).rejects.toThrow(
-        "Iframe direct signing is not yet implemented. Coming in Phase 2.",
+        "Iframe is not available. Ensure the iframe is mounted and the user is connected.",
       );
     });
 
@@ -125,19 +127,18 @@ describe("IframeController", () => {
         // Should not reach here
         expect(true).toBe(false);
       } catch (error) {
-        expect((error as Error).message).toContain("signer mode");
-        expect((error as Error).message).toContain("requireAuth");
+        expect((error as Error).message).toContain("iframe");
+        expect((error as Error).message).toContain("connected");
       }
     });
   });
 
   describe("connect", () => {
-    it("should throw if containerElement is not provided", async () => {
+    it("should throw in non-browser environment", async () => {
       const controller = createController();
 
-      await expect(controller.connect()).rejects.toThrow(
-        "containerElement is required",
-      );
+      // In node environment (no window/document), connect will fail
+      await expect(controller.connect()).rejects.toThrow();
     });
   });
 });

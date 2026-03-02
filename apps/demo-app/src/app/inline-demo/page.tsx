@@ -81,7 +81,11 @@ export default function InlineDemoPage(): JSX.Element {
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2">
             {[
-              { label: "isInitializing", value: isInitializing, color: "yellow" },
+              {
+                label: "isInitializing",
+                value: isInitializing,
+                color: "yellow",
+              },
               { label: "isConnecting", value: isConnecting, color: "blue" },
               { label: "isConnected", value: isConnected, color: "green" },
               { label: "isLoading", value: isLoading, color: "orange" },
@@ -91,9 +95,7 @@ export default function InlineDemoPage(): JSX.Element {
                 <div className="flex items-center gap-1">
                   <div
                     className={`h-2 w-2 rounded-full ${
-                      value
-                        ? `animate-pulse bg-${color}-400`
-                        : "bg-gray-600"
+                      value ? `animate-pulse bg-${color}-400` : "bg-gray-600"
                     }`}
                   />
                   <span
@@ -163,11 +165,7 @@ export default function InlineDemoPage(): JSX.Element {
 /**
  * Session key signing card — uses the grantee keypair, gasless via fee grant
  */
-function SessionKeySendCard({
-  accountAddress,
-}: {
-  accountAddress: string;
-}) {
+function SessionKeySendCard({ accountAddress }: { accountAddress: string }) {
   const { client } = useAbstraxionSigningClient();
   const [isSending, setIsSending] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -202,8 +200,13 @@ function SessionKeySendCard({
       </div>
 
       <div className="space-y-1 text-xs text-gray-400">
-        <p><strong>Signs with:</strong> grantee keypair (no popup, no iframe interaction)</p>
-        <p><strong>Gas:</strong> fee grant (gasless)</p>
+        <p>
+          <strong>Signs with:</strong> grantee keypair (no popup, no iframe
+          interaction)
+        </p>
+        <p>
+          <strong>Gas:</strong> fee grant (gasless)
+        </p>
       </div>
 
       <div className="border-t border-white/10 pt-2">
@@ -217,7 +220,12 @@ function SessionKeySendCard({
         </p>
       </div>
 
-      <Button fullWidth onClick={handleSend} disabled={isSending || !client} structure="base">
+      <Button
+        fullWidth
+        onClick={handleSend}
+        disabled={isSending || !client}
+        structure="base"
+      >
         {isSending ? "SENDING..." : "SEND 0.001 XION"}
       </Button>
 
@@ -239,11 +247,7 @@ function SessionKeySendCard({
 /**
  * Direct signing card — routes approval through the iframe, user pays gas
  */
-function DirectSigningCard({
-  accountAddress,
-}: {
-  accountAddress: string;
-}) {
+function DirectSigningCard({ accountAddress }: { accountAddress: string }) {
   const { client, error } = useAbstraxionSigningClient({ requireAuth: true });
   const [isSending, setIsSending] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -278,9 +282,16 @@ function DirectSigningCard({
       </div>
 
       <div className="space-y-1 text-xs text-gray-400">
-        <p><strong>Hook:</strong> useAbstraxionSigningClient({"{"} requireAuth: true {"}"})</p>
-        <p><strong>Signs with:</strong> meta-account (iframe approval)</p>
-        <p><strong>Gas:</strong> user pays from balance</p>
+        <p>
+          <strong>Hook:</strong> useAbstraxionSigningClient({"{"} requireAuth:
+          true {"}"})
+        </p>
+        <p>
+          <strong>Signs with:</strong> meta-account (iframe approval)
+        </p>
+        <p>
+          <strong>Gas:</strong> user pays from balance
+        </p>
       </div>
 
       <div className="border-t border-white/10 pt-2">

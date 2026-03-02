@@ -23,8 +23,7 @@ const inlineModeConfig = {
 
   authentication: {
     type: "iframe" as const,
-    iframeUrl:
-      process.env.NEXT_PUBLIC_IFRAME_URL || "http://localhost:3000",
+    iframeUrl: process.env.NEXT_PUBLIC_IFRAME_URL || "http://localhost:3000",
   },
 };
 
