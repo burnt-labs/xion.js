@@ -20,10 +20,16 @@ import type {
   StorageStrategy,
   RedirectStrategy,
 } from "@burnt-labs/abstraxion-core";
-import { fetchConfig } from "@burnt-labs/constants";
+import { fetchConfig, getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import { GasPrice } from "@cosmjs/stargate";
 import type { EncodeObject } from "@cosmjs/proto-signing";
 import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
+import {
+  ConnectionOrchestrator,
+  isSessionRestorationError,
+  isSessionRestored,
+  getAccountInfoFromRestored,
+} from "@burnt-labs/account-management";
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
 import type { PopupAuthentication, NormalizedAbstraxionConfig } from "../types";
@@ -51,6 +57,8 @@ export interface PopupControllerConfig {
 export class PopupController extends BaseController {
   private config: PopupControllerConfig;
   private abstraxionAuth: AbstraxionAuth;
+  private orchestrator: ConnectionOrchestrator;
+  private initializePromise: Promise<void> | null = null;
 
   static fromConfig(
     config: NormalizedAbstraxionConfig,
@@ -89,6 +97,12 @@ export class PopupController extends BaseController {
       config.redirectStrategy,
     );
 
+    // Provide treasuryIndexerUrl so pollForGrants() can verify treasury grants
+    // on session restore (same as RedirectController)
+    const treasuryIndexerUrl = config.treasury
+      ? getDaoDaoIndexerUrl(config.chainId)
+      : undefined;
+
     this.abstraxionAuth.configureAbstraxionInstance(
       config.rpcUrl,
       config.contracts,
@@ -96,51 +110,71 @@ export class PopupController extends BaseController {
       config.bank,
       undefined, // callbackUrl — not used in popup mode
       config.treasury,
-      undefined, // treasuryIndexerUrl — not needed for URL building
+      treasuryIndexerUrl,
       config.gasPrice,
     );
+
+    // Create orchestrator for session restoration (same pattern as RedirectController/SignerController)
+    const grantConfig =
+      config.treasury || config.contracts || config.bank || config.stake
+        ? {
+            treasury: config.treasury,
+            contracts: config.contracts,
+            bank: config.bank,
+            stake: config.stake,
+          }
+        : undefined;
+
+    this.orchestrator = new ConnectionOrchestrator({
+      sessionManager: this.abstraxionAuth,
+      storageStrategy: config.storageStrategy,
+      grantConfig,
+      chainId: config.chainId,
+      rpcUrl: config.rpcUrl,
+      gasPrice: config.gasPrice,
+    });
   }
 
   /**
-   * Initialize: attempt to restore a prior session from storage (same keys as redirect)
+   * Initialize: attempt to restore a prior session from storage
+   * Uses orchestrator.restoreSession() — same pattern as RedirectController and SignerController.
+   * Idempotent: returns the same promise if called while already initializing
+   * (guards against React strict-mode double-invocation)
    */
   async initialize(): Promise<void> {
+    if (this.initializePromise) return this.initializePromise;
+    this.initializePromise = this.doInitialize();
+    return this.initializePromise;
+  }
+
+  private async doInitialize(): Promise<void> {
     try {
-      const keypair = await this.abstraxionAuth.getLocalKeypair();
-      const granterAddress = await this.abstraxionAuth.getGranter();
+      // Restore session via orchestrator (verifies grants on-chain, creates signing client)
+      const restorationResult = await this.orchestrator.restoreSession(true);
 
-      if (keypair && granterAddress) {
-        // getSigner() checks this.abstractAccount (in-memory); getLocalKeypair()
-        // only reads from storage, so we must sync the in-memory property here.
-        this.abstraxionAuth.abstractAccount = keypair;
-        try {
-          const accounts = await keypair.getAccounts();
-          const granteeAddress = accounts[0]?.address;
+      if (
+        isSessionRestored(restorationResult) &&
+        restorationResult.signingClient
+      ) {
+        const accountInfo = getAccountInfoFromRestored(restorationResult);
 
-          if (granteeAddress) {
-            const signingClient = await this.abstraxionAuth.getSigner(
-              GasPrice.fromString(this.config.gasPrice),
-            );
-
-            const accountInfo: AccountInfo = {
-              keypair,
-              granterAddress,
-              granteeAddress,
-            };
-
-            this.dispatch({
-              type: "SET_CONNECTED",
-              account: accountInfo,
-              signingClient,
-            });
-            return;
-          }
-        } catch {
-          // Stored session is invalid — clear and fall through to idle
-          await this.abstraxionAuth.logout();
-        }
+        this.dispatch({
+          type: "SET_CONNECTED",
+          account: accountInfo,
+          signingClient: restorationResult.signingClient,
+        });
+        return;
       }
 
+      if (isSessionRestorationError(restorationResult)) {
+        this.dispatch({
+          type: "SET_ERROR",
+          error: restorationResult.error,
+        });
+        return;
+      }
+
+      // No session to restore — transition to idle
       this.dispatch({ type: "RESET" });
     } catch (error) {
       console.error("[PopupController] Initialization error:", error);
@@ -422,5 +456,13 @@ export class PopupController extends BaseController {
       account: accountInfo,
       signingClient,
     });
+  }
+
+  /**
+   * Cleanup resources
+   */
+  destroy(): void {
+    super.destroy();
+    this.orchestrator.destroy();
   }
 }

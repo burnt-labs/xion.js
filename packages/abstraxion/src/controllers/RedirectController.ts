@@ -18,6 +18,7 @@ import {
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import type { EncodeObject } from "@cosmjs/proto-signing";
+import { GasPrice } from "@cosmjs/stargate";
 import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
 import { fetchConfig } from "@burnt-labs/constants";
 import { BaseController } from "./BaseController";
@@ -75,6 +76,7 @@ export class RedirectController extends BaseController {
   private orchestrator: ConnectionOrchestrator;
   private config: RedirectControllerConfig;
   private signResult_: SignResult | null = null;
+  private initializePromise: Promise<void> | null = null;
 
   /**
    * Factory method to create RedirectController from NormalizedAbstraxionConfig
@@ -184,42 +186,76 @@ export class RedirectController extends BaseController {
   /**
    * Initialize the controller
    * Checks for redirect callback, attempts to restore session
+   * Idempotent: returns the same promise if called while already initializing
+   * (guards against React strict-mode double-invocation)
    */
   async initialize(): Promise<void> {
+    if (this.initializePromise) return this.initializePromise;
+    this.initializePromise = this.doInitialize();
+    return this.initializePromise;
+  }
+
+  private async doInitialize(): Promise<void> {
     // Check for signing result return (tx_hash / sign_rejected / sign_error)
     this.detectSignResult();
 
     // Check if we're returning from dashboard redirect FIRST
     // If so, transition from initializing to connecting
     if (this.isReturningFromRedirect()) {
-      // We're returning from dashboard - handle callback
-      // Transition from initializing to connecting
+      // We're returning from dashboard with ?granted=true — complete the
+      // connection directly (same approach as PopupController.completeConnection).
+      // This avoids going through performLogin() → pollForGrants() which has
+      // strict grant comparison logic and an isLoginInProgress guard that
+      // breaks under React strict-mode double-invocation.
       this.dispatch({ type: "START_CONNECT" });
 
       try {
-        // Use orchestrator to complete redirect flow
-        const result = await this.orchestrator.completeRedirect();
-
-        // Type guard to ensure we have a successful restoration
-        if (!isSessionRestored(result) || !result.signingClient) {
-          throw new Error("Failed to complete redirect flow");
+        // 1. Read keypair from storage (was generated before redirect)
+        const keypair = await this.abstraxionAuth.getLocalKeypair();
+        if (!keypair) {
+          throw new Error(
+            "Session keypair not found after redirect. Storage may have been cleared.",
+          );
         }
 
-        const accounts = await result.keypair.getAccounts();
-        // expected, dashboard only ever returns one account
+        // 2. Read granter from URL params (set by dashboard redirect)
+        const searchParams = new URLSearchParams(window.location.search);
+        const granterAddress = searchParams.get("granter");
+        if (!granterAddress) {
+          throw new Error(
+            "Granter address missing from redirect callback URL.",
+          );
+        }
+
+        // 3. Persist granter + sync in-memory state (same as PopupController)
+        await this.abstraxionAuth.setGranter(granterAddress);
+        this.abstraxionAuth.abstractAccount = keypair;
+
+        // 4. Create signing client
+        const signingClient = await this.abstraxionAuth.getSigner(
+          GasPrice.fromString(this.config.gasPrice),
+        );
+
+        const accounts = await keypair.getAccounts();
         const granteeAddress = accounts[0].address;
 
         const accountInfo: AccountInfo = {
-          keypair: result.keypair,
-          granterAddress: result.granterAddress,
+          keypair,
+          granterAddress,
           granteeAddress,
         };
 
         this.dispatch({
           type: "SET_CONNECTED",
           account: accountInfo,
-          signingClient: result.signingClient,
+          signingClient,
         });
+
+        // 5. Clean redirect params from URL
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("granted");
+        cleanUrl.searchParams.delete("granter");
+        history.replaceState({}, "", cleanUrl.href);
       } catch (error) {
         console.error(
           "[RedirectController] Error completing redirect callback:",

@@ -2,16 +2,16 @@
 import { AbstraxionProvider } from "@burnt-labs/abstraxion";
 
 /**
- * Popup mode — opens the auth app in a popup window.
+ * Auto mode — popup on desktop, redirect on mobile/PWA.
  *
- * Functionally identical to redirect mode but the user stays on the dApp page.
- * The popup handles login + grant approval, then postMessages CONNECT_SUCCESS back
- * to the opener and closes itself.
+ * The "auto" authentication type detects the environment and resolves to:
+ * - Desktop browsers → popup (user stays on this page)
+ * - Mobile / PWA → redirect (navigates to auth app and back)
  *
  * Auth app URL defaults to the chain-specific dashboard URL from constants.
  * Override with the authAppUrl option if using a local or custom deployment.
  */
-const popupModeConfig = {
+const autoModeConfig = {
   chainId: "xion-testnet-2",
   treasury: process.env.NEXT_PUBLIC_TREASURY_ADDRESS,
   rpcUrl:
@@ -22,7 +22,7 @@ const popupModeConfig = {
   gasPrice: process.env.NEXT_PUBLIC_GAS_PRICE || "0.001uxion",
 
   authentication: {
-    type: "popup" as const,
+    type: "auto" as const,
     authAppUrl: "http://localhost:3000",
   },
 };
@@ -33,7 +33,7 @@ export default function PopupDemoLayout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <AbstraxionProvider config={popupModeConfig}>
+    <AbstraxionProvider config={autoModeConfig}>
       {children}
     </AbstraxionProvider>
   );

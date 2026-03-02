@@ -156,7 +156,8 @@ export function useMetamask(): UseMetamaskReturn {
         }
 
         // Use personal_sign (EIP-191)
-        const signature = (await window.ethereum.request({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const signature = (await (window.ethereum as any).request({
           method: "personal_sign",
           params: [hexMessage, ethereumAddress],
         })) as string;
