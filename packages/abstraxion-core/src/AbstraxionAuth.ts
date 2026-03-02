@@ -17,6 +17,7 @@ import {
   compareContractGrants,
   compareStakeGrants,
   decodeAuthorization,
+  decodeRestFormatAuthorization,
   fetchChainGrantsABCI,
   getTreasuryGrantConfigs,
 } from "@/utils/grant";
@@ -409,12 +410,11 @@ export class AbstraxionAuth {
         );
       });
 
+    // Chain grants from fetchChainGrantsABCI are already decoded to REST format
+    // (with "@type" and snake_case fields). Convert to DecodedReadableAuthorization.
     const decodedChainConfigs: DecodedReadableAuthorization[] =
       grantsResponse.grants.map((grantResponse) => {
-        return decodeAuthorization(
-          grantResponse.authorization.typeUrl,
-          grantResponse.authorization.value,
-        );
+        return decodeRestFormatAuthorization(grantResponse.authorization);
       });
 
     return compareChainGrantsToTreasuryGrants(
@@ -442,12 +442,11 @@ export class AbstraxionAuth {
         );
       });
 
+    // Chain grants from fetchChainGrantsABCI are already decoded to REST format
+    // (with "@type" and snake_case fields). Convert to DecodedReadableAuthorization.
     const decodedChainConfigs: DecodedReadableAuthorization[] =
       grantsResponse.grants.map((grantResponse) => {
-        return decodeAuthorization(
-          grantResponse.authorization.typeUrl,
-          grantResponse.authorization.value,
-        );
+        return decodeRestFormatAuthorization(grantResponse.authorization);
       });
 
     return compareChainGrantsToTreasuryGrants(

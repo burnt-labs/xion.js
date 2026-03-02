@@ -129,3 +129,86 @@ export const decodeAuthorization = (
       return { type: AuthorizationTypes.Unsupported, data: null };
   }
 };
+
+/**
+ * Reverse map from string authorization_type back to numeric enum
+ */
+const STAKE_AUTH_TYPE_REVERSE: Record<string, number> = {
+  AUTHORIZATION_TYPE_UNSPECIFIED: 0,
+  AUTHORIZATION_TYPE_DELEGATE: 1,
+  AUTHORIZATION_TYPE_UNDELEGATE: 2,
+  AUTHORIZATION_TYPE_REDELEGATE: 3,
+};
+
+/**
+ * Converts a REST-format authorization object (as returned by fetchChainGrantsABCI
+ * after the decodeAuthorizationToRestFormat step) into a DecodedReadableAuthorization.
+ *
+ * This is needed because fetchChainGrantsABCI decodes protobuf grants into REST JSON
+ * format (with "@type", snake_case fields) for the legacy compare functions, but the
+ * treasury comparison path expects DecodedReadableAuthorization (camelCase protobuf types).
+ *
+ * @param auth - REST-format authorization object with "@type" and decoded fields
+ * @returns DecodedReadableAuthorization compatible with compareChainGrantsToTreasuryGrants
+ */
+export const decodeRestFormatAuthorization = (
+  auth: Record<string, unknown>,
+): DecodedReadableAuthorization => {
+  const typeUrl = auth["@type"] as string | undefined;
+
+  switch (typeUrl) {
+    case AuthorizationTypes.Generic:
+      return {
+        type: AuthorizationTypes.Generic,
+        data: GenericAuthorization.fromPartial({
+          msg: auth.msg as string,
+        }),
+      };
+
+    case AuthorizationTypes.Send: {
+      const spendLimit = (
+        auth.spend_limit as Array<{ denom: string; amount: string }>
+      ).map((c) => ({ denom: c.denom, amount: c.amount }));
+      const allowList = (auth.allow_list as string[]) || [];
+      return {
+        type: AuthorizationTypes.Send,
+        data: SendAuthorization.fromPartial({ spendLimit, allowList }),
+      };
+    }
+
+    case AuthorizationTypes.Stake: {
+      const authType =
+        STAKE_AUTH_TYPE_REVERSE[auth.authorization_type as string] ?? 0;
+      const maxTokens = auth.max_tokens as {
+        denom: string;
+        amount: string;
+      } | null;
+      return {
+        type: AuthorizationTypes.Stake,
+        data: StakeAuthorization.fromPartial({
+          authorizationType: authType,
+          maxTokens: maxTokens
+            ? { denom: maxTokens.denom, amount: maxTokens.amount }
+            : undefined,
+          allowList: {
+            address: (auth.allow_list as string[]) || [],
+          },
+          denyList: {
+            address: (auth.deny_list as string[]) || [],
+          },
+        }),
+      };
+    }
+
+    case AuthorizationTypes.ContractExecution:
+      // Contract execution keeps raw bytes in REST format default case,
+      // so we can decode from the raw value if present
+      if (auth.value instanceof Uint8Array) {
+        return decodeAuthorization(typeUrl, auth.value);
+      }
+      return { type: AuthorizationTypes.Unsupported, data: null };
+
+    default:
+      return { type: AuthorizationTypes.Unsupported, data: null };
+  }
+};
