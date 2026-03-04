@@ -34,6 +34,25 @@ export interface TreasuryContractResponse {
 }
 
 /**
+ * Queries the treasury-worker API for already-decoded treasury data.
+ * Use this instead of queryTreasuryContractWithPermissions when the treasury-worker
+ * API is available, as it returns pre-decoded permission descriptions without
+ * needing a chain client or strategy.
+ */
+export async function queryTreasuryFromApi(
+  apiUrl: string,
+  contractAddress: string,
+): Promise<TreasuryContractResponse> {
+  const response = await fetch(`${apiUrl}/treasury/${contractAddress}`);
+  if (!response.ok) {
+    throw new Error(
+      `Treasury API query failed: ${response.status} ${response.statusText}`,
+    );
+  }
+  return response.json();
+}
+
+/**
  * Queries the DAPP treasury contract to parse and display requested permissions to end user
  * @param contractAddress - The address for the deployed treasury contract instance
  * @param client - Client to query RPC (must have queryContractSmart method)

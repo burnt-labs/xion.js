@@ -3,7 +3,10 @@
  */
 
 // Discovery utilities (query/discover treasury contracts)
-export { queryTreasuryContractWithPermissions } from "./discovery";
+export {
+  queryTreasuryContractWithPermissions,
+  queryTreasuryFromApi,
+} from "./discovery";
 export type { TreasuryContractResponse } from "./discovery";
 
 // Construction utilities (build grant messages)
