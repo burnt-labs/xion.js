@@ -3,11 +3,13 @@ import type {
   NormalizedAbstraxionConfig,
   SignerAuthentication,
 } from "../types";
+import { resolveAutoAuth } from "./resolveAutoAuth";
 import {
   getFeeGranter,
   getRpcUrl,
   getRestUrl,
   getDaoDaoIndexerUrl,
+  getIframeUrl,
   xionGasValues,
 } from "@burnt-labs/constants";
 import type {
@@ -30,18 +32,36 @@ import {
 export function normalizeAbstraxionConfig(
   config: AbstraxionConfig,
 ): NormalizedAbstraxionConfig {
+  // Resolve "auto" → "popup" or "redirect" based on device before anything else
+  const resolvedAuthentication = resolveAutoAuth(config.authentication);
+  if (resolvedAuthentication !== config.authentication) {
+    config = { ...config, authentication: resolvedAuthentication };
+  }
+
   const { chainId } = config;
 
   // Get defaults from constants based on chainId
   const defaultRpcUrl = getRpcUrl(chainId);
   const defaultRestUrl = getRestUrl(chainId);
   const defaultFeeGranter = getFeeGranter(chainId);
+  const defaultIframeUrl = getIframeUrl(chainId);
 
   // Use provided values or defaults
   const rpcUrl = config.rpcUrl || defaultRpcUrl;
   const restUrl = config.restUrl || defaultRestUrl;
   const gasPrice = config.gasPrice || xionGasValues.gasPrice;
   const feeGranter = config.feeGranter || defaultFeeGranter;
+
+  // Set iframe URL default if using iframe authentication (avoid mutating input)
+  if (config.authentication?.type === "iframe") {
+    config = {
+      ...config,
+      authentication: {
+        ...config.authentication,
+        iframeUrl: config.authentication.iframeUrl || defaultIframeUrl,
+      },
+    };
+  }
 
   // Validate required fields
   if (!rpcUrl) {

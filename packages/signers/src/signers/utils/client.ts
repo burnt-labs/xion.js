@@ -59,8 +59,12 @@ function createDefaultRegistry(): Registry {
 }
 
 /**
- * @deprecated This class is deprecated and will no longer be maintained.
- * Please contact the Burnt Labs team for alternative solutions.
+ * AAClient - Abstract Account signing client
+ *
+ * Extends SigningCosmWasmClient to support XION's Abstract Account signatures.
+ * Used for direct signing where the user's authenticator signs transactions.
+ *
+ * @see {@link GranteeSignerClient} for session key signing (gasless transactions)
  */
 export class AAClient extends SigningCosmWasmClient {
   /// The signer used to crate AA signatures

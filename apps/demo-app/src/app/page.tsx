@@ -25,6 +25,21 @@ export default function Page(): JSX.Element {
             SIGNER MODE
           </Button>
         </Link>
+        <Link href="/direct-signing-demo">
+          <Button fullWidth structure="base">
+            DIRECT SIGNING DEMO
+          </Button>
+        </Link>
+        <Link href="/popup-demo">
+          <Button fullWidth structure="base">
+            POPUP AUTH DEMO
+          </Button>
+        </Link>
+        <Link href="/inline-demo">
+          <Button fullWidth structure="base">
+            INLINE IFRAME DEMO
+          </Button>
+        </Link>
       </div>
       <p className="mt-4 text-center text-xs text-gray-500">
         <strong>Loading States</strong> shows manual hook usage with custom UI.
@@ -34,6 +49,12 @@ export default function Page(): JSX.Element {
         <br />
         <strong>Signer Mode</strong> allows wallet connections without dashboard
         redirect.
+        <br />
+        <strong>Direct Signing Demo</strong> compares session key vs direct
+        signing modes.
+        <br />
+        <strong>Popup Auth Demo</strong> opens the auth app in a popup window —
+        dApp stays loaded.
       </p>
     </main>
   );

@@ -3,6 +3,7 @@ import { createContext, useCallback, useEffect, useState, useRef } from "react";
 import {
   SignArbSecp256k1HdWallet,
   GranteeSignerClient,
+  type ConnectorConnectionResult,
 } from "@burnt-labs/abstraxion-core";
 import type { AccountState } from "@burnt-labs/account-management";
 import {
@@ -58,8 +59,22 @@ export interface AbstraxionContextProps {
   treasuryIndexerUrl?: string;
 
   // Authentication
-  authMode: "signer" | "redirect";
+  authMode: "signer" | "redirect" | "iframe" | "popup";
   authentication?: AuthenticationConfig;
+
+  /**
+   * Connection info for direct signing (signer mode only)
+   * Contains signMessage function and authenticator metadata
+   * Used by useAbstraxionSigningClient({ requireAuth: true })
+   */
+  connectionInfo?: ConnectorConnectionResult;
+
+  /**
+   * The active controller instance.
+   * Hooks use instanceof narrowing to access mode-specific capabilities
+   * (e.g. PopupController.promptAndSign for direct signing in popup mode).
+   */
+  controller?: Controller;
 
   // Actions
   logout: () => Promise<void>;
@@ -99,6 +114,8 @@ const defaultContextValue: AbstraxionContextProps = {
   // Authentication
   authMode: "redirect",
   authentication: undefined,
+  connectionInfo: undefined,
+  controller: undefined,
 
   // Actions - throw errors if called before provider mounts
   logout: async () => {
@@ -159,8 +176,11 @@ export function AbstraxionProvider({
       ? authentication.treasuryIndexer
       : undefined;
 
-  // Determine authentication mode - defaults to redirect unless set in config
-  const authMode = authentication?.type || "redirect";
+  const authMode = (authentication?.type || "redirect") as
+    | "signer"
+    | "redirect"
+    | "iframe"
+    | "popup";
 
   if (!controllerRef.current) {
     // First render: Create controller with normalized config
@@ -208,9 +228,14 @@ export function AbstraxionProvider({
     });
 
     // Initialize controller (restores session, checks redirect callbacks, etc.)
-    controller.initialize().catch(() => {
-      // Initialization errors are handled by controller's state machine
-      // Error state will be reflected in isError/abstraxionError context values
+    controller.initialize().catch((error) => {
+      // Initialization errors are handled by controller's state machine.
+      // Error state will be reflected in isError/abstraxionError context values.
+      // Log here for debugging in case the state machine didn't capture it.
+      console.error(
+        "[AbstraxionProvider] Controller initialization failed:",
+        error,
+      );
     });
 
     return () => {
@@ -248,6 +273,15 @@ export function AbstraxionProvider({
     : "";
   const signingClient = isConnected ? controllerState.signingClient : undefined;
   const abstraxionError = isError ? controllerState.error : "";
+
+  // Get connection info from SignerController for direct signing
+  // Only available in signer mode when connected
+  const connectionInfo =
+    isConnected &&
+    controller instanceof SignerController &&
+    controller.getConnectionInfo
+      ? controller.getConnectionInfo()
+      : undefined;
 
   const login = useCallback(async () => {
     // Login function - delegates to controller who handles errors
@@ -290,6 +324,8 @@ export function AbstraxionProvider({
         // Authentication
         authMode,
         authentication,
+        connectionInfo,
+        controller,
 
         // Actions
         login,
