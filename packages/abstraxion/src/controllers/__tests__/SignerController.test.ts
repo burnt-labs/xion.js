@@ -293,4 +293,43 @@ describe("SignerController", () => {
       );
     });
   });
+
+  describe("disconnect", () => {
+    it("should call connector.disconnect + sessionManager.logout + dispatch RESET", async () => {
+      const controller = createController();
+
+      const mockConnector = {
+        disconnect: vi.fn().mockResolvedValue(undefined),
+      };
+
+      // Set connector on the controller
+      (controller as unknown as { connector: typeof mockConnector }).connector =
+        mockConnector;
+
+      mockSessionManager.logout.mockResolvedValue(undefined);
+
+      await controller.disconnect();
+
+      expect(mockConnector.disconnect).toHaveBeenCalled();
+      expect(mockSessionManager.logout).toHaveBeenCalled();
+      expect(controller.getState().status).toBe("idle");
+    });
+
+    it("should still dispatch RESET when logout throws", async () => {
+      const controller = createController();
+
+      mockSessionManager.logout.mockRejectedValue(
+        new Error("logout failed"),
+      );
+
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      await controller.disconnect();
+
+      expect(mockSessionManager.logout).toHaveBeenCalled();
+      expect(controller.getState().status).toBe("idle");
+
+      warnSpy.mockRestore();
+    });
+  });
 });

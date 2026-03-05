@@ -33,6 +33,7 @@ import {
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
 import type { PopupAuthentication, NormalizedAbstraxionConfig } from "../types";
+import { toBase64 } from "../utils/encoding";
 
 // postMessage types for the popup protocol
 const CONNECT_SUCCESS = "CONNECT_SUCCESS";
@@ -59,6 +60,7 @@ export class PopupController extends BaseController {
   private abstraxionAuth: AbstraxionAuth;
   private orchestrator: ConnectionOrchestrator;
   private initializePromise: Promise<void> | null = null;
+  private pendingCleanup: (() => void) | null = null;
 
   static fromConfig(
     config: NormalizedAbstraxionConfig,
@@ -235,6 +237,8 @@ export class PopupController extends BaseController {
       }
 
       return new Promise<void>((resolve, reject) => {
+        let settled = false;
+
         const messageHandler = (event: MessageEvent) => {
           // Only accept messages from the auth app origin
           if (event.origin !== authAppOrigin) return;
@@ -245,6 +249,8 @@ export class PopupController extends BaseController {
           };
 
           if (data?.type === CONNECT_SUCCESS && data.address) {
+            if (settled) return;
+            settled = true;
             cleanup();
             this.completeConnection(keypair, granteeAddress, data.address)
               .then(resolve)
@@ -252,6 +258,8 @@ export class PopupController extends BaseController {
           }
 
           if (data?.type === CONNECT_REJECTED) {
+            if (settled) return;
+            settled = true;
             cleanup();
             this.dispatch({ type: "RESET" });
             reject(new Error("Connection rejected by user"));
@@ -260,21 +268,21 @@ export class PopupController extends BaseController {
 
         // Monitor for popup closed by user without completing auth
         const closedCheck = setInterval(() => {
-          if (popup.closed) {
-            // Check if we've already completed (CONNECT_SUCCESS arrived just before close)
-            if (this.getState().status !== "connected") {
-              cleanup();
-              this.dispatch({ type: "RESET" });
-              reject(new Error("Authentication popup was closed"));
-            }
+          if (popup.closed && !settled) {
+            settled = true;
+            cleanup();
+            this.dispatch({ type: "RESET" });
+            reject(new Error("Authentication popup was closed"));
           }
         }, 500);
 
         const cleanup = () => {
           clearInterval(closedCheck);
           window.removeEventListener("message", messageHandler);
+          this.pendingCleanup = null;
         };
 
+        this.pendingCleanup = cleanup;
         window.addEventListener("message", messageHandler);
       });
     } catch (error) {
@@ -290,7 +298,11 @@ export class PopupController extends BaseController {
    * Disconnect and clean up via AbstraxionAuth
    */
   async disconnect(): Promise<void> {
-    await this.abstraxionAuth.logout();
+    try {
+      await this.abstraxionAuth.logout();
+    } catch (error) {
+      console.warn("[PopupController] Logout failed during disconnect. Session data may persist and be restored on next load:", error);
+    }
     this.dispatch({ type: "RESET" });
   }
 
@@ -323,7 +335,7 @@ export class PopupController extends BaseController {
 
     // Encode transaction payload as base64 JSON
     const txPayload = JSON.stringify({ messages, fee, memo });
-    const txEncoded = btoa(txPayload);
+    const txEncoded = toBase64(txPayload);
 
     const url = new URL(authAppUrl);
     url.searchParams.set("mode", "sign");
@@ -344,6 +356,8 @@ export class PopupController extends BaseController {
     }
 
     return new Promise<DeliverTxResponse>((resolve, reject) => {
+      let settled = false;
+
       const messageHandler = (event: MessageEvent) => {
         if (event.origin !== authAppOrigin) return;
 
@@ -354,7 +368,11 @@ export class PopupController extends BaseController {
         };
 
         if (data?.type === "SIGN_SUCCESS" && data.txHash) {
+          if (settled) return;
+          settled = true;
           cleanup();
+          // Note: height, gasUsed, gasWanted are not available from the popup protocol.
+          // Consumers should use the txHash to query the full transaction result if needed.
           resolve({
             code: 0,
             transactionHash: data.txHash,
@@ -368,18 +386,23 @@ export class PopupController extends BaseController {
         }
 
         if (data?.type === "SIGN_REJECTED") {
+          if (settled) return;
+          settled = true;
           cleanup();
           reject(new Error("Transaction was rejected by user"));
         }
 
         if (data?.type === "SIGN_ERROR") {
+          if (settled) return;
+          settled = true;
           cleanup();
           reject(new Error(data.message || "Transaction signing failed"));
         }
       };
 
       const closedCheck = setInterval(() => {
-        if (popup.closed) {
+        if (popup.closed && !settled) {
+          settled = true;
           cleanup();
           reject(new Error("Signing popup was closed"));
         }
@@ -462,6 +485,8 @@ export class PopupController extends BaseController {
    * Cleanup resources
    */
   destroy(): void {
+    this.pendingCleanup?.();
+    this.pendingCleanup = null;
     super.destroy();
     this.orchestrator.destroy();
   }

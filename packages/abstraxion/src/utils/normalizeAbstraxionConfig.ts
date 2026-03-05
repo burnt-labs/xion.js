@@ -52,10 +52,15 @@ export function normalizeAbstraxionConfig(
   const gasPrice = config.gasPrice || xionGasValues.gasPrice;
   const feeGranter = config.feeGranter || defaultFeeGranter;
 
-  // Set iframe URL default if using iframe authentication
+  // Set iframe URL default if using iframe authentication (avoid mutating input)
   if (config.authentication?.type === "iframe") {
-    config.authentication.iframeUrl =
-      config.authentication.iframeUrl || defaultIframeUrl;
+    config = {
+      ...config,
+      authentication: {
+        ...config.authentication,
+        iframeUrl: config.authentication.iframeUrl || defaultIframeUrl,
+      },
+    };
   }
 
   // Validate required fields

@@ -15,10 +15,7 @@ import type { StdFee, DeliverTxResponse, Coin } from "@cosmjs/stargate";
 import type { RedirectController } from "./RedirectController";
 
 export class RedirectSigningClient {
-  constructor(
-    private controller: RedirectController,
-    private signerAddress: string,
-  ) {}
+  constructor(private controller: RedirectController) {}
 
   async signAndBroadcast(
     address: string,

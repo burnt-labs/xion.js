@@ -23,7 +23,7 @@ export type Unsubscribe = () => void;
 
 /**
  * Controller interface
- * Each mode (redirect, signer, direct) implements this interface
+ * Each mode (redirect, signer, popup, iframe) implements this interface
  */
 export interface Controller {
   /**
@@ -52,7 +52,7 @@ export interface Controller {
 
   /**
    * Connect using the controller's specific flow
-   * Mode-specific implementation (redirect, signer, direct)
+   * Mode-specific implementation (redirect, signer, popup, iframe)
    * All controllers currently take no arguments - connection is initiated via this method
    */
   connect(): Promise<void>;
@@ -65,7 +65,7 @@ export interface Controller {
   /**
    * Get connection info for direct signing (optional)
    * Only available in signer mode after successful connection
-   * Returns undefined for redirect/iframe modes
+   * Returns undefined for redirect/popup/iframe modes
    */
   getConnectionInfo?(): ConnectorConnectionResult | undefined;
 
@@ -93,7 +93,7 @@ export interface ControllerConfig {
 /**
  * Controller factory function type
  * Creates a controller instance based on normalized config
- * Matches the signature of createController() in utils/controllerFactory.ts
+ * Matches the signature of createController() in ./factory.ts
  */
 export type ControllerFactory = (
   config: NormalizedAbstraxionConfig,

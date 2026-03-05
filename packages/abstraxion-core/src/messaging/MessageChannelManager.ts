@@ -3,8 +3,8 @@ import type { MessageResponse } from "../types/iframe";
 
 /**
  * Manages MessageChannel-based communication with the iframe
- * Uses the OKO pattern: each request gets its own isolated MessageChannel
- * for secure, type-safe communication
+ * Each request creates its own isolated MessageChannel for secure,
+ * one-shot request-response communication
  */
 export class MessageChannelManager {
   private requestIdCounter = 0;
@@ -52,6 +52,17 @@ export class MessageChannelManager {
         } else {
           reject(new Error(response.error || `Request failed: ${type}`));
         }
+      };
+
+      // Handle port errors (e.g., port neutered, iframe navigated away)
+      channel.port1.onmessageerror = () => {
+        clearTimeout(timeoutId);
+        channel.port1.close();
+        reject(
+          new Error(
+            `MessageChannel deserialization error during ${type}. The iframe may have sent unserializable data.`,
+          ),
+        );
       };
 
       // Send message to iframe with port2

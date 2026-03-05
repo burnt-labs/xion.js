@@ -126,6 +126,9 @@ export const decodeAuthorization = (
     }
 
     default:
+      console.warn(
+        `[decodeAuthorization] Unknown authorization typeUrl: ${typeUrl}. Returning Unsupported.`,
+      );
       return { type: AuthorizationTypes.Unsupported, data: null };
   }
 };
@@ -167,7 +170,7 @@ export const decodeRestFormatAuthorization = (
 
     case AuthorizationTypes.Send: {
       const spendLimit = (
-        auth.spend_limit as Array<{ denom: string; amount: string }>
+        (auth.spend_limit as Array<{ denom: string; amount: string }>) || []
       ).map((c) => ({ denom: c.denom, amount: c.amount }));
       const allowList = (auth.allow_list as string[]) || [];
       return {
@@ -206,9 +209,15 @@ export const decodeRestFormatAuthorization = (
       if (auth.value instanceof Uint8Array) {
         return decodeAuthorization(typeUrl, auth.value);
       }
+      console.warn(
+        `[decodeRestFormatAuthorization] ContractExecution value is not Uint8Array. Returning Unsupported.`,
+      );
       return { type: AuthorizationTypes.Unsupported, data: null };
 
     default:
+      console.warn(
+        `[decodeRestFormatAuthorization] Unknown authorization type: ${typeUrl}. Returning Unsupported.`,
+      );
       return { type: AuthorizationTypes.Unsupported, data: null };
   }
 };

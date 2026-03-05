@@ -5,29 +5,38 @@
 import { describe, it, expect, vi } from "vitest";
 
 // Mock the external dependencies before importing the controller
-vi.mock("@burnt-labs/abstraxion-core", () => ({
-  AbstraxionAuth: vi.fn().mockImplementation(() => ({
-    configureAbstraxionInstance: vi.fn(),
-    logout: vi.fn(),
-  })),
-}));
+vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
+  return {
+    ...actual,
+    AbstraxionAuth: vi.fn().mockImplementation(() => ({
+      configureAbstraxionInstance: vi.fn(),
+      logout: vi.fn(),
+    })),
+  };
+});
 
-vi.mock("@burnt-labs/account-management", () => ({
-  ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
-    restoreSession: vi.fn().mockResolvedValue({ restored: false }),
-    initiateRedirect: vi.fn(),
-    completeRedirect: vi.fn(),
-    destroy: vi.fn(),
-  })),
-  isSessionRestorationError: vi.fn().mockReturnValue(false),
-  isSessionRestored: vi.fn().mockReturnValue(false),
-  getAccountInfoFromRestored: vi.fn(),
-}));
+vi.mock("@burnt-labs/account-management", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@burnt-labs/account-management")>();
+  return {
+    ...actual,
+    ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
+      restoreSession: vi.fn().mockResolvedValue({ restored: false }),
+      initiateRedirect: vi.fn(),
+      completeRedirect: vi.fn(),
+      destroy: vi.fn(),
+    })),
+    isSessionRestorationError: vi.fn().mockReturnValue(false),
+    isSessionRestored: vi.fn().mockReturnValue(false),
+    getAccountInfoFromRestored: vi.fn(),
+  };
+});
 
 vi.mock("@burnt-labs/constants", () => ({
   getDaoDaoIndexerUrl: vi.fn().mockReturnValue("https://indexer.daodao.zone"),
 }));
 
+import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
 import { RedirectController } from "../RedirectController";
 import type { RedirectControllerConfig } from "../RedirectController";
 
@@ -102,6 +111,39 @@ describe("RedirectController", () => {
         expect((error as Error).message).toContain("iframe mode");
         expect((error as Error).message).toContain("requireAuth: true");
       }
+    });
+  });
+
+  describe("disconnect", () => {
+    const getLatestAuthInstance = () => {
+      const mockResults = (AbstraxionAuth as unknown as ReturnType<typeof vi.fn>).mock.results;
+      return mockResults[mockResults.length - 1].value;
+    };
+
+    it("should call logout and dispatch RESET", async () => {
+      const controller = createController();
+      const mockInstance = getLatestAuthInstance();
+      mockInstance.logout.mockResolvedValue(undefined);
+
+      await controller.disconnect();
+
+      expect(mockInstance.logout).toHaveBeenCalled();
+      expect(controller.getState().status).toBe("idle");
+    });
+
+    it("should still dispatch RESET when logout throws", async () => {
+      const controller = createController();
+      const mockInstance = getLatestAuthInstance();
+      mockInstance.logout.mockRejectedValue(new Error("logout failed"));
+
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      await controller.disconnect();
+
+      expect(mockInstance.logout).toHaveBeenCalled();
+      expect(controller.getState().status).toBe("idle");
+
+      warnSpy.mockRestore();
     });
   });
 });

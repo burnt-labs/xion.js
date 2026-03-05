@@ -228,9 +228,14 @@ export function AbstraxionProvider({
     });
 
     // Initialize controller (restores session, checks redirect callbacks, etc.)
-    controller.initialize().catch(() => {
-      // Initialization errors are handled by controller's state machine
-      // Error state will be reflected in isError/abstraxionError context values
+    controller.initialize().catch((error) => {
+      // Initialization errors are handled by controller's state machine.
+      // Error state will be reflected in isError/abstraxionError context values.
+      // Log here for debugging in case the state machine didn't capture it.
+      console.error(
+        "[AbstraxionProvider] Controller initialization failed:",
+        error,
+      );
     });
 
     return () => {

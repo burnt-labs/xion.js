@@ -14,10 +14,7 @@ import type { StdFee, DeliverTxResponse, Coin } from "@cosmjs/stargate";
 import type { PopupController } from "./PopupController";
 
 export class PopupSigningClient {
-  constructor(
-    private controller: PopupController,
-    private signerAddress: string,
-  ) {}
+  constructor(private controller: PopupController) {}
 
   async signAndBroadcast(
     address: string,

@@ -95,8 +95,9 @@ export interface AutoAuthentication {
  * sizing and positioning via the containerElement's CSS.
  *
  * The iframe handles login, grant approval, and shows a minimal "Connected"
- * state after auth. Communication uses postMessage (CONNECT_SUCCESS,
- * CONNECT_REJECTED, DISCONNECTED).
+ * state after auth. Communication uses MessageChannelManager for request-response
+ * (CONNECT, DISCONNECT) with targetOrigin enforcement. The only raw postMessage
+ * is the push-direction DISCONNECTED event from the iframe.
  */
 export interface IframeAuthentication {
   type: "iframe";

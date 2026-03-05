@@ -400,7 +400,8 @@ export class IframeController extends BaseController {
 
   /**
    * Set the container element for the iframe.
-   * Must be called before connect() — typically from a React ref callback.
+   * Typically called from a React ref callback. If a session was already
+   * restored before the container was available, the iframe will be mounted immediately.
    */
   setContainerElement(element: HTMLElement): void {
     this.config.iframe = { ...this.config.iframe, containerElement: element };
@@ -626,9 +627,14 @@ export class IframeController extends BaseController {
         if (this.getState().status === "connected") {
           // User clicked disconnect inside the iframe.
           // Remove iframe to prevent double-render, then clear SDK state.
-          // Auto-connect will create a fresh iframe.
+          // The next connect() call will create a fresh iframe.
           this.removeIframe();
-          this.handleDisconnect();
+          this.handleDisconnect().catch((error) => {
+            console.error(
+              "[IframeController] Error handling iframe-initiated disconnect:",
+              error,
+            );
+          });
         }
       }
     };
@@ -675,7 +681,11 @@ export class IframeController extends BaseController {
    */
   private async handleDisconnect(): Promise<void> {
     // Clear session via AbstraxionAuth (same storage keys as other controllers)
-    await this.abstraxionAuth.logout();
+    try {
+      await this.abstraxionAuth.logout();
+    } catch (error) {
+      console.warn("[IframeController] Logout failed during disconnect. Session data may persist and be restored on next load:", error);
+    }
 
     // Clear local state
     this.granterAddress = null;

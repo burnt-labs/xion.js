@@ -15,10 +15,7 @@ import type { StdFee, DeliverTxResponse, Coin } from "@cosmjs/stargate";
 import type { IframeController } from "./IframeController";
 
 export class IframeSigningClient {
-  constructor(
-    private controller: IframeController,
-    private signerAddress: string,
-  ) {}
+  constructor(private controller: IframeController) {}
 
   async signAndBroadcast(
     address: string,

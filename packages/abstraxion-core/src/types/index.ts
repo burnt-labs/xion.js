@@ -135,7 +135,7 @@ export interface TransactionOptions {
    * - Not supported with redirect mode (throws error)
    * - Transaction fees are NOT paid by session key's fee grant
    *   (user's smart account pays directly)
-   * - Iframe mode: Still in development
+   * - Iframe mode: Signs via dashboard iframe approval UI (SIGN_AND_BROADCAST message). Still in development.
    *
    * @default false - Uses session key for signing (existing behavior)
    *

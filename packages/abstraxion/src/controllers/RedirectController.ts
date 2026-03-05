@@ -24,6 +24,7 @@ import { fetchConfig } from "@burnt-labs/constants";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { RedirectAuthentication, SignResult } from "../types";
+import { toBase64 } from "../utils/encoding";
 
 /**
  * Configuration for RedirectController
@@ -361,7 +362,7 @@ export class RedirectController extends BaseController {
     try {
       await this.abstraxionAuth.logout();
     } catch (error) {
-      console.error("[RedirectController] Error during logout:", error);
+      console.warn("[RedirectController] Logout failed during disconnect. Session data may persist and be restored on next load:", error);
     }
 
     // Reset state
@@ -428,15 +429,24 @@ export class RedirectController extends BaseController {
     // Build signing URL (same params as PopupController.promptAndSign)
     const url = new URL(authAppUrl);
     url.searchParams.set("mode", "sign");
-    url.searchParams.set("tx", btoa(JSON.stringify({ messages, fee, memo })));
+    url.searchParams.set("tx", toBase64(JSON.stringify({ messages, fee, memo })));
     url.searchParams.set("granter", signerAddress);
     url.searchParams.set("redirect_uri", window.location.href);
 
     // Navigate away
     window.location.href = url.toString();
 
-    // Return a never-resolving promise (page is navigating away)
-    return new Promise(() => {});
+    // Return a promise that rejects if navigation doesn't happen within 5s
+    // (e.g., popup blocker, CSP, or browser stop button)
+    return new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(
+          new Error(
+            "Redirect to signing page failed. The page may have been blocked by a popup blocker or Content Security Policy.",
+          ),
+        );
+      }, 5_000);
+    });
   }
 
   /**

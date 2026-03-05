@@ -68,6 +68,7 @@ export interface SignerControllerConfig extends ControllerConfig {
 export class SignerController extends BaseController {
   private config: SignerControllerConfig;
   private orchestrator: ConnectionOrchestrator;
+  private initializePromise: Promise<void> | null = null;
   private connector: Connector | null = null;
   private connectionInfo: ConnectorConnectionResult | null = null; // signmessage and authenticator metadata needed for direct signing
 
@@ -144,12 +145,17 @@ export class SignerController extends BaseController {
 
   /**
    * Initialize the controller
-   * Attempts to restore existing session if available
+   * Attempts to restore existing session if available.
+   * Idempotent: returns the same promise if called while already initializing
+   * (guards against React strict-mode double-invocation)
    */
   async initialize(): Promise<void> {
-    // Already in initializing state, so no need to dispatch INITIALIZE
-    // Just proceed with session restoration
+    if (this.initializePromise) return this.initializePromise;
+    this.initializePromise = this.doInitialize();
+    return this.initializePromise;
+  }
 
+  private async doInitialize(): Promise<void> {
     try {
       // Try to restore existing session (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
@@ -329,16 +335,13 @@ export class SignerController extends BaseController {
    * Disconnect and cleanup
    */
   async disconnect(): Promise<void> {
-    // Clear connection info
-    this.connectionInfo = null;
-
     // Disconnect connector if connected
     if (this.connector) {
       try {
         await this.connector.disconnect();
       } catch (error) {
-        console.error(
-          "[SignerController] Error disconnecting connector:",
+        console.warn(
+          "[SignerController] Connector disconnect failed. Session data may persist:",
           error,
         );
       }
@@ -352,7 +355,7 @@ export class SignerController extends BaseController {
     try {
       await this.config.sessionManager.logout();
     } catch (error) {
-      console.error("[SignerController] Error cleaning up session:", error);
+      console.warn("[SignerController] Session cleanup failed during disconnect. Session data may persist and be restored on next load:", error);
     }
 
     // Reset state
@@ -363,6 +366,7 @@ export class SignerController extends BaseController {
    * Cleanup resources
    */
   destroy(): void {
+    this.orchestrator.destroy();
     super.destroy();
   }
 }

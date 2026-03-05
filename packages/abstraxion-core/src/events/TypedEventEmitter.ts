@@ -48,8 +48,11 @@ export class TypedEventEmitter<Events extends Record<string, unknown>> {
     handler: EventHandler<Events[K]>,
   ): void {
     const onceHandler = ((data: Events[K]) => {
-      handler(data);
-      this.off(event, onceHandler);
+      try {
+        handler(data);
+      } finally {
+        this.off(event, onceHandler);
+      }
     }) as EventHandler<Events[K]>;
     this.on(event, onceHandler);
   }

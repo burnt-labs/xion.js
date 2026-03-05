@@ -298,21 +298,16 @@ export class AbstraxionAuth {
    * Fetches dashboard URL from RPC based on network ID.
    */
   async redirectToDashboard() {
-    try {
-      if (!this.rpcUrl) {
-        throw new Error("AbstraxionAuth needs to be configured.");
-      }
-      const userAddress = await this.getKeypairAddress();
-
-      // Use authAppUrl override if provided, otherwise fetch from network config
-      const authAppUrl =
-        this.authAppUrl || (await fetchConfig(this.rpcUrl)).dashboardUrl;
-
-      await this.configureUrlAndRedirect(authAppUrl, userAddress);
-    } catch (error) {
-      // Error is thrown and handled by caller
-      throw error;
+    if (!this.rpcUrl) {
+      throw new Error("AbstraxionAuth needs to be configured.");
     }
+    const userAddress = await this.getKeypairAddress();
+
+    // Use authAppUrl override if provided, otherwise fetch from network config
+    const authAppUrl =
+      this.authAppUrl || (await fetchConfig(this.rpcUrl)).dashboardUrl;
+
+    await this.configureUrlAndRedirect(authAppUrl, userAddress);
   }
 
   /**
@@ -536,9 +531,20 @@ export class AbstraxionAuth {
 
         return validGrant && isValid;
       } catch (error) {
+        console.error(
+          `[AbstraxionAuth.pollForGrants] Retry ${retries + 1}/${maxRetries} failed:`,
+          error,
+        );
         const delay = Math.pow(2, retries) * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
         retries++;
+        if (retries >= maxRetries) {
+          throw new Error(
+            `Grant polling failed after ${maxRetries} retries. Last error: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
       }
     }
     return false;
@@ -609,7 +615,11 @@ export class AbstraxionAuth {
         );
       }
     } catch (error) {
-      await this.logout();
+      try {
+        await this.logout();
+      } catch (logoutError) {
+        console.warn("[AbstraxionAuth] Logout failed during error recovery:", logoutError);
+      }
       // Re-throw the error so that authenticate() rejects and callers can handle it
       throw error;
     }
@@ -624,15 +634,13 @@ export class AbstraxionAuth {
    * @throws {Error} - If the login process encounters an error.
    */
   async login(): Promise<void> {
-    try {
-      if (this.isLoginInProgress) {
-        return;
-      }
-      this.isLoginInProgress = true;
+    if (this.isLoginInProgress) {
+      return;
+    }
+    this.isLoginInProgress = true;
 
+    try {
       await this.performLogin();
-    } catch (error) {
-      throw error;
     } finally {
       this.isLoginInProgress = false;
     }
@@ -650,16 +658,14 @@ export class AbstraxionAuth {
   async completeLogin(): Promise<
     { keypair: SignArbSecp256k1HdWallet; granter: string } | undefined
   > {
-    try {
-      if (this.isLoginInProgress) {
-        return undefined;
-      }
-      this.isLoginInProgress = true;
+    if (this.isLoginInProgress) {
+      return undefined;
+    }
+    this.isLoginInProgress = true;
 
+    try {
       const result = await this.performLogin();
       return result;
-    } catch (error) {
-      throw error;
     } finally {
       this.isLoginInProgress = false;
     }
@@ -711,11 +717,7 @@ export class AbstraxionAuth {
    * Initiates the flow to generate a new keypair and redirect to the dashboard for grant issuance.
    */
   private async newKeypairFlow(): Promise<void> {
-    try {
-      await this.generateAndStoreTempAccount();
-      await this.redirectToDashboard();
-    } catch (error) {
-      throw error;
-    }
+    await this.generateAndStoreTempAccount();
+    await this.redirectToDashboard();
   }
 }
