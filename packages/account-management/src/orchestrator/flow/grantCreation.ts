@@ -209,7 +209,9 @@ export async function createGrants(
     });
 
     if (grantMessages.length === 0) {
-      // No grant configs found - just store granter and return success
+      // Treasury has no grant configs — the contract supports this (only
+      // deploy_fee_grant is needed, no authz grants). Store granter and
+      // return success so the caller can proceed with the fee grant.
       await storageStrategy.setItem(
         "xion-authz-granter-account",
         smartAccountAddress,

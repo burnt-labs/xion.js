@@ -176,22 +176,21 @@ describe("construction.ts - Grant Message Generation", () => {
       );
     });
 
-    it("should throw error when grant configs array is empty", async () => {
+    it("should return empty array when grant configs array is empty", async () => {
       const mockStrategy = createMockStrategy(createMockTreasuryConfig([]));
       const mockClient = createMockClient();
 
-      await expect(
-        generateTreasuryGrants(
-          mockContractAddress,
-          mockClient,
-          mockGranter,
-          mockGrantee,
-          mockStrategy,
-        ),
-      ).rejects.toThrow("No grant configs found in treasury contract");
+      const result = await generateTreasuryGrants(
+        mockContractAddress,
+        mockClient,
+        mockGranter,
+        mockGrantee,
+        mockStrategy,
+      );
+      expect(result).toEqual([]);
     });
 
-    it("should throw error when grantConfigs is undefined", async () => {
+    it("should return empty array when grantConfigs is undefined", async () => {
       const mockStrategy = createMockStrategy({
         grantConfigs: undefined as any,
         params: {
@@ -202,15 +201,14 @@ describe("construction.ts - Grant Message Generation", () => {
       });
       const mockClient = createMockClient();
 
-      await expect(
-        generateTreasuryGrants(
-          mockContractAddress,
-          mockClient,
-          mockGranter,
-          mockGrantee,
-          mockStrategy,
-        ),
-      ).rejects.toThrow("No grant configs found in treasury contract");
+      const result = await generateTreasuryGrants(
+        mockContractAddress,
+        mockClient,
+        mockGranter,
+        mockGrantee,
+        mockStrategy,
+      );
+      expect(result).toEqual([]);
     });
 
     it("should generate grant messages from treasury config", async () => {
