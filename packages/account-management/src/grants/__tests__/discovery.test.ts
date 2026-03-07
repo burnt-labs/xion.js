@@ -217,21 +217,6 @@ describe("discovery.ts - queryTreasuryContractWithPermissions", () => {
       ).rejects.toThrow("Missing treasury strategy");
     });
 
-    it("should throw error when strategy returns null", async () => {
-      mockStrategy.fetchTreasuryConfig = vi.fn().mockResolvedValue(null);
-
-      await expect(
-        queryTreasuryContractWithPermissions(
-          mockContractAddress,
-          mockClient as any,
-          mockAccount,
-          mockStrategy,
-        ),
-      ).rejects.toThrow(
-        "Something went wrong querying the treasury contract for grants",
-      );
-    });
-
     it("should throw error when strategy throws", async () => {
       mockStrategy.fetchTreasuryConfig = vi
         .fn()

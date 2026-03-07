@@ -71,12 +71,6 @@ export async function queryTreasuryContractWithPermissions(
     client,
   );
 
-  if (!treasuryConfig) {
-    throw new Error(
-      "Something went wrong querying the treasury contract for grants",
-    );
-  }
-
   // Process grant configurations
   const decodedGrantsWithDappDescription: (DecodedReadableAuthorization & {
     dappDescription: string;

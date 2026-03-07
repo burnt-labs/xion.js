@@ -45,20 +45,15 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
     const chainId = await client.getChainId();
     const cacheKey = `${treasuryAddress}:${chainId}`;
 
-    // Note: We don't cache null results (empty treasury configs)
     return await this.cache.get(cacheKey, async () => {
-      const result = await this.queryContract(treasuryAddress, client);
-      if (!result) {
-        throw new Error("Treasury config not found");
-      }
-      return result;
+      return this.queryContract(treasuryAddress, client);
     });
   }
 
   private async queryContract(
     treasuryAddress: string,
     client: ContractQueryClient,
-  ): Promise<TreasuryConfig | null> {
+  ): Promise<TreasuryConfig> {
     try {
       // Query all grant config type URLs
       const queryTreasuryContractMsg = {
@@ -70,8 +65,11 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
         queryTreasuryContractMsg,
       )) as string[];
 
+      // Query params (always needed, even with no grant configs)
+      const params = await this.fetchTreasuryParams(client, treasuryAddress);
+
       if (!queryAllTypeUrlsResponse || queryAllTypeUrlsResponse.length === 0) {
-        return null;
+        return { grantConfigs: [], params };
       }
 
       // Query each grant config by type URL
@@ -95,9 +93,6 @@ export class DirectQueryTreasuryStrategy implements TreasuryStrategy {
           return grantConfig;
         }),
       );
-
-      // Query params
-      const params = await this.fetchTreasuryParams(client, treasuryAddress);
 
       return {
         grantConfigs,
