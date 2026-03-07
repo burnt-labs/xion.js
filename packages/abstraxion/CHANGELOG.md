@@ -1,5 +1,12 @@
 # @burnt-labs/abstraxion
 
+## 1.0.0-alpha.76
+
+### Patch Changes
+
+- Updated dependencies [[`00ac279`](https://github.com/burnt-labs/xion.js/commit/00ac279a15f1845f62d63507ceb02ec70e5c5dc1)]:
+  - @burnt-labs/account-management@1.0.0-alpha.8
+
 ## 1.0.0-alpha.75
 
 ### Patch Changes
