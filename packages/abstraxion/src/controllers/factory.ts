@@ -9,6 +9,7 @@ import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
 import type { Controller } from "./index";
 import { RedirectController, SignerController } from "./index";
 import type { NormalizedAbstraxionConfig } from "../types";
+import { getTreasuryApiUrl } from "@burnt-labs/constants";
 
 /**
  * Create a controller based on authentication config
@@ -42,6 +43,9 @@ export function createController(
         ? config.authentication
         : undefined;
     const treasuryIndexerConfig = signerAuth?.treasuryIndexer;
+    const treasuryApiUrl = config.treasury
+      ? getTreasuryApiUrl(config.chainId)
+      : undefined;
 
     // Configure AbstraxionAuth for signer mode
     // Note: Account indexer (Numia/Subquery) is handled by SignerController via account-management,
@@ -55,6 +59,7 @@ export function createController(
       config.treasury,
       treasuryIndexerConfig?.url,
       config.gasPrice,
+      treasuryApiUrl,
     );
 
     // Delegate to SignerController's factory method

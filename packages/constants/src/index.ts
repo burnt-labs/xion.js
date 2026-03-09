@@ -119,6 +119,11 @@ const FEE_GRANTERS: Record<string, string> = {
   "xion-testnet-2": "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
 };
 
+const TREASURY_API_URLS: Record<string, string> = {
+  "xion-mainnet-1": "https://treasury-api.burnt.com",
+  "xion-testnet-2": "https://treasury-api.testnet.burnt.com",
+};
+
 const DAODAO_INDEXER_URLS: Record<string, string> = {
   "xion-mainnet-1": "https://daodaoindexer.burnt.com",
   "xion-testnet-1": "https://daodaoindexer.burnt.com",
@@ -139,6 +144,10 @@ export function getFeeGranter(chainId: string): string {
 
 export function getDaoDaoIndexerUrl(chainId: string): string {
   return DAODAO_INDEXER_URLS[chainId] || "https://daodaoindexer.burnt.com";
+}
+
+export function getTreasuryApiUrl(chainId: string): string | undefined {
+  return TREASURY_API_URLS[chainId];
 }
 
 export function getRpcUrl(chainId: string): string | undefined {
