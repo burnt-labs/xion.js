@@ -31,6 +31,7 @@ export class AbstraxionAuth {
   callbackUrl?: string;
   treasury?: string;
   treasuryIndexerUrl?: string;
+  treasuryApiUrl?: string;
   gasPrice?: string;
 
   // Signer
@@ -73,8 +74,9 @@ export class AbstraxionAuth {
    * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
    * @param {string} treasury - treasury contract instance address
-   * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
+   * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer). Deprecated: use treasuryApiUrl instead.
    * @param {string} gasPrice - Gas price string (e.g., "0.001uxion"). Defaults to "0.001uxion" if not provided.
+   * @param {string} treasuryApiUrl - Treasury worker API URL for server-side grant validation. When set, pollForGrants() delegates to the worker instead of doing client-side comparison.
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -85,6 +87,7 @@ export class AbstraxionAuth {
     treasury?: string,
     treasuryIndexerUrl?: string,
     gasPrice?: string,
+    treasuryApiUrl?: string,
   ) {
     this.rpcUrl = rpc;
     this.grantContracts = grantContracts;
@@ -93,6 +96,7 @@ export class AbstraxionAuth {
     this.callbackUrl = callbackUrl;
     this.treasury = treasury;
     this.treasuryIndexerUrl = treasuryIndexerUrl;
+    this.treasuryApiUrl = treasuryApiUrl;
     this.gasPrice = gasPrice;
   }
 
@@ -479,14 +483,28 @@ export class AbstraxionAuth {
 
     while (retries < maxRetries) {
       try {
+        // Treasury mode with treasury worker API: delegate grant validation entirely
+        // to the server. This eliminates the DaoDao indexer dependency on the client,
+        // avoids client-side protobuf decoding and ABCI queries, and leverages the
+        // worker's caching (30s Cache-Control) and racing strategy (DaoDao + direct
+        // RPC via Promise.any) for better performance and reliability.
+        if (this.treasury && this.treasuryApiUrl) {
+          return await this.checkGrantsViaApi(
+            this.treasuryApiUrl,
+            this.treasury,
+            grantee,
+            granter,
+          );
+        }
+
         let data: GrantsResponse;
         let treasuryGrantConfigs: TreasuryGrantConfig[] | undefined;
 
-        // If treasury mode, fetch both chain grants and treasury configs in parallel
+        // Treasury mode with client-side comparison (legacy path when treasuryApiUrl is not set)
         if (this.treasury) {
           if (!this.treasuryIndexerUrl) {
             throw new Error(
-              "Treasury indexer URL is required when using treasury mode",
+              "Treasury indexer URL is required when using treasury mode without treasuryApiUrl",
             );
           }
 
@@ -539,6 +557,51 @@ export class AbstraxionAuth {
       }
     }
     return false;
+  }
+
+  /**
+   * Validates grants by calling the treasury worker's /check-grants endpoint.
+   *
+   * This offloads grant validation to the server, which:
+   * - Fetches treasury config (via DaoDao indexer racing with direct RPC)
+   * - Fetches on-chain grants via ABCI query
+   * - Decodes and compares both sets of grants
+   * - Returns a simple match/valid/expiration result
+   *
+   * This approach is preferred over client-side validation because it:
+   * 1. Eliminates the client's dependency on the DaoDao indexer
+   * 2. Avoids shipping protobuf decoding logic to the browser
+   * 3. Leverages server-side caching (30s) for better performance
+   * 4. Centralizes grant comparison logic in one place (the treasury worker)
+   */
+  private async checkGrantsViaApi(
+    treasuryApiUrl: string,
+    treasuryAddress: string,
+    grantee: string,
+    granter: string,
+  ): Promise<boolean> {
+    const url = new URL(
+      `/treasury/${treasuryAddress}/check-grants`,
+      treasuryApiUrl,
+    );
+    url.searchParams.set("grantee", grantee);
+    url.searchParams.set("granter", granter);
+
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      throw new Error(
+        `Treasury grant check failed: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const result: {
+      match: boolean;
+      hasValidGrants: boolean;
+      earliestExpiration: string | null;
+    } = await response.json();
+
+    return result.match && result.hasValidGrants;
   }
 
   /**
