@@ -458,12 +458,13 @@ export class IframeController extends BaseController {
           fee: StdFee | "auto" | number;
           memo?: string;
         };
+        signerAddress: string;
       },
       { signedTx: DeliverTxResponse }
     >(
       this.iframe,
       IframeMessageType.SIGN_AND_BROADCAST,
-      { transaction: { messages, fee, memo } },
+      { transaction: { messages, fee, memo }, signerAddress },
       this.iframeOrigin,
       300_000, // 5 min — user needs time to review and approve
     );

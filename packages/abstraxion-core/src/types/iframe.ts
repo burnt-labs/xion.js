@@ -113,6 +113,7 @@ export interface SignedTransaction {
  */
 export interface SignTransactionPayload {
   transaction: TransactionData;
+  signerAddress: string;
 }
 
 /**
