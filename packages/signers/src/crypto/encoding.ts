@@ -98,3 +98,44 @@ export function getBufferFromUrlSafeBase64(base64Url: string): ArrayBuffer {
   const base64 = convertToStandardBase64(base64Url);
   return Buffer.from(base64, "base64").buffer;
 }
+
+/**
+ * Encode a UTF-8 string to base64, safely handling non-ASCII characters.
+ *
+ * Unlike btoa() which only accepts Latin-1, this encodes the string as UTF-8
+ * bytes first so any Unicode content (emoji, non-Latin scripts, etc.) is safe.
+ *
+ * @example
+ * ```typescript
+ * toBase64(JSON.stringify({ memo: "tip 🎉" }))
+ * ```
+ */
+export function toBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Decode a base64 string back to a UTF-8 string.
+ *
+ * Reverses toBase64() by converting the binary string from atob() back into
+ * a byte array and decoding via TextDecoder. For pure-ASCII payloads the
+ * result is identical to plain atob().
+ *
+ * @example
+ * ```typescript
+ * fromBase64(toBase64("tip 🎉")) // "tip 🎉"
+ * ```
+ */
+export function fromBase64(encoded: string): string {
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}

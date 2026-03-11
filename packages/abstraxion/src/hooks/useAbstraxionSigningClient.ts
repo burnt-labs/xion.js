@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState, useEffect, useCallback } from "react";
+import { useContext, useMemo, useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import {
   AAClient,
   createSignerFromSigningFunction,
@@ -153,13 +153,26 @@ export const useAbstraxionSigningClient = (
     return new IframeSigningClient(iframeController);
   }, [requireAuth, iframeController, granterAddress]);
 
-  // Read sign result from RedirectController (populated after signing redirect return).
-  // signResult is set once during initialize() and only cleared by clearSignResult().
-  // Use granterAddress as a proxy trigger — it changes when the controller finishes init.
-  const signResult = useMemo<SignResult | null>(() => {
-    return redirectController?.getSignResult() ?? null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [redirectController, granterAddress]);
+  // Read sign result from RedirectController via useSyncExternalStore so the
+  // hook re-renders whenever signResult changes (set during init, cleared by consumer).
+  const subscribeToSignResult = useCallback(
+    (onStoreChange: () => void) => {
+      if (!redirectController) return () => {};
+      return redirectController.subscribeToSignResult(onStoreChange);
+    },
+    [redirectController],
+  );
+
+  const getSignResultSnapshot = useCallback(
+    () => redirectController?.getSignResultSnapshot() ?? null,
+    [redirectController],
+  );
+
+  const signResult = useSyncExternalStore(
+    subscribeToSignResult,
+    getSignResultSnapshot,
+    getSignResultSnapshot, // server snapshot — always null
+  );
 
   const clearSignResult = useCallback(() => {
     redirectController?.clearSignResult();

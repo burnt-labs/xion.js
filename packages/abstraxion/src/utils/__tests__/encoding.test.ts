@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toBase64 } from "../encoding";
+import { toBase64 } from "@burnt-labs/signers";
 
 describe("toBase64", () => {
   it("round-trips ASCII correctly", () => {

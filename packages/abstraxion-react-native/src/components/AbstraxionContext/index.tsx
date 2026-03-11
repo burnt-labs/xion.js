@@ -186,6 +186,12 @@ export function AbstraxionProvider({
     // Fallback to full authentication if quick check fails
     try {
       await abstraxionAuth.authenticate();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Authentication failed. Please try again.";
+      setAbstraxionError(message);
     } finally {
       // Always end initialization after auth check completes, even if authenticate() throws
       setIsInitializing(false);

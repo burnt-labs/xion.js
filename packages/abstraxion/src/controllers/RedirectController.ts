@@ -24,7 +24,7 @@ import { fetchConfig } from "@burnt-labs/constants";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { RedirectAuthentication, SignResult } from "../types";
-import { toBase64 } from "../utils/encoding";
+import { toBase64 } from "@burnt-labs/signers";
 
 /**
  * Configuration for RedirectController
@@ -77,6 +77,8 @@ export class RedirectController extends BaseController {
   private orchestrator: ConnectionOrchestrator;
   private config: RedirectControllerConfig;
   private signResult_: SignResult | null = null;
+  private signResultVersion_ = 0;
+  private signResultSubscribers_ = new Set<() => void>();
   private initializePromise: Promise<void> | null = null;
 
   /**
@@ -395,10 +397,12 @@ export class RedirectController extends BaseController {
   /**
    * Redirect to the dashboard signing view for direct signing.
    *
-   * The page navigates away — the returned Promise never resolves on this page load.
-   * After the dashboard signs + broadcasts, it redirects back with `?tx_hash=<hash>`
-   * (or `?sign_rejected=true` / `?sign_error=<msg>`). On the next page load,
-   * `initialize()` picks up the result and exposes it via `getSignResult()`.
+   * **Fire-and-forget**: this method sets `window.location.href` and the
+   * browser navigates away. The returned Promise is only a safety net — it
+   * rejects after 10 seconds if navigation didn't happen (e.g. a Content
+   * Security Policy blocked it). Callers should NOT await this for a signing
+   * result; instead, read `getSignResult()` (via the hook's `signResult`)
+   * after the page reloads from the dashboard redirect.
    */
   async promptAndSign(
     signerAddress: string,
@@ -433,19 +437,22 @@ export class RedirectController extends BaseController {
     url.searchParams.set("granter", signerAddress);
     url.searchParams.set("redirect_uri", window.location.href);
 
-    // Navigate away
+    // Navigate away — on success, the browser unloads this page and the
+    // setTimeout below never fires.
     window.location.href = url.toString();
 
-    // Return a promise that rejects if navigation doesn't happen within 5s
-    // (e.g., popup blocker, CSP, or browser stop button)
+    // Safety net: if the page is still alive after 10s, navigation failed.
+    // Common causes: Content Security Policy blocking the redirect, or the
+    // user pressing the browser stop button.
     return new Promise((_, reject) => {
       setTimeout(() => {
         reject(
           new Error(
-            "Redirect to signing page failed. The page may have been blocked by a popup blocker or Content Security Policy.",
+            "Navigation to the dashboard signing page did not complete. " +
+              "This may be caused by a Content Security Policy restriction or the browser interrupting the redirect.",
           ),
         );
-      }, 5_000);
+      }, 10_000);
     });
   }
 
@@ -461,7 +468,33 @@ export class RedirectController extends BaseController {
    * Clear the sign result after the consumer has handled it.
    */
   clearSignResult(): void {
-    this.signResult_ = null;
+    this.setSignResult(null);
+  }
+
+  /**
+   * Subscribe to signResult changes (for use with React's useSyncExternalStore).
+   * Returns an unsubscribe function.
+   */
+  subscribeToSignResult(callback: () => void): () => void {
+    this.signResultSubscribers_.add(callback);
+    return () => {
+      this.signResultSubscribers_.delete(callback);
+    };
+  }
+
+  /**
+   * Snapshot accessor for useSyncExternalStore — returns a stable reference
+   * that only changes when signResult is actually updated.
+   */
+  getSignResultSnapshot(): SignResult | null {
+    return this.signResult_;
+  }
+
+  /** Internal setter that notifies subscribers */
+  private setSignResult(value: SignResult | null): void {
+    this.signResult_ = value;
+    this.signResultVersion_++;
+    this.signResultSubscribers_.forEach((cb) => cb());
   }
 
   /**
@@ -478,9 +511,11 @@ export class RedirectController extends BaseController {
 
     if (!txHash && !signRejected && !signError) return;
 
-    this.signResult_ = txHash
-      ? { success: true, transactionHash: txHash }
-      : { success: false, error: signError || "Transaction rejected" };
+    this.setSignResult(
+      txHash
+        ? { success: true, transactionHash: txHash }
+        : { success: false, error: signError || "Transaction rejected" },
+    );
 
     // Clean signing params from URL
     params.delete("tx_hash");
@@ -498,8 +533,7 @@ export class RedirectController extends BaseController {
    */
   destroy(): void {
     super.destroy();
-
-    // Cleanup orchestrator resources
+    this.signResultSubscribers_.clear();
     this.orchestrator.destroy();
   }
 }

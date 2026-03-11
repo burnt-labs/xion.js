@@ -33,7 +33,7 @@ import {
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
 import type { PopupAuthentication, NormalizedAbstraxionConfig } from "../types";
-import { toBase64 } from "../utils/encoding";
+import { toBase64 } from "@burnt-labs/signers";
 
 // postMessage types for the popup protocol
 const CONNECT_SUCCESS = "CONNECT_SUCCESS";
