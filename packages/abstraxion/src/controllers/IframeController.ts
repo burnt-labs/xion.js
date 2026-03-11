@@ -614,8 +614,7 @@ export class IframeController extends BaseController {
     iframe.style.width = "100%";
     iframe.style.height = "100%";
     iframe.style.border = "none";
-    iframe.allow =
-      `publickey-credentials-get ${this.iframeOrigin}; clipboard-read; clipboard-write`;
+    iframe.allow = `publickey-credentials-get ${this.iframeOrigin}; clipboard-read; clipboard-write`;
 
     container.appendChild(iframe);
     this.iframe = iframe;
@@ -685,7 +684,10 @@ export class IframeController extends BaseController {
     try {
       await this.abstraxionAuth.logout();
     } catch (error) {
-      console.warn("[IframeController] Logout failed during disconnect. Session data may persist and be restored on next load:", error);
+      console.warn(
+        "[IframeController] Logout failed during disconnect. Session data may persist and be restored on next load:",
+        error,
+      );
     }
 
     // Clear local state

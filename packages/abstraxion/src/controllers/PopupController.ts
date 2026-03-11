@@ -301,7 +301,10 @@ export class PopupController extends BaseController {
     try {
       await this.abstraxionAuth.logout();
     } catch (error) {
-      console.warn("[PopupController] Logout failed during disconnect. Session data may persist and be restored on next load:", error);
+      console.warn(
+        "[PopupController] Logout failed during disconnect. Session data may persist and be restored on next load:",
+        error,
+      );
     }
     this.dispatch({ type: "RESET" });
   }

@@ -364,7 +364,10 @@ export class RedirectController extends BaseController {
     try {
       await this.abstraxionAuth.logout();
     } catch (error) {
-      console.warn("[RedirectController] Logout failed during disconnect. Session data may persist and be restored on next load:", error);
+      console.warn(
+        "[RedirectController] Logout failed during disconnect. Session data may persist and be restored on next load:",
+        error,
+      );
     }
 
     // Reset state
@@ -433,7 +436,10 @@ export class RedirectController extends BaseController {
     // Build signing URL (same params as PopupController.promptAndSign)
     const url = new URL(authAppUrl);
     url.searchParams.set("mode", "sign");
-    url.searchParams.set("tx", toBase64(JSON.stringify({ messages, fee, memo })));
+    url.searchParams.set(
+      "tx",
+      toBase64(JSON.stringify({ messages, fee, memo })),
+    );
     url.searchParams.set("granter", signerAddress);
     url.searchParams.set("redirect_uri", window.location.href);
 

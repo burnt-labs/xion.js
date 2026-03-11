@@ -318,9 +318,7 @@ describe("SignerController", () => {
     it("should still dispatch RESET when logout throws", async () => {
       const controller = createController();
 
-      mockSessionManager.logout.mockRejectedValue(
-        new Error("logout failed"),
-      );
+      mockSessionManager.logout.mockRejectedValue(new Error("logout failed"));
 
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 

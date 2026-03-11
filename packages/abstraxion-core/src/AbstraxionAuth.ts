@@ -618,7 +618,10 @@ export class AbstraxionAuth {
       try {
         await this.logout();
       } catch (logoutError) {
-        console.warn("[AbstraxionAuth] Logout failed during error recovery:", logoutError);
+        console.warn(
+          "[AbstraxionAuth] Logout failed during error recovery:",
+          logoutError,
+        );
       }
       // Re-throw the error so that authenticate() rejects and callers can handle it
       throw error;

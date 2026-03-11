@@ -6,7 +6,8 @@ import { describe, it, expect, vi } from "vitest";
 
 // Mock the external dependencies before importing the controller
 vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
+  const actual =
+    await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
   return {
     ...actual,
     AbstraxionAuth: vi.fn().mockImplementation(() => ({
@@ -17,7 +18,8 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
 });
 
 vi.mock("@burnt-labs/account-management", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@burnt-labs/account-management")>();
+  const actual =
+    await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
     ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
@@ -116,7 +118,9 @@ describe("RedirectController", () => {
 
   describe("disconnect", () => {
     const getLatestAuthInstance = () => {
-      const mockResults = (AbstraxionAuth as unknown as ReturnType<typeof vi.fn>).mock.results;
+      const mockResults = (
+        AbstraxionAuth as unknown as ReturnType<typeof vi.fn>
+      ).mock.results;
       return mockResults[mockResults.length - 1].value;
     };
 

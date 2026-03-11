@@ -78,9 +78,7 @@ describe("MessageChannelManager", () => {
       "https://example.com",
     );
 
-    await expect(promise).rejects.toThrow(
-      "Iframe contentWindow not available",
-    );
+    await expect(promise).rejects.toThrow("Iframe contentWindow not available");
     expect(mockPort1.close).toHaveBeenCalled();
   });
 

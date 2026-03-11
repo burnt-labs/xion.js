@@ -159,7 +159,9 @@ describe("PopupController", () => {
 
       // Simulate a pending cleanup by setting it via the private field
       const mockCleanup = vi.fn();
-      (controller as unknown as { pendingCleanup: (() => void) | null }).pendingCleanup = mockCleanup;
+      (
+        controller as unknown as { pendingCleanup: (() => void) | null }
+      ).pendingCleanup = mockCleanup;
 
       controller.destroy();
 

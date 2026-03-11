@@ -355,7 +355,10 @@ export class SignerController extends BaseController {
     try {
       await this.config.sessionManager.logout();
     } catch (error) {
-      console.warn("[SignerController] Session cleanup failed during disconnect. Session data may persist and be restored on next load:", error);
+      console.warn(
+        "[SignerController] Session cleanup failed during disconnect. Session data may persist and be restored on next load:",
+        error,
+      );
     }
 
     // Reset state
