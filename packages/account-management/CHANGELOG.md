@@ -1,5 +1,11 @@
 # @burnt-labs/account-management
 
+## 1.0.0-alpha.8
+
+### Patch Changes
+
+- [#348](https://github.com/burnt-labs/xion.js/pull/348) [`00ac279`](https://github.com/burnt-labs/xion.js/commit/00ac279a15f1845f62d63507ceb02ec70e5c5dc1) Thanks [@justinbarry](https://github.com/justinbarry)! - Fix treasury queries failing for contracts with no grant configs. `DirectQueryTreasuryStrategy` now returns empty `grantConfigs` instead of throwing "Treasury config not found".
+
 ## 1.0.0-alpha.7
 
 ### Patch Changes

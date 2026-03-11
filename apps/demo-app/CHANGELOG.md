@@ -1,5 +1,13 @@
 # demo-app
 
+## 1.1.0-alpha.61
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion@1.0.0-alpha.76
+  - @burnt-labs/ui@1.0.0-alpha.24
+
 ## 1.1.0-alpha.60
 
 ### Patch Changes

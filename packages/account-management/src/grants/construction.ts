@@ -131,11 +131,15 @@ export async function generateTreasuryGrants(
     );
   }
 
+  // Treasury contracts can have zero grant configs — the contract supports
+  // instantiation with empty configs and deploy_fee_grant still works
+  // (it skips the authz grant validation loop). Return no grant messages
+  // so the caller can proceed with just the fee grant.
   if (
     !treasuryConfig.grantConfigs ||
     treasuryConfig.grantConfigs.length === 0
   ) {
-    throw new Error("No grant configs found in treasury contract");
+    return [];
   }
 
   // Build grant messages from raw authorization values
