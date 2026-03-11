@@ -615,7 +615,7 @@ export class IframeController extends BaseController {
     iframe.style.height = "100%";
     iframe.style.border = "none";
     iframe.allow =
-      "publickey-credentials-get *; clipboard-read; clipboard-write";
+      `publickey-credentials-get ${this.iframeOrigin}; clipboard-read; clipboard-write`;
 
     container.appendChild(iframe);
     this.iframe = iframe;

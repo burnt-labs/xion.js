@@ -230,6 +230,12 @@ export class RedirectController extends BaseController {
           );
         }
 
+        // Clean redirect params from the address bar now that we've read them
+        const url = new URL(window.location.href);
+        url.searchParams.delete("granted");
+        url.searchParams.delete("granter");
+        history.replaceState({}, "", url.href);
+
         // 3. Persist granter + sync in-memory state (same as PopupController)
         await this.abstraxionAuth.setGranter(granterAddress);
         this.abstraxionAuth.abstractAccount = keypair;
@@ -253,12 +259,6 @@ export class RedirectController extends BaseController {
           account: accountInfo,
           signingClient,
         });
-
-        // 5. Clean redirect params from URL
-        const cleanUrl = new URL(window.location.href);
-        cleanUrl.searchParams.delete("granted");
-        cleanUrl.searchParams.delete("granter");
-        history.replaceState({}, "", cleanUrl.href);
       } catch (error) {
         console.error(
           "[RedirectController] Error completing redirect callback:",
