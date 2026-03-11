@@ -308,21 +308,32 @@ import { AbstraxionProvider } from "@burnt-labs/abstraxion";
   }}
 >
   {children}
-</AbstraxionProvider>
+</AbstraxionProvider>;
 ```
 
 ```tsx
 // page.tsx — connect and sign
-import { useAbstraxionAccount, useAbstraxionSigningClient } from "@burnt-labs/abstraxion";
+import {
+  useAbstraxionAccount,
+  useAbstraxionSigningClient,
+} from "@burnt-labs/abstraxion";
 
 function MyPage() {
-  const { data: account, login, logout, isConnected, isConnecting } = useAbstraxionAccount();
+  const {
+    data: account,
+    login,
+    logout,
+    isConnected,
+    isConnecting,
+  } = useAbstraxionAccount();
 
   // Session key client — gasless, silent
   const { client } = useAbstraxionSigningClient();
 
   // Direct signing client — meta-account signs, user pays gas
-  const { client: directClient } = useAbstraxionSigningClient({ requireAuth: true });
+  const { client: directClient } = useAbstraxionSigningClient({
+    requireAuth: true,
+  });
 
   const handleLogin = async () => {
     try {
@@ -339,7 +350,12 @@ function MyPage() {
 
   const handleSecureSend = async () => {
     // Direct: opens approval popup, user pays gas from their XION balance
-    await directClient.sendTokens(account.bech32Address, recipient, amount, "auto");
+    await directClient.sendTokens(
+      account.bech32Address,
+      recipient,
+      amount,
+      "auto",
+    );
   };
 }
 ```
@@ -363,7 +379,11 @@ See `apps/demo-app/src/app/popup-demo/` for the complete example.
 
 ```tsx
 // page.tsx — attach iframe to a container you control
-import { AbstraxionContext, IframeController, useAbstraxionAccount } from "@burnt-labs/abstraxion";
+import {
+  AbstraxionContext,
+  IframeController,
+  useAbstraxionAccount,
+} from "@burnt-labs/abstraxion";
 import { useContext, useEffect, useRef } from "react";
 
 function MyPage() {
@@ -417,7 +437,11 @@ See `apps/demo-app/src/app/inline-demo/` for the complete example.
           account: signer,
         };
       },
-      smartAccountContract: { codeId: 12, checksum: "...", addressPrefix: "xion" },
+      smartAccountContract: {
+        codeId: 12,
+        checksum: "...",
+        addressPrefix: "xion",
+      },
     },
   }}
 >
@@ -429,7 +453,9 @@ See `apps/demo-app/src/app/inline-demo/` for the complete example.
 // page.tsx — same hooks as all other modes
 const { data: account, login, isConnected } = useAbstraxionAccount();
 const { client } = useAbstraxionSigningClient(); // GranteeSignerClient (gasless)
-const { client: directClient } = useAbstraxionSigningClient({ requireAuth: true }); // AAClient (MetaMask prompts)
+const { client: directClient } = useAbstraxionSigningClient({
+  requireAuth: true,
+}); // AAClient (MetaMask prompts)
 ```
 
 See `apps/demo-app/src/app/direct-signing-demo/` for the complete example with MetaMask.

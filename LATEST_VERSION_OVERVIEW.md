@@ -3,6 +3,7 @@
 This document contains a comprehensive overview of all manual changelog entries for the upcoming release across all packages in the xion.js monorepo.
 
 The document is split into two sections:
+
 1. **New in this version** — new authentication modes, direct signing, and UX improvements
 2. **Breaking changes from previous version** — migration guide for upgrading from the old API
 
@@ -17,6 +18,7 @@ The SDK now supports five authentication modes. All are configured via the `auth
 ### Auto Mode (recommended for most dApps)
 
 Automatically detects the environment and resolves to the best mode:
+
 - **Desktop browsers** → popup (user stays on page)
 - **Mobile / PWA** → redirect (navigates to auth app and back)
 
@@ -53,6 +55,7 @@ Opens the auth app in a separate popup window. The user stays on the dApp page w
 ```
 
 **UX improvements over redirect:**
+
 - User never leaves the dApp page
 - No loss of application state during authentication
 - Popup closes automatically after grant approval
@@ -97,7 +100,11 @@ The `iframeUrl` defaults to the chain-specific iframe URL from `@burnt-labs/cons
 
 ```tsx
 // page.tsx — mount the iframe into a container
-import { AbstraxionContext, IframeController, useAbstraxionAccount } from "@burnt-labs/abstraxion";
+import {
+  AbstraxionContext,
+  IframeController,
+  useAbstraxionAccount,
+} from "@burnt-labs/abstraxion";
 import { useContext, useEffect, useRef } from "react";
 
 function MyPage() {
@@ -132,6 +139,7 @@ function MyPage() {
 ```
 
 **UX improvements:**
+
 - No popup blocking issues
 - Full control over iframe placement and sizing
 - Auth UI is part of your page layout — can be hidden/resized after connection
@@ -180,6 +188,7 @@ This is the mode to use when you want to wrap an existing wallet directly into t
 ```
 
 **What happens under the hood:**
+
 1. User connects their wallet (e.g. MetaMask)
 2. SDK calls your `getSignerConfig()` to get the signing function
 3. SDK discovers or creates a XION smart account (meta-account) for that wallet
@@ -196,14 +205,14 @@ All modes support **direct signing** alongside the default session-key signing. 
 
 ### Key differences from session-key signing
 
-| Aspect | Session Key (default) | Direct Signing (`requireAuth: true`) |
-|--------|----------------------|--------------------------------------|
-| **Who signs** | Session keypair (grantee) | Meta-account directly (user's wallet or dashboard authenticator) |
-| **On-chain signer** | Grantee address via Authz Exec | Meta-account address directly |
-| **User interaction** | Silent — no prompts | Explicit approval required per transaction |
-| **Gas payment** | Fee grant (gasless for the user) | **User pays gas from their meta-account XION balance** |
-| **Balance requirement** | None (fee grant covers gas) | **Meta-account must hold XION to pay gas fees** |
-| **Use case** | Normal operations | Security-critical operations |
+| Aspect                  | Session Key (default)            | Direct Signing (`requireAuth: true`)                             |
+| ----------------------- | -------------------------------- | ---------------------------------------------------------------- |
+| **Who signs**           | Session keypair (grantee)        | Meta-account directly (user's wallet or dashboard authenticator) |
+| **On-chain signer**     | Grantee address via Authz Exec   | Meta-account address directly                                    |
+| **User interaction**    | Silent — no prompts              | Explicit approval required per transaction                       |
+| **Gas payment**         | Fee grant (gasless for the user) | **User pays gas from their meta-account XION balance**           |
+| **Balance requirement** | None (fee grant covers gas)      | **Meta-account must hold XION to pay gas fees**                  |
+| **Use case**            | Normal operations                | Security-critical operations                                     |
 
 ### Important: gas fees and balance
 
@@ -218,7 +227,9 @@ Both clients expose the same API, so switching is a one-line change:
 const { client } = useAbstraxionSigningClient();
 
 // Direct — meta-account signs directly, user approves, user pays gas
-const { client: directClient, error } = useAbstraxionSigningClient({ requireAuth: true });
+const { client: directClient, error } = useAbstraxionSigningClient({
+  requireAuth: true,
+});
 
 // Same API for both:
 await client.sendTokens(from, to, amount, "auto", memo);
@@ -227,12 +238,12 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 
 ### Client type by authentication mode
 
-| Auth Mode | Session Key Client | Direct Signing Client | Approval UX |
-|-----------|-------------------|-----------------------|-------------|
-| redirect  | `GranteeSignerClient` | `RedirectSigningClient` | Redirects to dashboard for approval |
-| popup / auto | `GranteeSignerClient` | `PopupSigningClient` | Opens dashboard popup for approval |
-| iframe    | `GranteeSignerClient` | `IframeSigningClient` | User approves inside embedded iframe |
-| signer    | `GranteeSignerClient` | `AAClient` | Wallet prompts directly (MetaMask popup, Keplr prompt, etc.) |
+| Auth Mode    | Session Key Client    | Direct Signing Client   | Approval UX                                                  |
+| ------------ | --------------------- | ----------------------- | ------------------------------------------------------------ |
+| redirect     | `GranteeSignerClient` | `RedirectSigningClient` | Redirects to dashboard for approval                          |
+| popup / auto | `GranteeSignerClient` | `PopupSigningClient`    | Opens dashboard popup for approval                           |
+| iframe       | `GranteeSignerClient` | `IframeSigningClient`   | User approves inside embedded iframe                         |
+| signer       | `GranteeSignerClient` | `AAClient`              | Wallet prompts directly (MetaMask popup, Keplr prompt, etc.) |
 
 ### When to use direct signing
 
@@ -252,19 +263,24 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 ## New Exports
 
 **Config types:**
+
 - `AbstraxionConfig`, `NormalizedAbstraxionConfig`, `AuthenticationConfig`
 - `RedirectAuthentication`, `PopupAuthentication`, `AutoAuthentication`, `IframeAuthentication`, `SignerAuthentication`
 
 **Signing clients:**
+
 - `PopupSigningClient`, `RedirectSigningClient`, `IframeSigningClient`
 
 **Controller:**
+
 - `IframeController` (for `instanceof` checks when setting container element)
 
 **Utilities:**
+
 - `isMobileOrStandalone()` — device detection used by auto mode
 
 **Re-exported:**
+
 - `Connector`, `ConnectorType`, `AUTHENTICATOR_TYPE`, `OfflineDirectSigner`
 
 ---
@@ -292,6 +308,7 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 ## @burnt-labs/abstraxion
 
 ### Removed Components and UI
+
 - All UI components removed: `<Abstraxion />`, `<AbstraxionSignin />`, `<Connected />`, `<Loading />`, `<ErrorDisplay />`
 - CSS import no longer needed - package is now UI-less
 - `@burnt-labs/ui` dependency removed
@@ -334,6 +351,7 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 ```
 
 **Key changes:**
+
 - `chainId` now required
 - `rpcUrl`, `restUrl`, `gasPrice` optional (auto-filled from chainId)
 - `dashboardUrl` moved to `authentication.authAppUrl` (optional, auto-fetched from chain RPC config)
@@ -343,6 +361,7 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 ### Hook Changes
 
 **`useAbstraxionSigningClient`:**
+
 - No longer returns `logout` (moved to `useAbstraxionAccount`)
 - Returns pre-configured `client` from state
 - New option: `{ requireAuth: true }` for direct signing
@@ -360,16 +379,20 @@ await logout(); // now async
 ### Context Changes
 
 **Removed from `AbstraxionContext`:**
+
 - All setter functions (`setIsConnected`, `setIsConnecting`, `setAbstraxionError`, `setAbstraxionAccount`, `showModal`, `setShowModal`, `setGranterAddress`, `setDashboardUrl`)
 
 **Added to `AbstraxionContext`:**
+
 - `chainId`, `restUrl`, `signingClient`, `authMode`, `authentication`, `feeGranter`, `indexerUrl`, `indexerAuthToken`, `treasuryIndexerUrl`
 
 **Changed:**
+
 - `logout` now async - returns `Promise<void>`
 - State values now read-only (derived from controller)
 
 ### Removed Exports
+
 - `Abstraxion` component
 - `abstraxionAuth` singleton
 - `useModal` hook
