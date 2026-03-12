@@ -124,7 +124,9 @@ export class IframeController extends BaseController {
     redirectStrategy: RedirectStrategy,
   ): IframeController {
     if (config.authentication?.type !== "embedded") {
-      throw new Error("Embedded authentication config required for embedded mode");
+      throw new Error(
+        "Embedded authentication config required for embedded mode",
+      );
     }
 
     const iframeConfig: IframeControllerConfig = {

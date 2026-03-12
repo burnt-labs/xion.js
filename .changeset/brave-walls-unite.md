@@ -16,6 +16,7 @@ Add embedded wallets with popup, auto, and embedded authentication modes. Also a
 - **Direct signing (`requireAuth: true`)** — meta-account signs transactions directly instead of using session keys; user pays gas from their XION balance. For txs that won't be secure using session keys, like big transfers, smart account management etc.
 
 Non user facing:
+
 - **Signing clients per auth mode** — `PopupSigningClient`, `RedirectSigningClient`, `IframeSigningClient` for direct signing in each mode
 - **`resolveAutoAuth` utility** — mobile/standalone detection heuristic (user-agent, touch, viewport, orientation, PWA)
 - **Wrong-wallet signing guard** — prevents signing from a wallet that doesn't match the connected account

@@ -191,7 +191,6 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 
 > **Demo:** See [`apps/demo-app/src/app/direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) — compares session-key vs direct signing with MetaMask (signer mode). Uses the `useMetamask` hook from [`apps/demo-app/src/hooks/useMetamask.ts`](apps/demo-app/src/hooks/useMetamask.ts). - for usage in the traditional flow see [`apps/demo-app/src/app/inline-demo/`](apps/demo-app/src/app/inline-demo/) (or popup demo) which shows how to approve a direct signature from a logged in wallet using social auth like email/google.
 
-
 ---
 
 ## New Exports (this version)
@@ -257,16 +256,17 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 
 All demos are in [`apps/demo-app/`](apps/demo-app/):
 
-| Demo | Path | What it shows |
-| --- | --- | --- |
-| **Popup Auth** | [`popup-demo/`](apps/demo-app/src/app/popup-demo/) | Auto mode (popup on desktop, redirect on mobile), session-key signing, token transfers |
-| **Inline Iframe** | [`inline-demo/`](apps/demo-app/src/app/inline-demo/) | Iframe mode with container mounting, session management, connected view |
-| **Direct Signing** | [`direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) | MetaMask signer mode comparing session-key vs direct signing side-by-side |
-| **Signer Mode** | [`signer-mode/`](apps/demo-app/src/app/signer-mode/) | External wallet integration without dashboard |
-| **Abstraxion UI** | [`abstraxion-ui/`](apps/demo-app/src/app/abstraxion-ui/) | Pre-built modal component (redirect mode) |
-| **Loading States** | [`loading-states/`](apps/demo-app/src/app/loading-states/) | Manual hook usage with custom UI |
+| Demo               | Path                                                                 | What it shows                                                                          |
+| ------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Popup Auth**     | [`popup-demo/`](apps/demo-app/src/app/popup-demo/)                   | Auto mode (popup on desktop, redirect on mobile), session-key signing, token transfers |
+| **Inline Iframe**  | [`inline-demo/`](apps/demo-app/src/app/inline-demo/)                 | Iframe mode with container mounting, session management, connected view                |
+| **Direct Signing** | [`direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) | MetaMask signer mode comparing session-key vs direct signing side-by-side              |
+| **Signer Mode**    | [`signer-mode/`](apps/demo-app/src/app/signer-mode/)                 | External wallet integration without dashboard                                          |
+| **Abstraxion UI**  | [`abstraxion-ui/`](apps/demo-app/src/app/abstraxion-ui/)             | Pre-built modal component (redirect mode)                                              |
+| **Loading States** | [`loading-states/`](apps/demo-app/src/app/loading-states/)           | Manual hook usage with custom UI                                                       |
 
 ---
+
 ---
 
 # Previous Version Recap (`@burnt-labs/abstraxion@1.0.0-alpha.70`)
