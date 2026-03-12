@@ -126,9 +126,9 @@ const DAODAO_INDEXER_URLS: Record<string, string> = {
 };
 
 const IFRAME_URLS: Record<string, string> = {
-  "xion-mainnet-1": "https://settings.mainnet.burnt.com/iframe",
-  "xion-testnet-1": "https://settings.testnet.burnt.com/iframe",
-  "xion-testnet-2": "https://auth.testnet.burnt.com/iframe",
+  "xion-mainnet-1": "https://settings.mainnet.burnt.com",
+  "xion-testnet-1": "https://settings.testnet.burnt.com",
+  "xion-testnet-2": "https://auth.testnet.burnt.com",
 };
 
 // Synchronous alternatives to fetchConfig() - use these when you already know the chain ID

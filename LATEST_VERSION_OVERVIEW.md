@@ -1,21 +1,21 @@
-# xion.js Version Overview - UNRELEASED
+# xion.js Version Overview
 
-This document contains a comprehensive overview of all manual changelog entries for the upcoming release across all packages in the xion.js monorepo.
+This document contains a comprehensive overview of all changelog entries across all packages in the xion.js monorepo.
 
 The document is split into two sections:
 
-1. **New in this version** — new authentication modes, direct signing, and UX improvements
-2. **Breaking changes from previous version** — migration guide for upgrading from the old API
+1. **New in this version (`1.0.0-alpha.76`)** — popup, auto, and iframe authentication modes, direct signing, and supporting changes
+2. **Previous version recap (`1.0.0-alpha.70`)** — summary of changes already released (config object refactor, UI removal, connector architecture, signer mode)
 
 ---
 
-# New in This Version
+# New in This Version (`@burnt-labs/abstraxion@1.0.0-alpha.76`)
 
 ## Authentication Modes
 
-The SDK now supports five authentication modes. All are configured via the `authentication` field on `AbstraxionProvider` config. For popup, redirect, auto, and iframe modes the auth app URL defaults to the chain-specific dashboard URL (fetched from the chain's RPC config at runtime for popup/redirect, or from `@burnt-labs/constants` for iframe). You only need to provide `authAppUrl` or `iframeUrl` if you're overriding for local development or a custom deployment.
+The SDK now supports five authentication modes (two from the previous version — redirect and signer — plus three new ones). All are configured via the `authentication` field on `AbstraxionProvider` config. For popup, redirect, auto, and iframe modes the auth app URL defaults to the chain-specific dashboard URL (fetched from the chain's RPC config at runtime for popup/redirect, or from `@burnt-labs/constants` for iframe). You only need to provide `authAppUrl` or `iframeUrl` if you're overriding for local development or a custom deployment.
 
-### Auto Mode (recommended for most dApps)
+### Auto Mode (recommended for most dApps) — NEW
 
 Automatically detects the environment and resolves to the best mode:
 
@@ -37,7 +37,9 @@ Automatically detects the environment and resolves to the best mode:
 
 Detection uses: user-agent (mobile keywords), touch capability, viewport width (<1024px), portrait orientation, and PWA standalone mode.
 
-### Popup Mode
+> **Demo:** See [`apps/demo-app/src/app/popup-demo/`](apps/demo-app/src/app/popup-demo/) — uses auto mode (popup on desktop, redirect on mobile).
+
+### Popup Mode — NEW
 
 Opens the auth app in a separate popup window. The user stays on the dApp page while the popup handles login and grant approval. The popup closes automatically on success.
 
@@ -62,27 +64,13 @@ Opens the auth app in a separate popup window. The user stays on the dApp page w
 
 **Handling popup blockers:** Wrap `login()` in a try/catch — if the popup is blocked, the error message will contain "popup". Prompt users to allow popups for your site.
 
-### Redirect Mode
+> **Demo:** See [`apps/demo-app/src/app/popup-demo/`](apps/demo-app/src/app/popup-demo/) for a full working example.
 
-Traditional dashboard OAuth flow — navigates the full page to the auth app and returns with `?granted=true`. Default if no `authentication` config is provided.
-
-```tsx
-<AbstraxionProvider
-  config={{
-    chainId: "xion-testnet-1",
-    authentication: {
-      type: "redirect",
-      callbackUrl: "https://myapp.com/callback", // optional, defaults to current page
-    },
-  }}
-/>
-```
-
-### Inline Iframe Mode
+### Inline Iframe Mode — NEW
 
 Embeds the full dashboard inside an iframe on your page. The user authenticates and approves grants without leaving your layout. You control the iframe's position and size via a container element.
 
-The `iframeUrl` defaults to the chain-specific iframe URL from `@burnt-labs/constants` (e.g. `https://settings.testnet.burnt.com/iframe` for testnet-1, `https://auth.testnet.burnt.com/iframe` for testnet-2).
+The `iframeUrl` defaults to the chain-specific iframe URL from `@burnt-labs/constants` (e.g. `https://settings.testnet.burnt.com`).
 
 ```tsx
 // layout.tsx — provider config
@@ -145,61 +133,17 @@ function MyPage() {
 - Auth UI is part of your page layout — can be hidden/resized after connection
 - Communication via `MessageChannel` (secure, origin-validated)
 
-### Signer Mode (wrap MetaMask/Keplr directly — no dashboard)
+> **Demo:** See [`apps/demo-app/src/app/inline-demo/`](apps/demo-app/src/app/inline-demo/) for a full working example with container mounting and session management.
 
-Signer mode lets you connect external wallets (MetaMask, Keplr, OKX) or auth providers (Turnkey, Privy, Web3Auth) **without any reliance on the dashboard or social logins**. The user's wallet is the authenticator — the SDK creates a XION smart account (meta-account) backed by that wallet's key.
+### Signer Mode (unchanged from previous version)
 
-This is the mode to use when you want to wrap an existing wallet directly into the XION account abstraction system.
+Signer mode lets you connect external wallets (MetaMask, Keplr, OKX) or auth providers (Turnkey, Privy, Web3Auth) **without any reliance on the dashboard or social logins**. See the [previous version recap](#signer-mode-wrap-metamaskkeplr-directly--no-dashboard-1) for configuration details.
 
-```tsx
-// Example: MetaMask as the authenticator
-<AbstraxionProvider
-  config={{
-    chainId: "xion-testnet-2",
-    treasury: "xion1...",
-    feeGranter: "xion1...",
-    authentication: {
-      type: "signer",
-      aaApiUrl: "https://aa-api.xion-testnet-2.burnt.com",
-      getSignerConfig: async () => {
-        // This function is called when the user connects.
-        // Return the wallet's signing function and authenticator details.
-        const signer = await yourWalletProvider.getSigner();
-        return {
-          authenticatorId: "...",
-          authenticatorType: AUTHENTICATOR_TYPE.SECP256K1, // or ETH_WALLET
-          account: signer,
-        };
-      },
-      smartAccountContract: {
-        codeId: 12,
-        checksum: "abc123...",
-        addressPrefix: "xion",
-      },
-      // Optional indexers for fast account discovery
-      indexer: {
-        type: "numia", // or "subquery"
-        url: "https://xion-testnet.numia.xyz",
-        authToken: "...",
-      },
-    },
-  }}
-/>
-```
-
-**What happens under the hood:**
-
-1. User connects their wallet (e.g. MetaMask)
-2. SDK calls your `getSignerConfig()` to get the signing function
-3. SDK discovers or creates a XION smart account (meta-account) for that wallet
-4. Session key generated + grants created for gasless session-key transactions
-5. For direct signing (`requireAuth: true`), the wallet is prompted directly — MetaMask popup appears for each tx
-
-See the `direct-signing-demo` in `apps/demo-app/` for a full working example with MetaMask.
+> **Demo:** See [`apps/demo-app/src/app/signer-mode/`](apps/demo-app/src/app/signer-mode/) and [`apps/demo-app/src/app/direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) for MetaMask integration with direct signing.
 
 ---
 
-## Direct Signing (`requireAuth: true`)
+## Direct Signing (`requireAuth: true`) — NEW
 
 All modes support **direct signing** alongside the default session-key signing. Pass `{ requireAuth: true }` to `useAbstraxionSigningClient` to get a client where **the user's meta-account signs each transaction directly** — not the session key.
 
@@ -258,14 +202,18 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 - High-frequency operations that should be seamless
 - When gasless UX is important (fee grants cover gas)
 
+> **Demo:** See [`apps/demo-app/src/app/direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) — compares session-key vs direct signing with MetaMask (signer mode). Uses the `useMetamask` hook from [`apps/demo-app/src/hooks/useMetamask.ts`](apps/demo-app/src/hooks/useMetamask.ts). - for usage in the traditional flow see [`apps/demo-app/src/app/inline-demo/`](apps/demo-app/src/app/inline-demo/) (or popup demo) which shows how to approve a direct signature from a logged in wallet using social auth like email/google.
+
+
 ---
 
-## New Exports
+## New Exports (this version)
 
 **Config types:**
 
-- `AbstraxionConfig`, `NormalizedAbstraxionConfig`, `AuthenticationConfig`
-- `RedirectAuthentication`, `PopupAuthentication`, `AutoAuthentication`, `IframeAuthentication`, `SignerAuthentication`
+- `PopupAuthentication`, `AutoAuthentication`, `IframeAuthentication`
+- `SignResult`, `SigningClient`
+- `UseAbstraxionSigningClientOptions`, `UseAbstraxionSigningClientReturn`
 
 **Signing clients:**
 
@@ -279,33 +227,64 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 
 - `isMobileOrStandalone()` — device detection used by auto mode
 
-**Re-exported:**
+**Core (abstraxion-core):**
 
-- `Connector`, `ConnectorType`, `AUTHENTICATOR_TYPE`, `OfflineDirectSigner`
+- `MessageChannelManager` — request-response messaging for iframe communication
+- `TypedEventEmitter`, `EventHandler` — typed event system used by controllers
+- `IframeMessageType`, `MessageTarget` — enums for iframe message protocol
 
----
+**Re-exported from signers:**
 
-## Controller Architecture
+- `AAClient` — for direct signing in signer mode
 
-- New controller pattern with state machine for connection lifecycle
-- `RedirectController` for OAuth redirect flow
-- `PopupController` for popup-based OAuth flow
-- `IframeController` for inline iframe flow with `MessageChannelManager`
-- `SignerController` for external signers (MetaMask, Keplr, Turnkey, etc.)
-- Controller factory auto-selects based on `authentication.type`
-- Handles state transitions, session restoration, account creation/discovery
+**Constants:**
 
-## Indexer Support
-
-- Numia and Subquery indexers for fast account discovery (signer mode)
-- DaoDao treasury indexer for fast grant config queries
-- Falls back to RPC if no indexer configured
+- `getIframeUrl(chainId)` — per-chain iframe dashboard URL
 
 ---
 
-# Breaking Changes (from previous version)
+## Controller Architecture (this version)
 
-## @burnt-labs/abstraxion
+- `PopupController` — popup-based OAuth flow with `postMessage` communication
+- `IframeController` — inline iframe flow with `MessageChannelManager` for request-response
+- Enhanced `RedirectController` — now supports `authAppUrl` override, improved session restoration
+- Enhanced `SignerController` — wrong-wallet signing guard
+- Controller factory updated to handle new `"popup"`, `"iframe"`, and `"auto"` types
+
+---
+
+## Fixes (this version)
+
+- **Treasury grant restoration** — `decodeRestFormatAuthorization` handles the ABCI REST format change that broke session restoration
+- **WebAuthn scope and URL param cleanup** — fixes passkey credential scope and cleans up `?granted=true` from URL after redirect
+- **Wrong-wallet signing guard** — prevents signing from a wallet that doesn't match the connected account
+- **Empty treasury grant configs** — `DirectQueryTreasuryStrategy` returns empty `grantConfigs` instead of throwing when treasury has no grant configs
+
+---
+
+## Demo Apps
+
+All demos are in [`apps/demo-app/`](apps/demo-app/):
+
+| Demo | Path | What it shows |
+| --- | --- | --- |
+| **Popup Auth** | [`popup-demo/`](apps/demo-app/src/app/popup-demo/) | Auto mode (popup on desktop, redirect on mobile), session-key signing, token transfers |
+| **Inline Iframe** | [`inline-demo/`](apps/demo-app/src/app/inline-demo/) | Iframe mode with container mounting, session management, connected view |
+| **Direct Signing** | [`direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) | MetaMask signer mode comparing session-key vs direct signing side-by-side |
+| **Signer Mode** | [`signer-mode/`](apps/demo-app/src/app/signer-mode/) | External wallet integration without dashboard |
+| **Abstraxion UI** | [`abstraxion-ui/`](apps/demo-app/src/app/abstraxion-ui/) | Pre-built modal component (redirect mode) |
+| **Loading States** | [`loading-states/`](apps/demo-app/src/app/loading-states/) | Manual hook usage with custom UI |
+
+---
+---
+
+# Previous Version Recap (`@burnt-labs/abstraxion@1.0.0-alpha.70`)
+
+The changes below were part of the previous major version release. They are included here as a reference for migration, but are not specific to the actual latest major version.
+
+---
+
+## @burnt-labs/abstraxion (previous version)
 
 ### Removed Components and UI
 
@@ -429,7 +408,6 @@ await logout(); // now async
 
    ```tsx
    // Auto (recommended) — popup on desktop, redirect on mobile
-   // All URLs auto-resolved from chainId — no overrides needed for standard networks
    authentication: { type: "auto" }
 
    // Popup only
@@ -445,24 +423,65 @@ await logout(); // now async
 6. **Optional — use direct signing for security-critical operations:**
 
    ```tsx
-   // Meta-account signs directly, user pays gas from their XION balance
    const { client } = useAbstraxionSigningClient({ requireAuth: true });
    ```
 
+### Signer Mode — wrap MetaMask/Keplr/Turnkey/Privy directly (no dashboard)
+
+Signer mode connects external wallets (MetaMask, Keplr, OKX) or auth providers (Turnkey, Privy, Web3Auth) **without any reliance on the dashboard or social logins**. The user's wallet or auth provider key is the authenticator — the SDK creates a XION smart account (meta-account) backed by that key.
+
+This is the mode to use when you want full control over authentication and don't want users routed through the XION dashboard at all.
+
+```tsx
+<AbstraxionProvider
+  config={{
+    chainId: "xion-testnet-2",
+    treasury: "xion1...",
+    feeGranter: "xion1...",
+    authentication: {
+      type: "signer",
+      aaApiUrl: "https://aa-api.xion-testnet-2.burnt.com",
+      getSignerConfig: async () => {
+        // Return a signer from any provider: Turnkey, Privy, Web3Auth, MetaMask, Keplr, etc.
+        const signer = await yourAuthProvider.getSigner();
+        return {
+          authenticatorId: "...",
+          authenticatorType: AUTHENTICATOR_TYPE.SECP256K1,
+          account: signer,
+        };
+      },
+      smartAccountContract: {
+        codeId: 12,
+        checksum: "abc123...",
+        addressPrefix: "xion",
+      },
+      indexer: {
+        type: "numia",
+        url: "https://xion-testnet.numia.xyz",
+        authToken: "...",
+      },
+    },
+  }}
+/>
+```
+
+**Indexer support:** Numia and Subquery indexers enable fast account discovery in signer mode. DaoDao treasury indexer handles grant config queries. Falls back to RPC if no indexer configured.
+
+> **Demo:** See [`apps/demo-app/src/app/signer-mode/`](apps/demo-app/src/app/signer-mode/) and [`apps/demo-app/src/app/direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) for MetaMask integration.
+
 ---
 
-## @burnt-labs/abstraxion-core
+## @burnt-labs/abstraxion-core (previous version)
 
 ### Major Changes
 
 - Connector architecture and AA API v2 integration
 
-  ## Connector System
+  ### Connector System
 
   New connector-based architecture for flexible authentication:
 
   ```typescript
-  // Connector types
   export interface Connector {
     type: ConnectorType;
     metadata: ConnectorMetadata;
@@ -470,199 +489,69 @@ await logout(); // now async
     disconnect(): Promise<void>;
   }
 
-  // External signer connector
-  export class ExternalSignerConnector implements Connector {
-    // Connect using external auth providers (Turnkey, Privy, etc.)
-  }
-
-  // Connector registry
-  export class ConnectorRegistry {
-    registerConnector(connector: Connector): void;
-    getConnector(type: ConnectorType): Connector | undefined;
-  }
+  export class ExternalSignerConnector implements Connector { ... }
+  export class ConnectorRegistry { ... }
   ```
 
-  ## AA API v2 Client
+  ### AA API v2 Client
   - New `api/client.ts` - HTTP client for AA API v2
   - New `api/createAccount.ts` - Account creation utilities
   - Supports both POST and GET account creation methods
-  - Enhanced error handling and validation
 
-  ## Configuration Validation
+  ### Configuration Validation
   - New `config/validation.ts` - Configuration schema validation
   - Type-safe configuration with runtime checks
-  - Improved error messages for misconfigurations
 
-  ## Enhanced AbstraxionAuth
-  - Improved authentication flow with better state management
-  - Support for multiple authentication modes
-  - Enhanced grant verification and validation
-
-  ## GranteeSignerClient Improvements
-  - Additional utility methods for account management
-  - Better integration with connector system
-  - Improved error handling
-
-  ## API Changes
-
-  **New exports:**
-
-  ```typescript
-  // Connectors
-  export * from "./connectors";
-  -Connector -
-    ConnectorType -
-    ConnectorMetadata -
-    ConnectorConfig -
-    ConnectorConnectionResult -
-    ExternalSignerConnector -
-    ConnectorRegistry;
-
-  // API utilities
-  export * from "./api";
-  -createAAClient - createAccount;
-
-  // Configuration
-  export * from "./config";
-  -validateConfig;
-
-  // Config utilities
-  export { fetchConfig, clearConfigCache } from "./utils/configUtils";
-  ```
-
-  **Import path fixes:**
-  - Fixed relative imports to use correct paths (removed `@/` aliases in exports)
-
-  ## Internal Improvements
-  - Enhanced test coverage with mock data utilities
-  - Better TypeScript configuration
-  - Improved build output with tsup
-
-### Patch Changes
-
-- Updated dependencies:
-  - `@burnt-labs/constants@*`
+  ### New exports
+  - Connectors: `Connector`, `ConnectorType`, `ConnectorMetadata`, `ConnectorConfig`, `ConnectorConnectionResult`, `ExternalSignerConnector`, `ConnectorRegistry`
+  - API utilities: `createAAClient`, `createAccount`
+  - Configuration: `validateConfig`
+  - Config utilities: `fetchConfig`, `clearConfigCache`
 
 ---
 
-## @burnt-labs/signers
+## @burnt-labs/signers (previous version)
 
 ### Major Changes
 
-- **Package un-deprecated** - Package is now actively maintained and enhanced with new features
+- **Package un-deprecated** — now actively maintained
 
-  ## Removed deprecation warnings
-  - Package deprecation removed - now actively maintained
-  - Console warnings removed
-
-  ## Passkey Signer Support
+  ### Passkey Signer Support
   - New `AAPasskeySigner` for WebAuthn/passkey authentication
-  - Built-in WebAuthn utilities for credential creation and verification
 
-  ## Signer Factory
-  - New `createSignerFromSigningFunction` utility for custom signer creation
-  - `CreateSignerParams` type for flexible signer configuration
-  - Simplifies integration of custom signing functions
+  ### Signer Factory
+  - `createSignerFromSigningFunction` utility for custom signer creation
 
-  ## Crypto Utilities
-  - Exported crypto utilities for smart account creation:
-    - Address generation and validation
-    - Salt generation for deterministic account addresses
-    - Signature utilities
-  - Previously internal, now part of public API
+  ### Crypto Utilities
+  - Exported crypto utilities for smart account creation (address generation, salt generation, signatures)
 
-  ## AA API v2 Support
+  ### AA API v2 Support
   - New API types for Account Abstraction API v2 interactions
-  - Enhanced type safety for AA API communication
-  - Fee grant types from `abstractaccount/v1`
 
-  ## Enhanced Signers
-  - Improved `AADirectSigner` with additional functionality
-  - Updated `AAEthSigner` for better Ethereum integration
-  - Refined `AbstractAccountJWTSigner` for JWT authentication
-
-  ## API Changes
-
-  **New exports:**
-  - `AAPasskeySigner` - WebAuthn/passkey signer
-  - `createSignerFromSigningFunction` - Signer factory function
-  - `CreateSignerParams` - Factory configuration type
+  ### New exports
+  - `AAPasskeySigner`, `createSignerFromSigningFunction`, `CreateSignerParams`
   - Crypto utilities: `crypto/*`
   - API types: `api/types`
 
-  **Removed:**
-  - Query utilities (`interfaces/queries.ts`) - moved to other packages
+  ### Removed
+  - Query utilities (`interfaces/queries.ts`) — moved to other packages
   - Fragment utilities (`interfaces/fragments.ts`)
-
-### Patch Changes
-
-- Updated dependencies
 
 ---
 
-## @burnt-labs/constants
+## @burnt-labs/constants (previous version)
 
 ### Minor Changes
 
-- Add synchronous chain configuration utilities and fee granter support
-
-  ## Synchronous Chain Info Utilities
-
-  New synchronous alternatives to `fetchConfig()` for when chain ID is already known:
+- Synchronous chain configuration utilities and fee granter support
 
   ```typescript
-  // Get chain info by chain ID
   getChainInfo(chainId: string): ChainInfo | undefined
-
-  // Get fee granter address for chain
   getFeeGranter(chainId: string): string
-
-  // Get RPC URL for chain
   getRpcUrl(chainId: string): string | undefined
-
-  // Get REST URL for chain
   getRestUrl(chainId: string): string | undefined
   ```
 
-  ## Fee Granter Configuration
-  - Added fee granter addresses for supported networks:
-    - `xion-mainnet-1`: `xion12q9q752mta5fvwjj2uevqpuku9y60j33j9rll0`
-    - `xion-testnet-2`: `xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x`
-  - `fetchConfig()` now returns `feeGranter` in response
-
-  ## Migration Guide
-
-  Instead of fetching config from RPC when you already have the chain ID:
-
-  ```typescript
-  // Before
-  const config = await fetchConfig(rpcUrl);
-  const restUrl = config.restUrl;
-
-  // After (no async needed)
-  const restUrl = getRestUrl(chainId);
-  const feeGranter = getFeeGranter(chainId);
-  ```
-
-### Patch Changes
-
-- Updated dependencies
-
----
-
-## Summary
-
-This release represents a major architectural overhaul of the xion.js SDK with:
-
-1. **Five authentication modes** — redirect, popup, auto, iframe, and signer for every UX need
-2. **Direct signing** — `requireAuth: true` for security-critical operations where the meta-account signs directly and the user pays gas from their XION balance
-3. **Popup & auto mode** — users stay on the dApp page; auto mode picks popup (desktop) or redirect (mobile)
-4. **Inline iframe mode** — embed the dashboard inside your page with `MessageChannel`-based communication
-5. **Signer mode** — wrap MetaMask, Keplr, Turnkey, Privy directly without dashboard or social logins
-6. **Connector-based architecture** — flexible authentication with support for external providers
-7. **AA API v2 integration** — enhanced account abstraction API support
-8. **Passkey support** — WebAuthn/passkey authentication capabilities
-9. **UI separation** — core packages are now UI-less for greater flexibility
-10. **Improved developer experience** — better types, error handling, and configuration validation
-
-**Migration Required**: This is a breaking change. Please review the migration guides in each package section above.
+  Fee granter addresses for supported networks:
+  - `xion-mainnet-1`: `xion12q9q752mta5fvwjj2uevqpuku9y60j33j9rll0`
+  - `xion-testnet-2`: `xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x`
