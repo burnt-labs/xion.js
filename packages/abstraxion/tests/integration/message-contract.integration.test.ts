@@ -121,38 +121,6 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       expect(msg.message).toBeTruthy();
     });
 
-    // Sign message popup types (used by PopupController.promptSignMessage)
-    const EXPECTED_POPUP_SIGN_MESSAGE_MESSAGES = {
-      success: "SIGN_MESSAGE_SUCCESS",
-      rejected: "SIGN_MESSAGE_REJECTED",
-      error: "SIGN_MESSAGE_ERROR",
-    };
-
-    it("SIGN_MESSAGE_SUCCESS includes signature and pubKey", () => {
-      const msg = {
-        type: EXPECTED_POPUP_SIGN_MESSAGE_MESSAGES.success,
-        signature: "base64sig==",
-        pubKey: { type: "tendermint/PubKeySecp256k1", value: "base64pk==" },
-      };
-      expect(msg.type).toBe("SIGN_MESSAGE_SUCCESS");
-      expect(msg.signature).toBeTruthy();
-      expect(msg.pubKey.type).toBeTruthy();
-      expect(msg.pubKey.value).toBeTruthy();
-    });
-
-    it("SIGN_MESSAGE_REJECTED has no required fields", () => {
-      const msg = { type: EXPECTED_POPUP_SIGN_MESSAGE_MESSAGES.rejected };
-      expect(msg.type).toBe("SIGN_MESSAGE_REJECTED");
-    });
-
-    it("SIGN_MESSAGE_ERROR includes message field", () => {
-      const msg = {
-        type: EXPECTED_POPUP_SIGN_MESSAGE_MESSAGES.error,
-        message: "Signing failed",
-      };
-      expect(msg.type).toBe("SIGN_MESSAGE_ERROR");
-      expect(msg.message).toBeTruthy();
-    });
   });
 
   describe("Embedded iframe push messages", () => {
@@ -231,41 +199,6 @@ describe("SDK ↔ Dashboard Message Contract", () => {
         expect(url.searchParams.get("granter")).toBeTruthy();
       });
 
-      it("sign_message popup/redirect sends correct params", () => {
-        const url = new URL("https://dashboard.burnt.com");
-        url.searchParams.set("mode", "sign_message");
-        url.searchParams.set("msg", "base64encodedpayload");
-        url.searchParams.set("granter", "xion1user");
-        url.searchParams.set("redirect_uri", "https://myapp.com");
-
-        expect(url.searchParams.get("mode")).toBe("sign_message");
-        expect(url.searchParams.get("msg")).toBeTruthy();
-        expect(url.searchParams.get("granter")).toBeTruthy();
-        expect(url.searchParams.get("redirect_uri")).toBeTruthy();
-      });
-    });
-
-    describe("sign-message callback params", () => {
-      it("signature + pub_key_type + pub_key_value signals success", () => {
-        const params = new URLSearchParams(
-          "?signature=base64sig==&pub_key_type=tendermint/PubKeySecp256k1&pub_key_value=base64pk==",
-        );
-        expect(params.get("signature")).toBeTruthy();
-        expect(params.get("pub_key_type")).toBeTruthy();
-        expect(params.get("pub_key_value")).toBeTruthy();
-      });
-
-      it("sign_rejected signals user rejection (reused from transaction signing)", () => {
-        const params = new URLSearchParams("?sign_rejected=true");
-        expect(params.get("sign_rejected")).toBe("true");
-      });
-
-      it("sign_error signals failure (reused from transaction signing)", () => {
-        const params = new URLSearchParams(
-          "?sign_error=Message%20signing%20failed",
-        );
-        expect(params.get("sign_error")).toBe("Message signing failed");
-      });
     });
   });
 
@@ -310,27 +243,6 @@ describe("SDK ↔ Dashboard Message Contract", () => {
     it("CONNECT without treasury sends empty grantParams", () => {
       const payload = { grantParams: undefined };
       expect(payload.grantParams).toBeUndefined();
-    });
-  });
-
-  describe("SIGN_MESSAGE payload shape", () => {
-    it("sends message string and signerAddress", () => {
-      const payload = {
-        message: "Sign this to prove ownership",
-        signerAddress: "xion1user",
-      };
-      expect(payload.message).toBeTruthy();
-      expect(payload.signerAddress).toBeTruthy();
-    });
-
-    it("response includes signature and pubKey", () => {
-      const response = {
-        signature: "base64encoded==",
-        pubKey: { type: "tendermint/PubKeySecp256k1", value: "base64pk==" },
-      };
-      expect(response.signature).toBeTruthy();
-      expect(response.pubKey.type).toBeTruthy();
-      expect(response.pubKey.value).toBeTruthy();
     });
   });
 
