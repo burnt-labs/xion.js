@@ -268,12 +268,17 @@ export const fetchChainGrantsABCI = async (
 
     // Convert the response to the expected GrantsResponse format
     // Decode protobuf authorization to REST API JSON format for compatibility with legacy compare functions
+    // Also preserve raw protobuf typeUrl/value for treasury grant comparison (which re-decodes from raw bytes)
     const grantsResponse: GrantsResponse = {
       grants: response.grants.map((grant) => ({
         granter: granter,
         grantee: grantee,
         authorization: grant.authorization
-          ? decodeAuthorizationToRestFormat(grant.authorization)
+          ? {
+              ...decodeAuthorizationToRestFormat(grant.authorization),
+              typeUrl: grant.authorization.typeUrl,
+              value: grant.authorization.value,
+            }
           : {},
         expiration: grant.expiration
           ? new Date(Number(grant.expiration.seconds) * 1000).toISOString()
