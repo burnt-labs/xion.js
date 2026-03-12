@@ -99,17 +99,22 @@ export interface AutoAuthentication {
  * (CONNECT, DISCONNECT) with targetOrigin enforcement. The only raw postMessage
  * is the push-direction DISCONNECTED event from the iframe.
  */
-export interface IframeAuthentication {
-  type: "iframe";
-  /** Dashboard URL for the iframe. Defaults to chain-specific value from constants. */
+export interface EmbeddedAuthentication {
+  type: "embedded";
+  /** Dashboard URL for the embedded view. Defaults to chain-specific value from constants. */
   iframeUrl?: string;
   /**
-   * DOM element to mount the iframe in. The iframe fills 100% width/height
+   * DOM element to mount the embedded view in. The iframe fills 100% width/height
    * of this container — control sizing via the container's CSS.
-   * Must be set before calling connect().
+   * Not needed when using the <AbstraxionEmbed> component.
    */
   containerElement?: HTMLElement;
 }
+
+/**
+ * @deprecated Use `EmbeddedAuthentication` instead. Will be removed in a future version.
+ */
+export type IframeAuthentication = EmbeddedAuthentication;
 
 /**
  * Authentication configuration - defines how users authenticate
@@ -120,7 +125,7 @@ export type AuthenticationConfig =
   | PopupAuthentication
   | AutoAuthentication
   | SignerAuthentication
-  | IframeAuthentication;
+  | EmbeddedAuthentication;
 
 // ============================================================================
 // Configuration Types

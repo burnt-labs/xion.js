@@ -52,8 +52,8 @@ export function normalizeAbstraxionConfig(
   const gasPrice = config.gasPrice || xionGasValues.gasPrice;
   const feeGranter = config.feeGranter || defaultFeeGranter;
 
-  // Set iframe URL default if using iframe authentication (avoid mutating input)
-  if (config.authentication?.type === "iframe") {
+  // Set iframe URL default if using embedded authentication (avoid mutating input)
+  if (config.authentication?.type === "embedded") {
     config = {
       ...config,
       authentication: {

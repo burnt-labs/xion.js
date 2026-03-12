@@ -123,8 +123,8 @@ export class IframeController extends BaseController {
     storageStrategy: StorageStrategy,
     redirectStrategy: RedirectStrategy,
   ): IframeController {
-    if (config.authentication?.type !== "iframe") {
-      throw new Error("Iframe authentication config required for iframe mode");
+    if (config.authentication?.type !== "embedded") {
+      throw new Error("Embedded authentication config required for embedded mode");
     }
 
     const iframeConfig: IframeControllerConfig = {
@@ -410,6 +410,14 @@ export class IframeController extends BaseController {
     if (this.getState().status === "connected" && !this.iframe) {
       this.mountConnectedIframe();
     }
+  }
+
+  /**
+   * Whether a container element has been set via setContainerElement().
+   * Used by AbstraxionProvider to warn if <AbstraxionEmbed> is missing.
+   */
+  hasContainerElement(): boolean {
+    return !!this.config.iframe.containerElement;
   }
 
   /**

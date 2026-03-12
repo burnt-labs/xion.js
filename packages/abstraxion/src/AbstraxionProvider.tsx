@@ -13,6 +13,7 @@ import {
 import type { Controller } from "./controllers";
 import {
   createController,
+  IframeController,
   RedirectController,
   SignerController,
 } from "./controllers";
@@ -59,7 +60,7 @@ export interface AbstraxionContextProps {
   treasuryIndexerUrl?: string;
 
   // Authentication
-  authMode: "signer" | "redirect" | "iframe" | "popup";
+  authMode: "signer" | "redirect" | "embedded" | "popup";
   authentication?: AuthenticationConfig;
 
   /**
@@ -179,7 +180,7 @@ export function AbstraxionProvider({
   const authMode = (authentication?.type || "redirect") as
     | "signer"
     | "redirect"
-    | "iframe"
+    | "embedded"
     | "popup";
 
   if (!controllerRef.current) {
@@ -243,6 +244,27 @@ export function AbstraxionProvider({
       controller.destroy();
     };
   }, [controller]);
+
+  // Dev warning: embedded mode requires <AbstraxionEmbed> to be rendered somewhere
+  useEffect(() => {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      authMode === "embedded" &&
+      controller instanceof IframeController
+    ) {
+      const timer = setTimeout(() => {
+        if (!controller.hasContainerElement()) {
+          console.error(
+            "[AbstraxionProvider] You are using embedded authentication mode but " +
+              "<AbstraxionEmbed> has not been rendered. The embedded auth flow will " +
+              "not work without it. Add <AbstraxionEmbed /> somewhere in your " +
+              "component tree inside <AbstraxionProvider>.",
+          );
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [authMode, controller]);
 
   // Map state machine state to context props - ALL loading states come from state machine
   const isInitializing = AccountStateGuards.isInitializing(controllerState);

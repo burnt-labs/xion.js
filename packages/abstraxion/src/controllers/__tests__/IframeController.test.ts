@@ -81,7 +81,7 @@ describe("IframeController", () => {
       rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
       gasPrice: "0.001uxion",
       iframe: {
-        type: "iframe",
+        type: "embedded",
         iframeUrl: "https://dashboard.xion.burnt.com",
       },
       storageStrategy: {

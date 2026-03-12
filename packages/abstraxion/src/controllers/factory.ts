@@ -69,7 +69,7 @@ export function createController(
 
     // Delegate to SignerController's factory method
     return SignerController.fromConfig(config, storageStrategy, abstraxionAuth);
-  } else if (authMode === "iframe") {
+  } else if (authMode === "embedded") {
     return IframeController.fromConfig(
       config,
       storageStrategy,

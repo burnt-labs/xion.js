@@ -220,8 +220,8 @@ export const useAbstraxionSigningClient = (
       return;
     }
 
-    // Iframe mode: handled by IframeSigningClient (above)
-    if (authMode === "iframe") {
+    // Embedded mode: handled by IframeSigningClient (above)
+    if (authMode === "embedded") {
       setAaClient(undefined);
       if (!iframeController) {
         setError(
@@ -330,8 +330,8 @@ export const useAbstraxionSigningClient = (
       };
     }
 
-    // Iframe mode: return IframeSigningClient
-    if (authMode === "iframe") {
+    // Embedded mode: return IframeSigningClient
+    if (authMode === "embedded") {
       return {
         client: iframeSigningClient,
         signArb: undefined,
