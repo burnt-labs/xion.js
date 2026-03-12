@@ -27,9 +27,12 @@ const TESTNET_CONFIG = {
 };
 
 // Check for environment-provided grant pair
-const TEST_GRANTER = process.env.XION_TEST_GRANTER || TESTNET_CONFIG.treasuryAddress;
+const TEST_GRANTER =
+  process.env.XION_TEST_GRANTER || TESTNET_CONFIG.treasuryAddress;
 const TEST_GRANTEE = process.env.XION_TEST_GRANTEE || TESTNET_CONFIG.feeGranter;
-const HAS_ENV_GRANTS = !!(process.env.XION_TEST_GRANTER && process.env.XION_TEST_GRANTEE);
+const HAS_ENV_GRANTS = !!(
+  process.env.XION_TEST_GRANTER && process.env.XION_TEST_GRANTEE
+);
 
 describe("ABCI Grant Decoding Integration Tests (PR #336)", () => {
   describe("fetchChainGrantsABCI against testnet", () => {
@@ -54,31 +57,19 @@ describe("ABCI Grant Decoding Integration Tests (PR #336)", () => {
 
     it("should throw error when grantee is missing", async () => {
       await expect(
-        fetchChainGrantsABCI(
-          undefined,
-          TEST_GRANTER,
-          TESTNET_CONFIG.rpcUrl,
-        ),
+        fetchChainGrantsABCI(undefined, TEST_GRANTER, TESTNET_CONFIG.rpcUrl),
       ).rejects.toThrow("Grantee address is required");
     });
 
     it("should throw error when granter is missing", async () => {
       await expect(
-        fetchChainGrantsABCI(
-          TEST_GRANTEE,
-          undefined,
-          TESTNET_CONFIG.rpcUrl,
-        ),
+        fetchChainGrantsABCI(TEST_GRANTEE, undefined, TESTNET_CONFIG.rpcUrl),
       ).rejects.toThrow("Granter address is required");
     });
 
     it("should throw error when RPC URL is missing", async () => {
       await expect(
-        fetchChainGrantsABCI(
-          TEST_GRANTEE,
-          TEST_GRANTER,
-          undefined,
-        ),
+        fetchChainGrantsABCI(TEST_GRANTEE, TEST_GRANTER, undefined),
       ).rejects.toThrow("RPC URL is required");
     });
   });
@@ -105,7 +96,7 @@ describe("ABCI Grant Decoding Integration Tests (PR #336)", () => {
       if (result.grants.length === 0) {
         console.log(
           "No grants found between test addresses. " +
-          "Set XION_TEST_GRANTER and XION_TEST_GRANTEE env vars to test with real grants."
+            "Set XION_TEST_GRANTER and XION_TEST_GRANTEE env vars to test with real grants.",
         );
         return;
       }
@@ -198,7 +189,9 @@ describe("ABCI Grant Decoding Integration Tests (PR #336)", () => {
       // compareBankGrants should not throw when processing decoded grants
       expect(() => compareBankGrants(result.grants, undefined)).not.toThrow();
       expect(() =>
-        compareBankGrants(result.grants, [{ denom: "uxion", amount: "1000000" }]),
+        compareBankGrants(result.grants, [
+          { denom: "uxion", amount: "1000000" },
+        ]),
       ).not.toThrow();
 
       // With bank=undefined, should always return true
@@ -262,7 +255,8 @@ describe("ABCI Grant Decoding Integration Tests (PR #336)", () => {
       );
 
       const bankGrants = result.grants.filter(
-        (g) => g.authorization["@type"] === "/cosmos.bank.v1beta1.SendAuthorization",
+        (g) =>
+          g.authorization["@type"] === "/cosmos.bank.v1beta1.SendAuthorization",
       );
 
       console.log("Bank grants found:", bankGrants.length);
@@ -276,7 +270,10 @@ describe("ABCI Grant Decoding Integration Tests (PR #336)", () => {
           expect(auth).toHaveProperty("spend_limit");
           expect(auth).toHaveProperty("allow_list");
 
-          for (const limit of auth.spend_limit as Array<{ denom: string; amount: string }>) {
+          for (const limit of auth.spend_limit as Array<{
+            denom: string;
+            amount: string;
+          }>) {
             expect(typeof limit.denom).toBe("string");
             expect(typeof limit.amount).toBe("string");
           }
