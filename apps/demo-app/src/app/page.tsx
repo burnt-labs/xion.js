@@ -32,12 +32,12 @@ export default function Page(): JSX.Element {
         </Link>
         <Link href="/popup-demo">
           <Button fullWidth structure="base">
-            POPUP AUTH DEMO
+            POPUP AUTH DEMO (Auto mode)
           </Button>
         </Link>
         <Link href="/inline-demo">
           <Button fullWidth structure="base">
-            INLINE IFRAME DEMO
+            Embedded wallets (inline iframe) DEMO
           </Button>
         </Link>
       </div>

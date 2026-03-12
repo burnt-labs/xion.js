@@ -16,6 +16,7 @@ export type {
   AutoAuthentication,
   SignerAuthentication,
   IframeAuthentication,
+  EmbeddedAuthentication,
   SignResult,
   SigningClient,
 } from "./types";
@@ -82,3 +83,7 @@ export { IframeSigningClient } from "./controllers/IframeSigningClient";
 
 // IframeController for inline iframe mode (consumers need instanceof check for setContainerElement)
 export { IframeController } from "./controllers/IframeController";
+
+// AbstraxionEmbed — drop-in component for embedded mode (no manual controller wiring needed)
+export { AbstraxionEmbed } from "./components/AbstraxionEmbed";
+export type { AbstraxionEmbedProps } from "./components/AbstraxionEmbed";

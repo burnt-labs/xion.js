@@ -4,7 +4,7 @@ This document contains a comprehensive overview of all changelog entries across 
 
 The document is split into two sections:
 
-1. **New in this version (`1.0.0-alpha.76`)** — popup, auto, and iframe authentication modes, direct signing, and supporting changes
+1. **New in this version (`1.0.0-alpha.76`)** — popup, auto, and embedded authentication modes, direct signing, and supporting changes
 2. **Previous version recap (`1.0.0-alpha.70`)** — summary of changes already released (config object refactor, UI removal, connector architecture, signer mode)
 
 ---
@@ -66,11 +66,11 @@ Opens the auth app in a separate popup window. The user stays on the dApp page w
 
 > **Demo:** See [`apps/demo-app/src/app/popup-demo/`](apps/demo-app/src/app/popup-demo/) for a full working example.
 
-### Inline Iframe Mode — NEW
+### Embedded Mode — NEW
 
-Embeds the full dashboard inside an iframe on your page. The user authenticates and approves grants without leaving your layout. You control the iframe's position and size via a container element.
+Embeds the full dashboard inside your page. The user authenticates and approves grants without leaving your layout. You control the position and size via the `<AbstraxionEmbed>` component.
 
-The `iframeUrl` defaults to the chain-specific iframe URL from `@burnt-labs/constants` (e.g. `https://settings.testnet.burnt.com`).
+The embedded view URL defaults to the chain-specific URL from `@burnt-labs/constants` (e.g. `https://settings.testnet.burnt.com`).
 
 ```tsx
 // layout.tsx — provider config
@@ -79,7 +79,7 @@ The `iframeUrl` defaults to the chain-specific iframe URL from `@burnt-labs/cons
     chainId: "xion-testnet-2",
     treasury: "xion1...",
     authentication: {
-      type: "iframe",
+      type: "embedded",
       // iframeUrl optional — defaults from constants based on chainId
     },
   }}
@@ -87,53 +87,40 @@ The `iframeUrl` defaults to the chain-specific iframe URL from `@burnt-labs/cons
 ```
 
 ```tsx
-// page.tsx — mount the iframe into a container
+// page.tsx — drop in the <AbstraxionEmbed> component
 import {
-  AbstraxionContext,
-  IframeController,
+  AbstraxionEmbed,
   useAbstraxionAccount,
+  useAbstraxionSigningClient,
 } from "@burnt-labs/abstraxion";
-import { useContext, useEffect, useRef } from "react";
 
 function MyPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { controller } = useContext(AbstraxionContext);
-  const { login, isConnected } = useAbstraxionAccount();
-
-  // Attach iframe to container element
-  useEffect(() => {
-    if (containerRef.current && controller instanceof IframeController) {
-      controller.setContainerElement(containerRef.current);
-    }
-  }, [controller]);
-
-  // Auto-start auth flow
-  useEffect(() => {
-    if (controller && !isConnected) {
-      login().catch(console.error);
-    }
-  }, [controller, isConnected]);
+  const { isConnected } = useAbstraxionAccount();
+  const { client } = useAbstraxionSigningClient();
 
   return (
     <div>
-      {/* Iframe fills 100% of this container — you control sizing via CSS */}
-      <div ref={containerRef} style={{ width: 420, height: 600 }} />
+      {/* Embedded view fills 100% of this component — control sizing via style/className */}
+      <AbstraxionEmbed style={{ width: 420, height: 600 }} />
 
-      {/* Your app content */}
+      {/* Your app content — hooks work exactly like popup/redirect mode */}
       {isConnected && <p>Connected!</p>}
     </div>
   );
 }
 ```
 
+`<AbstraxionEmbed>` handles all controller wiring and auto-connects by default. Pass `autoConnect={false}` to start the flow manually via `login()`. It accepts all standard `<div>` props (`style`, `className`, `ref`, etc.) so sizing and positioning work like any other element.
+
 **UX improvements:**
 
 - No popup blocking issues
-- Full control over iframe placement and sizing
+- Full control over placement and sizing
 - Auth UI is part of your page layout — can be hidden/resized after connection
 - Communication via `MessageChannel` (secure, origin-validated)
+- Same hook API as popup/redirect — just `useAbstraxionAccount` and `useAbstraxionSigningClient`
 
-> **Demo:** See [`apps/demo-app/src/app/inline-demo/`](apps/demo-app/src/app/inline-demo/) for a full working example with container mounting and session management.
+> **Demo:** See [`apps/demo-app/src/app/inline-demo/`](apps/demo-app/src/app/inline-demo/) for a full working example.
 
 ### Signer Mode (unchanged from previous version)
 
@@ -186,7 +173,7 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 | ------------ | --------------------- | ----------------------- | ------------------------------------------------------------ |
 | redirect     | `GranteeSignerClient` | `RedirectSigningClient` | Redirects to dashboard for approval                          |
 | popup / auto | `GranteeSignerClient` | `PopupSigningClient`    | Opens dashboard popup for approval                           |
-| iframe       | `GranteeSignerClient` | `IframeSigningClient`   | User approves inside embedded iframe                         |
+| embedded     | `GranteeSignerClient` | `IframeSigningClient`   | User approves inside embedded view                           |
 | signer       | `GranteeSignerClient` | `AAClient`              | Wallet prompts directly (MetaMask popup, Keplr prompt, etc.) |
 
 ### When to use direct signing
@@ -219,9 +206,13 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 
 - `PopupSigningClient`, `RedirectSigningClient`, `IframeSigningClient`
 
+**Components:**
+
+- `AbstraxionEmbed` — drop-in component for embedded mode (handles controller wiring + auto-connect)
+
 **Controller:**
 
-- `IframeController` (for `instanceof` checks when setting container element)
+- `IframeController` (exposed for advanced use cases; not needed when using `<AbstraxionEmbed>`)
 
 **Utilities:**
 
@@ -249,7 +240,7 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 - `IframeController` — inline iframe flow with `MessageChannelManager` for request-response
 - Enhanced `RedirectController` — now supports `authAppUrl` override, improved session restoration
 - Enhanced `SignerController` — wrong-wallet signing guard
-- Controller factory updated to handle new `"popup"`, `"iframe"`, and `"auto"` types
+- Controller factory updated to handle new `"popup"`, `"embedded"` / `"iframe"`, and `"auto"` types
 
 ---
 
@@ -323,7 +314,7 @@ The changes below were part of the previous major version release. They are incl
     treasury: "xion1...",
     feeGranter: "xion1...",
     authentication: {
-      type: "auto", // or "popup", "redirect", "iframe", "signer"
+      type: "auto", // or "popup", "redirect", "embedded", "signer"
     }
   }}
 >
@@ -413,8 +404,8 @@ await logout(); // now async
    // Popup only
    authentication: { type: "popup" }
 
-   // Inline iframe
-   authentication: { type: "iframe" }
+   // Embedded
+   authentication: { type: "embedded" }
 
    // Signer mode for custom auth (MetaMask, Turnkey, Privy, etc.)
    authentication: { type: "signer", aaApiUrl: "...", getSignerConfig: ..., smartAccountContract: ... }

@@ -1,8 +1,7 @@
 "use client";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
-  AbstraxionContext,
-  IframeController,
+  AbstraxionEmbed,
   useAbstraxionAccount,
   useAbstraxionSigningClient,
 } from "@burnt-labs/abstraxion";
@@ -11,39 +10,14 @@ import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";
 
 export default function InlineDemoPage(): JSX.Element {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { controller } = useContext(AbstraxionContext);
-
   const {
     data: account,
     isConnected,
     isLoading,
     isInitializing,
     isConnecting,
-    login,
     logout,
   } = useAbstraxionAccount();
-
-  // Set container element on the IframeController when the ref is available
-  useEffect(() => {
-    if (
-      containerRef.current &&
-      controller &&
-      controller instanceof IframeController
-    ) {
-      controller.setContainerElement(containerRef.current);
-    }
-  }, [controller]);
-
-  // Auto-connect: start the iframe auth flow once the controller is ready
-  useEffect(() => {
-    if (!isInitializing && !isConnected && !isConnecting && controller) {
-      login().catch((err) => {
-        // Connection rejected or error — user can retry via the iframe
-        console.log("[InlineDemo] Initial connect:", err.message);
-      });
-    }
-  }, [isInitializing, isConnected, isConnecting, controller]);
 
   return (
     <main className="flex min-h-screen bg-gray-950 text-white">
@@ -52,8 +26,7 @@ export default function InlineDemoPage(): JSX.Element {
         <p className="mb-4 text-center text-sm text-gray-400">
           Dashboard iframe (420 x 600)
         </p>
-        <div
-          ref={containerRef}
+        <AbstraxionEmbed
           style={{ width: 420, height: 600 }}
           className="overflow-hidden rounded-xl border border-white/10 bg-white"
         />

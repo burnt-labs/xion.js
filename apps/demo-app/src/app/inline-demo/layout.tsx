@@ -2,16 +2,16 @@
 import { AbstraxionProvider } from "@burnt-labs/abstraxion";
 
 /**
- * Inline iframe mode — embeds the dashboard inside an iframe on the page.
+ * Embedded mode — embeds the dashboard inside the page.
  *
- * The user authenticates and approves grants inside the iframe. The dApp
- * controls where and how big the iframe is via a container element.
+ * The user authenticates and approves grants inside the embedded view. The dApp
+ * controls where and how big the view is via the <AbstraxionEmbed> component.
  * Auth completion is signaled via postMessage (CONNECT_SUCCESS).
  *
  * Auth app URL defaults to localhost:3000 for local development.
  * Override with NEXT_PUBLIC_IFRAME_URL env var for deployed dashboards.
  */
-const inlineModeConfig = {
+const embeddedModeConfig = {
   chainId: "xion-testnet-2",
   treasury: process.env.NEXT_PUBLIC_TREASURY_ADDRESS,
   rpcUrl:
@@ -22,7 +22,7 @@ const inlineModeConfig = {
   gasPrice: process.env.NEXT_PUBLIC_GAS_PRICE || "0.001uxion",
 
   authentication: {
-    type: "iframe" as const,
+    type: "embedded" as const,
     iframeUrl: process.env.NEXT_PUBLIC_IFRAME_URL || "http://localhost:3000",
   },
 };
@@ -33,7 +33,7 @@ export default function InlineDemoLayout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <AbstraxionProvider config={inlineModeConfig}>
+    <AbstraxionProvider config={embeddedModeConfig}>
       {children}
     </AbstraxionProvider>
   );
