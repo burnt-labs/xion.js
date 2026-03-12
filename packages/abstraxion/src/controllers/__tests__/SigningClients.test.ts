@@ -13,12 +13,6 @@ import { PopupSigningClient } from "../PopupSigningClient";
 import { IframeSigningClient } from "../IframeSigningClient";
 import { RedirectSigningClient } from "../RedirectSigningClient";
 import type { DeliverTxResponse, StdFee } from "@cosmjs/stargate";
-import type { StdSignature } from "@cosmjs/amino";
-
-const mockStdSignature: StdSignature = {
-  signature: "mockSig123==",
-  pub_key: { type: "tendermint/PubKeySecp256k1", value: "mockPubKey==" },
-};
 
 const mockTxResponse: DeliverTxResponse = {
   code: 0,
@@ -33,11 +27,10 @@ const mockTxResponse: DeliverTxResponse = {
 
 describe("PopupSigningClient", () => {
   const mockController = {
-    promptAndSign: vi.fn().mockResolvedValue(mockTxResponse),
-    promptSignMessage: vi.fn().mockResolvedValue(mockStdSignature),
+    promptSignAndBroadcast: vi.fn().mockResolvedValue(mockTxResponse),
   };
 
-  it("delegates signAndBroadcast to controller.promptAndSign", async () => {
+  it("delegates signAndBroadcast to controller.promptSignAndBroadcast", async () => {
     const client = new PopupSigningClient(mockController as any);
 
     const messages = [
@@ -55,7 +48,7 @@ describe("PopupSigningClient", () => {
       "memo",
     );
 
-    expect(mockController.promptAndSign).toHaveBeenCalledWith(
+    expect(mockController.promptSignAndBroadcast).toHaveBeenCalledWith(
       "xion1addr",
       messages,
       fee,
@@ -64,15 +57,15 @@ describe("PopupSigningClient", () => {
     expect(result).toBe(mockTxResponse);
   });
 
-  it("delegates sendTokens to controller.promptAndSign with MsgSend", async () => {
-    mockController.promptAndSign.mockClear();
+  it("delegates sendTokens to controller.promptSignAndBroadcast with MsgSend", async () => {
+    mockController.promptSignAndBroadcast.mockClear();
     const client = new PopupSigningClient(mockController as any);
 
     const amount = [{ denom: "uxion", amount: "5000" }];
 
     await client.sendTokens("xion1sender", "xion1receiver", amount, "auto");
 
-    expect(mockController.promptAndSign).toHaveBeenCalledWith(
+    expect(mockController.promptSignAndBroadcast).toHaveBeenCalledWith(
       "xion1sender",
       [
         {
@@ -88,28 +81,14 @@ describe("PopupSigningClient", () => {
       undefined,
     );
   });
-
-  it("delegates signMessage to controller.promptSignMessage", async () => {
-    mockController.promptSignMessage.mockClear();
-    const client = new PopupSigningClient(mockController as any);
-
-    const result = await client.signMessage("xion1addr", "Sign this");
-
-    expect(mockController.promptSignMessage).toHaveBeenCalledWith(
-      "xion1addr",
-      "Sign this",
-    );
-    expect(result).toBe(mockStdSignature);
-  });
 });
 
 describe("IframeSigningClient", () => {
   const mockController = {
-    signWithMetaAccount: vi.fn().mockResolvedValue(mockTxResponse),
-    signMessage: vi.fn().mockResolvedValue(mockStdSignature),
+    signAndBroadcastWithMetaAccount: vi.fn().mockResolvedValue(mockTxResponse),
   };
 
-  it("delegates signAndBroadcast to controller.signWithMetaAccount", async () => {
+  it("delegates signAndBroadcast to controller.signAndBroadcastWithMetaAccount", async () => {
     const client = new IframeSigningClient(mockController as any);
 
     const messages = [
@@ -123,7 +102,7 @@ describe("IframeSigningClient", () => {
       "memo",
     );
 
-    expect(mockController.signWithMetaAccount).toHaveBeenCalledWith(
+    expect(mockController.signAndBroadcastWithMetaAccount).toHaveBeenCalledWith(
       "xion1addr",
       messages,
       "auto",
@@ -132,8 +111,8 @@ describe("IframeSigningClient", () => {
     expect(result).toBe(mockTxResponse);
   });
 
-  it("delegates sendTokens to controller.signWithMetaAccount with MsgSend", async () => {
-    mockController.signWithMetaAccount.mockClear();
+  it("delegates sendTokens to controller.signAndBroadcastWithMetaAccount with MsgSend", async () => {
+    mockController.signAndBroadcastWithMetaAccount.mockClear();
     const client = new IframeSigningClient(mockController as any);
 
     await client.sendTokens(
@@ -143,7 +122,7 @@ describe("IframeSigningClient", () => {
       "auto",
     );
 
-    expect(mockController.signWithMetaAccount).toHaveBeenCalledWith(
+    expect(mockController.signAndBroadcastWithMetaAccount).toHaveBeenCalledWith(
       "xion1sender",
       [
         {
@@ -159,29 +138,14 @@ describe("IframeSigningClient", () => {
       undefined,
     );
   });
-
-  it("delegates signMessage to controller.signMessage", async () => {
-    mockController.signMessage.mockClear();
-    const client = new IframeSigningClient(mockController as any);
-
-    const result = await client.signMessage("xion1addr", "test message");
-
-    expect(mockController.signMessage).toHaveBeenCalledWith(
-      "xion1addr",
-      "test message",
-    );
-    expect(result).toBe(mockStdSignature);
-  });
 });
 
 describe("RedirectSigningClient", () => {
-  const neverResolve = new Promise<never>(() => {});
   const mockController = {
-    promptAndSign: vi.fn().mockResolvedValue(mockTxResponse),
-    promptSignMessage: vi.fn().mockReturnValue(neverResolve),
+    promptSignAndBroadcast: vi.fn().mockResolvedValue(mockTxResponse),
   };
 
-  it("delegates signAndBroadcast to controller.promptAndSign", async () => {
+  it("delegates signAndBroadcast to controller.promptSignAndBroadcast", async () => {
     const client = new RedirectSigningClient(mockController as any);
 
     const result = await client.signAndBroadcast(
@@ -190,7 +154,7 @@ describe("RedirectSigningClient", () => {
       "auto",
     );
 
-    expect(mockController.promptAndSign).toHaveBeenCalledWith(
+    expect(mockController.promptSignAndBroadcast).toHaveBeenCalledWith(
       "xion1addr",
       [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
       "auto",
@@ -199,8 +163,8 @@ describe("RedirectSigningClient", () => {
     expect(result).toBe(mockTxResponse);
   });
 
-  it("delegates sendTokens to controller.promptAndSign with MsgSend", async () => {
-    mockController.promptAndSign.mockClear();
+  it("delegates sendTokens to controller.promptSignAndBroadcast with MsgSend", async () => {
+    mockController.promptSignAndBroadcast.mockClear();
     const client = new RedirectSigningClient(mockController as any);
 
     await client.sendTokens(
@@ -211,7 +175,7 @@ describe("RedirectSigningClient", () => {
       "tip",
     );
 
-    expect(mockController.promptAndSign).toHaveBeenCalledWith(
+    expect(mockController.promptSignAndBroadcast).toHaveBeenCalledWith(
       "xion1sender",
       [
         {
@@ -226,21 +190,5 @@ describe("RedirectSigningClient", () => {
       "auto",
       "tip",
     );
-  });
-
-  it("delegates signMessage to controller.promptSignMessage", async () => {
-    mockController.promptSignMessage.mockClear();
-    const client = new RedirectSigningClient(mockController as any);
-
-    // signMessage is fire-and-forget (navigates away), so we just check delegation
-    const promise = client.signMessage("xion1addr", "Sign this challenge");
-
-    expect(mockController.promptSignMessage).toHaveBeenCalledWith(
-      "xion1addr",
-      "Sign this challenge",
-    );
-
-    // Don't await — the promise never resolves (page navigates away)
-    expect(promise).toBeInstanceOf(Promise);
   });
 });

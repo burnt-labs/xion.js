@@ -42,7 +42,7 @@ import type {
   StorageStrategy,
   RedirectStrategy,
 } from "@burnt-labs/abstraxion-core";
-import { IframeMessageType } from "@burnt-labs/abstraxion-core";
+import { IframeMessageType, DashboardMessageType } from "@burnt-labs/abstraxion-core";
 import { GasPrice } from "@cosmjs/stargate";
 import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import type { EncodeObject } from "@cosmjs/proto-signing";
@@ -60,8 +60,6 @@ import type {
   NormalizedAbstraxionConfig,
 } from "../types";
 
-// Push-direction message type: iframe → SDK (user clicked disconnect inside iframe)
-const DISCONNECTED = "DISCONNECTED";
 
 /**
  * Configuration for IframeController
@@ -449,7 +447,7 @@ export class IframeController extends BaseController {
    * Sends SIGN_AND_BROADCAST via MessageChannelManager to the dashboard iframe,
    * which shows a signing approval UI and broadcasts the transaction.
    */
-  async signWithMetaAccount(
+  async signAndBroadcastWithMetaAccount(
     signerAddress: string,
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
@@ -590,7 +588,7 @@ export class IframeController extends BaseController {
 
       const handler = (event: MessageEvent) => {
         if (event.origin !== this.iframeOrigin) return;
-        if (event.data?.type === "IFRAME_READY") {
+        if (event.data?.type === DashboardMessageType.IFRAME_READY) {
           cleanup();
           resolve();
         }
@@ -633,7 +631,7 @@ export class IframeController extends BaseController {
     // This is the one raw postMessage we keep — it's push-direction and validates origin.
     this.disconnectListener = (event: MessageEvent) => {
       if (event.origin !== this.iframeOrigin) return;
-      if (event.data?.type === DISCONNECTED) {
+      if (event.data?.type === DashboardMessageType.DISCONNECTED) {
         if (this.getState().status === "connected") {
           // User clicked disconnect inside the iframe.
           // Remove iframe to prevent double-render, then clear SDK state.

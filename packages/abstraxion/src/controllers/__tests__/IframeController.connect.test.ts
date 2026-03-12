@@ -6,7 +6,7 @@
  * IframeController happy-path tests
  *
  * Tests the embedded iframe flow: mount iframe → IFRAME_READY → CONNECT → connected,
- * disconnect flow, and signWithMetaAccount flow.
+ * disconnect flow, and signAndBroadcastWithMetaAccount flow.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -81,6 +81,7 @@ vi.mock("@burnt-labs/constants", () => ({
 
 import { IframeController } from "../IframeController";
 import type { IframeControllerConfig } from "../IframeController";
+import { DashboardMessageType } from "@burnt-labs/abstraxion-core";
 
 describe("IframeController — happy paths", () => {
   let container: HTMLDivElement;
@@ -126,7 +127,7 @@ describe("IframeController — happy paths", () => {
   function simulateIframeReady() {
     window.dispatchEvent(
       new MessageEvent("message", {
-        data: { type: "IFRAME_READY" },
+        data: { type: DashboardMessageType.IFRAME_READY },
         origin: "https://dashboard.xion.burnt.com",
       }),
     );
@@ -233,7 +234,7 @@ describe("IframeController — happy paths", () => {
     // Simulate user clicking disconnect inside the iframe
     window.dispatchEvent(
       new MessageEvent("message", {
-        data: { type: "DISCONNECTED" },
+        data: { type: DashboardMessageType.DISCONNECTED },
         origin: "https://dashboard.xion.burnt.com",
       }),
     );
@@ -259,7 +260,7 @@ describe("IframeController — happy paths", () => {
 
     window.dispatchEvent(
       new MessageEvent("message", {
-        data: { type: "DISCONNECTED" },
+        data: { type: DashboardMessageType.DISCONNECTED },
         origin: "https://evil.com",
       }),
     );
@@ -269,7 +270,7 @@ describe("IframeController — happy paths", () => {
     controller.destroy();
   });
 
-  describe("signWithMetaAccount()", () => {
+  describe("signAndBroadcastWithMetaAccount()", () => {
     it("should send SIGN_AND_BROADCAST via MessageChannel and return result", async () => {
       const txResponse = {
         signedTx: {
@@ -307,7 +308,7 @@ describe("IframeController — happy paths", () => {
         },
       ];
 
-      const result = await controller.signWithMetaAccount(
+      const result = await controller.signAndBroadcastWithMetaAccount(
         "xion1granter789",
         messages,
         "auto",

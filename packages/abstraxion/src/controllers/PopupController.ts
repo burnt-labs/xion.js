@@ -15,7 +15,7 @@
  * 5. Monitors for popup closed (user cancelled) and dispatches RESET
  */
 
-import { AbstraxionAuth } from "@burnt-labs/abstraxion-core";
+import { AbstraxionAuth, DashboardMessageType } from "@burnt-labs/abstraxion-core";
 import type {
   StorageStrategy,
   RedirectStrategy,
@@ -35,9 +35,6 @@ import { BaseController } from "./BaseController";
 import type { PopupAuthentication, NormalizedAbstraxionConfig } from "../types";
 import { toBase64 } from "@burnt-labs/signers";
 
-// postMessage types for the popup protocol
-const CONNECT_SUCCESS = "CONNECT_SUCCESS";
-const CONNECT_REJECTED = "CONNECT_REJECTED";
 
 export interface PopupControllerConfig {
   chainId: string;
@@ -248,7 +245,7 @@ export class PopupController extends BaseController {
             address?: string;
           };
 
-          if (data?.type === CONNECT_SUCCESS && data.address) {
+          if (data?.type === DashboardMessageType.CONNECT_SUCCESS && data.address) {
             if (settled) return;
             settled = true;
             cleanup();
@@ -257,7 +254,7 @@ export class PopupController extends BaseController {
               .catch(reject);
           }
 
-          if (data?.type === CONNECT_REJECTED) {
+          if (data?.type === DashboardMessageType.CONNECT_REJECTED) {
             if (settled) return;
             settled = true;
             cleanup();
@@ -317,7 +314,7 @@ export class PopupController extends BaseController {
    * the txHash back via postMessage. This is the popup-mode equivalent of the
    * external-wallet approval prompt in signer mode.
    */
-  async promptAndSign(
+  async promptSignAndBroadcast(
     signerAddress: string,
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
@@ -370,7 +367,7 @@ export class PopupController extends BaseController {
           message?: string;
         };
 
-        if (data?.type === "SIGN_SUCCESS" && data.txHash) {
+        if (data?.type === DashboardMessageType.SIGN_SUCCESS && data.txHash) {
           if (settled) return;
           settled = true;
           cleanup();
@@ -388,14 +385,14 @@ export class PopupController extends BaseController {
           });
         }
 
-        if (data?.type === "SIGN_REJECTED") {
+        if (data?.type === DashboardMessageType.SIGN_REJECTED) {
           if (settled) return;
           settled = true;
           cleanup();
           reject(new Error("Transaction was rejected by user"));
         }
 
-        if (data?.type === "SIGN_ERROR") {
+        if (data?.type === DashboardMessageType.SIGN_ERROR) {
           if (settled) return;
           settled = true;
           cleanup();

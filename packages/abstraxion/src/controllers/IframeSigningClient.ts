@@ -3,8 +3,8 @@
  *
  * A thin wrapper that implements the same signAndBroadcast / sendTokens
  * interface as GranteeSignerClient, AAClient, and PopupSigningClient, but
- * delegates every call to IframeController.signWithMetaAccount() — which
- * sends SIGN_AND_BROADCAST via MessageChannel to the dashboard iframe
+ * delegates every call to IframeController.signAndBroadcastWithMetaAccount() —
+ * which sends SIGN_AND_BROADCAST via MessageChannel to the dashboard iframe
  * where the user approves and the dashboard signs + broadcasts.
  *
  * Returned by useAbstraxionSigningClient({ requireAuth: true }) in iframe mode.
@@ -23,7 +23,7 @@ export class IframeSigningClient {
     fee: StdFee | "auto" | number,
     memo?: string,
   ): Promise<DeliverTxResponse> {
-    return this.controller.signWithMetaAccount(address, messages, fee, memo);
+    return this.controller.signAndBroadcastWithMetaAccount(address, messages, fee, memo);
   }
 
   async sendTokens(
@@ -41,6 +41,6 @@ export class IframeSigningClient {
         amount: [...amount],
       },
     };
-    return this.controller.signWithMetaAccount(senderAddress, [msg], fee, memo);
+    return this.controller.signAndBroadcastWithMetaAccount(senderAddress, [msg], fee, memo);
   }
 }

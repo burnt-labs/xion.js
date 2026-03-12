@@ -32,6 +32,26 @@ export enum MessageTarget {
 }
 
 /**
+ * Push-direction message types: Dashboard → SDK (postMessage, not MessageChannel)
+ *
+ * These are sent via window.postMessage from the dashboard to the SDK in popup,
+ * redirect, and embedded iframe modes. They carry authentication/signing results
+ * back to the SDK after the user completes (or cancels) an action in the dashboard.
+ */
+export enum DashboardMessageType {
+  // Iframe push events
+  IFRAME_READY = "IFRAME_READY",
+  DISCONNECTED = "DISCONNECTED",
+  // Popup/redirect connect results
+  CONNECT_SUCCESS = "CONNECT_SUCCESS",
+  CONNECT_REJECTED = "CONNECT_REJECTED",
+  // Popup/redirect transaction signing results
+  SIGN_SUCCESS = "SIGN_SUCCESS",
+  SIGN_REJECTED = "SIGN_REJECTED",
+  SIGN_ERROR = "SIGN_ERROR",
+}
+
+/**
  * Generic message structure for iframe communication
  */
 export interface IframeMessage<T = unknown> {

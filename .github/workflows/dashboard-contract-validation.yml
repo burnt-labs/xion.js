@@ -131,6 +131,16 @@ jobs:
           fi
           echo "✅ Dashboard sign mode is reachable (HTTP $HTTP_CODE)"
 
+          # Check that the dashboard handles sign_message mode query params
+          SIGN_MSG_URL="${URL}?mode=sign_message&msg=dGVzdA==&granter=xion1test&redirect_uri=https://example.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$SIGN_MSG_URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard sign_message mode returned HTTP $HTTP_CODE"
+            echo "   URL: $SIGN_MSG_URL"
+            exit 1
+          fi
+          echo "✅ Dashboard sign_message mode is reachable (HTTP $HTTP_CODE)"
+
       - name: Validate iframe message types match dashboard
         working-directory: packages/abstraxion-core
         run: |
@@ -147,7 +157,7 @@ jobs:
           echo ""
 
           # Verify critical message types exist
-          REQUIRED_TYPES="IFRAME_READY CONNECT DISCONNECT SIGN_AND_BROADCAST SIGN_TRANSACTION GET_ADDRESS ADD_AUTHENTICATOR REMOVE_AUTHENTICATOR REQUEST_GRANT"
+          REQUIRED_TYPES="IFRAME_READY CONNECT DISCONNECT SIGN_AND_BROADCAST SIGN_TRANSACTION SIGN_MESSAGE GET_ADDRESS ADD_AUTHENTICATOR REMOVE_AUTHENTICATOR REQUEST_GRANT"
 
           MISSING=""
           for TYPE in $REQUIRED_TYPES; do

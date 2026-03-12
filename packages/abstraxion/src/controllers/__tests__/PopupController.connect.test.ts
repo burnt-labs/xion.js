@@ -71,6 +71,7 @@ vi.mock("@burnt-labs/signers", async (importOriginal) => {
 
 import { PopupController } from "../PopupController";
 import type { PopupControllerConfig } from "../PopupController";
+import { DashboardMessageType } from "@burnt-labs/abstraxion-core";
 
 /**
  * Minimal window mock with working event dispatch.
@@ -160,7 +161,7 @@ describe("PopupController — happy paths", () => {
     await waitForListenerSetup();
 
     windowMock.simulatePostMessage(
-      { type: "CONNECT_SUCCESS", address: "xion1granter456" },
+      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
       "https://dashboard.burnt.com",
     );
 
@@ -175,7 +176,7 @@ describe("PopupController — happy paths", () => {
     await waitForListenerSetup();
 
     windowMock.simulatePostMessage(
-      { type: "CONNECT_REJECTED" },
+      { type: DashboardMessageType.CONNECT_REJECTED },
       "https://dashboard.burnt.com",
     );
 
@@ -211,7 +212,7 @@ describe("PopupController — happy paths", () => {
 
     // Message from wrong origin should be ignored
     windowMock.simulatePostMessage(
-      { type: "CONNECT_SUCCESS", address: "xion1attacker" },
+      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1attacker" },
       "https://evil.com",
     );
 
@@ -255,7 +256,7 @@ describe("PopupController — happy paths", () => {
 
     // Complete the test
     windowMock.simulatePostMessage(
-      { type: "CONNECT_SUCCESS", address: "xion1granter456" },
+      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
       "https://dashboard.burnt.com",
     );
 
@@ -268,7 +269,7 @@ describe("PopupController — happy paths", () => {
     const connectPromise = controller.connect();
     await waitForListenerSetup();
     windowMock.simulatePostMessage(
-      { type: "CONNECT_SUCCESS", address: "xion1granter456" },
+      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
       "https://dashboard.burnt.com",
     );
     await connectPromise;
@@ -278,11 +279,11 @@ describe("PopupController — happy paths", () => {
     expect(windowMock.win.open).toHaveBeenCalledTimes(1);
   });
 
-  describe("promptAndSign()", () => {
+  describe("promptSignAndBroadcast()", () => {
     it("should resolve with tx hash on SIGN_SUCCESS", async () => {
       const controller = new PopupController(createConfig());
 
-      const signPromise = controller.promptAndSign(
+      const signPromise = controller.promptSignAndBroadcast(
         "xion1granter456",
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
         "auto",
@@ -290,7 +291,7 @@ describe("PopupController — happy paths", () => {
       );
 
       windowMock.simulatePostMessage(
-        { type: "SIGN_SUCCESS", txHash: "ABCDEF1234567890" },
+        { type: DashboardMessageType.SIGN_SUCCESS, txHash: "ABCDEF1234567890" },
         "https://dashboard.burnt.com",
       );
 
@@ -302,14 +303,14 @@ describe("PopupController — happy paths", () => {
     it("should reject on SIGN_REJECTED", async () => {
       const controller = new PopupController(createConfig());
 
-      const signPromise = controller.promptAndSign(
+      const signPromise = controller.promptSignAndBroadcast(
         "xion1granter456",
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
         "auto",
       );
 
       windowMock.simulatePostMessage(
-        { type: "SIGN_REJECTED" },
+        { type: DashboardMessageType.SIGN_REJECTED },
         "https://dashboard.burnt.com",
       );
 
@@ -321,14 +322,14 @@ describe("PopupController — happy paths", () => {
     it("should reject on SIGN_ERROR with message", async () => {
       const controller = new PopupController(createConfig());
 
-      const signPromise = controller.promptAndSign(
+      const signPromise = controller.promptSignAndBroadcast(
         "xion1granter456",
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
         "auto",
       );
 
       windowMock.simulatePostMessage(
-        { type: "SIGN_ERROR", message: "Insufficient funds" },
+        { type: DashboardMessageType.SIGN_ERROR, message: "Insufficient funds" },
         "https://dashboard.burnt.com",
       );
 
@@ -338,7 +339,7 @@ describe("PopupController — happy paths", () => {
     it("should build signing popup URL with encoded tx", async () => {
       const controller = new PopupController(createConfig());
 
-      const signPromise = controller.promptAndSign(
+      const signPromise = controller.promptSignAndBroadcast(
         "xion1granter456",
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: { amount: "100" } }],
         "auto",
@@ -353,7 +354,7 @@ describe("PopupController — happy paths", () => {
       expect(signUrl.searchParams.get("tx")).toBeTruthy();
 
       windowMock.simulatePostMessage(
-        { type: "SIGN_SUCCESS", txHash: "ABC" },
+        { type: DashboardMessageType.SIGN_SUCCESS, txHash: "ABC" },
         "https://dashboard.burnt.com",
       );
       await signPromise;
