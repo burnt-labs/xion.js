@@ -1,5 +1,5 @@
 /**
- * Unit tests for RedirectController signWithMetaAccount
+ * Unit tests for RedirectController signAndBroadcastWithMetaAccount
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -66,12 +66,12 @@ describe("RedirectController", () => {
     return new RedirectController(config);
   };
 
-  describe("signWithMetaAccount", () => {
+  describe("signAndBroadcastWithMetaAccount", () => {
     it("should throw 'not supported' error", async () => {
       const controller = createController();
 
       await expect(
-        controller.signWithMetaAccount(
+        controller.signAndBroadcastWithMetaAccount(
           "xion1abc123",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",
@@ -83,7 +83,7 @@ describe("RedirectController", () => {
       const controller = createController();
 
       try {
-        await controller.signWithMetaAccount(
+        await controller.signAndBroadcastWithMetaAccount(
           "xion1abc123",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",
@@ -101,7 +101,7 @@ describe("RedirectController", () => {
       const controller = createController();
 
       try {
-        await controller.signWithMetaAccount(
+        await controller.signAndBroadcastWithMetaAccount(
           "xion1abc123",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",

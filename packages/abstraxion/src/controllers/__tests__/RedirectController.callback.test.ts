@@ -6,7 +6,7 @@
  * RedirectController callback + signing tests
  *
  * Tests the redirect callback flow (returning from dashboard with ?granted=true),
- * sign result detection from URL params, and promptAndSign redirect.
+ * sign result detection from URL params, and promptSignAndBroadcast redirect.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -319,12 +319,12 @@ describe("RedirectController — callback & signing", () => {
     });
   });
 
-  describe("signWithMetaAccount()", () => {
+  describe("signAndBroadcastWithMetaAccount()", () => {
     it("should throw explaining redirect mode limitations", async () => {
       const controller = new RedirectController(createConfig());
 
       await expect(
-        controller.signWithMetaAccount(
+        controller.signAndBroadcastWithMetaAccount(
           "xion1granter",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",
@@ -333,13 +333,13 @@ describe("RedirectController — callback & signing", () => {
     });
   });
 
-  describe("promptAndSign()", () => {
+  describe("promptSignAndBroadcast()", () => {
     it("should navigate to dashboard signing page", async () => {
       const controller = new RedirectController(createConfig());
 
-      // promptAndSign sets window.location.href — we can check what it was set to
+      // promptSignAndBroadcast sets window.location.href — we can check what it was set to
       // Since it's a fire-and-forget redirect, we just verify it doesn't throw immediately
-      const signPromise = controller.promptAndSign(
+      const signPromise = controller.promptSignAndBroadcast(
         "xion1granter456",
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
         "auto",

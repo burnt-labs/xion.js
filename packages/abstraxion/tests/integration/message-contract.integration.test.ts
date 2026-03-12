@@ -60,9 +60,6 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       expect(IframeMessageType.REQUEST_GRANT).toBe("REQUEST_GRANT");
     });
 
-    it("SIGN_MESSAGE is sent by SDK for arbitrary message signing", () => {
-      expect(IframeMessageType.SIGN_MESSAGE).toBe("SIGN_MESSAGE");
-    });
   });
 
   describe("MessageTarget values", () => {

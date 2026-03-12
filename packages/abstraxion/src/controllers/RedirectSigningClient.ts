@@ -3,7 +3,7 @@
  *
  * A thin wrapper that implements the same signAndBroadcast / sendTokens
  * interface as GranteeSignerClient, AAClient, and PopupSigningClient, but
- * delegates to RedirectController.promptAndSign() — which navigates to the
+ * delegates to RedirectController.promptSignAndBroadcast() — which navigates to the
  * dashboard signing view. The page navigates away; on return, the result is
  * available via RedirectController.getSignResult().
  *
@@ -23,7 +23,7 @@ export class RedirectSigningClient {
     fee: StdFee | "auto" | number,
     memo?: string,
   ): Promise<DeliverTxResponse> {
-    return this.controller.promptAndSign(address, messages, fee, memo);
+    return this.controller.promptSignAndBroadcast(address, messages, fee, memo);
   }
 
   async sendTokens(
@@ -41,6 +41,6 @@ export class RedirectSigningClient {
         amount: [...amount],
       },
     };
-    return this.controller.promptAndSign(senderAddress, [msg], fee, memo);
+    return this.controller.promptSignAndBroadcast(senderAddress, [msg], fee, memo);
   }
 }

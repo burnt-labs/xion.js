@@ -3,7 +3,7 @@
  *
  * A thin wrapper that implements the same signAndBroadcast / sendTokens
  * interface as GranteeSignerClient and AAClient, but delegates every call
- * to PopupController.promptAndSign() — which opens a dashboard popup where
+ * to PopupController.promptSignAndBroadcast() — which opens a dashboard popup where
  * the user approves the transaction and the dashboard signs + broadcasts it.
  *
  * Returned by useAbstraxionSigningClient({ requireAuth: true }) in popup mode.

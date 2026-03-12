@@ -384,7 +384,7 @@ export class RedirectController extends BaseController {
    *
    * @throws Always throws an error explaining the limitation
    */
-  async signWithMetaAccount(
+  async signAndBroadcastWithMetaAccount(
     _signerAddress: string,
     _messages: readonly EncodeObject[],
     _fee: StdFee | "auto" | number,
@@ -407,7 +407,7 @@ export class RedirectController extends BaseController {
    * result; instead, read `getSignResult()` (via the hook's `signResult`)
    * after the page reloads from the dashboard redirect.
    */
-  async promptAndSign(
+  async promptSignAndBroadcast(
     signerAddress: string,
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
@@ -433,7 +433,7 @@ export class RedirectController extends BaseController {
       }),
     );
 
-    // Build signing URL (same params as PopupController.promptAndSign)
+    // Build signing URL (same params as PopupController.promptSignAndBroadcast)
     const url = new URL(authAppUrl);
     url.searchParams.set("mode", "sign");
     url.searchParams.set(

@@ -73,7 +73,7 @@ export interface AbstraxionContextProps {
   /**
    * The active controller instance.
    * Hooks use instanceof narrowing to access mode-specific capabilities
-   * (e.g. PopupController.promptAndSign for direct signing in popup mode).
+   * (e.g. PopupController.promptSignAndBroadcast for direct signing in popup mode).
    */
   controller?: Controller;
 

@@ -1,5 +1,5 @@
 /**
- * Unit tests for SignerController direct signing (signWithMetaAccount)
+ * Unit tests for SignerController direct signing (signAndBroadcastWithMetaAccount)
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -92,12 +92,12 @@ describe("SignerController", () => {
     vi.clearAllMocks();
   });
 
-  describe("signWithMetaAccount", () => {
+  describe("signAndBroadcastWithMetaAccount", () => {
     it("should throw error when connectionInfo is not available", async () => {
       const controller = createController();
 
       await expect(
-        controller.signWithMetaAccount(
+        controller.signAndBroadcastWithMetaAccount(
           "xion1abc123",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",
@@ -124,7 +124,7 @@ describe("SignerController", () => {
       };
 
       await expect(
-        controller.signWithMetaAccount(
+        controller.signAndBroadcastWithMetaAccount(
           "xion1abc123",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",
@@ -176,7 +176,7 @@ describe("SignerController", () => {
       };
       const memo = "Test memo";
 
-      const result = await controller.signWithMetaAccount(
+      const result = await controller.signAndBroadcastWithMetaAccount(
         "xion1abc123",
         messages,
         fee,
@@ -247,7 +247,7 @@ describe("SignerController", () => {
         },
       };
 
-      await controller.signWithMetaAccount(
+      await controller.signAndBroadcastWithMetaAccount(
         "xion1abc123",
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
         "auto",
@@ -283,7 +283,7 @@ describe("SignerController", () => {
 
       // Verify connectionInfo is cleared
       await expect(
-        controller.signWithMetaAccount(
+        controller.signAndBroadcastWithMetaAccount(
           "xion1abc123",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",

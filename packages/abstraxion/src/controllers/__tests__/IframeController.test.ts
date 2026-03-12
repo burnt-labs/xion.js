@@ -100,12 +100,12 @@ describe("IframeController", () => {
     return new IframeController(config);
   };
 
-  describe("signWithMetaAccount", () => {
+  describe("signAndBroadcastWithMetaAccount", () => {
     it("should throw when iframe is not available", async () => {
       const controller = createController();
 
       await expect(
-        controller.signWithMetaAccount(
+        controller.signAndBroadcastWithMetaAccount(
           "xion1abc123",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",
@@ -119,7 +119,7 @@ describe("IframeController", () => {
       const controller = createController();
 
       try {
-        await controller.signWithMetaAccount(
+        await controller.signAndBroadcastWithMetaAccount(
           "xion1abc123",
           [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
           "auto",

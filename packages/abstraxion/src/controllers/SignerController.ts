@@ -293,7 +293,7 @@ export class SignerController extends BaseController {
    * Uses the connectionInfo from connect() to create an AAClient and sign
    * the transaction directly with the user's authenticator.
    */
-  async signWithMetaAccount(
+  async signAndBroadcastWithMetaAccount(
     signerAddress: string,
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
