@@ -1,0 +1,210 @@
+name: Dashboard Contract Validation
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "packages/abstraxion/**"
+      - "packages/abstraxion-core/**"
+      - ".github/workflows/dashboard-contract-validation.yml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "packages/abstraxion/**"
+      - "packages/abstraxion-core/**"
+  workflow_dispatch:
+    inputs:
+      dashboard_url:
+        description: "Dashboard URL to validate (defaults to testnet)"
+        required: false
+        type: string
+
+jobs:
+  validate-dashboard-contract:
+    name: Validate SDK ↔ Dashboard Contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      matrix:
+        environment: [testnet]
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.9.0
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run message contract tests
+        working-directory: packages/abstraxion
+        run: |
+          echo "🔍 Running SDK ↔ Dashboard message contract tests..."
+          pnpm exec vitest run tests/integration/message-contract.integration.test.ts --config vitest.config.integration.ts
+
+      - name: Run controller unit tests
+        working-directory: packages/abstraxion
+        run: |
+          echo "🔍 Running controller tests (popup, iframe, redirect)..."
+          pnpm exec vitest run src/controllers/__tests__/ --reporter=verbose
+
+      - name: Run signing client tests
+        working-directory: packages/abstraxion
+        run: |
+          echo "🔍 Running signing client delegation tests..."
+          pnpm exec vitest run src/controllers/__tests__/SigningClients.test.ts --reporter=verbose
+
+      - name: Run auto-mode resolution tests
+        working-directory: packages/abstraxion
+        run: |
+          echo "🔍 Running auto-mode resolution tests..."
+          pnpm exec vitest run src/utils/__tests__/resolveAutoAuth.test.ts --reporter=verbose
+
+      - name: Validate dashboard URL is reachable
+        env:
+          DASHBOARD_URL: ${{ inputs.dashboard_url || '' }}
+        run: |
+          echo "🌐 Checking dashboard availability..."
+
+          # Determine dashboard URL from environment or network config
+          if [ -n "$DASHBOARD_URL" ]; then
+            URL="$DASHBOARD_URL"
+          else
+            # Use the testnet dashboard URL
+            URL="https://dashboard.testnet.burnt.com"
+          fi
+
+          echo "Testing URL: $URL"
+
+          # Check if the dashboard root is reachable
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard returned HTTP $HTTP_CODE"
+            echo "   URL: $URL"
+            echo "   This may indicate the dashboard is down or the URL has changed."
+            exit 1
+          fi
+          echo "✅ Dashboard root is reachable (HTTP $HTTP_CODE)"
+
+          # Check that the dashboard handles inline mode query params
+          INLINE_URL="${URL}?mode=inline&grantee=xion1test&redirect_uri=https://example.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$INLINE_URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard inline mode returned HTTP $HTTP_CODE"
+            echo "   URL: $INLINE_URL"
+            echo "   The dashboard may not be handling embedded mode query params correctly."
+            exit 1
+          fi
+          echo "✅ Dashboard inline mode is reachable (HTTP $HTTP_CODE)"
+
+          # Check that the dashboard handles popup mode query params
+          POPUP_URL="${URL}?mode=popup&grantee=xion1test&redirect_uri=https://example.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$POPUP_URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard popup mode returned HTTP $HTTP_CODE"
+            echo "   URL: $POPUP_URL"
+            exit 1
+          fi
+          echo "✅ Dashboard popup mode is reachable (HTTP $HTTP_CODE)"
+
+          # Check that the dashboard handles sign mode query params
+          SIGN_URL="${URL}?mode=sign&tx=dGVzdA==&granter=xion1test&redirect_uri=https://example.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$SIGN_URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard sign mode returned HTTP $HTTP_CODE"
+            echo "   URL: $SIGN_URL"
+            exit 1
+          fi
+          echo "✅ Dashboard sign mode is reachable (HTTP $HTTP_CODE)"
+
+      - name: Validate iframe message types match dashboard
+        working-directory: packages/abstraxion-core
+        run: |
+          echo "🔍 Checking iframe message type consistency..."
+
+          # Extract SDK message types from the enum
+          SDK_TYPES=$(node -e "
+            const { IframeMessageType } = require('./dist/index.js');
+            console.log(Object.values(IframeMessageType).sort().join('\n'));
+          ")
+
+          echo "SDK IframeMessageType values:"
+          echo "$SDK_TYPES"
+          echo ""
+
+          # Verify critical message types exist
+          REQUIRED_TYPES="IFRAME_READY CONNECT DISCONNECT SIGN_AND_BROADCAST SIGN_TRANSACTION GET_ADDRESS ADD_AUTHENTICATOR REMOVE_AUTHENTICATOR REQUEST_GRANT"
+
+          MISSING=""
+          for TYPE in $REQUIRED_TYPES; do
+            if ! echo "$SDK_TYPES" | grep -q "^${TYPE}$"; then
+              MISSING="$MISSING $TYPE"
+            fi
+          done
+
+          if [ -n "$MISSING" ]; then
+            echo "❌ Missing required IframeMessageType values:$MISSING"
+            echo "   These are required for SDK ↔ Dashboard communication."
+            exit 1
+          fi
+
+          echo "✅ All required IframeMessageType values present"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Dashboard Contract Validation Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "This workflow validates that changes to the abstraxion SDK"
+          echo "packages do not break the communication contract with the"
+          echo "XION dashboard application."
+          echo ""
+          echo "If this fails, check:"
+          echo "  1. Message type string values haven't changed"
+          echo "  2. Payload/response shapes match dashboard expectations"
+          echo "  3. URL parameter names match redirect/popup contracts"
+          echo "  4. Dashboard is deployed and reachable"
+          echo ""
+
+      - name: Post contract warning comment on PR
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = '## ⚠️ Dashboard Contract Validation Failed\n\n' +
+              'Changes to the abstraxion SDK may break compatibility with the XION dashboard.\n\n' +
+              '### What to check:\n' +
+              '- Message type enum values (IframeMessageType) match dashboard expectations\n' +
+              '- PostMessage types (CONNECT_SUCCESS, SIGN_SUCCESS, etc.) haven\'t changed\n' +
+              '- URL parameter names (?granted, ?granter, ?tx_hash, etc.) are consistent\n' +
+              '- Dashboard is deployed and responding to health checks\n\n' +
+              '### Required coordination:\n' +
+              'If you\'re intentionally changing the message protocol, you must also update:\n' +
+              '- `xion-dashboard-app/src/messaging/handler.ts`\n' +
+              '- `xion-dashboard-app/src/messaging/types.ts`\n' +
+              '- Any popup/redirect scripts in the dashboard\n\n' +
+              '> 🔗 See the workflow run for detailed failure output.';
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
