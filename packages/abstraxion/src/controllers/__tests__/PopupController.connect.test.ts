@@ -17,9 +17,15 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
       configureAbstraxionInstance: vi.fn(),
       logout: vi.fn().mockResolvedValue(undefined),
       generateAndStoreTempAccount: vi.fn().mockResolvedValue({
-        getAccounts: vi.fn().mockResolvedValue([
-          { address: "xion1grantee123", algo: "secp256k1", pubkey: new Uint8Array() },
-        ]),
+        getAccounts: vi
+          .fn()
+          .mockResolvedValue([
+            {
+              address: "xion1grantee123",
+              algo: "secp256k1",
+              pubkey: new Uint8Array(),
+            },
+          ]),
       }),
       getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
       setGranter: vi.fn().mockResolvedValue(undefined),
@@ -109,7 +115,15 @@ function createWindowMock() {
     }
   }
 
-  return { win, mockPopup, simulatePostMessage, setMockPopup: (p: typeof mockPopup) => { mockPopup = p; win.open.mockImplementation(() => mockPopup); } };
+  return {
+    win,
+    mockPopup,
+    simulatePostMessage,
+    setMockPopup: (p: typeof mockPopup) => {
+      mockPopup = p;
+      win.open.mockImplementation(() => mockPopup);
+    },
+  };
 }
 
 describe("PopupController — happy paths", () => {
@@ -161,7 +175,10 @@ describe("PopupController — happy paths", () => {
     await waitForListenerSetup();
 
     windowMock.simulatePostMessage(
-      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
+      {
+        type: DashboardMessageType.CONNECT_SUCCESS,
+        address: "xion1granter456",
+      },
       "https://dashboard.burnt.com",
     );
 
@@ -256,7 +273,10 @@ describe("PopupController — happy paths", () => {
 
     // Complete the test
     windowMock.simulatePostMessage(
-      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
+      {
+        type: DashboardMessageType.CONNECT_SUCCESS,
+        address: "xion1granter456",
+      },
       "https://dashboard.burnt.com",
     );
 
@@ -269,7 +289,10 @@ describe("PopupController — happy paths", () => {
     const connectPromise = controller.connect();
     await waitForListenerSetup();
     windowMock.simulatePostMessage(
-      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
+      {
+        type: DashboardMessageType.CONNECT_SUCCESS,
+        address: "xion1granter456",
+      },
       "https://dashboard.burnt.com",
     );
     await connectPromise;
@@ -329,7 +352,10 @@ describe("PopupController — happy paths", () => {
       );
 
       windowMock.simulatePostMessage(
-        { type: DashboardMessageType.SIGN_ERROR, message: "Insufficient funds" },
+        {
+          type: DashboardMessageType.SIGN_ERROR,
+          message: "Insufficient funds",
+        },
         "https://dashboard.burnt.com",
       );
 

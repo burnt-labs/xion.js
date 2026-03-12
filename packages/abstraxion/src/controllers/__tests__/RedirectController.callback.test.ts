@@ -21,9 +21,15 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
       configureAbstraxionInstance: vi.fn(),
       logout: vi.fn().mockResolvedValue(undefined),
       getLocalKeypair: vi.fn().mockResolvedValue({
-        getAccounts: vi.fn().mockResolvedValue([
-          { address: "xion1grantee123", algo: "secp256k1", pubkey: new Uint8Array() },
-        ]),
+        getAccounts: vi
+          .fn()
+          .mockResolvedValue([
+            {
+              address: "xion1grantee123",
+              algo: "secp256k1",
+              pubkey: new Uint8Array(),
+            },
+          ]),
       }),
       setGranter: vi.fn().mockResolvedValue(undefined),
       getSigner: vi.fn().mockResolvedValue({ signAndBroadcast: vi.fn() }),
@@ -191,7 +197,7 @@ describe("RedirectController — callback & signing", () => {
 
       // Make getLocalKeypair return null
       const { AbstraxionAuth } = await import("@burnt-labs/abstraxion-core");
-      const mockAuth = (AbstraxionAuth as ReturnType<typeof vi.fn>);
+      const mockAuth = AbstraxionAuth as ReturnType<typeof vi.fn>;
       const originalImpl = mockAuth.getMockImplementation()!;
       mockAuth.mockImplementationOnce(() => ({
         ...originalImpl(),

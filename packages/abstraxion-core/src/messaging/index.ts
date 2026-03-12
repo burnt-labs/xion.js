@@ -1,3 +1,7 @@
 export { MessageChannelManager } from "./MessageChannelManager";
 
-export { IframeMessageType, DashboardMessageType, MessageTarget } from "../types/iframe";
+export {
+  IframeMessageType,
+  DashboardMessageType,
+  MessageTarget,
+} from "../types/iframe";

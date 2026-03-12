@@ -15,7 +15,10 @@
  * 5. Monitors for popup closed (user cancelled) and dispatches RESET
  */
 
-import { AbstraxionAuth, DashboardMessageType } from "@burnt-labs/abstraxion-core";
+import {
+  AbstraxionAuth,
+  DashboardMessageType,
+} from "@burnt-labs/abstraxion-core";
 import type {
   StorageStrategy,
   RedirectStrategy,
@@ -34,7 +37,6 @@ import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
 import type { PopupAuthentication, NormalizedAbstraxionConfig } from "../types";
 import { toBase64 } from "@burnt-labs/signers";
-
 
 export interface PopupControllerConfig {
   chainId: string;
@@ -245,7 +247,10 @@ export class PopupController extends BaseController {
             address?: string;
           };
 
-          if (data?.type === DashboardMessageType.CONNECT_SUCCESS && data.address) {
+          if (
+            data?.type === DashboardMessageType.CONNECT_SUCCESS &&
+            data.address
+          ) {
             if (settled) return;
             settled = true;
             cleanup();

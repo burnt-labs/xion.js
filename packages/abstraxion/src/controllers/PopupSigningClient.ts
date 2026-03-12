@@ -22,7 +22,7 @@ export class PopupSigningClient {
     fee: StdFee | "auto" | number,
     memo?: string,
   ): Promise<DeliverTxResponse> {
-    return this.controller.promptAndSign(address, messages, fee, memo);
+    return this.controller.promptSignAndBroadcast(address, messages, fee, memo);
   }
 
   async sendTokens(
@@ -40,6 +40,6 @@ export class PopupSigningClient {
         amount: [...amount],
       },
     };
-    return this.controller.promptAndSign(senderAddress, [msg], fee, memo);
+    return this.controller.promptSignAndBroadcast(senderAddress, [msg], fee, memo);
   }
 }

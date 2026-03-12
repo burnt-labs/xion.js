@@ -23,7 +23,12 @@ export class IframeSigningClient {
     fee: StdFee | "auto" | number,
     memo?: string,
   ): Promise<DeliverTxResponse> {
-    return this.controller.signAndBroadcastWithMetaAccount(address, messages, fee, memo);
+    return this.controller.signAndBroadcastWithMetaAccount(
+      address,
+      messages,
+      fee,
+      memo,
+    );
   }
 
   async sendTokens(
@@ -41,6 +46,11 @@ export class IframeSigningClient {
         amount: [...amount],
       },
     };
-    return this.controller.signAndBroadcastWithMetaAccount(senderAddress, [msg], fee, memo);
+    return this.controller.signAndBroadcastWithMetaAccount(
+      senderAddress,
+      [msg],
+      fee,
+      memo,
+    );
   }
 }

@@ -73,7 +73,9 @@ describe("resolveAutoAuth", () => {
     });
 
     it("returns true for iPhone user agent", () => {
-      mockEnvironment({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0)" });
+      mockEnvironment({
+        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0)",
+      });
       expect(isMobileOrStandalone()).toBe(true);
     });
 
@@ -167,7 +169,9 @@ describe("resolveAutoAuth", () => {
     });
 
     it("resolves auto to redirect on mobile", () => {
-      mockEnvironment({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0)" });
+      mockEnvironment({
+        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0)",
+      });
 
       const result = resolveAutoAuth({
         type: "auto",

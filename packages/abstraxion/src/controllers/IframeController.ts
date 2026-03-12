@@ -42,7 +42,10 @@ import type {
   StorageStrategy,
   RedirectStrategy,
 } from "@burnt-labs/abstraxion-core";
-import { IframeMessageType, DashboardMessageType } from "@burnt-labs/abstraxion-core";
+import {
+  IframeMessageType,
+  DashboardMessageType,
+} from "@burnt-labs/abstraxion-core";
 import { GasPrice } from "@cosmjs/stargate";
 import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import type { EncodeObject } from "@cosmjs/proto-signing";
@@ -59,7 +62,6 @@ import type {
   IframeAuthentication,
   NormalizedAbstraxionConfig,
 } from "../types";
-
 
 /**
  * Configuration for IframeController

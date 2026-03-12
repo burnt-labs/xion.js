@@ -91,9 +91,7 @@ describe("IframeSigningClient", () => {
   it("delegates signAndBroadcast to controller.signAndBroadcastWithMetaAccount", async () => {
     const client = new IframeSigningClient(mockController as any);
 
-    const messages = [
-      { typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} },
-    ];
+    const messages = [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }];
 
     const result = await client.signAndBroadcast(
       "xion1addr",

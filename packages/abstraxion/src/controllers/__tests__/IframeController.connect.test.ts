@@ -24,9 +24,15 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
       configureAbstraxionInstance: vi.fn(),
       logout: vi.fn().mockResolvedValue(undefined),
       generateAndStoreTempAccount: vi.fn().mockResolvedValue({
-        getAccounts: vi.fn().mockResolvedValue([
-          { address: "xion1grantee123", algo: "secp256k1", pubkey: new Uint8Array() },
-        ]),
+        getAccounts: vi
+          .fn()
+          .mockResolvedValue([
+            {
+              address: "xion1grantee123",
+              algo: "secp256k1",
+              pubkey: new Uint8Array(),
+            },
+          ]),
       }),
       getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
       setGranter: vi.fn().mockResolvedValue(undefined),

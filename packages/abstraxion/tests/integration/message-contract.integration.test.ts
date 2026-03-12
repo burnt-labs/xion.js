@@ -195,9 +195,7 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       });
 
       it("sign_error signals signing failure with message", () => {
-        const params = new URLSearchParams(
-          "?sign_error=Insufficient%20funds",
-        );
+        const params = new URLSearchParams("?sign_error=Insufficient%20funds");
         expect(params.get("sign_error")).toBe("Insufficient funds");
       });
     });
