@@ -21,15 +21,13 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
       configureAbstraxionInstance: vi.fn(),
       logout: vi.fn().mockResolvedValue(undefined),
       getLocalKeypair: vi.fn().mockResolvedValue({
-        getAccounts: vi
-          .fn()
-          .mockResolvedValue([
-            {
-              address: "xion1grantee123",
-              algo: "secp256k1",
-              pubkey: new Uint8Array(),
-            },
-          ]),
+        getAccounts: vi.fn().mockResolvedValue([
+          {
+            address: "xion1grantee123",
+            algo: "secp256k1",
+            pubkey: new Uint8Array(),
+          },
+        ]),
       }),
       setGranter: vi.fn().mockResolvedValue(undefined),
       getSigner: vi.fn().mockResolvedValue({ signAndBroadcast: vi.fn() }),

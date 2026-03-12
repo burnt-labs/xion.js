@@ -59,7 +59,6 @@ describe("SDK ↔ Dashboard Message Contract", () => {
     it("REQUEST_GRANT is sent by SDK to request treasury permissions", () => {
       expect(IframeMessageType.REQUEST_GRANT).toBe("REQUEST_GRANT");
     });
-
   });
 
   describe("MessageTarget values", () => {
@@ -120,7 +119,6 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       expect(msg.type).toBe("SIGN_ERROR");
       expect(msg.message).toBeTruthy();
     });
-
   });
 
   describe("Embedded iframe push messages", () => {
@@ -198,7 +196,6 @@ describe("SDK ↔ Dashboard Message Contract", () => {
         expect(url.searchParams.get("tx")).toBeTruthy();
         expect(url.searchParams.get("granter")).toBeTruthy();
       });
-
     });
   });
 

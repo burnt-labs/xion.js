@@ -41,6 +41,11 @@ export class RedirectSigningClient {
         amount: [...amount],
       },
     };
-    return this.controller.promptSignAndBroadcast(senderAddress, [msg], fee, memo);
+    return this.controller.promptSignAndBroadcast(
+      senderAddress,
+      [msg],
+      fee,
+      memo,
+    );
   }
 }
