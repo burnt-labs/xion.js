@@ -63,23 +63,25 @@ export function normalizeAbstraxionConfig(
     };
   }
 
-  // Validate required fields
-  if (!rpcUrl) {
-    throw new Error(
-      `RPC URL is required. Either provide rpcUrl in config or use a known chainId (${chainId} not found in constants)`,
-    );
-  }
+  // Validate required fields (browser only — during SSR/prerendering env vars may not be set)
+  if (typeof window !== "undefined") {
+    if (!rpcUrl) {
+      throw new Error(
+        `RPC URL is required. Either provide rpcUrl in config or use a known chainId (${chainId} not found in constants)`,
+      );
+    }
 
-  if (!restUrl) {
-    throw new Error(
-      `REST URL is required. Either provide restUrl in config or use a known chainId (${chainId} not found in constants)`,
-    );
+    if (!restUrl) {
+      throw new Error(
+        `REST URL is required. Either provide restUrl in config or use a known chainId (${chainId} not found in constants)`,
+      );
+    }
   }
 
   return {
     ...config,
-    rpcUrl,
-    restUrl,
+    rpcUrl: rpcUrl || "",
+    restUrl: restUrl || "",
     gasPrice,
     feeGranter: feeGranter || undefined,
   };

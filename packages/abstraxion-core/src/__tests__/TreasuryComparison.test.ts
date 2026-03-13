@@ -184,15 +184,27 @@ function encodeSendAuthorization(
 describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
   describe("Treasury 1 (xion1sv6kd…): Bank + ContractExec(MaxCallsLimit)", () => {
     const configs: TreasuryGrantConfig[] = [
-      { description: "send funds", authorization: TREASURY_1_SEND, optional: false },
-      { description: "Execute on MAP and chess", authorization: TREASURY_1_CONTRACT, optional: false },
+      {
+        description: "send funds",
+        authorization: TREASURY_1_SEND,
+        optional: false,
+      },
+      {
+        description: "Execute on MAP and chess",
+        authorization: TREASURY_1_CONTRACT,
+        optional: false,
+      },
     ];
 
     it("should match when chain grants have identical authorizations", () => {
       const chainGrants: GrantsResponse = {
         grants: [
           makeChainGrant(
-            { "@type": TREASURY_1_SEND.type_url, spend_limit: [{ denom: "uxion", amount: "5000000" }], allow_list: [] },
+            {
+              "@type": TREASURY_1_SEND.type_url,
+              spend_limit: [{ denom: "uxion", amount: "5000000" }],
+              allow_list: [],
+            },
             TREASURY_1_SEND.type_url,
             toByteArray(TREASURY_1_SEND.value),
           ),
@@ -204,15 +216,23 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
         ],
         pagination: { next_key: null, total: "2" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(true);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        true,
+      );
     });
 
     it("should match when bank spend limit is partially used", () => {
-      const partialSend = encodeSendAuthorization([{ denom: "uxion", amount: "3000000" }]);
+      const partialSend = encodeSendAuthorization([
+        { denom: "uxion", amount: "3000000" },
+      ]);
       const chainGrants: GrantsResponse = {
         grants: [
           makeChainGrant(
-            { "@type": TREASURY_1_SEND.type_url, spend_limit: [{ denom: "uxion", amount: "3000000" }], allow_list: [] },
+            {
+              "@type": TREASURY_1_SEND.type_url,
+              spend_limit: [{ denom: "uxion", amount: "3000000" }],
+              allow_list: [],
+            },
             TREASURY_1_SEND.type_url,
             partialSend,
           ),
@@ -224,21 +244,35 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
         ],
         pagination: { next_key: null, total: "2" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(true);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        true,
+      );
     });
   });
 
   describe("Treasury 2 (xion1fqum4…): Bank + ContractExec(MaxFundsLimit, IBC denom)", () => {
     const configs: TreasuryGrantConfig[] = [
-      { description: "Send money to escrow", authorization: TREASURY_2_SEND, optional: false },
-      { description: "Auction, Invoice Registry", authorization: TREASURY_2_CONTRACT, optional: false },
+      {
+        description: "Send money to escrow",
+        authorization: TREASURY_2_SEND,
+        optional: false,
+      },
+      {
+        description: "Auction, Invoice Registry",
+        authorization: TREASURY_2_CONTRACT,
+        optional: false,
+      },
     ];
 
     it("should match when chain grants are identical", () => {
       const chainGrants: GrantsResponse = {
         grants: [
           makeChainGrant(
-            { "@type": TREASURY_2_SEND.type_url, spend_limit: [{ denom: "uxion", amount: "1000000" }], allow_list: [] },
+            {
+              "@type": TREASURY_2_SEND.type_url,
+              spend_limit: [{ denom: "uxion", amount: "1000000" }],
+              allow_list: [],
+            },
             TREASURY_2_SEND.type_url,
             toByteArray(TREASURY_2_SEND.value),
           ),
@@ -250,62 +284,92 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
         ],
         pagination: { next_key: null, total: "2" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(true);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        true,
+      );
     });
 
     it("should NOT match when chain is missing the contract exec grant", () => {
       const chainGrants: GrantsResponse = {
         grants: [
           makeChainGrant(
-            { "@type": TREASURY_2_SEND.type_url, spend_limit: [{ denom: "uxion", amount: "1000000" }], allow_list: [] },
+            {
+              "@type": TREASURY_2_SEND.type_url,
+              spend_limit: [{ denom: "uxion", amount: "1000000" }],
+              allow_list: [],
+            },
             TREASURY_2_SEND.type_url,
             toByteArray(TREASURY_2_SEND.value),
           ),
         ],
         pagination: { next_key: null, total: "1" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(false);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        false,
+      );
     });
   });
 
   describe("Treasury 3 (xion1x4zc9…): Bank-only", () => {
     const configs: TreasuryGrantConfig[] = [
-      { description: "SAMPLE", authorization: TREASURY_3_SEND, optional: false },
+      {
+        description: "SAMPLE",
+        authorization: TREASURY_3_SEND,
+        optional: false,
+      },
     ];
 
     it("should match when chain has matching send grant", () => {
       const chainGrants: GrantsResponse = {
         grants: [
           makeChainGrant(
-            { "@type": TREASURY_3_SEND.type_url, spend_limit: [{ denom: "uxion", amount: "1000000" }], allow_list: [] },
+            {
+              "@type": TREASURY_3_SEND.type_url,
+              spend_limit: [{ denom: "uxion", amount: "1000000" }],
+              allow_list: [],
+            },
             TREASURY_3_SEND.type_url,
             toByteArray(TREASURY_3_SEND.value),
           ),
         ],
         pagination: { next_key: null, total: "1" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(true);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        true,
+      );
     });
 
     it("should NOT match when chain has exceeded spend limit", () => {
-      const exceeded = encodeSendAuthorization([{ denom: "uxion", amount: "2000000" }]);
+      const exceeded = encodeSendAuthorization([
+        { denom: "uxion", amount: "2000000" },
+      ]);
       const chainGrants: GrantsResponse = {
         grants: [
           makeChainGrant(
-            { "@type": TREASURY_3_SEND.type_url, spend_limit: [{ denom: "uxion", amount: "2000000" }], allow_list: [] },
+            {
+              "@type": TREASURY_3_SEND.type_url,
+              spend_limit: [{ denom: "uxion", amount: "2000000" }],
+              allow_list: [],
+            },
             TREASURY_3_SEND.type_url,
             exceeded,
           ),
         ],
         pagination: { next_key: null, total: "1" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(false);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        false,
+      );
     });
   });
 
   describe("Treasury 4 (xion109k30…): MemoryCapsule — single contract MaxFundsLimit(uxion)", () => {
     const configs: TreasuryGrantConfig[] = [
-      { description: "MemoryCapsule smart contract", authorization: TREASURY_4_CONTRACT, optional: false },
+      {
+        description: "MemoryCapsule smart contract",
+        authorization: TREASURY_4_CONTRACT,
+        optional: false,
+      },
     ];
 
     it("should match when chain has identical contract exec grant", () => {
@@ -319,13 +383,19 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
         ],
         pagination: { next_key: null, total: "1" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(true);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        true,
+      );
     });
   });
 
   describe("Treasury 5 (xion1t3vjr…): UserMap + RUM — multi-contract MaxFundsLimit(uxion, 2500)", () => {
     const configs: TreasuryGrantConfig[] = [
-      { description: "User Map and RUM Contracts", authorization: TREASURY_5_CONTRACT, optional: false },
+      {
+        description: "User Map and RUM Contracts",
+        authorization: TREASURY_5_CONTRACT,
+        optional: false,
+      },
     ];
 
     it("should match when chain has identical two-contract grant", () => {
@@ -339,14 +409,24 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
         ],
         pagination: { next_key: null, total: "1" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(true);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        true,
+      );
     });
   });
 
   describe("Treasury 6 (xion174jza…): Factory-token bank + ContractExec", () => {
     const configs: TreasuryGrantConfig[] = [
-      { description: "SAMPLE factory token send", authorization: TREASURY_6_SEND, optional: false },
-      { description: "UserMap contract", authorization: TREASURY_6_CONTRACT, optional: false },
+      {
+        description: "SAMPLE factory token send",
+        authorization: TREASURY_6_SEND,
+        optional: false,
+      },
+      {
+        description: "UserMap contract",
+        authorization: TREASURY_6_CONTRACT,
+        optional: false,
+      },
     ];
 
     it("should match when chain has factory-token send + contract exec", () => {
@@ -355,7 +435,13 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
           makeChainGrant(
             {
               "@type": TREASURY_6_SEND.type_url,
-              spend_limit: [{ denom: "factory/xion15r5yxaeqwlx5zz5f2vwg87vz3m7d6dd5pdd6qp/mytoken", amount: "1000" }],
+              spend_limit: [
+                {
+                  denom:
+                    "factory/xion15r5yxaeqwlx5zz5f2vwg87vz3m7d6dd5pdd6qp/mytoken",
+                  amount: "1000",
+                },
+              ],
               allow_list: [],
             },
             TREASURY_6_SEND.type_url,
@@ -369,7 +455,9 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
         ],
         pagination: { next_key: null, total: "2" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(true);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        true,
+      );
     });
 
     it("should NOT match when chain is missing the factory-token send grant", () => {
@@ -383,7 +471,9 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
         ],
         pagination: { next_key: null, total: "1" },
       };
-      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(false);
+      expect(compareGrantsToTreasuryWithConfigs(chainGrants, configs)).toBe(
+        false,
+      );
     });
   });
 
@@ -414,13 +504,16 @@ describe("Legacy comparison still works with dual-format grants", () => {
       },
     ];
 
-    expect(compareBankGrants(grants as any, [{ denom: "uxion", amount: "1000000" }])).toBe(true);
+    expect(
+      compareBankGrants(grants as any, [{ denom: "uxion", amount: "1000000" }]),
+    ).toBe(true);
     expect(compareBankGrants(grants as any, undefined)).toBe(true);
   });
 
   it("should correctly validate contract grants with dual-format fields", () => {
     // Use a real contract address from Treasury 1
-    const contractAddress = "xion1q66h2ynmrm5je9awcdwcyxjykd6c0h4wf3u5ha4s5cntf8jr5jfqh8mwey";
+    const contractAddress =
+      "xion1q66h2ynmrm5je9awcdwcyxjykd6c0h4wf3u5ha4s5cntf8jr5jfqh8mwey";
     const grants = [
       {
         authorization: {
@@ -428,7 +521,10 @@ describe("Legacy comparison still works with dual-format grants", () => {
           grants: [
             {
               contract: contractAddress,
-              limit: { "@type": "/cosmwasm.wasm.v1.MaxCallsLimit", remaining: "100" },
+              limit: {
+                "@type": "/cosmwasm.wasm.v1.MaxCallsLimit",
+                remaining: "100",
+              },
               filter: { "@type": "/cosmwasm.wasm.v1.AllowAllMessagesFilter" },
             },
           ],
@@ -465,9 +561,13 @@ describe("Bug reproduction: pre-fix vs post-fix decoding", () => {
       TREASURY_2_CONTRACT.type_url,
       TREASURY_2_CONTRACT.value,
     );
-    expect(decoded.type).toBe("/cosmwasm.wasm.v1.ContractExecutionAuthorization");
+    expect(decoded.type).toBe(
+      "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+    );
     expect((decoded.data as any).grants).toHaveLength(2);
-    expect((decoded.data as any).grants[0].limitType).toBe("/cosmwasm.wasm.v1.MaxFundsLimit");
+    expect((decoded.data as any).grants[0].limitType).toBe(
+      "/cosmwasm.wasm.v1.MaxFundsLimit",
+    );
   });
 
   it("should decode ContractExecution MaxCallsLimit (Treasury 1)", () => {
@@ -475,9 +575,13 @@ describe("Bug reproduction: pre-fix vs post-fix decoding", () => {
       TREASURY_1_CONTRACT.type_url,
       TREASURY_1_CONTRACT.value,
     );
-    expect(decoded.type).toBe("/cosmwasm.wasm.v1.ContractExecutionAuthorization");
+    expect(decoded.type).toBe(
+      "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+    );
     expect((decoded.data as any).grants).toHaveLength(2);
-    expect((decoded.data as any).grants[0].limitType).toBe("/cosmwasm.wasm.v1.MaxCallsLimit");
+    expect((decoded.data as any).grants[0].limitType).toBe(
+      "/cosmwasm.wasm.v1.MaxCallsLimit",
+    );
   });
 
   it("should decode single-contract MaxFundsLimit uxion (Treasury 4 — MemoryCapsule)", () => {
@@ -485,9 +589,13 @@ describe("Bug reproduction: pre-fix vs post-fix decoding", () => {
       TREASURY_4_CONTRACT.type_url,
       TREASURY_4_CONTRACT.value,
     );
-    expect(decoded.type).toBe("/cosmwasm.wasm.v1.ContractExecutionAuthorization");
+    expect(decoded.type).toBe(
+      "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+    );
     expect((decoded.data as any).grants).toHaveLength(1);
-    expect((decoded.data as any).grants[0].limitType).toBe("/cosmwasm.wasm.v1.MaxFundsLimit");
+    expect((decoded.data as any).grants[0].limitType).toBe(
+      "/cosmwasm.wasm.v1.MaxFundsLimit",
+    );
   });
 
   it("should decode multi-contract MaxFundsLimit small amount (Treasury 5 — UserMap+RUM)", () => {
@@ -495,9 +603,13 @@ describe("Bug reproduction: pre-fix vs post-fix decoding", () => {
       TREASURY_5_CONTRACT.type_url,
       TREASURY_5_CONTRACT.value,
     );
-    expect(decoded.type).toBe("/cosmwasm.wasm.v1.ContractExecutionAuthorization");
+    expect(decoded.type).toBe(
+      "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
+    );
     expect((decoded.data as any).grants).toHaveLength(2);
-    expect((decoded.data as any).grants[0].limitType).toBe("/cosmwasm.wasm.v1.MaxFundsLimit");
+    expect((decoded.data as any).grants[0].limitType).toBe(
+      "/cosmwasm.wasm.v1.MaxFundsLimit",
+    );
   });
 
   it("should decode factory-token SendAuthorization (Treasury 6)", () => {

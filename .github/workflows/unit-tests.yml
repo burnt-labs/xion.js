@@ -58,6 +58,8 @@ jobs:
           fi
 
       - name: Build
+        env:
+          NEXT_PUBLIC_CHAIN_ID: xion-testnet-2
         run: pnpm build
 
       - name: Upload build artifacts
