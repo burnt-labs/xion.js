@@ -245,6 +245,35 @@ export function AbstraxionProvider({
     };
   }, [controller]);
 
+  // Dev warning: no grants configured — valid for direct-signing (requireAuth) flows,
+  // but unusual for popup/redirect/embedded modes.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      const hasGrants =
+        !!treasury ||
+        (contracts && contracts.length > 0) ||
+        !!stake ||
+        (bank && bank.length > 0);
+
+      const isDashboardMode =
+        authMode === "popup" ||
+        authMode === "redirect" ||
+        authMode === "embedded";
+
+      if (!hasGrants && isDashboardMode) {
+        console.warn(
+          "[AbstraxionProvider] No grants configured (treasury, contracts, stake, or bank). " +
+            "In popup/redirect/embedded modes the user will authenticate and get a session key, " +
+            "but no on-chain permissions will be granted to it. " +
+            "This is intentional if you are using requireAuth (direct signing), where the user " +
+            "signs transactions directly from their meta-account rather than via a session key. " +
+            "If you expected grant-based signing, add a `treasury` address or legacy grant config.",
+        );
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount — config is stable after normalizeAbstraxionConfig
+
   // Dev warning: embedded mode requires <AbstraxionEmbed> to be rendered somewhere
   useEffect(() => {
     if (

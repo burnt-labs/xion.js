@@ -241,6 +241,63 @@ describe("PopupController — happy paths", () => {
     vi.useRealTimers();
   });
 
+  // ─── No-grants path ─────────────────────────────────────────────────────────
+  // When no treasury/contracts/stake/bank are configured, the popup URL must
+  // NOT include any grant params. The dashboard should send CONNECT_SUCCESS
+  // immediately after the user authenticates (no approval step).
+  // See: App.tsx popup no-grants resolution useEffect.
+
+  it("should build popup URL without grant params when no grants are configured", async () => {
+    const controller = new PopupController(createConfig()); // No grants in default config
+
+    const connectPromise = controller.connect();
+    await waitForListenerSetup();
+
+    const openCall = windowMock.win.open.mock.calls[0];
+    const popupUrl = new URL(openCall[0] as string);
+
+    // Required params always present
+    expect(popupUrl.searchParams.get("grantee")).toBe("xion1grantee123");
+    expect(popupUrl.searchParams.get("mode")).toBe("popup");
+    expect(popupUrl.searchParams.get("redirect_uri")).toBeTruthy();
+
+    // Grant params must be absent when not configured
+    expect(popupUrl.searchParams.has("treasury")).toBe(false);
+    expect(popupUrl.searchParams.has("stake")).toBe(false);
+    expect(popupUrl.searchParams.has("bank")).toBe(false);
+    expect(popupUrl.searchParams.has("contracts")).toBe(false);
+
+    // Dashboard sends CONNECT_SUCCESS without a prior grant approval step
+    windowMock.simulatePostMessage(
+      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
+      "https://dashboard.burnt.com",
+    );
+
+    await connectPromise;
+    expect(controller.getState().status).toBe("connected");
+  });
+
+  it("should complete connection on CONNECT_SUCCESS even with no grants configured", async () => {
+    const controller = new PopupController(createConfig()); // No grants
+
+    const connectPromise = controller.connect();
+    await waitForListenerSetup();
+
+    windowMock.simulatePostMessage(
+      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
+      "https://dashboard.burnt.com",
+    );
+
+    await connectPromise;
+
+    const state = controller.getState();
+    expect(state.status).toBe("connected");
+    // Granter address is stored from the CONNECT_SUCCESS message
+    if (state.status === "connected") {
+      expect(state.account.granterAddress).toBe("xion1granter456");
+    }
+  });
+
   it("should build popup URL with correct query params", async () => {
     const config = createConfig({
       treasury: "xion1treasury",
