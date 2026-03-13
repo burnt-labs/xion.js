@@ -11,7 +11,8 @@
  */
 
 import type { EncodeObject } from "@cosmjs/proto-signing";
-import type { StdFee, DeliverTxResponse, Coin } from "@cosmjs/stargate";
+import type { StdFee, Coin } from "@cosmjs/stargate";
+import type { SignAndBroadcastResult } from "@burnt-labs/abstraxion-core";
 import type { IframeController } from "./IframeController";
 
 export class IframeSigningClient {
@@ -22,7 +23,7 @@ export class IframeSigningClient {
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
     memo?: string,
-  ): Promise<DeliverTxResponse> {
+  ): Promise<SignAndBroadcastResult> {
     return this.controller.signAndBroadcastWithMetaAccount(
       address,
       messages,
@@ -37,7 +38,7 @@ export class IframeSigningClient {
     amount: readonly Coin[],
     fee: StdFee | "auto" | number,
     memo?: string,
-  ): Promise<DeliverTxResponse> {
+  ): Promise<SignAndBroadcastResult> {
     const msg: EncodeObject = {
       typeUrl: "/cosmos.bank.v1beta1.MsgSend",
       value: {

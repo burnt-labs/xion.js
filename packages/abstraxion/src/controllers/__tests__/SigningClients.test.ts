@@ -13,7 +13,9 @@ import { PopupSigningClient } from "../PopupSigningClient";
 import { IframeSigningClient } from "../IframeSigningClient";
 import { RedirectSigningClient } from "../RedirectSigningClient";
 import type { DeliverTxResponse, StdFee } from "@cosmjs/stargate";
+import type { SignAndBroadcastResult } from "@burnt-labs/abstraxion-core";
 
+// Popup and redirect controllers broadcast independently and return the full CosmJS DeliverTxResponse.
 const mockTxResponse: DeliverTxResponse = {
   code: 0,
   transactionHash: "TXHASH123",
@@ -23,6 +25,11 @@ const mockTxResponse: DeliverTxResponse = {
   gasWanted: BigInt(100000),
   msgResponses: [],
   txIndex: 0,
+};
+
+// IframeSigningClient delegates to the dashboard which only returns the tx hash.
+const mockBroadcastResult: SignAndBroadcastResult = {
+  transactionHash: "TXHASH123",
 };
 
 describe("PopupSigningClient", () => {
@@ -85,7 +92,7 @@ describe("PopupSigningClient", () => {
 
 describe("IframeSigningClient", () => {
   const mockController = {
-    signAndBroadcastWithMetaAccount: vi.fn().mockResolvedValue(mockTxResponse),
+    signAndBroadcastWithMetaAccount: vi.fn().mockResolvedValue(mockBroadcastResult),
   };
 
   it("delegates signAndBroadcast to controller.signAndBroadcastWithMetaAccount", async () => {
@@ -106,7 +113,8 @@ describe("IframeSigningClient", () => {
       "auto",
       "memo",
     );
-    expect(result).toBe(mockTxResponse);
+    expect(result).toEqual(mockBroadcastResult);
+    expect(result.transactionHash).toBe("TXHASH123");
   });
 
   it("delegates sendTokens to controller.signAndBroadcastWithMetaAccount with MsgSend", async () => {

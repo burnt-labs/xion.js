@@ -276,17 +276,9 @@ describe("IframeController — happy paths", () => {
 
   describe("signAndBroadcastWithMetaAccount()", () => {
     it("should send SIGN_AND_BROADCAST via MessageChannel and return result", async () => {
+      // The dashboard only returns the transaction hash — not the full CosmJS DeliverTxResponse.
       const txResponse = {
-        signedTx: {
-          code: 0,
-          transactionHash: "TX_HASH_123",
-          events: [],
-          height: 100,
-          gasUsed: BigInt(50000),
-          gasWanted: BigInt(100000),
-          msgResponses: [],
-          txIndex: 0,
-        },
+        signedTx: { transactionHash: "TX_HASH_123" },
       };
 
       mockSendRequest

@@ -144,9 +144,19 @@ export interface SignTransactionResponse {
 }
 
 /**
- * Sign and broadcast response
+ * Result returned over MessageChannel after the dashboard signs and broadcasts a transaction.
+ * Only the transaction hash is returned — query the chain RPC for the full DeliverTxResponse.
  */
-export interface SignAndBroadcastResponse {
+export interface SignAndBroadcastResult {
+  transactionHash: string;
+}
+
+/**
+ * Payload carried by the `transactionBroadcast` iframe event.
+ * This is a lightweight notification shape — it is NOT the full
+ * CosmJS DeliverTxResponse returned by signAndBroadcastWithMetaAccount.
+ */
+export interface TransactionBroadcastEvent {
   transactionHash: string;
   height?: number;
   code?: number;
@@ -238,7 +248,7 @@ export interface IframeSDKEvents {
   /** Fired when an authenticator is removed */
   authenticatorRemoved: { authenticatorId: number };
   /** Fired when a transaction is broadcast */
-  transactionBroadcast: SignAndBroadcastResponse;
+  transactionBroadcast: TransactionBroadcastEvent;
   /** Fired when treasury grant is successful */
   grantApproved: { treasuryAddress: string };
 }

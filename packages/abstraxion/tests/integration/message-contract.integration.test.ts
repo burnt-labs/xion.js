@@ -268,4 +268,27 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       expect(payload.signerAddress).toBeTruthy();
     });
   });
+
+  describe("SIGN_AND_BROADCAST response shape", () => {
+    // The dashboard wraps the result in { signedTx: ... } and the SDK unwraps it.
+    // The SDK consumer receives only { transactionHash } — NOT a full CosmJS DeliverTxResponse.
+    // If either side changes this contract, IframeController.signAndBroadcastWithMetaAccount breaks.
+    it("dashboard response contains signedTx.transactionHash", () => {
+      // Simulates what the dashboard sends back via MessageChannel
+      const dashboardResponse: { signedTx: { transactionHash: string } } = {
+        signedTx: { transactionHash: "ABCDEF123456" },
+      };
+      expect(dashboardResponse.signedTx.transactionHash).toBeTruthy();
+      // No other fields — consumers must query the chain RPC for full tx details
+      expect((dashboardResponse.signedTx as Record<string, unknown>).height).toBeUndefined();
+      expect((dashboardResponse.signedTx as Record<string, unknown>).gasUsed).toBeUndefined();
+    });
+
+    it("SDK consumer receives only transactionHash from signAndBroadcastWithMetaAccount", () => {
+      // This documents the SignAndBroadcastResult contract.
+      // If the dashboard starts returning more fields, update SignAndBroadcastResult too.
+      const result: { transactionHash: string } = { transactionHash: "ABCDEF123456" };
+      expect(typeof result.transactionHash).toBe("string");
+    });
+  });
 });

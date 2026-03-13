@@ -41,6 +41,7 @@ import type {
   ConnectResponse,
   StorageStrategy,
   RedirectStrategy,
+  SignAndBroadcastResult,
 } from "@burnt-labs/abstraxion-core";
 import {
   IframeMessageType,
@@ -49,7 +50,7 @@ import {
 import { GasPrice } from "@cosmjs/stargate";
 import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import type { EncodeObject } from "@cosmjs/proto-signing";
-import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
+import type { StdFee } from "@cosmjs/stargate";
 import {
   ConnectionOrchestrator,
   isSessionRestorationError,
@@ -454,7 +455,7 @@ export class IframeController extends BaseController {
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
     memo?: string,
-  ): Promise<DeliverTxResponse> {
+  ): Promise<SignAndBroadcastResult> {
     if (!this.iframe?.contentWindow) {
       throw new Error(
         "Iframe is not available. Ensure the iframe is mounted and the user is connected.",
@@ -470,7 +471,7 @@ export class IframeController extends BaseController {
         };
         signerAddress: string;
       },
-      { signedTx: DeliverTxResponse }
+      { signedTx: SignAndBroadcastResult }
     >(
       this.iframe,
       IframeMessageType.SIGN_AND_BROADCAST,

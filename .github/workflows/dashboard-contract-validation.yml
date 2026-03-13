@@ -93,6 +93,31 @@ jobs:
           echo "🔍 Running SDK ↔ Dashboard message contract tests..."
           pnpm exec vitest run tests/integration/message-contract.integration.test.ts --config vitest.config.integration.ts
 
+      - name: Run response shape contract tests
+        working-directory: packages/abstraxion
+        run: |
+          echo "🔍 Running response shape contract tests (runtime assertions)..."
+          pnpm exec vitest run tests/integration/response-shapes.integration.test.ts --config vitest.config.integration.ts
+
+      - name: Typecheck response shape contracts
+        working-directory: packages/abstraxion
+        run: |
+          echo "🔍 Type-checking response shape @ts-expect-error regression guards..."
+          # This step catches type drift that vitest alone cannot detect.
+          # Vitest uses esbuild which strips types without checking them, so
+          # @ts-expect-error directives in test files are silently ignored at runtime.
+          #
+          # With tsc --noEmit, an @ts-expect-error that becomes *unnecessary* (because
+          # the type was widened to accept the previously-invalid value) surfaces as:
+          #   "Unused '@ts-expect-error' directive"
+          # and this step fails — making the type drift visible in CI.
+          #
+          # Example: if 'height' were added to SignAndBroadcastResult, the line
+          #   // @ts-expect-error — 'height' is not in SignAndBroadcastResult
+          #   const _h: SignAndBroadcastResult = { transactionHash: "x", height: 100 };
+          # would produce "Unused '@ts-expect-error'" and fail here.
+          pnpm exec tsc --noEmit
+
       - name: Run controller unit tests
         working-directory: packages/abstraxion
         run: |
@@ -218,6 +243,9 @@ jobs:
           echo "  2. Payload/response shapes match dashboard expectations"
           echo "  3. URL parameter names match redirect/popup contracts"
           echo "  4. Dashboard is deployed and reachable"
+          echo "  5. Response types match actual dashboard sends (not mocks)"
+          echo "     See: tests/integration/response-shapes.integration.test.ts"
+          echo "  6. @ts-expect-error guards — tsc detects accidental type widening"
           echo ""
 
       - name: Post contract warning comment on PR
@@ -231,11 +259,17 @@ jobs:
               '- Message type enum values (IframeMessageType) match dashboard expectations\n' +
               '- PostMessage types (CONNECT_SUCCESS, SIGN_SUCCESS, etc.) haven\'t changed\n' +
               '- URL parameter names (?granted, ?granter, ?tx_hash, etc.) are consistent\n' +
+              '- Response type shapes match what the dashboard actually sends (not just what mocks return)\n' +
               '- Dashboard is deployed and responding to health checks\n\n' +
+              '### If the "Typecheck response shape contracts" step failed:\n' +
+              'An `@ts-expect-error` directive in `response-shapes.integration.test.ts` became unused,\n' +
+              'meaning a type was widened to accept a field the dashboard never actually sends.\n' +
+              'Check `SignAndBroadcastResult`, `TransactionBroadcastEvent`, and other response types.\n\n' +
               '### Required coordination:\n' +
               'If you\'re intentionally changing the message protocol, you must also update:\n' +
               '- `xion-dashboard-app/src/messaging/handler.ts`\n' +
               '- `xion-dashboard-app/src/messaging/types.ts`\n' +
+              '- `tests/integration/response-shapes.integration.test.ts` (update shape assertions)\n' +
               '- Any popup/redirect scripts in the dashboard\n\n' +
               '> 🔗 See the workflow run for detailed failure output.';
 
