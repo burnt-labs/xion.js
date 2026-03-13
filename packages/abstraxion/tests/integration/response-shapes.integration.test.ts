@@ -63,15 +63,26 @@ describe("SignAndBroadcastResult (SIGN_AND_BROADCAST response)", () => {
     // @ts-expect-error — 'code' is not in SignAndBroadcastResult
     const _c: SignAndBroadcastResult = { transactionHash: "x", code: 0 };
     // @ts-expect-error — 'gasUsed' is not in SignAndBroadcastResult
-    const _g: SignAndBroadcastResult = { transactionHash: "x", gasUsed: BigInt(50000) };
+    const _g: SignAndBroadcastResult = {
+      transactionHash: "x",
+      gasUsed: BigInt(50000),
+    };
     // @ts-expect-error — 'events' is not in SignAndBroadcastResult
     const _e: SignAndBroadcastResult = { transactionHash: "x", events: [] };
     // @ts-expect-error — 'msgResponses' is not in SignAndBroadcastResult
-    const _mr: SignAndBroadcastResult = { transactionHash: "x", msgResponses: [] };
+    const _mr: SignAndBroadcastResult = {
+      transactionHash: "x",
+      msgResponses: [],
+    };
     // @ts-expect-error — 'txIndex' is not in SignAndBroadcastResult
     const _ti: SignAndBroadcastResult = { transactionHash: "x", txIndex: 0 };
 
-    void _h; void _c; void _g; void _e; void _mr; void _ti;
+    void _h;
+    void _c;
+    void _g;
+    void _e;
+    void _mr;
+    void _ti;
     // If tsc compiles this file clean, the type shape is correct.
     expect(true).toBe(true);
   });
@@ -98,7 +109,10 @@ describe("TransactionBroadcastEvent (IframeSDKEvents.transactionBroadcast)", () 
     // Push events can carry optional extras (height, code, rawLog) that the
     // dashboard emits as informational notifications. The request/response type
     // (SignAndBroadcastResult) is intentionally narrower.
-    const event: TransactionBroadcastEvent = { transactionHash: "x", height: 100 };
+    const event: TransactionBroadcastEvent = {
+      transactionHash: "x",
+      height: 100,
+    };
 
     // height is valid in TransactionBroadcastEvent but NOT in SignAndBroadcastResult.
     // If they were ever unified (same type), this @ts-expect-error would become unused
@@ -106,7 +120,8 @@ describe("TransactionBroadcastEvent (IframeSDKEvents.transactionBroadcast)", () 
     // @ts-expect-error — 'height' is not in SignAndBroadcastResult
     const _r: SignAndBroadcastResult = { transactionHash: "x", height: 100 };
 
-    void event; void _r;
+    void event;
+    void _r;
     expect(true).toBe(true);
   });
 });
@@ -120,7 +135,10 @@ describe("ConnectResponse (CONNECT response)", () => {
   });
 
   it("balance is optional", () => {
-    const with_: ConnectResponse = { address: "xion1abc", balance: "1000uxion" };
+    const with_: ConnectResponse = {
+      address: "xion1abc",
+      balance: "1000uxion",
+    };
     const without: ConnectResponse = { address: "xion1abc" };
     expect(with_.balance).toBeDefined();
     expect(without.balance).toBeUndefined();
@@ -128,7 +146,10 @@ describe("ConnectResponse (CONNECT response)", () => {
 
   it("rejects extra unknown fields [compile-time]", () => {
     // @ts-expect-error — 'chainId' is not in ConnectResponse
-    const _extra: ConnectResponse = { address: "xion1abc", chainId: "xion-testnet-1" };
+    const _extra: ConnectResponse = {
+      address: "xion1abc",
+      chainId: "xion-testnet-1",
+    };
     void _extra;
     expect(true).toBe(true);
   });
@@ -162,7 +183,11 @@ describe("AddAuthenticatorResponse (ADD_AUTHENTICATOR response)", () => {
 
   it("rejects AuthenticatorData missing required fields [compile-time]", () => {
     // @ts-expect-error — 'authenticatorIndex' is required in AuthenticatorData
-    const _incomplete: AuthenticatorData = { id: "1", type: "Secp256K1", authenticator: "0x" };
+    const _incomplete: AuthenticatorData = {
+      id: "1",
+      type: "Secp256K1",
+      authenticator: "0x",
+    };
     void _incomplete;
     expect(true).toBe(true);
   });
@@ -185,10 +210,14 @@ describe("Boolean success responses", () => {
 
   it("rejects extra fields on boolean responses [compile-time]", () => {
     // @ts-expect-error — 'grantee' is not in RemoveAuthenticatorResponse
-    const _r: RemoveAuthenticatorResponse = { success: true, grantee: "xion1x" };
+    const _r: RemoveAuthenticatorResponse = {
+      success: true,
+      grantee: "xion1x",
+    };
     // @ts-expect-error — 'treasury' is not in RequestGrantResponse
     const _g: RequestGrantResponse = { success: true, treasury: "xion1t" };
-    void _r; void _g;
+    void _r;
+    void _g;
     expect(true).toBe(true);
   });
 });

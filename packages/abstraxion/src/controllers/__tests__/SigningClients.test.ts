@@ -92,7 +92,9 @@ describe("PopupSigningClient", () => {
 
 describe("IframeSigningClient", () => {
   const mockController = {
-    signAndBroadcastWithMetaAccount: vi.fn().mockResolvedValue(mockBroadcastResult),
+    signAndBroadcastWithMetaAccount: vi
+      .fn()
+      .mockResolvedValue(mockBroadcastResult),
   };
 
   it("delegates signAndBroadcast to controller.signAndBroadcastWithMetaAccount", async () => {

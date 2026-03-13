@@ -269,7 +269,10 @@ describe("PopupController — happy paths", () => {
 
     // Dashboard sends CONNECT_SUCCESS without a prior grant approval step
     windowMock.simulatePostMessage(
-      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
+      {
+        type: DashboardMessageType.CONNECT_SUCCESS,
+        address: "xion1granter456",
+      },
       "https://dashboard.burnt.com",
     );
 
@@ -284,7 +287,10 @@ describe("PopupController — happy paths", () => {
     await waitForListenerSetup();
 
     windowMock.simulatePostMessage(
-      { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter456" },
+      {
+        type: DashboardMessageType.CONNECT_SUCCESS,
+        address: "xion1granter456",
+      },
       "https://dashboard.burnt.com",
     );
 

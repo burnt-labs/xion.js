@@ -271,7 +271,7 @@ export function AbstraxionProvider({
         );
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount — config is stable after normalizeAbstraxionConfig
 
   // Dev warning: embedded mode requires <AbstraxionEmbed> to be rendered somewhere

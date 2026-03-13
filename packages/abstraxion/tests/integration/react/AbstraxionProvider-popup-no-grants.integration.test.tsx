@@ -27,7 +27,10 @@ import { cleanup, render, waitFor, screen, act } from "@testing-library/react";
 import React from "react";
 import { AbstraxionProvider } from "../../../src/AbstraxionProvider";
 import { useAbstraxionAccount } from "../../../src/hooks/useAbstraxionAccount";
-import { AbstraxionAuth, DashboardMessageType } from "@burnt-labs/abstraxion-core";
+import {
+  AbstraxionAuth,
+  DashboardMessageType,
+} from "@burnt-labs/abstraxion-core";
 
 // ─── No vi.mock() factory mocks — all packages run real implementations ────────
 
@@ -50,7 +53,11 @@ function TestComponent() {
   return (
     <div>
       <div data-testid="status">
-        {account.isInitializing ? "initializing" : account.isConnected ? "connected" : "disconnected"}
+        {account.isInitializing
+          ? "initializing"
+          : account.isConnected
+            ? "connected"
+            : "disconnected"}
       </div>
       <div data-testid="address">{account.data.bech32Address}</div>
       <button data-testid="login" onClick={() => account.login()}>
@@ -71,7 +78,9 @@ describe("AbstraxionProvider — Popup mode with no grants (direct-signing path)
     mockPopup = { closed: false };
 
     // Mock window.open — jsdom cannot open real popup windows
-    openSpy = vi.spyOn(window, "open").mockReturnValue(mockPopup as unknown as Window);
+    openSpy = vi
+      .spyOn(window, "open")
+      .mockReturnValue(mockPopup as unknown as Window);
 
     Object.defineProperty(window, "location", {
       value: { origin: "https://myapp.com", href: "https://myapp.com" },
@@ -92,7 +101,10 @@ describe("AbstraxionProvider — Popup mode with no grants (direct-signing path)
         config={{
           ...BASE_CONFIG,
           // No treasury, contracts, stake, or bank — direct-signing path
-          authentication: { type: "popup", authAppUrl: "https://dashboard.burnt.com" },
+          authentication: {
+            type: "popup",
+            authAppUrl: "https://dashboard.burnt.com",
+          },
         }}
       >
         <TestComponent />
@@ -134,7 +146,10 @@ describe("AbstraxionProvider — Popup mode with no grants (direct-signing path)
       <AbstraxionProvider
         config={{
           ...BASE_CONFIG,
-          authentication: { type: "popup", authAppUrl: "https://dashboard.burnt.com" },
+          authentication: {
+            type: "popup",
+            authAppUrl: "https://dashboard.burnt.com",
+          },
         }}
       >
         <TestComponent />
@@ -156,7 +171,10 @@ describe("AbstraxionProvider — Popup mode with no grants (direct-signing path)
     await act(async () => {
       window.dispatchEvent(
         new MessageEvent("message", {
-          data: { type: DashboardMessageType.CONNECT_SUCCESS, address: "xion1granter789" },
+          data: {
+            type: DashboardMessageType.CONNECT_SUCCESS,
+            address: "xion1granter789",
+          },
           origin: "https://dashboard.burnt.com",
         }),
       );
@@ -180,7 +198,10 @@ describe("AbstraxionProvider — Popup mode with no grants (direct-signing path)
       <AbstraxionProvider
         config={{
           ...BASE_CONFIG,
-          authentication: { type: "popup", authAppUrl: "https://dashboard.burnt.com" },
+          authentication: {
+            type: "popup",
+            authAppUrl: "https://dashboard.burnt.com",
+          },
           // No treasury/contracts/stake/bank
         }}
       >
@@ -205,7 +226,10 @@ describe("AbstraxionProvider — Popup mode with no grants (direct-signing path)
         config={{
           ...BASE_CONFIG,
           treasury: "xion1treasury123", // Grants ARE configured
-          authentication: { type: "popup", authAppUrl: "https://dashboard.burnt.com" },
+          authentication: {
+            type: "popup",
+            authAppUrl: "https://dashboard.burnt.com",
+          },
         }}
       >
         <TestComponent />

@@ -280,14 +280,20 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       };
       expect(dashboardResponse.signedTx.transactionHash).toBeTruthy();
       // No other fields — consumers must query the chain RPC for full tx details
-      expect((dashboardResponse.signedTx as Record<string, unknown>).height).toBeUndefined();
-      expect((dashboardResponse.signedTx as Record<string, unknown>).gasUsed).toBeUndefined();
+      expect(
+        (dashboardResponse.signedTx as Record<string, unknown>).height,
+      ).toBeUndefined();
+      expect(
+        (dashboardResponse.signedTx as Record<string, unknown>).gasUsed,
+      ).toBeUndefined();
     });
 
     it("SDK consumer receives only transactionHash from signAndBroadcastWithMetaAccount", () => {
       // This documents the SignAndBroadcastResult contract.
       // If the dashboard starts returning more fields, update SignAndBroadcastResult too.
-      const result: { transactionHash: string } = { transactionHash: "ABCDEF123456" };
+      const result: { transactionHash: string } = {
+        transactionHash: "ABCDEF123456",
+      };
       expect(typeof result.transactionHash).toBe("string");
     });
   });
