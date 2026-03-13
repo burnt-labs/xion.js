@@ -51,34 +51,21 @@ function AbstraxionWrapper({ children }: { children: React.ReactNode }) {
     return undefined;
   })();
 
-  const smartAccountContractConfig =
-    process.env.NEXT_PUBLIC_CODE_ID && process.env.NEXT_PUBLIC_CHECKSUM
-      ? {
-          codeId: parseInt(process.env.NEXT_PUBLIC_CODE_ID),
-          checksum: process.env.NEXT_PUBLIC_CHECKSUM,
-          addressPrefix: process.env.NEXT_PUBLIC_ADDRESS_PREFIX || "xion",
-        }
-      : {
-          codeId: 1,
-          checksum: "BUILD_TIME_PLACEHOLDER",
-          addressPrefix: "xion",
-        };
+  const smartAccountContractConfig = {
+    codeId: parseInt(process.env.NEXT_PUBLIC_CODE_ID ?? "0"),
+    checksum: process.env.NEXT_PUBLIC_CHECKSUM ?? "",
+    addressPrefix: process.env.NEXT_PUBLIC_ADDRESS_PREFIX ?? "xion",
+  };
 
   const config = {
-    chainId: process.env.NEXT_PUBLIC_CHAIN_ID || "xion-testnet-2",
-    rpcUrl:
-      process.env.NEXT_PUBLIC_RPC_URL ||
-      "https://rpc.xion-testnet-2.burnt.com:443",
-    restUrl:
-      process.env.NEXT_PUBLIC_REST_URL ||
-      "https://api.xion-testnet-2.burnt.com",
-    gasPrice: process.env.NEXT_PUBLIC_GAS_PRICE || "0.001uxion",
+    chainId: process.env.NEXT_PUBLIC_CHAIN_ID,
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL,
+    restUrl: process.env.NEXT_PUBLIC_REST_URL,
+    gasPrice: process.env.NEXT_PUBLIC_GAS_PRICE,
 
     authentication: {
       type: "signer" as const,
-      aaApiUrl:
-        process.env.NEXT_PUBLIC_AA_API_URL ||
-        "https://aa-api.xion-testnet-2.burnt.com",
+      aaApiUrl: process.env.NEXT_PUBLIC_AA_API_URL,
       getSignerConfig,
       smartAccountContract: smartAccountContractConfig,
       indexer: indexerConfig,
