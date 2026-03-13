@@ -58,14 +58,14 @@ function AbstraxionWrapper({ children }: { children: React.ReactNode }) {
   };
 
   const config = {
-    chainId: process.env.NEXT_PUBLIC_CHAIN_ID,
+    chainId: process.env.NEXT_PUBLIC_CHAIN_ID!,
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL,
     restUrl: process.env.NEXT_PUBLIC_REST_URL,
     gasPrice: process.env.NEXT_PUBLIC_GAS_PRICE,
 
     authentication: {
       type: "signer" as const,
-      aaApiUrl: process.env.NEXT_PUBLIC_AA_API_URL,
+      aaApiUrl: process.env.NEXT_PUBLIC_AA_API_URL!,
       getSignerConfig,
       smartAccountContract: smartAccountContractConfig,
       indexer: indexerConfig,

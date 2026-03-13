@@ -2,7 +2,7 @@
 import { AbstraxionProvider } from "@burnt-labs/abstraxion";
 
 const embeddedModeConfig = {
-  chainId: process.env.NEXT_PUBLIC_CHAIN_ID,
+  chainId: process.env.NEXT_PUBLIC_CHAIN_ID!,
   treasury: process.env.NEXT_PUBLIC_TREASURY_ADDRESS,
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL,
   restUrl: process.env.NEXT_PUBLIC_REST_URL,

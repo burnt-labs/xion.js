@@ -151,7 +151,7 @@ function DirectSigningCard({
       try {
         // Import StargateClient dynamically for balance queries
         const { StargateClient } = await import("@cosmjs/stargate");
-        const rpcEndpoint = process.env.NEXT_PUBLIC_RPC_URL;
+        const rpcEndpoint = process.env.NEXT_PUBLIC_RPC_URL!;
         const queryClient = await StargateClient.connect(rpcEndpoint);
 
         const balances = await queryClient.getAllBalances(accountAddress);
