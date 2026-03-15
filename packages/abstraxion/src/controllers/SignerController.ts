@@ -361,8 +361,8 @@ export class SignerController extends BaseController {
       );
     }
 
-    // Reset state
-    this.dispatch({ type: "RESET" });
+    // Mark as explicitly disconnected so autoConnect does not fire on re-render.
+    this.dispatch({ type: "EXPLICITLY_DISCONNECTED" });
   }
 
   /**

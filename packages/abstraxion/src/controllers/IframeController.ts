@@ -7,23 +7,27 @@
  * and grant approval happen inside the iframe UI.
  *
  * Communication uses MessageChannelManager for request-response (CONNECT,
- * DISCONNECT) — each request gets its own isolated MessageChannel with
- * targetOrigin enforcement and timeouts.
+ * SIGN_AND_BROADCAST) — each request gets its own isolated MessageChannel
+ * with targetOrigin enforcement and timeouts.
  *
- * The one raw postMessage kept is DISCONNECTED (iframe → SDK), which is
- * push-direction (user clicked disconnect inside the iframe). It validates
- * event.origin.
+ * Two disconnect types exist:
+ * - DISCONNECT (soft): SDK detaches the iframe without notifying the dashboard.
+ *   Dashboard session survives. Not currently sent but defined for future use
+ *   (e.g. ITP storage cleanup, UI hints).
+ * - HARD_DISCONNECT: Full session clear on both sides. Sent as a raw postMessage
+ *   in both directions (SDK → dashboard and dashboard → SDK). Currently only the
+ *   dashboard → SDK direction is active (user clicks disconnect inside the iframe).
+ *   The SDK → dashboard direction is defined for future use.
  *
  * The iframe handles:
  * - User authentication (Stytch OAuth, Passkey, MetaMask, Keplr, etc.)
  * - Grant permission UI
- * - Post-connect "Connected" state with disconnect button
  *
  * The SDK (this controller) handles:
  * - Iframe lifecycle management
  * - Local session keypair generation (via AbstraxionAuth)
  * - GranteeSignerClient creation
- * - MessageChannel-based CONNECT / DISCONNECT
+ * - MessageChannel-based CONNECT / SIGN_AND_BROADCAST
  * - IFRAME_READY handshake (waits for dashboard to mount before sending requests)
  * - Session restoration with on-chain grant verification (via orchestrator)
  */
@@ -115,6 +119,13 @@ export class IframeController extends BaseController {
   >();
   private disconnectListener: ((event: MessageEvent) => void) | null = null;
   private iframeReadyListener: ((event: MessageEvent) => void) | null = null;
+
+  // Transient UI state: true while a requireAuth signing request is pending
+  // and the iframe needs to be visible for user approval.
+  private _awaitingApproval = false;
+  private _approvalListeners = new Set<(value: boolean) => void>();
+  /** Reject callback for the in-flight signAndBroadcast, used by cancelApproval(). */
+  private _cancelPendingApproval: (() => void) | null = null;
 
   /**
    * Factory method to create IframeController from NormalizedAbstraxionConfig
@@ -368,36 +379,30 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Disconnect and cleanup (SDK-initiated)
+   * Disconnect and cleanup (SDK-initiated / soft disconnect)
    *
-   * Sends DISCONNECT via MessageChannelManager to the dashboard. The dashboard's
-   * IframeMessageHandler calls xionDisconnect() and responds via the port.
-   * Falls back to cleanup on timeout (dashboard may be unresponsive).
+   * Only clears SDK-side state (grantee keypair, granter address) and removes
+   * the iframe from the DOM. Does NOT send a DISCONNECT message to the dashboard,
+   * so the dashboard session remains intact.
+   *
+   * This means on the next connect() call the user only needs to re-approve
+   * grants — they won't have to fully re-authenticate with their XION account.
+   *
+   * Contrast with iframe-initiated disconnect (user clicks Disconnect inside the
+   * iframe): that path goes through AuthStateManager.logout() in the dashboard
+   * and is a full logout, which is the correct behaviour for a user deliberately
+   * signing out of their account.
    */
   async disconnect(): Promise<void> {
-    if (this.iframe?.contentWindow && this.getState().status === "connected") {
-      try {
-        await this.messageManager.sendRequest(
-          this.iframe,
-          IframeMessageType.DISCONNECT,
-          {},
-          this.iframeOrigin,
-          5_000, // Short timeout — disconnect is fast
-        );
-      } catch (error) {
-        // Dashboard may be unresponsive — proceed with cleanup
-        console.warn(
-          "[IframeController] Disconnect request failed, cleaning up anyway:",
-          error instanceof Error ? error.message : error,
-        );
-      }
-
-      // Remove the iframe from DOM so the dashboard's internal re-render
-      // (from xionDisconnect) is not visible. connect() will create a fresh one.
+    // Remove the iframe silently — the dashboard session survives.
+    // connect() will create a fresh iframe whose dashboard app can reuse
+    // the existing session from storage.
+    if (this.iframe) {
       this.removeIframe();
     }
 
-    // Dashboard has cleared its state — now clear SDK state
+    // Clear SDK-side state (keypair, granter, signing client) and dispatch
+    // EXPLICITLY_DISCONNECTED so the embed does not immediately re-trigger login.
     await this.handleDisconnect();
   }
 
@@ -445,6 +450,45 @@ export class IframeController extends BaseController {
   }
 
   /**
+   * Whether a requireAuth signing request is pending and the iframe needs
+   * to be visible for user approval.
+   */
+  get awaitingApproval(): boolean {
+    return this._awaitingApproval;
+  }
+
+  /**
+   * Subscribe to awaitingApproval changes.
+   * Used by AbstraxionProvider to surface `isAwaitingApproval` in context.
+   */
+  subscribeApproval(callback: (value: boolean) => void): () => void {
+    this._approvalListeners.add(callback);
+    return () => {
+      this._approvalListeners.delete(callback);
+    };
+  }
+
+  private setAwaitingApproval(value: boolean): void {
+    if (this._awaitingApproval !== value) {
+      this._awaitingApproval = value;
+      this._approvalListeners.forEach((cb) => cb(value));
+    }
+  }
+
+  /**
+   * Cancel a pending approval (signing request).
+   * Rejects the in-flight signAndBroadcastWithMetaAccount promise with a
+   * cancellation error and hides the approval UI.
+   */
+  cancelApproval(): void {
+    if (this._cancelPendingApproval) {
+      this._cancelPendingApproval();
+      this._cancelPendingApproval = null;
+    }
+    this.setAwaitingApproval(false);
+  }
+
+  /**
    * Sign and broadcast a transaction with the user's direct authenticator (meta-account).
    *
    * Sends SIGN_AND_BROADCAST via MessageChannelManager to the dashboard iframe,
@@ -462,25 +506,42 @@ export class IframeController extends BaseController {
       );
     }
 
-    const response = await this.messageManager.sendRequest<
-      {
-        transaction: {
-          messages: readonly EncodeObject[];
-          fee: StdFee | "auto" | number;
-          memo?: string;
-        };
-        signerAddress: string;
-      },
-      { signedTx: SignAndBroadcastResult }
-    >(
-      this.iframe,
-      IframeMessageType.SIGN_AND_BROADCAST,
-      { transaction: { messages, fee, memo }, signerAddress },
-      this.iframeOrigin,
-      300_000, // 5 min — user needs time to review and approve
-    );
+    this.setAwaitingApproval(true);
+    try {
+      // Race the MessageChannel request against a cancellation promise so
+      // that cancelApproval() can abort the flow from the UI side.
+      const response = await new Promise<{ signedTx: SignAndBroadcastResult }>(
+        (resolve, reject) => {
+          this._cancelPendingApproval = () =>
+            reject(new Error("User cancelled signing request"));
 
-    return response.signedTx;
+          this.messageManager
+            .sendRequest<
+              {
+                transaction: {
+                  messages: readonly EncodeObject[];
+                  fee: StdFee | "auto" | number;
+                  memo?: string;
+                };
+                signerAddress: string;
+              },
+              { signedTx: SignAndBroadcastResult }
+            >(
+              this.iframe!,
+              IframeMessageType.SIGN_AND_BROADCAST,
+              { transaction: { messages, fee, memo }, signerAddress },
+              this.iframeOrigin,
+              300_000, // 5 min — user needs time to review and approve
+            )
+            .then(resolve, reject);
+        },
+      );
+
+      return response.signedTx;
+    } finally {
+      this._cancelPendingApproval = null;
+      this.setAwaitingApproval(false);
+    }
   }
 
   /**
@@ -630,19 +691,16 @@ export class IframeController extends BaseController {
     container.appendChild(iframe);
     this.iframe = iframe;
 
-    // Listen for DISCONNECTED messages from iframe (user clicked disconnect inside iframe).
-    // This is the one raw postMessage we keep — it's push-direction and validates origin.
+    // Listen for HARD_DISCONNECT from the dashboard (user clicked disconnect inside
+    // the iframe UI — full session clear on both sides).
     this.disconnectListener = (event: MessageEvent) => {
       if (event.origin !== this.iframeOrigin) return;
-      if (event.data?.type === DashboardMessageType.DISCONNECTED) {
+      if (event.data?.type === DashboardMessageType.HARD_DISCONNECT) {
         if (this.getState().status === "connected") {
-          // User clicked disconnect inside the iframe.
-          // Remove iframe to prevent double-render, then clear SDK state.
-          // The next connect() call will create a fresh iframe.
           this.removeIframe();
           this.handleDisconnect().catch((error) => {
             console.error(
-              "[IframeController] Error handling iframe-initiated disconnect:",
+              "[IframeController] Error handling hard disconnect:",
               error,
             );
           });
@@ -710,7 +768,8 @@ export class IframeController extends BaseController {
     // Emit disconnected event
     this.eventEmitter.emit("disconnected", {});
 
-    // Reset state
-    this.dispatch({ type: "RESET" });
+    // Mark as explicitly disconnected so the embed does not re-trigger login
+    // on the next render within the same page session.
+    this.dispatch({ type: "EXPLICITLY_DISCONNECTED" });
   }
 }

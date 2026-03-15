@@ -295,7 +295,7 @@ describe("SignerController", () => {
   });
 
   describe("disconnect", () => {
-    it("should call connector.disconnect + sessionManager.logout + dispatch RESET", async () => {
+    it("should call connector.disconnect + sessionManager.logout + dispatch EXPLICITLY_DISCONNECTED", async () => {
       const controller = createController();
 
       const mockConnector = {
@@ -312,10 +312,10 @@ describe("SignerController", () => {
 
       expect(mockConnector.disconnect).toHaveBeenCalled();
       expect(mockSessionManager.logout).toHaveBeenCalled();
-      expect(controller.getState().status).toBe("idle");
+      expect(controller.getState().status).toBe("disconnected");
     });
 
-    it("should still dispatch RESET when logout throws", async () => {
+    it("should still dispatch EXPLICITLY_DISCONNECTED when logout throws", async () => {
       const controller = createController();
 
       mockSessionManager.logout.mockRejectedValue(new Error("logout failed"));
@@ -325,7 +325,7 @@ describe("SignerController", () => {
       await controller.disconnect();
 
       expect(mockSessionManager.logout).toHaveBeenCalled();
-      expect(controller.getState().status).toBe("idle");
+      expect(controller.getState().status).toBe("disconnected");
 
       warnSpy.mockRestore();
     });

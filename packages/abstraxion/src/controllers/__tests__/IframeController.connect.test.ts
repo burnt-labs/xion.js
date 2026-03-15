@@ -222,7 +222,7 @@ describe("IframeController — happy paths", () => {
     controller.destroy();
   });
 
-  it("should handle DISCONNECTED postMessage from iframe", async () => {
+  it("should handle HARD_DISCONNECT postMessage from iframe", async () => {
     mockSendRequest.mockResolvedValueOnce({ address: "xion1granter789" });
 
     const controller = new IframeController(createConfig());
@@ -238,20 +238,20 @@ describe("IframeController — happy paths", () => {
     // Simulate user clicking disconnect inside the iframe
     window.dispatchEvent(
       new MessageEvent("message", {
-        data: { type: DashboardMessageType.DISCONNECTED },
+        data: { type: DashboardMessageType.HARD_DISCONNECT },
         origin: "https://dashboard.xion.burnt.com",
       }),
     );
 
     // Wait for async handleDisconnect
     await vi.waitFor(() => {
-      expect(controller.getState().status).toBe("idle");
+      expect(controller.getState().status).toBe("disconnected");
     });
 
     controller.destroy();
   });
 
-  it("should ignore DISCONNECTED from wrong origin", async () => {
+  it("should ignore HARD_DISCONNECT from wrong origin", async () => {
     mockSendRequest.mockResolvedValueOnce({ address: "xion1granter789" });
 
     const controller = new IframeController(createConfig());
@@ -264,7 +264,7 @@ describe("IframeController — happy paths", () => {
 
     window.dispatchEvent(
       new MessageEvent("message", {
-        data: { type: DashboardMessageType.DISCONNECTED },
+        data: { type: DashboardMessageType.HARD_DISCONNECT },
         origin: "https://evil.com",
       }),
     );
@@ -329,10 +329,8 @@ describe("IframeController — happy paths", () => {
   });
 
   describe("disconnect()", () => {
-    it("should send DISCONNECT via MessageChannel and reset state", async () => {
-      mockSendRequest
-        .mockResolvedValueOnce({ address: "xion1granter789" })
-        .mockResolvedValueOnce({});
+    it("should remove iframe silently and dispatch EXPLICITLY_DISCONNECTED", async () => {
+      mockSendRequest.mockResolvedValueOnce({ address: "xion1granter789" });
 
       const controller = new IframeController(createConfig());
       controller.setContainerElement(container);
@@ -344,15 +342,18 @@ describe("IframeController — happy paths", () => {
 
       await controller.disconnect();
 
-      expect(controller.getState().status).toBe("idle");
+      expect(controller.getState().status).toBe("disconnected");
       expect(controller.getAddress()).toBeNull();
 
-      expect(mockSendRequest).toHaveBeenCalledWith(
-        expect.any(HTMLIFrameElement),
+      // disconnect() intentionally does NOT send a DISCONNECT message to the
+      // dashboard iframe — the dashboard session survives so the user won't
+      // have to re-authenticate on the next connect() call.
+      expect(mockSendRequest).not.toHaveBeenCalledWith(
+        expect.anything(),
         "DISCONNECT",
-        {},
-        "https://dashboard.xion.burnt.com",
-        5_000,
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
       );
 
       controller.destroy();

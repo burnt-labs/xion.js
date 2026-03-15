@@ -308,7 +308,7 @@ export class PopupController extends BaseController {
         error,
       );
     }
-    this.dispatch({ type: "RESET" });
+    this.dispatch({ type: "EXPLICITLY_DISCONNECTED" });
   }
 
   /**

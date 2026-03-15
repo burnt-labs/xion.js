@@ -124,7 +124,7 @@ describe("RedirectController", () => {
       return mockResults[mockResults.length - 1].value;
     };
 
-    it("should call logout and dispatch RESET", async () => {
+    it("should call logout and dispatch EXPLICITLY_DISCONNECTED", async () => {
       const controller = createController();
       const mockInstance = getLatestAuthInstance();
       mockInstance.logout.mockResolvedValue(undefined);
@@ -132,10 +132,10 @@ describe("RedirectController", () => {
       await controller.disconnect();
 
       expect(mockInstance.logout).toHaveBeenCalled();
-      expect(controller.getState().status).toBe("idle");
+      expect(controller.getState().status).toBe("disconnected");
     });
 
-    it("should still dispatch RESET when logout throws", async () => {
+    it("should still dispatch EXPLICITLY_DISCONNECTED when logout throws", async () => {
       const controller = createController();
       const mockInstance = getLatestAuthInstance();
       mockInstance.logout.mockRejectedValue(new Error("logout failed"));
@@ -145,7 +145,7 @@ describe("RedirectController", () => {
       await controller.disconnect();
 
       expect(mockInstance.logout).toHaveBeenCalled();
-      expect(controller.getState().status).toBe("idle");
+      expect(controller.getState().status).toBe("disconnected");
 
       warnSpy.mockRestore();
     });

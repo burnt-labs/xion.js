@@ -90,15 +90,6 @@ export class RedirectController extends BaseController {
     storageStrategy: StorageStrategy,
     redirectStrategy: RedirectStrategy,
   ): RedirectController {
-    // For redirect mode, ensure at least one grant parameter is present
-    // This ensures the dashboard shows AbstraxionGrant and redirects back
-    // If no grant config is provided, use a minimal bank grant as fallback
-    const hasGrantConfig =
-      config.treasury || config.contracts || config.bank || config.stake;
-    const fallbackBank = hasGrantConfig
-      ? undefined
-      : [{ denom: "uxion", amount: "0.1" }];
-
     const redirectConfig: RedirectControllerConfig = {
       chainId: config.chainId,
       rpcUrl: config.rpcUrl,
@@ -117,7 +108,7 @@ export class RedirectController extends BaseController {
       storageStrategy,
       redirectStrategy,
       treasury: config.treasury,
-      bank: config.bank || fallbackBank,
+      bank: config.bank,
       stake: config.stake,
       contracts: config.contracts,
     };
@@ -370,8 +361,8 @@ export class RedirectController extends BaseController {
       );
     }
 
-    // Reset state
-    this.dispatch({ type: "RESET" });
+    // Mark as explicitly disconnected so autoConnect does not fire on re-render.
+    this.dispatch({ type: "EXPLICITLY_DISCONNECTED" });
   }
 
   /**

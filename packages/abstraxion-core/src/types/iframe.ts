@@ -14,7 +14,10 @@ import type { AuthenticatorType } from "@burnt-labs/signers";
 export enum IframeMessageType {
   IFRAME_READY = "IFRAME_READY",
   CONNECT = "CONNECT",
+  /** Soft disconnect: SDK is detaching — dashboard can update its UI but session survives. */
   DISCONNECT = "DISCONNECT",
+  /** Hard disconnect: SDK requests full session clear on the dashboard side. */
+  HARD_DISCONNECT = "HARD_DISCONNECT",
   GET_ADDRESS = "GET_ADDRESS",
   SIGN_TRANSACTION = "SIGN_TRANSACTION",
   SIGN_AND_BROADCAST = "SIGN_AND_BROADCAST",
@@ -41,7 +44,8 @@ export enum MessageTarget {
 export enum DashboardMessageType {
   // Iframe push events
   IFRAME_READY = "IFRAME_READY",
-  DISCONNECTED = "DISCONNECTED",
+  /** User clicked disconnect inside the dashboard iframe — full session clear. */
+  HARD_DISCONNECT = "HARD_DISCONNECT",
   // Popup/redirect connect results
   CONNECT_SUCCESS = "CONNECT_SUCCESS",
   CONNECT_REJECTED = "CONNECT_REJECTED",

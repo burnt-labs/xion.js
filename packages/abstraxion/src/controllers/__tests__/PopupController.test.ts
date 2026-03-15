@@ -131,16 +131,16 @@ describe("PopupController", () => {
   });
 
   describe("disconnect()", () => {
-    it("should call logout and dispatch RESET", async () => {
+    it("should call logout and dispatch EXPLICITLY_DISCONNECTED", async () => {
       const controller = createController();
 
       await controller.disconnect();
 
       expect(mockLogout).toHaveBeenCalled();
-      expect(controller.getState().status).toBe("idle");
+      expect(controller.getState().status).toBe("disconnected");
     });
 
-    it("should still dispatch RESET when logout throws", async () => {
+    it("should still dispatch EXPLICITLY_DISCONNECTED when logout throws", async () => {
       const controller = createController();
 
       mockLogout.mockRejectedValueOnce(new Error("Logout failed"));
@@ -148,8 +148,8 @@ describe("PopupController", () => {
       await controller.disconnect();
 
       expect(mockLogout).toHaveBeenCalled();
-      // State should still be reset even though logout threw
-      expect(controller.getState().status).toBe("idle");
+      // State should still transition to disconnected even though logout threw
+      expect(controller.getState().status).toBe("disconnected");
     });
   });
 
