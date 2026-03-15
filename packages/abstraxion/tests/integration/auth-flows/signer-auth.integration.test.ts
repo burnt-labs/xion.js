@@ -263,7 +263,7 @@ describe("Signer Authentication Flow - Integration", () => {
       // Disconnect
       await controller1.disconnect();
       const disconnectedState = controller1.getState();
-      expect(disconnectedState.status).toBe("idle");
+      expect(disconnectedState.status).toBe("disconnected");
 
       console.log("✅ Disconnected from first connector");
 
@@ -422,7 +422,7 @@ describe("Signer Authentication Flow - Integration", () => {
       await controller.disconnect();
 
       const state = controller.getState();
-      expect(state.status).toBe("idle");
+      expect(state.status).toBe("disconnected");
       expect(state.account).toBeUndefined();
 
       console.log("✅ Disconnection and state reset successful");
