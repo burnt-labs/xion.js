@@ -230,6 +230,42 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
         }
       });
     });
+
+    describe("isDisconnected", () => {
+      it("should return true for disconnected state", () => {
+        const state: AccountState = { status: "disconnected" };
+        expect(AccountStateGuards.isDisconnected(state)).toBe(true);
+      });
+
+      it("should return false for non-disconnected states", () => {
+        expect(AccountStateGuards.isDisconnected({ status: "idle" })).toBe(
+          false,
+        );
+        expect(
+          AccountStateGuards.isDisconnected({ status: "initializing" }),
+        ).toBe(false);
+        expect(
+          AccountStateGuards.isDisconnected({ status: "connecting" }),
+        ).toBe(false);
+        expect(
+          AccountStateGuards.isDisconnected({
+            status: "connected",
+            account: createMockAccountInfo(),
+            signingClient: createMockSigningClient(),
+          }),
+        ).toBe(false);
+        expect(
+          AccountStateGuards.isDisconnected({ status: "error", error: "test" }),
+        ).toBe(false);
+      });
+
+      it("should narrow type correctly", () => {
+        const state: AccountState = { status: "disconnected" };
+        if (AccountStateGuards.isDisconnected(state)) {
+          expect(state.status).toBe("disconnected");
+        }
+      });
+    });
   });
 
   describe("🔴 CRITICAL: State Reducer - Valid Transitions", () => {
@@ -541,6 +577,45 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
       });
     });
 
+    describe("EXPLICITLY_DISCONNECTED action", () => {
+      it("should transition to disconnected from connected", () => {
+        const state: AccountState = {
+          status: "connected",
+          account: createMockAccountInfo(),
+          signingClient: createMockSigningClient(),
+        };
+        const action: AccountStateAction = { type: "EXPLICITLY_DISCONNECTED" };
+        const newState = accountStateReducer(state, action);
+        expect(newState.status).toBe("disconnected");
+      });
+
+      it("should transition to disconnected from any state", () => {
+        const states: AccountState[] = [
+          { status: "idle" },
+          { status: "disconnected" },
+          { status: "initializing" },
+          { status: "redirecting", dashboardUrl: "https://test.com" },
+          { status: "connecting" },
+          {
+            status: "configuring-permissions",
+            smartAccountAddress: "xion1account123456789abcdefghijklmnopqrstuv",
+          },
+          {
+            status: "connected",
+            account: createMockAccountInfo(),
+            signingClient: createMockSigningClient(),
+          },
+          { status: "error", error: "test" },
+        ];
+
+        states.forEach((state) => {
+          const action: AccountStateAction = { type: "EXPLICITLY_DISCONNECTED" };
+          const newState = accountStateReducer(state, action);
+          expect(newState.status).toBe("disconnected");
+        });
+      });
+    });
+
     describe("Invalid/Unknown Actions", () => {
       it("should return current state for unknown action type", () => {
         const state: AccountState = { status: "idle" };
@@ -627,6 +702,7 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
       it("should allow RESET from any state", () => {
         const states: AccountState[] = [
           { status: "idle" },
+          { status: "disconnected" },
           { status: "initializing" },
           { status: "redirecting", dashboardUrl: "https://test.com" },
           { status: "connecting" },
@@ -645,6 +721,35 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
         states.forEach((state) => {
           expect(isValidTransition(state, "RESET")).toBe(true);
         });
+      });
+
+      it("should allow EXPLICITLY_DISCONNECTED from any state", () => {
+        const states: AccountState[] = [
+          { status: "idle" },
+          { status: "disconnected" },
+          { status: "initializing" },
+          { status: "redirecting", dashboardUrl: "https://test.com" },
+          { status: "connecting" },
+          {
+            status: "configuring-permissions",
+            smartAccountAddress: "xion1account123456789abcdefghijklmnopqrstuv",
+          },
+          {
+            status: "connected",
+            account: createMockAccountInfo(),
+            signingClient: createMockSigningClient(),
+          },
+          { status: "error", error: "test" },
+        ];
+
+        states.forEach((state) => {
+          expect(isValidTransition(state, "EXPLICITLY_DISCONNECTED")).toBe(true);
+        });
+      });
+
+      it("should allow START_CONNECT from disconnected state", () => {
+        const state: AccountState = { status: "disconnected" };
+        expect(isValidTransition(state, "START_CONNECT")).toBe(true);
       });
     });
 
