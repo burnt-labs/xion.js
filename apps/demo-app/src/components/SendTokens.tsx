@@ -3,11 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@burnt-labs/ui";
 import { useGetBalance } from "@/hooks/useGetBalance";
 import { useSendTokens } from "@/hooks/useSendTokens";
-import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import type { SigningClient } from "@burnt-labs/abstraxion";
 
 interface SendTokensProps {
   accountAddress: string | undefined;
-  client: GranteeSignerClient | undefined;
+  client: SigningClient | undefined;
   memo?: string;
 }
 

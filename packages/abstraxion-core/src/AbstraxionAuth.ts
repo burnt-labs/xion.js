@@ -17,6 +17,7 @@ import {
   compareContractGrants,
   compareStakeGrants,
   decodeAuthorization,
+  decodeRestFormatAuthorization,
   fetchChainGrantsABCI,
   getTreasuryGrantConfigs,
 } from "@/utils/grant";
@@ -29,6 +30,7 @@ export class AbstraxionAuth {
   stake?: boolean;
   bank?: SpendLimit[];
   callbackUrl?: string;
+  authAppUrl?: string;
   treasury?: string;
   treasuryIndexerUrl?: string;
   gasPrice?: string;
@@ -75,6 +77,7 @@ export class AbstraxionAuth {
    * @param {string} treasury - treasury contract instance address
    * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
    * @param {string} gasPrice - Gas price string (e.g., "0.001uxion"). Defaults to "0.001uxion" if not provided.
+   * @param {string} authAppUrl - optional override for the auth app URL (dashboard). When provided, skips the fetchConfig RPC call.
    */
   configureAbstraxionInstance(
     rpc: string,
@@ -85,12 +88,14 @@ export class AbstraxionAuth {
     treasury?: string,
     treasuryIndexerUrl?: string,
     gasPrice?: string,
+    authAppUrl?: string,
   ) {
     this.rpcUrl = rpc;
     this.grantContracts = grantContracts;
     this.stake = stake;
     this.bank = bank;
     this.callbackUrl = callbackUrl;
+    this.authAppUrl = authAppUrl;
     this.treasury = treasury;
     this.treasuryIndexerUrl = treasuryIndexerUrl;
     this.gasPrice = gasPrice;
@@ -293,21 +298,16 @@ export class AbstraxionAuth {
    * Fetches dashboard URL from RPC based on network ID.
    */
   async redirectToDashboard() {
-    try {
-      if (!this.rpcUrl) {
-        throw new Error("AbstraxionAuth needs to be configured.");
-      }
-      const userAddress = await this.getKeypairAddress();
-
-      // Fetch dashboard URL from RPC based on network ID
-      const config = await fetchConfig(this.rpcUrl);
-      const dashboardUrl = config.dashboardUrl;
-
-      await this.configureUrlAndRedirect(dashboardUrl, userAddress);
-    } catch (error) {
-      // Error is thrown and handled by caller
-      throw error;
+    if (!this.rpcUrl) {
+      throw new Error("AbstraxionAuth needs to be configured.");
     }
+    const userAddress = await this.getKeypairAddress();
+
+    // Use authAppUrl override if provided, otherwise fetch from network config
+    const authAppUrl =
+      this.authAppUrl || (await fetchConfig(this.rpcUrl)).dashboardUrl;
+
+    await this.configureUrlAndRedirect(authAppUrl, userAddress);
   }
 
   /**
@@ -405,12 +405,11 @@ export class AbstraxionAuth {
         );
       });
 
+    // Chain grants from fetchChainGrantsABCI are already decoded to REST format
+    // (with "@type" and snake_case fields). Convert to DecodedReadableAuthorization.
     const decodedChainConfigs: DecodedReadableAuthorization[] =
       grantsResponse.grants.map((grantResponse) => {
-        return decodeAuthorization(
-          grantResponse.authorization.typeUrl,
-          grantResponse.authorization.value,
-        );
+        return decodeRestFormatAuthorization(grantResponse.authorization);
       });
 
     return compareChainGrantsToTreasuryGrants(
@@ -438,12 +437,11 @@ export class AbstraxionAuth {
         );
       });
 
+    // Chain grants from fetchChainGrantsABCI are already decoded to REST format
+    // (with "@type" and snake_case fields). Convert to DecodedReadableAuthorization.
     const decodedChainConfigs: DecodedReadableAuthorization[] =
       grantsResponse.grants.map((grantResponse) => {
-        return decodeAuthorization(
-          grantResponse.authorization.typeUrl,
-          grantResponse.authorization.value,
-        );
+        return decodeRestFormatAuthorization(grantResponse.authorization);
       });
 
     return compareChainGrantsToTreasuryGrants(
@@ -533,9 +531,20 @@ export class AbstraxionAuth {
 
         return validGrant && isValid;
       } catch (error) {
+        console.error(
+          `[AbstraxionAuth.pollForGrants] Retry ${retries + 1}/${maxRetries} failed:`,
+          error,
+        );
         const delay = Math.pow(2, retries) * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
         retries++;
+        if (retries >= maxRetries) {
+          throw new Error(
+            `Grant polling failed after ${maxRetries} retries. Last error: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
       }
     }
     return false;
@@ -606,7 +615,14 @@ export class AbstraxionAuth {
         );
       }
     } catch (error) {
-      await this.logout();
+      try {
+        await this.logout();
+      } catch (logoutError) {
+        console.warn(
+          "[AbstraxionAuth] Logout failed during error recovery:",
+          logoutError,
+        );
+      }
       // Re-throw the error so that authenticate() rejects and callers can handle it
       throw error;
     }
@@ -621,15 +637,13 @@ export class AbstraxionAuth {
    * @throws {Error} - If the login process encounters an error.
    */
   async login(): Promise<void> {
-    try {
-      if (this.isLoginInProgress) {
-        return;
-      }
-      this.isLoginInProgress = true;
+    if (this.isLoginInProgress) {
+      return;
+    }
+    this.isLoginInProgress = true;
 
+    try {
       await this.performLogin();
-    } catch (error) {
-      throw error;
     } finally {
       this.isLoginInProgress = false;
     }
@@ -647,16 +661,14 @@ export class AbstraxionAuth {
   async completeLogin(): Promise<
     { keypair: SignArbSecp256k1HdWallet; granter: string } | undefined
   > {
-    try {
-      if (this.isLoginInProgress) {
-        return undefined;
-      }
-      this.isLoginInProgress = true;
+    if (this.isLoginInProgress) {
+      return undefined;
+    }
+    this.isLoginInProgress = true;
 
+    try {
       const result = await this.performLogin();
       return result;
-    } catch (error) {
-      throw error;
     } finally {
       this.isLoginInProgress = false;
     }
@@ -708,11 +720,7 @@ export class AbstraxionAuth {
    * Initiates the flow to generate a new keypair and redirect to the dashboard for grant issuance.
    */
   private async newKeypairFlow(): Promise<void> {
-    try {
-      await this.generateAndStoreTempAccount();
-      await this.redirectToDashboard();
-    } catch (error) {
-      throw error;
-    }
+    await this.generateAndStoreTempAccount();
+    await this.redirectToDashboard();
   }
 }

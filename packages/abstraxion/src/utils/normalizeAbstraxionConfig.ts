@@ -3,11 +3,13 @@ import type {
   NormalizedAbstraxionConfig,
   SignerAuthentication,
 } from "../types";
+import { resolveAutoAuth } from "./resolveAutoAuth";
 import {
   getFeeGranter,
   getRpcUrl,
   getRestUrl,
   getDaoDaoIndexerUrl,
+  getIframeUrl,
   xionGasValues,
 } from "@burnt-labs/constants";
 import type {
@@ -30,12 +32,19 @@ import {
 export function normalizeAbstraxionConfig(
   config: AbstraxionConfig,
 ): NormalizedAbstraxionConfig {
+  // Resolve "auto" → "popup" or "redirect" based on device before anything else
+  const resolvedAuthentication = resolveAutoAuth(config.authentication);
+  if (resolvedAuthentication !== config.authentication) {
+    config = { ...config, authentication: resolvedAuthentication };
+  }
+
   const { chainId } = config;
 
   // Get defaults from constants based on chainId
   const defaultRpcUrl = getRpcUrl(chainId);
   const defaultRestUrl = getRestUrl(chainId);
   const defaultFeeGranter = getFeeGranter(chainId);
+  const defaultIframeUrl = getIframeUrl(chainId);
 
   // Use provided values or defaults
   const rpcUrl = config.rpcUrl || defaultRpcUrl;
@@ -43,23 +52,36 @@ export function normalizeAbstraxionConfig(
   const gasPrice = config.gasPrice || xionGasValues.gasPrice;
   const feeGranter = config.feeGranter || defaultFeeGranter;
 
-  // Validate required fields
-  if (!rpcUrl) {
-    throw new Error(
-      `RPC URL is required. Either provide rpcUrl in config or use a known chainId (${chainId} not found in constants)`,
-    );
+  // Set iframe URL default if using embedded authentication (avoid mutating input)
+  if (config.authentication?.type === "embedded") {
+    config = {
+      ...config,
+      authentication: {
+        ...config.authentication,
+        iframeUrl: config.authentication.iframeUrl || defaultIframeUrl,
+      },
+    };
   }
 
-  if (!restUrl) {
-    throw new Error(
-      `REST URL is required. Either provide restUrl in config or use a known chainId (${chainId} not found in constants)`,
-    );
+  // Validate required fields (browser only — during SSR/prerendering env vars may not be set)
+  if (typeof window !== "undefined") {
+    if (!rpcUrl) {
+      throw new Error(
+        `RPC URL is required. Either provide rpcUrl in config or use a known chainId (${chainId} not found in constants)`,
+      );
+    }
+
+    if (!restUrl) {
+      throw new Error(
+        `REST URL is required. Either provide restUrl in config or use a known chainId (${chainId} not found in constants)`,
+      );
+    }
   }
 
   return {
     ...config,
-    rpcUrl,
-    restUrl,
+    rpcUrl: rpcUrl || "",
+    restUrl: restUrl || "",
     gasPrice,
     feeGranter: feeGranter || undefined,
   };

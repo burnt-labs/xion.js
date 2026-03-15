@@ -4,7 +4,10 @@
  * Uses ConnectionOrchestrator to handle the full connection flow
  */
 
-import { ExternalSignerConnector } from "@burnt-labs/abstraxion-core";
+import {
+  ExternalSignerConnector,
+  type ConnectorConnectionResult,
+} from "@burnt-labs/abstraxion-core";
 import {
   ConnectionOrchestrator,
   SessionManager,
@@ -17,6 +20,14 @@ import {
   getAccountInfoFromRestored,
 } from "@burnt-labs/account-management";
 import type { Connector, StorageStrategy } from "@burnt-labs/abstraxion-core";
+import type { EncodeObject } from "@cosmjs/proto-signing";
+import { GasPrice } from "@cosmjs/stargate";
+import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
+import {
+  AAClient,
+  createSignerFromSigningFunction,
+  type AuthenticatorType,
+} from "@burnt-labs/signers";
 import { BaseController } from "./BaseController";
 import type { ControllerConfig } from "./types";
 import type { SignerAuthentication } from "../types";
@@ -57,7 +68,9 @@ export interface SignerControllerConfig extends ControllerConfig {
 export class SignerController extends BaseController {
   private config: SignerControllerConfig;
   private orchestrator: ConnectionOrchestrator;
+  private initializePromise: Promise<void> | null = null;
   private connector: Connector | null = null;
+  private connectionInfo: ConnectorConnectionResult | null = null; // signmessage and authenticator metadata needed for direct signing
 
   /**
    * Factory method to create SignerController from NormalizedAbstraxionConfig
@@ -132,12 +145,17 @@ export class SignerController extends BaseController {
 
   /**
    * Initialize the controller
-   * Attempts to restore existing session if available
+   * Attempts to restore existing session if available.
+   * Idempotent: returns the same promise if called while already initializing
+   * (guards against React strict-mode double-invocation)
    */
   async initialize(): Promise<void> {
-    // Already in initializing state, so no need to dispatch INITIALIZE
-    // Just proceed with session restoration
+    if (this.initializePromise) return this.initializePromise;
+    this.initializePromise = this.doInitialize();
+    return this.initializePromise;
+  }
 
+  private async doInitialize(): Promise<void> {
     try {
       // Try to restore existing session (with signing client creation)
       const restorationResult = await this.orchestrator.restoreSession(true);
@@ -211,13 +229,16 @@ export class SignerController extends BaseController {
         signerConfig.authenticator,
       );
 
-      // 4. Get session keypair for account info
+      // 4. Store connection info for direct signing
+      this.connectionInfo = connectionResult.connectionInfo;
+
+      // 6. Get session keypair for account info
       const sessionKeypair = await this.config.sessionManager.getLocalKeypair();
       if (!sessionKeypair) {
         throw new Error("Session keypair not found after connection");
       }
 
-      // 5. Dispatch success
+      // 7. Dispatch success
       const accounts = await sessionKeypair.getAccounts();
       //TODO: fix this to allow multiple accounts long term
       const granteeAddress = accounts[0].address;
@@ -258,6 +279,59 @@ export class SignerController extends BaseController {
   }
 
   /**
+   * Get connection info for direct signing
+   * Returns the connector connection result which includes signMessage function
+   * Used by useAbstraxionSigningClient to create AAClient for direct signing
+   */
+  getConnectionInfo(): ConnectorConnectionResult | undefined {
+    return this.connectionInfo ?? undefined;
+  }
+
+  /**
+   * Sign and broadcast a transaction using the user's direct authenticator (meta-account).
+   *
+   * Uses the connectionInfo from connect() to create an AAClient and sign
+   * the transaction directly with the user's authenticator.
+   */
+  async signAndBroadcastWithMetaAccount(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    fee: StdFee | "auto" | number,
+    memo?: string,
+  ): Promise<DeliverTxResponse> {
+    if (!this.connectionInfo) {
+      throw new Error(
+        "No authenticator available for direct signing. Please reconnect your wallet.",
+      );
+    }
+
+    const authenticatorType = this.connectionInfo.metadata?.authenticatorType;
+    if (!authenticatorType) {
+      throw new Error(
+        "Authenticator type not found in connection metadata. Please reconnect your wallet.",
+      );
+    }
+
+    const authenticatorIndex =
+      this.connectionInfo.metadata?.authenticatorIndex ?? 0;
+
+    const signer = createSignerFromSigningFunction({
+      smartAccountAddress: signerAddress,
+      authenticatorIndex,
+      authenticatorType: authenticatorType as AuthenticatorType,
+      signMessage: this.connectionInfo.signMessage,
+    });
+
+    const client = await AAClient.connectWithSigner(
+      this.config.rpcUrl,
+      signer,
+      { gasPrice: GasPrice.fromString(this.config.gasPrice) },
+    );
+
+    return client.signAndBroadcast(signerAddress, messages, fee, memo);
+  }
+
+  /**
    * Disconnect and cleanup
    */
   async disconnect(): Promise<void> {
@@ -266,29 +340,36 @@ export class SignerController extends BaseController {
       try {
         await this.connector.disconnect();
       } catch (error) {
-        console.error(
-          "[SignerController] Error disconnecting connector:",
+        console.warn(
+          "[SignerController] Connector disconnect failed. Session data may persist:",
           error,
         );
       }
       this.connector = null;
     }
 
+    // Clear connection info
+    this.connectionInfo = null;
+
     // Cleanup session
     try {
       await this.config.sessionManager.logout();
     } catch (error) {
-      console.error("[SignerController] Error cleaning up session:", error);
+      console.warn(
+        "[SignerController] Session cleanup failed during disconnect. Session data may persist and be restored on next load:",
+        error,
+      );
     }
 
-    // Reset state
-    this.dispatch({ type: "RESET" });
+    // Mark as explicitly disconnected so autoConnect does not fire on re-render.
+    this.dispatch({ type: "EXPLICITLY_DISCONNECTED" });
   }
 
   /**
    * Cleanup resources
    */
   destroy(): void {
+    this.orchestrator.destroy();
     super.destroy();
   }
 }

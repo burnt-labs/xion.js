@@ -14,11 +14,26 @@ import type { SignerConfig } from "@burnt-labs/abstraxion-core";
 
 /**
  * Redirect authentication (dashboard OAuth flow)
- * This is the default if no authentication config is provided
+ * This is the default if no authentication config is provided.
+ * Navigates the current page to the auth app and returns with ?granted=true.
  */
 export interface RedirectAuthentication {
   type: "redirect";
+  /** Callback URL to return to after auth. Defaults to the current page URL. */
   callbackUrl?: string;
+  /** Auth app base URL override. Defaults to the chain-specific value from network config. */
+  authAppUrl?: string;
+}
+
+/**
+ * Popup authentication (dashboard OAuth flow in a popup window)
+ * The user stays on the dApp page. Auth happens in a separate popup tab which
+ * postMessages CONNECT_SUCCESS back to the opener and closes itself.
+ */
+export interface PopupAuthentication {
+  type: "popup";
+  /** Auth app base URL override. Defaults to the chain-specific value from network config. */
+  authAppUrl?: string;
 }
 
 /**
@@ -61,12 +76,56 @@ export interface SignerAuthentication {
 }
 
 /**
+ * Auto authentication — resolves to popup on desktop, redirect on mobile/PWA.
+ * The resolution happens during config normalization so all downstream code
+ * (controllers, hooks, provider) only ever sees "popup" or "redirect".
+ */
+export interface AutoAuthentication {
+  type: "auto";
+  /** Auth app base URL override (used by both popup and redirect paths). */
+  authAppUrl?: string;
+  /** Callback URL for the redirect fallback. Defaults to the current page URL. */
+  callbackUrl?: string;
+}
+
+/**
+ * Iframe authentication (inline embedded dashboard iframe)
+ *
+ * Renders the full dashboard app inside an inline iframe. The dApp controls
+ * sizing and positioning via the containerElement's CSS.
+ *
+ * The iframe handles login and grant approval. Communication uses
+ * MessageChannelManager for request-response (CONNECT, SIGN_AND_BROADCAST)
+ * with targetOrigin enforcement. The only raw postMessage is the push-direction
+ * HARD_DISCONNECT event from the iframe (user clicked disconnect in dashboard UI).
+ */
+export interface EmbeddedAuthentication {
+  type: "embedded";
+  /** Dashboard URL for the embedded view. Defaults to chain-specific value from constants. */
+  iframeUrl?: string;
+  /**
+   * DOM element to mount the embedded view in. The iframe fills 100% width/height
+   * of this container — control sizing via the container's CSS.
+   * Not needed when using the <AbstraxionEmbed> component.
+   */
+  containerElement?: HTMLElement;
+}
+
+/**
+ * @deprecated Use `EmbeddedAuthentication` instead. Will be removed in a future version.
+ */
+export type IframeAuthentication = EmbeddedAuthentication;
+
+/**
  * Authentication configuration - defines how users authenticate
  * Type-safe union ensures only compatible options can be combined
  */
 export type AuthenticationConfig =
   | RedirectAuthentication
-  | SignerAuthentication;
+  | PopupAuthentication
+  | AutoAuthentication
+  | SignerAuthentication
+  | EmbeddedAuthentication;
 
 // ============================================================================
 // Configuration Types
@@ -119,19 +178,46 @@ export interface AbstraxionConfig {
    */
   gasPrice?: string;
 
-  /** Treasury contract address for grant configurations */
+  /**
+   * Treasury contract address for grant configurations (recommended).
+   *
+   * When provided, the dashboard queries this contract for the list of permissions
+   * to display and grant to the session key. This is the modern, preferred approach.
+   *
+   * **No-grants path**: If `treasury`, `contracts`, `stake`, and `bank` are ALL omitted,
+   * no on-chain grant approval step is shown. The user just authenticates and receives
+   * a session key with no permissions. This is valid when your dApp uses `requireAuth`
+   * (direct signing), where the user signs each transaction from their meta-account
+   * directly instead of delegating to a session key.
+   *
+   * @see {@link contracts}, {@link stake}, {@link bank} for legacy grant configuration
+   */
   treasury?: string;
 
   /** Fee granter address that pays transaction fees for grant creation */
   feeGranter?: string;
 
-  /** Contract grant configurations (if not using treasury) */
+  /**
+   * Contract grant configurations — legacy alternative to `treasury`.
+   *
+   * Grants the session key permission to call specific contracts. Prefer `treasury`
+   * for new integrations; use this only when a treasury contract is not available.
+   *
+   * Omitting this (along with `treasury`, `stake`, `bank`) enables the no-grants path
+   * where the user signs directly. See `treasury` for details.
+   */
   contracts?: ContractGrantDescription[];
 
-  /** Enable staking grants */
+  /**
+   * Enable staking and governance grants for the session key.
+   * Legacy alternative to `treasury`. Prefer `treasury` for new integrations.
+   */
   stake?: boolean;
 
-  /** Bank spend limits */
+  /**
+   * Bank spend limits — grants the session key permission to send tokens up to specified amounts.
+   * Legacy alternative to `treasury`. Prefer `treasury` for new integrations.
+   */
   bank?: SpendLimit[];
 
   /**
@@ -155,3 +241,49 @@ export interface NormalizedAbstraxionConfig
   /** Gas price - always present after normalization */
   gasPrice: string;
 }
+
+// ============================================================================
+// Signing Client Types
+// ============================================================================
+
+// Re-import concrete client types so we can build the union here.
+// Consumers should use `SigningClient` instead of building the union themselves.
+import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
+import type { AAClient } from "@burnt-labs/signers";
+import type { PopupSigningClient } from "./controllers/PopupSigningClient";
+import type { RedirectSigningClient } from "./controllers/RedirectSigningClient";
+import type { IframeSigningClient } from "./controllers/IframeSigningClient";
+
+/**
+ * Union of all signing client types returned by `useAbstraxionSigningClient`.
+ *
+ * Import this instead of importing individual client types:
+ * ```ts
+ * import type { SigningClient } from "@burnt-labs/abstraxion";
+ * ```
+ *
+ * Which concrete type you get depends on the authentication mode and `requireAuth`:
+ * - `GranteeSignerClient` — session key signing (default, gasless)
+ * - `AAClient` — direct signing in signer mode (external wallet)
+ * - `PopupSigningClient` — direct signing in popup mode (dashboard popup)
+ * - `RedirectSigningClient` — direct signing in redirect mode (dashboard redirect)
+ * - `IframeSigningClient` — direct signing in iframe mode (dashboard iframe)
+ */
+export type SigningClient =
+  | GranteeSignerClient
+  | AAClient
+  | PopupSigningClient
+  | RedirectSigningClient
+  | IframeSigningClient;
+
+// ============================================================================
+// Signing Result Types
+// ============================================================================
+
+/**
+ * Result from a redirect-based signing flow.
+ * Populated after returning from the dashboard signing redirect.
+ */
+export type SignResult =
+  | { success: true; transactionHash: string }
+  | { success: false; error: string };

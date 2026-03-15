@@ -3,6 +3,7 @@ import { createContext, useCallback, useEffect, useState, useRef } from "react";
 import {
   SignArbSecp256k1HdWallet,
   GranteeSignerClient,
+  type ConnectorConnectionResult,
 } from "@burnt-labs/abstraxion-core";
 import type { AccountState } from "@burnt-labs/account-management";
 import {
@@ -12,6 +13,8 @@ import {
 import type { Controller } from "./controllers";
 import {
   createController,
+  IframeController,
+  PopupController,
   RedirectController,
   SignerController,
 } from "./controllers";
@@ -36,6 +39,10 @@ export interface AbstraxionContextProps {
   isConnected: boolean;
   isConnecting: boolean;
   isInitializing: boolean;
+  /** True after an explicit user-initiated logout. Prevents the embed from re-triggering login. */
+  isDisconnected: boolean;
+  /** True while a requireAuth signing request is pending and the iframe needs to be visible. */
+  isAwaitingApproval: boolean;
   isReturningFromAuth: boolean;
   isLoggingIn: boolean;
   abstraxionError: string;
@@ -58,8 +65,22 @@ export interface AbstraxionContextProps {
   treasuryIndexerUrl?: string;
 
   // Authentication
-  authMode: "signer" | "redirect";
+  authMode: "signer" | "redirect" | "embedded" | "popup";
   authentication?: AuthenticationConfig;
+
+  /**
+   * Connection info for direct signing (signer mode only)
+   * Contains signMessage function and authenticator metadata
+   * Used by useAbstraxionSigningClient({ requireAuth: true })
+   */
+  connectionInfo?: ConnectorConnectionResult;
+
+  /**
+   * The active controller instance.
+   * Hooks use instanceof narrowing to access mode-specific capabilities
+   * (e.g. PopupController.promptSignAndBroadcast for direct signing in popup mode).
+   */
+  controller?: Controller;
 
   // Actions
   logout: () => Promise<void>;
@@ -75,6 +96,8 @@ const defaultContextValue: AbstraxionContextProps = {
   isConnected: false,
   isConnecting: false,
   isInitializing: true,
+  isDisconnected: false,
+  isAwaitingApproval: false,
   isReturningFromAuth: false,
   isLoggingIn: false,
   abstraxionError: "",
@@ -99,6 +122,8 @@ const defaultContextValue: AbstraxionContextProps = {
   // Authentication
   authMode: "redirect",
   authentication: undefined,
+  connectionInfo: undefined,
+  controller: undefined,
 
   // Actions - throw errors if called before provider mounts
   logout: async () => {
@@ -159,9 +184,6 @@ export function AbstraxionProvider({
       ? authentication.treasuryIndexer
       : undefined;
 
-  // Determine authentication mode - defaults to redirect unless set in config
-  const authMode = authentication?.type || "redirect";
-
   if (!controllerRef.current) {
     // First render: Create controller with normalized config
     controllerRef.current = createController(normalizedConfig);
@@ -194,9 +216,27 @@ export function AbstraxionProvider({
 
   // Always start with controller's initializing state this ensures UI immediately shows loading state and doesn't assume readiness
   const controller = controllerRef.current;
+
+  // Derive authMode from the actual controller type, not from normalizedConfig.
+  // normalizeAbstraxionConfig + resolveAutoAuth runs on every render and can return
+  // different results between SSR and client (window undefined → defined), or when
+  // the viewport changes (e.g. isMobileOrStandalone flips on resize). The controller
+  // is created once (via ref) and never replaced, so authMode must stay in sync with it.
+  const authMode: "signer" | "redirect" | "embedded" | "popup" =
+    controller instanceof PopupController
+      ? "popup"
+      : controller instanceof RedirectController
+        ? "redirect"
+        : controller instanceof IframeController
+          ? "embedded"
+          : "signer";
+
   const [controllerState, setControllerState] = useState<AccountState>(
     controller.getState(),
   );
+
+  // Track whether a requireAuth signing request is pending (iframe needs to be visible)
+  const [isAwaitingApproval, setIsAwaitingApproval] = useState(false);
 
   // TODO: Potentially put in a useEffect with empty dependency array to check if we're returning from auth redirect and if so, transition to connecting state
   // To keep it clean this is all handled in the controller for now, this means there is a short INIT window for redirect mode
@@ -207,17 +247,58 @@ export function AbstraxionProvider({
       setControllerState(newState);
     });
 
+    // Subscribe to awaitingApproval changes (iframe mode only)
+    let unsubscribeApproval: (() => void) | undefined;
+    if (controller instanceof IframeController) {
+      unsubscribeApproval = controller.subscribeApproval(setIsAwaitingApproval);
+    }
+
     // Initialize controller (restores session, checks redirect callbacks, etc.)
-    controller.initialize().catch(() => {
-      // Initialization errors are handled by controller's state machine
-      // Error state will be reflected in isError/abstraxionError context values
+    controller.initialize().catch((error) => {
+      // Initialization errors are handled by controller's state machine.
+      // Error state will be reflected in isError/abstraxionError context values.
+      // Log here for debugging in case the state machine didn't capture it.
+      console.error(
+        "[AbstraxionProvider] Controller initialization failed:",
+        error,
+      );
     });
 
     return () => {
       unsubscribe(); // Cleanup subscription
+      unsubscribeApproval?.();
       controller.destroy();
     };
   }, [controller]);
+
+  // Dev warning: no grants configured — valid for direct-signing (requireAuth) flows,
+  // but unusual for popup/redirect/embedded modes.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      const hasGrants =
+        !!treasury ||
+        (contracts && contracts.length > 0) ||
+        !!stake ||
+        (bank && bank.length > 0);
+
+      const isDashboardMode =
+        authMode === "popup" ||
+        authMode === "redirect" ||
+        authMode === "embedded";
+
+      if (!hasGrants && isDashboardMode) {
+        console.warn(
+          "[AbstraxionProvider] No grants configured (treasury, contracts, stake, or bank). " +
+            "In popup/redirect/embedded modes the user will authenticate and get a session key, " +
+            "but no on-chain permissions will be granted to it. " +
+            "This is intentional if you are using requireAuth (direct signing), where the user " +
+            "signs transactions directly from their meta-account rather than via a session key. " +
+            "If you expected grant-based signing, add a `treasury` address or legacy grant config.",
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount — config is stable after normalizeAbstraxionConfig
 
   // Map state machine state to context props - ALL loading states come from state machine
   const isInitializing = AccountStateGuards.isInitializing(controllerState);
@@ -225,6 +306,7 @@ export function AbstraxionProvider({
     AccountStateGuards.isConnecting(controllerState) ||
     AccountStateGuards.isConfiguringPermissions(controllerState);
   const isConnected = AccountStateGuards.isConnected(controllerState);
+  const isDisconnected = AccountStateGuards.isDisconnected(controllerState);
   const isError = AccountStateGuards.isError(controllerState);
 
   // Derive isLoggingIn from connecting state (user actively logging in)
@@ -249,6 +331,15 @@ export function AbstraxionProvider({
   const signingClient = isConnected ? controllerState.signingClient : undefined;
   const abstraxionError = isError ? controllerState.error : "";
 
+  // Get connection info from SignerController for direct signing
+  // Only available in signer mode when connected
+  const connectionInfo =
+    isConnected &&
+    controller instanceof SignerController &&
+    controller.getConnectionInfo
+      ? controller.getConnectionInfo()
+      : undefined;
+
   const login = useCallback(async () => {
     // Login function - delegates to controller who handles errors
     await controller.connect();
@@ -266,6 +357,8 @@ export function AbstraxionProvider({
         isConnected,
         isConnecting,
         isInitializing,
+        isDisconnected,
+        isAwaitingApproval,
         isReturningFromAuth,
         isLoggingIn,
         abstraxionError,
@@ -290,6 +383,8 @@ export function AbstraxionProvider({
         // Authentication
         authMode,
         authentication,
+        connectionInfo,
+        controller,
 
         // Actions
         login,

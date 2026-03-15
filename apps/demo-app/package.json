@@ -20,6 +20,8 @@
     "@cosmjs/amino": "^0.36.0",
     "@cosmjs/cosmwasm-stargate": "^0.36.0",
     "@cosmjs/crypto": "^0.36.0",
+    "@cosmjs/proto-signing": "^0.36.0",
+    "@cosmjs/stargate": "^0.36.0",
     "@heroicons/react": "^2.1.4",
     "@noble/hashes": "1.8.0",
     "@turnkey/react-wallet-kit": "^1.4.1",

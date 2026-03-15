@@ -25,9 +25,14 @@ export interface AccountInfo {
  *
  * Note: The 'configuring-permissions' status represents setting up session permissions/authorization,
  * not creating the session key itself (which happens during connecting).
+ *
+ * 'disconnected' is distinct from 'idle': it means the user explicitly logged out in this
+ * page session. Consumers (e.g. AbstraxionEmbed's autoConnect) should not auto-connect from
+ * this state — the user must deliberately initiate a new login.
  */
 export type AccountState =
   | { status: "idle" }
+  | { status: "disconnected" }
   | { status: "initializing" }
   | { status: "redirecting"; dashboardUrl: string }
   | { status: "connecting"; connectorId?: string }
@@ -53,7 +58,8 @@ export type AccountStateAction =
       signingClient: GranteeSignerClient;
     }
   | { type: "SET_ERROR"; error: string }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "EXPLICITLY_DISCONNECTED" };
 
 /**
  * State transition guard functions
@@ -62,6 +68,10 @@ export const AccountStateGuards = {
   /** Check if state is idle */
   isIdle: (state: AccountState): state is { status: "idle" } =>
     state.status === "idle",
+
+  /** Check if state is disconnected (user explicitly logged out) */
+  isDisconnected: (state: AccountState): state is { status: "disconnected" } =>
+    state.status === "disconnected",
 
   /** Check if state is initializing */
   isInitializing: (state: AccountState): state is { status: "initializing" } =>
@@ -143,6 +153,9 @@ export function accountStateReducer(
     case "RESET":
       return { status: "idle" };
 
+    case "EXPLICITLY_DISCONNECTED":
+      return { status: "disconnected" };
+
     default:
       return state;
   }
@@ -160,6 +173,11 @@ export function isValidTransition(
     return true;
   }
 
+  // Allow explicit disconnect from any state
+  if (to === "EXPLICITLY_DISCONNECTED") {
+    return true;
+  }
+
   // Allow initialize from idle
   if (to === "INITIALIZE" && from.status === "idle") {
     return true;
@@ -170,10 +188,12 @@ export function isValidTransition(
     return true;
   }
 
-  // Allow connect from initializing or idle
+  // Allow connect from initializing, idle, or disconnected (re-login after explicit logout)
   if (
     to === "START_CONNECT" &&
-    (from.status === "initializing" || from.status === "idle")
+    (from.status === "initializing" ||
+      from.status === "idle" ||
+      from.status === "disconnected")
   ) {
     return true;
   }

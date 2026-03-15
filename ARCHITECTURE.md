@@ -17,10 +17,15 @@ The xion.js SDK uses a **three-layer architecture** to separate concerns and pro
 │              CONTROLLER LAYER                                │
 │         (@burnt-labs/abstraxion)                             │
 │                                                              │
-│  ┌─────────────────┐         ┌─────────────────┐           │
-│  │ RedirectController│        │ SignerController│           │
-│  │   (Dashboard)   │        │   (Headless)    │           │
-│  └────────┬────────┘         └────────┬────────┘           │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │  Redirect     │  │  Popup       │  │  Iframe      │      │
+│  │  Controller   │  │  Controller  │  │  Controller  │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│         │                 │                  │               │
+│         │    ┌────────────────────┐          │               │
+│         │    │ SignerController   │          │               │
+│         │    │   (Headless)      │          │               │
+│         │    └────────┬──────────┘          │               │
 │           │                           │                     │
 └───────────┼───────────────────────────┼─────────────────────┘
             │                           │
@@ -184,23 +189,62 @@ Controllers bridge the React world with the business logic:
 
 #### RedirectController
 
-Used for **dashboard-based authentication** (OAuth flow):
+Used for **dashboard-based authentication** via full-page redirect (OAuth flow):
 
 ```typescript
 class RedirectController extends BaseController {
-  // Redirects to dashboard for authentication
-  async login(): Promise<void> {
-    // Save state, redirect to dashboard
+  async connect(): Promise<void> {
+    // Generate session keypair, redirect to dashboard
   }
+  // On page load, detects ?granted=true&granter=<address> callback
+}
+```
 
-  // Called after redirect back from dashboard
-  async handleCallback(): Promise<void> {
-    // Restore state, verify grants
+**Use case**: Web apps that want a hosted authentication UI. Default mode if no `authentication` config.
+
+**Direct signing**: `RedirectSigningClient` — redirects to dashboard for transaction approval, returns with result.
+
+#### PopupController
+
+Used for **dashboard-based authentication** in a popup window (user stays on dApp page):
+
+```typescript
+class PopupController extends BaseController {
+  async connect(): Promise<void> {
+    // Generate session keypair, open dashboard in popup window
+    // Listen for CONNECT_SUCCESS / CONNECT_REJECTED via postMessage
   }
 }
 ```
 
-**Use case**: Web apps that want a hosted authentication UI
+**Use case**: Desktop web apps that want seamless authentication without page navigation.
+
+**Direct signing**: `PopupSigningClient` — opens dashboard popup for each transaction approval.
+
+#### IframeController
+
+Used for **inline embedded authentication** — dashboard runs inside an iframe on your page:
+
+```typescript
+class IframeController extends BaseController {
+  setContainerElement(el: HTMLElement): void {
+    // Mount iframe into the provided container element
+  }
+  async connect(): Promise<void> {
+    // Communicate with iframe via MessageChannel
+    // Listen for CONNECT_SUCCESS via postMessage
+  }
+  async signWithMetaAccount(msgs, fee, memo): Promise<DeliverTxResponse> {
+    // Send SIGN_AND_BROADCAST to iframe, user approves inside iframe
+  }
+}
+```
+
+**Use case**: Apps that want full control over where the auth UI appears, white-label experiences, no popup issues.
+
+**Direct signing**: `IframeSigningClient` — routes approval through the embedded iframe.
+
+**Sizing**: The iframe fills 100% of its container element. You control size via CSS on the container.
 
 #### SignerController
 
@@ -208,22 +252,30 @@ Used for **headless authentication** with custom connectors:
 
 ```typescript
 class SignerController extends BaseController {
-  // Programmatic connection with connector
-  async connect(connector: Connector): Promise<void> {
-    // Use orchestrator to handle connection
-    const result = await this.orchestrator.connectAndSetup(connector);
-    // Update state with result
+  async connect(): Promise<void> {
+    // Call developer-provided getSignerConfig()
+    // Use orchestrator to discover/create smart account
   }
-
-  // Check for existing session on mount
   async initialize(): Promise<void> {
     const restored = await this.orchestrator.restoreSession();
-    // Update state based on restoration result
   }
 }
 ```
 
-**Use case**: Apps that want full control over authentication UI (Turnkey, Privy, custom wallets)
+**Use case**: Apps that want full control over authentication UI (Turnkey, Privy, MetaMask, Keplr, custom wallets).
+
+**Direct signing**: `AAClient` — prompts the external wallet for each transaction signature.
+
+### Auto Mode Resolution
+
+The `"auto"` authentication type resolves to the best controller at initialization:
+
+```
+Desktop browser  → PopupController
+Mobile / PWA     → RedirectController
+```
+
+Detection uses: user-agent, `navigator.maxTouchPoints`, viewport width (<1024px), portrait aspect ratio, and `display-mode: standalone` media query.
 
 ### Why Controllers?
 
@@ -236,65 +288,177 @@ class SignerController extends BaseController {
 
 Without controllers, every React app would need to reimplement this logic.
 
-## How They Work Together
+## SDK Usage Patterns
 
-### Example: Connecting with Turnkey (Signer Mode)
+The following examples show how downstream developers use the SDK. All controller internals are handled automatically by `AbstraxionProvider` — you only interact with hooks and config.
 
-```typescript
-// 1. Application creates controller (via AbstraxionProvider)
-const controller = SignerController.fromConfig(config, storage, auth);
+For full working examples, see the demo app at `apps/demo-app/src/app/`.
 
-// 2. Controller initializes and checks for existing session
-await controller.initialize();
-  // → Controller creates ConnectionOrchestrator
-  // → Orchestrator checks sessionManager for stored keypair/granter
-  // → If found, verifies grants on-chain
+### Popup / Auto Mode
 
-// 3. User clicks "Connect with Turnkey"
-const connector = new ExternalSignerConnector({...});
+```tsx
+// layout.tsx — wrap your app with the provider
+import { AbstraxionProvider } from "@burnt-labs/abstraxion";
 
-// 4. Controller handles connection
-await controller.connect(connector);
-  // → Controller calls orchestrator.connectAndSetup(connector)
-  // → Orchestrator calls connector.connect()
-  // → Connector returns authenticator and signMessage function
-  // → Orchestrator uses accountStrategy to find/create smart account
-  // → Orchestrator uses grantConfig to create authorization grants
-  // → Orchestrator stores keypair and granter in sessionManager
-  // → Controller updates state to "connected"
-
-// 5. React components receive state update and re-render
-// 6. User can now sign transactions with session key
+<AbstraxionProvider
+  config={{
+    chainId: "xion-testnet-2",
+    treasury: "xion1...",
+    authentication: { type: "auto" }, // popup on desktop, redirect on mobile
+  }}
+>
+  {children}
+</AbstraxionProvider>;
 ```
 
-### Example: Redirect Mode (Dashboard)
+```tsx
+// page.tsx — connect and sign
+import {
+  useAbstraxionAccount,
+  useAbstraxionSigningClient,
+} from "@burnt-labs/abstraxion";
 
-```typescript
-// 1. Application creates controller (via AbstraxionProvider)
-const controller = RedirectController.fromConfig(config, storage, redirect);
+function MyPage() {
+  const {
+    data: account,
+    login,
+    logout,
+    isConnected,
+    isConnecting,
+  } = useAbstraxionAccount();
 
-// 2. Controller checks if returning from redirect
-if (isReturningFromRedirect()) {
-  // → Controller calls redirect strategy to complete flow
-  // → Verifies grants exist in storage
-  // → Updates state to "connected"
-} else {
-  // Check for existing session
-  await controller.initialize();
+  // Session key client — gasless, silent
+  const { client } = useAbstraxionSigningClient();
+
+  // Direct signing client — meta-account signs, user pays gas
+  const { client: directClient } = useAbstraxionSigningClient({
+    requireAuth: true,
+  });
+
+  const handleLogin = async () => {
+    try {
+      await login(); // Opens popup (or redirects on mobile)
+    } catch (err) {
+      // Handle popup blocked, user rejected, etc.
+    }
+  };
+
+  const handleSend = async () => {
+    // Session key: silent, gasless
+    await client.sendTokens(account.bech32Address, recipient, amount, "auto");
+  };
+
+  const handleSecureSend = async () => {
+    // Direct: opens approval popup, user pays gas from their XION balance
+    await directClient.sendTokens(
+      account.bech32Address,
+      recipient,
+      amount,
+      "auto",
+    );
+  };
 }
-
-// 3. User clicks "Login"
-await controller.login();
-// → Controller saves state to localStorage
-// → Controller redirects to dashboard URL with config
-// → Dashboard authenticates user and creates grants
-// → Dashboard redirects back to app with success param
-
-// 4. App loads again, controller detects redirect
-// → Restores state from localStorage
-// → Verifies grants exist
-// → Updates state to "connected"
 ```
+
+See `apps/demo-app/src/app/popup-demo/` for the complete example.
+
+### Inline Iframe Mode
+
+```tsx
+// layout.tsx
+<AbstraxionProvider
+  config={{
+    chainId: "xion-testnet-2",
+    treasury: "xion1...",
+    authentication: { type: "iframe" }, // iframeUrl defaults from chainId
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
+
+```tsx
+// page.tsx — attach iframe to a container you control
+import {
+  AbstraxionContext,
+  IframeController,
+  useAbstraxionAccount,
+} from "@burnt-labs/abstraxion";
+import { useContext, useEffect, useRef } from "react";
+
+function MyPage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { controller } = useContext(AbstraxionContext);
+  const { login, isConnected } = useAbstraxionAccount();
+
+  // Mount the iframe into your container
+  useEffect(() => {
+    if (containerRef.current && controller instanceof IframeController) {
+      controller.setContainerElement(containerRef.current);
+    }
+  }, [controller]);
+
+  // Start auth flow — user logs in inside the iframe
+  useEffect(() => {
+    if (controller && !isConnected) {
+      login().catch(console.error);
+    }
+  }, [controller, isConnected]);
+
+  return (
+    <div style={{ display: "flex" }}>
+      {/* You control the iframe size via the container's CSS */}
+      <div ref={containerRef} style={{ width: 420, height: 600 }} />
+      <div>{/* Your app content */}</div>
+    </div>
+  );
+}
+```
+
+See `apps/demo-app/src/app/inline-demo/` for the complete example.
+
+### Signer Mode (MetaMask / Keplr — no dashboard)
+
+```tsx
+// layout.tsx — provide wallet signing function, no dashboard involved
+<AbstraxionProvider
+  config={{
+    chainId: "xion-testnet-2",
+    treasury: "xion1...",
+    feeGranter: "xion1...",
+    authentication: {
+      type: "signer",
+      aaApiUrl: "https://aa-api.xion-testnet-2.burnt.com",
+      getSignerConfig: async () => {
+        const signer = await metamask.getSigner();
+        return {
+          authenticatorId: "...",
+          authenticatorType: AUTHENTICATOR_TYPE.SECP256K1,
+          account: signer,
+        };
+      },
+      smartAccountContract: {
+        codeId: 12,
+        checksum: "...",
+        addressPrefix: "xion",
+      },
+    },
+  }}
+>
+  {children}
+</AbstraxionProvider>
+```
+
+```tsx
+// page.tsx — same hooks as all other modes
+const { data: account, login, isConnected } = useAbstraxionAccount();
+const { client } = useAbstraxionSigningClient(); // GranteeSignerClient (gasless)
+const { client: directClient } = useAbstraxionSigningClient({
+  requireAuth: true,
+}); // AAClient (MetaMask prompts)
+```
+
+See `apps/demo-app/src/app/direct-signing-demo/` for the complete example with MetaMask.
 
 ## Key Design Principles
 
@@ -369,56 +533,158 @@ xion.js/
 │       │   ├── types.ts          # Controller interface
 │       │   ├── BaseController.ts # State management base
 │       │   ├── RedirectController.ts
+│       │   ├── PopupController.ts       # Popup auth flow
+│       │   ├── IframeController.ts      # Inline iframe auth flow
 │       │   ├── SignerController.ts
-│       │   ├── factory.ts        # Controller factory
-│       │   └── typeGuards.ts     # Type guards
-│       └── src/components/
-│           └── AbstraxionContext/
-│               └── index.tsx     # React provider
+│       │   ├── PopupSigningClient.ts    # Direct signing via popup
+│       │   ├── RedirectSigningClient.ts # Direct signing via redirect
+│       │   ├── IframeSigningClient.ts   # Direct signing via iframe
+│       │   └── factory.ts        # Controller factory (routes config → controller)
+│       ├── src/utils/
+│       │   ├── normalizeAbstraxionConfig.ts  # Config defaults + auto mode resolution
+│       │   └── resolveAutoAuth.ts            # Device detection for auto mode
+│       └── src/AbstraxionProvider.tsx  # React provider
+```
+
+## Direct Signing Architecture
+
+The SDK supports two signing flows. Both are available in every authentication mode.
+
+### Session Key Signing (default)
+
+```
+dApp → useAbstraxionSigningClient() → GranteeSignerClient → chain
+```
+
+- Signs with a locally-stored session keypair (grantee)
+- Gasless via fee grants — user pays nothing
+- Silent — no popups, no user interaction per transaction
+- The on-chain signer is the grantee address (via Authz Exec)
+
+### Direct Signing (`requireAuth: true`)
+
+```
+dApp → useAbstraxionSigningClient({ requireAuth: true }) → mode-specific client → user approval → chain
+```
+
+- **The meta-account signs each transaction directly** — not the session key
+- The on-chain signer is the meta-account address itself (not a grantee via Authz Exec)
+- Each transaction requires explicit user approval (wallet popup, dashboard popup/iframe, or redirect)
+- **User pays gas from their meta-account XION balance** — fee grants are NOT used
+- The meta-account must have sufficient XION balance or the transaction will fail
+- The approval mechanism depends on the authentication mode:
+
+| Mode         | Direct Signing Client   | Approval UX                                     |
+| ------------ | ----------------------- | ----------------------------------------------- |
+| redirect     | `RedirectSigningClient` | Redirects to dashboard for approval             |
+| popup / auto | `PopupSigningClient`    | Opens dashboard popup for approval              |
+| iframe       | `IframeSigningClient`   | Sends `SIGN_AND_BROADCAST` to iframe            |
+| signer       | `AAClient`              | Prompts external wallet (MetaMask, Keplr, etc.) |
+
+### Code Pattern
+
+Both clients expose the same API, so switching is a one-line change:
+
+```tsx
+// Session key — silent, gasless
+const { client } = useAbstraxionSigningClient();
+
+// Direct — user approval, user pays gas
+const { client, error } = useAbstraxionSigningClient({ requireAuth: true });
+
+// Same API for both:
+await client.sendTokens(from, to, amount, "auto", memo);
+await client.signAndBroadcast(address, messages, "auto", memo);
 ```
 
 ## When to Use Each Mode
+
+### Auto Mode (recommended)
+
+**Best for**: Most web applications
+
+**Config**: `authentication: { type: "auto" }`
+
+Resolves to popup on desktop, redirect on mobile. Gives the best UX for each platform automatically.
+
+### Popup Mode (PopupController)
+
+**Best for**:
+
+- Desktop-first applications
+- Apps where preserving page state is critical
+
+**Pros**:
+
+- User never leaves the dApp
+- No loss of application state
+- Popup closes automatically after auth
+
+**Cons**:
+
+- Popup blockers can interfere (handle with try/catch)
+- Not ideal for mobile (use auto mode instead)
 
 ### Redirect Mode (RedirectController)
 
 **Best for**:
 
 - Consumer-facing applications
+- Mobile-first applications
 - Apps that want minimal integration work
-- Apps that trust the dashboard for authentication
 
 **Pros**:
 
 - Hosted authentication UI
-- No wallet integration needed
+- No popup blocking issues
 - Supports Web3Auth, Passkeys, email login
 
 **Cons**:
 
-- Requires redirect (disrupts UX)
-- Less control over UI/flow
-- Requires dashboard deployment
+- Requires full-page redirect (disrupts UX)
+- Application state lost during redirect
+
+### Inline Iframe Mode (IframeController)
+
+**Best for**:
+
+- White-label experiences
+- Apps that want the auth UI embedded in their layout
+- Cases where popup blockers are a concern
+
+**Pros**:
+
+- No popups, no redirects
+- Full control over placement and sizing
+- Can hide/resize after authentication
+- Secure `MessageChannel` communication
+
+**Cons**:
+
+- Requires more setup (container ref + controller wiring)
+- iframe must be rendered during authentication
+- Requires dashboard deployment that supports iframe embedding
 
 ### Signer Mode (SignerController)
 
 **Best for**:
 
-- Apps with existing authentication
+- Apps with existing authentication (Turnkey, Privy, Web3Auth)
 - Apps that want custom UI/UX
-- Apps using Turnkey, Privy, or custom signers
+- Direct wallet connections (MetaMask, Keplr)
 - Mobile apps (React Native)
 
 **Pros**:
 
 - Full control over UI/flow
-- No redirect required
+- No redirect or popup required
 - Headless integration
 - Works in React Native
 
 **Cons**:
 
 - More integration work
-- Need to implement connector for each signer
+- Need to provide `getSignerConfig` and smart account contract details
 - Handle wallet connection UI yourself
 
 ## Summary
@@ -437,3 +703,5 @@ This separation makes the codebase:
 - **Reusable**: Lower layers work across platforms
 
 The key insight is that **authentication is complex**, and this architecture breaks that complexity into manageable, well-defined layers.
+
+Every controller supports both session-key signing (gasless, silent) and direct signing (`requireAuth: true`, explicit user approval). The signing flow is determined by the hook option, while the approval UX is determined by the authentication mode — keeping the two concerns orthogonal.

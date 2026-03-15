@@ -1,0 +1,114 @@
+name: Dashboard Reachability Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "packages/abstraxion/**"
+      - "packages/abstraxion-core/**"
+      - ".github/workflows/dashboard-contract-validation.yml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "packages/abstraxion/**"
+      - "packages/abstraxion-core/**"
+  workflow_dispatch:
+    inputs:
+      dashboard_url:
+        description: "Dashboard URL to validate (defaults to testnet)"
+        required: false
+        type: string
+
+jobs:
+  validate-dashboard-reachable:
+    name: Validate Dashboard is Reachable
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    strategy:
+      matrix:
+        environment: [testnet]
+      fail-fast: false
+
+    steps:
+      - name: Validate dashboard URL is reachable
+        env:
+          DASHBOARD_URL: ${{ inputs.dashboard_url || '' }}
+        run: |
+          echo "🌐 Checking dashboard availability..."
+
+          # Determine dashboard URL from environment or network config
+          if [ -n "$DASHBOARD_URL" ]; then
+            URL="$DASHBOARD_URL"
+          else
+            # Use the testnet dashboard URL
+            URL="https://dashboard.testnet.burnt.com"
+          fi
+
+          echo "Testing URL: $URL"
+
+          # Check if the dashboard root is reachable
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard returned HTTP $HTTP_CODE"
+            echo "   URL: $URL"
+            echo "   This may indicate the dashboard is down or the URL has changed."
+            exit 1
+          fi
+          echo "✅ Dashboard root is reachable (HTTP $HTTP_CODE)"
+
+          # Check that the dashboard handles inline mode query params
+          INLINE_URL="${URL}?mode=inline&grantee=xion1test&redirect_uri=https://example.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$INLINE_URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard inline mode returned HTTP $HTTP_CODE"
+            echo "   URL: $INLINE_URL"
+            echo "   The dashboard may not be handling embedded mode query params correctly."
+            exit 1
+          fi
+          echo "✅ Dashboard inline mode is reachable (HTTP $HTTP_CODE)"
+
+          # Check that the dashboard handles popup mode query params
+          POPUP_URL="${URL}?mode=popup&grantee=xion1test&redirect_uri=https://example.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$POPUP_URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard popup mode returned HTTP $HTTP_CODE"
+            echo "   URL: $POPUP_URL"
+            exit 1
+          fi
+          echo "✅ Dashboard popup mode is reachable (HTTP $HTTP_CODE)"
+
+          # Check that the dashboard handles sign mode query params
+          SIGN_URL="${URL}?mode=sign&tx=dGVzdA==&granter=xion1test&redirect_uri=https://example.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$SIGN_URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Dashboard sign mode returned HTTP $HTTP_CODE"
+            echo "   URL: $SIGN_URL"
+            exit 1
+          fi
+          echo "✅ Dashboard sign mode is reachable (HTTP $HTTP_CODE)"
+
+      - name: Post warning comment on PR
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = '## ⚠️ Dashboard Reachability Check Failed\n\n' +
+              'The XION dashboard is not responding correctly to one or more mode URLs.\n\n' +
+              '### Checked URLs:\n' +
+              '- Root: `https://dashboard.testnet.burnt.com`\n' +
+              '- Inline mode: `?mode=inline&grantee=...&redirect_uri=...`\n' +
+              '- Popup mode: `?mode=popup&grantee=...&redirect_uri=...`\n' +
+              '- Sign mode: `?mode=sign&tx=...&granter=...&redirect_uri=...`\n\n' +
+              '### Possible causes:\n' +
+              '- Dashboard deployment is down\n' +
+              '- Dashboard URL has changed\n' +
+              '- Cloudflare routing issue\n\n' +
+              '> This check runs when SDK packages change to verify the deployed dashboard is still reachable.';
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

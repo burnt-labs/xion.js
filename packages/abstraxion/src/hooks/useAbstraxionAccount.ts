@@ -10,6 +10,8 @@ export interface AbstraxionAccountState {
   isConnected: boolean;
   isConnecting: boolean;
   isInitializing: boolean;
+  /** True after an explicit user-initiated logout. Consumers can use this to show a "logged out" UI. */
+  isDisconnected: boolean;
   isLoading: boolean;
   isReturningFromAuth: boolean;
   isLoggingIn: boolean;
@@ -25,6 +27,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     isConnected,
     isConnecting,
     isInitializing,
+    isDisconnected,
     isReturningFromAuth,
     isLoggingIn,
     abstraxionError,
@@ -44,7 +47,8 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     },
     login,
     logout,
-    isConnected: isConnected,
+    isConnected,
+    isDisconnected,
     isLoading,
     isInitializing,
     isLoggingIn,
