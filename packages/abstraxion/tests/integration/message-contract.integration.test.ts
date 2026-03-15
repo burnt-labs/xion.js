@@ -7,7 +7,7 @@
  *
  * Tests cover:
  * - Popup mode: postMessage types (CONNECT_SUCCESS, CONNECT_REJECTED, SIGN_SUCCESS, etc.)
- * - Embedded mode: MessageChannel protocol (CONNECT, DISCONNECT, SIGN_AND_BROADCAST, IFRAME_READY)
+ * - Embedded mode: MessageChannel protocol (CONNECT, DISCONNECT, HARD_DISCONNECT, SIGN_AND_BROADCAST, IFRAME_READY)
  * - Redirect mode: URL parameter contracts (?granted, ?granter, ?tx_hash, ?sign_error, etc.)
  *
  * These tests use the SAME message type strings that the dashboard uses,
@@ -30,8 +30,12 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       expect(IframeMessageType.CONNECT).toBe("CONNECT");
     });
 
-    it("DISCONNECT is sent by SDK to end session", () => {
+    it("DISCONNECT is sent by SDK for soft disconnect (UI hint, session survives)", () => {
       expect(IframeMessageType.DISCONNECT).toBe("DISCONNECT");
+    });
+
+    it("HARD_DISCONNECT is sent by SDK for full session clear on both sides", () => {
+      expect(IframeMessageType.HARD_DISCONNECT).toBe("HARD_DISCONNECT");
     });
 
     it("GET_ADDRESS is sent by SDK to query current user", () => {
@@ -122,10 +126,10 @@ describe("SDK ↔ Dashboard Message Contract", () => {
   });
 
   describe("Embedded iframe push messages", () => {
-    // DISCONNECTED is the one raw postMessage (iframe → SDK)
-    it("DISCONNECTED is sent by dashboard when user clicks disconnect", () => {
-      const msg = { type: "DISCONNECTED" };
-      expect(msg.type).toBe("DISCONNECTED");
+    // HARD_DISCONNECT is the one raw postMessage (iframe → SDK)
+    it("HARD_DISCONNECT is sent by dashboard when user clicks disconnect", () => {
+      const msg = { type: "HARD_DISCONNECT" };
+      expect(msg.type).toBe("HARD_DISCONNECT");
     });
   });
 
