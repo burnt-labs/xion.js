@@ -16,6 +16,7 @@ export default function UILessPage(): JSX.Element {
     login,
     logout,
     isConnected,
+    isDisconnected,
     isLoading,
     isInitializing,
     isLoggingIn,
@@ -30,6 +31,7 @@ export default function UILessPage(): JSX.Element {
       isInitializing,
       isConnecting,
       isConnected,
+      isDisconnected,
       isLoading,
       isReturningFromAuth,
       hasAddress: !!account.bech32Address,
@@ -40,6 +42,7 @@ export default function UILessPage(): JSX.Element {
     isInitializing,
     isConnecting,
     isConnected,
+    isDisconnected,
     isLoading,
     account.bech32Address,
     isLoggingIn,
@@ -123,6 +126,24 @@ export default function UILessPage(): JSX.Element {
                 className={`font-mono ${isConnected ? "font-semibold text-green-400" : "text-gray-600"}`}
               >
                 {String(isConnected)}
+              </span>
+            </div>
+          </div>
+
+          {/* isDisconnected is true after an explicit logout — prevents autoConnect from re-triggering and lets you show a "logged out" UI */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <span className="font-mono text-gray-400">isDisconnected:</span>
+              <StateTooltip text="True after an explicit user-initiated logout. Prevents autoConnect from re-triggering the login flow. Resets to false when the user initiates login again." />
+            </div>
+            <div className="flex items-center gap-1">
+              <div
+                className={`h-2 w-2 rounded-full ${isDisconnected ? "animate-pulse bg-red-400" : "bg-gray-600"}`}
+              ></div>
+              <span
+                className={`font-mono ${isDisconnected ? "font-semibold text-red-400" : "text-gray-600"}`}
+              >
+                {String(isDisconnected)}
               </span>
             </div>
           </div>
@@ -317,20 +338,20 @@ export default function UILessPage(): JSX.Element {
             </div>
             <div
               className={`mx-2 h-px flex-1 ${
-                isConnected ? "bg-green-400/50" : "bg-gray-600"
+                isConnected ? "bg-green-400/50" : isDisconnected ? "bg-red-400/50" : "bg-gray-600"
               }`}
             ></div>
             <div
               className={`flex items-center gap-1 ${
-                isConnected ? "text-green-400" : "text-gray-600"
+                isDisconnected ? "text-red-400" : isConnected ? "text-green-400" : "text-gray-600"
               }`}
             >
               <div
                 className={`h-2 w-2 rounded-full ${
-                  isConnected ? "animate-pulse bg-green-400" : "bg-gray-600"
+                  isDisconnected ? "animate-pulse bg-red-400" : isConnected ? "animate-pulse bg-green-400" : "bg-gray-600"
                 }`}
               ></div>
-              <span>Ready</span>
+              <span>{isDisconnected ? "Logged Out" : "Ready"}</span>
             </div>
           </div>
         </div>

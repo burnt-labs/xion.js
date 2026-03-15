@@ -35,9 +35,14 @@ export default function Page(): JSX.Element {
             POPUP AUTH DEMO (Auto mode)
           </Button>
         </Link>
-        <Link href="/inline-demo">
+        <Link href="/embedded-inline">
           <Button fullWidth structure="base">
-            Embedded wallets (inline iframe) DEMO
+            EMBEDDED · INLINE (always visible iframe)
+          </Button>
+        </Link>
+        <Link href="/embedded-dynamic">
+          <Button fullWidth structure="base">
+            EMBEDDED · DYNAMIC (button + modal)
           </Button>
         </Link>
       </div>

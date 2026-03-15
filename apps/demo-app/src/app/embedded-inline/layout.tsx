@@ -14,7 +14,7 @@ const embeddedModeConfig = {
   },
 };
 
-export default function InlineDemoLayout({
+export default function EmbeddedInlineLayout({
   children,
 }: {
   children: React.ReactNode;
