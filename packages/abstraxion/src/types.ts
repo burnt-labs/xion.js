@@ -94,10 +94,10 @@ export interface AutoAuthentication {
  * Renders the full dashboard app inside an inline iframe. The dApp controls
  * sizing and positioning via the containerElement's CSS.
  *
- * The iframe handles login, grant approval, and shows a minimal "Connected"
- * state after auth. Communication uses MessageChannelManager for request-response
- * (CONNECT, DISCONNECT) with targetOrigin enforcement. The only raw postMessage
- * is the push-direction DISCONNECTED event from the iframe.
+ * The iframe handles login and grant approval. Communication uses
+ * MessageChannelManager for request-response (CONNECT, SIGN_AND_BROADCAST)
+ * with targetOrigin enforcement. The only raw postMessage is the push-direction
+ * HARD_DISCONNECT event from the iframe (user clicked disconnect in dashboard UI).
  */
 export interface EmbeddedAuthentication {
   type: "embedded";
