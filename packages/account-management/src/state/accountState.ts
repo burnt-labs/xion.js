@@ -70,9 +70,8 @@ export const AccountStateGuards = {
     state.status === "idle",
 
   /** Check if state is disconnected (user explicitly logged out) */
-  isDisconnected: (
-    state: AccountState,
-  ): state is { status: "disconnected" } => state.status === "disconnected",
+  isDisconnected: (state: AccountState): state is { status: "disconnected" } =>
+    state.status === "disconnected",
 
   /** Check if state is initializing */
   isInitializing: (state: AccountState): state is { status: "initializing" } =>

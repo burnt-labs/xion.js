@@ -10,11 +10,7 @@ import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";
 
 export default function EmbeddedInlinePage(): JSX.Element {
-  const {
-    data: account,
-    isConnected,
-    logout,
-  } = useAbstraxionAccount();
+  const { data: account, isConnected, logout } = useAbstraxionAccount();
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-gray-950 p-6">
@@ -117,7 +113,12 @@ function SessionKeySendCard({ accountAddress }: { accountAddress: string }) {
       <p className="text-xs text-gray-400">
         Signs with grantee keypair — no popup, gasless via fee grant.
       </p>
-      <Button fullWidth onClick={handleSend} disabled={isSending || !client} structure="base">
+      <Button
+        fullWidth
+        onClick={handleSend}
+        disabled={isSending || !client}
+        structure="base"
+      >
         {isSending ? "SENDING..." : "SEND 0.001 XION"}
       </Button>
       {txHash && (
@@ -171,9 +172,7 @@ function DirectSigningCard({ accountAddress }: { accountAddress: string }) {
       <p className="text-xs text-gray-400">
         Signs with meta-account via iframe approval — user pays gas.
       </p>
-      {error && (
-        <p className="text-xs text-red-400">Error: {error}</p>
-      )}
+      {error && <p className="text-xs text-red-400">Error: {error}</p>}
       <Button
         fullWidth
         onClick={handleSend}

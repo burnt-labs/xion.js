@@ -68,7 +68,6 @@ export interface AbstraxionEmbedProps extends HTMLAttributes<HTMLDivElement> {
    * (`width: 420px`, `maxHeight: 90vh`).
    */
   modalStyle?: CSSProperties;
-
 }
 
 // ─── Shared styles ──────────────────────────────────────────────────────────
@@ -290,7 +289,8 @@ export const AbstraxionEmbed = forwardRef<HTMLDivElement, AbstraxionEmbedProps>(
       (isInactive && inactiveView !== "fullview") ||
       (!!abstraxionError && !isFullviewMode);
     const showButton =
-      (isInactive && inactiveView === "button") || (!!abstraxionError && !isFullviewMode);
+      (isInactive && inactiveView === "button") ||
+      (!!abstraxionError && !isFullviewMode);
 
     // ── Compute iframe container style ───────────────────────────────────
     // The container <div> is always in DOM. Its style changes based on state:
@@ -342,7 +342,15 @@ export const AbstraxionEmbed = forwardRef<HTMLDivElement, AbstraxionEmbedProps>(
               aria-label="Close"
               style={closeButtonStyle}
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <path d="M1 1l12 12M13 1 1 13" />
               </svg>
             </button>

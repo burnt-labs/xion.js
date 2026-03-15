@@ -609,7 +609,9 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
         ];
 
         states.forEach((state) => {
-          const action: AccountStateAction = { type: "EXPLICITLY_DISCONNECTED" };
+          const action: AccountStateAction = {
+            type: "EXPLICITLY_DISCONNECTED",
+          };
           const newState = accountStateReducer(state, action);
           expect(newState.status).toBe("disconnected");
         });
@@ -743,7 +745,9 @@ describe("accountState.test.ts - State Machine Breaking Tests", () => {
         ];
 
         states.forEach((state) => {
-          expect(isValidTransition(state, "EXPLICITLY_DISCONNECTED")).toBe(true);
+          expect(isValidTransition(state, "EXPLICITLY_DISCONNECTED")).toBe(
+            true,
+          );
         });
       });
 

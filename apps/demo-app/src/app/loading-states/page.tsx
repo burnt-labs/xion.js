@@ -338,17 +338,29 @@ export default function UILessPage(): JSX.Element {
             </div>
             <div
               className={`mx-2 h-px flex-1 ${
-                isConnected ? "bg-green-400/50" : isDisconnected ? "bg-red-400/50" : "bg-gray-600"
+                isConnected
+                  ? "bg-green-400/50"
+                  : isDisconnected
+                    ? "bg-red-400/50"
+                    : "bg-gray-600"
               }`}
             ></div>
             <div
               className={`flex items-center gap-1 ${
-                isDisconnected ? "text-red-400" : isConnected ? "text-green-400" : "text-gray-600"
+                isDisconnected
+                  ? "text-red-400"
+                  : isConnected
+                    ? "text-green-400"
+                    : "text-gray-600"
               }`}
             >
               <div
                 className={`h-2 w-2 rounded-full ${
-                  isDisconnected ? "animate-pulse bg-red-400" : isConnected ? "animate-pulse bg-green-400" : "bg-gray-600"
+                  isDisconnected
+                    ? "animate-pulse bg-red-400"
+                    : isConnected
+                      ? "animate-pulse bg-green-400"
+                      : "bg-gray-600"
                 }`}
               ></div>
               <span>{isDisconnected ? "Logged Out" : "Ready"}</span>

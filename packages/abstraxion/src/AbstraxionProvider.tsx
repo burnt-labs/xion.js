@@ -300,7 +300,6 @@ export function AbstraxionProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount — config is stable after normalizeAbstraxionConfig
 
-
   // Map state machine state to context props - ALL loading states come from state machine
   const isInitializing = AccountStateGuards.isInitializing(controllerState);
   const isConnecting =

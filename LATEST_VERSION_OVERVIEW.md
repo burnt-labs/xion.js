@@ -112,17 +112,17 @@ function MyPage() {
 
 `<AbstraxionEmbed>` handles all controller wiring. It accepts all standard `<div>` props (`style`, `className`, `ref`, etc.) plus lifecycle control props:
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `idleView` | `"button" \| "fullview" \| "hidden"` | `"button"` | What to show before the user logs in |
-| `disconnectedView` | same | same as `idleView` | What to show after an explicit logout |
-| `connectedView` | `"hidden" \| "visible"` | `"hidden"` | Whether to keep the iframe visible after connecting |
-| `approvalView` | `"modal" \| "inline"` | `"modal"` | How to show the iframe when a `requireAuth` request is pending |
-| `loginLabel` | `ReactNode` | `"Sign in with XION"` | Label for the login button |
-| `loginButtonClassName` | `string` | — | className for the login button |
-| `loginButtonStyle` | `CSSProperties` | — | Inline style for the login button |
-| `modalClassName` | `string` | — | className for the approval modal wrapper |
-| `modalStyle` | `CSSProperties` | — | Override the default modal sizing (`420×600px`) |
+| Prop                   | Type                                 | Default               | Description                                                    |
+| ---------------------- | ------------------------------------ | --------------------- | -------------------------------------------------------------- |
+| `idleView`             | `"button" \| "fullview" \| "hidden"` | `"button"`            | What to show before the user logs in                           |
+| `disconnectedView`     | same                                 | same as `idleView`    | What to show after an explicit logout                          |
+| `connectedView`        | `"hidden" \| "visible"`              | `"hidden"`            | Whether to keep the iframe visible after connecting            |
+| `approvalView`         | `"modal" \| "inline"`                | `"modal"`             | How to show the iframe when a `requireAuth` request is pending |
+| `loginLabel`           | `ReactNode`                          | `"Sign in with XION"` | Label for the login button                                     |
+| `loginButtonClassName` | `string`                             | —                     | className for the login button                                 |
+| `loginButtonStyle`     | `CSSProperties`                      | —                     | Inline style for the login button                              |
+| `modalClassName`       | `string`                             | —                     | className for the approval modal wrapper                       |
+| `modalStyle`           | `CSSProperties`                      | —                     | Override the default modal sizing (`420×600px`)                |
 
 **UX improvements:**
 
@@ -292,9 +292,13 @@ Without `isDisconnected`, the `autoConnect` prop could not tell the difference b
 ```tsx
 // The embed internally guards: autoConnect && !isDisconnected
 // You can use the same flag in your own UI:
-{isDisconnected && (
-  <p>You have been logged out. <button onClick={login}>Sign in again</button></p>
-)}
+{
+  isDisconnected && (
+    <p>
+      You have been logged out. <button onClick={login}>Sign in again</button>
+    </p>
+  );
+}
 ```
 
 ---
@@ -303,15 +307,15 @@ Without `isDisconnected`, the `autoConnect` prop could not tell the difference b
 
 All demos are in [`apps/demo-app/`](apps/demo-app/):
 
-| Demo               | Path                                                                 | What it shows                                                                          |
-| ------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Demo                   | Path                                                                 | What it shows                                                                          |
+| ---------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **Popup Auth**         | [`popup-demo/`](apps/demo-app/src/app/popup-demo/)                   | Auto mode (popup on desktop, redirect on mobile), session-key signing, token transfers |
 | **Embedded (dynamic)** | [`embedded-dynamic/`](apps/demo-app/src/app/embedded-dynamic/)       | Embedded mode with login button that expands to full auth view                         |
 | **Embedded (inline)**  | [`embedded-inline/`](apps/demo-app/src/app/embedded-inline/)         | Embedded mode always shown inline; collapses after connect, modal for approvals        |
-| **Direct Signing**    | [`direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) | MetaMask signer mode comparing session-key vs direct signing side-by-side              |
-| **Signer Mode**       | [`signer-mode/`](apps/demo-app/src/app/signer-mode/)                 | External wallet integration without dashboard                                          |
-| **Abstraxion UI**     | [`abstraxion-ui/`](apps/demo-app/src/app/abstraxion-ui/)             | Pre-built modal component (redirect mode)                                              |
-| **Loading States**    | [`loading-states/`](apps/demo-app/src/app/loading-states/)           | Manual hook usage with custom UI, shows `isDisconnected` state                        |
+| **Direct Signing**     | [`direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) | MetaMask signer mode comparing session-key vs direct signing side-by-side              |
+| **Signer Mode**        | [`signer-mode/`](apps/demo-app/src/app/signer-mode/)                 | External wallet integration without dashboard                                          |
+| **Abstraxion UI**      | [`abstraxion-ui/`](apps/demo-app/src/app/abstraxion-ui/)             | Pre-built modal component (redirect mode)                                              |
+| **Loading States**     | [`loading-states/`](apps/demo-app/src/app/loading-states/)           | Manual hook usage with custom UI, shows `isDisconnected` state                         |
 
 ---
 

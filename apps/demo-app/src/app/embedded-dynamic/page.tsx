@@ -26,11 +26,7 @@ const rainbowKeyframes = `
 `;
 
 export default function EmbeddedDynamicPage(): JSX.Element {
-  const {
-    data: account,
-    isConnected,
-    logout,
-  } = useAbstraxionAccount();
+  const { data: account, isConnected, logout } = useAbstraxionAccount();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-950 p-6">
@@ -72,11 +68,25 @@ export default function EmbeddedDynamicPage(): JSX.Element {
           style={{ height: 600 }}
           /* ── Rainbow login button ────────────────────────────────────── */
           loginLabel={
-            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, position: "relative" }}>
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                position: "relative",
+              }}
+            >
               {/* Animated icon */}
               <svg
-                width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 style={{ filter: "drop-shadow(0 0 4px currentColor)" }}
               >
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
@@ -84,16 +94,19 @@ export default function EmbeddedDynamicPage(): JSX.Element {
                 <line x1="15" y1="12" x2="3" y2="12" />
               </svg>
               {/* Rainbow-clipped text */}
-              <span style={{
-                backgroundImage: "linear-gradient(90deg, #ff0080, #ff8c00, #ffe600, #00ff80, #00cfff, #cc00ff, #ff0080)",
-                backgroundSize: "300% 100%",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-                animation: "rainbow-sweep 2s linear infinite",
-                fontWeight: 800,
-                letterSpacing: "0.15em",
-              }}>
+              <span
+                style={{
+                  backgroundImage:
+                    "linear-gradient(90deg, #ff0080, #ff8c00, #ffe600, #00ff80, #00cfff, #cc00ff, #ff0080)",
+                  backgroundSize: "300% 100%",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                  animation: "rainbow-sweep 2s linear infinite",
+                  fontWeight: 800,
+                  letterSpacing: "0.15em",
+                }}
+              >
                 SIGN IN WITH XION
               </span>
               {/* Sparkles */}
@@ -105,7 +118,8 @@ export default function EmbeddedDynamicPage(): JSX.Element {
             background: "#0a0a0f",
             border: "2px solid transparent",
             backgroundClip: "padding-box",
-            boxShadow: "0 0 16px 2px rgba(255,80,160,0.55), 0 0 40px 6px rgba(80,80,255,0.3), inset 0 0 0 2px rgba(255,255,255,0.06)",
+            boxShadow:
+              "0 0 16px 2px rgba(255,80,160,0.55), 0 0 40px 6px rgba(80,80,255,0.3), inset 0 0 0 2px rgba(255,255,255,0.06)",
             animation: "btn-glow-pulse 3s ease-in-out infinite",
             outline: "2px solid transparent",
             outlineOffset: 2,
@@ -122,19 +136,27 @@ export default function EmbeddedDynamicPage(): JSX.Element {
 
         {/* Tip: bring-your-own button */}
         <details className="rounded-xl border border-white/10 bg-white/5 text-xs text-gray-400">
-          <summary className="cursor-pointer select-none px-4 py-3 font-semibold text-gray-300 hover:text-white transition-colors">
+          <summary className="cursor-pointer select-none px-4 py-3 font-semibold text-gray-300 transition-colors hover:text-white">
             Tip — use your own button instead
           </summary>
           <div className="space-y-2 px-4 pb-4">
             <p>
               If you already have a standard button style, skip{" "}
-              <code className="rounded bg-white/10 px-1 py-0.5 text-purple-300">loginButtonClassName</code>{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-purple-300">
+                loginButtonClassName
+              </code>{" "}
               entirely. Set{" "}
-              <code className="rounded bg-white/10 px-1 py-0.5 text-purple-300">idleView="hidden"</code>{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-purple-300">
+                idleView="hidden"
+              </code>{" "}
               and call{" "}
-              <code className="rounded bg-white/10 px-1 py-0.5 text-purple-300">login()</code>{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-purple-300">
+                login()
+              </code>{" "}
               from{" "}
-              <code className="rounded bg-white/10 px-1 py-0.5 text-purple-300">useAbstraxionAccount()</code>{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-purple-300">
+                useAbstraxionAccount()
+              </code>{" "}
               yourself:
             </p>
             <pre className="overflow-x-auto rounded bg-black/40 p-3 text-[11px] leading-relaxed text-gray-300">{`const { login } = useAbstraxionAccount();
@@ -219,7 +241,12 @@ function SessionKeySendCard({ accountAddress }: { accountAddress: string }) {
       <p className="text-xs text-gray-400">
         Signs with grantee keypair — no popup, gasless via fee grant.
       </p>
-      <Button fullWidth onClick={handleSend} disabled={isSending || !client} structure="base">
+      <Button
+        fullWidth
+        onClick={handleSend}
+        disabled={isSending || !client}
+        structure="base"
+      >
         {isSending ? "SENDING..." : "SEND 0.001 XION"}
       </Button>
       {txHash && (
@@ -273,9 +300,7 @@ function DirectSigningCard({ accountAddress }: { accountAddress: string }) {
       <p className="text-xs text-gray-400">
         Signs with meta-account via iframe approval — user pays gas.
       </p>
-      {error && (
-        <p className="text-xs text-red-400">Error: {error}</p>
-      )}
+      {error && <p className="text-xs text-red-400">Error: {error}</p>}
       <Button
         fullWidth
         onClick={handleSend}

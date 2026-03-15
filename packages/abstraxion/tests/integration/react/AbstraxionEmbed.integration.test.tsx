@@ -225,7 +225,10 @@ describe("AbstraxionEmbed", () => {
 
     const { container } = render(
       <AbstraxionContext.Provider value={context as any}>
-        <AbstraxionEmbed connectedView="hidden" style={{ width: 420, height: 600 }} />
+        <AbstraxionEmbed
+          connectedView="hidden"
+          style={{ width: 420, height: 600 }}
+        />
       </AbstraxionContext.Provider>,
     );
 
@@ -247,7 +250,10 @@ describe("AbstraxionEmbed", () => {
 
     const { container } = render(
       <AbstraxionContext.Provider value={context as any}>
-        <AbstraxionEmbed approvalView="modal" style={{ width: 420, height: 600 }} />
+        <AbstraxionEmbed
+          approvalView="modal"
+          style={{ width: 420, height: 600 }}
+        />
       </AbstraxionContext.Provider>,
     );
 
