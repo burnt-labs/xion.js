@@ -1,4 +1,7 @@
 "use client";
+
+export const dynamic = "force-dynamic";
+
 import { AbstraxionProvider } from "@burnt-labs/abstraxion";
 
 const embeddedModeConfig = {

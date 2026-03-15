@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React from "react";
 import { Providers as MetamaskProviders } from "./providers";
 import { AbstraxionProvider } from "@burnt-labs/abstraxion";
