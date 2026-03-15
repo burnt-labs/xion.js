@@ -286,9 +286,9 @@ describe("Session Management - Integration", () => {
       const afterLogout = await storageStrategy.getItem("abstraxion_granter");
       expect(afterLogout).toBeNull();
 
-      // Verify state is idle
+      // Verify state is disconnected
       const state = controller.getState();
-      expect(state.status).toBe("idle");
+      expect(state.status).toBe("disconnected");
       expect(state.account).toBeUndefined();
 
       console.log("✅ All data cleared on logout");
@@ -329,9 +329,9 @@ describe("Session Management - Integration", () => {
         console.log(`   Cycle ${i + 1} completed`);
       }
 
-      // Final state should be idle
+      // Final state should be disconnected
       const state = controller.getState();
-      expect(state.status).toBe("idle");
+      expect(state.status).toBe("disconnected");
 
       console.log("✅ Rapid cycles handled");
     }, 120000);
@@ -610,7 +610,7 @@ describe("Session Management - Integration", () => {
       // 3. Disconnect
       await controller.disconnect();
       const disconnectedState = controller.getState();
-      expect(disconnectedState.status).toBe("idle");
+      expect(disconnectedState.status).toBe("disconnected");
 
       console.log("   3. Disconnected:", disconnectedState.status);
       console.log("✅ Complete lifecycle validated");
@@ -721,7 +721,7 @@ describe("Session Management - Integration", () => {
       }
 
       const finalState = controller.getState();
-      expect(finalState.status).toBe("idle");
+      expect(finalState.status).toBe("disconnected");
 
       console.log("✅ Rapid cycles handled");
       console.log("   Final state:", finalState.status);
