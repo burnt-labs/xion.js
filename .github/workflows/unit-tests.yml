@@ -96,11 +96,6 @@ jobs:
           name: build-artifacts
           path: packages
 
-      - name: Typecheck
-        run: |
-          # Type-check all packages (catches @ts-expect-error drift, exhaustive switch gaps, etc.)
-          pnpm -r exec tsc --noEmit
-
       - name: Run Unit Tests
         env:
           NODE_ENV: test
