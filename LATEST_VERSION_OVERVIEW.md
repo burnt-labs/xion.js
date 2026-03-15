@@ -100,7 +100,7 @@ function MyPage() {
 
   return (
     <div>
-      {/* Embedded view fills 100% of this component — control sizing via style/className */}
+      {/* Shows a login button by default; expand to fullview or hide as needed */}
       <AbstraxionEmbed style={{ width: 420, height: 600 }} />
 
       {/* Your app content — hooks work exactly like popup/redirect mode */}
@@ -110,17 +110,30 @@ function MyPage() {
 }
 ```
 
-`<AbstraxionEmbed>` handles all controller wiring and auto-connects by default. Pass `autoConnect={false}` to start the flow manually via `login()`. It accepts all standard `<div>` props (`style`, `className`, `ref`, etc.) so sizing and positioning work like any other element.
+`<AbstraxionEmbed>` handles all controller wiring. It accepts all standard `<div>` props (`style`, `className`, `ref`, etc.) plus lifecycle control props:
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `idleView` | `"button" \| "fullview" \| "hidden"` | `"button"` | What to show before the user logs in |
+| `disconnectedView` | same | same as `idleView` | What to show after an explicit logout |
+| `connectedView` | `"hidden" \| "visible"` | `"hidden"` | Whether to keep the iframe visible after connecting |
+| `approvalView` | `"modal" \| "inline"` | `"modal"` | How to show the iframe when a `requireAuth` request is pending |
+| `loginLabel` | `ReactNode` | `"Sign in with XION"` | Label for the login button |
+| `loginButtonClassName` | `string` | — | className for the login button |
+| `loginButtonStyle` | `CSSProperties` | — | Inline style for the login button |
+| `modalClassName` | `string` | — | className for the approval modal wrapper |
+| `modalStyle` | `CSSProperties` | — | Override the default modal sizing (`420×600px`) |
 
 **UX improvements:**
 
 - No popup blocking issues
 - Full control over placement and sizing
-- Auth UI is part of your page layout — can be hidden/resized after connection
+- Auth UI is part of your page layout — collapses to 0×0 when connected (unless `requireAuth` is pending)
+- `approvalView="modal"` surfaces a centered overlay for direct-signing approvals
 - Communication via `MessageChannel` (secure, origin-validated)
 - Same hook API as popup/redirect — just `useAbstraxionAccount` and `useAbstraxionSigningClient`
 
-> **Demo:** See [`apps/demo-app/src/app/inline-demo/`](apps/demo-app/src/app/inline-demo/) for a full working example.
+> **Demos:** See [`apps/demo-app/src/app/embedded-dynamic/`](apps/demo-app/src/app/embedded-dynamic/) (connect button that expands to fullview) and [`apps/demo-app/src/app/embedded-inline/`](apps/demo-app/src/app/embedded-inline/) (always-inline layout) for full working examples.
 
 ### Signer Mode (unchanged from previous version)
 
@@ -189,7 +202,7 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 - High-frequency operations that should be seamless
 - When gasless UX is important (fee grants cover gas)
 
-> **Demo:** See [`apps/demo-app/src/app/direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) — compares session-key vs direct signing with MetaMask (signer mode). Uses the `useMetamask` hook from [`apps/demo-app/src/hooks/useMetamask.ts`](apps/demo-app/src/hooks/useMetamask.ts). - for usage in the traditional flow see [`apps/demo-app/src/app/inline-demo/`](apps/demo-app/src/app/inline-demo/) (or popup demo) which shows how to approve a direct signature from a logged in wallet using social auth like email/google.
+> **Demo:** See [`apps/demo-app/src/app/direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) — compares session-key vs direct signing with MetaMask (signer mode). Uses the `useMetamask` hook from [`apps/demo-app/src/hooks/useMetamask.ts`](apps/demo-app/src/hooks/useMetamask.ts). For the traditional social-auth flow, see [`apps/demo-app/src/app/embedded-dynamic/`](apps/demo-app/src/app/embedded-dynamic/) or the popup demo, which show how to approve a direct signature from a logged-in wallet using social auth like email/Google.
 
 ---
 
@@ -207,7 +220,12 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 
 **Components:**
 
-- `AbstraxionEmbed` — drop-in component for embedded mode (handles controller wiring + auto-connect)
+- `AbstraxionEmbed` — drop-in component for embedded mode with lifecycle control props (`idleView`, `disconnectedView`, `connectedView`, `approvalView`, etc.)
+
+**Context values (from `useAbstraxionAccount` / `AbstraxionContext`):**
+
+- `isDisconnected: boolean` — `true` only after an explicit user logout; prevents `autoConnect` re-login loops
+- `isAwaitingApproval: boolean` — `true` while a `requireAuth` signing request is pending (iframe mode only)
 
 **Controller:**
 
@@ -249,6 +267,35 @@ await client.signAndBroadcast(address, messages, "auto", memo);
 - **WebAuthn scope and URL param cleanup** — fixes passkey credential scope and cleans up `?granted=true` from URL after redirect
 - **Wrong-wallet signing guard** — prevents signing from a wallet that doesn't match the connected account
 - **Empty treasury grant configs** — `DirectQueryTreasuryStrategy` returns empty `grantConfigs` instead of throwing when treasury has no grant configs
+- **Post-logout auto-login loop** — after an explicit logout the state machine now transitions to `disconnected` (not `idle`), preventing `AbstraxionEmbed`'s `autoConnect` from silently re-authenticating the user
+
+## New State: `isDisconnected`
+
+`useAbstraxionAccount` now returns `isDisconnected: boolean`.
+
+This is `true` **only after an explicit user-initiated logout**. It is distinct from `isConnected: false`, which is also true on first load when no session exists.
+
+```tsx
+const { isConnected, isDisconnected, login, logout } = useAbstraxionAccount();
+
+// isDisconnected is false on initial page load (no session yet)
+// isDisconnected becomes true after the user calls logout()
+// isDisconnected resets to false once login() is called again
+```
+
+**Why this matters for embedded mode (`<AbstraxionEmbed autoConnect>`):**
+
+Without `isDisconnected`, the `autoConnect` prop could not tell the difference between "user just logged out" and "user has never logged in". After logout, `autoConnect` would immediately re-trigger `login()`, silently re-authenticating without any user interaction.
+
+`isDisconnected` lets you (and the embed itself) safely gate auto-connect behaviour:
+
+```tsx
+// The embed internally guards: autoConnect && !isDisconnected
+// You can use the same flag in your own UI:
+{isDisconnected && (
+  <p>You have been logged out. <button onClick={login}>Sign in again</button></p>
+)}
+```
 
 ---
 
@@ -258,12 +305,13 @@ All demos are in [`apps/demo-app/`](apps/demo-app/):
 
 | Demo               | Path                                                                 | What it shows                                                                          |
 | ------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **Popup Auth**     | [`popup-demo/`](apps/demo-app/src/app/popup-demo/)                   | Auto mode (popup on desktop, redirect on mobile), session-key signing, token transfers |
-| **Inline Iframe**  | [`inline-demo/`](apps/demo-app/src/app/inline-demo/)                 | Iframe mode with container mounting, session management, connected view                |
-| **Direct Signing** | [`direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) | MetaMask signer mode comparing session-key vs direct signing side-by-side              |
-| **Signer Mode**    | [`signer-mode/`](apps/demo-app/src/app/signer-mode/)                 | External wallet integration without dashboard                                          |
-| **Abstraxion UI**  | [`abstraxion-ui/`](apps/demo-app/src/app/abstraxion-ui/)             | Pre-built modal component (redirect mode)                                              |
-| **Loading States** | [`loading-states/`](apps/demo-app/src/app/loading-states/)           | Manual hook usage with custom UI                                                       |
+| **Popup Auth**         | [`popup-demo/`](apps/demo-app/src/app/popup-demo/)                   | Auto mode (popup on desktop, redirect on mobile), session-key signing, token transfers |
+| **Embedded (dynamic)** | [`embedded-dynamic/`](apps/demo-app/src/app/embedded-dynamic/)       | Embedded mode with login button that expands to full auth view                         |
+| **Embedded (inline)**  | [`embedded-inline/`](apps/demo-app/src/app/embedded-inline/)         | Embedded mode always shown inline; collapses after connect, modal for approvals        |
+| **Direct Signing**    | [`direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) | MetaMask signer mode comparing session-key vs direct signing side-by-side              |
+| **Signer Mode**       | [`signer-mode/`](apps/demo-app/src/app/signer-mode/)                 | External wallet integration without dashboard                                          |
+| **Abstraxion UI**     | [`abstraxion-ui/`](apps/demo-app/src/app/abstraxion-ui/)             | Pre-built modal component (redirect mode)                                              |
+| **Loading States**    | [`loading-states/`](apps/demo-app/src/app/loading-states/)           | Manual hook usage with custom UI, shows `isDisconnected` state                        |
 
 ---
 
