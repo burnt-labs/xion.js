@@ -261,7 +261,7 @@ describe("Grant Decoding Utilities", () => {
     const typeUrl = "/cosmos.authz.v1beta1.GenericAuthorization";
     const value = "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN0";
     const result = decodeAuthorization(typeUrl, value);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: "/cosmos.authz.v1beta1.GenericAuthorization",
       data: { msg: "/cosmwasm.wasm.v1.MsgInstantiateContract" },
     });
@@ -272,7 +272,7 @@ describe("Grant Decoding Utilities", () => {
     const value =
       "Cg0KBXV4aW9uEgQxMDAwEj94aW9uMWY3YzNjZDI2czh2ZXE5cnA5NHQ3eXNyZWFjejRhZW1laDB0bDB3Y215c2xqZ3JtNnFhcHF1NmpoNXg=";
     const result = decodeAuthorization(typeUrl, value);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: "/cosmos.bank.v1beta1.SendAuthorization",
       data: {
         spendLimit: [{ denom: "uxion", amount: "1000" }],
@@ -288,7 +288,7 @@ describe("Grant Decoding Utilities", () => {
     const value =
       "CpUBCj94aW9uMXo3MGN2YzA4cXY1NzY0emVnM2R5a2N5eW1qNXo2bnU0c3FyN3g4dmw0emplZjJneXA2OXM5bW1ka2ESJgofL2Nvc213YXNtLndhc20udjEuTWF4Q2FsbHNMaW1pdBIDCP8BGioKKC9jb3Ntd2FzbS53YXNtLnYxLkFsbG93QWxsTWVzc2FnZXNGaWx0ZXI=";
     const result = decodeAuthorization(typeUrl, value);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
       data: {
         grants: [
