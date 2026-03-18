@@ -1,4 +1,9 @@
-import { GrantsResponse } from "@/types";
+import type { ChainGrant, GrantsResponse } from "@/types";
+import {
+  AuthorizationTypes,
+  ContractExecLimitTypes,
+  ContractExecFilterTypes,
+} from "@/utils/grant/constants";
 
 export const mockValidatorAddress =
   "xionvaloper1q5wtf79lrndrm4uxpxzsqnkahewen47qug7f4h";
@@ -114,6 +119,88 @@ export const mockGrantsResponse: GrantsResponse = {
     total: "7",
   },
 };
+
+export const mockChainGrants: ChainGrant[] = [
+  {
+    granter: mockAccountAddress,
+    grantee: mockAccountAddress,
+    authorization: {
+      type: AuthorizationTypes.Send,
+      data: { spendLimit: [{ denom: "uxion", amount: "1000000" }], allowList: [] } as any,
+    },
+    expiration: "2025-02-13T18:03:09Z",
+  },
+  {
+    granter: mockAccountAddress,
+    grantee: mockAccountAddress,
+    authorization: {
+      type: AuthorizationTypes.Generic,
+      data: { msg: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward" } as any,
+    },
+    expiration: "2025-02-13T18:03:09Z",
+  },
+  {
+    granter: mockAccountAddress,
+    grantee: mockAccountAddress,
+    authorization: {
+      type: AuthorizationTypes.Stake,
+      data: { authorizationType: 3 } as any,
+    },
+    expiration: "2025-02-13T18:03:09Z",
+  },
+  {
+    granter: mockAccountAddress,
+    grantee: mockAccountAddress,
+    authorization: {
+      type: AuthorizationTypes.Generic,
+      data: { msg: "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation" } as any,
+    },
+    expiration: "2025-02-13T18:03:09Z",
+  },
+  {
+    granter: mockAccountAddress,
+    grantee: mockAccountAddress,
+    authorization: {
+      type: AuthorizationTypes.Stake,
+      data: { authorizationType: 1 } as any,
+    },
+    expiration: "2025-02-13T18:03:09Z",
+  },
+  {
+    granter: mockAccountAddress,
+    grantee: mockAccountAddress,
+    authorization: {
+      type: AuthorizationTypes.Stake,
+      data: { authorizationType: 2 } as any,
+    },
+    expiration: "2025-02-13T18:03:09Z",
+  },
+  {
+    granter: mockAccountAddress,
+    grantee: mockAccountAddress,
+    authorization: {
+      type: AuthorizationTypes.ContractExecution,
+      data: {
+        grants: [
+          {
+            address: mockContractAddress,
+            limitType: ContractExecLimitTypes.MaxCalls,
+            maxCalls: "255",
+            filterType: ContractExecFilterTypes.AllowAll,
+          },
+          {
+            address: mockContractAddress,
+            limitType: ContractExecLimitTypes.CombinedLimit,
+            maxCalls: "255",
+            maxFunds: [{ denom: "uxion", amount: "1000000" }],
+            filterType: ContractExecFilterTypes.AllowAll,
+          },
+        ],
+      },
+    },
+    expiration: "2025-02-13T18:03:09Z",
+  },
+];
 
 export const mockGrantsResponseForTreasury: GrantsResponse = {
   grants: [

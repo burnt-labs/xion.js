@@ -1,4 +1,4 @@
-import {
+import type {
   AuthorizationTypes,
   ContractExecFilterTypes,
   ContractExecLimitTypes,
@@ -111,6 +111,18 @@ export interface DecodedReadableAuthorization {
     | StakeAuthorization
     | HumanContractExecAuth
     | null;
+}
+
+/**
+ * A decoded chain grant returned by fetchChainGrantsABCI.
+ * The authorization is already decoded to DecodedReadableAuthorization —
+ * no intermediate REST-format conversion needed.
+ */
+export interface ChainGrant {
+  granter: string;
+  grantee: string;
+  authorization: DecodedReadableAuthorization;
+  expiration: string; // ISO string
 }
 
 // Re-export generated protobuf types from signers
