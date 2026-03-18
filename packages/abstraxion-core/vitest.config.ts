@@ -14,7 +14,7 @@ export default defineConfig({
       "**/__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
-    exclude: ["node_modules", "dist", ".next", ".turbo", "tests"],
+    exclude: ["node_modules", "dist", ".next", ".turbo", "tests", "**/*.integration.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

@@ -96,6 +96,11 @@ export interface DecodedExecuteContracts {
   filterType?: ContractExecFilterTypes;
   messages?: Uint8Array[];
   keys?: string[];
+  // Raw bytes preserved for unknown limit/filter types (enables byte-level comparison fallback)
+  rawLimitTypeUrl?: string;
+  rawLimitValue?: Uint8Array;
+  rawFilterTypeUrl?: string;
+  rawFilterValue?: Uint8Array;
 }
 
 export interface HumanContractExecAuth {

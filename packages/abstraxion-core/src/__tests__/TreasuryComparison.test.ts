@@ -165,10 +165,11 @@ function compareGrantsToTreasuryWithConfigs(
       ),
     );
 
-  return compareChainGrantsToTreasuryGrants(
+  const result = compareChainGrantsToTreasuryGrants(
     decodedChainConfigs,
     decodedTreasuryConfigs,
   );
+  return result.match;
 }
 
 function encodeSendAuthorization(
