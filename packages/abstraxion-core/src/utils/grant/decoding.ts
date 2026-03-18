@@ -85,8 +85,8 @@ export const decodeAuthorization = (
               maxFunds = MaxFundsLimit.decode(grant.limit.value).amounts;
               break;
             case ContractExecLimitTypes.CombinedLimit: {
-              const combined = CombinedLimit.decode(grant.limit.value);
               limitType = ContractExecLimitTypes.CombinedLimit;
+              const combined = CombinedLimit.decode(grant.limit.value);
               maxCalls = combined.callsRemaining.toString();
               maxFunds = combined.amounts;
               break;

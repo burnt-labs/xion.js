@@ -24,7 +24,7 @@ import {
 } from "@cosmjs/stargate";
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { xionGasValues } from "@burnt-labs/constants";
-import { MsgRegisterAccount } from "../../types/generated/abstractaccount/v1/tx";
+import { MsgRegisterAccount } from "@burnt-labs/xion-types/abstractaccount/v1/tx";
 import {
   abstractAccountTypes,
   MsgRegisterAccountEncodeObject,

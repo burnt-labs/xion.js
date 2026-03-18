@@ -31,5 +31,26 @@ export * from "./types/account";
 // API types for AA API v2 interactions
 export * from "./types/api";
 
-// Generated protobuf types (source of truth)
-export { AbstractAccount } from "./types/generated/abstractaccount/v1/account";
+// Protobuf types (from xion-types)
+export type { AbstractAccount } from "@burnt-labs/xion-types/abstractaccount/v1/account";
+
+// DaoDAO Indexer types
+export type {
+  DaoDaoIndexerGrantConfig,
+  DaoDaoIndexerTreasuryParams,
+  DaoDaoIndexerTreasuryAllResponse,
+  DaoDaoIndexerTreasuryGrantConfigsResponse,
+  DaoDaoIndexerTreasuryParamsResponse,
+  DaoDaoIndexerAny,
+} from "./types/generated/daodao-indexer";
+export {
+  isDaoDaoIndexerTreasuryAllResponse,
+  isDaoDaoIndexerGrantConfig,
+} from "./types/generated/daodao-indexer";
+export {
+  DAODAO_TREASURY_ALL_PATH,
+  DAODAO_TREASURY_GRANT_CONFIGS_PATH,
+  DAODAO_TREASURY_PARAMS_PATH,
+  DAODAO_TREASURY_FEE_CONFIG_PATH,
+  DAODAO_TREASURY_BALANCES_PATH,
+} from "./types/generated/daodao-indexer-api";

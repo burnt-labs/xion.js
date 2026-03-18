@@ -23,3 +23,4 @@ export {
   fetchFromDaoDaoIndexer,
   type TreasuryIndexerConfig,
 } from "./utils/indexer/treasury-indexer";
+

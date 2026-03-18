@@ -40,6 +40,97 @@ jobs:
       - name: Run AA API type validation tests
         run: pnpm --filter @burnt-labs/signers test src/__tests__/aa-api-types.test.ts
 
+      - name: Check xion-types version alignment with chain
+        run: |
+          echo "🔍 Checking @burnt-labs/xion-types alignment with xion chain..."
+
+          # Get installed version from the pnpm override (source of truth)
+          INSTALLED=$(jq -r '.pnpm.overrides["@burnt-labs/xion-types"]' package.json)
+          INSTALLED_MAJOR=$(echo "$INSTALLED" | grep -oE '[0-9]+' | head -1)
+          echo "Installed xion-types: $INSTALLED (major: $INSTALLED_MAJOR)"
+
+          # Get latest xion chain release tag from GitHub
+          CHAIN_TAG=$(curl -sf \
+            -H "Accept: application/vnd.github.v3+json" \
+            ${GITHUB_TOKEN:+-H "Authorization: token $GITHUB_TOKEN"} \
+            "https://api.github.com/repos/burnt-labs/xion/releases/latest" \
+            | jq -r '.tag_name')
+          CHAIN_MAJOR=$(echo "$CHAIN_TAG" | grep -oE '[0-9]+' | head -1)
+          echo "Latest xion chain release: $CHAIN_TAG (major: $CHAIN_MAJOR)"
+
+          # Get latest xion-types version from npm
+          NPM_VERSION=$(curl -sf "https://registry.npmjs.org/@burnt-labs/xion-types" \
+            | jq -r '.["dist-tags"].latest // .["dist-tags"].rc')
+          NPM_MAJOR=$(echo "$NPM_VERSION" | grep -oE '[0-9]+' | head -1)
+          echo "Latest npm xion-types: $NPM_VERSION (major: $NPM_MAJOR)"
+
+          echo ""
+          FAILED=false
+
+          # Fail on major version mismatch with chain
+          if [ "$INSTALLED_MAJOR" != "$CHAIN_MAJOR" ]; then
+            echo "❌ Major version mismatch with xion chain!"
+            echo "   Installed: v$INSTALLED_MAJOR (from $INSTALLED)"
+            echo "   Chain:     v$CHAIN_MAJOR (from $CHAIN_TAG)"
+            echo "   Action: Update @burnt-labs/xion-types to match the chain release."
+            FAILED=true
+          fi
+
+          # Fail on major version mismatch with npm
+          if [ "$INSTALLED_MAJOR" != "$NPM_MAJOR" ]; then
+            echo "❌ Major version mismatch with npm!"
+            echo "   Installed: v$INSTALLED_MAJOR (from $INSTALLED)"
+            echo "   npm:       v$NPM_MAJOR (from $NPM_VERSION)"
+            echo "   Action: Run pnpm update @burnt-labs/xion-types"
+            FAILED=true
+          fi
+
+          if [ "$FAILED" = true ]; then
+            exit 1
+          fi
+
+          # Warn on patch/minor drift (non-blocking)
+          INSTALLED_BASE=$(echo "$INSTALLED" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          CHAIN_BASE=$(echo "$CHAIN_TAG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          NPM_BASE=$(echo "$NPM_VERSION" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+
+          if [ -n "$CHAIN_BASE" ] && [ "$INSTALLED_BASE" != "$CHAIN_BASE" ]; then
+            echo "⚠️  Patch/minor drift with chain: installed $INSTALLED vs chain $CHAIN_TAG"
+            echo "   Consider updating to stay in sync with the latest chain release."
+          fi
+
+          if [ "$INSTALLED" != "$NPM_VERSION" ]; then
+            echo "⚠️  Version drift with npm: installed $INSTALLED vs npm $NPM_VERSION"
+            echo "   A newer release may be available."
+          fi
+
+          echo ""
+          echo "✅ xion-types major version ($INSTALLED_MAJOR) matches chain and npm"
+
+      - name: Check xion-types version consistency across packages
+        run: |
+          echo "🔍 Checking @burnt-labs/xion-types version consistency..."
+
+          OVERRIDE=$(jq -r '.pnpm.overrides["@burnt-labs/xion-types"]' package.json)
+          echo "Root override: $OVERRIDE"
+
+          MISMATCH=false
+          for pkg_file in packages/*/package.json; do
+            version=$(jq -r '.dependencies["@burnt-labs/xion-types"] // empty' "$pkg_file")
+            if [ -n "$version" ] && [ "$version" != "$OVERRIDE" ]; then
+              echo "❌ $pkg_file has $version (expected $OVERRIDE)"
+              MISMATCH=true
+            fi
+          done
+
+          if [ "$MISMATCH" = true ]; then
+            echo ""
+            echo "Package versions should match the pnpm override in root package.json."
+            exit 1
+          fi
+
+          echo "✅ All packages use consistent xion-types version: $OVERRIDE"
+
       - name: Check @cosmjs version consistency across packages
         run: |
           echo "🔍 Checking @cosmjs version consistency across all packages..."

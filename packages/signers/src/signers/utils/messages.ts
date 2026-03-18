@@ -1,7 +1,7 @@
 import {
   MsgRegisterAccount,
   MsgRegisterAccountResponse,
-} from "./../../types/generated/abstractaccount/v1/tx";
+} from "@burnt-labs/xion-types/abstractaccount/v1/tx";
 import { GeneratedType, EncodeObject } from "@cosmjs/proto-signing";
 
 export const typeUrlMsgRegisterAccount =

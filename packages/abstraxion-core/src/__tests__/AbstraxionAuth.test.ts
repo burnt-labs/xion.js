@@ -10,6 +10,7 @@ import {
   MockStorageStrategy,
 } from "@burnt-labs/test-utils/mocks";
 import {
+  mockChainGrants,
   mockGrantsResponse,
   mockLegacyConfig,
 } from "./fixtures/grantResponses";
@@ -151,7 +152,7 @@ describe("AbstraxionAuth", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
+        abstraxionAuth.compareGrantsToLegacyConfig(mockChainGrants);
       expect(result).toBe(true);
     });
 
@@ -161,7 +162,7 @@ describe("AbstraxionAuth", () => {
       abstraxionAuth.bank = [{ denom: "uxion", amount: "200" }];
 
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
+        abstraxionAuth.compareGrantsToLegacyConfig(mockChainGrants);
       expect(result).toBe(false);
     });
 
@@ -176,7 +177,7 @@ describe("AbstraxionAuth", () => {
       ];
 
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
+        abstraxionAuth.compareGrantsToLegacyConfig(mockChainGrants);
       expect(result).toBe(false);
     });
 
@@ -186,24 +187,15 @@ describe("AbstraxionAuth", () => {
       abstraxionAuth.stake = false;
 
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
+        abstraxionAuth.compareGrantsToLegacyConfig(mockChainGrants);
       expect(result).toBe(true);
     });
 
     it("should return false when no grants are found", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
-      // Empty grants response
-      const emptyGrantsResponse = {
-        grants: [],
-        pagination: {
-          next_key: null,
-          total: "0",
-        },
-      };
-
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(emptyGrantsResponse);
+        abstraxionAuth.compareGrantsToLegacyConfig([]);
       expect(result).toBe(false);
     });
   });
