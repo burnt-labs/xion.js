@@ -22,7 +22,7 @@ import {
   SigningStargateClientOptions,
   StdFee,
 } from "@cosmjs/stargate";
-import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
+import { Comet38Client, CometClient } from "@cosmjs/tendermint-rpc";
 import { xionGasValues } from "@burnt-labs/constants";
 import { MsgRegisterAccount } from "@burnt-labs/xion-types/abstractaccount/v1/tx";
 import {
@@ -74,8 +74,8 @@ export class AAClient extends SigningCosmWasmClient {
     signer: AASigner,
     options: SigningStargateClientOptions = {},
   ): Promise<AAClient> {
-    const tmClient = await Tendermint37Client.connect(endpoint);
-    return new AAClient(tmClient, signer, {
+    const cometClient = await Comet38Client.connect(endpoint);
+    return new AAClient(cometClient, signer, {
       registry: createDefaultRegistry(),
       ...options,
       accountParser: customAccountFromAny,
@@ -83,11 +83,11 @@ export class AAClient extends SigningCosmWasmClient {
   }
 
   protected constructor(
-    tmClient: Tendermint37Client | undefined,
+    cometClient: CometClient | undefined,
     signer: AASigner,
     options: SigningStargateClientOptions,
   ) {
-    super(tmClient, signer, options);
+    super(cometClient, signer, options);
     this.abstractSigner = signer;
   }
 
