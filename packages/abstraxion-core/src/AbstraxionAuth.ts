@@ -2,6 +2,7 @@ import { GasPrice } from "@cosmjs/stargate";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import type { AccountData } from "@cosmjs/proto-signing";
 import type {
+  ChainGrant,
   ContractGrantDescription,
   DecodedReadableAuthorization,
   GrantsResponse,
@@ -17,8 +18,8 @@ import {
   compareContractGrants,
   compareStakeGrants,
   decodeAuthorization,
-  decodeRestFormatAuthorization,
   fetchChainGrantsABCI,
+  fetchChainGrantsDecoded,
   getTreasuryGrantConfigs,
 } from "@/utils/grant";
 import { fetchConfig, getRpcClient } from "@/utils";
@@ -365,12 +366,12 @@ export class AbstraxionAuth {
   /**
    * Compares treasury grant configurations with the grants on-chain to ensure they match.
    *
-   * @param {GrantsResponse} grantsResponse - The grants currently existing on-chain.
+   * @param {ChainGrant[]} chainGrants - The decoded chain grants (from fetchChainGrantsDecoded).
    * @returns {Promise<boolean>} - Returns a promise that resolves to `true` if all treasury grants match chain grants; otherwise, `false`.
    * @throws {Error} - Throws an error if the treasury contract is missing.
    */
   async compareGrantsToTreasury(
-    grantsResponse: GrantsResponse,
+    chainGrants: ChainGrant[],
   ): Promise<boolean> {
     if (!this.treasury) {
       throw new Error("Missing treasury");
@@ -389,7 +390,6 @@ export class AbstraxionAuth {
       );
     }
 
-    // Use the new combined function to get treasury grant configs directly
     const treasuryGrantConfigs = await getTreasuryGrantConfigs(
       cosmwasmClient,
       this.treasury,
@@ -397,38 +397,24 @@ export class AbstraxionAuth {
       this.treasuryIndexerUrl,
     );
 
-    const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
-      treasuryGrantConfigs.map((treasuryGrantConfig) => {
-        return decodeAuthorization(
-          treasuryGrantConfig.authorization.type_url,
-          treasuryGrantConfig.authorization.value,
-        );
-      });
-
-    // Chain grants from fetchChainGrantsABCI are already decoded to REST format
-    // (with "@type" and snake_case fields). Convert to DecodedReadableAuthorization.
-    const decodedChainConfigs: DecodedReadableAuthorization[] =
-      grantsResponse.grants.map((grantResponse) => {
-        return decodeRestFormatAuthorization(grantResponse.authorization);
-      });
-
-    return compareChainGrantsToTreasuryGrants(
-      decodedChainConfigs,
-      decodedTreasuryConfigs,
+    return this.compareGrantsToTreasuryWithConfigs(
+      chainGrants,
+      treasuryGrantConfigs,
     );
   }
 
   /**
-   * Compares pre-fetched treasury grant configurations with the grants on-chain to ensure they match.
+   * Compares pre-fetched treasury grant configurations with decoded chain grants.
+   * Uses the direct decode pipeline — no REST-format intermediate step.
    *
-   * @param {GrantsResponse} grantsResponse - The grants currently existing on-chain.
+   * @param {ChainGrant[]} chainGrants - Decoded chain grants (from fetchChainGrantsDecoded).
    * @param {TreasuryGrantConfig[]} treasuryGrantConfigs - Pre-fetched treasury grant configurations.
-   * @returns {Promise<boolean>} - Returns a promise that resolves to `true` if all treasury grants match chain grants; otherwise, `false`.
+   * @returns {boolean} - Returns `true` if all treasury grants match chain grants; otherwise, `false`.
    */
-  async compareGrantsToTreasuryWithConfigs(
-    grantsResponse: GrantsResponse,
+  compareGrantsToTreasuryWithConfigs(
+    chainGrants: ChainGrant[],
     treasuryGrantConfigs: TreasuryGrantConfig[],
-  ): Promise<boolean> {
+  ): boolean {
     const decodedTreasuryConfigs: DecodedReadableAuthorization[] =
       treasuryGrantConfigs.map((treasuryGrantConfig) => {
         return decodeAuthorization(
@@ -437,17 +423,32 @@ export class AbstraxionAuth {
         );
       });
 
-    // Chain grants from fetchChainGrantsABCI are already decoded to REST format
-    // (with "@type" and snake_case fields). Convert to DecodedReadableAuthorization.
+    // Chain grants are already decoded via fetchChainGrantsDecoded — extract directly
     const decodedChainConfigs: DecodedReadableAuthorization[] =
-      grantsResponse.grants.map((grantResponse) => {
-        return decodeRestFormatAuthorization(grantResponse.authorization);
-      });
+      chainGrants.map((grant) => grant.authorization);
 
-    return compareChainGrantsToTreasuryGrants(
+    const result = compareChainGrantsToTreasuryGrants(
       decodedChainConfigs,
       decodedTreasuryConfigs,
     );
+
+    if (!result.match && result.reason === "decode_error") {
+      // Decode errors indicate proto changes, not actual grant mismatches.
+      // Log a warning but don't force logout — this is the core resilience improvement.
+      console.warn(
+        `[AbstraxionAuth] Grant comparison decode error: ${result.detail}. ` +
+          `This may indicate a protobuf format change. Session preserved.`,
+      );
+      return true;
+    }
+
+    if (!result.match) {
+      console.debug(
+        `[AbstraxionAuth] Grant comparison failed: ${result.reason} — ${result.detail}`,
+      );
+    }
+
+    return result.match;
   }
 
   /**
@@ -477,11 +478,8 @@ export class AbstraxionAuth {
 
     while (retries < maxRetries) {
       try {
-        let data: GrantsResponse;
-        let treasuryGrantConfigs: TreasuryGrantConfig[] | undefined;
-
-        // If treasury mode, fetch both chain grants and treasury configs in parallel
         if (this.treasury) {
+          // Treasury mode: use direct decode pipeline (no REST intermediate)
           if (!this.treasuryIndexerUrl) {
             throw new Error(
               "Treasury indexer URL is required when using treasury mode",
@@ -491,45 +489,48 @@ export class AbstraxionAuth {
           const cosmwasmClient =
             this.cosmwasmQueryClient || (await this.getCosmWasmClient());
 
-          const [chainGrantsResponse, treasuryConfigs] = await Promise.all([
-            fetchChainGrantsABCI(grantee, granter, this.rpcUrl),
+          const [chainGrants, treasuryGrantConfigs] = await Promise.all([
+            fetchChainGrantsDecoded(grantee, granter, this.rpcUrl!),
             getTreasuryGrantConfigs(
               cosmwasmClient,
               this.treasury,
-              this.rpcUrl,
+              this.rpcUrl!,
               this.treasuryIndexerUrl,
             ),
           ]);
 
-          data = chainGrantsResponse;
-          treasuryGrantConfigs = treasuryConfigs;
-        } else {
-          // Legacy mode - only fetch chain grants
-          data = await fetchChainGrantsABCI(grantee, granter, this.rpcUrl);
-        }
+          if (chainGrants.length === 0) {
+            return false;
+          }
 
-        if (data.grants.length === 0) {
-          return false;
-        }
+          const currentTime = new Date().toISOString();
+          const validGrant = chainGrants.some((grant) => {
+            return !grant.expiration || grant.expiration > currentTime;
+          });
 
-        // Check expiration for each grant
-        const currentTime = new Date().toISOString();
-        const validGrant = data.grants.some((grant) => {
-          const { expiration } = grant;
-          return !expiration || expiration > currentTime;
-        });
-
-        let isValid: boolean;
-        if (this.treasury && treasuryGrantConfigs) {
-          isValid = await this.compareGrantsToTreasuryWithConfigs(
-            data,
+          const isValid = this.compareGrantsToTreasuryWithConfigs(
+            chainGrants,
             treasuryGrantConfigs,
           );
-        } else {
-          isValid = this.compareGrantsToLegacyConfig(data);
-        }
 
-        return validGrant && isValid;
+          return validGrant && isValid;
+        } else {
+          // Legacy mode: fetch chain grants in REST format for legacy compare functions
+          const data = await fetchChainGrantsABCI(grantee, granter, this.rpcUrl);
+
+          if (data.grants.length === 0) {
+            return false;
+          }
+
+          const currentTime = new Date().toISOString();
+          const validGrant = data.grants.some((grant) => {
+            return !grant.expiration || grant.expiration > currentTime;
+          });
+
+          const isValid = this.compareGrantsToLegacyConfig(data);
+
+          return validGrant && isValid;
+        }
       } catch (error) {
         console.error(
           `[AbstraxionAuth.pollForGrants] Retry ${retries + 1}/${maxRetries} failed:`,

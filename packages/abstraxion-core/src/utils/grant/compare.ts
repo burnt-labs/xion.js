@@ -15,6 +15,28 @@ import {
 } from "@/utils/grant/constants";
 
 /**
+ * Typed result from grant comparison, differentiating decode errors from missing/mismatched grants.
+ */
+export type GrantComparisonResult =
+  | { match: true }
+  | { match: false; reason: "grant_missing" | "grant_mismatch" | "decode_error"; detail: string };
+
+/**
+ * Compare two Uint8Array values for byte-level equality.
+ */
+export function bytesEqual(
+  a: Uint8Array | undefined,
+  b: Uint8Array | undefined,
+): boolean {
+  if (a === undefined || b === undefined) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+/**
  * Type guard to check if data is HumanContractExecAuth
  */
 function isHumanContractExecAuth(
@@ -168,20 +190,20 @@ export const validateContractExecution = (
         // Compare messages byte by byte
         const messagesMatch = decodedTreasuryMessages.every((msg, index) => {
           const chainMsg = decodedChainMessages[index];
-          if (msg.length !== chainMsg.length) {
-            return false;
-          }
-          for (let i = 0; i < msg.length; i++) {
-            if (msg[i] !== chainMsg[i]) {
-              return false;
-            }
-          }
-          return true;
+          return bytesEqual(msg, chainMsg);
         });
         if (!messagesMatch) {
           return false;
         }
-      } else if (chainGrant.filterType) {
+      } else if (treasuryGrant.rawFilterTypeUrl) {
+        // Unknown filter type — fall back to raw byte comparison
+        if (
+          treasuryGrant.rawFilterTypeUrl !== chainGrant.rawFilterTypeUrl ||
+          !bytesEqual(treasuryGrant.rawFilterValue, chainGrant.rawFilterValue)
+        ) {
+          return false;
+        }
+      } else if (chainGrant.filterType || chainGrant.rawFilterTypeUrl) {
         return false;
       }
 
@@ -217,7 +239,14 @@ export const validateContractExecution = (
           );
 
         default:
-          return false;
+          // Unknown limit type — fall back to raw byte comparison.
+          // If both sides carry the same unrecognized typeUrl and identical
+          // encoded bytes, the limits match regardless of whether we can decode them.
+          return (
+            treasuryGrant.rawLimitTypeUrl !== undefined &&
+            treasuryGrant.rawLimitTypeUrl === matchingChainGrant.rawLimitTypeUrl &&
+            bytesEqual(treasuryGrant.rawLimitValue, matchingChainGrant.rawLimitValue)
+          );
       }
     });
 
@@ -230,21 +259,33 @@ export const validateContractExecution = (
  *
  * @param {DecodedReadableAuthorization[]} decodedChainConfigs - The decoded grants currently existing on-chain.
  * @param {DecodedReadableAuthorization[]} decodedTreasuryConfigs - The decoded treasury grant configurations to compare against.
- * @returns {boolean} - Returns `true` if all treasury grants match chain grants; otherwise, `false`.
+ * @returns {GrantComparisonResult} - Typed result differentiating match, missing, mismatch, and decode errors.
  */
 export function compareChainGrantsToTreasuryGrants(
   decodedChainConfigs: DecodedReadableAuthorization[],
   decodedTreasuryConfigs: DecodedReadableAuthorization[],
-): boolean {
-  return decodedTreasuryConfigs.every((treasuryConfig) => {
-    return decodedChainConfigs.find((chainConfig) => {
-      const chainAuthType = chainConfig.type;
-      const isTypeMatch = chainAuthType === treasuryConfig.type;
+): GrantComparisonResult {
+  for (const treasuryConfig of decodedTreasuryConfigs) {
+    // Detect decode errors — if either side decoded as Unsupported, it's a decode issue
+    if (treasuryConfig.type === AuthorizationTypes.Unsupported) {
+      return {
+        match: false,
+        reason: "decode_error",
+        detail: `Treasury grant decoded as Unsupported`,
+      };
+    }
 
+    const matchingChain = decodedChainConfigs.find((chainConfig) => {
+      if (chainConfig.type === AuthorizationTypes.Unsupported) {
+        return false; // Will be caught below as decode_error if no other match
+      }
+
+      const isTypeMatch = chainConfig.type === treasuryConfig.type;
       if (!isTypeMatch) return false;
 
+      const chainAuthType = chainConfig.type;
+
       if (chainAuthType === AuthorizationTypes.Generic) {
-        // Use type guards for safe type narrowing
         if (
           !isGenericAuthorization(chainConfig.data) ||
           !isGenericAuthorization(treasuryConfig.data)
@@ -255,7 +296,6 @@ export function compareChainGrantsToTreasuryGrants(
       }
 
       if (chainAuthType === AuthorizationTypes.Send) {
-        // Use type guards for safe type narrowing
         if (
           !isSendAuthorization(chainConfig.data) ||
           !isSendAuthorization(treasuryConfig.data)
@@ -273,7 +313,6 @@ export function compareChainGrantsToTreasuryGrants(
       }
 
       if (chainAuthType === AuthorizationTypes.Stake) {
-        // Use type guards for safe type narrowing
         if (
           !isStakeAuthorization(chainConfig.data) ||
           !isStakeAuthorization(treasuryConfig.data)
@@ -301,7 +340,33 @@ export function compareChainGrantsToTreasuryGrants(
 
       return false;
     });
-  });
+
+    if (!matchingChain) {
+      // Check if any chain config has Unsupported type (decode error)
+      const hasDecodeError = decodedChainConfigs.some(
+        (c) => c.type === AuthorizationTypes.Unsupported,
+      );
+      if (hasDecodeError) {
+        return {
+          match: false,
+          reason: "decode_error",
+          detail: `Chain grant decoded as Unsupported for expected type ${treasuryConfig.type}`,
+        };
+      }
+
+      // Check if the type exists but doesn't match (mismatch vs missing)
+      const sameTypeExists = decodedChainConfigs.some(
+        (c) => c.type === treasuryConfig.type,
+      );
+      return {
+        match: false,
+        reason: sameTypeExists ? "grant_mismatch" : "grant_missing",
+        detail: `Treasury expects ${treasuryConfig.type}`,
+      };
+    }
+  }
+
+  return { match: true };
 }
 
 //   =============================== Legacy Config Utils ============================
