@@ -137,6 +137,33 @@ describe("createCompositeTreasuryStrategy", () => {
     });
   });
 
+  describe("racing option", () => {
+    it("should default to sequential mode (racing false)", () => {
+      const strategy = createCompositeTreasuryStrategy({
+        daodao: { indexerUrl: "https://daodao.example.com" },
+      });
+
+      expect((strategy as any).racing).toBe(false);
+    });
+
+    it("should enable racing mode when racing is true", () => {
+      const strategy = createCompositeTreasuryStrategy({
+        daodao: { indexerUrl: "https://daodao.example.com" },
+        racing: true,
+      });
+
+      expect((strategy as any).racing).toBe(true);
+    });
+
+    it("should pass racing option with direct query only", () => {
+      const strategy = createCompositeTreasuryStrategy({
+        racing: true,
+      });
+
+      expect((strategy as any).racing).toBe(true);
+    });
+  });
+
   describe("strategy order", () => {
     it("should place DaoDaoTreasuryStrategy first when configured", () => {
       const strategy = createCompositeTreasuryStrategy({
