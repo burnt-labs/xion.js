@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-03-16T00:00:00.000Z",
+  "generated_at": "2026-04-01T12:13:50.794Z",
   "schema_title": "DAO DAO API",
   "schema_version": "0.0.1",
-  "schema_url": "https://daodaoindexer.burnt.com/openapi.json",
+  "schema_url": "https://daodaoindexer.burnt.com/xion-testnet-2/openapi.json",
   "path_count": 340,
-  "source_env": "local-daodao-indexer-build"
+  "source_env": "testnet"
 }
