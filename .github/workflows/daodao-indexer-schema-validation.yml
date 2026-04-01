@@ -10,7 +10,7 @@ on:
         description: 'DaoDAO Indexer URL to validate against'
         required: false
         type: string
-        default: 'https://daodaoindexer.burnt.com'
+        default: 'https://daodaoindexer.burnt.com/xion-testnet-2'
 
 jobs:
   validate-schema:
@@ -40,7 +40,7 @@ jobs:
           if [ -n "${{ github.event.inputs.daodao_indexer_url }}" ]; then
             DAODAO_INDEXER_URL="${{ github.event.inputs.daodao_indexer_url }}"
           else
-            DAODAO_INDEXER_URL="https://daodaoindexer.burnt.com"
+            DAODAO_INDEXER_URL="https://daodaoindexer.burnt.com/xion-testnet-2"
           fi
           echo "daodao_indexer_url=$DAODAO_INDEXER_URL" >> $GITHUB_OUTPUT
 

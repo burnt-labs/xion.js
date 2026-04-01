@@ -25,6 +25,9 @@ export * from "./crypto";
 // Fee and gas calculation utilities
 export * from "./fees";
 
+// Transaction payload transport utilities (SDK ↔ Dashboard)
+export * from "./tx-payload";
+
 // Domain types (source of truth for account types)
 export * from "./types/account";
 
@@ -42,12 +45,10 @@ export type {
   DaoDaoIndexerTreasuryGrantConfigsResponse,
   DaoDaoIndexerTreasuryParamsResponse,
   DaoDaoIndexerAny,
-} from "./types/generated/daodao-indexer";
+} from "./types/generated/daodao-indexer-api";
 export {
   isDaoDaoIndexerTreasuryAllResponse,
   isDaoDaoIndexerGrantConfig,
-} from "./types/generated/daodao-indexer";
-export {
   DAODAO_TREASURY_ALL_PATH,
   DAODAO_TREASURY_GRANT_CONFIGS_PATH,
   DAODAO_TREASURY_PARAMS_PATH,

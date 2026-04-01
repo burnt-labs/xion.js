@@ -9,9 +9,7 @@
  * 1. Fetches OpenAPI schema from DaoDAO Indexer endpoint (or uses local build)
  * 2. Generates TypeScript path types using openapi-typescript
  * 3. Writes to packages/signers/src/types/generated/
- * Note: DaoDAO Indexer response schemas are not typed in the OpenAPI spec (only paths/params).
- * Response body types live in signers/src/types/generated/daodao-indexer.ts as manual interfaces.
- * When the indexer adds response schemas, they will automatically appear in the generated file.
+ * Response body types are derived from the generated operations in daodao-indexer-api.ts.
  */
 
 import { execSync } from "child_process";
@@ -23,8 +21,10 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Chain ID prefix is required by the Cloudflare routing layer in front of Argus.
+// The static /openapi.json file is served after the chain prefix is stripped.
 const DAODAO_INDEXER_URLS: Record<string, string> = {
-  testnet: "https://daodaoindexer.burnt.com",
+  testnet: "https://daodaoindexer.burnt.com/xion-testnet-2",
   local: "http://localhost:3420",
 };
 
@@ -112,10 +112,7 @@ async function main() {
   console.log(`   - ${GENERATED_FILE}`);
   console.log(`   - ${METADATA_FILE}`);
   console.log(
-    `\nNote: Response body types are in signers/src/types/generated/daodao-indexer.ts`,
-  );
-  console.log(
-    `   Once the indexer adds response schemas, they will auto-appear in the generated file.`,
+    `\nNote: Response type aliases are derived from operations in daodao-indexer-api.ts`,
   );
 }
 
