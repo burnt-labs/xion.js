@@ -27,7 +27,7 @@
     "@turnkey/react-wallet-kit": "^1.4.1",
     "@turnkey/viem": "^0.14.10",
     "cosmjs-types": "^0.9.0",
-    "next": "^14.0.3",
+    "next": "^15.5.14",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "viem": "^2.38.5"
@@ -37,7 +37,7 @@
     "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/tsconfig": "workspace:*",
     "@next/eslint-plugin-next": "^13.4.19",
-    "@opennextjs/cloudflare": "^1.0.4",
+    "@opennextjs/cloudflare": "^1.17.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^20",
     "@types/react": "^18.2.47",
@@ -47,6 +47,6 @@
     "postcss": "^8.4.20",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.2.2",
-    "wrangler": "^4.16.0"
+    "wrangler": "^4.59.1"
   }
 }
