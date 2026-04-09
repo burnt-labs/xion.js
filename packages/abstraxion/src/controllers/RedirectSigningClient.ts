@@ -5,7 +5,7 @@
  * interface as GranteeSignerClient, AAClient, and PopupSigningClient, but
  * delegates to RedirectController.promptSignAndBroadcast() — which navigates to the
  * dashboard signing view. The page navigates away; on return, the result is
- * available via RedirectController.getSignResult().
+ * available via RedirectController.signResult.get().
  *
  * Returned by useAbstraxionSigningClient({ requireAuth: true }) in redirect mode.
  */

@@ -7399,7 +7399,7 @@ export interface operations {
             };
         };
     };
-    cwPayrollFactory_listVestingContractsByInstantia_eafa46d: {
+    cwPayrollFactory_listVestingContractsByInstantia_eafa46d_startBefore: {
         parameters: {
             query: {
                 /** @description address of the instantiator */
@@ -7473,7 +7473,7 @@ export interface operations {
             };
         };
     };
-    cwPayrollFactory_listVestingContractsByRecipient_b617620: {
+    cwPayrollFactory_listVestingContractsByRecipient_b617620_startBefore: {
         parameters: {
             query: {
                 /** @description address of the recipient */

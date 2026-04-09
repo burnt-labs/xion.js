@@ -38,6 +38,7 @@ import {
   MsgExecuteContractEncodeObject,
 } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
+import { MsgTransfer } from "cosmjs-types/ibc/applications/transfer/v1/tx";
 import {
   AddAuthenticator,
   RemoveAuthenticator,
@@ -53,6 +54,7 @@ export const AADefaultRegistryTypes: ReadonlyArray<[string, GeneratedType]> = [
   ...defaultRegistryTypes,
   ...wasmTypes,
   ...abstractAccountTypes,
+  ["/ibc.applications.transfer.v1.MsgTransfer", MsgTransfer],
 ];
 function createDefaultRegistry(): Registry {
   return new Registry(AADefaultRegistryTypes);
@@ -126,7 +128,7 @@ export class AAClient extends SigningCosmWasmClient {
       gasAdjustmentMargin,
     } = xionGasValues;
 
-    const simmedGas = await this.simulate(sender, messages, memo);
+    const simmedGas = await this.si2mulate(sender, messages, memo);
     const gasPrice = GasPrice.fromString(gasPriceString);
     const calculatedFee: StdFee = calculateFee(simmedGas, gasPrice);
 

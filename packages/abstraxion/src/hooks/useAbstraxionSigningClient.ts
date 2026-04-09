@@ -162,27 +162,14 @@ export const useAbstraxionSigningClient = (
 
   // Read sign result from RedirectController via useSyncExternalStore so the
   // hook re-renders whenever signResult changes (set during init, cleared by consumer).
-  const subscribeToSignResult = useCallback(
-    (onStoreChange: () => void) => {
-      if (!redirectController) return () => {};
-      return redirectController.subscribeToSignResult(onStoreChange);
-    },
-    [redirectController],
-  );
-
-  const getSignResultSnapshot = useCallback(
-    () => redirectController?.getSignResultSnapshot() ?? null,
-    [redirectController],
-  );
-
   const signResult = useSyncExternalStore(
-    subscribeToSignResult,
-    getSignResultSnapshot,
-    getSignResultSnapshot, // server snapshot — always null
+    (cb) => redirectController?.signResult.subscribe(cb) ?? (() => {}),
+    () => redirectController?.signResult.snapshot() ?? null,
+    () => null,
   );
 
   const clearSignResult = useCallback(() => {
-    redirectController?.clearSignResult();
+    redirectController?.signResult.clear();
   }, [redirectController]);
 
   // Create AAClient when requireAuth is true and in signer mode

@@ -5,3 +5,7 @@ export {
   type UseAbstraxionSigningClientReturn,
 } from "./useAbstraxionSigningClient";
 export { useAbstraxionClient } from "./useAbstraxionClient";
+export {
+  useAddAuthenticators,
+  type UseAddAuthenticatorsReturn,
+} from "./useAddAuthenticators";

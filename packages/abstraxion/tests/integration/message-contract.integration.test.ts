@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { IframeMessageType, MessageTarget } from "@burnt-labs/abstraxion-core";
+import { IframeMessageType, MessageTarget, DashboardMessageType } from "@burnt-labs/abstraxion-core";
 
 describe("SDK ↔ Dashboard Message Contract", () => {
   describe("Iframe MessageType enum values", () => {
@@ -123,6 +123,25 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       expect(msg.type).toBe("SIGN_ERROR");
       expect(msg.message).toBeTruthy();
     });
+
+    it("ADD_AUTHENTICATOR_SUCCESS has no required fields", () => {
+      const msg = { type: DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS };
+      expect(msg.type).toBe("ADD_AUTHENTICATOR_SUCCESS");
+    });
+
+    it("ADD_AUTHENTICATOR_REJECTED has no required fields", () => {
+      const msg = { type: DashboardMessageType.ADD_AUTHENTICATOR_REJECTED };
+      expect(msg.type).toBe("ADD_AUTHENTICATOR_REJECTED");
+    });
+
+    it("ADD_AUTHENTICATOR_ERROR includes message field", () => {
+      const msg = {
+        type: DashboardMessageType.ADD_AUTHENTICATOR_ERROR,
+        message: "Passkey registration failed",
+      };
+      expect(msg.type).toBe("ADD_AUTHENTICATOR_ERROR");
+      expect(msg.message).toBeTruthy();
+    });
   });
 
   describe("Embedded iframe push messages", () => {
@@ -167,6 +186,23 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       });
     });
 
+    describe("add-authenticator callback params", () => {
+      it("add_auth_success=true signals completed add", () => {
+        const params = new URLSearchParams("?add_auth_success=true");
+        expect(params.get("add_auth_success")).toBe("true");
+      });
+
+      it("add_auth_rejected=true signals user cancellation", () => {
+        const params = new URLSearchParams("?add_auth_rejected=true");
+        expect(params.get("add_auth_rejected")).toBe("true");
+      });
+
+      it("add_auth_error carries URL-encoded error message", () => {
+        const params = new URLSearchParams("?add_auth_error=Passkey%20registration%20failed");
+        expect(decodeURIComponent(params.get("add_auth_error")!)).toBe("Passkey registration failed");
+      });
+    });
+
     describe("SDK → dashboard URL params", () => {
       it("popup mode sends correct params", () => {
         // This is the URL format the SDK builds for popup auth
@@ -199,6 +235,17 @@ describe("SDK ↔ Dashboard Message Contract", () => {
         expect(url.searchParams.get("mode")).toBe("sign");
         expect(url.searchParams.get("tx")).toBeTruthy();
         expect(url.searchParams.get("granter")).toBeTruthy();
+      });
+
+      it("add-authenticators popup/redirect sends correct params", () => {
+        const url = new URL("https://dashboard.burnt.com");
+        url.searchParams.set("mode", "add-authenticators");
+        url.searchParams.set("granter", "xion1user");
+        url.searchParams.set("redirect_uri", "https://myapp.com");
+
+        expect(url.searchParams.get("mode")).toBe("add-authenticators");
+        expect(url.searchParams.get("granter")).toBeTruthy();
+        expect(url.searchParams.get("redirect_uri")).toBeTruthy();
       });
     });
   });

@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AAClient } from "../utils/client";
 import { AASigner } from "../../interfaces";
-import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
+import { Comet38Client } from "@cosmjs/tendermint-rpc";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 const { mockSimulate } = vi.hoisted(() => ({ mockSimulate: vi.fn() }));
 
 // Mock dependencies
 vi.mock("@cosmjs/tendermint-rpc", () => ({
-  Tendermint37Client: {
+  Comet38Client: {
     connect: vi.fn(),
   },
 }));
@@ -108,13 +108,13 @@ describe("AAClient", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    (Tendermint37Client.connect as any).mockResolvedValue({});
+    (Comet38Client.connect as any).mockResolvedValue({});
     client = await AAClient.connectWithSigner(mockEndpoint, mockSigner);
   });
 
   it("should connect with signer", async () => {
     expect(client).toBeDefined();
-    expect(Tendermint37Client.connect).toHaveBeenCalledWith(mockEndpoint);
+    expect(Comet38Client.connect).toHaveBeenCalledWith(mockEndpoint);
     expect(client.abstractSigner).toBe(mockSigner);
   });
 

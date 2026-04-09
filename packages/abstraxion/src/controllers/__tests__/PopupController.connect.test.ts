@@ -373,6 +373,7 @@ describe("PopupController — happy paths", () => {
         "auto",
         "test memo",
       );
+      await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
         { type: DashboardMessageType.SIGN_SUCCESS, txHash: "ABCDEF1234567890" },
@@ -392,6 +393,7 @@ describe("PopupController — happy paths", () => {
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
         "auto",
       );
+      await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
         { type: DashboardMessageType.SIGN_REJECTED },
@@ -411,6 +413,7 @@ describe("PopupController — happy paths", () => {
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
         "auto",
       );
+      await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
         {
@@ -432,6 +435,7 @@ describe("PopupController — happy paths", () => {
         "auto",
         "memo",
       );
+      await waitForListenerSetup();
 
       const openCall = windowMock.win.open.mock.calls[0];
       const signUrl = new URL(openCall[0] as string);
@@ -445,6 +449,84 @@ describe("PopupController — happy paths", () => {
         "https://dashboard.burnt.com",
       );
       await signPromise;
+    });
+  });
+
+  describe("promptAddAuthenticators()", () => {
+    it("should resolve on ADD_AUTHENTICATOR_SUCCESS", async () => {
+      const controller = new PopupController(createConfig());
+
+      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      await waitForListenerSetup();
+
+      windowMock.simulatePostMessage(
+        { type: DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS },
+        "https://dashboard.burnt.com",
+      );
+
+      await expect(addAuthPromise).resolves.toBeUndefined();
+    });
+
+    it("should reject on ADD_AUTHENTICATOR_REJECTED", async () => {
+      const controller = new PopupController(createConfig());
+
+      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      await waitForListenerSetup();
+
+      windowMock.simulatePostMessage(
+        { type: DashboardMessageType.ADD_AUTHENTICATOR_REJECTED },
+        "https://dashboard.burnt.com",
+      );
+
+      await expect(addAuthPromise).rejects.toThrow("Add authenticator cancelled by user");
+    });
+
+    it("should reject on ADD_AUTHENTICATOR_ERROR with message", async () => {
+      const controller = new PopupController(createConfig());
+
+      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      await waitForListenerSetup();
+
+      windowMock.simulatePostMessage(
+        { type: DashboardMessageType.ADD_AUTHENTICATOR_ERROR, message: "Passkey registration failed" },
+        "https://dashboard.burnt.com",
+      );
+
+      await expect(addAuthPromise).rejects.toThrow("Passkey registration failed");
+    });
+
+    it("should reject when popup is closed", async () => {
+      vi.useFakeTimers();
+      const controller = new PopupController(createConfig());
+
+      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      await vi.advanceTimersByTimeAsync(0); // flush microtasks for listener setup
+
+      windowMock.mockPopup.closed = true;
+      vi.advanceTimersByTime(600);
+
+      await expect(addAuthPromise).rejects.toThrow("Add authenticators popup was closed");
+      vi.useRealTimers();
+    });
+
+    it("should build add-authenticators popup URL with correct params", async () => {
+      const controller = new PopupController(createConfig());
+
+      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      await waitForListenerSetup();
+
+      const openCall = windowMock.win.open.mock.calls[0];
+      const popupUrl = new URL(openCall[0] as string);
+
+      expect(popupUrl.searchParams.get("mode")).toBe("add-authenticators");
+      expect(popupUrl.searchParams.get("granter")).toBe("xion1granter456");
+      expect(popupUrl.searchParams.get("redirect_uri")).toBeTruthy();
+
+      windowMock.simulatePostMessage(
+        { type: DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS },
+        "https://dashboard.burnt.com",
+      );
+      await addAuthPromise;
     });
   });
 });

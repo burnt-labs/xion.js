@@ -26,6 +26,7 @@ import type {
   DaoDaoIndexerGrantConfig,
   DaoDaoIndexerTreasuryAllResponse,
 } from "@burnt-labs/signers";
+import { getTreasuryParamsMetadata } from "@burnt-labs/signers";
 
 // Helper to validate URLs for security
 function isUrlSafe(url?: string): boolean {
@@ -107,13 +108,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
         validatedData.grantConfigs,
       );
 
-      // Extract and validate params from the response
-      // Note: DaoDao indexer may return display_url, but contract uses metadata
-      // metadata is a JSON string (not a URL), validated by contract with serde_json::from_str
-      const metadataValue =
-        validatedData.params.metadata ||
-        validatedData.params.display_url ||
-        "{}"; // Default to empty JSON object
+      const metadataValue = getTreasuryParamsMetadata(validatedData.params);
       const params: TreasuryParams = {
         redirect_url: isUrlSafe(validatedData.params.redirect_url)
           ? validatedData.params.redirect_url || ""
@@ -206,8 +201,6 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
         authorization: config.authorization,
         description: config.description,
         optional: config.optional ?? false, // Default to false if not provided
-        allowance: config.allowance || { type_url: "", value: "" },
-        maxDuration: config.maxDuration,
       });
     }
 
