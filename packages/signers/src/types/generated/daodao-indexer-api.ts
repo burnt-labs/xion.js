@@ -49,6 +49,25 @@ export type DaoDaoIndexerGrantConfig = TreasuryAllJson["grantConfigs"][string];
 export type DaoDaoIndexerTreasuryParams = TreasuryAllJson["params"];
 
 /**
+ * Treasury params with backward-compat field for older indexer/contract versions.
+ * Pre-upgrade contracts returned `display_url` where current contracts use `metadata`.
+ */
+type DaoDaoIndexerTreasuryParamsCompat = DaoDaoIndexerTreasuryParams & {
+  display_url?: string;
+};
+
+/**
+ * Returns the metadata string from treasury params, falling back to `display_url`
+ * for pre-upgrade indexer responses that returned it instead of `metadata`.
+ */
+export function getTreasuryParamsMetadata(
+  params: DaoDaoIndexerTreasuryParams,
+): string {
+  const p = params as DaoDaoIndexerTreasuryParamsCompat;
+  return p.metadata || p.display_url || "{}";
+}
+
+/**
  * Response shape of the DaoDAO indexer /{chainId}/contract/{address}/xion/treasury/all endpoint
  */
 export type DaoDaoIndexerTreasuryAllResponse = TreasuryAllJson;

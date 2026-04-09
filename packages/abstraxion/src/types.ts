@@ -287,3 +287,11 @@ export type SigningClient =
 export type SignResult =
   | { success: true; transactionHash: string }
   | { success: false; error: string };
+
+/**
+ * Result from a redirect-mode add-authenticator flow.
+ * Populated after returning from the dashboard add-authenticators redirect.
+ */
+export type AddAuthResult =
+  | { success: true }
+  | { success: false; error: string };

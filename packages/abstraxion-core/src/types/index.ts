@@ -131,7 +131,7 @@ export interface ChainGrant {
 }
 
 // Re-export generated protobuf types from signers
-export { AbstractAccount } from "@burnt-labs/signers";
+export type { AbstractAccount } from "@burnt-labs/signers";
 
 // Iframe communication types
 export * from "./iframe";

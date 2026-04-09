@@ -1,5 +1,5 @@
 export { GasPrice } from "@cosmjs/stargate";
-export { AAClient } from "./signers/utils/client";
+export { AAClient, AADefaultRegistryTypes } from "./signers/utils/client";
 export { AADirectSigner } from "./signers/direct-signer";
 export { AAEthSigner } from "./signers/eth-signer";
 export {
@@ -49,6 +49,7 @@ export type {
 export {
   isDaoDaoIndexerTreasuryAllResponse,
   isDaoDaoIndexerGrantConfig,
+  getTreasuryParamsMetadata,
   DAODAO_TREASURY_ALL_PATH,
   DAODAO_TREASURY_GRANT_CONFIGS_PATH,
   DAODAO_TREASURY_PARAMS_PATH,

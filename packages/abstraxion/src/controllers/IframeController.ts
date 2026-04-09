@@ -46,6 +46,8 @@ import type {
   StorageStrategy,
   RedirectStrategy,
   SignAndBroadcastResult,
+  AddAuthenticatorPayload,
+  AddAuthenticatorResponse,
 } from "@burnt-labs/abstraxion-core";
 import {
   IframeMessageType,
@@ -62,6 +64,10 @@ import {
   getAccountInfoFromRestored,
 } from "@burnt-labs/account-management";
 import type { AccountInfo } from "@burnt-labs/account-management";
+import {
+  validateTxPayload,
+  type TxTransportPayload,
+} from "@burnt-labs/signers";
 import { BaseController } from "./BaseController";
 import type {
   IframeAuthentication,
@@ -506,6 +512,17 @@ export class IframeController extends BaseController {
       );
     }
 
+    // Validate payload before sending — catches common dev mistakes early.
+    // The casts below are needed because CosmJS types (readonly EncodeObject[],
+    // StdFee | "auto" | number) don't perfectly overlap with TxTransportPayload's
+    // field types at the TS level, but are structurally compatible at runtime.
+    const txPayloadObj: TxTransportPayload = {
+      messages: messages as TxTransportPayload["messages"],
+      fee: fee as TxTransportPayload["fee"],
+      memo,
+    };
+    validateTxPayload(txPayloadObj, "IframeController");
+
     this.setAwaitingApproval(true);
     try {
       // Race the MessageChannel request against a cancellation promise so
@@ -538,6 +555,47 @@ export class IframeController extends BaseController {
       );
 
       return response.signedTx;
+    } finally {
+      this._cancelPendingApproval = null;
+      this.setAwaitingApproval(false);
+    }
+  }
+
+  /**
+   * Add an authenticator to the user's account via the embedded iframe.
+   *
+   * Sends ADD_AUTHENTICATOR via MessageChannelManager to the dashboard iframe,
+   * which shows an add-authenticator UI and resolves when the user completes
+   * or cancels. Same pattern as signAndBroadcastWithMetaAccount.
+   */
+  // _signerAddress is unused here because the iframe already knows the connected
+  // account. The parameter exists for interface symmetry with PopupController and
+  // RedirectController so callers can use promptAddAuthenticators uniformly.
+  async promptAddAuthenticators(_signerAddress: string): Promise<void> {
+    if (!this.iframe?.contentWindow) {
+      throw new Error(
+        "Iframe is not available. Ensure the iframe is mounted and the user is connected.",
+      );
+    }
+
+    this.setAwaitingApproval(true);
+    try {
+      await new Promise<AddAuthenticatorResponse>(
+        (resolve, reject) => {
+          this._cancelPendingApproval = () =>
+            reject(new Error("User cancelled add authenticator request"));
+
+          this.messageManager
+            .sendRequest<AddAuthenticatorPayload, AddAuthenticatorResponse>(
+              this.iframe!,
+              IframeMessageType.ADD_AUTHENTICATOR,
+              {},
+              this.iframeOrigin,
+              600_000, // 10 min — user needs time to add authenticator
+            )
+            .then(resolve, reject);
+        },
+      );
     } finally {
       this._cancelPendingApproval = null;
       this.setAwaitingApproval(false);

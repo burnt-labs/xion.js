@@ -22,8 +22,10 @@ import {
 import type {
   StorageStrategy,
   RedirectStrategy,
+  SignArbSecp256k1HdWallet,
 } from "@burnt-labs/abstraxion-core";
-import { fetchConfig, getDaoDaoIndexerUrl } from "@burnt-labs/constants";
+import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
+import { resolveAuthAppUrl, buildDashboardUrl } from "./utils";
 import { GasPrice } from "@cosmjs/stargate";
 import type { EncodeObject } from "@cosmjs/proto-signing";
 import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
@@ -36,7 +38,11 @@ import {
 import type { AccountInfo } from "@burnt-labs/account-management";
 import { BaseController } from "./BaseController";
 import type { PopupAuthentication, NormalizedAbstraxionConfig } from "../types";
-import { toBase64 } from "@burnt-labs/signers";
+import {
+  toBase64,
+  validateTxPayload,
+  type TxTransportPayload,
+} from "@burnt-labs/signers";
 
 export interface PopupControllerConfig {
   chainId: string;
@@ -201,39 +207,26 @@ export class PopupController extends BaseController {
     this.dispatch({ type: "START_CONNECT" });
 
     try {
-      // Resolve auth app URL: use explicit override or fetch from network config (same
-      // mechanism as redirect mode — dashboardUrl comes from the chain's RPC config)
-      const authAppUrl =
-        this.config.popup.authAppUrl ||
-        (await fetchConfig(this.config.rpcUrl)).dashboardUrl;
-
-      if (!authAppUrl) {
-        throw new Error(
-          "Could not determine auth app URL from network config. " +
-            "Provide authAppUrl in your authentication config as a fallback.",
-        );
-      }
-
+      const authAppUrl = await resolveAuthAppUrl(this.config.rpcUrl, this.config.popup.authAppUrl);
       const authAppOrigin = new URL(authAppUrl).origin;
 
       // Generate keypair via AbstraxionAuth (same storage key as redirect mode)
       const keypair = await this.abstraxionAuth.generateAndStoreTempAccount();
       const granteeAddress = await this.abstraxionAuth.getKeypairAddress();
 
-      const popupUrl = this.buildPopupUrl(granteeAddress, authAppUrl);
+      // Build connection URL. mode=popup tells the dashboard to close the window
+      // on completion instead of redirecting — important when window.opener is
+      // lost during cross-origin OAuth sub-flows (Google/Apple).
+      const connectUrl = new URL(authAppUrl);
+      connectUrl.searchParams.set("mode", "popup");
+      connectUrl.searchParams.set("grantee", granteeAddress);
+      connectUrl.searchParams.set("redirect_uri", window.location.origin);
+      if (this.config.treasury) connectUrl.searchParams.set("treasury", this.config.treasury);
+      if (this.config.bank) connectUrl.searchParams.set("bank", JSON.stringify(this.config.bank));
+      if (this.config.stake) connectUrl.searchParams.set("stake", "true");
+      if (this.config.contracts) connectUrl.searchParams.set("contracts", JSON.stringify(this.config.contracts));
 
-      const popup = window.open(
-        popupUrl,
-        "xion-auth-popup",
-        "width=460,height=720,resizable=yes,scrollbars=yes,status=no,location=yes",
-      );
-
-      if (!popup) {
-        this.dispatch({ type: "RESET" });
-        throw new Error(
-          "Popup was blocked by the browser. Please allow popups for this site and try again.",
-        );
-      }
+      const popup = this.openPopupWindow(connectUrl.toString(), "xion-auth-popup");
 
       return new Promise<void>((resolve, reject) => {
         let settled = false;
@@ -325,62 +318,28 @@ export class PopupController extends BaseController {
     fee: StdFee | "auto" | number,
     memo?: string,
   ): Promise<DeliverTxResponse> {
-    const authAppUrl =
-      this.config.popup.authAppUrl ||
-      (await fetchConfig(this.config.rpcUrl)).dashboardUrl;
-
-    if (!authAppUrl) {
-      throw new Error(
-        "Could not determine auth app URL for signing popup. " +
-          "Provide authAppUrl in your authentication config.",
-      );
-    }
-
+    const authAppUrl = await resolveAuthAppUrl(this.config.rpcUrl, this.config.popup.authAppUrl);
     const authAppOrigin = new URL(authAppUrl).origin;
 
-    // Encode transaction payload as base64 JSON
-    const txPayload = JSON.stringify({ messages, fee, memo });
-    const txEncoded = toBase64(txPayload);
+    const txPayloadObj: TxTransportPayload = { messages, fee, memo };
+    validateTxPayload(txPayloadObj, "PopupController");
 
-    const url = new URL(authAppUrl);
-    url.searchParams.set("mode", "sign");
-    url.searchParams.set("tx", txEncoded);
-    url.searchParams.set("granter", signerAddress);
-    url.searchParams.set("redirect_uri", window.location.origin);
+    const url = buildDashboardUrl(authAppUrl, "sign", signerAddress, window.location.origin, {
+      tx: toBase64(JSON.stringify(txPayloadObj)),
+    });
 
-    const popup = window.open(
-      url.toString(),
-      "xion-sign-popup",
-      "width=460,height=720,resizable=yes,scrollbars=yes,status=no,location=yes",
-    );
+    const popup = this.openPopupWindow(url.toString(), "xion-sign-popup");
 
-    if (!popup) {
-      throw new Error(
-        "Signing popup was blocked by the browser. Please allow popups for this site.",
-      );
-    }
-
-    return new Promise<DeliverTxResponse>((resolve, reject) => {
-      let settled = false;
-
-      const messageHandler = (event: MessageEvent) => {
-        if (event.origin !== authAppOrigin) return;
-
-        const data = event.data as {
-          type?: string;
-          txHash?: string;
-          message?: string;
-        };
-
-        if (data?.type === DashboardMessageType.SIGN_SUCCESS && data.txHash) {
-          if (settled) return;
-          settled = true;
-          cleanup();
+    return this.waitForPopupMessage<DeliverTxResponse>(
+      popup,
+      authAppOrigin,
+      (data, resolve, reject) => {
+        if (data.type === DashboardMessageType.SIGN_SUCCESS && data.txHash) {
           // Note: height, gasUsed, gasWanted are not available from the popup protocol.
           // Consumers should use the txHash to query the full transaction result if needed.
           resolve({
             code: 0,
-            transactionHash: data.txHash,
+            transactionHash: data.txHash as string,
             events: [],
             height: 0,
             gasUsed: BigInt(0),
@@ -388,69 +347,128 @@ export class PopupController extends BaseController {
             msgResponses: [],
             txIndex: 0,
           });
-        }
-
-        if (data?.type === DashboardMessageType.SIGN_REJECTED) {
-          if (settled) return;
-          settled = true;
-          cleanup();
+        } else if (data.type === DashboardMessageType.SIGN_REJECTED) {
           reject(new Error("Transaction was rejected by user"));
+        } else if (data.type === DashboardMessageType.SIGN_ERROR) {
+          reject(new Error((data.message as string) || "Transaction signing failed"));
         }
+      },
+      { name: "Signing popup" },
+    );
+  }
 
-        if (data?.type === DashboardMessageType.SIGN_ERROR) {
-          if (settled) return;
-          settled = true;
-          cleanup();
-          reject(new Error(data.message || "Transaction signing failed"));
+  /**
+   * Open a popup to add an authenticator to the user's account.
+   *
+   * The dashboard shows AddAuthenticatorsForm (approve / skip). On success it
+   * posts ADD_AUTHENTICATOR_SUCCESS back; on cancel it posts ADD_AUTHENTICATOR_REJECTED.
+   */
+  async promptAddAuthenticators(signerAddress: string): Promise<void> {
+    const authAppUrl = await resolveAuthAppUrl(this.config.rpcUrl, this.config.popup.authAppUrl);
+    const authAppOrigin = new URL(authAppUrl).origin;
+
+    const url = buildDashboardUrl(authAppUrl, "add-authenticators", signerAddress, window.location.origin);
+    const popup = this.openPopupWindow(url.toString(), "xion-add-auth-popup");
+
+    return this.waitForPopupMessage<void>(
+      popup,
+      authAppOrigin,
+      (data, resolve, reject) => {
+        if (data.type === DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS) {
+          resolve();
+        } else if (data.type === DashboardMessageType.ADD_AUTHENTICATOR_REJECTED) {
+          reject(new Error("Add authenticator cancelled by user"));
+        } else if (data.type === DashboardMessageType.ADD_AUTHENTICATOR_ERROR) {
+          reject(new Error((data.message as string) || "Failed to add authenticator"));
         }
-      };
-
-      const closedCheck = setInterval(() => {
-        if (popup.closed && !settled) {
-          settled = true;
-          cleanup();
-          reject(new Error("Signing popup was closed"));
-        }
-      }, 500);
-
-      const cleanup = () => {
-        clearInterval(closedCheck);
-        window.removeEventListener("message", messageHandler);
-      };
-
-      window.addEventListener("message", messageHandler);
-    });
+      },
+      { name: "Add authenticators popup", timeoutMs: 10 * 60 * 1000 },
+    );
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
 
   /**
-   * Build the popup URL with all required query params
+   * Open a popup window and throw if the browser blocked it.
    */
-  private buildPopupUrl(granteeAddress: string, authAppUrl: string): string {
-    const url = new URL(authAppUrl);
+  private openPopupWindow(url: string, name: string): Window {
+    const popup = window.open(
+      url,
+      name,
+      "width=460,height=720,resizable=yes,scrollbars=yes,status=no,location=yes",
+    );
+    if (!popup) {
+      throw new Error(
+        "Popup was blocked by the browser. Please allow popups for this site.",
+      );
+    }
+    return popup;
+  }
 
-    url.searchParams.set("grantee", granteeAddress);
-    url.searchParams.set("redirect_uri", window.location.origin);
-    // mode=popup tells the dashboard to close the window on completion instead of
-    // redirecting to redirect_uri — important when window.opener is lost during
-    // cross-origin OAuth sub-flows (Google/Apple)
-    url.searchParams.set("mode", "popup");
+  /**
+   * Wait for a postMessage result from a popup window.
+   *
+   * @param popup     - The popup window returned by window.open
+   * @param origin    - The expected message origin (validated on every message)
+   * @param onMessage - Called for each message from the popup; call resolve/reject to settle
+   * @param options   - Optional timeout and label for error messages
+   */
+  private waitForPopupMessage<T>(
+    popup: Window,
+    origin: string,
+    onMessage: (
+      data: Record<string, unknown>,
+      resolve: (value: T) => void,
+      reject: (error: Error) => void,
+    ) => void,
+    options?: { timeoutMs?: number; name?: string; onRegisterCleanup?: (cleanup: () => void) => void },
+  ): Promise<T> {
+    const label = options?.name ?? "Popup";
 
-    if (this.config.treasury) {
-      url.searchParams.set("treasury", this.config.treasury);
-    }
-    if (this.config.bank) {
-      url.searchParams.set("bank", JSON.stringify(this.config.bank));
-    }
-    if (this.config.stake) {
-      url.searchParams.set("stake", "true");
-    }
-    if (this.config.contracts) {
-      url.searchParams.set("contracts", JSON.stringify(this.config.contracts));
-    }
+    return new Promise<T>((resolve, reject) => {
+      let settled = false;
 
-    return url.toString();
+      const settle = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        fn();
+      };
+
+      const messageHandler = (event: MessageEvent) => {
+        if (event.origin !== origin) return;
+        onMessage(
+          event.data as Record<string, unknown>,
+          (v) => settle(() => resolve(v)),
+          (e) => settle(() => reject(e)),
+        );
+      };
+
+      const closedCheck = setInterval(() => {
+        if (popup.closed) {
+          settle(() => reject(new Error(`${label} was closed`)));
+        }
+      }, 500);
+
+      let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+      if (options?.timeoutMs !== undefined) {
+        timeoutHandle = setTimeout(() => {
+          settle(() => {
+            try { popup.close(); } catch { /* ignore */ }
+            reject(new Error(`${label} timed out`));
+          });
+        }, options.timeoutMs);
+      }
+
+      const cleanup = () => {
+        clearInterval(closedCheck);
+        if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
+        window.removeEventListener("message", messageHandler);
+      };
+
+      options?.onRegisterCleanup?.(cleanup);
+      window.addEventListener("message", messageHandler);
+    });
   }
 
   /**
@@ -458,7 +476,7 @@ export class PopupController extends BaseController {
    * Stores granter via AbstraxionAuth and creates GranteeSignerClient
    */
   private async completeConnection(
-    keypair: import("@burnt-labs/abstraxion-core").SignArbSecp256k1HdWallet,
+    keypair: SignArbSecp256k1HdWallet,
     granteeAddress: string,
     granterAddress: string,
   ): Promise<void> {
