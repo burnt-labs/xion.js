@@ -122,9 +122,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should create signing client when config provided", async () => {
-      const { GranteeSignerClient } = await import(
-        "@burnt-labs/abstraxion-core"
-      );
+      const { GranteeSignerClient } =
+        await import("@burnt-labs/abstraxion-core");
       mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
       mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
@@ -154,9 +153,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should include treasury address in signing client config", async () => {
-      const { GranteeSignerClient } = await import(
-        "@burnt-labs/abstraxion-core"
-      );
+      const { GranteeSignerClient } =
+        await import("@burnt-labs/abstraxion-core");
       mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
       mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
@@ -179,9 +177,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should not create signing client when config not provided", async () => {
-      const { GranteeSignerClient } = await import(
-        "@burnt-labs/abstraxion-core"
-      );
+      const { GranteeSignerClient } =
+        await import("@burnt-labs/abstraxion-core");
       mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
       mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();
@@ -337,9 +334,8 @@ describe("sessionRestoration.ts - Session Restoration Flow", () => {
     });
 
     it("should handle signing client creation failure", async () => {
-      const { GranteeSignerClient } = await import(
-        "@burnt-labs/abstraxion-core"
-      );
+      const { GranteeSignerClient } =
+        await import("@burnt-labs/abstraxion-core");
       mockSessionManager.getLocalKeypair.mockResolvedValue(mockKeypair);
       mockSessionManager.getGranter.mockResolvedValue("xion1granter");
       mockSessionManager.authenticate.mockResolvedValue();

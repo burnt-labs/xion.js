@@ -1,21 +1,28 @@
 /**
- * Signing client delegation tests
+ * RequireSigningClient tests
  *
- * Verifies that PopupSigningClient, IframeSigningClient, and RedirectSigningClient
- * correctly delegate signAndBroadcast and sendTokens to their respective controllers.
+ * Verifies that RequireSigningClient:
+ * - delegates signAndBroadcast and sendTokens to the provided strategy fn
+ * - delegates simulate to simulateWithNilPubkey (no strategy fn involved)
+ * - constructs the correct MsgSend payload for sendTokens
  *
- * These are thin wrappers — the test ensures the contract is maintained so
- * dashboard changes that break the controller methods surface here.
+ * The strategy fn is swapped per test to emulate popup, redirect, and iframe transports.
  */
 
-import { describe, it, expect, vi } from "vitest";
-import { PopupSigningClient } from "../PopupSigningClient";
-import { IframeSigningClient } from "../IframeSigningClient";
-import { RedirectSigningClient } from "../RedirectSigningClient";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { RequireSigningClient } from "../RequireSigningClient";
 import type { DeliverTxResponse, StdFee } from "@cosmjs/stargate";
 import type { SignAndBroadcastResult } from "@burnt-labs/abstraxion-core";
 
-// Popup and redirect controllers broadcast independently and return the full CosmJS DeliverTxResponse.
+// Mock simulateWithNilPubkey so tests don't need a live chain
+vi.mock("@burnt-labs/signers", () => ({
+  simulateWithNilPubkey: vi.fn().mockResolvedValue(100000),
+}));
+
+import { simulateWithNilPubkey } from "@burnt-labs/signers";
+
+const RPC_URL = "https://rpc.xion-testnet-1.burnt.com:443";
+
 const mockTxResponse: DeliverTxResponse = {
   code: 0,
   transactionHash: "TXHASH123",
@@ -27,52 +34,51 @@ const mockTxResponse: DeliverTxResponse = {
   txIndex: 0,
 };
 
-// IframeSigningClient delegates to the dashboard which only returns the tx hash.
 const mockBroadcastResult: SignAndBroadcastResult = {
   transactionHash: "TXHASH123",
 };
 
-describe("PopupSigningClient", () => {
-  const mockController = {
-    promptSignAndBroadcast: vi.fn().mockResolvedValue(mockTxResponse),
-  };
+const sampleMessages = [
+  { typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: { amount: "100" } },
+];
 
-  it("delegates signAndBroadcast to controller.promptSignAndBroadcast", async () => {
-    const client = new PopupSigningClient(mockController as any);
+const sampleFee: StdFee = {
+  amount: [{ denom: "uxion", amount: "1000" }],
+  gas: "200000",
+};
 
-    const messages = [
-      { typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: { amount: "100" } },
-    ];
-    const fee: StdFee = {
-      amount: [{ denom: "uxion", amount: "1000" }],
-      gas: "200000",
-    };
+describe("RequireSigningClient — popup strategy (DeliverTxResponse)", () => {
+  let mockFn: ReturnType<typeof vi.fn>;
+  let client: RequireSigningClient;
 
+  beforeEach(() => {
+    mockFn = vi.fn().mockResolvedValue(mockTxResponse);
+    client = new RequireSigningClient(mockFn, RPC_URL);
+  });
+
+  it("delegates signAndBroadcast to strategy fn with correct args", async () => {
     const result = await client.signAndBroadcast(
       "xion1addr",
-      messages,
-      fee,
+      sampleMessages,
+      sampleFee,
       "memo",
     );
 
-    expect(mockController.promptSignAndBroadcast).toHaveBeenCalledWith(
+    expect(mockFn).toHaveBeenCalledWith(
       "xion1addr",
-      messages,
-      fee,
+      sampleMessages,
+      sampleFee,
       "memo",
     );
     expect(result).toBe(mockTxResponse);
   });
 
-  it("delegates sendTokens to controller.promptSignAndBroadcast with MsgSend", async () => {
-    mockController.promptSignAndBroadcast.mockClear();
-    const client = new PopupSigningClient(mockController as any);
-
+  it("delegates sendTokens by constructing MsgSend and calling strategy fn", async () => {
     const amount = [{ denom: "uxion", amount: "5000" }];
 
     await client.sendTokens("xion1sender", "xion1receiver", amount, "auto");
 
-    expect(mockController.promptSignAndBroadcast).toHaveBeenCalledWith(
+    expect(mockFn).toHaveBeenCalledWith(
       "xion1sender",
       [
         {
@@ -90,39 +96,28 @@ describe("PopupSigningClient", () => {
   });
 });
 
-describe("IframeSigningClient", () => {
-  const mockController = {
-    signAndBroadcastWithMetaAccount: vi
-      .fn()
-      .mockResolvedValue(mockBroadcastResult),
-  };
+describe("RequireSigningClient — iframe strategy (SignAndBroadcastResult)", () => {
+  let mockFn: ReturnType<typeof vi.fn>;
+  let client: RequireSigningClient;
 
-  it("delegates signAndBroadcast to controller.signAndBroadcastWithMetaAccount", async () => {
-    const client = new IframeSigningClient(mockController as any);
-
-    const messages = [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }];
-
-    const result = await client.signAndBroadcast(
-      "xion1addr",
-      messages,
-      "auto",
-      "memo",
-    );
-
-    expect(mockController.signAndBroadcastWithMetaAccount).toHaveBeenCalledWith(
-      "xion1addr",
-      messages,
-      "auto",
-      "memo",
-    );
-    expect(result).toEqual(mockBroadcastResult);
-    expect(result.transactionHash).toBe("TXHASH123");
+  beforeEach(() => {
+    mockFn = vi.fn().mockResolvedValue(mockBroadcastResult);
+    client = new RequireSigningClient(mockFn, RPC_URL);
   });
 
-  it("delegates sendTokens to controller.signAndBroadcastWithMetaAccount with MsgSend", async () => {
-    mockController.signAndBroadcastWithMetaAccount.mockClear();
-    const client = new IframeSigningClient(mockController as any);
+  it("returns SignAndBroadcastResult from iframe strategy", async () => {
+    const result = await client.signAndBroadcast(
+      "xion1addr",
+      sampleMessages,
+      "auto",
+      "memo",
+    );
 
+    expect(result).toEqual(mockBroadcastResult);
+    expect((result as SignAndBroadcastResult).transactionHash).toBe("TXHASH123");
+  });
+
+  it("delegates sendTokens to iframe strategy with MsgSend", async () => {
     await client.sendTokens(
       "xion1sender",
       "xion1receiver",
@@ -130,7 +125,7 @@ describe("IframeSigningClient", () => {
       "auto",
     );
 
-    expect(mockController.signAndBroadcastWithMetaAccount).toHaveBeenCalledWith(
+    expect(mockFn).toHaveBeenCalledWith(
       "xion1sender",
       [
         {
@@ -148,55 +143,42 @@ describe("IframeSigningClient", () => {
   });
 });
 
-describe("RedirectSigningClient", () => {
-  const mockController = {
-    promptSignAndBroadcast: vi.fn().mockResolvedValue(mockTxResponse),
-  };
+describe("RequireSigningClient — simulate", () => {
+  let mockFn: ReturnType<typeof vi.fn>;
+  let client: RequireSigningClient;
 
-  it("delegates signAndBroadcast to controller.promptSignAndBroadcast", async () => {
-    const client = new RedirectSigningClient(mockController as any);
-
-    const result = await client.signAndBroadcast(
-      "xion1addr",
-      [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
-      "auto",
-    );
-
-    expect(mockController.promptSignAndBroadcast).toHaveBeenCalledWith(
-      "xion1addr",
-      [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
-      "auto",
-      undefined,
-    );
-    expect(result).toBe(mockTxResponse);
+  beforeEach(() => {
+    mockFn = vi.fn();
+    client = new RequireSigningClient(mockFn, RPC_URL);
+    vi.mocked(simulateWithNilPubkey).mockClear();
   });
 
-  it("delegates sendTokens to controller.promptSignAndBroadcast with MsgSend", async () => {
-    mockController.promptSignAndBroadcast.mockClear();
-    const client = new RedirectSigningClient(mockController as any);
+  it("calls simulateWithNilPubkey with rpcUrl, address, messages, and memo", async () => {
+    const gas = await client.simulate("xion1addr", sampleMessages, "memo");
 
-    await client.sendTokens(
-      "xion1sender",
-      "xion1receiver",
-      [{ denom: "uxion", amount: "2000" }],
-      "auto",
-      "tip",
+    expect(simulateWithNilPubkey).toHaveBeenCalledWith(
+      RPC_URL,
+      "xion1addr",
+      sampleMessages,
+      "memo",
     );
+    expect(gas).toBe(100000);
+  });
 
-    expect(mockController.promptSignAndBroadcast).toHaveBeenCalledWith(
-      "xion1sender",
-      [
-        {
-          typeUrl: "/cosmos.bank.v1beta1.MsgSend",
-          value: {
-            fromAddress: "xion1sender",
-            toAddress: "xion1receiver",
-            amount: [{ denom: "uxion", amount: "2000" }],
-          },
-        },
-      ],
-      "auto",
-      "tip",
+  it("never calls the strategy fn when simulating", async () => {
+    await client.simulate("xion1addr", sampleMessages, undefined);
+
+    expect(mockFn).not.toHaveBeenCalled();
+  });
+
+  it("passes undefined memo through to simulateWithNilPubkey", async () => {
+    await client.simulate("xion1addr", sampleMessages, undefined);
+
+    expect(simulateWithNilPubkey).toHaveBeenCalledWith(
+      RPC_URL,
+      "xion1addr",
+      sampleMessages,
+      undefined,
     );
   });
 });

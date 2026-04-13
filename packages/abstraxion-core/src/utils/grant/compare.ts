@@ -19,7 +19,11 @@ import {
  */
 export type GrantComparisonResult =
   | { match: true }
-  | { match: false; reason: "grant_missing" | "grant_mismatch" | "decode_error"; detail: string };
+  | {
+      match: false;
+      reason: "grant_missing" | "grant_mismatch" | "decode_error";
+      detail: string;
+    };
 
 /**
  * Compare two Uint8Array values for byte-level equality.
@@ -244,8 +248,12 @@ export const validateContractExecution = (
           // encoded bytes, the limits match regardless of whether we can decode them.
           return (
             treasuryGrant.rawLimitTypeUrl !== undefined &&
-            treasuryGrant.rawLimitTypeUrl === matchingChainGrant.rawLimitTypeUrl &&
-            bytesEqual(treasuryGrant.rawLimitValue, matchingChainGrant.rawLimitValue)
+            treasuryGrant.rawLimitTypeUrl ===
+              matchingChainGrant.rawLimitTypeUrl &&
+            bytesEqual(
+              treasuryGrant.rawLimitValue,
+              matchingChainGrant.rawLimitValue,
+            )
           );
       }
     });

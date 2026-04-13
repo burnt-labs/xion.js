@@ -580,22 +580,20 @@ export class IframeController extends BaseController {
 
     this.setAwaitingApproval(true);
     try {
-      await new Promise<AddAuthenticatorResponse>(
-        (resolve, reject) => {
-          this._cancelPendingApproval = () =>
-            reject(new Error("User cancelled add authenticator request"));
+      await new Promise<AddAuthenticatorResponse>((resolve, reject) => {
+        this._cancelPendingApproval = () =>
+          reject(new Error("User cancelled add authenticator request"));
 
-          this.messageManager
-            .sendRequest<AddAuthenticatorPayload, AddAuthenticatorResponse>(
-              this.iframe!,
-              IframeMessageType.ADD_AUTHENTICATOR,
-              {},
-              this.iframeOrigin,
-              600_000, // 10 min — user needs time to add authenticator
-            )
-            .then(resolve, reject);
-        },
-      );
+        this.messageManager
+          .sendRequest<AddAuthenticatorPayload, AddAuthenticatorResponse>(
+            this.iframe!,
+            IframeMessageType.ADD_AUTHENTICATOR,
+            {},
+            this.iframeOrigin,
+            600_000, // 10 min — user needs time to add authenticator
+          )
+          .then(resolve, reject);
+      });
     } finally {
       this._cancelPendingApproval = null;
       this.setAwaitingApproval(false);

@@ -19,7 +19,10 @@
 
 import { describe, it, expect } from "vitest";
 import { MsgSend } from "cosmjs-types/cosmos/bank/v1beta1/tx";
-import { MsgDelegate, MsgUndelegate } from "cosmjs-types/cosmos/staking/v1beta1/tx";
+import {
+  MsgDelegate,
+  MsgUndelegate,
+} from "cosmjs-types/cosmos/staking/v1beta1/tx";
 import { MsgVote } from "cosmjs-types/cosmos/gov/v1beta1/tx";
 import { VoteOption } from "cosmjs-types/cosmos/gov/v1beta1/gov";
 import { MsgTransfer } from "cosmjs-types/ibc/applications/transfer/v1/tx";
@@ -33,9 +36,7 @@ import {
   MsgUpdateAdmin,
 } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { MsgGrant, MsgRevoke } from "cosmjs-types/cosmos/authz/v1beta1/tx";
-import {
-  MsgWithdrawDelegatorReward,
-} from "cosmjs-types/cosmos/distribution/v1beta1/tx";
+import { MsgWithdrawDelegatorReward } from "cosmjs-types/cosmos/distribution/v1beta1/tx";
 import type { TxTransportPayload } from "../types";
 import { WASM_MSG_TYPES_WITH_BYTES } from "../types";
 import {
@@ -52,7 +53,9 @@ const RECIPIENT = "xion1recipient000000000000000000000000000000000test";
 const CONTRACT = "xion1contract0000000000000000000000000000000000test";
 const VALIDATOR = "xionvaloper100000000000000000000000000000000000test";
 
-function makePayload(messages: TxTransportPayload["messages"]): TxTransportPayload {
+function makePayload(
+  messages: TxTransportPayload["messages"],
+): TxTransportPayload {
   return { messages, fee: "auto" };
 }
 
@@ -117,7 +120,9 @@ describe("CosmWasm messages — byte normalization through transport", () => {
 
     const normalizedValue = result.normalizedMessages[0].value as any;
     expect(normalizedValue.msg).toBeInstanceOf(Uint8Array);
-    expect(JSON.parse(new TextDecoder().decode(normalizedValue.msg))).toEqual(initMsg);
+    expect(JSON.parse(new TextDecoder().decode(normalizedValue.msg))).toEqual(
+      initMsg,
+    );
   });
 
   it("MsgInstantiateContract2: msg object survives round-trip", () => {
@@ -145,7 +150,9 @@ describe("CosmWasm messages — byte normalization through transport", () => {
 
     const normalizedValue = result.normalizedMessages[0].value as any;
     expect(normalizedValue.msg).toBeInstanceOf(Uint8Array);
-    expect(JSON.parse(new TextDecoder().decode(normalizedValue.msg))).toEqual(initMsg);
+    expect(JSON.parse(new TextDecoder().decode(normalizedValue.msg))).toEqual(
+      initMsg,
+    );
   });
 
   it("MsgMigrateContract: msg object survives round-trip", () => {

@@ -12,7 +12,9 @@ export type INodes<T> = {
   nodes: Array<T>;
 };
 
-function uint64FromProto(input: number | bigint | { toString(): string }): Uint64 {
+function uint64FromProto(
+  input: number | bigint | { toString(): string },
+): Uint64 {
   return Uint64.fromString(input.toString());
 }
 
@@ -31,7 +33,9 @@ export function customAccountFromAny(input: Any): Account {
       return {
         address: abstractAccount.address,
         pubkey: null,
-        accountNumber: uint64FromProto(abstractAccount.accountNumber).toNumber(),
+        accountNumber: uint64FromProto(
+          abstractAccount.accountNumber,
+        ).toNumber(),
         sequence: uint64FromProto(abstractAccount.sequence).toNumber(),
       };
     }

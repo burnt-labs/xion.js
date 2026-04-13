@@ -15,7 +15,11 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { IframeMessageType, MessageTarget, DashboardMessageType } from "@burnt-labs/abstraxion-core";
+import {
+  IframeMessageType,
+  MessageTarget,
+  DashboardMessageType,
+} from "@burnt-labs/abstraxion-core";
 
 describe("SDK ↔ Dashboard Message Contract", () => {
   describe("Iframe MessageType enum values", () => {
@@ -198,8 +202,12 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       });
 
       it("add_auth_error carries URL-encoded error message", () => {
-        const params = new URLSearchParams("?add_auth_error=Passkey%20registration%20failed");
-        expect(decodeURIComponent(params.get("add_auth_error")!)).toBe("Passkey registration failed");
+        const params = new URLSearchParams(
+          "?add_auth_error=Passkey%20registration%20failed",
+        );
+        expect(decodeURIComponent(params.get("add_auth_error")!)).toBe(
+          "Passkey registration failed",
+        );
       });
     });
 

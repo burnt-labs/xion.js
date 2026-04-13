@@ -8,7 +8,12 @@
  */
 
 import type { OfflineDirectSigner } from "@cosmjs/proto-signing";
-import { SignDoc, TxRaw, AuthInfo, Fee } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import {
+  SignDoc,
+  TxRaw,
+  AuthInfo,
+  Fee,
+} from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
 
 // xion-specific — must come from xion-types
@@ -55,7 +60,9 @@ function checkMsgRegisterAccount(msg: MsgRegisterAccount): void {
 import { AASigner } from "../interfaces/AASigner";
 
 // AASigner must structurally satisfy OfflineDirectSigner
-type _AssertAASignerIsOfflineDirectSigner = AASigner extends OfflineDirectSigner ? true : never;
+type _AssertAASignerIsOfflineDirectSigner = AASigner extends OfflineDirectSigner
+  ? true
+  : never;
 const _check: _AssertAASignerIsOfflineDirectSigner = true;
 
 // --- SignMode values accessible ---

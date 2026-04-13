@@ -1,5 +1,6 @@
 export { GasPrice } from "@cosmjs/stargate";
 export { AAClient, AADefaultRegistryTypes } from "./signers/utils/client";
+export { simulateWithNilPubkey } from "./signers/utils/simulate";
 export { AADirectSigner } from "./signers/direct-signer";
 export { AAEthSigner } from "./signers/eth-signer";
 export {

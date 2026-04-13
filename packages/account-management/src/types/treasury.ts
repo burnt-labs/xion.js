@@ -1,8 +1,4 @@
-import type {
-  GrantConfig,
-  TreasuryAny,
-  Params,
-} from "@burnt-labs/xion-types";
+import type { GrantConfig, TreasuryAny, Params } from "@burnt-labs/xion-types";
 
 export type GrantConfigTypeUrlsResponse = string[];
 

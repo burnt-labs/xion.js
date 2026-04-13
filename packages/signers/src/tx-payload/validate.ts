@@ -38,27 +38,36 @@ export function validateTxPayload(
   for (const [i, msg] of payload.messages.entries()) {
     const at = (field: string) => `messages[${i}].${field}`;
 
-    if (!msg.typeUrl) { fail(`messages[${i}]: missing typeUrl`); continue; }
-    if (msg.value == null) { fail(`messages[${i}]: missing value`); continue; }
+    if (!msg.typeUrl) {
+      fail(`messages[${i}]: missing typeUrl`);
+      continue;
+    }
+    if (msg.value == null) {
+      fail(`messages[${i}]: missing value`);
+      continue;
+    }
     if (!isWasmMsgWithBytes(msg.typeUrl)) continue;
 
     // ── CosmWasm-specific checks ──────────────────────────────────
 
     const v = msg.value as Record<string, unknown>;
-    const isExecute   = msg.typeUrl.endsWith("MsgExecuteContract");
-    const isMigrate   = msg.typeUrl.endsWith("MsgMigrateContract");
+    const isExecute = msg.typeUrl.endsWith("MsgExecuteContract");
+    const isMigrate = msg.typeUrl.endsWith("MsgMigrateContract");
     const isInstantiate = msg.typeUrl.endsWith("MsgInstantiateContract");
 
-    if (!v.sender)
-      fail(`${at("sender")}: required`);
+    if (!v.sender) fail(`${at("sender")}: required`);
 
     if ((isExecute || isMigrate) && !v.contract)
       fail(`${at("contract")}: required`);
 
-    if (v.msg == null)
-      fail(`${at("msg")}: required`);
-    else if (!(v.msg instanceof Uint8Array) && (typeof v.msg !== "object" || Array.isArray(v.msg)))
-      fail(`${at("msg")}: must be a plain object, got ${Array.isArray(v.msg) ? "array" : typeof v.msg}`);
+    if (v.msg == null) fail(`${at("msg")}: required`);
+    else if (
+      !(v.msg instanceof Uint8Array) &&
+      (typeof v.msg !== "object" || Array.isArray(v.msg))
+    )
+      fail(
+        `${at("msg")}: must be a plain object, got ${Array.isArray(v.msg) ? "array" : typeof v.msg}`,
+      );
 
     if (!isMigrate && v.funds !== undefined) {
       if (!Array.isArray(v.funds)) {
@@ -66,14 +75,18 @@ export function validateTxPayload(
       } else {
         for (const [j, coin] of (v.funds as unknown[]).entries()) {
           if (!coin || typeof coin !== "object") {
-            fail(`${at(`funds[${j}]`)}: expected { denom, amount }, got ${typeof coin}`);
+            fail(
+              `${at(`funds[${j}]`)}: expected { denom, amount }, got ${typeof coin}`,
+            );
             continue;
           }
           const c = coin as Record<string, unknown>;
           if (typeof c.denom !== "string" || !c.denom)
             fail(`${at(`funds[${j}].denom`)}: must be a non-empty string`);
           if (typeof c.amount !== "string")
-            fail(`${at(`funds[${j}].amount`)}: must be a string, got ${typeof c.amount}`);
+            fail(
+              `${at(`funds[${j}].amount`)}: must be a string, got ${typeof c.amount}`,
+            );
         }
       }
     }

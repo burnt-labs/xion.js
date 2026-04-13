@@ -8,6 +8,7 @@ export type {
   ControllerFactory,
   StateSubscription,
   Unsubscribe,
+  SignAndBroadcastFn,
 } from "./types";
 
 export { BaseController } from "./BaseController";
@@ -20,6 +21,9 @@ export type { SignerControllerConfig } from "./SignerController";
 export type { RedirectControllerConfig } from "./RedirectController";
 export type { IframeControllerConfig } from "./IframeController";
 export type { PopupControllerConfig } from "./PopupController";
+
+// Signing clients
+export { RequireSigningClient } from "./RequireSigningClient";
 
 // Factory
 export { createController } from "./factory";

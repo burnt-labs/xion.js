@@ -92,9 +92,9 @@ describe("normalizeMessage", () => {
     const resultValue = result.value as Record<string, unknown>;
 
     expect(resultValue.msg).toBeInstanceOf(Uint8Array);
-    expect(JSON.parse(new TextDecoder().decode(resultValue.msg as Uint8Array))).toEqual(
-      contractMsg,
-    );
+    expect(
+      JSON.parse(new TextDecoder().decode(resultValue.msg as Uint8Array)),
+    ).toEqual(contractMsg);
     // Other fields preserved
     expect(resultValue.sender).toBe("xion1sender");
     expect(resultValue.contract).toBe("xion1contract");
@@ -162,9 +162,9 @@ describe("normalizeMessage", () => {
     const result = normalizeMessage(msg);
     const resultValue = result.value as Record<string, unknown>;
     expect(resultValue.msg).toBeInstanceOf(Uint8Array);
-    expect(JSON.parse(new TextDecoder().decode(resultValue.msg as Uint8Array))).toEqual(
-      initMsg,
-    );
+    expect(
+      JSON.parse(new TextDecoder().decode(resultValue.msg as Uint8Array)),
+    ).toEqual(initMsg);
   });
 
   it("normalizes MsgMigrateContract.msg", () => {
@@ -182,9 +182,9 @@ describe("normalizeMessage", () => {
     const result = normalizeMessage(msg);
     const resultValue = result.value as Record<string, unknown>;
     expect(resultValue.msg).toBeInstanceOf(Uint8Array);
-    expect(JSON.parse(new TextDecoder().decode(resultValue.msg as Uint8Array))).toEqual(
-      migrateMsg,
-    );
+    expect(
+      JSON.parse(new TextDecoder().decode(resultValue.msg as Uint8Array)),
+    ).toEqual(migrateMsg);
   });
 
   it("handles wasm message with null value gracefully", () => {
@@ -240,7 +240,9 @@ describe("normalizeMessages", () => {
     // MsgExecuteContract.msg normalized
     const execValue = result[1].value as Record<string, unknown>;
     expect(execValue.msg).toBeInstanceOf(Uint8Array);
-    expect(JSON.parse(new TextDecoder().decode(execValue.msg as Uint8Array))).toEqual({
+    expect(
+      JSON.parse(new TextDecoder().decode(execValue.msg as Uint8Array)),
+    ).toEqual({
       increment: {},
     });
   });
@@ -284,8 +286,10 @@ describe("JSON round-trip simulation (popup transport)", () => {
     const originalMessage: EncodeObject = {
       typeUrl: WASM_MSG_EXECUTE,
       value: {
-        sender: "xion10f7l88m0afqzwvfcnzrd2rxk5z9mzwxkzlvlg36fu2yqqxgxh4nsvncw7f",
-        contract: "xion1shle62n59n7mfs9pmtgy26cs5xm0jtjrcjzpp0a2c7z88gd9np5qx6xpm5",
+        sender:
+          "xion10f7l88m0afqzwvfcnzrd2rxk5z9mzwxkzlvlg36fu2yqqxgxh4nsvncw7f",
+        contract:
+          "xion1shle62n59n7mfs9pmtgy26cs5xm0jtjrcjzpp0a2c7z88gd9np5qx6xpm5",
         msg: originalMsg,
         funds: [{ denom: "uxion", amount: "100000" }],
       },
@@ -309,7 +313,9 @@ describe("JSON round-trip simulation (popup transport)", () => {
     expect(normalizedValue.sender).toBe(
       "xion10f7l88m0afqzwvfcnzrd2rxk5z9mzwxkzlvlg36fu2yqqxgxh4nsvncw7f",
     );
-    expect(normalizedValue.funds).toEqual([{ denom: "uxion", amount: "100000" }]);
+    expect(normalizedValue.funds).toEqual([
+      { denom: "uxion", amount: "100000" },
+    ]);
   });
 
   it("handles multiple wasm messages in a batch", () => {
@@ -342,7 +348,9 @@ describe("JSON round-trip simulation (popup transport)", () => {
       const v = normalized[i].value as Record<string, unknown>;
       expect(v.msg).toBeInstanceOf(Uint8Array);
       const original = (messages[i].value as Record<string, unknown>).msg;
-      expect(JSON.parse(new TextDecoder().decode(v.msg as Uint8Array))).toEqual(original);
+      expect(JSON.parse(new TextDecoder().decode(v.msg as Uint8Array))).toEqual(
+        original,
+      );
     }
   });
 });

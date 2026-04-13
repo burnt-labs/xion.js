@@ -62,8 +62,14 @@ export function useAddAuthenticators(): UseAddAuthenticatorsReturn {
 
   // For redirect mode: subscribe to addAuthResult via useSyncExternalStore
   const addAuthResult = useSyncExternalStore(
-    (cb) => controller instanceof RedirectController ? controller.addAuthResult.subscribe(cb) : () => {},
-    () => controller instanceof RedirectController ? controller.addAuthResult.snapshot() : null,
+    (cb) =>
+      controller instanceof RedirectController
+        ? controller.addAuthResult.subscribe(cb)
+        : () => {},
+    () =>
+      controller instanceof RedirectController
+        ? controller.addAuthResult.snapshot()
+        : null,
     () => null,
   );
 

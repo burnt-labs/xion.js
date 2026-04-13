@@ -23,7 +23,11 @@ import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
 import { BaseController } from "./BaseController";
 import { resolveAuthAppUrl, buildDashboardUrl } from "./utils";
 import type { ControllerConfig } from "./types";
-import type { RedirectAuthentication, SignResult, AddAuthResult } from "../types";
+import type {
+  RedirectAuthentication,
+  SignResult,
+  AddAuthResult,
+} from "../types";
 import {
   toBase64,
   validateTxPayload,
@@ -92,7 +96,13 @@ function initiateRedirectNavigation(
     JSON.stringify({ returnUrl: window.location.href, timestamp: Date.now() }),
   );
 
-  const url = buildDashboardUrl(authAppUrl, mode, granter, window.location.href, extraParams);
+  const url = buildDashboardUrl(
+    authAppUrl,
+    mode,
+    granter,
+    window.location.href,
+    extraParams,
+  );
   window.location.href = url.toString();
 
   return new Promise<never>((_, reject) => {
@@ -559,7 +569,12 @@ export class RedirectController extends BaseController {
         const signError = params.get("sign_error");
         return txHash
           ? { success: true as const, transactionHash: txHash }
-          : { success: false as const, error: signError ? decodeURIComponent(signError) : "Transaction rejected" };
+          : {
+              success: false as const,
+              error: signError
+                ? decodeURIComponent(signError)
+                : "Transaction rejected",
+            };
       },
       (result) => this.signResult.set(result),
     );
@@ -600,7 +615,10 @@ export class RedirectController extends BaseController {
         const error = params.get("add_auth_error");
         return success
           ? { success: true as const }
-          : { success: false as const, error: error ? decodeURIComponent(error) : "Cancelled" };
+          : {
+              success: false as const,
+              error: error ? decodeURIComponent(error) : "Cancelled",
+            };
       },
       (result) => this.addAuthResult.set(result),
     );

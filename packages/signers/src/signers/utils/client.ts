@@ -49,6 +49,7 @@ import {
   ServiceClientImpl,
   SimulateRequest,
 } from "cosmjs-types/cosmos/tx/v1beta1/service";
+import { normalizeMessages } from "../../tx-payload/normalize";
 
 export const AADefaultRegistryTypes: ReadonlyArray<[string, GeneratedType]> = [
   ...defaultRegistryTypes,
@@ -128,7 +129,7 @@ export class AAClient extends SigningCosmWasmClient {
       gasAdjustmentMargin,
     } = xionGasValues;
 
-    const simmedGas = await this.si2mulate(sender, messages, memo);
+    const simmedGas = await this.simulate(sender, messages, memo);
     const gasPrice = GasPrice.fromString(gasPriceString);
     const calculatedFee: StdFee = calculateFee(simmedGas, gasPrice);
 
@@ -267,7 +268,7 @@ export class AAClient extends SigningCosmWasmClient {
     const txBodyEncodeObject = {
       typeUrl: "/cosmos.tx.v1beta1.TxBody",
       value: {
-        messages: messages,
+        messages: normalizeMessages([...messages]),
         memo: memo || "AA Gas Simulation",
       },
     };
@@ -368,7 +369,7 @@ export class AAClient extends SigningCosmWasmClient {
     const txBodyEncodeObject = {
       typeUrl: "/cosmos.tx.v1beta1.TxBody",
       value: {
-        messages: messages,
+        messages: normalizeMessages([...messages]),
         memo: memo,
       },
     };

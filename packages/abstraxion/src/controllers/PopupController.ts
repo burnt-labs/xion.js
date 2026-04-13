@@ -207,7 +207,10 @@ export class PopupController extends BaseController {
     this.dispatch({ type: "START_CONNECT" });
 
     try {
-      const authAppUrl = await resolveAuthAppUrl(this.config.rpcUrl, this.config.popup.authAppUrl);
+      const authAppUrl = await resolveAuthAppUrl(
+        this.config.rpcUrl,
+        this.config.popup.authAppUrl,
+      );
       const authAppOrigin = new URL(authAppUrl).origin;
 
       // Generate keypair via AbstraxionAuth (same storage key as redirect mode)
@@ -221,12 +224,21 @@ export class PopupController extends BaseController {
       connectUrl.searchParams.set("mode", "popup");
       connectUrl.searchParams.set("grantee", granteeAddress);
       connectUrl.searchParams.set("redirect_uri", window.location.origin);
-      if (this.config.treasury) connectUrl.searchParams.set("treasury", this.config.treasury);
-      if (this.config.bank) connectUrl.searchParams.set("bank", JSON.stringify(this.config.bank));
+      if (this.config.treasury)
+        connectUrl.searchParams.set("treasury", this.config.treasury);
+      if (this.config.bank)
+        connectUrl.searchParams.set("bank", JSON.stringify(this.config.bank));
       if (this.config.stake) connectUrl.searchParams.set("stake", "true");
-      if (this.config.contracts) connectUrl.searchParams.set("contracts", JSON.stringify(this.config.contracts));
+      if (this.config.contracts)
+        connectUrl.searchParams.set(
+          "contracts",
+          JSON.stringify(this.config.contracts),
+        );
 
-      const popup = this.openPopupWindow(connectUrl.toString(), "xion-auth-popup");
+      const popup = this.openPopupWindow(
+        connectUrl.toString(),
+        "xion-auth-popup",
+      );
 
       return new Promise<void>((resolve, reject) => {
         let settled = false;
@@ -318,15 +330,24 @@ export class PopupController extends BaseController {
     fee: StdFee | "auto" | number,
     memo?: string,
   ): Promise<DeliverTxResponse> {
-    const authAppUrl = await resolveAuthAppUrl(this.config.rpcUrl, this.config.popup.authAppUrl);
+    const authAppUrl = await resolveAuthAppUrl(
+      this.config.rpcUrl,
+      this.config.popup.authAppUrl,
+    );
     const authAppOrigin = new URL(authAppUrl).origin;
 
     const txPayloadObj: TxTransportPayload = { messages, fee, memo };
     validateTxPayload(txPayloadObj, "PopupController");
 
-    const url = buildDashboardUrl(authAppUrl, "sign", signerAddress, window.location.origin, {
-      tx: toBase64(JSON.stringify(txPayloadObj)),
-    });
+    const url = buildDashboardUrl(
+      authAppUrl,
+      "sign",
+      signerAddress,
+      window.location.origin,
+      {
+        tx: toBase64(JSON.stringify(txPayloadObj)),
+      },
+    );
 
     const popup = this.openPopupWindow(url.toString(), "xion-sign-popup");
 
@@ -350,7 +371,9 @@ export class PopupController extends BaseController {
         } else if (data.type === DashboardMessageType.SIGN_REJECTED) {
           reject(new Error("Transaction was rejected by user"));
         } else if (data.type === DashboardMessageType.SIGN_ERROR) {
-          reject(new Error((data.message as string) || "Transaction signing failed"));
+          reject(
+            new Error((data.message as string) || "Transaction signing failed"),
+          );
         }
       },
       { name: "Signing popup" },
@@ -364,10 +387,18 @@ export class PopupController extends BaseController {
    * posts ADD_AUTHENTICATOR_SUCCESS back; on cancel it posts ADD_AUTHENTICATOR_REJECTED.
    */
   async promptAddAuthenticators(signerAddress: string): Promise<void> {
-    const authAppUrl = await resolveAuthAppUrl(this.config.rpcUrl, this.config.popup.authAppUrl);
+    const authAppUrl = await resolveAuthAppUrl(
+      this.config.rpcUrl,
+      this.config.popup.authAppUrl,
+    );
     const authAppOrigin = new URL(authAppUrl).origin;
 
-    const url = buildDashboardUrl(authAppUrl, "add-authenticators", signerAddress, window.location.origin);
+    const url = buildDashboardUrl(
+      authAppUrl,
+      "add-authenticators",
+      signerAddress,
+      window.location.origin,
+    );
     const popup = this.openPopupWindow(url.toString(), "xion-add-auth-popup");
 
     return this.waitForPopupMessage<void>(
@@ -376,10 +407,16 @@ export class PopupController extends BaseController {
       (data, resolve, reject) => {
         if (data.type === DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS) {
           resolve();
-        } else if (data.type === DashboardMessageType.ADD_AUTHENTICATOR_REJECTED) {
+        } else if (
+          data.type === DashboardMessageType.ADD_AUTHENTICATOR_REJECTED
+        ) {
           reject(new Error("Add authenticator cancelled by user"));
         } else if (data.type === DashboardMessageType.ADD_AUTHENTICATOR_ERROR) {
-          reject(new Error((data.message as string) || "Failed to add authenticator"));
+          reject(
+            new Error(
+              (data.message as string) || "Failed to add authenticator",
+            ),
+          );
         }
       },
       { name: "Add authenticators popup", timeoutMs: 10 * 60 * 1000 },
@@ -421,7 +458,11 @@ export class PopupController extends BaseController {
       resolve: (value: T) => void,
       reject: (error: Error) => void,
     ) => void,
-    options?: { timeoutMs?: number; name?: string; onRegisterCleanup?: (cleanup: () => void) => void },
+    options?: {
+      timeoutMs?: number;
+      name?: string;
+      onRegisterCleanup?: (cleanup: () => void) => void;
+    },
   ): Promise<T> {
     const label = options?.name ?? "Popup";
 
@@ -454,7 +495,11 @@ export class PopupController extends BaseController {
       if (options?.timeoutMs !== undefined) {
         timeoutHandle = setTimeout(() => {
           settle(() => {
-            try { popup.close(); } catch { /* ignore */ }
+            try {
+              popup.close();
+            } catch {
+              /* ignore */
+            }
             reject(new Error(`${label} timed out`));
           });
         }, options.timeoutMs);
