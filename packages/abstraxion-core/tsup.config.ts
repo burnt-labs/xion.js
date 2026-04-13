@@ -7,7 +7,7 @@ export default defineConfig((options: Options) => ({
   format: ["esm", "cjs"],
   dts: true,
   minify: false,
-  clean: true,
+  clean: !options.watch,
   tsconfig: "./tsconfig.json",
   ...options,
 }));

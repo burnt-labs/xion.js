@@ -287,4 +287,3 @@ function SessionKeySendCard({ accountAddress }: { accountAddress: string }) {
     </div>
   );
 }
-
