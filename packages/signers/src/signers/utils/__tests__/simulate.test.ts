@@ -17,11 +17,15 @@ import { testAccounts } from "../../../testing/fixtures";
 // ── Network mocks (hoisted before module resolution) ─────────────────
 
 const { mockSimulate } = vi.hoisted(() => ({
-  mockSimulate: vi.fn().mockResolvedValue({ gasInfo: { gasUsed: BigInt(100_000) } }),
+  mockSimulate: vi
+    .fn()
+    .mockResolvedValue({ gasInfo: { gasUsed: BigInt(100_000) } }),
 }));
 
 vi.mock("@cosmjs/tendermint-rpc", () => ({
-  Comet38Client: { connect: vi.fn().mockResolvedValue({}) },
+  Comet38Client: {
+    connect: vi.fn().mockResolvedValue({ disconnect: vi.fn() }),
+  },
 }));
 
 // Fixture addresses don't carry valid bech32 checksums (they're mock data).
@@ -77,7 +81,9 @@ function abstractAccountAny(address: string, sequence = 5) {
 
 function setupQueryClient(address = testAccounts.existing, sequence = 5) {
   (QueryClient.withExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
-    auth: { account: vi.fn().mockResolvedValue(abstractAccountAny(address, sequence)) },
+    auth: {
+      account: vi.fn().mockResolvedValue(abstractAccountAny(address, sequence)),
+    },
   });
 }
 
@@ -100,7 +106,12 @@ describe("simulateWithNilPubkey", () => {
   });
 
   it("returns gas estimate as a number", async () => {
-    const gas = await simulateWithNilPubkey(RPC, testAccounts.existing, [MSG_SEND], undefined);
+    const gas = await simulateWithNilPubkey(
+      RPC,
+      testAccounts.existing,
+      [MSG_SEND],
+      undefined,
+    );
     expect(gas).toBe(100_000);
     expect(typeof gas).toBe("number");
   });
@@ -115,13 +126,23 @@ describe("simulateWithNilPubkey", () => {
   });
 
   it("calls Simulate exactly once per invocation", async () => {
-    await simulateWithNilPubkey(RPC, testAccounts.existing, [MSG_SEND], "test-memo");
+    await simulateWithNilPubkey(
+      RPC,
+      testAccounts.existing,
+      [MSG_SEND],
+      "test-memo",
+    );
     expect(mockSimulate).toHaveBeenCalledOnce();
   });
 
   it("works with treasury (32-byte smart contract) address", async () => {
     setupQueryClient(testAccounts.treasury, 1);
-    const gas = await simulateWithNilPubkey(RPC, testAccounts.treasury, [MSG_SEND], undefined);
+    const gas = await simulateWithNilPubkey(
+      RPC,
+      testAccounts.treasury,
+      [MSG_SEND],
+      undefined,
+    );
     expect(gas).toBe(100_000);
   });
 
@@ -136,7 +157,12 @@ describe("simulateWithNilPubkey", () => {
   it("passes memo through (undefined falls back to 'AA Gas Simulation')", async () => {
     // Both calls should succeed — the memo path is exercised inside TxBody encoding.
     await simulateWithNilPubkey(RPC, testAccounts.existing, [], undefined);
-    await simulateWithNilPubkey(RPC, testAccounts.existing, [], "explicit-memo");
+    await simulateWithNilPubkey(
+      RPC,
+      testAccounts.existing,
+      [],
+      "explicit-memo",
+    );
     expect(mockSimulate).toHaveBeenCalledTimes(2);
   });
 

@@ -158,7 +158,14 @@ export const useAbstraxionSigningClient = (
       );
     }
     return undefined;
-  }, [requireAuth, granterAddress, popupController, redirectController, iframeController, rpcUrl]);
+  }, [
+    requireAuth,
+    granterAddress,
+    popupController,
+    redirectController,
+    iframeController,
+    rpcUrl,
+  ]);
 
   // Read sign result from RedirectController via useSyncExternalStore so the
   // hook re-renders whenever signResult changes (set during init, cleared by consumer).

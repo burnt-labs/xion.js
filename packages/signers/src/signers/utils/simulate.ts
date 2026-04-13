@@ -13,11 +13,7 @@
  */
 
 import { bech32 } from "bech32";
-import {
-  TxRaw,
-  AuthInfo,
-  Fee,
-} from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import { TxRaw, AuthInfo, Fee } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import {
   ServiceClientImpl,
   SimulateRequest,
@@ -59,7 +55,10 @@ export async function simulateWithNilPubkey(
   // Attach auth extension so we can look up the sequence via the same comet connection.
   // customAccountFromAny handles /abstractaccount.v1.AbstractAccount; the default
   // StargateClient account parser would throw on this XION-specific account type.
-  const queryClient = QueryClient.withExtensions(cometClient, setupAuthExtension);
+  const queryClient = QueryClient.withExtensions(
+    cometClient,
+    setupAuthExtension,
+  );
   const authAccount = await queryClient.auth.account(signerAddress);
   if (!authAccount) throw new Error(`Account not found: ${signerAddress}`);
   const { sequence } = customAccountFromAny(authAccount);

@@ -13,7 +13,7 @@
  */
 
 import { execSync } from "child_process";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, readFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -70,6 +70,45 @@ async function generateTypes(
   console.log(`Types generated: ${outputFile}`);
 }
 
+/**
+ * Post-process a generated TypeScript file to rename duplicate property keys.
+ *
+ * openapi-typescript hashes operation keys from the path, which can produce
+ * collisions when two operations share a path but differ only in query params
+ * (e.g. startAfter vs startBefore variants).  TypeScript rejects duplicate keys
+ * in an interface/object type, so we rename later occurrences by appending a
+ * numeric suffix (_2, _3, …) to make them unique.
+ */
+async function deduplicateOperationKeys(outputFile: string): Promise<void> {
+  const src = await readFile(outputFile, "utf-8");
+  const lines = src.split("\n");
+
+  const seen = new Map<string, number>();
+  const out: string[] = [];
+
+  for (const line of lines) {
+    // Match a top-level property key in an interface/object type:
+    //   "    someKey: {" (4-space indent, no leading whitespace before key)
+    const match = line.match(/^    ([A-Za-z_][A-Za-z0-9_]*): \{/);
+    if (match) {
+      const key = match[1];
+      const count = (seen.get(key) ?? 0) + 1;
+      seen.set(key, count);
+      if (count > 1) {
+        out.push(line.replace(`    ${key}: {`, `    ${key}_${count}: {`));
+        continue;
+      }
+    }
+    out.push(line);
+  }
+
+  const deduped = out.join("\n");
+  if (deduped !== src) {
+    await writeFile(outputFile, deduped, "utf-8");
+    console.log(`Deduplicated operation keys in: ${outputFile}`);
+  }
+}
+
 async function main() {
   const targetEnv = process.argv[2] || "testnet";
   const baseUrl = DAODAO_INDEXER_URLS[targetEnv] ?? targetEnv;
@@ -89,6 +128,7 @@ async function main() {
 
   try {
     await generateTypes(tempFile, GENERATED_FILE);
+    await deduplicateOperationKeys(GENERATED_FILE);
   } finally {
     if (existsSync(tempFile)) {
       const { unlinkSync } = await import("fs");

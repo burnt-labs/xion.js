@@ -114,7 +114,9 @@ describe("RequireSigningClient — iframe strategy (SignAndBroadcastResult)", ()
     );
 
     expect(result).toEqual(mockBroadcastResult);
-    expect((result as SignAndBroadcastResult).transactionHash).toBe("TXHASH123");
+    expect((result as SignAndBroadcastResult).transactionHash).toBe(
+      "TXHASH123",
+    );
   });
 
   it("delegates sendTokens to iframe strategy with MsgSend", async () => {

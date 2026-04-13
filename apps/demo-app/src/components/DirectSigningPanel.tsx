@@ -23,7 +23,9 @@ interface DirectSigningPanelProps {
  * Pre-encoding as Uint8Array corrupts the payload through the postMessage
  * channel (JSON.stringify(Uint8Array) → {"0":1,...} → "unknown variant `0`").
  */
-export function DirectSigningPanel({ accountAddress }: DirectSigningPanelProps) {
+export function DirectSigningPanel({
+  accountAddress,
+}: DirectSigningPanelProps) {
   const { client, error } = useAbstraxionSigningClient({ requireAuth: true });
   const [tab, setTab] = useState<Tab>("send");
 
@@ -192,9 +194,11 @@ export function DirectSigningPanel({ accountAddress }: DirectSigningPanelProps) 
         {tab === "contract" && (
           <div className="space-y-3">
             <div className="rounded border border-white/10 bg-black/30 p-2 font-mono text-xs leading-relaxed text-gray-300">
-              <span className="text-gray-500">// ✅ correct — plain object</span>
+              <span className="text-gray-500">
+                // ✅ correct — plain object
+              </span>
               <br />
-              {"{ typeUrl: \"/cosmwasm…MsgExecuteContract\","}
+              {'{ typeUrl: "/cosmwasm…MsgExecuteContract",'}
               <br />
               {"  value: { msg: contractMsg } }"}
               <br />
