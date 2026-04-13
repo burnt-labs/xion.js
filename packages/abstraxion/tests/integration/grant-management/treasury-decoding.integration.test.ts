@@ -401,9 +401,7 @@ describe("Treasury decoding integration (xion-testnet-2)", () => {
     it("ContractExecution grants preserve decoded limit/filter info from real treasuries", async () => {
       const treasuries = await collectTreasuries(testAddresses);
       const contractExecTreasuries = treasuries.filter((t) =>
-        t.decoded.some(
-          (d) => d.type === AuthorizationTypes.ContractExecution,
-        ),
+        t.decoded.some((d) => d.type === AuthorizationTypes.ContractExecution),
       );
 
       if (contractExecTreasuries.length === 0) {
@@ -415,7 +413,9 @@ describe("Treasury decoding integration (xion-testnet-2)", () => {
         for (const decoded of t.decoded) {
           if (decoded.type !== AuthorizationTypes.ContractExecution) continue;
 
-          const data = decoded.data as unknown as { grants: Array<Record<string, unknown>> };
+          const data = decoded.data as unknown as {
+            grants: Array<Record<string, unknown>>;
+          };
           expect(data.grants.length).toBeGreaterThan(0);
 
           for (const grant of data.grants) {

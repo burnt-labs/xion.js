@@ -75,14 +75,8 @@ export { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 // Re-export AAClient for direct signing (consumers need this when using requireAuth: true)
 export { AAClient } from "@burnt-labs/signers";
 
-// PopupSigningClient for direct signing in popup mode
-export { PopupSigningClient } from "./controllers/PopupSigningClient";
-
-// RedirectSigningClient for direct signing in redirect mode
-export { RedirectSigningClient } from "./controllers/RedirectSigningClient";
-
-// IframeSigningClient for direct signing in iframe mode
-export { IframeSigningClient } from "./controllers/IframeSigningClient";
+// RequireSigningClient — unified client for popup / redirect / iframe direct-signing modes
+export { RequireSigningClient } from "./controllers/RequireSigningClient";
 
 // IframeController for inline iframe mode (consumers need instanceof check for setContainerElement)
 export { IframeController } from "./controllers/IframeController";

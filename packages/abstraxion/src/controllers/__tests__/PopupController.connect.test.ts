@@ -456,7 +456,8 @@ describe("PopupController — happy paths", () => {
     it("should resolve on ADD_AUTHENTICATOR_SUCCESS", async () => {
       const controller = new PopupController(createConfig());
 
-      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      const addAuthPromise =
+        controller.promptAddAuthenticators("xion1granter456");
       await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
@@ -470,7 +471,8 @@ describe("PopupController — happy paths", () => {
     it("should reject on ADD_AUTHENTICATOR_REJECTED", async () => {
       const controller = new PopupController(createConfig());
 
-      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      const addAuthPromise =
+        controller.promptAddAuthenticators("xion1granter456");
       await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
@@ -478,41 +480,53 @@ describe("PopupController — happy paths", () => {
         "https://dashboard.burnt.com",
       );
 
-      await expect(addAuthPromise).rejects.toThrow("Add authenticator cancelled by user");
+      await expect(addAuthPromise).rejects.toThrow(
+        "Add authenticator cancelled by user",
+      );
     });
 
     it("should reject on ADD_AUTHENTICATOR_ERROR with message", async () => {
       const controller = new PopupController(createConfig());
 
-      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      const addAuthPromise =
+        controller.promptAddAuthenticators("xion1granter456");
       await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
-        { type: DashboardMessageType.ADD_AUTHENTICATOR_ERROR, message: "Passkey registration failed" },
+        {
+          type: DashboardMessageType.ADD_AUTHENTICATOR_ERROR,
+          message: "Passkey registration failed",
+        },
         "https://dashboard.burnt.com",
       );
 
-      await expect(addAuthPromise).rejects.toThrow("Passkey registration failed");
+      await expect(addAuthPromise).rejects.toThrow(
+        "Passkey registration failed",
+      );
     });
 
     it("should reject when popup is closed", async () => {
       vi.useFakeTimers();
       const controller = new PopupController(createConfig());
 
-      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      const addAuthPromise =
+        controller.promptAddAuthenticators("xion1granter456");
       await vi.advanceTimersByTimeAsync(0); // flush microtasks for listener setup
 
       windowMock.mockPopup.closed = true;
       vi.advanceTimersByTime(600);
 
-      await expect(addAuthPromise).rejects.toThrow("Add authenticators popup was closed");
+      await expect(addAuthPromise).rejects.toThrow(
+        "Add authenticators popup was closed",
+      );
       vi.useRealTimers();
     });
 
     it("should build add-authenticators popup URL with correct params", async () => {
       const controller = new PopupController(createConfig());
 
-      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      const addAuthPromise =
+        controller.promptAddAuthenticators("xion1granter456");
       await waitForListenerSetup();
 
       const openCall = windowMock.win.open.mock.calls[0];

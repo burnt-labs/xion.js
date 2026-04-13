@@ -58,9 +58,7 @@ describe("CompositeTreasuryStrategy", () => {
 
     it("should accept single strategy", () => {
       const strategy = createMockStrategy("TestStrategy", "success");
-      expect(
-        () => new CompositeTreasuryStrategy([strategy]),
-      ).not.toThrow();
+      expect(() => new CompositeTreasuryStrategy([strategy])).not.toThrow();
     });
 
     it("should accept multiple strategies", () => {
@@ -252,7 +250,12 @@ describe("CompositeTreasuryStrategy", () => {
         metadata: '{"name": "Slow"}',
       };
       const fast = createDelayedMockStrategy("Fast", "success", 10, fastConfig);
-      const slow = createDelayedMockStrategy("Slow", "success", 100, slowConfig);
+      const slow = createDelayedMockStrategy(
+        "Slow",
+        "success",
+        100,
+        slowConfig,
+      );
       const composite = new CompositeTreasuryStrategy([fast, slow], {
         racing: true,
       });

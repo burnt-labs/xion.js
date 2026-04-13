@@ -349,7 +349,9 @@ describe("RedirectController — callback & signing", () => {
       expect(window.location.href).toContain("mode=sign");
       expect(window.location.href).toContain("granter=xion1granter456");
 
-      signPromise.catch(() => { /* expected timeout rejection */ });
+      signPromise.catch(() => {
+        /* expected timeout rejection */
+      });
       controller.destroy();
     });
   });
@@ -409,7 +411,10 @@ describe("RedirectController — callback & signing", () => {
       await controller.initialize();
 
       const result = controller.addAuthResult.get();
-      expect(result).toEqual({ success: false, error: "Passkey registration failed" });
+      expect(result).toEqual({
+        success: false,
+        error: "Passkey registration failed",
+      });
     });
 
     it("should clear add-auth result and notify subscribers", async () => {
@@ -440,7 +445,8 @@ describe("RedirectController — callback & signing", () => {
     it("should navigate to dashboard add-authenticators page", async () => {
       const controller = new RedirectController(createConfig());
 
-      const addAuthPromise = controller.promptAddAuthenticators("xion1granter456");
+      const addAuthPromise =
+        controller.promptAddAuthenticators("xion1granter456");
 
       // resolveAuthAppUrl is always async — yield one microtask so navigation fires
       await Promise.resolve();
@@ -449,7 +455,9 @@ describe("RedirectController — callback & signing", () => {
       expect(window.location.href).toContain("mode=add-authenticators");
       expect(window.location.href).toContain("granter=xion1granter456");
 
-      addAuthPromise.catch(() => { /* expected timeout rejection */ });
+      addAuthPromise.catch(() => {
+        /* expected timeout rejection */
+      });
       controller.destroy();
     });
   });

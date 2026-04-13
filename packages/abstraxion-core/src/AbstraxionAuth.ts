@@ -370,9 +370,7 @@ export class AbstraxionAuth {
    * @returns {Promise<boolean>} - Returns a promise that resolves to `true` if all treasury grants match chain grants; otherwise, `false`.
    * @throws {Error} - Throws an error if the treasury contract is missing.
    */
-  async compareGrantsToTreasury(
-    chainGrants: ChainGrant[],
-  ): Promise<boolean> {
+  async compareGrantsToTreasury(chainGrants: ChainGrant[]): Promise<boolean> {
     if (!this.treasury) {
       throw new Error("Missing treasury");
     }
@@ -424,8 +422,9 @@ export class AbstraxionAuth {
       });
 
     // Chain grants are already decoded via fetchChainGrantsDecoded — extract directly
-    const decodedChainConfigs: DecodedReadableAuthorization[] =
-      chainGrants.map((grant) => grant.authorization);
+    const decodedChainConfigs: DecodedReadableAuthorization[] = chainGrants.map(
+      (grant) => grant.authorization,
+    );
 
     const result = compareChainGrantsToTreasuryGrants(
       decodedChainConfigs,
@@ -516,7 +515,11 @@ export class AbstraxionAuth {
           return validGrant && isValid;
         } else {
           // Legacy mode: fetch chain grants in REST format for legacy compare functions
-          const data = await fetchChainGrantsABCI(grantee, granter, this.rpcUrl);
+          const data = await fetchChainGrantsABCI(
+            grantee,
+            granter,
+            this.rpcUrl,
+          );
 
           if (data.grants.length === 0) {
             return false;

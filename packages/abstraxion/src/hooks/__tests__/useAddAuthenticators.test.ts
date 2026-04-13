@@ -93,7 +93,10 @@ vi.mock("../../controllers/RedirectController", () => {
           _value = null;
           _subscribers.forEach((cb) => cb());
         }),
-        _set: (v: typeof _value) => { _value = v; _subscribers.forEach((cb) => cb()); },
+        _set: (v: typeof _value) => {
+          _value = v;
+          _subscribers.forEach((cb) => cb());
+        },
       };
     })();
     promptAddAuthenticators = vi.fn().mockResolvedValue(undefined);
@@ -103,7 +106,10 @@ vi.mock("../../controllers/RedirectController", () => {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function buildContext(controller: unknown, granterAddress: string | null = "xion1user") {
+function buildContext(
+  controller: unknown,
+  granterAddress: string | null = "xion1user",
+) {
   return {
     controller,
     granterAddress,
@@ -128,7 +134,8 @@ function wrapper(ctx: React.ContextType<typeof AbstraxionContext>) {
 // Re-import after mocking so instanceof checks use the mocked classes
 const { PopupController } = await import("../../controllers/PopupController");
 const { IframeController } = await import("../../controllers/IframeController");
-const { RedirectController } = await import("../../controllers/RedirectController");
+const { RedirectController } =
+  await import("../../controllers/RedirectController");
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -174,7 +181,9 @@ describe("useAddAuthenticators", () => {
         wrapper: wrapper(buildContext(controller, "xion1popup")),
       });
       await act(() => result.current.addAuthenticators());
-      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith("xion1popup");
+      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith(
+        "xion1popup",
+      );
     });
 
     it("calls IframeController.promptAddAuthenticators with the granter address", async () => {
@@ -183,7 +192,9 @@ describe("useAddAuthenticators", () => {
         wrapper: wrapper(buildContext(controller, "xion1iframe")),
       });
       await act(() => result.current.addAuthenticators());
-      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith("xion1iframe");
+      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith(
+        "xion1iframe",
+      );
     });
 
     it("calls RedirectController.promptAddAuthenticators with the granter address", async () => {
@@ -192,7 +203,9 @@ describe("useAddAuthenticators", () => {
         wrapper: wrapper(buildContext(controller, "xion1redirect")),
       });
       await act(() => result.current.addAuthenticators());
-      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith("xion1redirect");
+      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith(
+        "xion1redirect",
+      );
     });
 
     it("throws when the user is not connected (granterAddress is null)", async () => {

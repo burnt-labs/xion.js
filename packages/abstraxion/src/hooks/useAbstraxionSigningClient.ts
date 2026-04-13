@@ -14,11 +14,9 @@ import {
 } from "@burnt-labs/signers";
 import { AbstraxionContext } from "@/src/AbstraxionProvider";
 import { PopupController } from "@/src/controllers/PopupController";
-import { PopupSigningClient } from "@/src/controllers/PopupSigningClient";
 import { RedirectController } from "@/src/controllers/RedirectController";
-import { RedirectSigningClient } from "@/src/controllers/RedirectSigningClient";
 import { IframeController } from "@/src/controllers/IframeController";
-import { IframeSigningClient } from "@/src/controllers/IframeSigningClient";
+import { RequireSigningClient } from "@/src/controllers/RequireSigningClient";
 import type { SigningClient, SignResult } from "@/src/types";
 
 /**
@@ -31,7 +29,7 @@ export interface UseAbstraxionSigningClientOptions {
    *
    * Direct signing:
    * - Signer mode: AAClient — external wallet prompts for approval
-   * - Popup mode: PopupSigningClient — dashboard popup prompts for approval
+   * - Popup / redirect / iframe mode: RequireSigningClient — dashboard mediates approval
    * - User pays gas from their meta-account balance
    * - For security-critical operations
    *
@@ -136,29 +134,31 @@ export const useAbstraxionSigningClient = (
   const [aaClient, setAaClient] = useState<AAClient | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
 
-  // PopupSigningClient for popup mode (synchronous, no async creation needed)
-  const popupSigningClient = useMemo(() => {
-    if (!requireAuth || !popupController || !granterAddress) {
-      return undefined;
-    }
-    return new PopupSigningClient(popupController);
-  }, [requireAuth, popupController, granterAddress]);
+  // RequireSigningClient for popup / redirect / iframe modes (synchronous).
+  // The transport strategy is bound from the active controller method.
+  const requireSigningClient = useMemo(() => {
+    if (!requireAuth || !granterAddress) return undefined;
 
-  // RedirectSigningClient for redirect mode (synchronous)
-  const redirectSigningClient = useMemo(() => {
-    if (!requireAuth || !redirectController || !granterAddress) {
-      return undefined;
+    if (popupController) {
+      return new RequireSigningClient(
+        popupController.promptSignAndBroadcast.bind(popupController),
+        rpcUrl,
+      );
     }
-    return new RedirectSigningClient(redirectController);
-  }, [requireAuth, redirectController, granterAddress]);
-
-  // IframeSigningClient for iframe mode (synchronous)
-  const iframeSigningClient = useMemo(() => {
-    if (!requireAuth || !iframeController || !granterAddress) {
-      return undefined;
+    if (redirectController) {
+      return new RequireSigningClient(
+        redirectController.promptSignAndBroadcast.bind(redirectController),
+        rpcUrl,
+      );
     }
-    return new IframeSigningClient(iframeController);
-  }, [requireAuth, iframeController, granterAddress]);
+    if (iframeController) {
+      return new RequireSigningClient(
+        iframeController.signAndBroadcastWithMetaAccount.bind(iframeController),
+        rpcUrl,
+      );
+    }
+    return undefined;
+  }, [requireAuth, granterAddress, popupController, redirectController, iframeController, rpcUrl]);
 
   // Read sign result from RedirectController via useSyncExternalStore so the
   // hook re-renders whenever signResult changes (set during init, cleared by consumer).
@@ -181,7 +181,8 @@ export const useAbstraxionSigningClient = (
       return;
     }
 
-    // Popup mode: handled by PopupSigningClient (above), no error needed
+    // Popup / redirect / embedded: handled by RequireSigningClient (above).
+    // Only set an error if the relevant controller is missing.
     if (authMode === "popup") {
       setAaClient(undefined);
       if (!popupController) {
@@ -194,7 +195,6 @@ export const useAbstraxionSigningClient = (
       return;
     }
 
-    // Redirect mode: handled by RedirectSigningClient (above)
     if (authMode === "redirect") {
       setAaClient(undefined);
       if (!redirectController) {
@@ -207,7 +207,6 @@ export const useAbstraxionSigningClient = (
       return;
     }
 
-    // Embedded mode: handled by IframeSigningClient (above)
     if (authMode === "embedded") {
       setAaClient(undefined);
       if (!iframeController) {
@@ -293,10 +292,10 @@ export const useAbstraxionSigningClient = (
 
   // Return appropriate client based on mode
   if (requireAuth) {
-    // Popup mode: return PopupSigningClient
+    // Popup / redirect / iframe: return RequireSigningClient (unified transport-strategy client)
     if (authMode === "popup") {
       return {
-        client: popupSigningClient,
+        client: requireSigningClient,
         signArb: undefined,
         rpcUrl,
         error,
@@ -305,10 +304,10 @@ export const useAbstraxionSigningClient = (
       };
     }
 
-    // Redirect mode: return RedirectSigningClient + signResult
+    // Redirect mode: also expose signResult store for consuming the post-redirect result
     if (authMode === "redirect") {
       return {
-        client: redirectSigningClient,
+        client: requireSigningClient,
         signArb: undefined,
         rpcUrl,
         error,
@@ -317,10 +316,10 @@ export const useAbstraxionSigningClient = (
       };
     }
 
-    // Embedded mode: return IframeSigningClient
+    // Embedded (iframe) mode
     if (authMode === "embedded") {
       return {
-        client: iframeSigningClient,
+        client: requireSigningClient,
         signArb: undefined,
         rpcUrl,
         error,
@@ -329,10 +328,10 @@ export const useAbstraxionSigningClient = (
       };
     }
 
-    // Signer mode: return AAClient
+    // Signer mode: return AAClient (has full direct-key access)
     return {
       client: aaClient,
-      signArb: undefined, // signArb not available for direct signing
+      signArb: undefined,
       rpcUrl,
       error,
       signResult: null,

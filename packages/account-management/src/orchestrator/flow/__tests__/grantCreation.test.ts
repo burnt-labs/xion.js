@@ -80,9 +80,8 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       getAccounts: vi.fn(),
     };
 
-    const { AAClient, createSignerFromSigningFunction } = await import(
-      "@burnt-labs/signers"
-    );
+    const { AAClient, createSignerFromSigningFunction } =
+      await import("@burnt-labs/signers");
     AAClient.connectWithSigner.mockResolvedValue(mockClient);
     createSignerFromSigningFunction.mockReturnValue(mockSigner);
 
@@ -564,9 +563,8 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should create signer with correct parameters", async () => {
-      const { createSignerFromSigningFunction } = await import(
-        "@burnt-labs/signers"
-      );
+      const { createSignerFromSigningFunction } =
+        await import("@burnt-labs/signers");
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
       vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([

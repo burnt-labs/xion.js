@@ -86,7 +86,9 @@ export function encodePayloadForTransport(payload: TxTransportPayload): string {
  * Takes a base64-encoded payload (as it arrives in the URL) and runs
  * every step the dashboard performs before signing.
  */
-export function emulateDashboardReceive(encodedPayload: string): EmulatorResult {
+export function emulateDashboardReceive(
+  encodedPayload: string,
+): EmulatorResult {
   // Step 1: Decode (mirrors decodeTxPayload in SignTransactionView)
   const json = fromBase64(encodedPayload);
   const decodedPayload = JSON.parse(json) as TxTransportPayload;

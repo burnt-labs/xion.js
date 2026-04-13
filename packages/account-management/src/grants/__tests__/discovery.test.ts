@@ -58,9 +58,8 @@ describe("discovery.ts - queryTreasuryContractWithPermissions", () => {
     });
 
     // Setup default generatePermissionDescriptions mock
-    const { generatePermissionDescriptions } = await import(
-      "../utils/format-permissions"
-    );
+    const { generatePermissionDescriptions } =
+      await import("../utils/format-permissions");
     vi.mocked(generatePermissionDescriptions).mockReturnValue([
       {
         type: "SendAuthorization",
@@ -134,9 +133,8 @@ describe("discovery.ts - queryTreasuryContractWithPermissions", () => {
 
     it("should pass usdcDenom to generatePermissionDescriptions when provided", async () => {
       const usdcDenom = "ibc/usdc";
-      const { generatePermissionDescriptions } = await import(
-        "../utils/format-permissions"
-      );
+      const { generatePermissionDescriptions } =
+        await import("../utils/format-permissions");
 
       await queryTreasuryContractWithPermissions(
         mockContractAddress,
@@ -154,9 +152,8 @@ describe("discovery.ts - queryTreasuryContractWithPermissions", () => {
     });
 
     it("should include dappDescription from grant config", async () => {
-      const { generatePermissionDescriptions } = await import(
-        "../utils/format-permissions"
-      );
+      const { generatePermissionDescriptions } =
+        await import("../utils/format-permissions");
 
       await queryTreasuryContractWithPermissions(
         mockContractAddress,
@@ -339,9 +336,8 @@ describe("discovery.ts - queryTreasuryContractWithPermissions", () => {
     });
 
     it("should pass decoded grants with dappDescription to generatePermissionDescriptions", async () => {
-      const { generatePermissionDescriptions } = await import(
-        "../utils/format-permissions"
-      );
+      const { generatePermissionDescriptions } =
+        await import("../utils/format-permissions");
 
       vi.mocked(decodeAuthorization).mockReturnValue({
         type: "SendAuthorization",

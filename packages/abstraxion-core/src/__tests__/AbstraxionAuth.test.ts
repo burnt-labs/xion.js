@@ -152,7 +152,7 @@ describe("AbstraxionAuth", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockChainGrants);
+        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
       expect(result).toBe(true);
     });
 
@@ -162,7 +162,7 @@ describe("AbstraxionAuth", () => {
       abstraxionAuth.bank = [{ denom: "uxion", amount: "200" }];
 
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockChainGrants);
+        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
       expect(result).toBe(false);
     });
 
@@ -177,7 +177,7 @@ describe("AbstraxionAuth", () => {
       ];
 
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockChainGrants);
+        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
       expect(result).toBe(false);
     });
 
@@ -187,15 +187,17 @@ describe("AbstraxionAuth", () => {
       abstraxionAuth.stake = false;
 
       const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockChainGrants);
+        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
       expect(result).toBe(true);
     });
 
     it("should return false when no grants are found", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
-      const result =
-        abstraxionAuth.compareGrantsToLegacyConfig([]);
+      const result = abstraxionAuth.compareGrantsToLegacyConfig({
+        grants: [],
+        pagination: { next_key: null, total: "0" },
+      });
       expect(result).toBe(false);
     });
   });

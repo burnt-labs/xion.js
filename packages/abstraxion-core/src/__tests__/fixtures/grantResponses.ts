@@ -126,7 +126,10 @@ export const mockChainGrants: ChainGrant[] = [
     grantee: mockAccountAddress,
     authorization: {
       type: AuthorizationTypes.Send,
-      data: { spendLimit: [{ denom: "uxion", amount: "1000000" }], allowList: [] } as any,
+      data: {
+        spendLimit: [{ denom: "uxion", amount: "1000000" }],
+        allowList: [],
+      } as any,
     },
     expiration: "2025-02-13T18:03:09Z",
   },
@@ -135,7 +138,9 @@ export const mockChainGrants: ChainGrant[] = [
     grantee: mockAccountAddress,
     authorization: {
       type: AuthorizationTypes.Generic,
-      data: { msg: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward" } as any,
+      data: {
+        msg: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+      } as any,
     },
     expiration: "2025-02-13T18:03:09Z",
   },
@@ -153,7 +158,9 @@ export const mockChainGrants: ChainGrant[] = [
     grantee: mockAccountAddress,
     authorization: {
       type: AuthorizationTypes.Generic,
-      data: { msg: "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation" } as any,
+      data: {
+        msg: "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation",
+      } as any,
     },
     expiration: "2025-02-13T18:03:09Z",
   },

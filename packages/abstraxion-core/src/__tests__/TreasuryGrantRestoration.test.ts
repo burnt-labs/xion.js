@@ -129,7 +129,10 @@ describe("Treasury grant comparison — session restoration bug", () => {
       expect(
         decodedChain.every((d) => d.type === AuthorizationTypes.Unsupported),
       ).toBe(true);
-      const result = compareChainGrantsToTreasuryGrants(decodedChain, decodedTreasury);
+      const result = compareChainGrantsToTreasuryGrants(
+        decodedChain,
+        decodedTreasury,
+      );
       expect(result.match).toBe(false);
       expect(result.match === false && result.reason).toBe("decode_error");
     });

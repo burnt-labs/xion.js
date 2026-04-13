@@ -98,3 +98,26 @@ export interface ControllerConfig {
 export type ControllerFactory = (
   config: NormalizedAbstraxionConfig,
 ) => Controller;
+
+// ============================================================================
+// Signing Client Types
+// ============================================================================
+
+import type { EncodeObject } from "@cosmjs/proto-signing";
+import type { StdFee, DeliverTxResponse, Coin } from "@cosmjs/stargate";
+import type { SignAndBroadcastResult } from "@burnt-labs/abstraxion-core";
+
+/**
+ * Strategy function passed to RequireSigningClient at construction.
+ * Each dashboard transport mode (popup, redirect, iframe) binds its own
+ * controller method and passes it here.
+ *
+ * The return type is a union because popup/redirect return DeliverTxResponse
+ * while iframe returns SignAndBroadcastResult (hash only — no full RPC response).
+ */
+export type SignAndBroadcastFn = (
+  address: string,
+  messages: readonly EncodeObject[],
+  fee: StdFee | "auto" | number,
+  memo?: string,
+) => Promise<DeliverTxResponse | SignAndBroadcastResult>;

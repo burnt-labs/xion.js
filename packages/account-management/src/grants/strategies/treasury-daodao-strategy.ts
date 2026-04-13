@@ -91,15 +91,16 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
   ): Promise<TreasuryConfig | null> {
     try {
       // Use shared low-level indexer fetcher from abstraxion-core
-      const data = await fetchFromDaoDaoIndexer<DaoDaoIndexerTreasuryAllResponse>(
-        treasuryAddress,
-        chainId,
-        "all",
-        {
-          indexerUrl: this.config.indexerUrl,
-          timeout: this.config.timeout,
-        },
-      );
+      const data =
+        await fetchFromDaoDaoIndexer<DaoDaoIndexerTreasuryAllResponse>(
+          treasuryAddress,
+          chainId,
+          "all",
+          {
+            indexerUrl: this.config.indexerUrl,
+            timeout: this.config.timeout,
+          },
+        );
 
       const validatedData = this.validateAllResponse(data);
 

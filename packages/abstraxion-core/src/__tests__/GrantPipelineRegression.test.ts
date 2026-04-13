@@ -19,7 +19,10 @@ import { ContractExecutionAuthorization } from "cosmjs-types/cosmwasm/wasm/v1/au
 import { decodeAuthorization } from "@/utils/grant/decoding";
 import { compareChainGrantsToTreasuryGrants } from "@/utils/grant/compare";
 import { AuthorizationTypes } from "@/utils/grant/constants";
-import type { DecodedReadableAuthorization, TreasuryGrantConfig } from "@/types";
+import type {
+  DecodedReadableAuthorization,
+  TreasuryGrantConfig,
+} from "@/types";
 
 // ─── Real base64 fixtures (from xion-testnet-2 treasury contracts) ───────────
 
@@ -33,13 +36,22 @@ const CONTRACT_BASE64 =
 const CONTRACT_TYPE_URL = "/cosmwasm.wasm.v1.ContractExecutionAuthorization";
 
 // GenericAuthorization: MsgInstantiateContract
-const GENERIC_BASE64 = "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN0";
+const GENERIC_BASE64 =
+  "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN0";
 const GENERIC_TYPE_URL = "/cosmos.authz.v1beta1.GenericAuthorization";
 
 // Treasury configs (same base64 — this is what the treasury contract stores)
 const treasuryConfigs: TreasuryGrantConfig[] = [
-  { description: "send", authorization: { type_url: SEND_TYPE_URL, value: SEND_BASE64 }, optional: false },
-  { description: "contracts", authorization: { type_url: CONTRACT_TYPE_URL, value: CONTRACT_BASE64 }, optional: false },
+  {
+    description: "send",
+    authorization: { type_url: SEND_TYPE_URL, value: SEND_BASE64 },
+    optional: false,
+  },
+  {
+    description: "contracts",
+    authorization: { type_url: CONTRACT_TYPE_URL, value: CONTRACT_BASE64 },
+    optional: false,
+  },
 ];
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -69,7 +81,9 @@ describe("PR #290 regression: ABCI returns protobuf, legacy expects REST", () =>
     // Legacy compareBankGrants reads grant.authorization["@type"]
     // which is undefined here → the grant is filtered out → returns false even though it exists
     const bankGrants = rawProtobufGrants.filter(
-      (g) => g.authorization["@type" as keyof typeof g.authorization] === SEND_TYPE_URL,
+      (g) =>
+        g.authorization["@type" as keyof typeof g.authorization] ===
+        SEND_TYPE_URL,
     );
     expect(bankGrants.length).toBe(0); // Bug: grant exists but filter misses it
   });
@@ -112,7 +126,7 @@ describe("PR #336 regression: REST format fed to treasury comparison expecting p
     // The bug: treasury comparison called decodeAuthorization(grant.authorization.typeUrl, ...)
     const decoded = decodeAuthorization(
       (restFormatGrant as any).typeUrl, // undefined!
-      (restFormatGrant as any).value,   // undefined!
+      (restFormatGrant as any).value, // undefined!
     );
     expect(decoded.type).toBe(AuthorizationTypes.Unsupported); // Bug: valid grant decoded as Unsupported
   });
@@ -129,7 +143,10 @@ describe("PR #336 regression: REST format fed to treasury comparison expecting p
       decodeAuthorization(c.authorization.type_url, c.authorization.value),
     );
 
-    const result = compareChainGrantsToTreasuryGrants(brokenChainDecoded, decodedTreasury);
+    const result = compareChainGrantsToTreasuryGrants(
+      brokenChainDecoded,
+      decodedTreasury,
+    );
     expect(result.match).toBe(false);
 
     // With our typed result, this is now classified as decode_error (not grant_missing)
@@ -156,7 +173,10 @@ describe("PR #336 regression: REST format fed to treasury comparison expecting p
     );
 
     // Both sides use the same decoder on the same bytes → must match
-    const result = compareChainGrantsToTreasuryGrants(chainDecoded, treasuryDecoded);
+    const result = compareChainGrantsToTreasuryGrants(
+      chainDecoded,
+      treasuryDecoded,
+    );
     expect(result.match).toBe(true);
   });
 });
@@ -177,26 +197,41 @@ describe("Pipeline contract: query output shape matches comparison input", () =>
     // base64 string (treasury path)
     const fromBase64 = decodeAuthorization(SEND_TYPE_URL, SEND_BASE64);
     // Uint8Array (chain ABCI path)
-    const fromBytes = decodeAuthorization(SEND_TYPE_URL, toByteArray(SEND_BASE64));
+    const fromBytes = decodeAuthorization(
+      SEND_TYPE_URL,
+      toByteArray(SEND_BASE64),
+    );
 
     expect(fromBase64.type).toBe(fromBytes.type);
-    expect(JSON.stringify(fromBase64.data)).toBe(JSON.stringify(fromBytes.data));
+    expect(JSON.stringify(fromBase64.data)).toBe(
+      JSON.stringify(fromBytes.data),
+    );
   });
 
   it("decodeAuthorization is symmetric for ContractExecution", () => {
     const fromBase64 = decodeAuthorization(CONTRACT_TYPE_URL, CONTRACT_BASE64);
-    const fromBytes = decodeAuthorization(CONTRACT_TYPE_URL, toByteArray(CONTRACT_BASE64));
+    const fromBytes = decodeAuthorization(
+      CONTRACT_TYPE_URL,
+      toByteArray(CONTRACT_BASE64),
+    );
 
     expect(fromBase64.type).toBe(fromBytes.type);
-    expect(JSON.stringify(fromBase64.data)).toBe(JSON.stringify(fromBytes.data));
+    expect(JSON.stringify(fromBase64.data)).toBe(
+      JSON.stringify(fromBytes.data),
+    );
   });
 
   it("decodeAuthorization is symmetric for Generic", () => {
     const fromBase64 = decodeAuthorization(GENERIC_TYPE_URL, GENERIC_BASE64);
-    const fromBytes = decodeAuthorization(GENERIC_TYPE_URL, toByteArray(GENERIC_BASE64));
+    const fromBytes = decodeAuthorization(
+      GENERIC_TYPE_URL,
+      toByteArray(GENERIC_BASE64),
+    );
 
     expect(fromBase64.type).toBe(fromBytes.type);
-    expect(JSON.stringify(fromBase64.data)).toBe(JSON.stringify(fromBytes.data));
+    expect(JSON.stringify(fromBase64.data)).toBe(
+      JSON.stringify(fromBytes.data),
+    );
   });
 
   it("every known authorization type decodes without Unsupported from valid base64", () => {
@@ -219,7 +254,10 @@ describe("decode_error resilience: corrupted data does not crash session restore
     const corruptTreasury: TreasuryGrantConfig[] = [
       {
         description: "corrupted",
-        authorization: { type_url: SEND_TYPE_URL, value: "dGhpcyBpcyBnYXJiYWdl" }, // "this is garbage"
+        authorization: {
+          type_url: SEND_TYPE_URL,
+          value: "dGhpcyBpcyBnYXJiYWdl",
+        }, // "this is garbage"
         optional: false,
       },
     ];
@@ -233,7 +271,10 @@ describe("decode_error resilience: corrupted data does not crash session restore
     expect(corruptDecoded[0].type).toBe(AuthorizationTypes.Unsupported);
 
     // Comparison returns decode_error (not crash, not grant_missing)
-    const result = compareChainGrantsToTreasuryGrants(validChain, corruptDecoded);
+    const result = compareChainGrantsToTreasuryGrants(
+      validChain,
+      corruptDecoded,
+    );
     expect(result.match).toBe(false);
     if (!result.match) {
       expect(result.reason).toBe("decode_error");

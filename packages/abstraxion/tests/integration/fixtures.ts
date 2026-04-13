@@ -233,9 +233,8 @@ export const testConfig = {
         // Create test connector on demand
         const connector = createTestSecp256k1Connector(TEST_MNEMONIC, 0);
         const result = await connector.connect();
-        const { getSignerConfigFromConnectorResult } = await import(
-          "./helpers"
-        );
+        const { getSignerConfigFromConnectorResult } =
+          await import("./helpers");
         return getSignerConfigFromConnectorResult(result);
       },
       smartAccountContract: {

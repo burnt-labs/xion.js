@@ -79,4 +79,3 @@ export interface TxTransportPayload {
   fee: StdFee | "auto" | number;
   memo?: string;
 }
-
