@@ -26,7 +26,7 @@ import type { ControllerConfig } from "./types";
 import type {
   RedirectAuthentication,
   SignResult,
-  AddAuthResult,
+  ManageAuthResult,
 } from "../types";
 import {
   toBase64,
@@ -206,7 +206,7 @@ export class RedirectController extends BaseController {
   private orchestrator: ConnectionOrchestrator;
   private config: RedirectControllerConfig;
   readonly signResult = new ResultStore<SignResult>();
-  readonly addAuthResult = new ResultStore<AddAuthResult>();
+  readonly manageAuthResult = new ResultStore<ManageAuthResult>();
   private initializePromise: Promise<void> | null = null;
 
   /**
@@ -320,8 +320,8 @@ export class RedirectController extends BaseController {
   private async doInitialize(): Promise<void> {
     // Check for signing result return (tx_hash / sign_rejected / sign_error)
     this.detectSignResult();
-    // Check for add-authenticator result return (add_auth_success / add_auth_rejected / add_auth_error)
-    this.detectAddAuthResult();
+    // Check for manage-authenticators result return (add_auth_success / add_auth_rejected / add_auth_error)
+    this.detectManageAuthResult();
 
     // Check if we're returning from dashboard redirect FIRST
     // If so, transition from initializing to connecting
@@ -589,10 +589,10 @@ export class RedirectController extends BaseController {
    * redirects back with `?add_auth_success=true`; on cancellation with
    * `?add_auth_rejected=true`; on error with `?add_auth_error=<message>`.
    *
-   * Read the result via `addAuthResult.get()` (or the hook's `addAuthResult`)
+   * Read the result via `manageAuthResult.get()` (or the hook's `manageAuthResult`)
    * after the page reloads from the dashboard redirect.
    */
-  async promptAddAuthenticators(signerAddress: string): Promise<void> {
+  async promptManageAuthenticators(signerAddress: string): Promise<void> {
     const authAppUrl = await resolveAuthAppUrl(
       this.config.rpcUrl,
       this.config.redirect.authAppUrl,
@@ -606,7 +606,7 @@ export class RedirectController extends BaseController {
     );
   }
 
-  private detectAddAuthResult(): void {
+  private detectManageAuthResult(): void {
     detectRedirectResult(
       ["add_auth_success", "add_auth_rejected", "add_auth_error"],
       STORAGE_KEY_PENDING_ADD_AUTH,
@@ -620,7 +620,7 @@ export class RedirectController extends BaseController {
               error: error ? decodeURIComponent(error) : "Cancelled",
             };
       },
-      (result) => this.addAuthResult.set(result),
+      (result) => this.manageAuthResult.set(result),
     );
   }
 
@@ -630,7 +630,7 @@ export class RedirectController extends BaseController {
   destroy(): void {
     super.destroy();
     this.signResult.destroy();
-    this.addAuthResult.destroy();
+    this.manageAuthResult.destroy();
     this.orchestrator.destroy();
   }
 }

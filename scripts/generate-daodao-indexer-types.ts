@@ -83,23 +83,62 @@ async function deduplicateOperationKeys(outputFile: string): Promise<void> {
   const src = await readFile(outputFile, "utf-8");
   const lines = src.split("\n");
 
-  const seen = new Map<string, number>();
-  const out: string[] = [];
-
+  // Pre-scan: identify which operation keys appear more than once so we know
+  // which paths references need updating.
+  const definitionCount = new Map<string, number>();
   for (const line of lines) {
-    // Match a top-level property key in an interface/object type:
-    //   "    someKey: {" (4-space indent, no leading whitespace before key)
     const match = line.match(/^    ([A-Za-z_][A-Za-z0-9_]*): \{/);
     if (match) {
       const key = match[1];
-      const count = (seen.get(key) ?? 0) + 1;
-      seen.set(key, count);
+      definitionCount.set(key, (definitionCount.get(key) ?? 0) + 1);
+    }
+  }
+  const duplicateKeys = new Set(
+    [...definitionCount.entries()]
+      .filter(([, count]) => count > 1)
+      .map(([key]) => key),
+  );
+
+  if (duplicateKeys.size === 0) return;
+
+  // Main pass: rename duplicate operation key definitions AND update the
+  // corresponding operations["key"] references in the paths interface so they
+  // point at the correctly-suffixed variant.
+  const defSeen = new Map<string, number>();
+  const refSeen = new Map<string, number>();
+  const out: string[] = [];
+
+  for (const line of lines) {
+    // Match a top-level property key definition: "    someKey: {"
+    const defMatch = line.match(/^    ([A-Za-z_][A-Za-z0-9_]*): \{/);
+    if (defMatch && duplicateKeys.has(defMatch[1])) {
+      const key = defMatch[1];
+      const count = (defSeen.get(key) ?? 0) + 1;
+      defSeen.set(key, count);
       if (count > 1) {
         out.push(line.replace(`    ${key}: {`, `    ${key}_${count}: {`));
-        continue;
+      } else {
+        out.push(line);
+      }
+      continue;
+    }
+
+    // Update operations["key"] references for duplicate keys.
+    let updatedLine = line;
+    for (const key of duplicateKeys) {
+      if (updatedLine.includes(`operations["${key}"]`)) {
+        const count = (refSeen.get(key) ?? 0) + 1;
+        refSeen.set(key, count);
+        if (count > 1) {
+          updatedLine = updatedLine.replace(
+            `operations["${key}"]`,
+            `operations["${key}_${count}"]`,
+          );
+        }
+        break;
       }
     }
-    out.push(line);
+    out.push(updatedLine);
   }
 
   const deduped = out.join("\n");

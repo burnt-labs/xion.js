@@ -10,7 +10,8 @@ import type { EncodeObject } from "@cosmjs/proto-signing";
 
 const WASM_MSG_EXECUTE = WASM_MSG_TYPES_WITH_BYTES[0];
 const WASM_MSG_INSTANTIATE = WASM_MSG_TYPES_WITH_BYTES[1];
-const WASM_MSG_MIGRATE = WASM_MSG_TYPES_WITH_BYTES[2];
+const WASM_MSG_INSTANTIATE2 = WASM_MSG_TYPES_WITH_BYTES[2];
+const WASM_MSG_MIGRATE = WASM_MSG_TYPES_WITH_BYTES[3];
 
 // ── contractMsgToBytes ──────────────────────────────────────────────
 
@@ -44,6 +45,10 @@ describe("isWasmMsgWithBytes", () => {
 
   it("returns true for MsgInstantiateContract", () => {
     expect(isWasmMsgWithBytes(WASM_MSG_INSTANTIATE)).toBe(true);
+  });
+
+  it("returns true for MsgInstantiateContract2", () => {
+    expect(isWasmMsgWithBytes(WASM_MSG_INSTANTIATE2)).toBe(true);
   });
 
   it("returns true for MsgMigrateContract", () => {
@@ -154,6 +159,27 @@ describe("normalizeMessage", () => {
         sender: "xion1sender",
         code_id: "42",
         label: "test",
+        msg: initMsg,
+        funds: [],
+      },
+    };
+
+    const result = normalizeMessage(msg);
+    const resultValue = result.value as Record<string, unknown>;
+    expect(resultValue.msg).toBeInstanceOf(Uint8Array);
+    expect(
+      JSON.parse(new TextDecoder().decode(resultValue.msg as Uint8Array)),
+    ).toEqual(initMsg);
+  });
+
+  it("normalizes MsgInstantiateContract2.msg", () => {
+    const initMsg = { salt: "abc", admin: "xion1admin" };
+    const msg: EncodeObject = {
+      typeUrl: WASM_MSG_INSTANTIATE2,
+      value: {
+        sender: "xion1sender",
+        code_id: "42",
+        label: "test2",
         msg: initMsg,
         funds: [],
       },

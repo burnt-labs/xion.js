@@ -46,8 +46,8 @@ import type {
   StorageStrategy,
   RedirectStrategy,
   SignAndBroadcastResult,
-  AddAuthenticatorPayload,
-  AddAuthenticatorResponse,
+  ManageAuthenticatorsPayload,
+  ManageAuthenticatorsResponse,
 } from "@burnt-labs/abstraxion-core";
 import {
   IframeMessageType,
@@ -564,14 +564,14 @@ export class IframeController extends BaseController {
   /**
    * Add an authenticator to the user's account via the embedded iframe.
    *
-   * Sends ADD_AUTHENTICATOR via MessageChannelManager to the dashboard iframe,
+   * Sends MANAGE_AUTHENTICATORS via MessageChannelManager to the dashboard iframe,
    * which shows an add-authenticator UI and resolves when the user completes
    * or cancels. Same pattern as signAndBroadcastWithMetaAccount.
    */
   // _signerAddress is unused here because the iframe already knows the connected
   // account. The parameter exists for interface symmetry with PopupController and
-  // RedirectController so callers can use promptAddAuthenticators uniformly.
-  async promptAddAuthenticators(_signerAddress: string): Promise<void> {
+  // RedirectController so callers can use promptManageAuthenticators uniformly.
+  async promptManageAuthenticators(_signerAddress: string): Promise<void> {
     if (!this.iframe?.contentWindow) {
       throw new Error(
         "Iframe is not available. Ensure the iframe is mounted and the user is connected.",
@@ -580,17 +580,20 @@ export class IframeController extends BaseController {
 
     this.setAwaitingApproval(true);
     try {
-      await new Promise<AddAuthenticatorResponse>((resolve, reject) => {
+      await new Promise<ManageAuthenticatorsResponse>((resolve, reject) => {
         this._cancelPendingApproval = () =>
-          reject(new Error("User cancelled add authenticator request"));
+          reject(new Error("User cancelled manage authenticators request"));
 
         this.messageManager
-          .sendRequest<AddAuthenticatorPayload, AddAuthenticatorResponse>(
+          .sendRequest<
+            ManageAuthenticatorsPayload,
+            ManageAuthenticatorsResponse
+          >(
             this.iframe!,
-            IframeMessageType.ADD_AUTHENTICATOR,
+            IframeMessageType.MANAGE_AUTHENTICATORS,
             {},
             this.iframeOrigin,
-            600_000, // 10 min — user needs time to add authenticator
+            600_000, // 10 min — user needs time to manage authenticators
           )
           .then(resolve, reject);
       });

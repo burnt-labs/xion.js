@@ -6,6 +6,6 @@ export {
 } from "./useAbstraxionSigningClient";
 export { useAbstraxionClient } from "./useAbstraxionClient";
 export {
-  useAddAuthenticators,
-  type UseAddAuthenticatorsReturn,
-} from "./useAddAuthenticators";
+  useManageAuthenticators,
+  type UseManageAuthenticatorsReturn,
+} from "./useManageAuthenticators";

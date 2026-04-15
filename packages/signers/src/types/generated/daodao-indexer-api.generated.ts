@@ -947,7 +947,7 @@ export interface paths {
             cookie?: never;
         };
         /** lists vesting contracts by instantiator in reverse order */
-        get: operations["cwPayrollFactory_listVestingContractsByInstantia_eafa46d"];
+        get: operations["cwPayrollFactory_listVestingContractsByInstantia_eafa46d_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -981,7 +981,7 @@ export interface paths {
             cookie?: never;
         };
         /** lists vesting contracts by recipient in reverse order */
-        get: operations["cwPayrollFactory_listVestingContractsByRecipient_b617620"];
+        get: operations["cwPayrollFactory_listVestingContractsByRecipient_b617620_2"];
         put?: never;
         post?: never;
         delete?: never;

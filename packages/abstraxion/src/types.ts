@@ -289,9 +289,9 @@ export type SignResult =
   | { success: false; error: string };
 
 /**
- * Result from a redirect-mode add-authenticator flow.
- * Populated after returning from the dashboard add-authenticators redirect.
+ * Result from a redirect-mode manage-authenticators flow.
+ * Populated after returning from the dashboard manage-authenticators redirect.
  */
-export type AddAuthResult =
+export type ManageAuthResult =
   | { success: true }
   | { success: false; error: string };

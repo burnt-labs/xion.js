@@ -53,7 +53,7 @@ export function validateTxPayload(
     const v = msg.value as Record<string, unknown>;
     const isExecute = msg.typeUrl.endsWith("MsgExecuteContract");
     const isMigrate = msg.typeUrl.endsWith("MsgMigrateContract");
-    const isInstantiate = msg.typeUrl.endsWith("MsgInstantiateContract");
+    const isInstantiate = msg.typeUrl.includes("MsgInstantiateContract");
 
     if (!v.sender) fail(`${at("sender")}: required`);
 

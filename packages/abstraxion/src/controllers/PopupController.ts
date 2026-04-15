@@ -383,10 +383,10 @@ export class PopupController extends BaseController {
   /**
    * Open a popup to add an authenticator to the user's account.
    *
-   * The dashboard shows AddAuthenticatorsForm (approve / skip). On success it
-   * posts ADD_AUTHENTICATOR_SUCCESS back; on cancel it posts ADD_AUTHENTICATOR_REJECTED.
+   * The dashboard shows AuthenticatorsManageView (add/remove). On success it
+   * posts MANAGE_AUTHENTICATORS_SUCCESS back; on cancel it posts MANAGE_AUTHENTICATORS_REJECTED.
    */
-  async promptAddAuthenticators(signerAddress: string): Promise<void> {
+  async promptManageAuthenticators(signerAddress: string): Promise<void> {
     const authAppUrl = await resolveAuthAppUrl(
       this.config.rpcUrl,
       this.config.popup.authAppUrl,
@@ -399,27 +399,32 @@ export class PopupController extends BaseController {
       signerAddress,
       window.location.origin,
     );
-    const popup = this.openPopupWindow(url.toString(), "xion-add-auth-popup");
+    const popup = this.openPopupWindow(
+      url.toString(),
+      "xion-manage-auth-popup",
+    );
 
     return this.waitForPopupMessage<void>(
       popup,
       authAppOrigin,
       (data, resolve, reject) => {
-        if (data.type === DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS) {
+        if (data.type === DashboardMessageType.MANAGE_AUTHENTICATORS_SUCCESS) {
           resolve();
         } else if (
-          data.type === DashboardMessageType.ADD_AUTHENTICATOR_REJECTED
+          data.type === DashboardMessageType.MANAGE_AUTHENTICATORS_REJECTED
         ) {
-          reject(new Error("Add authenticator cancelled by user"));
-        } else if (data.type === DashboardMessageType.ADD_AUTHENTICATOR_ERROR) {
+          reject(new Error("Manage authenticators cancelled by user"));
+        } else if (
+          data.type === DashboardMessageType.MANAGE_AUTHENTICATORS_ERROR
+        ) {
           reject(
             new Error(
-              (data.message as string) || "Failed to add authenticator",
+              (data.message as string) || "Failed to manage authenticators",
             ),
           );
         }
       },
-      { name: "Add authenticators popup", timeoutMs: 10 * 60 * 1000 },
+      { name: "Manage authenticators popup", timeoutMs: 10 * 60 * 1000 },
     );
   }
 

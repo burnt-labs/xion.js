@@ -21,7 +21,7 @@ export enum IframeMessageType {
   GET_ADDRESS = "GET_ADDRESS",
   SIGN_TRANSACTION = "SIGN_TRANSACTION",
   SIGN_AND_BROADCAST = "SIGN_AND_BROADCAST",
-  ADD_AUTHENTICATOR = "ADD_AUTHENTICATOR",
+  MANAGE_AUTHENTICATORS = "MANAGE_AUTHENTICATORS",
   REMOVE_AUTHENTICATOR = "REMOVE_AUTHENTICATOR",
   REQUEST_GRANT = "REQUEST_GRANT",
   MODAL_STATE_CHANGE = "MODAL_STATE_CHANGE",
@@ -53,10 +53,10 @@ export enum DashboardMessageType {
   SIGN_SUCCESS = "SIGN_SUCCESS",
   SIGN_REJECTED = "SIGN_REJECTED",
   SIGN_ERROR = "SIGN_ERROR",
-  // Popup add-authenticator results
-  ADD_AUTHENTICATOR_SUCCESS = "ADD_AUTHENTICATOR_SUCCESS",
-  ADD_AUTHENTICATOR_REJECTED = "ADD_AUTHENTICATOR_REJECTED",
-  ADD_AUTHENTICATOR_ERROR = "ADD_AUTHENTICATOR_ERROR",
+  // Popup/redirect manage-authenticators results
+  MANAGE_AUTHENTICATORS_SUCCESS = "MANAGE_AUTHENTICATORS_SUCCESS",
+  MANAGE_AUTHENTICATORS_REJECTED = "MANAGE_AUTHENTICATORS_REJECTED",
+  MANAGE_AUTHENTICATORS_ERROR = "MANAGE_AUTHENTICATORS_ERROR",
 }
 
 /**
@@ -192,21 +192,21 @@ export interface AuthenticatorData {
 }
 
 /**
- * Add authenticator payload
+ * Manage authenticators payload
  *
  * Note: The 'type' field uses AuthenticatorType from @burnt-labs/signers.
  * The dashboard's ConnectionMethod provides a superset of authentication methods
  * including social auth options (email, google, apple, discord, twitter).
  */
-export interface AddAuthenticatorPayload {
+export interface ManageAuthenticatorsPayload {
   type?: AuthenticatorType | string; // Allow string for dashboard-specific auth methods
   oAuthToken?: string;
 }
 
 /**
- * Add authenticator response
+ * Manage authenticators response
  */
-export interface AddAuthenticatorResponse {
+export interface ManageAuthenticatorsResponse {
   authenticator: AuthenticatorData;
 }
 

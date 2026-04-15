@@ -4,7 +4,8 @@ import { WASM_MSG_TYPES_WITH_BYTES, type TxTransportPayload } from "../types";
 
 const WASM_MSG_EXECUTE = WASM_MSG_TYPES_WITH_BYTES[0];
 const WASM_MSG_INSTANTIATE = WASM_MSG_TYPES_WITH_BYTES[1];
-const WASM_MSG_MIGRATE = WASM_MSG_TYPES_WITH_BYTES[2];
+const WASM_MSG_INSTANTIATE2 = WASM_MSG_TYPES_WITH_BYTES[2];
+const WASM_MSG_MIGRATE = WASM_MSG_TYPES_WITH_BYTES[3];
 
 // Suppress console.warn output during tests
 beforeEach(() => vi.spyOn(console, "warn").mockImplementation(() => {}));
@@ -295,6 +296,49 @@ describe("MsgInstantiateContract", () => {
       "Test",
     );
     // code_id is a warn, not a hard error — ok is still true
+    expect(r.ok).toBe(true);
+    expect(r.reason).toBeUndefined();
+  });
+});
+
+// ── MsgInstantiateContract2 ─────────────────────────────────────────
+
+describe("MsgInstantiateContract2", () => {
+  it("passes a fully valid message", () => {
+    const r = validateTxPayload(
+      {
+        messages: [
+          {
+            typeUrl: WASM_MSG_INSTANTIATE2,
+            value: {
+              sender: "xion1s",
+              code_id: "42",
+              label: "t",
+              msg: {},
+              funds: [],
+            },
+          },
+        ],
+        fee: "auto",
+      },
+      "Test",
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("warns (non-blocking) when code_id is missing", () => {
+    const r = validateTxPayload(
+      {
+        messages: [
+          {
+            typeUrl: WASM_MSG_INSTANTIATE2,
+            value: { sender: "xion1s", label: "t", msg: {} },
+          },
+        ],
+        fee: "auto",
+      },
+      "Test",
+    );
     expect(r.ok).toBe(true);
     expect(r.reason).toBeUndefined();
   });

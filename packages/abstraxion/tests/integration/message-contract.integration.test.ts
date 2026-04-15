@@ -54,8 +54,10 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       expect(IframeMessageType.SIGN_AND_BROADCAST).toBe("SIGN_AND_BROADCAST");
     });
 
-    it("ADD_AUTHENTICATOR is sent by SDK to add auth method", () => {
-      expect(IframeMessageType.ADD_AUTHENTICATOR).toBe("ADD_AUTHENTICATOR");
+    it("MANAGE_AUTHENTICATORS is sent by SDK to manage auth methods", () => {
+      expect(IframeMessageType.MANAGE_AUTHENTICATORS).toBe(
+        "MANAGE_AUTHENTICATORS",
+      );
     });
 
     it("REMOVE_AUTHENTICATOR is sent by SDK to remove auth method", () => {
@@ -128,22 +130,22 @@ describe("SDK ↔ Dashboard Message Contract", () => {
       expect(msg.message).toBeTruthy();
     });
 
-    it("ADD_AUTHENTICATOR_SUCCESS has no required fields", () => {
-      const msg = { type: DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS };
-      expect(msg.type).toBe("ADD_AUTHENTICATOR_SUCCESS");
+    it("MANAGE_AUTHENTICATORS_SUCCESS has no required fields", () => {
+      const msg = { type: DashboardMessageType.MANAGE_AUTHENTICATORS_SUCCESS };
+      expect(msg.type).toBe("MANAGE_AUTHENTICATORS_SUCCESS");
     });
 
-    it("ADD_AUTHENTICATOR_REJECTED has no required fields", () => {
-      const msg = { type: DashboardMessageType.ADD_AUTHENTICATOR_REJECTED };
-      expect(msg.type).toBe("ADD_AUTHENTICATOR_REJECTED");
+    it("MANAGE_AUTHENTICATORS_REJECTED has no required fields", () => {
+      const msg = { type: DashboardMessageType.MANAGE_AUTHENTICATORS_REJECTED };
+      expect(msg.type).toBe("MANAGE_AUTHENTICATORS_REJECTED");
     });
 
-    it("ADD_AUTHENTICATOR_ERROR includes message field", () => {
+    it("MANAGE_AUTHENTICATORS_ERROR includes message field", () => {
       const msg = {
-        type: DashboardMessageType.ADD_AUTHENTICATOR_ERROR,
+        type: DashboardMessageType.MANAGE_AUTHENTICATORS_ERROR,
         message: "Passkey registration failed",
       };
-      expect(msg.type).toBe("ADD_AUTHENTICATOR_ERROR");
+      expect(msg.type).toBe("MANAGE_AUTHENTICATORS_ERROR");
       expect(msg.message).toBeTruthy();
     });
   });

@@ -104,7 +104,7 @@ export type ControllerFactory = (
 // ============================================================================
 
 import type { EncodeObject } from "@cosmjs/proto-signing";
-import type { StdFee, DeliverTxResponse, Coin } from "@cosmjs/stargate";
+import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
 import type { SignAndBroadcastResult } from "@burnt-labs/abstraxion-core";
 
 /**

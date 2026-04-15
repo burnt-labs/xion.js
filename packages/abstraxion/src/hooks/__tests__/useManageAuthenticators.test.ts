@@ -1,56 +1,22 @@
 // @vitest-environment jsdom
 /**
- * useAddAuthenticators — unit tests
+ * useManageAuthenticators — unit tests
  *
  * Covers:
  * - isSupported for popup, iframe, redirect, and signer controllers
- * - addAuthenticators() delegates to the correct controller method
- * - addAuthenticators() throws when not connected (no granterAddress)
- * - addAuthenticators() throws when controller doesn't support the feature
- * - addAuthResult and clearAddAuthResult wiring for redirect mode
+ * - manageAuthenticators() delegates to the correct controller method
+ * - manageAuthenticators() throws when not connected (no granterAddress)
+ * - manageAuthenticators() throws when controller doesn't support the feature
+ * - manageAuthResult and clearManageAuthResult wiring for redirect mode
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import React from "react";
 import { AbstraxionContext } from "../../AbstraxionProvider";
-import { useAddAuthenticators } from "../useAddAuthenticators";
+import { useManageAuthenticators } from "../useManageAuthenticators";
 
 // ─── Minimal controller mocks ─────────────────────────────────────────────────
-
-function makePopupController() {
-  return {
-    promptAddAuthenticators: vi.fn().mockResolvedValue(undefined),
-  };
-}
-
-function makeIframeController() {
-  return {
-    promptAddAuthenticators: vi.fn().mockResolvedValue(undefined),
-  };
-}
-
-function makeRedirectController(initialResult = null) {
-  let result = initialResult;
-  const subscribers = new Set<() => void>();
-  return {
-    promptAddAuthenticators: vi.fn().mockResolvedValue(undefined),
-    getAddAuthResult: vi.fn(() => result),
-    getAddAuthResultSnapshot: vi.fn(() => result),
-    subscribeToAddAuthResult: vi.fn((cb: () => void) => {
-      subscribers.add(cb);
-      return () => subscribers.delete(cb);
-    }),
-    clearAddAuthResult: vi.fn(() => {
-      result = null;
-      subscribers.forEach((cb) => cb());
-    }),
-    _setResult: (r: typeof result) => {
-      result = r;
-      subscribers.forEach((cb) => cb());
-    },
-  };
-}
 
 function makeSignerController() {
   return {};
@@ -65,21 +31,21 @@ function makeSignerController() {
 
 vi.mock("../../controllers/PopupController", () => {
   class PopupController {
-    promptAddAuthenticators = vi.fn().mockResolvedValue(undefined);
+    promptManageAuthenticators = vi.fn().mockResolvedValue(undefined);
   }
   return { PopupController };
 });
 
 vi.mock("../../controllers/IframeController", () => {
   class IframeController {
-    promptAddAuthenticators = vi.fn().mockResolvedValue(undefined);
+    promptManageAuthenticators = vi.fn().mockResolvedValue(undefined);
   }
   return { IframeController };
 });
 
 vi.mock("../../controllers/RedirectController", () => {
   class RedirectController {
-    addAuthResult = (() => {
+    manageAuthResult = (() => {
       let _value: { success: boolean; error?: string } | null = null;
       const _subscribers = new Set<() => void>();
       return {
@@ -99,7 +65,7 @@ vi.mock("../../controllers/RedirectController", () => {
         },
       };
     })();
-    promptAddAuthenticators = vi.fn().mockResolvedValue(undefined);
+    promptManageAuthenticators = vi.fn().mockResolvedValue(undefined);
   }
   return { RedirectController };
 });
@@ -139,11 +105,11 @@ const { RedirectController } =
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe("useAddAuthenticators", () => {
+describe("useManageAuthenticators", () => {
   describe("isSupported", () => {
     it("is true for PopupController", () => {
       const controller = new PopupController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
       expect(result.current.isSupported).toBe(true);
@@ -151,7 +117,7 @@ describe("useAddAuthenticators", () => {
 
     it("is true for IframeController", () => {
       const controller = new IframeController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
       expect(result.current.isSupported).toBe(true);
@@ -159,7 +125,7 @@ describe("useAddAuthenticators", () => {
 
     it("is true for RedirectController", () => {
       const controller = new RedirectController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
       expect(result.current.isSupported).toBe(true);
@@ -167,108 +133,108 @@ describe("useAddAuthenticators", () => {
 
     it("is false for an unsupported controller", () => {
       const controller = makeSignerController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
       expect(result.current.isSupported).toBe(false);
     });
   });
 
-  describe("addAuthenticators()", () => {
-    it("calls PopupController.promptAddAuthenticators with the granter address", async () => {
+  describe("manageAuthenticators()", () => {
+    it("calls PopupController.promptManageAuthenticators with the granter address", async () => {
       const controller = new PopupController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller, "xion1popup")),
       });
-      await act(() => result.current.addAuthenticators());
-      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith(
+      await act(() => result.current.manageAuthenticators());
+      expect(controller.promptManageAuthenticators).toHaveBeenCalledWith(
         "xion1popup",
       );
     });
 
-    it("calls IframeController.promptAddAuthenticators with the granter address", async () => {
+    it("calls IframeController.promptManageAuthenticators with the granter address", async () => {
       const controller = new IframeController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller, "xion1iframe")),
       });
-      await act(() => result.current.addAuthenticators());
-      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith(
+      await act(() => result.current.manageAuthenticators());
+      expect(controller.promptManageAuthenticators).toHaveBeenCalledWith(
         "xion1iframe",
       );
     });
 
-    it("calls RedirectController.promptAddAuthenticators with the granter address", async () => {
+    it("calls RedirectController.promptManageAuthenticators with the granter address", async () => {
       const controller = new RedirectController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller, "xion1redirect")),
       });
-      await act(() => result.current.addAuthenticators());
-      expect(controller.promptAddAuthenticators).toHaveBeenCalledWith(
+      await act(() => result.current.manageAuthenticators());
+      expect(controller.promptManageAuthenticators).toHaveBeenCalledWith(
         "xion1redirect",
       );
     });
 
     it("throws when the user is not connected (granterAddress is null)", async () => {
       const controller = new PopupController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller, null)),
       });
-      await expect(result.current.addAuthenticators()).rejects.toThrow(
+      await expect(result.current.manageAuthenticators()).rejects.toThrow(
         "not connected",
       );
     });
 
     it("throws when the controller doesn't support the feature", async () => {
       const controller = makeSignerController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
-      await expect(result.current.addAuthenticators()).rejects.toThrow(
+      await expect(result.current.manageAuthenticators()).rejects.toThrow(
         "not supported",
       );
     });
   });
 
-  describe("addAuthResult (redirect mode)", () => {
+  describe("manageAuthResult (redirect mode)", () => {
     it("is null by default for redirect mode", () => {
       const controller = new RedirectController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
-      expect(result.current.addAuthResult).toBeNull();
+      expect(result.current.manageAuthResult).toBeNull();
     });
 
     it("is null for popup mode (not applicable)", () => {
       const controller = new PopupController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
-      expect(result.current.addAuthResult).toBeNull();
+      expect(result.current.manageAuthResult).toBeNull();
     });
 
-    it("clears addAuthResult when clearAddAuthResult() is called", () => {
+    it("clears manageAuthResult when clearManageAuthResult() is called", () => {
       const controller = new RedirectController();
-      controller.addAuthResult._set({ success: true });
+      controller.manageAuthResult._set({ success: true });
 
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
 
       act(() => {
-        result.current.clearAddAuthResult();
+        result.current.clearManageAuthResult();
       });
 
-      expect(controller.addAuthResult.clear).toHaveBeenCalled();
+      expect(controller.manageAuthResult.clear).toHaveBeenCalled();
     });
 
-    it("clearAddAuthResult is a no-op for popup mode", () => {
+    it("clearManageAuthResult is a no-op for popup mode", () => {
       const controller = new PopupController();
-      const { result } = renderHook(() => useAddAuthenticators(), {
+      const { result } = renderHook(() => useManageAuthenticators(), {
         wrapper: wrapper(buildContext(controller)),
       });
       // Should not throw
       act(() => {
-        result.current.clearAddAuthResult();
+        result.current.clearManageAuthResult();
       });
     });
   });

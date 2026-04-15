@@ -18,7 +18,7 @@ export type {
   IframeAuthentication,
   EmbeddedAuthentication,
   SignResult,
-  AddAuthResult,
+  ManageAuthResult,
   SigningClient,
 } from "./types";
 
@@ -30,11 +30,11 @@ export {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
   useAbstraxionClient,
-  useAddAuthenticators,
+  useManageAuthenticators,
 } from "./hooks";
 
 // Hook types
-export type { UseAddAuthenticatorsReturn } from "./hooks";
+export type { UseManageAuthenticatorsReturn } from "./hooks";
 export type {
   UseAbstraxionSigningClientOptions,
   UseAbstraxionSigningClientReturn,

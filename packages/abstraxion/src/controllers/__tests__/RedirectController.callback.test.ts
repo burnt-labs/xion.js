@@ -356,7 +356,7 @@ describe("RedirectController — callback & signing", () => {
     });
   });
 
-  describe("detectAddAuthResult()", () => {
+  describe("detectManageAuthResult()", () => {
     it("should detect successful add-auth from add_auth_success param", async () => {
       Object.defineProperty(window, "location", {
         value: {
@@ -371,7 +371,7 @@ describe("RedirectController — callback & signing", () => {
       const controller = new RedirectController(createConfig());
       await controller.initialize();
 
-      const result = controller.addAuthResult.get();
+      const result = controller.manageAuthResult.get();
       expect(result).toEqual({ success: true });
 
       // URL should be cleaned
@@ -392,7 +392,7 @@ describe("RedirectController — callback & signing", () => {
       const controller = new RedirectController(createConfig());
       await controller.initialize();
 
-      const result = controller.addAuthResult.get();
+      const result = controller.manageAuthResult.get();
       expect(result).toEqual({ success: false, error: "Cancelled" });
     });
 
@@ -410,7 +410,7 @@ describe("RedirectController — callback & signing", () => {
       const controller = new RedirectController(createConfig());
       await controller.initialize();
 
-      const result = controller.addAuthResult.get();
+      const result = controller.manageAuthResult.get();
       expect(result).toEqual({
         success: false,
         error: "Passkey registration failed",
@@ -432,21 +432,21 @@ describe("RedirectController — callback & signing", () => {
       await controller.initialize();
 
       const subscriber = vi.fn();
-      controller.addAuthResult.subscribe(subscriber);
+      controller.manageAuthResult.subscribe(subscriber);
 
-      controller.addAuthResult.clear();
+      controller.manageAuthResult.clear();
 
-      expect(controller.addAuthResult.get()).toBeNull();
+      expect(controller.manageAuthResult.get()).toBeNull();
       expect(subscriber).toHaveBeenCalled();
     });
   });
 
-  describe("promptAddAuthenticators()", () => {
+  describe("promptManageAuthenticators()", () => {
     it("should navigate to dashboard add-authenticators page", async () => {
       const controller = new RedirectController(createConfig());
 
       const addAuthPromise =
-        controller.promptAddAuthenticators("xion1granter456");
+        controller.promptManageAuthenticators("xion1granter456");
 
       // resolveAuthAppUrl is always async — yield one microtask so navigation fires
       await Promise.resolve();

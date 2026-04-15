@@ -452,49 +452,49 @@ describe("PopupController — happy paths", () => {
     });
   });
 
-  describe("promptAddAuthenticators()", () => {
-    it("should resolve on ADD_AUTHENTICATOR_SUCCESS", async () => {
+  describe("promptManageAuthenticators()", () => {
+    it("should resolve on MANAGE_AUTHENTICATORS_SUCCESS", async () => {
       const controller = new PopupController(createConfig());
 
       const addAuthPromise =
-        controller.promptAddAuthenticators("xion1granter456");
+        controller.promptManageAuthenticators("xion1granter456");
       await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
-        { type: DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS },
+        { type: DashboardMessageType.MANAGE_AUTHENTICATORS_SUCCESS },
         "https://dashboard.burnt.com",
       );
 
       await expect(addAuthPromise).resolves.toBeUndefined();
     });
 
-    it("should reject on ADD_AUTHENTICATOR_REJECTED", async () => {
+    it("should reject on MANAGE_AUTHENTICATORS_REJECTED", async () => {
       const controller = new PopupController(createConfig());
 
       const addAuthPromise =
-        controller.promptAddAuthenticators("xion1granter456");
+        controller.promptManageAuthenticators("xion1granter456");
       await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
-        { type: DashboardMessageType.ADD_AUTHENTICATOR_REJECTED },
+        { type: DashboardMessageType.MANAGE_AUTHENTICATORS_REJECTED },
         "https://dashboard.burnt.com",
       );
 
       await expect(addAuthPromise).rejects.toThrow(
-        "Add authenticator cancelled by user",
+        "Manage authenticators cancelled by user",
       );
     });
 
-    it("should reject on ADD_AUTHENTICATOR_ERROR with message", async () => {
+    it("should reject on MANAGE_AUTHENTICATORS_ERROR with message", async () => {
       const controller = new PopupController(createConfig());
 
       const addAuthPromise =
-        controller.promptAddAuthenticators("xion1granter456");
+        controller.promptManageAuthenticators("xion1granter456");
       await waitForListenerSetup();
 
       windowMock.simulatePostMessage(
         {
-          type: DashboardMessageType.ADD_AUTHENTICATOR_ERROR,
+          type: DashboardMessageType.MANAGE_AUTHENTICATORS_ERROR,
           message: "Passkey registration failed",
         },
         "https://dashboard.burnt.com",
@@ -510,14 +510,14 @@ describe("PopupController — happy paths", () => {
       const controller = new PopupController(createConfig());
 
       const addAuthPromise =
-        controller.promptAddAuthenticators("xion1granter456");
+        controller.promptManageAuthenticators("xion1granter456");
       await vi.advanceTimersByTimeAsync(0); // flush microtasks for listener setup
 
       windowMock.mockPopup.closed = true;
       vi.advanceTimersByTime(600);
 
       await expect(addAuthPromise).rejects.toThrow(
-        "Add authenticators popup was closed",
+        "Manage authenticators popup was closed",
       );
       vi.useRealTimers();
     });
@@ -526,7 +526,7 @@ describe("PopupController — happy paths", () => {
       const controller = new PopupController(createConfig());
 
       const addAuthPromise =
-        controller.promptAddAuthenticators("xion1granter456");
+        controller.promptManageAuthenticators("xion1granter456");
       await waitForListenerSetup();
 
       const openCall = windowMock.win.open.mock.calls[0];
@@ -537,7 +537,7 @@ describe("PopupController — happy paths", () => {
       expect(popupUrl.searchParams.get("redirect_uri")).toBeTruthy();
 
       windowMock.simulatePostMessage(
-        { type: DashboardMessageType.ADD_AUTHENTICATOR_SUCCESS },
+        { type: DashboardMessageType.MANAGE_AUTHENTICATORS_SUCCESS },
         "https://dashboard.burnt.com",
       );
       await addAuthPromise;
