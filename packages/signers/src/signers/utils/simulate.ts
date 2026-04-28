@@ -27,6 +27,7 @@ import {
 } from "@cosmjs/stargate";
 import { Comet38Client } from "@cosmjs/tendermint-rpc";
 import { Uint53 } from "@cosmjs/math";
+import { NilPubKey } from "@burnt-labs/xion-types/abstractaccount/v1/account";
 import { AADefaultRegistryTypes } from "./client";
 import { customAccountFromAny } from ".";
 import { normalizeMessages } from "../../tx-payload/normalize";
@@ -76,7 +77,7 @@ export async function simulateWithNilPubkey(
       {
         publicKey: {
           typeUrl: "/abstractaccount.v1.NilPubKey",
-          value: new Uint8Array([10, 32, ...pubkey]),
+          value: NilPubKey.encode({ addressBytes: pubkey }).finish(),
         },
         modeInfo: {
           single: {

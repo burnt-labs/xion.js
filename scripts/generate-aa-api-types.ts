@@ -76,9 +76,8 @@ async function generateTypes(schema: any, outputFile: string): Promise<void> {
   await writeFile(tempSchemaFile, JSON.stringify(schema, null, 2), "utf-8");
 
   try {
-    // Use openapi-typescript to generate types
-    // Note: This requires openapi-typescript to be installed
-    const command = `npx --yes openapi-typescript "${tempSchemaFile}" -o "${outputFile}"`;
+    // Use openapi-typescript to generate types (pinned in root devDependencies)
+    const command = `pnpm exec openapi-typescript "${tempSchemaFile}" -o "${outputFile}"`;
 
     execSync(command, {
       stdio: "inherit",

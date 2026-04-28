@@ -62,7 +62,7 @@ async function generateTypes(
   outputFile: string,
 ): Promise<void> {
   console.log(`Generating TypeScript path types with openapi-typescript...`);
-  const command = `npx --yes openapi-typescript "${schemaPath}" -o "${outputFile}"`;
+  const command = `pnpm exec openapi-typescript "${schemaPath}" -o "${outputFile}"`;
   execSync(command, {
     stdio: "inherit",
     cwd: path.join(__dirname, ".."),

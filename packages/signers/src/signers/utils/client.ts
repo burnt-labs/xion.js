@@ -25,6 +25,7 @@ import {
 import { Comet38Client, CometClient } from "@cosmjs/tendermint-rpc";
 import { xionGasValues } from "@burnt-labs/constants";
 import { MsgRegisterAccount } from "@burnt-labs/xion-types/abstractaccount/v1/tx";
+import { NilPubKey } from "@burnt-labs/xion-types/abstractaccount/v1/account";
 import {
   abstractAccountTypes,
   MsgRegisterAccountEncodeObject,
@@ -252,7 +253,7 @@ export class AAClient extends SigningCosmWasmClient {
         {
           publicKey: {
             typeUrl: "/abstractaccount.v1.NilPubKey",
-            value: new Uint8Array([10, 32, ...pubkey]), // a little hack to encode the pk into proto bytes
+            value: NilPubKey.encode({ addressBytes: pubkey }).finish(),
           },
           modeInfo: {
             single: {

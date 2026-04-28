@@ -4,7 +4,10 @@ import { Any } from "cosmjs-types/google/protobuf/any";
 import { AuthInfo, SignerInfo } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { coins, StdFee } from "@cosmjs/amino";
 import { Uint64 } from "@cosmjs/math";
-import { AbstractAccount } from "@burnt-labs/xion-types/abstractaccount/v1/account";
+import {
+  AbstractAccount,
+  NilPubKey,
+} from "@burnt-labs/xion-types/abstractaccount/v1/account";
 import { assert } from "@cosmjs/utils";
 import { accountFromAny } from "@cosmjs/stargate/build/accounts";
 
@@ -62,7 +65,7 @@ export function makeAAuthInfo(
       SignerInfo.fromPartial({
         publicKey: {
           typeUrl: "/abstractaccount.v1.NilPubKey",
-          value: new Uint8Array([10, 32, ...pubKey]), // a little hack to encode the pk into proto bytes
+          value: NilPubKey.encode({ addressBytes: pubKey }).finish(),
         },
         modeInfo: {
           single: {

@@ -156,6 +156,16 @@ export async function generateTreasuryGrants(
 }
 
 /**
+ * Sort coins ascending by denom (Cosmos SDK requirement).
+ * Does not mutate the input array.
+ */
+function sortCoins<T extends { denom: string }>(coins: T[]): T[] {
+  return [...coins].sort((a, b) =>
+    a.denom < b.denom ? -1 : a.denom > b.denom ? 1 : 0,
+  );
+}
+
+/**
  * Generate bank (send) authorization grant
  */
 export function generateBankGrant(
@@ -172,7 +182,7 @@ export function generateBankGrant(
           typeUrl: SendAuthorization.typeUrl,
           value: SendAuthorization.encode(
             SendAuthorization.fromPartial({
-              spendLimit: bank,
+              spendLimit: sortCoins(bank),
             }),
           ).finish(),
         },
@@ -237,7 +247,7 @@ export function generateContractGrant(
               value: CombinedLimit.encode(
                 CombinedLimit.fromPartial({
                   callsRemaining: BigInt("255"),
-                  amounts,
+                  amounts: sortCoins(amounts),
                 }),
               ).finish(),
             },
