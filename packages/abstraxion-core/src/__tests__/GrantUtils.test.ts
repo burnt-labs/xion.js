@@ -124,7 +124,7 @@ describe("Grant Comparison Utilities", () => {
         compareChainGrantsToTreasuryGrants(
           decodedChainConfigs,
           decodedTreasuryConfigs,
-        ),
+        ).match,
       ).toBe(true);
     });
 
@@ -166,7 +166,7 @@ describe("Grant Comparison Utilities", () => {
         compareChainGrantsToTreasuryGrants(
           decodedChainConfigs,
           decodedTreasuryConfigs,
-        ),
+        ).match,
       ).toBe(false);
     });
 
@@ -208,7 +208,7 @@ describe("Grant Comparison Utilities", () => {
         compareChainGrantsToTreasuryGrants(
           decodedChainConfigs,
           decodedTreasuryConfigs,
-        ),
+        ).match,
       ).toBe(true);
     });
 
@@ -250,8 +250,93 @@ describe("Grant Comparison Utilities", () => {
         compareChainGrantsToTreasuryGrants(
           decodedChainConfigs,
           decodedTreasuryConfigs,
-        ),
+        ).match,
       ).toBe(false);
+    });
+
+    it("should return match:true when both sides are empty (empty treasury)", () => {
+      const result = compareChainGrantsToTreasuryGrants([], []);
+      expect(result.match).toBe(true);
+    });
+
+    it("should return grant_missing when treasury has grants but chain is empty", () => {
+      const treasury: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Generic,
+          data: { msg: "/cosmos.bank.v1beta1.MsgSend" },
+        },
+      ];
+      const result = compareChainGrantsToTreasuryGrants([], treasury);
+      expect(result.match).toBe(false);
+      if (!result.match) {
+        expect(result.reason).toBe("grant_missing");
+      }
+    });
+
+    it("should return decode_error when chain has Unsupported (not grant_missing)", () => {
+      const chain: DecodedReadableAuthorization[] = [
+        { type: AuthorizationTypes.Unsupported, data: null },
+      ];
+      const treasury: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Send,
+          data: {
+            spendLimit: [{ denom: "uxion", amount: "1000" }],
+            allowList: [],
+          },
+        },
+      ];
+      const result = compareChainGrantsToTreasuryGrants(chain, treasury);
+      expect(result.match).toBe(false);
+      if (!result.match) {
+        expect(result.reason).toBe("decode_error");
+      }
+    });
+
+    it("should return decode_error when treasury has Unsupported", () => {
+      const chain: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Send,
+          data: {
+            spendLimit: [{ denom: "uxion", amount: "1000" }],
+            allowList: [],
+          },
+        },
+      ];
+      const treasury: DecodedReadableAuthorization[] = [
+        { type: AuthorizationTypes.Unsupported, data: null },
+      ];
+      const result = compareChainGrantsToTreasuryGrants(chain, treasury);
+      expect(result.match).toBe(false);
+      if (!result.match) {
+        expect(result.reason).toBe("decode_error");
+      }
+    });
+
+    it("should return grant_mismatch when same type exists but values differ", () => {
+      const chain: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Send,
+          data: {
+            spendLimit: [{ denom: "uxion", amount: "5000" }],
+            allowList: [],
+          },
+        },
+      ];
+      const treasury: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Send,
+          data: {
+            spendLimit: [{ denom: "uxion", amount: "1000" }],
+            allowList: [],
+          },
+        },
+      ];
+      const result = compareChainGrantsToTreasuryGrants(chain, treasury);
+      expect(result.match).toBe(false);
+      if (!result.match) {
+        expect(result.reason).toBe("grant_mismatch");
+      }
     });
   });
 });
@@ -261,7 +346,7 @@ describe("Grant Decoding Utilities", () => {
     const typeUrl = "/cosmos.authz.v1beta1.GenericAuthorization";
     const value = "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN0";
     const result = decodeAuthorization(typeUrl, value);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: "/cosmos.authz.v1beta1.GenericAuthorization",
       data: { msg: "/cosmwasm.wasm.v1.MsgInstantiateContract" },
     });
@@ -272,7 +357,7 @@ describe("Grant Decoding Utilities", () => {
     const value =
       "Cg0KBXV4aW9uEgQxMDAwEj94aW9uMWY3YzNjZDI2czh2ZXE5cnA5NHQ3eXNyZWFjejRhZW1laDB0bDB3Y215c2xqZ3JtNnFhcHF1NmpoNXg=";
     const result = decodeAuthorization(typeUrl, value);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: "/cosmos.bank.v1beta1.SendAuthorization",
       data: {
         spendLimit: [{ denom: "uxion", amount: "1000" }],
@@ -288,7 +373,7 @@ describe("Grant Decoding Utilities", () => {
     const value =
       "CpUBCj94aW9uMXo3MGN2YzA4cXY1NzY0emVnM2R5a2N5eW1qNXo2bnU0c3FyN3g4dmw0emplZjJneXA2OXM5bW1ka2ESJgofL2Nvc213YXNtLndhc20udjEuTWF4Q2FsbHNMaW1pdBIDCP8BGioKKC9jb3Ntd2FzbS53YXNtLnYxLkFsbG93QWxsTWVzc2FnZXNGaWx0ZXI=";
     const result = decodeAuthorization(typeUrl, value);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
       data: {
         grants: [
@@ -309,6 +394,50 @@ describe("Grant Decoding Utilities", () => {
     const value = "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN0";
     const result = decodeAuthorization(typeUrl, value);
     expect(result).toEqual({ type: "Unsupported", data: null });
+  });
+
+  it("should return Unsupported for undefined typeUrl (proto format confusion)", () => {
+    const result = decodeAuthorization(
+      undefined as unknown as string,
+      undefined as unknown as string,
+    );
+    expect(result.type).toBe("Unsupported");
+    expect(result.data).toBeNull();
+  });
+
+  it("should handle empty base64 value without throwing", () => {
+    const result = decodeAuthorization(
+      "/cosmos.bank.v1beta1.SendAuthorization",
+      "",
+    );
+    expect(result).toBeDefined();
+    expect(result.type).toBe("/cosmos.bank.v1beta1.SendAuthorization");
+    // Protobuf decodes empty bytes to default field values
+  });
+
+  it("should return Unsupported on corrupted base64 value (garbage bytes)", () => {
+    const result = decodeAuthorization(
+      "/cosmos.bank.v1beta1.SendAuthorization",
+      "dGhpcyBpcyBub3QgdmFsaWQgcHJvdG9idWY=", // "this is not valid protobuf"
+    );
+    // Protobuf throws on invalid wire types — our catch returns Unsupported
+    expect(result).toBeDefined();
+    expect(result.type).toBe("Unsupported");
+    expect(result.data).toBeNull();
+  });
+
+  it("should return Unsupported on type_url/value mismatch (Send typeUrl, Generic bytes)", () => {
+    // GenericAuthorization bytes: {msg: "/cosmwasm.wasm.v1.MsgInstantiateContract"}
+    const genericBytes =
+      "CigvY29zbXdhc20ud2FzbS52MS5Nc2dJbnN0YW50aWF0ZUNvbnRyYWN0";
+    const result = decodeAuthorization(
+      "/cosmos.bank.v1beta1.SendAuthorization",
+      genericBytes,
+    );
+    // Protobuf throws on wire type mismatch — our catch returns Unsupported
+    expect(result).toBeDefined();
+    expect(result.type).toBe("Unsupported");
+    expect(result.data).toBeNull();
   });
 });
 

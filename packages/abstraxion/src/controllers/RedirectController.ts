@@ -20,11 +20,138 @@ import { getDaoDaoIndexerUrl } from "@burnt-labs/constants";
 import type { EncodeObject } from "@cosmjs/proto-signing";
 import { GasPrice } from "@cosmjs/stargate";
 import type { StdFee, DeliverTxResponse } from "@cosmjs/stargate";
-import { fetchConfig } from "@burnt-labs/constants";
 import { BaseController } from "./BaseController";
+import { resolveAuthAppUrl, buildDashboardUrl } from "./utils";
 import type { ControllerConfig } from "./types";
-import type { RedirectAuthentication, SignResult } from "../types";
-import { toBase64 } from "@burnt-labs/signers";
+import type {
+  RedirectAuthentication,
+  SignResult,
+  ManageAuthResult,
+} from "../types";
+import {
+  toBase64,
+  validateTxPayload,
+  type TxTransportPayload,
+} from "@burnt-labs/signers";
+
+const STORAGE_KEY_PENDING_SIGN = "xion_pending_sign";
+const STORAGE_KEY_PENDING_ADD_AUTH = "xion_pending_add_auth";
+
+// ─── File-level utilities ────────────────────────────────────────────────────
+
+/**
+ * Generic observable result store for redirect flow results.
+ * Handles get/set/clear/subscribe for a single nullable value.
+ */
+class ResultStore<T> {
+  private value_: T | null = null;
+  private subscribers_ = new Set<() => void>();
+
+  get(): T | null {
+    return this.value_;
+  }
+
+  /** Stable snapshot reference — only changes when value is updated */
+  snapshot(): T | null {
+    return this.value_;
+  }
+
+  set(value: T | null): void {
+    this.value_ = value;
+    this.subscribers_.forEach((cb) => cb());
+  }
+
+  clear(): void {
+    this.set(null);
+  }
+
+  /** Subscribe for useSyncExternalStore. Returns unsubscribe function. */
+  subscribe(callback: () => void): () => void {
+    this.subscribers_.add(callback);
+    return () => {
+      this.subscribers_.delete(callback);
+    };
+  }
+
+  destroy(): void {
+    this.subscribers_.clear();
+  }
+}
+
+/**
+ * Initiate a redirect to the dashboard for a given mode.
+ * Stores a pending context entry in sessionStorage, builds the URL, and
+ * navigates the browser away. Returns a Promise that rejects after 10 s if
+ * navigation didn't complete (e.g. CSP block).
+ */
+function initiateRedirectNavigation(
+  authAppUrl: string,
+  mode: string,
+  granter: string,
+  storageKey: string,
+  extraParams?: Record<string, string>,
+): Promise<never> {
+  sessionStorage.setItem(
+    storageKey,
+    JSON.stringify({ returnUrl: window.location.href, timestamp: Date.now() }),
+  );
+
+  const url = buildDashboardUrl(
+    authAppUrl,
+    mode,
+    granter,
+    window.location.href,
+    extraParams,
+  );
+  window.location.href = url.toString();
+
+  return new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(
+        new Error(
+          `Navigation to the dashboard "${mode}" page did not complete. ` +
+            "This may be caused by a Content Security Policy restriction or the browser interrupting the redirect.",
+        ),
+      );
+    }, 10_000);
+  });
+}
+
+/**
+ * Detect a redirect result from URL query params.
+ * If any of the watched params are present, calls `buildResult` to construct
+ * the typed result, stores it via `setResult`, cleans the params from the URL,
+ * and removes the pending sessionStorage entry.
+ *
+ * @param paramKeys  Param names to watch for (any one triggers detection)
+ * @param storageKey sessionStorage key to remove after detection
+ * @param buildResult Receives the current URLSearchParams; returns the typed result
+ * @param setResult  Called with the constructed result
+ */
+function detectRedirectResult<T>(
+  paramKeys: string[],
+  storageKey: string,
+  buildResult: (params: URLSearchParams) => T,
+  setResult: (value: T) => void,
+): void {
+  if (typeof window === "undefined") return;
+
+  const params = new URLSearchParams(window.location.search);
+  if (!paramKeys.some((k) => params.has(k))) return;
+
+  setResult(buildResult(params));
+
+  paramKeys.forEach((k) => params.delete(k));
+  const cleanSearch = params.toString();
+  window.history.replaceState(
+    {},
+    "",
+    window.location.pathname + (cleanSearch ? `?${cleanSearch}` : ""),
+  );
+  sessionStorage.removeItem(storageKey);
+}
+
+// ─── Config ──────────────────────────────────────────────────────────────────
 
 /**
  * Configuration for RedirectController
@@ -55,6 +182,8 @@ export interface RedirectControllerConfig extends ControllerConfig {
   >;
 }
 
+// ─── Controller ──────────────────────────────────────────────────────────────
+
 /**
  * Check if we're currently returning from a redirect callback
  * This is a synchronous check of URL params, useful for immediate UI state
@@ -76,9 +205,8 @@ export class RedirectController extends BaseController {
   private abstraxionAuth: AbstraxionAuth;
   private orchestrator: ConnectionOrchestrator;
   private config: RedirectControllerConfig;
-  private signResult_: SignResult | null = null;
-  private signResultVersion_ = 0;
-  private signResultSubscribers_ = new Set<() => void>();
+  readonly signResult = new ResultStore<SignResult>();
+  readonly manageAuthResult = new ResultStore<ManageAuthResult>();
   private initializePromise: Promise<void> | null = null;
 
   /**
@@ -192,6 +320,8 @@ export class RedirectController extends BaseController {
   private async doInitialize(): Promise<void> {
     // Check for signing result return (tx_hash / sign_rejected / sign_error)
     this.detectSignResult();
+    // Check for manage-authenticators result return (add_auth_success / add_auth_rejected / add_auth_error)
+    this.detectManageAuthResult();
 
     // Check if we're returning from dashboard redirect FIRST
     // If so, transition from initializing to connecting
@@ -388,6 +518,8 @@ export class RedirectController extends BaseController {
     );
   }
 
+  // ─── Sign redirect flow ──────────────────────────────────────────────────
+
   /**
    * Redirect to the dashboard signing view for direct signing.
    *
@@ -395,134 +527,101 @@ export class RedirectController extends BaseController {
    * browser navigates away. The returned Promise is only a safety net — it
    * rejects after 10 seconds if navigation didn't happen (e.g. a Content
    * Security Policy blocked it). Callers should NOT await this for a signing
-   * result; instead, read `getSignResult()` (via the hook's `signResult`)
+   * result; instead, read `signResult.get()` (via the hook's `signResult`)
    * after the page reloads from the dashboard redirect.
+   *
+   * TODO: consider storing the tx payload in sessionStorage before redirect and
+   * verifying it matches on return, to correlate results to the originating tx.
    */
   async promptSignAndBroadcast(
     signerAddress: string,
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
     memo?: string,
-  ): Promise<DeliverTxResponse> {
-    const authAppUrl =
-      this.config.redirect.authAppUrl ||
-      (await fetchConfig(this.config.rpcUrl)).dashboardUrl;
-
-    if (!authAppUrl) {
-      throw new Error(
-        "Could not determine auth app URL for signing redirect. " +
-          "Provide authAppUrl in your authentication config.",
-      );
-    }
-
-    // Save pending sign context so we can correlate the return
-    sessionStorage.setItem(
-      "xion_pending_sign",
-      JSON.stringify({
-        returnUrl: window.location.href,
-        timestamp: Date.now(),
-      }),
+  ): Promise<never> {
+    const authAppUrl = await resolveAuthAppUrl(
+      this.config.rpcUrl,
+      this.config.redirect.authAppUrl,
     );
 
-    // Build signing URL (same params as PopupController.promptSignAndBroadcast)
-    const url = new URL(authAppUrl);
-    url.searchParams.set("mode", "sign");
-    url.searchParams.set(
-      "tx",
-      toBase64(JSON.stringify({ messages, fee, memo })),
-    );
-    url.searchParams.set("granter", signerAddress);
-    url.searchParams.set("redirect_uri", window.location.href);
-
-    // Navigate away — on success, the browser unloads this page and the
-    // setTimeout below never fires.
-    window.location.href = url.toString();
-
-    // Safety net: if the page is still alive after 10s, navigation failed.
-    // Common causes: Content Security Policy blocking the redirect, or the
-    // user pressing the browser stop button.
-    return new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(
-          new Error(
-            "Navigation to the dashboard signing page did not complete. " +
-              "This may be caused by a Content Security Policy restriction or the browser interrupting the redirect.",
-          ),
-        );
-      }, 10_000);
-    });
-  }
-
-  /**
-   * Get the result from a redirect signing flow (populated after returning
-   * from the dashboard signing redirect). Returns null if no result is pending.
-   */
-  getSignResult(): SignResult | null {
-    return this.signResult_;
-  }
-
-  /**
-   * Clear the sign result after the consumer has handled it.
-   */
-  clearSignResult(): void {
-    this.setSignResult(null);
-  }
-
-  /**
-   * Subscribe to signResult changes (for use with React's useSyncExternalStore).
-   * Returns an unsubscribe function.
-   */
-  subscribeToSignResult(callback: () => void): () => void {
-    this.signResultSubscribers_.add(callback);
-    return () => {
-      this.signResultSubscribers_.delete(callback);
+    const txPayloadObj: TxTransportPayload = {
+      messages,
+      fee,
+      memo,
     };
+    validateTxPayload(txPayloadObj, "RedirectController");
+
+    return initiateRedirectNavigation(
+      authAppUrl,
+      "sign",
+      signerAddress,
+      STORAGE_KEY_PENDING_SIGN,
+      { tx: toBase64(JSON.stringify(txPayloadObj)) },
+    );
   }
 
-  /**
-   * Snapshot accessor for useSyncExternalStore — returns a stable reference
-   * that only changes when signResult is actually updated.
-   */
-  getSignResultSnapshot(): SignResult | null {
-    return this.signResult_;
-  }
-
-  /** Internal setter that notifies subscribers */
-  private setSignResult(value: SignResult | null): void {
-    this.signResult_ = value;
-    this.signResultVersion_++;
-    this.signResultSubscribers_.forEach((cb) => cb());
-  }
-
-  /**
-   * Detect signing result from URL query params after a signing redirect return.
-   * Stores the result and cleans the params from the URL.
-   */
   private detectSignResult(): void {
-    if (typeof window === "undefined") return;
+    detectRedirectResult(
+      ["tx_hash", "sign_rejected", "sign_error"],
+      STORAGE_KEY_PENDING_SIGN,
+      (params) => {
+        const txHash = params.get("tx_hash");
+        const signError = params.get("sign_error");
+        return txHash
+          ? { success: true as const, transactionHash: txHash }
+          : {
+              success: false as const,
+              error: signError
+                ? decodeURIComponent(signError)
+                : "Transaction rejected",
+            };
+      },
+      (result) => this.signResult.set(result),
+    );
+  }
 
-    const params = new URLSearchParams(window.location.search);
-    const txHash = params.get("tx_hash");
-    const signRejected = params.get("sign_rejected");
-    const signError = params.get("sign_error");
+  // ─── Add-authenticator redirect flow ────────────────────────────────────
 
-    if (!txHash && !signRejected && !signError) return;
-
-    this.setSignResult(
-      txHash
-        ? { success: true, transactionHash: txHash }
-        : { success: false, error: signError || "Transaction rejected" },
+  /**
+   * Add an authenticator by redirecting to the dashboard's add-auth page.
+   *
+   * Fire-and-forget: the browser navigates away. On success the dashboard
+   * redirects back with `?add_auth_success=true`; on cancellation with
+   * `?add_auth_rejected=true`; on error with `?add_auth_error=<message>`.
+   *
+   * Read the result via `manageAuthResult.get()` (or the hook's `manageAuthResult`)
+   * after the page reloads from the dashboard redirect.
+   */
+  async promptManageAuthenticators(signerAddress: string): Promise<void> {
+    const authAppUrl = await resolveAuthAppUrl(
+      this.config.rpcUrl,
+      this.config.redirect.authAppUrl,
     );
 
-    // Clean signing params from URL
-    params.delete("tx_hash");
-    params.delete("sign_rejected");
-    params.delete("sign_error");
-    const cleanSearch = params.toString();
-    const cleanUrl =
-      window.location.pathname + (cleanSearch ? `?${cleanSearch}` : "");
-    window.history.replaceState({}, "", cleanUrl);
-    sessionStorage.removeItem("xion_pending_sign");
+    return initiateRedirectNavigation(
+      authAppUrl,
+      "add-authenticators",
+      signerAddress,
+      STORAGE_KEY_PENDING_ADD_AUTH,
+    );
+  }
+
+  private detectManageAuthResult(): void {
+    detectRedirectResult(
+      ["add_auth_success", "add_auth_rejected", "add_auth_error"],
+      STORAGE_KEY_PENDING_ADD_AUTH,
+      (params) => {
+        const success = params.get("add_auth_success");
+        const error = params.get("add_auth_error");
+        return success
+          ? { success: true as const }
+          : {
+              success: false as const,
+              error: error ? decodeURIComponent(error) : "Cancelled",
+            };
+      },
+      (result) => this.manageAuthResult.set(result),
+    );
   }
 
   /**
@@ -530,7 +629,8 @@ export class RedirectController extends BaseController {
    */
   destroy(): void {
     super.destroy();
-    this.signResultSubscribers_.clear();
+    this.signResult.destroy();
+    this.manageAuthResult.destroy();
     this.orchestrator.destroy();
   }
 }

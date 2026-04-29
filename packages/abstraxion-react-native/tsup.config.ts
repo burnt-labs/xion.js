@@ -1,11 +1,11 @@
-import { defineConfig } from "tsup";
+import { defineConfig, Options } from "tsup";
 
-export default defineConfig({
+export default defineConfig((options: Options) => ({
   entry: ["src/index.ts"],
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,
-  clean: true,
+  clean: !options.watch,
   external: [
     "react",
     "react-native",
@@ -14,4 +14,4 @@ export default defineConfig({
     "expo-linking",
     "react-native-libsodium",
   ],
-});
+}));

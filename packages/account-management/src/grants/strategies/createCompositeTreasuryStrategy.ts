@@ -21,6 +21,13 @@ export interface CreateCompositeTreasuryStrategyConfig {
    * Defaults to true - recommended for production reliability
    */
   includeDirectQuery?: boolean;
+
+  /**
+   * When true, all strategies are fired in parallel using Promise.any().
+   * The first to resolve wins. Useful when both DAODAO and direct query
+   * are configured and you want to avoid waiting for a slow strategy.
+   */
+  racing?: boolean;
 }
 
 /**
@@ -59,5 +66,7 @@ export function createCompositeTreasuryStrategy(
     );
   }
 
-  return new CompositeTreasuryStrategy(...strategies);
+  return new CompositeTreasuryStrategy(strategies, {
+    racing: config.racing,
+  });
 }

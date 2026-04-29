@@ -65,23 +65,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup integration environment (pnpm + deps + artifacts + Playwright)
+        uses: ./.github/actions/setup-integration-env
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: lts/*
-          cache: pnpm
-
-      - name: Install Dependencies
-        run: pnpm install
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-          path: packages
+      # The dashboard contract test runs separately from the rest of the
+      # integration suite so it can be 100% blocking — i.e. NOT subject to
+      # the `TOTAL_FAILED > 10` cap applied to the broader suite below.
+      # Any failure here breaks the build immediately. The mainnet variant
+      # runs as a separate non-blocking job (`dashboard-contract-mainnet`).
+      - name: Run Dashboard Contract Test (testnet, blocking)
+        run: pnpm --filter @burnt-labs/abstraxion test:contract
 
       - name: Load Test Configuration
         id: config
@@ -235,4 +228,73 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: body
+            });
+
+  # Informational-only mainnet contract regression detector.
+  # Runs only on PRs targeting `main` (and on manual dispatch) to keep the
+  # heavyweight Playwright run gated to release-relevant changes.
+  #
+  # `continue-on-error` lives on the test step (not the job) so the JOB
+  # appears green in the checks list even when the test fails — engineers
+  # don't see a red ❌ for an informational signal. The failed step itself
+  # surfaces as a yellow ⚠️ in the run view, and the regression details land
+  # in a PR comment.
+  dashboard-contract-mainnet:
+    name: Dashboard Contract — mainnet [informational]
+    needs: [build]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.base_ref == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup integration environment (pnpm + deps + artifacts + Playwright)
+        uses: ./.github/actions/setup-integration-env
+
+      - name: Run Dashboard Contract Test (mainnet)
+        id: run-contract
+        continue-on-error: true
+        env:
+          DASHBOARD_URL: https://settings.burnt.com
+        run: pnpm --filter @burnt-labs/abstraxion test:contract
+
+      - name: Annotate mainnet regression
+        if: steps.run-contract.outcome == 'failure'
+        run: |
+          echo "::warning::Mainnet dashboard contract regression detected — see PR comment / run logs for details"
+
+      - name: Comment on PR (mainnet contract failed)
+        if: steps.run-contract.outcome == 'failure' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              '## ⚠️ Mainnet Dashboard Contract Regression [informational]',
+              '',
+              'The live SDK ↔ dashboard contract test failed against **mainnet** (`https://settings.burnt.com`).',
+              '',
+              'This job is **non-blocking** — the testnet contract test is the gating signal. ' +
+              'A mainnet failure here means the deployed mainnet dashboard has drifted from the SDK contract ' +
+              '(message routing, IFRAME_READY handshake, error codes, or the iframe-embed headers).',
+              '',
+              '### What to check',
+              '- Cloudflare/edge headers for `https://settings.burnt.com` (`frame-ancestors`, `X-Frame-Options`, `connect-src`)',
+              '- The deployed mainnet bundle vs. testnet — message-routing or response-shape drift',
+              '- Whether mainnet is running an older `xion-dashboard-app` build than testnet',
+              '',
+              `> Workflow run: ${runUrl}`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
             });

@@ -162,9 +162,8 @@ export async function createGrants(
 
   // Validate contract grant configurations
   if (contracts && contracts.length > 0) {
-    const { validateContractGrantsOrThrow } = await import(
-      "../../grants/utils/contract-validation"
-    );
+    const { validateContractGrantsOrThrow } =
+      await import("../../grants/utils/contract-validation");
 
     await validateContractGrantsOrThrow(contracts, smartAccountAddress, {
       expectedPrefix: "xion", // TODO: Derive from chainId or config

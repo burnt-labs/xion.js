@@ -5,11 +5,13 @@ import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import type { Any } from "cosmjs-types/google/protobuf/any";
-import type { GrantsResponse, TreasuryGrantConfig } from "@/types";
+import type { ChainGrant, GrantsResponse, TreasuryGrantConfig } from "@/types";
 import { fetchConfig, getRpcClient } from "@/utils";
 import { CacheManager } from "@/utils/cache/CacheManager";
 import { validateTreasuryIndexerResponse } from "./validation";
 import { fetchFromDaoDaoIndexer } from "../indexer/treasury-indexer";
+import { decodeAuthorization } from "./decoding";
+import { AuthorizationTypes } from "./constants";
 
 /**
  * Maps StakeAuthorization type enum to string representation
@@ -121,10 +123,6 @@ export const fetchTreasuryDataFromIndexer = async (
     const { networkId } = await fetchConfig(rpcUrl);
 
     try {
-      console.debug(
-        `Fetching treasury data from indexer for ${treasuryAddress}`,
-      );
-
       // Use shared low-level indexer fetcher
       const indexerData = await fetchFromDaoDaoIndexer<TreasuryIndexerResponse>(
         treasuryAddress,
@@ -293,4 +291,52 @@ export const fetchChainGrantsABCI = async (
     // Close the Tendermint client connection
     // No need to explicitly close the connection as it will be garbage collected
   }
+};
+
+/**
+ * Fetch grants issued to a grantee from a granter using ABCI query,
+ * returning each grant's authorization directly decoded to DecodedReadableAuthorization.
+ *
+ * This bypasses the REST-format intermediate step that fetchChainGrantsABCI uses,
+ * eliminating the double-conversion (protobuf → REST → decoded) that caused
+ * repeated session-invalidation bugs.
+ *
+ * @param {string} grantee - The address of the grantee.
+ * @param {string} granter - The address of the granter.
+ * @param {string} rpcUrl - RPC URL to use for fetching grants.
+ * @returns {Promise<ChainGrant[]>} Decoded chain grants.
+ */
+export const fetchChainGrantsDecoded = async (
+  grantee: string,
+  granter: string,
+  rpcUrl: string,
+): Promise<ChainGrant[]> => {
+  if (!grantee) throw new Error("Grantee address is required");
+  if (!granter) throw new Error("Granter address is required");
+  if (!rpcUrl) throw new Error("RPC URL is required");
+
+  const rpcClient = await getRpcClient(rpcUrl);
+  const queryClient = new QueryClient(rpcClient);
+  const protobufRpcClient = createProtobufRpcClient(queryClient);
+  const authzClient = new AuthzQueryClient(protobufRpcClient);
+
+  const response = await authzClient.Grants({
+    grantee,
+    granter,
+    msgTypeUrl: "",
+  });
+
+  return response.grants.map((grant) => ({
+    granter,
+    grantee,
+    authorization: grant.authorization
+      ? decodeAuthorization(
+          grant.authorization.typeUrl,
+          grant.authorization.value,
+        )
+      : { type: AuthorizationTypes.Unsupported as const, data: null },
+    expiration: grant.expiration
+      ? new Date(Number(grant.expiration.seconds) * 1000).toISOString()
+      : "",
+  }));
 };

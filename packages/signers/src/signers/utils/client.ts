@@ -22,9 +22,10 @@ import {
   SigningStargateClientOptions,
   StdFee,
 } from "@cosmjs/stargate";
-import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
+import { Comet38Client, CometClient } from "@cosmjs/tendermint-rpc";
 import { xionGasValues } from "@burnt-labs/constants";
-import { MsgRegisterAccount } from "../../types/generated/abstractaccount/v1/tx";
+import { MsgRegisterAccount } from "@burnt-labs/xion-types/abstractaccount/v1/tx";
+import { NilPubKey } from "@burnt-labs/xion-types/abstractaccount/v1/account";
 import {
   abstractAccountTypes,
   MsgRegisterAccountEncodeObject,
@@ -38,6 +39,7 @@ import {
   MsgExecuteContractEncodeObject,
 } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
+import { MsgTransfer } from "cosmjs-types/ibc/applications/transfer/v1/tx";
 import {
   AddAuthenticator,
   RemoveAuthenticator,
@@ -48,11 +50,13 @@ import {
   ServiceClientImpl,
   SimulateRequest,
 } from "cosmjs-types/cosmos/tx/v1beta1/service";
+import { normalizeMessages } from "../../tx-payload/normalize";
 
 export const AADefaultRegistryTypes: ReadonlyArray<[string, GeneratedType]> = [
   ...defaultRegistryTypes,
   ...wasmTypes,
   ...abstractAccountTypes,
+  ["/ibc.applications.transfer.v1.MsgTransfer", MsgTransfer],
 ];
 function createDefaultRegistry(): Registry {
   return new Registry(AADefaultRegistryTypes);
@@ -74,8 +78,8 @@ export class AAClient extends SigningCosmWasmClient {
     signer: AASigner,
     options: SigningStargateClientOptions = {},
   ): Promise<AAClient> {
-    const tmClient = await Tendermint37Client.connect(endpoint);
-    return new AAClient(tmClient, signer, {
+    const cometClient = await Comet38Client.connect(endpoint);
+    return new AAClient(cometClient, signer, {
       registry: createDefaultRegistry(),
       ...options,
       accountParser: customAccountFromAny,
@@ -83,11 +87,11 @@ export class AAClient extends SigningCosmWasmClient {
   }
 
   protected constructor(
-    tmClient: Tendermint37Client | undefined,
+    cometClient: CometClient | undefined,
     signer: AASigner,
     options: SigningStargateClientOptions,
   ) {
-    super(tmClient, signer, options);
+    super(cometClient, signer, options);
     this.abstractSigner = signer;
   }
 
@@ -249,7 +253,7 @@ export class AAClient extends SigningCosmWasmClient {
         {
           publicKey: {
             typeUrl: "/abstractaccount.v1.NilPubKey",
-            value: new Uint8Array([10, 32, ...pubkey]), // a little hack to encode the pk into proto bytes
+            value: NilPubKey.encode({ addressBytes: pubkey }).finish(),
           },
           modeInfo: {
             single: {
@@ -265,7 +269,7 @@ export class AAClient extends SigningCosmWasmClient {
     const txBodyEncodeObject = {
       typeUrl: "/cosmos.tx.v1beta1.TxBody",
       value: {
-        messages: messages,
+        messages: normalizeMessages([...messages]),
         memo: memo || "AA Gas Simulation",
       },
     };
@@ -366,7 +370,7 @@ export class AAClient extends SigningCosmWasmClient {
     const txBodyEncodeObject = {
       typeUrl: "/cosmos.tx.v1beta1.TxBody",
       value: {
-        messages: messages,
+        messages: normalizeMessages([...messages]),
         memo: memo,
       },
     };

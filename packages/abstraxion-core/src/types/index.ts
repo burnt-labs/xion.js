@@ -1,4 +1,4 @@
-import {
+import type {
   AuthorizationTypes,
   ContractExecFilterTypes,
   ContractExecLimitTypes,
@@ -96,6 +96,11 @@ export interface DecodedExecuteContracts {
   filterType?: ContractExecFilterTypes;
   messages?: Uint8Array[];
   keys?: string[];
+  // Raw bytes preserved for unknown limit/filter types (enables byte-level comparison fallback)
+  rawLimitTypeUrl?: string;
+  rawLimitValue?: Uint8Array;
+  rawFilterTypeUrl?: string;
+  rawFilterValue?: Uint8Array;
 }
 
 export interface HumanContractExecAuth {
@@ -113,8 +118,20 @@ export interface DecodedReadableAuthorization {
     | null;
 }
 
+/**
+ * A decoded chain grant returned by fetchChainGrantsABCI.
+ * The authorization is already decoded to DecodedReadableAuthorization —
+ * no intermediate REST-format conversion needed.
+ */
+export interface ChainGrant {
+  granter: string;
+  grantee: string;
+  authorization: DecodedReadableAuthorization;
+  expiration: string; // ISO string
+}
+
 // Re-export generated protobuf types from signers
-export { AbstractAccount } from "@burnt-labs/signers";
+export type { AbstractAccount } from "@burnt-labs/signers";
 
 // Iframe communication types
 export * from "./iframe";

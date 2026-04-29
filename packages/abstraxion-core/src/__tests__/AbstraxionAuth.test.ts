@@ -10,6 +10,7 @@ import {
   MockStorageStrategy,
 } from "@burnt-labs/test-utils/mocks";
 import {
+  mockChainGrants,
   mockGrantsResponse,
   mockLegacyConfig,
 } from "./fixtures/grantResponses";
@@ -193,17 +194,10 @@ describe("AbstraxionAuth", () => {
     it("should return false when no grants are found", () => {
       configureAbstraxionAuthInstance(abstraxionAuth);
 
-      // Empty grants response
-      const emptyGrantsResponse = {
+      const result = abstraxionAuth.compareGrantsToLegacyConfig({
         grants: [],
-        pagination: {
-          next_key: null,
-          total: "0",
-        },
-      };
-
-      const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(emptyGrantsResponse);
+        pagination: { next_key: null, total: "0" },
+      });
       expect(result).toBe(false);
     });
   });

@@ -87,8 +87,7 @@ export interface DirectSecp256k1HdWalletOptions {
   readonly prefix: string;
 }
 
-interface DirectSecp256k1HdWalletConstructorOptions
-  extends Partial<DirectSecp256k1HdWalletOptions> {
+interface DirectSecp256k1HdWalletConstructorOptions extends Partial<DirectSecp256k1HdWalletOptions> {
   readonly seed: Uint8Array;
 }
 

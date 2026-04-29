@@ -1,12 +1,13 @@
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
 import { Account } from "@cosmjs/stargate";
-import { Any } from "../../types/generated/google/protobuf/any";
-import { BaseAccount } from "cosmjs-types/cosmos/auth/v1beta1/auth";
+import { Any } from "cosmjs-types/google/protobuf/any";
 import { AuthInfo, SignerInfo } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { decodePubkey } from "@cosmjs/proto-signing";
-import { coins, StdFee, type Pubkey } from "@cosmjs/amino";
+import { coins, StdFee } from "@cosmjs/amino";
 import { Uint64 } from "@cosmjs/math";
-import { AbstractAccount } from "../../types/generated/abstractaccount/v1/account";
+import {
+  AbstractAccount,
+  NilPubKey,
+} from "@burnt-labs/xion-types/abstractaccount/v1/account";
 import { assert } from "@cosmjs/utils";
 import { accountFromAny } from "@cosmjs/stargate/build/accounts";
 
@@ -14,22 +15,10 @@ export type INodes<T> = {
   nodes: Array<T>;
 };
 
-function uint64FromProto(input: number | bigint): Uint64 {
+function uint64FromProto(
+  input: number | bigint | { toString(): string },
+): Uint64 {
   return Uint64.fromString(input.toString());
-}
-
-function accountFromBaseAccount(input: BaseAccount) {
-  const { address, pubKey, accountNumber, sequence } = input;
-  let pubkey: Pubkey | null = null;
-  if (pubKey) {
-    pubkey = decodePubkey(pubKey);
-  }
-  return {
-    address,
-    pubkey,
-    accountNumber: uint64FromProto(accountNumber).toNumber(),
-    sequence: uint64FromProto(sequence).toNumber(),
-  };
 }
 
 /**
@@ -42,9 +31,16 @@ export function customAccountFromAny(input: Any): Account {
   const { typeUrl, value } = input;
   switch (typeUrl) {
     case "/abstractaccount.v1.AbstractAccount": {
-      const abstractAccount = AbstractAccount.fromBinary(value);
+      const abstractAccount = AbstractAccount.decode(value);
       assert(abstractAccount);
-      return accountFromBaseAccount(abstractAccount);
+      return {
+        address: abstractAccount.address,
+        pubkey: null,
+        accountNumber: uint64FromProto(
+          abstractAccount.accountNumber,
+        ).toNumber(),
+        sequence: uint64FromProto(abstractAccount.sequence).toNumber(),
+      };
     }
     default:
       return accountFromAny(input);
@@ -69,7 +65,7 @@ export function makeAAuthInfo(
       SignerInfo.fromPartial({
         publicKey: {
           typeUrl: "/abstractaccount.v1.NilPubKey",
-          value: new Uint8Array([10, 32, ...pubKey]), // a little hack to encode the pk into proto bytes
+          value: NilPubKey.encode({ addressBytes: pubKey }).finish(),
         },
         modeInfo: {
           single: {

@@ -30,6 +30,21 @@ export const decodeAuthorization = (
   typeUrl: string,
   value: string | Uint8Array,
 ): DecodedReadableAuthorization => {
+  try {
+    return decodeAuthorizationInner(typeUrl, value);
+  } catch (error) {
+    console.warn(
+      `[decodeAuthorization] Failed to decode authorization ${typeUrl}:`,
+      error instanceof Error ? error.message : error,
+    );
+    return { type: AuthorizationTypes.Unsupported, data: null };
+  }
+};
+
+const decodeAuthorizationInner = (
+  typeUrl: string,
+  value: string | Uint8Array,
+): DecodedReadableAuthorization => {
   const processedAuthorizationValue =
     typeof value === "string" ? toByteArray(value) : value;
 
@@ -63,15 +78,19 @@ export const decodeAuthorization = (
         processedAuthorizationValue,
       );
 
-      let limitType: ContractExecLimitTypes | undefined;
-      let maxCalls: string | undefined;
-      let maxFunds: Coin[] | undefined;
-
-      let filterType: ContractExecFilterTypes | undefined;
-      let messages: Uint8Array[] | undefined;
-      let keys: string[] | undefined;
-
       const grants = authorization.grants.map((grant) => {
+        let limitType: ContractExecLimitTypes | undefined;
+        let maxCalls: string | undefined;
+        let maxFunds: Coin[] | undefined;
+        let rawLimitTypeUrl: string | undefined;
+        let rawLimitValue: Uint8Array | undefined;
+
+        let filterType: ContractExecFilterTypes | undefined;
+        let messages: Uint8Array[] | undefined;
+        let keys: string[] | undefined;
+        let rawFilterTypeUrl: string | undefined;
+        let rawFilterValue: Uint8Array | undefined;
+
         if (grant.limit) {
           switch (grant.limit.typeUrl) {
             case ContractExecLimitTypes.MaxCalls:
@@ -85,12 +104,17 @@ export const decodeAuthorization = (
               maxFunds = MaxFundsLimit.decode(grant.limit.value).amounts;
               break;
             case ContractExecLimitTypes.CombinedLimit: {
-              const combined = CombinedLimit.decode(grant.limit.value);
               limitType = ContractExecLimitTypes.CombinedLimit;
+              const combined = CombinedLimit.decode(grant.limit.value);
               maxCalls = combined.callsRemaining.toString();
               maxFunds = combined.amounts;
               break;
             }
+            default:
+              // Unknown limit type — preserve raw bytes for byte-level comparison
+              rawLimitTypeUrl = grant.limit.typeUrl;
+              rawLimitValue = grant.limit.value;
+              break;
           }
         }
 
@@ -109,6 +133,11 @@ export const decodeAuthorization = (
             case ContractExecFilterTypes.AllowAll:
               filterType = ContractExecFilterTypes.AllowAll;
               break;
+            default:
+              // Unknown filter type — preserve raw bytes for byte-level comparison
+              rawFilterTypeUrl = grant.filter.typeUrl;
+              rawFilterValue = grant.filter.value;
+              break;
           }
         }
 
@@ -120,6 +149,10 @@ export const decodeAuthorization = (
           filterType,
           messages,
           keys,
+          rawLimitTypeUrl,
+          rawLimitValue,
+          rawFilterTypeUrl,
+          rawFilterValue,
         };
       });
       return { type: AuthorizationTypes.ContractExecution, data: { grants } };

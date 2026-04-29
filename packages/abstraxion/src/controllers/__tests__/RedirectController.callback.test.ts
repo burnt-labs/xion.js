@@ -241,7 +241,7 @@ describe("RedirectController — callback & signing", () => {
       const controller = new RedirectController(createConfig());
       await controller.initialize();
 
-      const result = controller.getSignResult();
+      const result = controller.signResult.get();
       expect(result).toEqual({
         success: true,
         transactionHash: "ABCDEF123",
@@ -265,7 +265,7 @@ describe("RedirectController — callback & signing", () => {
       const controller = new RedirectController(createConfig());
       await controller.initialize();
 
-      const result = controller.getSignResult();
+      const result = controller.signResult.get();
       expect(result).toEqual({
         success: false,
         error: "Transaction rejected",
@@ -286,7 +286,7 @@ describe("RedirectController — callback & signing", () => {
       const controller = new RedirectController(createConfig());
       await controller.initialize();
 
-      const result = controller.getSignResult();
+      const result = controller.signResult.get();
       expect(result).toEqual({
         success: false,
         error: "Insufficient funds",
@@ -308,11 +308,11 @@ describe("RedirectController — callback & signing", () => {
       await controller.initialize();
 
       const subscriber = vi.fn();
-      controller.subscribeToSignResult(subscriber);
+      controller.signResult.subscribe(subscriber);
 
-      controller.clearSignResult();
+      controller.signResult.clear();
 
-      expect(controller.getSignResult()).toBeNull();
+      expect(controller.signResult.get()).toBeNull();
       expect(subscriber).toHaveBeenCalled();
     });
   });
@@ -335,8 +335,6 @@ describe("RedirectController — callback & signing", () => {
     it("should navigate to dashboard signing page", async () => {
       const controller = new RedirectController(createConfig());
 
-      // promptSignAndBroadcast sets window.location.href — we can check what it was set to
-      // Since it's a fire-and-forget redirect, we just verify it doesn't throw immediately
       const signPromise = controller.promptSignAndBroadcast(
         "xion1granter456",
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
@@ -344,17 +342,122 @@ describe("RedirectController — callback & signing", () => {
         "memo",
       );
 
-      // The method should have set window.location.href
+      // resolveAuthAppUrl is always async — yield one microtask so navigation fires
+      await Promise.resolve();
+
       expect(window.location.href).toContain("dashboard.burnt.com");
       expect(window.location.href).toContain("mode=sign");
       expect(window.location.href).toContain("granter=xion1granter456");
 
-      // Clean up — the promise will reject after 10s timeout
-      // We don't wait for that in tests
       signPromise.catch(() => {
-        // Expected timeout rejection
+        /* expected timeout rejection */
+      });
+      controller.destroy();
+    });
+  });
+
+  describe("detectManageAuthResult()", () => {
+    it("should detect successful add-auth from add_auth_success param", async () => {
+      Object.defineProperty(window, "location", {
+        value: {
+          search: "?add_auth_success=true",
+          href: "https://myapp.com?add_auth_success=true",
+          pathname: "/",
+        },
+        writable: true,
+        configurable: true,
       });
 
+      const controller = new RedirectController(createConfig());
+      await controller.initialize();
+
+      const result = controller.manageAuthResult.get();
+      expect(result).toEqual({ success: true });
+
+      // URL should be cleaned
+      expect(replaceStateSpy).toHaveBeenCalled();
+    });
+
+    it("should detect add-auth rejection", async () => {
+      Object.defineProperty(window, "location", {
+        value: {
+          search: "?add_auth_rejected=true",
+          href: "https://myapp.com?add_auth_rejected=true",
+          pathname: "/",
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      const controller = new RedirectController(createConfig());
+      await controller.initialize();
+
+      const result = controller.manageAuthResult.get();
+      expect(result).toEqual({ success: false, error: "Cancelled" });
+    });
+
+    it("should detect add-auth error with decoded message", async () => {
+      Object.defineProperty(window, "location", {
+        value: {
+          search: "?add_auth_error=Passkey%20registration%20failed",
+          href: "https://myapp.com?add_auth_error=Passkey%20registration%20failed",
+          pathname: "/",
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      const controller = new RedirectController(createConfig());
+      await controller.initialize();
+
+      const result = controller.manageAuthResult.get();
+      expect(result).toEqual({
+        success: false,
+        error: "Passkey registration failed",
+      });
+    });
+
+    it("should clear add-auth result and notify subscribers", async () => {
+      Object.defineProperty(window, "location", {
+        value: {
+          search: "?add_auth_success=true",
+          href: "https://myapp.com?add_auth_success=true",
+          pathname: "/",
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      const controller = new RedirectController(createConfig());
+      await controller.initialize();
+
+      const subscriber = vi.fn();
+      controller.manageAuthResult.subscribe(subscriber);
+
+      controller.manageAuthResult.clear();
+
+      expect(controller.manageAuthResult.get()).toBeNull();
+      expect(subscriber).toHaveBeenCalled();
+    });
+  });
+
+  describe("promptManageAuthenticators()", () => {
+    it("should navigate to dashboard add-authenticators page", async () => {
+      const controller = new RedirectController(createConfig());
+
+      const addAuthPromise =
+        controller.promptManageAuthenticators("xion1granter456");
+
+      // resolveAuthAppUrl is always async — yield one microtask so navigation fires
+      await Promise.resolve();
+
+      expect(window.location.href).toContain("dashboard.burnt.com");
+      expect(window.location.href).toContain("mode=add-authenticators");
+      expect(window.location.href).toContain("granter=xion1granter456");
+
+      addAuthPromise.catch(() => {
+        /* expected timeout rejection */
+      });
       controller.destroy();
     });
   });

@@ -22,6 +22,11 @@ import {
   CacheManager,
   fetchFromDaoDaoIndexer,
 } from "@burnt-labs/abstraxion-core";
+import type {
+  DaoDaoIndexerGrantConfig,
+  DaoDaoIndexerTreasuryAllResponse,
+} from "@burnt-labs/signers";
+import { getTreasuryParamsMetadata } from "@burnt-labs/signers";
 
 // Helper to validate URLs for security
 function isUrlSafe(url?: string): boolean {
@@ -34,37 +39,6 @@ function isUrlSafe(url?: string): boolean {
   } catch {
     return false;
   }
-}
-
-// DaoDao indexer response formats
-interface TreasuryIndexerGrantConfig {
-  authorization: {
-    type_url: string;
-    value: string; // base64 encoded
-  };
-  description: string;
-  optional?: boolean;
-  allowance?: {
-    type_url: string;
-    value: string;
-  };
-  maxDuration?: number;
-}
-
-interface TreasuryIndexerAllResponse {
-  grantConfigs: {
-    [typeUrl: string]: TreasuryIndexerGrantConfig;
-  };
-  params: {
-    icon_url?: string;
-    redirect_url?: string;
-    metadata?: string;
-    display_url?: string;
-  };
-  feeConfig?: unknown;
-  admin?: string;
-  pendingAdmin?: string | null;
-  balances?: Record<string, unknown>;
 }
 
 export interface DaoDaoTreasuryStrategyConfig {
@@ -117,15 +91,16 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
   ): Promise<TreasuryConfig | null> {
     try {
       // Use shared low-level indexer fetcher from abstraxion-core
-      const data = await fetchFromDaoDaoIndexer<TreasuryIndexerAllResponse>(
-        treasuryAddress,
-        chainId,
-        "all",
-        {
-          indexerUrl: this.config.indexerUrl,
-          timeout: this.config.timeout,
-        },
-      );
+      const data =
+        await fetchFromDaoDaoIndexer<DaoDaoIndexerTreasuryAllResponse>(
+          treasuryAddress,
+          chainId,
+          "all",
+          {
+            indexerUrl: this.config.indexerUrl,
+            timeout: this.config.timeout,
+          },
+        );
 
       const validatedData = this.validateAllResponse(data);
 
@@ -134,13 +109,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
         validatedData.grantConfigs,
       );
 
-      // Extract and validate params from the response
-      // Note: DaoDao indexer may return display_url, but contract uses metadata
-      // metadata is a JSON string (not a URL), validated by contract with serde_json::from_str
-      const metadataValue =
-        validatedData.params.metadata ||
-        validatedData.params.display_url ||
-        "{}"; // Default to empty JSON object
+      const metadataValue = getTreasuryParamsMetadata(validatedData.params);
       const params: TreasuryParams = {
         redirect_url: isUrlSafe(validatedData.params.redirect_url)
           ? validatedData.params.redirect_url || ""
@@ -168,7 +137,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
   /**
    * Validates the /all endpoint response structure
    */
-  private validateAllResponse(data: unknown): TreasuryIndexerAllResponse {
+  private validateAllResponse(data: unknown): DaoDaoIndexerTreasuryAllResponse {
     if (!data || typeof data !== "object") {
       throw new Error("Invalid indexer response: not an object");
     }
@@ -217,14 +186,14 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
     }
 
     // We've validated the structure, so we can safely return it
-    return data as TreasuryIndexerAllResponse;
+    return data as DaoDaoIndexerTreasuryAllResponse;
   }
 
   /**
    * Transform grant configs from /all response to standard format
    */
   private transformAllResponseGrants(
-    grantConfigs: Record<string, TreasuryIndexerGrantConfig>,
+    grantConfigs: Record<string, DaoDaoIndexerGrantConfig>,
   ): GrantConfigByTypeUrl[] {
     const result: GrantConfigByTypeUrl[] = [];
 
@@ -233,8 +202,6 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
         authorization: config.authorization,
         description: config.description,
         optional: config.optional ?? false, // Default to false if not provided
-        allowance: config.allowance || { type_url: "", value: "" },
-        maxDuration: config.maxDuration,
       });
     }
 

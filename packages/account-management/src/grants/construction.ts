@@ -31,6 +31,7 @@ import {
 } from "cosmjs-types/cosmos/staking/v1beta1/tx";
 import { MsgVote } from "cosmjs-types/cosmos/gov/v1beta1/tx";
 import { MsgSubmitProposal } from "cosmjs-types/cosmos/gov/v1/tx";
+import { sortCoins } from "@burnt-labs/abstraxion-core";
 import type { ContractGrantDescription, SpendLimit } from "../types/grants";
 import type { GrantConfigByTypeUrl, TreasuryStrategy } from "../types/treasury";
 
@@ -172,7 +173,7 @@ export function generateBankGrant(
           typeUrl: SendAuthorization.typeUrl,
           value: SendAuthorization.encode(
             SendAuthorization.fromPartial({
-              spendLimit: bank,
+              spendLimit: sortCoins(bank),
             }),
           ).finish(),
         },
@@ -237,7 +238,7 @@ export function generateContractGrant(
               value: CombinedLimit.encode(
                 CombinedLimit.fromPartial({
                   callsRemaining: BigInt("255"),
-                  amounts,
+                  amounts: sortCoins(amounts),
                 }),
               ).finish(),
             },

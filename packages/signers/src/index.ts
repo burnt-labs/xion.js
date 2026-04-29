@@ -1,5 +1,6 @@
 export { GasPrice } from "@cosmjs/stargate";
-export { AAClient } from "./signers/utils/client";
+export { AAClient, AADefaultRegistryTypes } from "./signers/utils/client";
+export { simulateWithNilPubkey } from "./signers/utils/simulate";
 export { AADirectSigner } from "./signers/direct-signer";
 export { AAEthSigner } from "./signers/eth-signer";
 export {
@@ -25,11 +26,34 @@ export * from "./crypto";
 // Fee and gas calculation utilities
 export * from "./fees";
 
+// Transaction payload transport utilities (SDK ↔ Dashboard)
+export * from "./tx-payload";
+
 // Domain types (source of truth for account types)
 export * from "./types/account";
 
 // API types for AA API v2 interactions
 export * from "./types/api";
 
-// Generated protobuf types (source of truth)
-export { AbstractAccount } from "./types/generated/abstractaccount/v1/account";
+// Protobuf types (from xion-types)
+export type { AbstractAccount } from "@burnt-labs/xion-types/abstractaccount/v1/account";
+
+// DaoDAO Indexer types
+export type {
+  DaoDaoIndexerGrantConfig,
+  DaoDaoIndexerTreasuryParams,
+  DaoDaoIndexerTreasuryAllResponse,
+  DaoDaoIndexerTreasuryGrantConfigsResponse,
+  DaoDaoIndexerTreasuryParamsResponse,
+  DaoDaoIndexerAny,
+} from "./types/generated/daodao-indexer-api";
+export {
+  isDaoDaoIndexerTreasuryAllResponse,
+  isDaoDaoIndexerGrantConfig,
+  getTreasuryParamsMetadata,
+  DAODAO_TREASURY_ALL_PATH,
+  DAODAO_TREASURY_GRANT_CONFIGS_PATH,
+  DAODAO_TREASURY_PARAMS_PATH,
+  DAODAO_TREASURY_FEE_CONFIG_PATH,
+  DAODAO_TREASURY_BALANCES_PATH,
+} from "./types/generated/daodao-indexer-api";

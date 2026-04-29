@@ -45,6 +45,11 @@ export default function Page(): JSX.Element {
             EMBEDDED · DYNAMIC (button + modal)
           </Button>
         </Link>
+        <Link href="/manage-authenticators">
+          <Button fullWidth structure="base">
+            MANAGE AUTHENTICATORS
+          </Button>
+        </Link>
       </div>
       <p className="mt-4 text-center text-xs text-gray-500">
         <strong>Loading States</strong> shows manual hook usage with custom UI.
@@ -60,6 +65,10 @@ export default function Page(): JSX.Element {
         <br />
         <strong>Popup Auth Demo</strong> opens the auth app in a popup window —
         dApp stays loaded.
+        <br />
+        <strong>Manage Authenticators</strong> shows the embedded iframe flow
+        with <code>useManageAuthenticators()</code> and a live authenticator
+        list.
       </p>
     </main>
   );

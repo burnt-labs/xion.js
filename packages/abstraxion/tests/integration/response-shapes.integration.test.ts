@@ -34,7 +34,7 @@ import type {
   SignedTransaction,
   ConnectResponse,
   GetAddressResponse,
-  AddAuthenticatorResponse,
+  ManageAuthenticatorsResponse,
   RemoveAuthenticatorResponse,
   RequestGrantResponse,
   AuthenticatorData,
@@ -166,9 +166,9 @@ describe("GetAddressResponse (GET_ADDRESS response)", () => {
   });
 });
 
-// ─── ADD_AUTHENTICATOR ─────────────────────────────────────────────────────
+// ─── MANAGE_AUTHENTICATORS ─────────────────────────────────────────────────────
 
-describe("AddAuthenticatorResponse (ADD_AUTHENTICATOR response)", () => {
+describe("ManageAuthenticatorsResponse (MANAGE_AUTHENTICATORS response)", () => {
   it("contains a fully-shaped AuthenticatorData", () => {
     const auth: AuthenticatorData = {
       id: "1",
@@ -176,7 +176,7 @@ describe("AddAuthenticatorResponse (ADD_AUTHENTICATOR response)", () => {
       authenticator: "0xpubkey",
       authenticatorIndex: 0,
     };
-    const response: AddAuthenticatorResponse = { authenticator: auth };
+    const response: ManageAuthenticatorsResponse = { authenticator: auth };
     expect(response.authenticator.id).toBe("1");
     expect(typeof response.authenticator.authenticatorIndex).toBe("number");
   });

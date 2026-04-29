@@ -8,6 +8,7 @@ import {
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";
+import { DirectSigningPanel } from "@/components/DirectSigningPanel";
 
 export default function EmbeddedInlinePage(): JSX.Element {
   const { data: account, isConnected, logout } = useAbstraxionAccount();
@@ -53,7 +54,7 @@ export default function EmbeddedInlinePage(): JSX.Element {
             </div>
 
             <SessionKeySendCard accountAddress={account.bech32Address} />
-            <DirectSigningCard accountAddress={account.bech32Address} />
+            <DirectSigningPanel accountAddress={account.bech32Address} />
 
             <Button
               fullWidth
@@ -124,67 +125,6 @@ function SessionKeySendCard({ accountAddress }: { accountAddress: string }) {
       {txHash && (
         <div className="rounded border border-green-500/20 bg-green-500/10 p-2">
           <p className="text-xs text-green-400">Success!</p>
-          <p className="truncate text-xs text-gray-400">Hash: {txHash}</p>
-        </div>
-      )}
-      {txError && (
-        <div className="rounded border border-red-500/20 bg-red-500/10 p-2">
-          <p className="text-xs text-red-400">Error: {txError}</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DirectSigningCard({ accountAddress }: { accountAddress: string }) {
-  const { client, error } = useAbstraxionSigningClient({ requireAuth: true });
-  const [isSending, setIsSending] = useState(false);
-  const [txHash, setTxHash] = useState<string | null>(null);
-  const [txError, setTxError] = useState<string | null>(null);
-
-  const handleSend = async () => {
-    if (!client || !accountAddress) return;
-    setIsSending(true);
-    setTxHash(null);
-    setTxError(null);
-    try {
-      const result = await client.sendTokens(
-        accountAddress,
-        accountAddress,
-        [{ denom: "uxion", amount: "1000" }],
-        "auto",
-        "Embedded inline demo: direct signing (user pays gas)",
-      );
-      setTxHash(result.transactionHash);
-    } catch (err: any) {
-      setTxError(err.message || "Transaction failed");
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  return (
-    <div className="space-y-3 rounded-lg border border-amber-500/30 bg-gray-900/50 p-4">
-      <div className="flex items-center gap-2">
-        <div className="h-3 w-3 rounded-full bg-amber-500" />
-        <h3 className="font-semibold text-amber-400">Direct Signing</h3>
-      </div>
-      <p className="text-xs text-gray-400">
-        Signs with meta-account via iframe approval — user pays gas.
-      </p>
-      {error && <p className="text-xs text-red-400">Error: {error}</p>}
-      <Button
-        fullWidth
-        onClick={handleSend}
-        disabled={isSending || !client || !!error}
-        structure="base"
-        className="border-amber-500/50 hover:border-amber-400"
-      >
-        {isSending ? "SIGNING..." : "SEND 0.001 XION"}
-      </Button>
-      {txHash && (
-        <div className="rounded border border-amber-500/20 bg-amber-500/10 p-2">
-          <p className="text-xs text-amber-400">Success!</p>
           <p className="truncate text-xs text-gray-400">Hash: {txHash}</p>
         </div>
       )}

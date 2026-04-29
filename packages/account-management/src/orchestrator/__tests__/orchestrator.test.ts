@@ -363,9 +363,8 @@ describe("ConnectionOrchestrator", () => {
 
       (createGrants as any).mockResolvedValueOnce({ success: true });
 
-      const { GranteeSignerClient } = await import(
-        "@burnt-labs/abstraxion-core"
-      );
+      const { GranteeSignerClient } =
+        await import("@burnt-labs/abstraxion-core");
       (GranteeSignerClient.connectWithSigner as any).mockResolvedValueOnce({});
 
       orchestrator = new ConnectionOrchestrator({

@@ -60,9 +60,9 @@ describe("construction.ts - Grant Message Generation", () => {
   ): TreasuryConfig => ({
     grantConfigs,
     params: {
-      display_url: "https://example.com",
       redirect_url: "https://example.com/redirect",
       icon_url: "https://example.com/icon.png",
+      metadata: "",
     },
   });
 
@@ -77,6 +77,7 @@ describe("construction.ts - Grant Message Generation", () => {
       value: Buffer.from("mockauthorizationvalue").toString("base64"),
     },
     description: "Mock grant config",
+    optional: false,
     maxDuration: 7776000, // 90 days in seconds
   });
 
@@ -194,9 +195,9 @@ describe("construction.ts - Grant Message Generation", () => {
       const mockStrategy = createMockStrategy({
         grantConfigs: undefined as any,
         params: {
-          display_url: "",
           redirect_url: "",
           icon_url: "",
+          metadata: "",
         },
       });
       const mockClient = createMockClient();
@@ -411,7 +412,7 @@ describe("construction.ts - Grant Message Generation", () => {
       expect(grantValue.grant.expiration.seconds).toBe(mockExpiration);
     });
 
-    it("should handle multiple spend limits", () => {
+    it("should handle multiple spend limits (sorted alphabetically by denom)", () => {
       const spendLimits: SpendLimit[] = [
         { denom: "uxion", amount: "1000000" },
         { denom: "uatom", amount: "500000" },
@@ -428,14 +429,14 @@ describe("construction.ts - Grant Message Generation", () => {
       expect(result.typeUrl).toBe(MsgGrant.typeUrl);
       const grantValue = result.value as any;
 
-      // Decode the authorization to verify spend limits
+      // Decode the authorization to verify spend limits are sorted: uatom < uosmo < uxion
       const decodedAuth = SendAuthorization.decode(
         grantValue.grant.authorization.value,
       );
       expect(decodedAuth.spendLimit).toHaveLength(3);
-      expect(decodedAuth.spendLimit[0].denom).toBe("uxion");
-      expect(decodedAuth.spendLimit[1].denom).toBe("uatom");
-      expect(decodedAuth.spendLimit[2].denom).toBe("uosmo");
+      expect(decodedAuth.spendLimit[0].denom).toBe("uatom");
+      expect(decodedAuth.spendLimit[1].denom).toBe("uosmo");
+      expect(decodedAuth.spendLimit[2].denom).toBe("uxion");
     });
 
     it("should encode SendAuthorization correctly", () => {
@@ -498,7 +499,7 @@ describe("construction.ts - Grant Message Generation", () => {
       expect(decodedAuth.spendLimit[0].amount).toBe(largeAmount);
     });
 
-    it("should handle different denom formats", () => {
+    it("should handle different denom formats (sorted alphabetically)", () => {
       const spendLimits: SpendLimit[] = [
         { denom: "uxion", amount: "100" },
         {
@@ -520,10 +521,11 @@ describe("construction.ts - Grant Message Generation", () => {
       const decodedAuth = SendAuthorization.decode(
         grantValue.grant.authorization.value,
       );
+      // Sorted: factory/ < ibc/ < uxion
       expect(decodedAuth.spendLimit).toHaveLength(3);
-      expect(decodedAuth.spendLimit[0].denom).toBe("uxion");
+      expect(decodedAuth.spendLimit[0].denom).toContain("factory/");
       expect(decodedAuth.spendLimit[1].denom).toContain("ibc/");
-      expect(decodedAuth.spendLimit[2].denom).toContain("factory/");
+      expect(decodedAuth.spendLimit[2].denom).toBe("uxion");
     });
   });
 
@@ -776,6 +778,134 @@ describe("construction.ts - Grant Message Generation", () => {
 
       const grantValue = result.value as any;
       expect(grantValue.grant.expiration.seconds).toBe(mockExpiration);
+    });
+  });
+
+  describe("🔴 CRITICAL: Coin ordering (Cosmos SDK requires alphabetical denom sort)", () => {
+    it("should sort bank spend limit coins alphabetically by denom", () => {
+      // Cosmos SDK ValidateBasic rejects unsorted sdk.Coins with an unhelpful error.
+      // This test documents the requirement: unsorted input must produce sorted output.
+      const unsortedSpendLimit: SpendLimit[] = [
+        { denom: "uxion", amount: "1000000" }, // 'u' > 'i' — wrong order
+        {
+          denom:
+            "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+          amount: "500000",
+        },
+      ];
+
+      const result = generateBankGrant(
+        mockExpiration,
+        mockGrantee,
+        mockGranter,
+        unsortedSpendLimit,
+      );
+
+      const grantValue = result.value as any;
+      const decoded = SendAuthorization.decode(
+        grantValue.grant.authorization.value,
+      );
+
+      expect(decoded.spendLimit).toHaveLength(2);
+      expect(decoded.spendLimit[0].denom).toContain("ibc/"); // 'i' < 'u'
+      expect(decoded.spendLimit[1].denom).toBe("uxion");
+    });
+
+    it("should sort three-denom bank spend limit correctly", () => {
+      const unsorted: SpendLimit[] = [
+        { denom: "uxion", amount: "3" },
+        { denom: "factory/xion1.../subdenom", amount: "2" },
+        { denom: "ibc/ABC", amount: "1" },
+      ];
+
+      const result = generateBankGrant(
+        mockExpiration,
+        mockGrantee,
+        mockGranter,
+        unsorted,
+      );
+      const decoded = SendAuthorization.decode(
+        (result.value as any).grant.authorization.value,
+      );
+
+      // Expected alphabetical order: factory < ibc < uxion
+      expect(decoded.spendLimit[0].denom).toContain("factory/");
+      expect(decoded.spendLimit[1].denom).toContain("ibc/");
+      expect(decoded.spendLimit[2].denom).toBe("uxion");
+
+      // Amounts must travel with their denoms
+      expect(decoded.spendLimit[0].amount).toBe("2");
+      expect(decoded.spendLimit[1].amount).toBe("1");
+      expect(decoded.spendLimit[2].amount).toBe("3");
+    });
+
+    it("should sort CombinedLimit amounts alphabetically by denom", () => {
+      const contracts: ContractGrantDescription[] = [
+        {
+          address: "xion1contract123",
+          amounts: [
+            { denom: "uxion", amount: "1000000" }, // wrong order
+            { denom: "ibc/ABC", amount: "500000" },
+          ],
+        },
+      ];
+
+      const result = generateContractGrant(
+        mockExpiration,
+        mockGrantee,
+        mockGranter,
+        contracts,
+      );
+      const grantValue = result.value as any;
+      const decodedAuth = ContractExecutionAuthorization.decode(
+        grantValue.grant.authorization.value,
+      );
+      const decodedLimit = CombinedLimit.decode(
+        decodedAuth.grants[0].limit!.value,
+      );
+
+      expect(decodedLimit.amounts).toHaveLength(2);
+      expect(decodedLimit.amounts[0].denom).toContain("ibc/"); // 'i' < 'u'
+      expect(decodedLimit.amounts[1].denom).toBe("uxion");
+    });
+
+    it("should be idempotent — already-sorted coins stay in the same order", () => {
+      const alreadySorted: SpendLimit[] = [
+        { denom: "ibc/ABC", amount: "1" },
+        { denom: "uatom", amount: "2" },
+        { denom: "uxion", amount: "3" },
+      ];
+
+      const result = generateBankGrant(
+        mockExpiration,
+        mockGrantee,
+        mockGranter,
+        alreadySorted,
+      );
+      const decoded = SendAuthorization.decode(
+        (result.value as any).grant.authorization.value,
+      );
+
+      expect(decoded.spendLimit[0].denom).toContain("ibc/");
+      expect(decoded.spendLimit[1].denom).toBe("uatom");
+      expect(decoded.spendLimit[2].denom).toBe("uxion");
+    });
+
+    it("should not affect single-coin spend limits", () => {
+      const single: SpendLimit[] = [{ denom: "uxion", amount: "1000000" }];
+
+      const result = generateBankGrant(
+        mockExpiration,
+        mockGrantee,
+        mockGranter,
+        single,
+      );
+      const decoded = SendAuthorization.decode(
+        (result.value as any).grant.authorization.value,
+      );
+
+      expect(decoded.spendLimit).toHaveLength(1);
+      expect(decoded.spendLimit[0].denom).toBe("uxion");
     });
   });
 
@@ -1199,7 +1329,7 @@ describe("construction.ts - Grant Message Generation", () => {
       expect(decodedAuth.grants[0].contract).toBe(longAddress);
     });
 
-    it("should handle special characters in denoms", () => {
+    it("should handle special characters in denoms (sorted alphabetically)", () => {
       const specialDenoms: SpendLimit[] = [
         { denom: "ibc/ABC123-DEF456_789", amount: "100" },
         { denom: "factory/xion1.../sub-denom_v2", amount: "200" },
@@ -1216,10 +1346,11 @@ describe("construction.ts - Grant Message Generation", () => {
       const decodedAuth = SendAuthorization.decode(
         grantValue.grant.authorization.value,
       );
-      expect(decodedAuth.spendLimit[0].denom).toBe("ibc/ABC123-DEF456_789");
-      expect(decodedAuth.spendLimit[1].denom).toBe(
+      // Sorted: factory/ < ibc/
+      expect(decodedAuth.spendLimit[0].denom).toBe(
         "factory/xion1.../sub-denom_v2",
       );
+      expect(decodedAuth.spendLimit[1].denom).toBe("ibc/ABC123-DEF456_789");
     });
 
     it("should handle zero amounts in spend limits", () => {
@@ -1273,7 +1404,7 @@ describe("construction.ts - Grant Message Generation", () => {
   });
 
   describe("🟢 MEDIUM: Protobuf Encoding/Decoding", () => {
-    it("should encode and decode SendAuthorization correctly", () => {
+    it("should encode and decode SendAuthorization correctly (sorted by denom)", () => {
       const spendLimit: SpendLimit[] = [
         { denom: "uxion", amount: "1000000" },
         { denom: "uatom", amount: "500000" },
@@ -1290,11 +1421,12 @@ describe("construction.ts - Grant Message Generation", () => {
       const encoded = grantValue.grant.authorization.value;
       const decoded = SendAuthorization.decode(encoded);
 
+      // Sorted: uatom < uxion
       expect(decoded.spendLimit).toHaveLength(2);
-      expect(decoded.spendLimit[0].denom).toBe("uxion");
-      expect(decoded.spendLimit[0].amount).toBe("1000000");
-      expect(decoded.spendLimit[1].denom).toBe("uatom");
-      expect(decoded.spendLimit[1].amount).toBe("500000");
+      expect(decoded.spendLimit[0].denom).toBe("uatom");
+      expect(decoded.spendLimit[0].amount).toBe("500000");
+      expect(decoded.spendLimit[1].denom).toBe("uxion");
+      expect(decoded.spendLimit[1].amount).toBe("1000000");
     });
 
     it("should encode and decode ContractExecutionAuthorization correctly", () => {
@@ -1342,7 +1474,7 @@ describe("construction.ts - Grant Message Generation", () => {
       expect(decodedLimit.remaining).toBe(BigInt(255));
     });
 
-    it("should encode and decode CombinedLimit correctly", () => {
+    it("should encode and decode CombinedLimit correctly (sorted by denom)", () => {
       const contracts: ContractGrantDescription[] = [
         {
           address: "xion1contract123",
@@ -1367,10 +1499,11 @@ describe("construction.ts - Grant Message Generation", () => {
       const encodedLimit = decodedAuth.grants[0].limit!.value;
       const decodedLimit = CombinedLimit.decode(encodedLimit);
 
+      // Sorted: uatom < uxion
       expect(decodedLimit.callsRemaining).toBe(BigInt(255));
       expect(decodedLimit.amounts).toHaveLength(2);
-      expect(decodedLimit.amounts[0].denom).toBe("uxion");
-      expect(decodedLimit.amounts[1].denom).toBe("uatom");
+      expect(decodedLimit.amounts[0].denom).toBe("uatom");
+      expect(decodedLimit.amounts[1].denom).toBe("uxion");
     });
 
     it("should encode and decode GenericAuthorization correctly", () => {

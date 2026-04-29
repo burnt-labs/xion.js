@@ -232,8 +232,10 @@ export interface AbstraxionConfig {
  * Normalized Abstraxion configuration
  * This type represents the config after normalization, where optional fields have been filled in
  */
-export interface NormalizedAbstraxionConfig
-  extends Omit<AbstraxionConfig, "rpcUrl" | "restUrl" | "gasPrice"> {
+export interface NormalizedAbstraxionConfig extends Omit<
+  AbstraxionConfig,
+  "rpcUrl" | "restUrl" | "gasPrice"
+> {
   /** RPC URL - always present after normalization */
   rpcUrl: string;
   /** REST URL - always present after normalization */
@@ -250,9 +252,7 @@ export interface NormalizedAbstraxionConfig
 // Consumers should use `SigningClient` instead of building the union themselves.
 import type { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 import type { AAClient } from "@burnt-labs/signers";
-import type { PopupSigningClient } from "./controllers/PopupSigningClient";
-import type { RedirectSigningClient } from "./controllers/RedirectSigningClient";
-import type { IframeSigningClient } from "./controllers/IframeSigningClient";
+import type { RequireSigningClient } from "./controllers/RequireSigningClient";
 
 /**
  * Union of all signing client types returned by `useAbstraxionSigningClient`.
@@ -262,19 +262,19 @@ import type { IframeSigningClient } from "./controllers/IframeSigningClient";
  * import type { SigningClient } from "@burnt-labs/abstraxion";
  * ```
  *
+ * All three types expose `signAndBroadcast`, `sendTokens`, and `simulate`.
+ * `simulate` performs a read-only RPC call (no key or approval needed) and
+ * is safe to call for gas estimation regardless of which client type is active.
+ *
  * Which concrete type you get depends on the authentication mode and `requireAuth`:
  * - `GranteeSignerClient` — session key signing (default, gasless)
- * - `AAClient` — direct signing in signer mode (external wallet)
- * - `PopupSigningClient` — direct signing in popup mode (dashboard popup)
- * - `RedirectSigningClient` — direct signing in redirect mode (dashboard redirect)
- * - `IframeSigningClient` — direct signing in iframe mode (dashboard iframe)
+ * - `AAClient` — direct signing in signer mode (external wallet, requireAuth: true)
+ * - `RequireSigningClient` — dashboard-mediated direct signing (popup / redirect / iframe, requireAuth: true)
  */
 export type SigningClient =
   | GranteeSignerClient
   | AAClient
-  | PopupSigningClient
-  | RedirectSigningClient
-  | IframeSigningClient;
+  | RequireSigningClient;
 
 // ============================================================================
 // Signing Result Types
@@ -286,4 +286,12 @@ export type SigningClient =
  */
 export type SignResult =
   | { success: true; transactionHash: string }
+  | { success: false; error: string };
+
+/**
+ * Result from a redirect-mode manage-authenticators flow.
+ * Populated after returning from the dashboard manage-authenticators redirect.
+ */
+export type ManageAuthResult =
+  | { success: true }
   | { success: false; error: string };

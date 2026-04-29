@@ -13,88 +13,12 @@ import {
   normalizeEthereumAddress,
   utf8ToHexWithPrefix,
 } from "@burnt-labs/signers";
-import { StargateClient } from "@cosmjs/stargate";
 import { createEthWalletAccountV2, createSecp256k1AccountV2 } from "./client";
 import type { CreateAccountResponse } from "@burnt-labs/signers";
 
 /**
- * Wait for transaction confirmation by polling getTx
- * Graceful fallback: if transaction not found after 3 attempts, waits 2s and continues
- * If RPC connection fails, continues immediately without waiting
- * Memory leak safe: all timeouts are properly cleaned up
- */
-async function waitForTxConfirmation(
-  rpcUrl: string,
-  txHash: string,
-): Promise<void> {
-  let client: StargateClient | null = null;
-  const maxAttempts = 3;
-  const pollIntervalMs = 1000;
-  const timeoutIds: NodeJS.Timeout[] = [];
-
-  // Helper to create timeout with cleanup tracking
-  const createTimeout = (ms: number): Promise<void> => {
-    return new Promise((resolve) => {
-      const timeoutId = setTimeout(() => {
-        const index = timeoutIds.indexOf(timeoutId);
-        if (index > -1) {
-          timeoutIds.splice(index, 1);
-        }
-        resolve();
-      }, ms);
-      timeoutIds.push(timeoutId);
-    });
-  };
-
-  // Cleanup function to clear all pending timeouts
-  const cleanupTimeouts = () => {
-    timeoutIds.forEach((timeoutId) => {
-      clearTimeout(timeoutId);
-    });
-    timeoutIds.length = 0;
-  };
-
-  try {
-    client = await StargateClient.connect(rpcUrl);
-
-    // Check immediately (attempt 1)
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const result = await client.getTx(txHash);
-        if (result) {
-          cleanupTimeouts();
-          return;
-        }
-      } catch (error) {
-        // Transaction not found yet, continue to next attempt
-      }
-
-      if (attempt < maxAttempts) {
-        await createTimeout(pollIntervalMs);
-      }
-    }
-
-    // Reached max attempts without finding transaction
-    await createTimeout(2000);
-  } catch (error) {
-    // RPC connection failed - cleanup and continue immediately
-    cleanupTimeouts();
-  } finally {
-    cleanupTimeouts();
-    if (client) {
-      try {
-        client.disconnect();
-      } catch (error) {
-        // Ignore disconnect errors
-      }
-    }
-  }
-}
-
-/**
- * Simple sleep function to prevent account sequence errors
- * Temporary replacement for waitForTxConfirmation to reduce latency
- * Memory leak safe: timeout is properly tracked and cleaned up
+ * Simple sleep function to prevent account sequence errors after account
+ * creation. Memory leak safe: timeout is properly tracked and cleaned up.
  */
 async function simpleSleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -160,13 +84,7 @@ export async function createEthWalletAccount(
 
   // Short sleep to prevent sequence errors
   if (rpcUrl && result.transaction_hash) {
-    // try {
-    //   await waitForTxConfirmation(rpcUrl, result.transaction_hash);
-    // } catch (error) {
-    //   // Confirmation failed - continue anyway
-    // }
-    //TODO: test more thoroughly if account sequence errors can be avoided without this sleep
-    await simpleSleep(500); // 500ms sleep instead of polling
+    await simpleSleep(500);
   }
 
   return result;
@@ -229,12 +147,7 @@ export async function createSecp256k1Account(
 
   // Short sleep to prevent sequence errors
   if (rpcUrl && result.transaction_hash) {
-    // try {
-    //   await waitForTxConfirmation(rpcUrl, result.transaction_hash);
-    // } catch (error) {
-    //   // Confirmation failed - continue anyway
-    // }
-    await simpleSleep(250); // 250ms sleep instead of polling
+    await simpleSleep(250);
   }
 
   return result;

@@ -98,7 +98,7 @@ describe("Treasury grant comparison — session restoration bug", () => {
         decodeAuthorization(t.authorization.type_url, t.authorization.value),
       );
       expect(
-        compareChainGrantsToTreasuryGrants(decodedChain, decodedTreasury),
+        compareChainGrantsToTreasuryGrants(decodedChain, decodedTreasury).match,
       ).toBe(true);
     });
   });
@@ -125,13 +125,16 @@ describe("Treasury grant comparison — session restoration bug", () => {
         decodeAuthorization(t.authorization.type_url, t.authorization.value),
       );
 
-      // All chain grants are Unsupported → no type match → comparison fails
+      // All chain grants are Unsupported → decode_error
       expect(
         decodedChain.every((d) => d.type === AuthorizationTypes.Unsupported),
       ).toBe(true);
-      expect(
-        compareChainGrantsToTreasuryGrants(decodedChain, decodedTreasury),
-      ).toBe(false);
+      const result = compareChainGrantsToTreasuryGrants(
+        decodedChain,
+        decodedTreasury,
+      );
+      expect(result.match).toBe(false);
+      expect(result.match === false && result.reason).toBe("decode_error");
     });
   });
 
@@ -191,7 +194,7 @@ describe("Treasury grant comparison — session restoration bug", () => {
       );
 
       expect(
-        compareChainGrantsToTreasuryGrants(decodedChain, decodedTreasury),
+        compareChainGrantsToTreasuryGrants(decodedChain, decodedTreasury).match,
       ).toBe(true);
     });
 

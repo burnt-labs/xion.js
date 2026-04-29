@@ -140,9 +140,8 @@ describe("accountConnection.ts - Account Connection Flow", () => {
     });
 
     it("should handle account creation for EthWallet when not exists", async () => {
-      const { createEthWalletAccount } = await import(
-        "@burnt-labs/abstraxion-core"
-      );
+      const { createEthWalletAccount } =
+        await import("@burnt-labs/abstraxion-core");
       const mockKeypair = {
         getAccounts: vi.fn().mockResolvedValue([{ address: "xion1grantee" }]),
       };
@@ -192,9 +191,8 @@ describe("accountConnection.ts - Account Connection Flow", () => {
     });
 
     it("should handle account creation for Secp256K1 when not exists", async () => {
-      const { createSecp256k1Account } = await import(
-        "@burnt-labs/abstraxion-core"
-      );
+      const { createSecp256k1Account } =
+        await import("@burnt-labs/abstraxion-core");
       const mockKeypair = {
         getAccounts: vi.fn().mockResolvedValue([{ address: "xion1grantee" }]),
       };

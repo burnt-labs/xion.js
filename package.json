@@ -20,7 +20,9 @@
     "test:integration:watch": "turbo run test:integration:watch --filter=!demo-app",
     "generate:types": "pnpm --filter @burnt-labs/signers generate:types",
     "generate:types:testnet": "pnpm --filter @burnt-labs/signers generate:types:testnet",
-    "generate:types:mainnet": "pnpm --filter @burnt-labs/signers generate:types:mainnet"
+    "generate:types:mainnet": "pnpm --filter @burnt-labs/signers generate:types:mainnet",
+    "generate:daodao-indexer-types": "pnpm --filter @burnt-labs/signers generate:daodao-indexer-types",
+    "generate:daodao-indexer-types:local": "pnpm --filter @burnt-labs/signers generate:daodao-indexer-types:local"
   },
   "packageManager": "pnpm@8.9.0",
   "dependencies": {
@@ -34,7 +36,8 @@
   },
   "devDependencies": {
     "@hono/zod-openapi": "^0.18.4",
-    "@vitest/coverage-v8": "^1.6.1"
+    "@vitest/coverage-v8": "^1.6.1",
+    "openapi-typescript": "^7.0.0"
   },
   "pnpm": {
     "overrides": {
@@ -49,7 +52,8 @@
       "@cosmjs/stargate": "^0.36.0",
       "@cosmjs/tendermint-rpc": "^0.36.0",
       "@cosmjs/utils": "^0.36.0",
-      "cosmjs-types": "^0.9.0"
+      "cosmjs-types": "^0.9.0",
+      "@burnt-labs/xion-types": "29.0.0-rc1"
     }
   }
 }

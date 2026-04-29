@@ -40,6 +40,177 @@ jobs:
       - name: Run AA API type validation tests
         run: pnpm --filter @burnt-labs/signers test src/__tests__/aa-api-types.test.ts
 
+      - name: Check xion-types version alignment with chain
+        run: |
+          set -euo pipefail
+          echo "🔍 Checking @burnt-labs/xion-types alignment with xion chain..."
+
+          # Get installed version from the pnpm override (source of truth)
+          INSTALLED=$(jq -r '.pnpm.overrides["@burnt-labs/xion-types"]' package.json)
+          INSTALLED_MAJOR=$(echo "$INSTALLED" | grep -oE '[0-9]+' | head -1)
+          echo "Installed xion-types: $INSTALLED (major: $INSTALLED_MAJOR)"
+
+          # Get latest xion chain release tag from GitHub
+          CHAIN_TAG=$(curl -sf \
+            -H "Accept: application/vnd.github.v3+json" \
+            ${GITHUB_TOKEN:+-H "Authorization: token $GITHUB_TOKEN"} \
+            "https://api.github.com/repos/burnt-labs/xion/releases/latest" \
+            | jq -r '.tag_name')
+          CHAIN_MAJOR=$(echo "$CHAIN_TAG" | grep -oE '[0-9]+' | head -1)
+          echo "Latest xion chain release: $CHAIN_TAG (major: $CHAIN_MAJOR)"
+
+          # Determine the highest version published on npm — semver-sorted.
+          #
+          # We deliberately do NOT use `dist-tags.latest`: @burnt-labs/xion-types
+          # publishes prereleases (e.g. RCs) to non-default tags ('rc', 'alpha'),
+          # and the `latest` tag has historically lagged the actual current
+          # release by many majors (e.g. stuck at 0.1.1 while 29.0.0-rc1 is
+          # the current published version). Sorting all published versions is
+          # the only reliable signal.
+          REGISTRY_JSON=$(mktemp)
+          curl -sf "https://registry.npmjs.org/@burnt-labs/xion-types" > "$REGISTRY_JSON"
+
+          # Inline semver compare — avoids a runtime dep install that could
+          # interact with the pnpm-managed node_modules.
+          NPM_VERSION=$(REGISTRY="$REGISTRY_JSON" node <<'EOF'
+            const data = JSON.parse(require('fs').readFileSync(process.env.REGISTRY, 'utf8'));
+            const versions = Object.keys(data.versions || {});
+            if (!versions.length) { process.exit(2); }
+
+            // SemVer 2.0.0 ordering, including prerelease comparison rules.
+            const re = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?/;
+            function cmp(a, b) {
+              const ma = a.match(re), mb = b.match(re);
+              if (!ma || !mb) return a < b ? -1 : a > b ? 1 : 0;
+              for (let i = 1; i <= 3; i++) {
+                const d = (+ma[i]) - (+mb[i]);
+                if (d !== 0) return d;
+              }
+              const pa = ma[4], pb = mb[4];
+              if (!pa && !pb) return 0;
+              if (!pa) return 1;   // release > prerelease
+              if (!pb) return -1;
+              const ia = pa.split('.'), ib = pb.split('.');
+              for (let i = 0; i < Math.max(ia.length, ib.length); i++) {
+                const x = ia[i], y = ib[i];
+                if (x === undefined) return -1;
+                if (y === undefined) return 1;
+                const xn = /^\d+$/.test(x), yn = /^\d+$/.test(y);
+                if (xn && yn) {
+                  const d = (+x) - (+y);
+                  if (d !== 0) return d;
+                } else if (xn) return -1;
+                else if (yn) return 1;
+                else if (x !== y) return x < y ? -1 : 1;
+              }
+              return 0;
+            }
+            versions.sort(cmp);
+            process.stdout.write(versions[versions.length - 1]);
+          EOF
+          )
+          NPM_MAJOR=$(echo "$NPM_VERSION" | grep -oE '[0-9]+' | head -1)
+          echo "Highest npm xion-types: $NPM_VERSION (major: $NPM_MAJOR)"
+
+          # Sanity: confirm the installed version is actually published on npm.
+          # If not, that's a yellow flag (could be a local override or an
+          # in-flight prerelease) but not a hard failure.
+          INSTALLED_PUBLISHED=$(REGISTRY="$REGISTRY_JSON" INSTALLED="$INSTALLED" node -e "
+            const data = JSON.parse(require('fs').readFileSync(process.env.REGISTRY, 'utf8'));
+            process.stdout.write(data.versions && data.versions[process.env.INSTALLED] ? 'yes' : 'no');
+          ")
+          if [ "$INSTALLED_PUBLISHED" = "no" ]; then
+            echo "⚠️  Installed version $INSTALLED is not published on npm (may be a local/in-flight build)."
+          fi
+
+          echo ""
+
+          # Hard fail: installed major MUST match the latest xion chain release.
+          # This is the actual contract — types must match the chain version
+          # the SDK targets. npm-side checks below are hygiene only.
+          if [ "$INSTALLED_MAJOR" != "$CHAIN_MAJOR" ]; then
+            echo "❌ Major version mismatch with xion chain!"
+            echo "   Installed: v$INSTALLED_MAJOR (from $INSTALLED)"
+            echo "   Chain:     v$CHAIN_MAJOR (from $CHAIN_TAG)"
+            echo "   Action: Update @burnt-labs/xion-types to match the chain release."
+            exit 1
+          fi
+
+          # Warn (non-blocking): newer same-major version available on npm.
+          NEWER_SAME_MAJOR=$(REGISTRY="$REGISTRY_JSON" INSTALLED="$INSTALLED" INSTALLED_MAJOR="$INSTALLED_MAJOR" node <<'EOF'
+            const data = JSON.parse(require('fs').readFileSync(process.env.REGISTRY, 'utf8'));
+            const installed = process.env.INSTALLED;
+            const major = +process.env.INSTALLED_MAJOR;
+            const re = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?/;
+            function cmp(a, b) {
+              const ma = a.match(re), mb = b.match(re);
+              if (!ma || !mb) return 0;
+              for (let i = 1; i <= 3; i++) {
+                const d = (+ma[i]) - (+mb[i]);
+                if (d !== 0) return d;
+              }
+              const pa = ma[4], pb = mb[4];
+              if (!pa && !pb) return 0;
+              if (!pa) return 1;
+              if (!pb) return -1;
+              const ia = pa.split('.'), ib = pb.split('.');
+              for (let i = 0; i < Math.max(ia.length, ib.length); i++) {
+                const x = ia[i], y = ib[i];
+                if (x === undefined) return -1;
+                if (y === undefined) return 1;
+                const xn = /^\d+$/.test(x), yn = /^\d+$/.test(y);
+                if (xn && yn) { const d = (+x) - (+y); if (d !== 0) return d; }
+                else if (xn) return -1;
+                else if (yn) return 1;
+                else if (x !== y) return x < y ? -1 : 1;
+              }
+              return 0;
+            }
+            const sameMajor = Object.keys(data.versions || {})
+              .filter(v => { const m = v.match(re); return m && +m[1] === major; })
+              .sort(cmp);
+            const top = sameMajor[sameMajor.length - 1];
+            if (top && cmp(top, installed) > 0) process.stdout.write(top);
+          EOF
+          )
+          if [ -n "$NEWER_SAME_MAJOR" ]; then
+            echo "ℹ️  A newer v$INSTALLED_MAJOR release is available on npm: $NEWER_SAME_MAJOR (installed: $INSTALLED)"
+            echo "   Consider running pnpm update @burnt-labs/xion-types to pull it in."
+          fi
+
+          # Warn (non-blocking): npm has a newer major than the chain release —
+          # heads-up that types for a future chain version are already published.
+          if [ "$NPM_MAJOR" -gt "$CHAIN_MAJOR" ]; then
+            echo "ℹ️  npm has a newer major published than the chain ($NPM_VERSION vs $CHAIN_TAG)."
+          fi
+
+          echo ""
+          echo "✅ xion-types major (v$INSTALLED_MAJOR) matches chain release ($CHAIN_TAG)"
+
+      - name: Check xion-types version consistency across packages
+        run: |
+          echo "🔍 Checking @burnt-labs/xion-types version consistency..."
+
+          OVERRIDE=$(jq -r '.pnpm.overrides["@burnt-labs/xion-types"]' package.json)
+          echo "Root override: $OVERRIDE"
+
+          MISMATCH=false
+          for pkg_file in packages/*/package.json; do
+            version=$(jq -r '.dependencies["@burnt-labs/xion-types"] // empty' "$pkg_file")
+            if [ -n "$version" ] && [ "$version" != "$OVERRIDE" ]; then
+              echo "❌ $pkg_file has $version (expected $OVERRIDE)"
+              MISMATCH=true
+            fi
+          done
+
+          if [ "$MISMATCH" = true ]; then
+            echo ""
+            echo "Package versions should match the pnpm override in root package.json."
+            exit 1
+          fi
+
+          echo "✅ All packages use consistent xion-types version: $OVERRIDE"
+
       - name: Check @cosmjs version consistency across packages
         run: |
           echo "🔍 Checking @cosmjs version consistency across all packages..."

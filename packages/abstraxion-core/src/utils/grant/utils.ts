@@ -11,6 +11,25 @@ export const formatCoinArray = (coins: Coin[] = []): string => {
 };
 
 /**
+ * Sorts coins alphabetically by denom.
+ *
+ * The Cosmos SDK requires coin lists (sdk.Coins) to be sorted in ascending
+ * lexicographic order by denom before they are accepted by the chain.
+ * Submitting unsorted coins results in a chain-level rejection with an
+ * unhelpful error message. Use this before encoding any coin array into a
+ * protobuf message (SendAuthorization, CombinedLimit, etc.).
+ *
+ * Does not mutate the input array.
+ *
+ * @param {T[]} coins - Array of coin-like objects with a `denom` field
+ * @returns {T[]} New array sorted ascending by denom
+ */
+export const sortCoins = <T extends { denom: string }>(coins: T[]): T[] =>
+  [...coins].sort((a, b) =>
+    a.denom < b.denom ? -1 : a.denom > b.denom ? 1 : 0,
+  );
+
+/**
  * Parses a comma-separated coin string into a Coin array.
  * Enhanced version with better validation for edge cases.
  *
