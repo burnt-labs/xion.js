@@ -35,6 +35,28 @@ export function isWasmMsgWithBytes(typeUrl: string): typeUrl is WasmMsgTypeUrl {
 }
 
 /**
+ * Detect the JSON-degraded shape of a Uint8Array — `{ "0": 123, "1": 34, ... }`.
+ *
+ * If a Uint8Array gets accidentally JSON.stringify'd before transport, it
+ * arrives as a plain object with consecutive numeric string keys mapping to
+ * byte values. Re-encoding that as a CosmWasm contract message would silently
+ * produce the wrong bytes (the JSON of `{"0":123,...}` instead of the original
+ * payload). Treat this as a hard error.
+ */
+function isUint8ArrayLikeObject(obj: Record<string, unknown>): boolean {
+  const keys = Object.keys(obj);
+  if (keys.length === 0) return false;
+  for (let i = 0; i < keys.length; i++) {
+    if (keys[i] !== String(i)) return false;
+    const v = obj[keys[i]];
+    if (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > 255) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Dashboard-side normalization: converts a post-transport CosmWasm message's
  * `msg` field from a plain JS object to Uint8Array for protobuf encoding.
  *
@@ -60,11 +82,21 @@ export function normalizeMessage(message: EncodeObject): EncodeObject {
     );
   }
 
+  const msgObj = value.msg as Record<string, unknown>;
+  if (isUint8ArrayLikeObject(msgObj)) {
+    throw new Error(
+      `[normalizeMessage] ${message.typeUrl}.msg looks like a JSON-degraded ` +
+        `Uint8Array ({"0":...,"1":...}). The SDK must send the contract ` +
+        `message as a real JS object before transport — re-encoding this ` +
+        `would silently produce the wrong bytes.`,
+    );
+  }
+
   return {
     ...message,
     value: {
       ...value,
-      msg: contractMsgToBytes(value.msg as Record<string, unknown>),
+      msg: contractMsgToBytes(msgObj),
     },
   };
 }

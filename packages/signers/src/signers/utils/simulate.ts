@@ -53,64 +53,67 @@ export async function simulateWithNilPubkey(
 ): Promise<number> {
   const cometClient = await Comet38Client.connect(rpcUrl);
 
-  // Attach auth extension so we can look up the sequence via the same comet connection.
-  // customAccountFromAny handles /abstractaccount.v1.AbstractAccount; the default
-  // StargateClient account parser would throw on this XION-specific account type.
-  const queryClient = QueryClient.withExtensions(
-    cometClient,
-    setupAuthExtension,
-  );
-  const authAccount = await queryClient.auth.account(signerAddress);
-  if (!authAccount) throw new Error(`Account not found: ${signerAddress}`);
-  const { sequence } = customAccountFromAny(authAccount);
-
-  const rpc = createProtobufRpcClient(queryClient);
-  const txService = new ServiceClientImpl(rpc);
-
-  // Derive NilPubKey bytes from the bech32 address (same approach as AAClient)
-  const pubKeyBytes = bech32.fromWords(bech32.decode(signerAddress).words);
-  const pubkey = Uint8Array.from(pubKeyBytes);
-
-  const authInfo = AuthInfo.fromPartial({
-    fee: Fee.fromPartial({}),
-    signerInfos: [
-      {
-        publicKey: {
-          typeUrl: "/abstractaccount.v1.NilPubKey",
-          value: NilPubKey.encode({ addressBytes: pubkey }).finish(),
-        },
-        modeInfo: {
-          single: {
-            mode: SignMode.SIGN_MODE_DIRECT,
-          },
-        },
-        sequence: BigInt(sequence),
-      },
-    ],
-  });
-  const authInfoBytes = AuthInfo.encode(authInfo).finish();
-
-  const registry = new Registry(AADefaultRegistryTypes);
-  const txBodyEncodeObject = {
-    typeUrl: "/cosmos.tx.v1beta1.TxBody",
-    value: {
-      messages: normalizeMessages([...messages]),
-      memo: memo || "AA Gas Simulation",
-    },
-  };
-  const bodyBytes = registry.encode(txBodyEncodeObject);
-
-  const tx = TxRaw.fromPartial({
-    bodyBytes,
-    authInfoBytes,
-    signatures: [new Uint8Array()],
-  });
-
-  const request = SimulateRequest.fromPartial({
-    txBytes: TxRaw.encode(tx).finish(),
-  });
-
+  // All work after connect() runs in this try/finally so the RPC connection
+  // is always closed — including failures in account lookup, bech32 decode,
+  // or registry.encode that would otherwise leak the socket.
   try {
+    // Attach auth extension so we can look up the sequence via the same comet connection.
+    // customAccountFromAny handles /abstractaccount.v1.AbstractAccount; the default
+    // StargateClient account parser would throw on this XION-specific account type.
+    const queryClient = QueryClient.withExtensions(
+      cometClient,
+      setupAuthExtension,
+    );
+    const authAccount = await queryClient.auth.account(signerAddress);
+    if (!authAccount) throw new Error(`Account not found: ${signerAddress}`);
+    const { sequence } = customAccountFromAny(authAccount);
+
+    const rpc = createProtobufRpcClient(queryClient);
+    const txService = new ServiceClientImpl(rpc);
+
+    // Derive NilPubKey bytes from the bech32 address (same approach as AAClient)
+    const pubKeyBytes = bech32.fromWords(bech32.decode(signerAddress).words);
+    const pubkey = Uint8Array.from(pubKeyBytes);
+
+    const authInfo = AuthInfo.fromPartial({
+      fee: Fee.fromPartial({}),
+      signerInfos: [
+        {
+          publicKey: {
+            typeUrl: "/abstractaccount.v1.NilPubKey",
+            value: NilPubKey.encode({ addressBytes: pubkey }).finish(),
+          },
+          modeInfo: {
+            single: {
+              mode: SignMode.SIGN_MODE_DIRECT,
+            },
+          },
+          sequence: BigInt(sequence),
+        },
+      ],
+    });
+    const authInfoBytes = AuthInfo.encode(authInfo).finish();
+
+    const registry = new Registry(AADefaultRegistryTypes);
+    const txBodyEncodeObject = {
+      typeUrl: "/cosmos.tx.v1beta1.TxBody",
+      value: {
+        messages: normalizeMessages([...messages]),
+        memo: memo || "AA Gas Simulation",
+      },
+    };
+    const bodyBytes = registry.encode(txBodyEncodeObject);
+
+    const tx = TxRaw.fromPartial({
+      bodyBytes,
+      authInfoBytes,
+      signatures: [new Uint8Array()],
+    });
+
+    const request = SimulateRequest.fromPartial({
+      txBytes: TxRaw.encode(tx).finish(),
+    });
+
     const { gasInfo } = await txService.Simulate(request);
     if (!gasInfo) {
       throw new Error("No gas info returned");

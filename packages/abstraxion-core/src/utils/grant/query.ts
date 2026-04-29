@@ -123,10 +123,6 @@ export const fetchTreasuryDataFromIndexer = async (
     const { networkId } = await fetchConfig(rpcUrl);
 
     try {
-      console.debug(
-        `Fetching treasury data from indexer for ${treasuryAddress}`,
-      );
-
       // Use shared low-level indexer fetcher
       const indexerData = await fetchFromDaoDaoIndexer<TreasuryIndexerResponse>(
         treasuryAddress,

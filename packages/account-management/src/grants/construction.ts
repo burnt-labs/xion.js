@@ -31,6 +31,7 @@ import {
 } from "cosmjs-types/cosmos/staking/v1beta1/tx";
 import { MsgVote } from "cosmjs-types/cosmos/gov/v1beta1/tx";
 import { MsgSubmitProposal } from "cosmjs-types/cosmos/gov/v1/tx";
+import { sortCoins } from "@burnt-labs/abstraxion-core";
 import type { ContractGrantDescription, SpendLimit } from "../types/grants";
 import type { GrantConfigByTypeUrl, TreasuryStrategy } from "../types/treasury";
 
@@ -153,16 +154,6 @@ export async function generateTreasuryGrants(
   });
 
   return grantMessages;
-}
-
-/**
- * Sort coins ascending by denom (Cosmos SDK requirement).
- * Does not mutate the input array.
- */
-function sortCoins<T extends { denom: string }>(coins: T[]): T[] {
-  return [...coins].sort((a, b) =>
-    a.denom < b.denom ? -1 : a.denom > b.denom ? 1 : 0,
-  );
 }
 
 /**

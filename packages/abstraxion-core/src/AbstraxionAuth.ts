@@ -441,12 +441,6 @@ export class AbstraxionAuth {
       return true;
     }
 
-    if (!result.match) {
-      console.debug(
-        `[AbstraxionAuth] Grant comparison failed: ${result.reason} — ${result.detail}`,
-      );
-    }
-
     return result.match;
   }
 
@@ -577,9 +571,6 @@ export class AbstraxionAuth {
   async authenticate(): Promise<void> {
     // If authentication is already in progress, return the existing promise
     if (this.authenticationPromise) {
-      console.debug(
-        "Authentication already in progress, waiting for completion",
-      );
       return this.authenticationPromise;
     }
 
