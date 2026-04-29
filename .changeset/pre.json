@@ -16,6 +16,7 @@
     "@burnt-labs/test-utils": "1.0.0-alpha.1"
   },
   "changesets": [
+    "add-authenticators-exposure",
     "beige-suns-tell",
     "blue-lobsters-taste",
     "blue-spoons-train",

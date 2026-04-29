@@ -1,5 +1,12 @@
 # @burnt-labs/ui
 
+## 1.0.0-alpha.26
+
+### Patch Changes
+
+- Updated dependencies [[`e466751`](https://github.com/burnt-labs/xion.js/commit/e46675174d71aabd6ff24cc59016713938168ea2)]:
+  - @burnt-labs/abstraxion@1.0.0-alpha.78
+
 ## 1.0.0-alpha.25
 
 ### Patch Changes
