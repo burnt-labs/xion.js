@@ -1,0 +1,63 @@
+name: Setup Integration Environment
+description: |
+  Shared setup for jobs that run integration tests with Playwright:
+    - pnpm + Node (with pnpm cache)
+    - pnpm install
+    - Download build artifacts (from the upstream `build` job)
+    - Cached Playwright browser install
+
+  The Playwright cache is keyed on pnpm-lock.yaml so the chromium download
+  (~150MB) only runs once per lockfile change, even across parallel jobs.
+  System dep install (`playwright install-deps`) still runs every time
+  because runners' apt state is not preserved.
+
+inputs:
+  artifact-name:
+    description: Name of the build-artifacts artifact to download.
+    required: false
+    default: build-artifacts
+  artifact-path:
+    description: Where to extract build artifacts.
+    required: false
+    default: packages
+
+runs:
+  using: composite
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: lts/*
+        cache: pnpm
+
+    - name: Install Dependencies
+      shell: bash
+      run: pnpm install
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.artifact-path }}
+
+    - name: Cache Playwright browsers
+      id: playwright-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
+
+    - name: Install Playwright browsers (full, on cache miss)
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: pnpm --filter @burnt-labs/abstraxion exec playwright install --with-deps chromium
+
+    - name: Install Playwright system deps only (on cache hit)
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: pnpm --filter @burnt-labs/abstraxion exec playwright install-deps chromium

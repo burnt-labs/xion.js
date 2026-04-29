@@ -22,6 +22,7 @@
     "test": "vitest",
     "test:integration": "vitest run tests/integration --config vitest.config.integration.ts",
     "test:integration:watch": "vitest tests/integration --config vitest.config.integration.ts",
+    "test:contract": "vitest run --config vitest.config.contract.ts",
     "test:react": "vitest run tests/integration/react --config vitest.config.react-integration.ts",
     "test:react:watch": "vitest tests/integration/react --config vitest.config.react-integration.ts"
   },
@@ -43,6 +44,8 @@
     "postcss": "^8.4.20",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "playwright": "1.48.0",
+    "playwright-core": "1.48.0",
     "rimraf": "^5.0.5",
     "tailwindcss": "^3.2.4",
     "tsup": "^6.0.1",

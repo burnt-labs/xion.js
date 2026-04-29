@@ -102,7 +102,7 @@ export const testChainInfo: ChainInfo = {
 
 // If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
-  "xion-mainnet-1": "https://settings.mainnet.burnt.com",
+  "xion-mainnet-1": "https://settings.burnt.com",
   "xion-testnet-1": "https://settings.testnet.burnt.com",
   "xion-testnet-2": "https://auth.testnet.burnt.com",
 };
@@ -126,7 +126,7 @@ const DAODAO_INDEXER_URLS: Record<string, string> = {
 };
 
 const IFRAME_URLS: Record<string, string> = {
-  "xion-mainnet-1": "https://settings.mainnet.burnt.com",
+  "xion-mainnet-1": "https://settings.burnt.com",
   "xion-testnet-1": "https://settings.testnet.burnt.com",
   "xion-testnet-2": "https://auth.testnet.burnt.com",
 };

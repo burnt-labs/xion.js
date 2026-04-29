@@ -24,7 +24,14 @@ export default defineConfig({
       "tests/integration/**/*.diagnostic.test.ts",
       "tests/integration/**/*.test.ts",
     ],
-    exclude: ["node_modules", "dist", "src/**/*.test.ts"],
+    exclude: [
+      "node_modules",
+      "dist",
+      "src/**/*.test.ts",
+      // Run separately via `pnpm test:contract` so CI can apply different
+      // pass/fail rules (testnet = hard-fail, mainnet = informational).
+      "tests/integration/message-contract.integration.test.ts",
+    ],
     coverage: {
       enabled: false, // Disable coverage for integration tests
     },

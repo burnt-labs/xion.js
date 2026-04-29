@@ -1,4 +1,18 @@
-name: Dashboard Reachability Check
+name: Dashboard Contract Validation
+
+# Fast HTTP-level check that the deployed XION dashboard is reachable and
+# serving the expected SPA shell.
+#
+# The validation logic is shared between the testnet (blocking) and mainnet
+# (informational) jobs via .github/scripts/validate-dashboard-shell.sh.
+# Mainnet runs in non-blocking mode: the job stays green even when issues
+# are detected; warnings are surfaced via PR comment so the run doesn't
+# look broken to engineers scanning the checks list.
+#
+# Browser-driven mode-mount + SDK ↔ dashboard message handshake validation
+# lives in the integration test suite — see
+# packages/abstraxion/tests/integration/message-contract.integration.test.ts
+# (run via integration-tests.yml).
 
 on:
   pull_request:
@@ -6,109 +20,131 @@ on:
     paths:
       - "packages/abstraxion/**"
       - "packages/abstraxion-core/**"
+      - "packages/constants/**"
       - ".github/workflows/dashboard-contract-validation.yml"
+      - ".github/scripts/validate-dashboard-shell.sh"
   push:
     branches: [main, develop]
     paths:
       - "packages/abstraxion/**"
       - "packages/abstraxion-core/**"
+      - "packages/constants/**"
+      - ".github/scripts/validate-dashboard-shell.sh"
   workflow_dispatch:
-    inputs:
-      dashboard_url:
-        description: "Dashboard URL to validate (defaults to testnet)"
-        required: false
-        type: string
+
+# Dashboard URLs come from packages/constants/src/index.ts (DASHBOARD_URLS).
+# Keep these in sync.
 
 jobs:
-  validate-dashboard-reachable:
-    name: Validate Dashboard is Reachable
+  http-shell-testnet:
+    name: HTTP shell — testnet (auth.testnet)
     runs-on: ubuntu-latest
     timeout-minutes: 5
-
-    strategy:
-      matrix:
-        environment: [testnet]
-      fail-fast: false
-
     steps:
-      - name: Validate dashboard URL is reachable
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate SPA shell loads
         env:
-          DASHBOARD_URL: ${{ inputs.dashboard_url || '' }}
-        run: |
-          echo "🌐 Checking dashboard availability..."
+          BLOCKING: "true"
+        run: bash .github/scripts/validate-dashboard-shell.sh https://auth.testnet.burnt.com
 
-          # Determine dashboard URL from environment or network config
-          if [ -n "$DASHBOARD_URL" ]; then
-            URL="$DASHBOARD_URL"
-          else
-            # Use the testnet dashboard URL
-            URL="https://dashboard.testnet.burnt.com"
-          fi
+  # Non-blocking mainnet check. The script exits 0 even on failure here, so
+  # the job appears green in the checks list — engineers don't see a red ❌
+  # for an informational signal. Issues surface via the report-mainnet
+  # follow-up job which posts a PR comment.
+  http-shell-mainnet:
+    name: HTTP shell — mainnet (settings.burnt.com) [informational]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      had_warnings: ${{ steps.validate.outputs.had_warnings }}
+      warning_summary: ${{ steps.validate.outputs.warning_summary }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
-          echo "Testing URL: $URL"
+      - name: Validate SPA shell loads
+        id: validate
+        env:
+          BLOCKING: "false"
+        run: bash .github/scripts/validate-dashboard-shell.sh https://settings.burnt.com
 
-          # Check if the dashboard root is reachable
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL")
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
-            echo "❌ Dashboard returned HTTP $HTTP_CODE"
-            echo "   URL: $URL"
-            echo "   This may indicate the dashboard is down or the URL has changed."
-            exit 1
-          fi
-          echo "✅ Dashboard root is reachable (HTTP $HTTP_CODE)"
-
-          # Check that the dashboard handles inline mode query params
-          INLINE_URL="${URL}?mode=inline&grantee=xion1test&redirect_uri=https://example.com"
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$INLINE_URL")
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
-            echo "❌ Dashboard inline mode returned HTTP $HTTP_CODE"
-            echo "   URL: $INLINE_URL"
-            echo "   The dashboard may not be handling embedded mode query params correctly."
-            exit 1
-          fi
-          echo "✅ Dashboard inline mode is reachable (HTTP $HTTP_CODE)"
-
-          # Check that the dashboard handles popup mode query params
-          POPUP_URL="${URL}?mode=popup&grantee=xion1test&redirect_uri=https://example.com"
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$POPUP_URL")
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
-            echo "❌ Dashboard popup mode returned HTTP $HTTP_CODE"
-            echo "   URL: $POPUP_URL"
-            exit 1
-          fi
-          echo "✅ Dashboard popup mode is reachable (HTTP $HTTP_CODE)"
-
-          # Check that the dashboard handles sign mode query params
-          SIGN_URL="${URL}?mode=sign&tx=dGVzdA==&granter=xion1test&redirect_uri=https://example.com"
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$SIGN_URL")
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
-            echo "❌ Dashboard sign mode returned HTTP $HTTP_CODE"
-            echo "   URL: $SIGN_URL"
-            exit 1
-          fi
-          echo "✅ Dashboard sign mode is reachable (HTTP $HTTP_CODE)"
-
-      - name: Post warning comment on PR
-        if: failure() && github.event_name == 'pull_request'
+  report-testnet-failure:
+    name: Post PR comment on testnet failure
+    needs: [http-shell-testnet]
+    if: failure() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Comment on PR
         uses: actions/github-script@v7
         with:
           script: |
-            const body = '## ⚠️ Dashboard Reachability Check Failed\n\n' +
-              'The XION dashboard is not responding correctly to one or more mode URLs.\n\n' +
-              '### Checked URLs:\n' +
-              '- Root: `https://dashboard.testnet.burnt.com`\n' +
-              '- Inline mode: `?mode=inline&grantee=...&redirect_uri=...`\n' +
-              '- Popup mode: `?mode=popup&grantee=...&redirect_uri=...`\n' +
-              '- Sign mode: `?mode=sign&tx=...&granter=...&redirect_uri=...`\n\n' +
-              '### Possible causes:\n' +
-              '- Dashboard deployment is down\n' +
-              '- Dashboard URL has changed\n' +
-              '- Cloudflare routing issue\n\n' +
-              '> This check runs when SDK packages change to verify the deployed dashboard is still reachable.';
+            const body = [
+              '## ❌ Dashboard Contract Validation Failed (testnet)',
+              '',
+              'The deployed XION testnet dashboard failed HTTP-level validation.',
+              '',
+              '### What was checked',
+              '- SPA HTML loads on the canonical testnet environment (auth.testnet.burnt.com)',
+              '- The hashed Vite JS bundle(s) are reachable',
+              '- Iframe-embed headers (`frame-ancestors`, `X-Frame-Options`) still permit embedding',
+              '',
+              '### Likely causes',
+              '- Dashboard deployment is down or stuck on a stale build',
+              '- A dashboard URL changed (update `packages/constants/src/index.ts`)',
+              '- Iframe-embed headers regressed',
+              '',
+              '> Mainnet runs as an informational-only signal — see the separate comment if it also detected issues.',
+              '> Browser-driven mode + SDK handshake checks run separately in the Integration Tests workflow.',
+            ].join('\n');
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: body
+              body,
+            });
+
+  report-mainnet-warnings:
+    name: Post PR comment on mainnet warnings
+    needs: [http-shell-mainnet]
+    if: needs.http-shell-mainnet.outputs.had_warnings == 'true' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        env:
+          WARNING_SUMMARY: ${{ needs.http-shell-mainnet.outputs.warning_summary }}
+        with:
+          script: |
+            const summary = process.env.WARNING_SUMMARY || '(no details captured)';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              '## ⚠️ Mainnet Dashboard Contract Warning [informational]',
+              '',
+              'The mainnet dashboard (`https://settings.burnt.com`) HTTP-level validation surfaced issues. ',
+              'This is **non-blocking** — the testnet variant is the gating signal — but you should know:',
+              '',
+              summary,
+              '',
+              '### Likely causes',
+              '- An edge/CDN/WAF rule is overriding the headers the dashboard repo sets in `public/_headers`',
+              '- Mainnet is running an older build than testnet',
+              '- A dashboard URL changed (update `packages/constants/src/index.ts`)',
+              '',
+              `> Workflow run: ${runUrl}`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
             });
