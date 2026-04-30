@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Abstraxion RN Demo",
+    "slug": "abstraxion-rn-demo",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "scheme": "abstraxiondemo",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.burnt.abstraxiondemo"
+    },
+    "android": {
+      "package": "com.burnt.abstraxiondemo"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": ["expo-router"]
+  }
+}
