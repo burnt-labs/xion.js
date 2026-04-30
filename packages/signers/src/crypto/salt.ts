@@ -107,16 +107,59 @@ export function calculateSalt(
     case AUTHENTICATOR_TYPE.Passkey:
     case AUTHENTICATOR_TYPE.Ed25519:
     case AUTHENTICATOR_TYPE.Sr25519:
-    case AUTHENTICATOR_TYPE.ZKEmail:
       // For now, these use the same salt calculation as Secp256K1
       // (sha256 of the credential string)
       // Can be extended with specific implementations later
+      return calculateSecp256k1Salt(credential);
+    case AUTHENTICATOR_TYPE.ZKEmail:
+      // ZKEmail requires special handling - see calculateZKEmailSalt
+      // The credential for ZKEmail should be the email salt (already calculated)
+      // If you need to calculate from accountCode + email, use calculateZKEmailSalt
       return calculateSecp256k1Salt(credential);
     default:
       // TypeScript exhaustiveness check - should never reach here
       const _exhaustive: never = authenticatorType;
       throw new Error(`Unsupported authenticator type: ${_exhaustive}`);
   }
+}
+
+/**
+ * Calculate salt for ZKEmail authenticator
+ *
+ * ZKEmail salt calculation requires the Poseidon hash function from the
+ * zk-email circuits. This cannot be implemented in pure JavaScript and
+ * requires the WASM module from `@burnt-labs/zk-email-relayer-utils`.
+ *
+ * Formula: `poseidon(emailAddress, accountCode)` (field element arithmetic)
+ *
+ * For now, use one of these approaches:
+ * 1. Call the backend API endpoint `/generate-email-salt`
+ * 2. Use `@burnt-labs/zk-email-relayer-utils` WASM module directly:
+ *    ```typescript
+ *    import { generateAccountSalt } from "@burnt-labs/zk-email-relayer-utils";
+ *    const saltHex = await generateAccountSalt(emailAddress, accountCode);
+ *    ```
+ * 3. Extract the salt from ZK proof public inputs (index 32)
+ *
+ * @param emailAddress - Email address for the account
+ * @param accountCode - Account code as hex string (with or without 0x prefix)
+ * @returns Salt as decimal string (field element representation)
+ * @throws Error - This function requires WASM and is not yet implemented
+ *
+ * @see https://github.com/burnt-labs/zk-email-worker for backend implementation
+ * @see https://github.com/burnt-labs/zk-email-relayer-utils for WASM module
+ */
+export function calculateZKEmailSalt(
+  _emailAddress: string,
+  _accountCode: string,
+): string {
+  // ZKEmail salt uses Poseidon hash which requires WASM
+  // See: @burnt-labs/zk-email-relayer-utils for the actual implementation
+  throw new Error(
+    "calculateZKEmailSalt requires the @burnt-labs/zk-email-relayer-utils WASM module. " +
+      "Use the backend API endpoint /generate-email-salt or import generateAccountSalt " +
+      "from @burnt-labs/zk-email-relayer-utils directly.",
+  );
 }
 
 /**
