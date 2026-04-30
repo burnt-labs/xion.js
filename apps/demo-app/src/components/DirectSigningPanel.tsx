@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAbstraxionSigningClient } from "@burnt-labs/abstraxion";
+import { useAbstraxionSigningClient } from "@burnt-labs/abstraxion-react";
 import { Button } from "@burnt-labs/ui";
 
 type Tab = "send" | "contract";

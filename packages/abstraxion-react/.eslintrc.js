@@ -1,0 +1,26 @@
+module.exports = {
+  root: true,
+  extends: ["@burnt-labs/eslint-config-custom/react"],
+  rules: {
+    "no-nested-ternary": "off",
+    "no-console": "off",
+    "no-implicit-coercion": "off",
+    "no-unnecessary-condition": "off",
+    "eslint-comments/require-description": "off",
+    "tsdoc/syntax": "off",
+    "unicorn/filename-case": "off",
+    "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/no-confusing-void-expression": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-unnecessary-condition": "off",
+    "@typescript-eslint/no-unnecessary-type-assertion": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/require-await": "off",
+    "@typescript-eslint/unbound-method": "off",
+    "react/display-name": "off",
+  },
+  // Don't run on the jest.config.js file
+  ignorePatterns: ["jest.config.js", "**/__tests__/**"],
+};

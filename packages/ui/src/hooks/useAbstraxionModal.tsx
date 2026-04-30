@@ -111,12 +111,12 @@ export interface UseAbstraxionModalReturn {
  *
  * This hook provides a complete modal experience with loading states, success display,
  * and error handling. It's designed to work with the `useAbstraxionAccount` hook
- * from `@burnt-labs/abstraxion`.
+ * from `@burnt-labs/abstraxion-react`.
  *
  * @example
  * ```tsx
  * import { useAbstraxionModal } from "@burnt-labs/ui";
- * import { useAbstraxionAccount } from "@burnt-labs/abstraxion";
+ * import { useAbstraxionAccount } from "@burnt-labs/abstraxion-react";
  *
  * function MyComponent() {
  *   const accountState = useAbstraxionAccount();

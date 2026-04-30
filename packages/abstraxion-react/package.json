@@ -1,0 +1,70 @@
+{
+  "name": "@burnt-labs/abstraxion-react",
+  "version": "1.0.0-alpha.78",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burnt-labs/xion.js",
+    "directory": "packages/abstraxion-react"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/",
+    "dev": "tsup --watch",
+    "check-types": "tsc --noEmit",
+    "clean": "rimraf ./dist",
+    "test": "vitest",
+    "test:integration": "vitest run tests/integration --config vitest.config.integration.ts",
+    "test:integration:watch": "vitest tests/integration --config vitest.config.integration.ts",
+    "test:contract": "vitest run --config vitest.config.contract.ts",
+    "test:react": "vitest run tests/integration/react --config vitest.config.react-integration.ts",
+    "test:react:watch": "vitest tests/integration/react --config vitest.config.react-integration.ts"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@burnt-labs/abstraxion-core": "workspace:*",
+    "@burnt-labs/account-management": "workspace:*",
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/signers": "workspace:*",
+    "@burnt-labs/tailwind-config": "workspace:*",
+    "@burnt-labs/test-utils": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
+    "@cosmjs/amino": "^0.36.0",
+    "@cosmjs/cosmwasm-stargate": "^0.36.0",
+    "@cosmjs/crypto": "^0.36.0",
+    "@cosmjs/encoding": "^0.36.0",
+    "@cosmjs/proto-signing": "^0.36.0",
+    "@cosmjs/stargate": "^0.36.0",
+    "@cosmjs/tendermint-rpc": "^0.36.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1",
+    "@types/node": "^20",
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
+    "autoprefixer": "^10.4.13",
+    "dotenv": "^16.4.5",
+    "ethers": "^6",
+    "playwright": "1.48.0",
+    "playwright-core": "1.48.0",
+    "postcss": "^8.4.20",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rimraf": "^5.0.5",
+    "tailwindcss": "^3.2.4",
+    "tsup": "^6.0.1",
+    "typescript": "^5.2.2",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "@burnt-labs/abstraxion-js": "workspace:*"
+  }
+}

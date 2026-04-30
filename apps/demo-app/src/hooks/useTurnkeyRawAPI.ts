@@ -5,8 +5,8 @@
 
 import { useTurnkey } from "@turnkey/react-wallet-kit";
 import { hashMessage } from "viem";
-import type { SignerConfig } from "@burnt-labs/abstraxion";
-import { AUTHENTICATOR_TYPE } from "@burnt-labs/abstraxion";
+import type { SignerConfig } from "@burnt-labs/abstraxion-react";
+import { AUTHENTICATOR_TYPE } from "@burnt-labs/abstraxion-react";
 
 export function useTurnkeyRawAPI() {
   const { authState, wallets, httpClient } = useTurnkey();

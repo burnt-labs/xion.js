@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { AbstraxionProvider } from "@burnt-labs/abstraxion-react";
 
 const popupModeConfig = {
   chainId: process.env.NEXT_PUBLIC_CHAIN_ID!,
