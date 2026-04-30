@@ -8,6 +8,6 @@ export default defineConfig((options: Options) => ({
   dts: true,
   minify: false,
   clean: !options.watch,
-  external: ["react", "@burnt-labs/abstraxion"],
+  external: ["react", "@burnt-labs/abstraxion-react"],
   ...options,
 }));

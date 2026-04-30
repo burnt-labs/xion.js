@@ -72,7 +72,7 @@ describe("Circular Dependency Prevention", () => {
     // Higher-level packages that signers should NOT import from:
     // - Layer 3: account-abstraction-api (already checked above)
     // - Layer 4: @burnt-labs/abstraxion-core, @burnt-labs/account-management
-    // - Layer 5: @burnt-labs/abstraxion, @burnt-labs/abstraxion-react-native, @burnt-labs/ui
+    // - Layer 5: @burnt-labs/abstraxion-react, @burnt-labs/abstraxion-react-native, @burnt-labs/ui
     //
     // Signers CAN import from:
     // - Layer 1: @burnt-labs/constants (lower layer)
@@ -106,7 +106,7 @@ describe("Circular Dependency Prevention", () => {
     const forbiddenPackages = [
       "@burnt-labs/abstraxion-core",
       "@burnt-labs/account-management",
-      "@burnt-labs/abstraxion",
+      "@burnt-labs/abstraxion-react",
       "@burnt-labs/abstraxion-react-native",
       "@burnt-labs/ui",
       "account-abstraction-api", // Already checked above, but include for completeness

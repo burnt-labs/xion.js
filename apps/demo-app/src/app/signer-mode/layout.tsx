@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import React from "react";
 import { Providers as TurnkeyProviders } from "./providers";
-import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { AbstraxionProvider } from "@burnt-labs/abstraxion-react";
 import {
   useTurnkeyForAbstraxion,
   TurnkeySigningMethod,

@@ -1,5 +1,5 @@
 import React from "react";
-import { useAbstraxionAccount } from "@burnt-labs/abstraxion";
+import { useAbstraxionAccount } from "@burnt-labs/abstraxion-react";
 import { useAbstraxionModal } from "./hooks/useAbstraxionModal";
 
 // This component expects to be used within an AbstraxionProvider context
@@ -23,7 +23,7 @@ export interface AbstraxionProps {
  * consider using the hook directly:
  *
  * ```tsx
- * import { useAbstraxionAccount } from "@burnt-labs/abstraxion";
+ * import { useAbstraxionAccount } from "@burnt-labs/abstraxion-react";
  * import { useAbstraxionModal } from "@burnt-labs/ui";
  *
  * const accountState = useAbstraxionAccount();
@@ -34,7 +34,7 @@ export interface AbstraxionProps {
  * // Backward compatible usage (OLD API - still works!)
  * ```tsx
  * import { Abstraxion } from "@burnt-labs/ui";
- * import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+ * import { AbstraxionProvider } from "@burnt-labs/abstraxion-react";
  *
  * function App() {
  *   return (
@@ -49,7 +49,7 @@ export interface AbstraxionProps {
  * // New controlled usage (NEW API - more control)
  * ```tsx
  * import { Abstraxion } from "@burnt-labs/ui";
- * import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+ * import { AbstraxionProvider } from "@burnt-labs/abstraxion-react";
  *
  * function App() {
  *   const [isOpen, setIsOpen] = useState(false);
