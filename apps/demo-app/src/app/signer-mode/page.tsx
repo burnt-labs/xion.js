@@ -5,7 +5,7 @@ import { useTurnkey, AuthState } from "@turnkey/react-wallet-kit";
 import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
-} from "@burnt-labs/abstraxion";
+} from "@burnt-labs/abstraxion-react";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
 import Link from "next/link";

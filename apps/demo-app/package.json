@@ -13,8 +13,8 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@burnt-labs/abstraxion": "workspace:*",
     "@burnt-labs/abstraxion-core": "workspace:*",
+    "@burnt-labs/abstraxion-react": "workspace:*",
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/ui": "workspace:*",
     "@cosmjs/amino": "^0.36.0",
