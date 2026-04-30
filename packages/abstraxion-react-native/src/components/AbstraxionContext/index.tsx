@@ -1,254 +1,331 @@
-import { createContext, useCallback, useEffect, useState } from "react";
-import { testnetChainInfo, xionGasValues } from "@burnt-labs/constants";
-import { GasPrice } from "@cosmjs/stargate";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
+import { createContext, useCallback, useEffect, useRef, useState } from "react";
 import {
-  AbstraxionAuth,
+  AccountStateGuards,
+  createController,
+  GasPrice,
+  normalizeAbstraxionConfig,
+  RedirectController,
+  SignerController,
+  testnetChainInfo,
+} from "@burnt-labs/abstraxion-js";
+import type {
+  AbstraxionConfig as AbstraxionJsConfig,
+  AccountState,
+  AuthenticationConfig,
+  ConnectorConnectionResult,
+  ContractGrantDescription,
+  Controller,
+  GranteeSignerClient,
+  NormalizedAbstraxionConfig,
   SignArbSecp256k1HdWallet,
-} from "@burnt-labs/abstraxion-core";
+  SpendLimit,
+} from "@burnt-labs/abstraxion-js";
 import {
   ReactNativeRedirectStrategy,
   ReactNativeStorageStrategy,
 } from "../../strategies";
 
-export const abstraxionAuth = new AbstraxionAuth(
-  new ReactNativeStorageStrategy(),
-  new ReactNativeRedirectStrategy(),
-);
-
-export type SpendLimit = { denom: string; amount: string };
-
-export type ContractGrantDescription =
-  | string
-  | {
-      address: string;
-      amounts: SpendLimit[];
-    };
+export type {
+  ContractGrantDescription,
+  SpendLimit,
+} from "@burnt-labs/abstraxion-js";
 
 export interface AbstraxionContextProps {
   isConnected: boolean;
-  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsConnected: Dispatch<SetStateAction<boolean>>;
   isConnecting: boolean;
-  setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsConnecting: Dispatch<SetStateAction<boolean>>;
   isInitializing: boolean;
+  isDisconnected: boolean;
   isReturningFromAuth: boolean;
   isLoggingIn: boolean;
   abstraxionError: string;
-  setAbstraxionError: React.Dispatch<React.SetStateAction<string>>;
+  setAbstraxionError: Dispatch<SetStateAction<string>>;
   abstraxionAccount: SignArbSecp256k1HdWallet | undefined;
-  setAbstraxionAccount: React.Dispatch<SignArbSecp256k1HdWallet | undefined>;
+  setAbstraxionAccount: Dispatch<
+    SetStateAction<SignArbSecp256k1HdWallet | undefined>
+  >;
   granterAddress: string;
   showModal: boolean;
-  setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
-  setGranterAddress: React.Dispatch<React.SetStateAction<string>>;
+  setShowModal: Dispatch<SetStateAction<boolean>>;
+  setGranterAddress: Dispatch<SetStateAction<string>>;
   contracts?: ContractGrantDescription[];
   dashboardUrl?: string;
-  setDashboardUrl: React.Dispatch<React.SetStateAction<string>>;
+  setDashboardUrl: Dispatch<SetStateAction<string>>;
+  chainId: string;
   rpcUrl: string;
+  restUrl: string;
   stake?: boolean;
   bank?: SpendLimit[];
   treasury?: string;
   indexerUrl?: string;
   gasPrice: GasPrice;
-  logout: () => void;
+  signingClient?: GranteeSignerClient;
+  authMode: "signer" | "redirect" | "embedded" | "popup";
+  authentication?: AuthenticationConfig;
+  connectionInfo?: ConnectorConnectionResult;
+  controller?: Controller;
+  logout: () => Promise<void>;
   login: () => Promise<void>;
 }
 
-export interface AbstraxionConfig {
-  contracts?: ContractGrantDescription[];
-  rpcUrl?: string;
-  stake?: boolean;
-  bank?: SpendLimit[];
+export interface AbstraxionConfig extends Omit<
+  AbstraxionJsConfig,
+  "chainId" | "authentication"
+> {
+  chainId?: string;
   callbackUrl?: string;
-  treasury?: string;
   indexerUrl?: string;
-  gasPrice?: string;
+  authentication?: AuthenticationConfig;
+}
+
+const noopBooleanDispatch = (() => undefined) as Dispatch<
+  SetStateAction<boolean>
+>;
+const noopStringDispatch = (() => undefined) as Dispatch<
+  SetStateAction<string>
+>;
+const noopAccountDispatch = (() => undefined) as Dispatch<
+  SetStateAction<SignArbSecp256k1HdWallet | undefined>
+>;
+
+const defaultContextValue: AbstraxionContextProps = {
+  isConnected: false,
+  setIsConnected: noopBooleanDispatch,
+  isConnecting: false,
+  setIsConnecting: noopBooleanDispatch,
+  isInitializing: true,
+  isDisconnected: false,
+  isReturningFromAuth: false,
+  isLoggingIn: false,
+  abstraxionError: "",
+  setAbstraxionError: noopStringDispatch,
+  abstraxionAccount: undefined,
+  setAbstraxionAccount: noopAccountDispatch,
+  granterAddress: "",
+  showModal: false,
+  setShowModal: noopBooleanDispatch,
+  setGranterAddress: noopStringDispatch,
+  contracts: undefined,
+  dashboardUrl: "",
+  setDashboardUrl: noopStringDispatch,
+  chainId: testnetChainInfo.chainId,
+  rpcUrl: testnetChainInfo.rpc,
+  restUrl: testnetChainInfo.rest,
+  stake: false,
+  bank: undefined,
+  treasury: undefined,
+  indexerUrl: undefined,
+  gasPrice: GasPrice.fromString("0.001uxion"),
+  signingClient: undefined,
+  authMode: "redirect",
+  authentication: undefined,
+  connectionInfo: undefined,
+  controller: undefined,
+  logout: () => {
+    return Promise.reject(
+      new Error("AbstraxionContext: logout() called before provider mounted."),
+    );
+  },
+  login: () => {
+    return Promise.reject(
+      new Error("AbstraxionContext: login() called before provider mounted."),
+    );
+  },
+};
+
+export const AbstraxionContext =
+  createContext<AbstraxionContextProps>(defaultContextValue);
+
+function resolveReactNativeAuthentication(
+  authentication: AuthenticationConfig | undefined,
+  callbackUrl: string | undefined,
+): AuthenticationConfig {
+  if (!authentication) {
+    return callbackUrl
+      ? { type: "redirect", callbackUrl }
+      : { type: "redirect" };
+  }
+
+  if (
+    authentication.type === "redirect" &&
+    callbackUrl &&
+    !authentication.callbackUrl
+  ) {
+    return {
+      ...authentication,
+      callbackUrl,
+    };
+  }
+
+  return authentication;
+}
+
+function normalizeReactNativeConfig(
+  config: AbstraxionConfig,
+): NormalizedAbstraxionConfig {
+  const {
+    callbackUrl,
+    indexerUrl: _indexerUrl,
+    chainId,
+    authentication,
+    ...rest
+  } = config;
+
+  return normalizeAbstraxionConfig({
+    ...rest,
+    chainId: chainId ?? testnetChainInfo.chainId,
+    authentication: resolveReactNativeAuthentication(
+      authentication,
+      callbackUrl,
+    ),
+  });
 }
 
 export function AbstraxionProvider({
   children,
-  config: {
-    contracts,
-    rpcUrl = testnetChainInfo.rpc,
-    stake = false,
-    bank,
-    callbackUrl,
-    treasury,
-    indexerUrl,
-    gasPrice,
-  },
+  config,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   config: AbstraxionConfig;
 }): JSX.Element {
-  const [abstraxionError, setAbstraxionError] = useState("");
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true); // Start with true, prevents mounting/hydration flash/issues
-  const [isReturningFromAuth, setIsReturningFromAuth] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [abstraxionAccount, setAbstraxionAccount] = useState<
-    SignArbSecp256k1HdWallet | undefined
-  >(undefined);
-  const [granterAddress, setGranterAddress] = useState("");
-  const [dashboardUrl, setDashboardUrl] = useState("");
-  let gasPriceDefault: GasPrice;
-  const { gasPrice: gasPriceConstant } = xionGasValues;
-  if (rpcUrl.includes("mainnet")) {
-    gasPriceDefault = GasPrice.fromString(gasPriceConstant);
-  } else {
-    gasPriceDefault = GasPrice.fromString("0.001uxion");
+  const normalizedConfig = normalizeReactNativeConfig(config);
+  const controllerRef = useRef<Controller | null>(null);
+  const configRef = useRef<NormalizedAbstraxionConfig>(normalizedConfig);
+  const strategiesRef = useRef<{
+    storageStrategy: ReactNativeStorageStrategy;
+    redirectStrategy: ReactNativeRedirectStrategy;
+  } | null>(null);
+
+  if (!strategiesRef.current) {
+    strategiesRef.current = {
+      storageStrategy: new ReactNativeStorageStrategy(),
+      redirectStrategy: new ReactNativeRedirectStrategy(),
+    };
   }
 
-  const configureInstance = useCallback(() => {
-    abstraxionAuth.configureAbstraxionInstance(
-      rpcUrl,
-      contracts,
-      stake,
-      bank,
-      callbackUrl,
-      treasury,
-      indexerUrl,
+  const previousConfig = configRef.current;
+
+  if (!controllerRef.current) {
+    controllerRef.current = createController(
+      normalizedConfig,
+      strategiesRef.current,
     );
-  }, [rpcUrl, contracts, stake, bank, callbackUrl, treasury, indexerUrl]);
+    configRef.current = normalizedConfig;
+  } else {
+    const isSignerMode =
+      previousConfig.authentication?.type === "signer" &&
+      normalizedConfig.authentication?.type === "signer";
+    const hasSignerConfigChanged =
+      isSignerMode &&
+      previousConfig.authentication?.type === "signer" &&
+      normalizedConfig.authentication?.type === "signer" &&
+      previousConfig.authentication.getSignerConfig !==
+        normalizedConfig.authentication.getSignerConfig;
 
-  useEffect(() => {
-    configureInstance();
-  }, [configureInstance]);
-
-  // Set up React state callback for WebBrowser redirect completion
-  useEffect(() => {
-    const redirectStrategy = abstraxionAuth["redirectStrategy"] as any;
-    if (redirectStrategy.setReactStateCallback) {
-      redirectStrategy.setReactStateCallback(
-        (params: { granter?: string | null }) => {
-          if (params.granter) {
-            setIsReturningFromAuth(true);
-            setIsConnecting(true);
-            setIsInitializing(false);
-            setShowModal(true);
-          }
-        },
+    if (
+      hasSignerConfigChanged &&
+      controllerRef.current instanceof SignerController &&
+      normalizedConfig.authentication?.type === "signer"
+    ) {
+      controllerRef.current.updateGetSignerConfig(
+        normalizedConfig.authentication.getSignerConfig,
       );
     }
-  }, []);
 
-  useEffect(() => {
-    const unsubscribe = abstraxionAuth.subscribeToAuthStateChange(
-      async (newState: boolean) => {
-        if (newState !== isConnected) {
-          if (newState) {
-            // Only set connecting state if we don't already have account info
-            if (!abstraxionAccount || !granterAddress) {
-              setIsConnecting(true);
-              const account = await abstraxionAuth.getLocalKeypair();
-              const granterAddress = await abstraxionAuth.getGranter();
-              setAbstraxionAccount(account);
-              setGranterAddress(granterAddress);
-              setIsConnected(newState);
-              setIsConnecting(false);
-            } else {
-              setIsConnected(newState);
-            }
-            // Clear login state regardless of account info
-            setIsLoggingIn(false);
-          } else {
-            setIsConnected(newState);
-            setAbstraxionAccount(undefined);
-            setGranterAddress("");
-            // Ensure to clear any active states
-            setIsLoggingIn(false);
-            setIsConnecting(false);
-            setIsReturningFromAuth(false);
-          }
-        }
-      },
-    );
-
-    return () => {
-      unsubscribe?.();
-    };
-  }, [isConnected, abstraxionAuth, abstraxionAccount, granterAddress]);
-
-  const persistAuthenticateState = useCallback(async () => {
-    // Quick check: if we can immediately determine auth state, do so - lowers load time on refresh (never goes into connecting state/flow)
-    const hasLocalKeypair = await abstraxionAuth.getLocalKeypair();
-    const hasGranter = await abstraxionAuth.getGranter();
-
-    if (hasLocalKeypair && hasGranter) {
-      setAbstraxionAccount(hasLocalKeypair);
-      setGranterAddress(hasGranter);
-      setIsConnected(true);
-      setIsInitializing(false);
-      return;
-    }
-
-    // Fallback to full authentication if quick check fails
-    try {
-      await abstraxionAuth.authenticate();
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Authentication failed. Please try again.";
-      setAbstraxionError(message);
-    } finally {
-      // Always end initialization after auth check completes, even if authenticate() throws
-      setIsInitializing(false);
-    }
-  }, [abstraxionAuth]);
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      // Skip initialization if we're in Auth callback flow
-      if (isReturningFromAuth) {
-        return;
-      }
-
-      if (!isConnecting && !abstraxionAccount && !granterAddress) {
-        await persistAuthenticateState();
-      }
-    };
-
-    initializeAuth();
-  }, [isReturningFromAuth]); // Re-run when Auth detection completes
-
-  async function login() {
-    // User actively logging in, so initialization phase is over
-    setIsInitializing(false);
-
-    // Only login state for people actually clicking Login, not Auth callbacks
-    if (!isReturningFromAuth) {
-      setIsLoggingIn(true);
-    }
-
-    try {
-      await abstraxionAuth.login();
-    } catch (error) {
-      throw error; // Re-throw to allow handling by the caller
-    } finally {
-      setIsLoggingIn(false);
-    }
+    configRef.current = normalizedConfig;
   }
 
-  const logout = useCallback(() => {
-    setIsConnected(false);
+  const controller = controllerRef.current;
+  const [controllerState, setControllerState] = useState<AccountState>(
+    controller.getState(),
+  );
+  const [manualError, setAbstraxionError] = useState("");
+  const [manualAccount, setAbstraxionAccount] = useState<
+    SignArbSecp256k1HdWallet | undefined
+  >(undefined);
+  const [manualGranterAddress, setGranterAddress] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [dashboardUrlOverride, setDashboardUrl] = useState("");
+
+  const authMode: "signer" | "redirect" | "embedded" | "popup" =
+    controller instanceof RedirectController
+      ? "redirect"
+      : controller instanceof SignerController
+        ? "signer"
+        : normalizedConfig.authentication?.type === "embedded"
+          ? "embedded"
+          : "popup";
+
+  useEffect(() => {
+    const unsubscribe = controller.subscribe(setControllerState);
+
+    controller.initialize().catch((error) => {
+      console.error(
+        "[AbstraxionProvider] Controller initialization failed:",
+        error,
+      );
+    });
+
+    return () => {
+      unsubscribe();
+      controller.destroy();
+    };
+  }, [controller]);
+
+  const isInitializing = AccountStateGuards.isInitializing(controllerState);
+  const isConnecting =
+    AccountStateGuards.isConnecting(controllerState) ||
+    AccountStateGuards.isConfiguringPermissions(controllerState) ||
+    AccountStateGuards.isRedirecting(controllerState);
+  const isConnected = AccountStateGuards.isConnected(controllerState);
+  const isDisconnected = AccountStateGuards.isDisconnected(controllerState);
+  const isError = AccountStateGuards.isError(controllerState);
+  const isLoggingIn = isConnecting && !isInitializing;
+  const isReturningFromAuth =
+    authMode === "redirect" && AccountStateGuards.isConnecting(controllerState);
+
+  const abstraxionAccount = isConnected
+    ? controllerState.account.keypair
+    : manualAccount;
+  const granterAddress = isConnected
+    ? controllerState.account.granterAddress
+    : manualGranterAddress;
+  const signingClient = isConnected ? controllerState.signingClient : undefined;
+  const abstraxionError = isError ? controllerState.error : manualError;
+  const dashboardUrl = AccountStateGuards.isRedirecting(controllerState)
+    ? controllerState.dashboardUrl
+    : dashboardUrlOverride;
+
+  const connectionInfo =
+    isConnected &&
+    controller instanceof SignerController &&
+    controller.getConnectionInfo
+      ? controller.getConnectionInfo()
+      : undefined;
+
+  const login = useCallback(async () => {
+    setAbstraxionError("");
+    await controller.connect();
+  }, [controller]);
+
+  const logout = useCallback(async () => {
+    setAbstraxionError("");
     setAbstraxionAccount(undefined);
     setGranterAddress("");
-    setIsInitializing(false);
-    setIsConnecting(false);
-    setIsReturningFromAuth(false);
-    abstraxionAuth?.logout();
-  }, [abstraxionAuth]);
+    await controller.disconnect();
+  }, [controller]);
 
   return (
     <AbstraxionContext.Provider
       value={{
         isConnected,
-        setIsConnected,
+        setIsConnected: noopBooleanDispatch,
         isConnecting,
-        setIsConnecting,
+        setIsConnecting: noopBooleanDispatch,
         isInitializing,
+        isDisconnected,
         isReturningFromAuth,
         isLoggingIn,
         abstraxionError,
@@ -259,24 +336,27 @@ export function AbstraxionProvider({
         showModal,
         setShowModal,
         setGranterAddress,
-        contracts,
+        contracts: normalizedConfig.contracts,
         dashboardUrl,
         setDashboardUrl,
-        rpcUrl,
-        stake,
-        bank,
-        treasury,
-        indexerUrl,
+        chainId: normalizedConfig.chainId,
+        rpcUrl: normalizedConfig.rpcUrl,
+        restUrl: normalizedConfig.restUrl,
+        stake: normalizedConfig.stake,
+        bank: normalizedConfig.bank,
+        treasury: normalizedConfig.treasury,
+        indexerUrl: config.indexerUrl,
         login,
         logout,
-        gasPrice: gasPrice ? GasPrice.fromString(gasPrice) : gasPriceDefault,
+        gasPrice: GasPrice.fromString(normalizedConfig.gasPrice),
+        signingClient,
+        authMode,
+        authentication: normalizedConfig.authentication,
+        connectionInfo,
+        controller,
       }}
     >
       {children}
     </AbstraxionContext.Provider>
   );
 }
-
-export const AbstraxionContext = createContext<AbstraxionContextProps>(
-  {} as AbstraxionContextProps,
-);

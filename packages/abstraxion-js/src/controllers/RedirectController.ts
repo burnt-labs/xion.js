@@ -205,6 +205,7 @@ export class RedirectController extends BaseController {
   private abstraxionAuth: AbstraxionAuth;
   private orchestrator: ConnectionOrchestrator;
   private config: RedirectControllerConfig;
+  private authStateUnsubscribe?: () => void;
   readonly signResult = new ResultStore<SignResult>();
   readonly manageAuthResult = new ResultStore<ManageAuthResult>();
   private initializePromise: Promise<void> | null = null;
@@ -294,6 +295,57 @@ export class RedirectController extends BaseController {
       rpcUrl: config.rpcUrl,
       gasPrice: config.gasPrice,
     });
+
+    this.authStateUnsubscribe = this.abstraxionAuth.subscribeToAuthStateChange(
+      (isLoggedIn) => {
+        void this.syncAuthState(isLoggedIn);
+      },
+    );
+  }
+
+  private async syncAuthState(isLoggedIn: boolean): Promise<void> {
+    if (!isLoggedIn) {
+      if (this.getState().status === "connected") {
+        this.dispatch({ type: "EXPLICITLY_DISCONNECTED" });
+      }
+      return;
+    }
+
+    try {
+      const keypair = await this.abstraxionAuth.getLocalKeypair();
+      if (!keypair) {
+        throw new Error("Session keypair not found after redirect.");
+      }
+
+      const granterAddress = await this.abstraxionAuth.getGranter();
+      if (!granterAddress) {
+        throw new Error("Granter address missing after redirect.");
+      }
+
+      const signingClient = await this.abstraxionAuth.getSigner(
+        GasPrice.fromString(this.config.gasPrice),
+      );
+      const accounts = await keypair.getAccounts();
+      const granteeAddress = accounts[0].address;
+
+      this.dispatch({
+        type: "SET_CONNECTED",
+        account: {
+          keypair,
+          granterAddress,
+          granteeAddress,
+        },
+        signingClient,
+      });
+    } catch (error) {
+      this.dispatch({
+        type: "SET_ERROR",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to complete authentication. Please try again.",
+      });
+    }
   }
 
   /**
@@ -457,6 +509,14 @@ export class RedirectController extends BaseController {
     try {
       // Use orchestrator to initiate redirect (generates keypair and redirects)
       const { dashboardUrl } = await this.orchestrator.initiateRedirect();
+
+      // React Native auth sessions can complete before redirect() returns.
+      // In that case AbstraxionAuth has already emitted auth state and
+      // syncAuthState has connected the controller, so do not overwrite it
+      // with a redirecting state.
+      if (this.getState().status === "connected") {
+        return;
+      }
 
       // Dispatch redirecting state
       this.dispatch({
@@ -628,6 +688,7 @@ export class RedirectController extends BaseController {
    * Cleanup resources
    */
   destroy(): void {
+    this.authStateUnsubscribe?.();
     super.destroy();
     this.signResult.destroy();
     this.manageAuthResult.destroy();

@@ -12,6 +12,7 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
     ...actual,
     AbstraxionAuth: vi.fn().mockImplementation(() => ({
       configureAbstraxionInstance: vi.fn(),
+      subscribeToAuthStateChange: vi.fn(() => vi.fn()),
       logout: vi.fn(),
     })),
   };

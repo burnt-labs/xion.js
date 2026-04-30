@@ -1,7 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import { StorageStrategy, RedirectStrategy } from "@burnt-labs/abstraxion-core";
+import type {
+  RedirectStrategy,
+  StorageStrategy,
+} from "@burnt-labs/abstraxion-js";
 
 /**
  * React Native implementation of the StorageStrategy using AsyncStorage
@@ -38,10 +41,9 @@ export class ReactNativeStorageStrategy implements StorageStrategy {
  */
 export class ReactNativeRedirectStrategy implements RedirectStrategy {
   private redirectCallback?: (params: { granter?: string | null }) => void;
-  private reactStateCallback?: (params: { granter?: string | null }) => void;
 
-  async getCurrentUrl(): Promise<string> {
-    return Linking.createURL("");
+  getCurrentUrl(): Promise<string> {
+    return Promise.resolve(Linking.createURL(""));
   }
 
   async redirect(url: string): Promise<void> {
@@ -65,11 +67,6 @@ export class ReactNativeRedirectStrategy implements RedirectStrategy {
         if (this.redirectCallback) {
           this.redirectCallback(params);
         }
-
-        // Also call our React state callback if it exists
-        if (this.reactStateCallback) {
-          this.reactStateCallback(params);
-        }
       }
     } catch (error) {
       console.warn("Something went wrong during redirect:", error);
@@ -77,21 +74,16 @@ export class ReactNativeRedirectStrategy implements RedirectStrategy {
     }
   }
 
-  async onRedirectComplete(
+  onRedirectComplete(
     callback: (params: { granter?: string | null }) => void,
   ): Promise<void> {
     this.redirectCallback = callback;
+    return Promise.resolve();
   }
 
-  async removeRedirectHandler(): Promise<void> {
+  removeRedirectHandler(): Promise<void> {
     this.redirectCallback = undefined;
-  }
-
-  // Method to set up React state callback
-  setReactStateCallback(
-    callback: (params: { granter?: string | null }) => void,
-  ): void {
-    this.reactStateCallback = callback;
+    return Promise.resolve();
   }
 
   async getUrlParameter(param: string): Promise<string | null> {
@@ -106,7 +98,7 @@ export class ReactNativeRedirectStrategy implements RedirectStrategy {
     }
   }
 
-  async cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
+  async cleanUrlParameters(_paramsToRemove: string[]): Promise<void> {
     // In React Native, URL parameters are typically handled by the deep linking system
     // and don't persist in the same way as browser URLs. This method is a no-op
     // for React Native environments as the parameters are already processed by the
