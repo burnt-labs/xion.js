@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from "react";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { CosmWasmClient, testnetChainInfo } from "@burnt-labs/abstraxion-js";
 import { AbstraxionContext } from "../components/AbstraxionContext";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 export const useAbstraxionClient = (): {
   readonly client: CosmWasmClient | undefined;
@@ -13,7 +12,7 @@ export const useAbstraxionClient = (): {
   >(undefined);
 
   useEffect(() => {
-    async function getClient() {
+    async function getClient(): Promise<void> {
       try {
         const client = await CosmWasmClient.connect(
           // Should be set in the context but defaulting here just in case

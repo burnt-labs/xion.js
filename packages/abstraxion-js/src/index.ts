@@ -40,10 +40,7 @@ export type {
   Unsubscribe,
 } from "./controllers";
 
-export {
-  BrowserRedirectStrategy,
-  BrowserStorageStrategy,
-} from "./strategies";
+export { BrowserRedirectStrategy, BrowserStorageStrategy } from "./strategies";
 
 export {
   createAccountCreationConfigFromConfig,
@@ -73,6 +70,8 @@ export type {
   GrantsResponse,
   SignArbSecp256k1HdWallet,
   SignerConfig,
+  RedirectStrategy,
+  StorageStrategy,
   TransactionOptions,
   TreasuryGrantConfig,
 } from "@burnt-labs/abstraxion-core";

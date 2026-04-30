@@ -318,32 +318,31 @@ export class AbstraxionAuth {
     dashboardUrl: string,
     userAddress: string,
   ): Promise<void> {
-    if (typeof window !== "undefined") {
-      const currentUrl = this.callbackUrl || window.location.href;
-      const urlParams = new URLSearchParams();
+    const currentUrl =
+      this.callbackUrl || (await this.redirectStrategy.getCurrentUrl());
+    const urlParams = new URLSearchParams();
 
-      if (this.treasury) {
-        urlParams.set("treasury", this.treasury);
-      }
-
-      if (this.bank) {
-        urlParams.set("bank", JSON.stringify(this.bank));
-      }
-
-      if (this.stake) {
-        urlParams.set("stake", "true");
-      }
-
-      if (this.grantContracts) {
-        urlParams.set("contracts", JSON.stringify(this.grantContracts));
-      }
-
-      urlParams.set("grantee", userAddress);
-      urlParams.set("redirect_uri", currentUrl);
-
-      const queryString = urlParams.toString();
-      await this.redirectStrategy.redirect(`${dashboardUrl}?${queryString}`);
+    if (this.treasury) {
+      urlParams.set("treasury", this.treasury);
     }
+
+    if (this.bank) {
+      urlParams.set("bank", JSON.stringify(this.bank));
+    }
+
+    if (this.stake) {
+      urlParams.set("stake", "true");
+    }
+
+    if (this.grantContracts) {
+      urlParams.set("contracts", JSON.stringify(this.grantContracts));
+    }
+
+    urlParams.set("grantee", userAddress);
+    urlParams.set("redirect_uri", currentUrl);
+
+    const queryString = urlParams.toString();
+    await this.redirectStrategy.redirect(`${dashboardUrl}?${queryString}`);
   }
 
   /**
