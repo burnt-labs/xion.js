@@ -5,20 +5,20 @@ import {
   createController,
   GasPrice,
   normalizeAbstraxionConfig,
-  RedirectController,
   SignerController,
   testnetChainInfo,
 } from "@burnt-labs/abstraxion-js";
 import type {
   AbstraxionConfig as AbstraxionJsConfig,
   AccountState,
-  AuthenticationConfig,
   ConnectorConnectionResult,
   ContractGrantDescription,
   Controller,
   GranteeSignerClient,
   NormalizedAbstraxionConfig,
+  RedirectAuthentication,
   SignArbSecp256k1HdWallet,
+  SignerAuthentication,
   SpendLimit,
 } from "@burnt-labs/abstraxion-js";
 import {
@@ -30,6 +30,19 @@ export type {
   ContractGrantDescription,
   SpendLimit,
 } from "@burnt-labs/abstraxion-js";
+
+/**
+ * Authentication modes supported in React Native.
+ *
+ * `popup`, `embedded`, and `auto` are web-only:
+ * - `popup` requires `window.open` + same-origin `postMessage`.
+ * - `embedded` requires a DOM `<iframe>` (a WebView-based equivalent is tracked as a follow-up).
+ * - `auto` resolves to `popup` on desktop and would silently fall through here; consumers
+ *   on RN must pick `redirect` or `signer` explicitly.
+ */
+export type ReactNativeAuthenticationConfig =
+  | RedirectAuthentication
+  | SignerAuthentication;
 
 export interface AbstraxionContextProps {
   isConnected: boolean;
@@ -62,8 +75,8 @@ export interface AbstraxionContextProps {
   indexerUrl?: string;
   gasPrice: GasPrice;
   signingClient?: GranteeSignerClient;
-  authMode: "signer" | "redirect" | "embedded" | "popup";
-  authentication?: AuthenticationConfig;
+  authMode: "signer" | "redirect";
+  authentication?: ReactNativeAuthenticationConfig;
   connectionInfo?: ConnectorConnectionResult;
   controller?: Controller;
   logout: () => Promise<void>;
@@ -77,7 +90,12 @@ export interface AbstraxionConfig extends Omit<
   chainId?: string;
   callbackUrl?: string;
   indexerUrl?: string;
-  authentication?: AuthenticationConfig;
+  /**
+   * React Native only supports `redirect` (Expo WebBrowser + deep link) and `signer`
+   * (injected signing function). `popup`, `embedded`, and `auto` are web-only — see
+   * {@link ReactNativeAuthenticationConfig}.
+   */
+  authentication?: ReactNativeAuthenticationConfig;
 }
 
 const noopBooleanDispatch = (() => undefined) as Dispatch<
@@ -119,7 +137,7 @@ const defaultContextValue: AbstraxionContextProps = {
   indexerUrl: undefined,
   gasPrice: GasPrice.fromString("0.001uxion"),
   signingClient: undefined,
-  authMode: "redirect",
+  authMode: "redirect" as "signer" | "redirect",
   authentication: undefined,
   connectionInfo: undefined,
   controller: undefined,
@@ -139,13 +157,26 @@ export const AbstraxionContext =
   createContext<AbstraxionContextProps>(defaultContextValue);
 
 function resolveReactNativeAuthentication(
-  authentication: AuthenticationConfig | undefined,
+  authentication: ReactNativeAuthenticationConfig | undefined,
   callbackUrl: string | undefined,
-): AuthenticationConfig {
+): ReactNativeAuthenticationConfig {
   if (!authentication) {
     return callbackUrl
       ? { type: "redirect", callbackUrl }
       : { type: "redirect" };
+  }
+
+  // Defensive runtime guard: TypeScript narrows AbstraxionConfig.authentication to
+  // ReactNativeAuthenticationConfig, but consumers using `as any` or untyped JS would
+  // otherwise silently crash later in createController. Fail fast with a clear message.
+  if (authentication.type !== "redirect" && authentication.type !== "signer") {
+    throw new Error(
+      `[abstraxion-react-native] Authentication mode "${
+        (authentication as { type: string }).type
+      }" is not supported on React Native. ` +
+        `Use { type: "redirect" } (Expo WebBrowser) or { type: "signer" } (injected signing). ` +
+        `popup, embedded, and auto are web-only.`,
+    );
   }
 
   if (
@@ -249,14 +280,8 @@ export function AbstraxionProvider({
   const [showModal, setShowModal] = useState(false);
   const [dashboardUrlOverride, setDashboardUrl] = useState("");
 
-  const authMode: "signer" | "redirect" | "embedded" | "popup" =
-    controller instanceof RedirectController
-      ? "redirect"
-      : controller instanceof SignerController
-        ? "signer"
-        : normalizedConfig.authentication?.type === "embedded"
-          ? "embedded"
-          : "popup";
+  const authMode: "signer" | "redirect" =
+    controller instanceof SignerController ? "signer" : "redirect";
 
   useEffect(() => {
     const unsubscribe = controller.subscribe(setControllerState);
@@ -351,7 +376,10 @@ export function AbstraxionProvider({
         gasPrice: GasPrice.fromString(normalizedConfig.gasPrice),
         signingClient,
         authMode,
-        authentication: normalizedConfig.authentication,
+        // resolveReactNativeAuthentication has already narrowed/asserted this
+        // to ReactNativeAuthenticationConfig before normalizeAbstraxionConfig ran.
+        authentication:
+          normalizedConfig.authentication as ReactNativeAuthenticationConfig,
         connectionInfo,
         controller,
       }}

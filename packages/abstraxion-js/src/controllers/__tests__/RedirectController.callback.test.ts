@@ -102,8 +102,26 @@ describe("RedirectController — callback & signing", () => {
       removeItem: vi.fn(),
     },
     redirectStrategy: {
-      getCurrentUrl: vi.fn().mockReturnValue("https://myapp.com"),
-      redirect: vi.fn(),
+      getCurrentUrl: vi
+        .fn()
+        .mockImplementation(() => Promise.resolve(window.location.href)),
+      redirect: vi.fn().mockImplementation((url: string) => {
+        // Mirror BrowserRedirectStrategy.redirect for assertions that read href.
+        window.location.href = url;
+        return Promise.resolve();
+      }),
+      getUrlParameter: vi.fn().mockImplementation((param: string) => {
+        const params = new URLSearchParams(window.location.search);
+        return Promise.resolve(params.get(param));
+      }),
+      cleanUrlParameters: vi
+        .fn()
+        .mockImplementation((paramsToRemove: string[]) => {
+          const url = new URL(window.location.href);
+          paramsToRemove.forEach((p) => url.searchParams.delete(p));
+          window.history.replaceState({}, "", url.href);
+          return Promise.resolve();
+        }),
     },
     ...overrides,
   });
@@ -336,23 +354,17 @@ describe("RedirectController — callback & signing", () => {
     it("should navigate to dashboard signing page", async () => {
       const controller = new RedirectController(createConfig());
 
-      const signPromise = controller.promptSignAndBroadcast(
+      await controller.promptSignAndBroadcast(
         "xion1granter456",
         [{ typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: {} }],
         "auto",
         "memo",
       );
 
-      // resolveAuthAppUrl is always async — yield one microtask so navigation fires
-      await Promise.resolve();
-
       expect(window.location.href).toContain("dashboard.burnt.com");
       expect(window.location.href).toContain("mode=sign");
       expect(window.location.href).toContain("granter=xion1granter456");
 
-      signPromise.catch(() => {
-        /* expected timeout rejection */
-      });
       controller.destroy();
     });
   });
@@ -446,19 +458,12 @@ describe("RedirectController — callback & signing", () => {
     it("should navigate to dashboard add-authenticators page", async () => {
       const controller = new RedirectController(createConfig());
 
-      const addAuthPromise =
-        controller.promptManageAuthenticators("xion1granter456");
-
-      // resolveAuthAppUrl is always async — yield one microtask so navigation fires
-      await Promise.resolve();
+      await controller.promptManageAuthenticators("xion1granter456");
 
       expect(window.location.href).toContain("dashboard.burnt.com");
       expect(window.location.href).toContain("mode=add-authenticators");
       expect(window.location.href).toContain("granter=xion1granter456");
 
-      addAuthPromise.catch(() => {
-        /* expected timeout rejection */
-      });
       controller.destroy();
     });
   });
