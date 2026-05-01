@@ -1,17 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+} from "react-router-dom";
 
-import { routeTree } from "./routeTree.gen";
+import { HomePage } from "@/pages/HomePage";
+import { AutoModePage } from "@/pages/AutoModePage";
+import { EmbeddedModePage } from "@/pages/EmbeddedModePage";
+import { SignerModePage } from "@/pages/SignerModePage";
 import "./styles.css";
-
-const router = createRouter({ routeTree });
-
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
-}
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -20,6 +19,15 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <BrowserRouter>
+      <main className="m-auto flex min-h-screen w-full max-w-2xl flex-col p-6">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/auto" element={<AutoModePage />} />
+          <Route path="/embedded" element={<EmbeddedModePage />} />
+          <Route path="/signer-mode" element={<SignerModePage />} />
+        </Routes>
+      </main>
+    </BrowserRouter>
   </StrictMode>,
 );
