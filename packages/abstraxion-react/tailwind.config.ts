@@ -1,10 +1,18 @@
 // tailwind config is required for editor support
 import type { Config } from "tailwindcss";
-import sharedConfig from "@burnt-labs/tailwind-config/tailwind.config.ts";
 
-const config: Pick<Config, "prefix" | "presets"> = {
+const config: Config = {
   prefix: "ui-",
-  presets: [sharedConfig],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  theme: {
+    extend: {
+      backgroundImage: {
+        "glow-conic":
+          "conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #e92a67 360deg)",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;

@@ -30,9 +30,7 @@
     }
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/test-utils": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
     "rimraf": "^5.0.5",
     "tsup": "^6.0.1",

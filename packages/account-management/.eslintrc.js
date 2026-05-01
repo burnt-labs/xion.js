@@ -1,7 +1,5 @@
 module.exports = {
-  extends: ["@burnt-labs/eslint-config-custom/library.js"],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    project: true,
-  },
+  root: true,
+  extends: ["../../.eslintrc.js"],
+  ignorePatterns: ["**/__tests__/**"],
 };

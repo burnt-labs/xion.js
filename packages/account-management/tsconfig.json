@@ -1,5 +1,5 @@
 {
-  "extends": "@burnt-labs/tsconfig/base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",

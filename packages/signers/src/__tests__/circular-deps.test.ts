@@ -72,7 +72,7 @@ describe("Circular Dependency Prevention", () => {
     // Higher-level packages that signers should NOT import from:
     // - Layer 3: account-abstraction-api (already checked above)
     // - Layer 4: @burnt-labs/abstraxion-core, @burnt-labs/account-management
-    // - Layer 5: @burnt-labs/abstraxion-react, @burnt-labs/abstraxion-react-native, @burnt-labs/ui
+    // - Layer 5: @burnt-labs/abstraxion-react, @burnt-labs/abstraxion-react-native
     //
     // Signers CAN import from:
     // - Layer 1: @burnt-labs/constants (lower layer)
@@ -108,7 +108,6 @@ describe("Circular Dependency Prevention", () => {
       "@burnt-labs/account-management",
       "@burnt-labs/abstraxion-react",
       "@burnt-labs/abstraxion-react-native",
-      "@burnt-labs/ui",
       "account-abstraction-api", // Already checked above, but include for completeness
     ];
 
@@ -127,7 +126,7 @@ describe("Circular Dependency Prevention", () => {
           //   from "@burnt-labs/abstraxion-core"
           //   from '@burnt-labs/account-management'
           //   import ... from "account-abstraction-api"
-          //   import type ... from "@burnt-labs/ui"
+          //   import type ... from "@burnt-labs/abstraxion-react"
           const escapedPkg = pkg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           const importPattern = new RegExp(
             `(?:import|from)\\s+(?:type\\s+)?(?:[^"']*\\s+)?["']${escapedPkg}(?:/[^"']*)?["']`,
