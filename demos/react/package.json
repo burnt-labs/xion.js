@@ -22,8 +22,6 @@
     "viem": "^2.38.5"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^20",
     "@types/react": "^19.0.0",

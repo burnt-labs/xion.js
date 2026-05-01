@@ -1,7 +1,6 @@
 // tailwind config is required for editor support
 import fs from "node:fs";
 import type { Config } from "tailwindcss";
-import sharedConfig from "@burnt-labs/tailwind-config/tailwind.config.ts";
 
 // Convert image to base64
 const imageToBase64 = (path: string): string => {
@@ -9,12 +8,14 @@ const imageToBase64 = (path: string): string => {
   return `data:image/png;base64,${Buffer.from(bitmap).toString("base64")}`;
 };
 
-const config: Pick<Config, "prefix" | "presets" | "theme"> = {
+const config: Config = {
   prefix: "ui-",
-  presets: [sharedConfig],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       backgroundImage: {
+        "glow-conic":
+          "conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #e92a67 360deg)",
         "modal-overlay": `url('${imageToBase64(
           "./src/assets/xion-bg-blur.png",
         )}')`,
@@ -24,6 +25,7 @@ const config: Pick<Config, "prefix" | "presets" | "theme"> = {
       },
     },
   },
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;

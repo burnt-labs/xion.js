@@ -15,8 +15,6 @@
     "@burnt-labs/constants": "workspace:*"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
     "@sveltejs/vite-plugin-svelte": "^6.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "@tsconfig/svelte": "^5.0.0",

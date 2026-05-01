@@ -1,6 +1,11 @@
 {
-  "extends": "@burnt-labs/tsconfig/react-library.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "lib": ["ES2016", "DOM"],
+    "module": "ESNext",
+    "target": "ES6",
+    "jsx": "react-jsx",
+    "noEmit": true,
     "paths": {
       "@burnt-labs/abstraxion-react": ["../abstraxion-react/src/index.ts"]
     }

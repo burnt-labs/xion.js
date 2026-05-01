@@ -13,8 +13,6 @@
     "@burnt-labs/constants": "workspace:*"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
     "tsx": "^4.7.0",
     "typescript": "^5.2.2"
