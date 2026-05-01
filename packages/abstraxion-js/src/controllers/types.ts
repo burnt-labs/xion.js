@@ -127,12 +127,15 @@ import type { SignAndBroadcastResult } from "@burnt-labs/abstraxion-core";
  * Each dashboard transport mode (popup, redirect, iframe) binds its own
  * controller method and passes it here.
  *
- * The return type is a union because popup/redirect return DeliverTxResponse
- * while iframe returns SignAndBroadcastResult (hash only — no full RPC response).
+ * The return type is a union because popup returns DeliverTxResponse, iframe
+ * returns SignAndBroadcastResult (hash only — no full RPC response), and
+ * redirect resolves with no value (web: page navigates and never resolves;
+ * React Native: WebBrowser session ends and the result is delivered via the
+ * controller's signResult store, not as a direct return value).
  */
 export type SignAndBroadcastFn = (
   address: string,
   messages: readonly EncodeObject[],
   fee: StdFee | "auto" | number,
   memo?: string,
-) => Promise<DeliverTxResponse | SignAndBroadcastResult>;
+) => Promise<DeliverTxResponse | SignAndBroadcastResult | void>;

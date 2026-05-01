@@ -42,7 +42,9 @@ export class BrowserRedirectStrategy implements RedirectStrategy {
     paramsToRemove.forEach((param) => {
       currentUrl.searchParams.delete(param);
     });
-    history.pushState({}, "", currentUrl.href);
+    // replaceState (not pushState) so cleaning detection params doesn't add a
+    // history entry the user could navigate back to.
+    window.history.replaceState({}, "", currentUrl.href);
     return Promise.resolve();
   }
 }

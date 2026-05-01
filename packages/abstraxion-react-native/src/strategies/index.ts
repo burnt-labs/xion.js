@@ -1,7 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import { StorageStrategy, RedirectStrategy } from "@burnt-labs/abstraxion-core";
+import type {
+  RedirectStrategy,
+  StorageStrategy,
+} from "@burnt-labs/abstraxion-js";
 
 /**
  * React Native implementation of the StorageStrategy using AsyncStorage
@@ -34,14 +37,20 @@ export class ReactNativeStorageStrategy implements StorageStrategy {
 }
 
 /**
- * React Native implementation of the RedirectStrategy using Expo WebBrowser
+ * React Native implementation of the RedirectStrategy using Expo WebBrowser.
+ *
+ * After a successful WebBrowser auth session, the result URL's query params
+ * are stashed on the strategy so subsequent `getUrlParameter`/`cleanUrlParameters`
+ * calls can read and clear them. This lets RedirectController's
+ * `detectSignResult` / `detectManageAuthResult` flows work after
+ * `redirect()` resolves, the same way they work after a browser page reload.
  */
 export class ReactNativeRedirectStrategy implements RedirectStrategy {
   private redirectCallback?: (params: { granter?: string | null }) => void;
-  private reactStateCallback?: (params: { granter?: string | null }) => void;
+  private resultParams: Record<string, string> | null = null;
 
-  async getCurrentUrl(): Promise<string> {
-    return Linking.createURL("");
+  getCurrentUrl(): Promise<string> {
+    return Promise.resolve(Linking.createURL(""));
   }
 
   async redirect(url: string): Promise<void> {
@@ -57,18 +66,23 @@ export class ReactNativeRedirectStrategy implements RedirectStrategy {
 
       if (result.type === "success" && result.url) {
         const { queryParams } = Linking.parse(result.url);
-        const params = {
-          granter: queryParams?.granter?.toString() || null,
-        };
-
-        // Call the original callback (this triggers AbstraxionAuth's logic)
-        if (this.redirectCallback) {
-          this.redirectCallback(params);
+        const flatParams: Record<string, string> = {};
+        if (queryParams) {
+          for (const [key, value] of Object.entries(queryParams)) {
+            if (value !== undefined && value !== null) {
+              flatParams[key] = value.toString();
+            }
+          }
         }
+        // Stash for getUrlParameter/cleanUrlParameters reads after this resolves.
+        this.resultParams = flatParams;
 
-        // Also call our React state callback if it exists
-        if (this.reactStateCallback) {
-          this.reactStateCallback(params);
+        // Preserve the original login callback contract: AbstraxionAuth subscribes
+        // via onRedirectComplete and only acts on `granter`.
+        if (this.redirectCallback) {
+          this.redirectCallback({
+            granter: flatParams.granter ?? null,
+          });
         }
       }
     } catch (error) {
@@ -77,40 +91,45 @@ export class ReactNativeRedirectStrategy implements RedirectStrategy {
     }
   }
 
-  async onRedirectComplete(
+  onRedirectComplete(
     callback: (params: { granter?: string | null }) => void,
   ): Promise<void> {
     this.redirectCallback = callback;
+    return Promise.resolve();
   }
 
-  async removeRedirectHandler(): Promise<void> {
+  removeRedirectHandler(): Promise<void> {
     this.redirectCallback = undefined;
-  }
-
-  // Method to set up React state callback
-  setReactStateCallback(
-    callback: (params: { granter?: string | null }) => void,
-  ): void {
-    this.reactStateCallback = callback;
+    return Promise.resolve();
   }
 
   async getUrlParameter(param: string): Promise<string | null> {
+    if (this.resultParams && param in this.resultParams) {
+      return this.resultParams[param] ?? null;
+    }
     try {
       const url = await Linking.getInitialURL();
       if (!url) return null;
       const { queryParams } = Linking.parse(url);
-      return queryParams?.[param]?.toString() || null;
+      return queryParams?.[param]?.toString() ?? null;
     } catch (error) {
       console.error("Error getting URL parameter:", error);
       return null;
     }
   }
 
-  async cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
-    // In React Native, URL parameters are typically handled by the deep linking system
-    // and don't persist in the same way as browser URLs. This method is a no-op
-    // for React Native environments as the parameters are already processed by the
-    // deep linking callback and don't need manual cleanup.
+  cleanUrlParameters(paramsToRemove: string[]): Promise<void> {
+    if (!this.resultParams) return Promise.resolve();
+    const next: Record<string, string> = {};
+    const removeSet = new Set(paramsToRemove);
+    for (const [key, value] of Object.entries(this.resultParams)) {
+      if (!removeSet.has(key)) {
+        next[key] = value;
+      }
+    }
+    // Drop the stash entirely once empty so a later cold-start deep link can
+    // still be read via Linking.getInitialURL().
+    this.resultParams = Object.keys(next).length === 0 ? null : next;
     return Promise.resolve();
   }
 }

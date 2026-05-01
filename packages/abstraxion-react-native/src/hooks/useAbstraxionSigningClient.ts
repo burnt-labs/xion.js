@@ -1,84 +1,143 @@
 import { useContext, useEffect, useState } from "react";
-import { testnetChainInfo } from "@burnt-labs/constants";
 import {
-  GranteeSignerClient,
-  SignArbSecp256k1HdWallet,
-} from "@burnt-labs/abstraxion-core";
-import {
-  AbstraxionContext,
-  abstraxionAuth,
-} from "../components/AbstraxionContext";
+  AAClient,
+  createSignerFromSigningFunction,
+} from "@burnt-labs/abstraxion-js";
+import type {
+  AuthenticatorType,
+  SigningClient,
+  SignResult,
+} from "@burnt-labs/abstraxion-js";
+import { AbstraxionContext } from "../components/AbstraxionContext";
 
-export const useAbstraxionSigningClient = (): {
-  readonly client: GranteeSignerClient | undefined;
+export interface UseAbstraxionSigningClientOptions {
+  /**
+   * When true, returns a direct signing client where the active RN auth mode
+   * supports direct signing. Signer mode can provide `AAClient`; redirect mode
+   * currently supports session-key signing only in React Native.
+   */
+  requireAuth?: boolean;
+}
+
+export interface UseAbstraxionSigningClientReturn {
+  readonly client: SigningClient | undefined;
   readonly signArb:
     | ((signerAddress: string, message: string | Uint8Array) => Promise<string>)
     | undefined;
-} => {
+  readonly rpcUrl: string;
+  readonly error: string | undefined;
+  readonly signResult: SignResult | null;
+  readonly clearSignResult: (() => void) | undefined;
+}
+
+export const useAbstraxionSigningClient = (
+  options?: UseAbstraxionSigningClientOptions,
+): UseAbstraxionSigningClientReturn => {
   const {
-    isConnected,
     abstraxionAccount,
+    authMode,
+    connectionInfo,
+    gasPrice,
     granterAddress,
     rpcUrl,
-    gasPrice,
-    treasury,
+    signingClient,
   } = useContext(AbstraxionContext);
-  const [signArbWallet, setSignArbWallet] = useState<
-    SignArbSecp256k1HdWallet | undefined
-  >(undefined);
 
-  const [abstractClient, setAbstractClient] = useState<
-    GranteeSignerClient | undefined
-  >(undefined);
+  const requireAuth = options?.requireAuth ?? false;
+  const [aaClient, setAaClient] = useState<AAClient | undefined>(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    async function getSigner() {
-      try {
-        if (!abstraxionAccount) {
-          throw new Error("No account found.");
-        }
-
-        if (!granterAddress) {
-          throw new Error("No granter found.");
-        }
-
-        const granteeAddress = await abstraxionAccount
-          .getAccounts()
-          .then((accounts) => {
-            if (accounts.length === 0) {
-              throw new Error("No account found.");
-            }
-            return accounts[0].address;
-          });
-
-        const directClient = await GranteeSignerClient.connectWithSigner(
-          // Should be set in the context but defaulting here just in case
-          rpcUrl || testnetChainInfo.rpc,
-          abstraxionAccount,
-          {
-            gasPrice,
-            granterAddress,
-            granteeAddress,
-            treasuryAddress: treasury,
-          },
-        );
-
-        const wallet = await abstraxionAuth.getLocalKeypair();
-        if (wallet) {
-          setSignArbWallet(wallet);
-        }
-
-        setAbstractClient(directClient);
-      } catch (error) {
-        setAbstractClient(undefined);
-      }
+    if (!requireAuth) {
+      setAaClient(undefined);
+      setError(undefined);
+      return;
     }
 
-    getSigner();
-  }, [isConnected, abstraxionAccount, granterAddress, abstraxionAuth]);
+    if (authMode !== "signer") {
+      setAaClient(undefined);
+      setError(
+        "Direct signing with requireAuth is only supported in React Native signer mode. Redirect mode supports session-key signing only.",
+      );
+      return;
+    }
+
+    if (!connectionInfo) {
+      setAaClient(undefined);
+      setError(
+        "Direct signing requires an active signer connection. Please ensure you are logged in.",
+      );
+      return;
+    }
+
+    if (!granterAddress) {
+      setAaClient(undefined);
+      setError(
+        "Direct signing requires a connected account. Please ensure you are logged in.",
+      );
+      return;
+    }
+
+    const createClient = async (): Promise<void> => {
+      try {
+        const authenticatorType = connectionInfo.metadata
+          ?.authenticatorType as AuthenticatorType;
+        const authenticatorIndex =
+          connectionInfo.metadata?.authenticatorIndex ?? 0;
+
+        if (!authenticatorType) {
+          throw new Error(
+            "Authenticator type not available in connection info",
+          );
+        }
+
+        const signer = createSignerFromSigningFunction({
+          smartAccountAddress: granterAddress,
+          authenticatorIndex,
+          authenticatorType,
+          signMessage: connectionInfo.signMessage,
+        });
+
+        const client = await AAClient.connectWithSigner(rpcUrl, signer, {
+          gasPrice,
+        });
+
+        setAaClient(client);
+        setError(undefined);
+      } catch (err) {
+        console.error(
+          "[useAbstraxionSigningClient] Error creating AAClient:",
+          err,
+        );
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to create direct signing client",
+        );
+        setAaClient(undefined);
+      }
+    };
+
+    void createClient();
+  }, [authMode, connectionInfo, gasPrice, granterAddress, requireAuth, rpcUrl]);
+
+  if (requireAuth) {
+    return {
+      client: authMode === "signer" ? aaClient : undefined,
+      signArb: undefined,
+      rpcUrl,
+      error,
+      signResult: null,
+      clearSignResult: undefined,
+    };
+  }
 
   return {
-    client: abstractClient,
-    signArb: signArbWallet?.signArb,
+    client: signingClient,
+    signArb: abstraxionAccount?.signArb,
+    rpcUrl,
+    error: undefined,
+    signResult: null,
+    clearSignResult: undefined,
   } as const;
 };

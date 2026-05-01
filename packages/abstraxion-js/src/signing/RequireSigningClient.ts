@@ -44,7 +44,7 @@ export class RequireSigningClient {
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
     memo?: string,
-  ): Promise<DeliverTxResponse | SignAndBroadcastResult> {
+  ): Promise<DeliverTxResponse | SignAndBroadcastResult | void> {
     return this.signAndBroadcastFn(address, messages, fee, memo);
   }
 
@@ -58,7 +58,7 @@ export class RequireSigningClient {
     amount: readonly Coin[],
     fee: StdFee | "auto" | number,
     memo?: string,
-  ): Promise<DeliverTxResponse | SignAndBroadcastResult> {
+  ): Promise<DeliverTxResponse | SignAndBroadcastResult | void> {
     const msg: EncodeObject = {
       typeUrl: "/cosmos.bank.v1beta1.MsgSend",
       value: {

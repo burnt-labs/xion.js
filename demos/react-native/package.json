@@ -1,0 +1,37 @@
+{
+  "name": "demos-react-native",
+  "version": "0.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build": "expo export",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@burnt-labs/abstraxion-react-native": "workspace:*",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "buffer": "^6.0.3",
+    "expo": "~54.0.0",
+    "expo-linking": "~8.0.12",
+    "expo-router": "~6.0.23",
+    "expo-status-bar": "~3.0.9",
+    "expo-web-browser": "~15.0.11",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-get-random-values": "~1.11.0",
+    "react-native-quick-crypto": "^0.7.17",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0"
+  },
+  "devDependencies": {
+    "@burnt-labs/eslint-config-custom": "workspace:*",
+    "@burnt-labs/tsconfig": "workspace:*",
+    "@types/react": "~19.1.10",
+    "typescript": "^5.2.2"
+  }
+}

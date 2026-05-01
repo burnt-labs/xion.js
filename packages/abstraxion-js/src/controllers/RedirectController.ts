@@ -80,75 +80,86 @@ class ResultStore<T> {
 
 /**
  * Initiate a redirect to the dashboard for a given mode.
- * Stores a pending context entry in sessionStorage, builds the URL, and
- * navigates the browser away. Returns a Promise that rejects after 10 s if
- * navigation didn't complete (e.g. CSP block).
+ *
+ * Goes through the injected `storageStrategy` and `redirectStrategy` so the
+ * helper works on both web (page-level navigation) and React Native (Expo
+ * WebBrowser auth session). The browser strategy navigates the page away —
+ * any code after the await is best-effort and will likely be cancelled by
+ * unload. The React Native strategy resolves when the in-app WebBrowser
+ * session closes and stashes the result-URL query params for subsequent
+ * `getUrlParameter` reads, so the caller can detect the dashboard's response
+ * (e.g. `add_auth_success=true`) immediately after this resolves.
  */
-function initiateRedirectNavigation(
+async function initiateRedirectNavigation(
   authAppUrl: string,
   mode: string,
   granter: string,
   storageKey: string,
+  storageStrategy: StorageStrategy,
+  redirectStrategy: RedirectStrategy,
   extraParams?: Record<string, string>,
-): Promise<never> {
-  sessionStorage.setItem(
+): Promise<void> {
+  const returnUrl = await redirectStrategy.getCurrentUrl();
+
+  await storageStrategy.setItem(
     storageKey,
-    JSON.stringify({ returnUrl: window.location.href, timestamp: Date.now() }),
+    JSON.stringify({ returnUrl, timestamp: Date.now() }),
   );
 
   const url = buildDashboardUrl(
     authAppUrl,
     mode,
     granter,
-    window.location.href,
+    returnUrl,
     extraParams,
   );
-  window.location.href = url.toString();
 
-  return new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(
-        new Error(
-          `Navigation to the dashboard "${mode}" page did not complete. ` +
-            "This may be caused by a Content Security Policy restriction or the browser interrupting the redirect.",
-        ),
-      );
-    }, 10_000);
-  });
+  await redirectStrategy.redirect(url.toString());
 }
 
 /**
- * Detect a redirect result from URL query params.
+ * Detect a redirect result from URL query params via the injected strategies.
  * If any of the watched params are present, calls `buildResult` to construct
  * the typed result, stores it via `setResult`, cleans the params from the URL,
- * and removes the pending sessionStorage entry.
+ * and removes the pending storage entry.
+ *
+ * On web, the strategy reads from `window.location.search` and cleans via
+ * `history.pushState`. On React Native, the strategy reads from the post-
+ * WebBrowser-session stash (or `Linking.getInitialURL()` for cold-start deep
+ * links) and clears the stash entries.
  *
  * @param paramKeys  Param names to watch for (any one triggers detection)
- * @param storageKey sessionStorage key to remove after detection
- * @param buildResult Receives the current URLSearchParams; returns the typed result
+ * @param storageKey storage key to remove after detection
+ * @param buildResult Receives the watched params (key → value); returns the typed result
  * @param setResult  Called with the constructed result
  */
-function detectRedirectResult<T>(
+async function detectRedirectResult<T>(
   paramKeys: string[],
   storageKey: string,
-  buildResult: (params: URLSearchParams) => T,
+  storageStrategy: StorageStrategy,
+  redirectStrategy: RedirectStrategy,
+  buildResult: (params: Map<string, string>) => T,
   setResult: (value: T) => void,
-): void {
-  if (typeof window === "undefined") return;
-
-  const params = new URLSearchParams(window.location.search);
-  if (!paramKeys.some((k) => params.has(k))) return;
-
-  setResult(buildResult(params));
-
-  paramKeys.forEach((k) => params.delete(k));
-  const cleanSearch = params.toString();
-  window.history.replaceState(
-    {},
-    "",
-    window.location.pathname + (cleanSearch ? `?${cleanSearch}` : ""),
+): Promise<void> {
+  const values = await Promise.all(
+    paramKeys.map((key) => redirectStrategy.getUrlParameter(key)),
   );
-  sessionStorage.removeItem(storageKey);
+  const found = new Map<string, string>();
+  paramKeys.forEach((key, i) => {
+    const value = values[i];
+    if (value !== null && value !== undefined) {
+      found.set(key, value);
+    }
+  });
+
+  if (found.size === 0) return;
+
+  setResult(buildResult(found));
+
+  if (redirectStrategy.cleanUrlParameters) {
+    await redirectStrategy.cleanUrlParameters(paramKeys);
+  }
+  await storageStrategy.removeItem(storageKey);
 }
 
 // ─── Config ──────────────────────────────────────────────────────────────────
@@ -205,6 +216,7 @@ export class RedirectController extends BaseController {
   private abstraxionAuth: AbstraxionAuth;
   private orchestrator: ConnectionOrchestrator;
   private config: RedirectControllerConfig;
+  private authStateUnsubscribe?: () => void;
   readonly signResult = new ResultStore<SignResult>();
   readonly manageAuthResult = new ResultStore<ManageAuthResult>();
   private initializePromise: Promise<void> | null = null;
@@ -294,6 +306,57 @@ export class RedirectController extends BaseController {
       rpcUrl: config.rpcUrl,
       gasPrice: config.gasPrice,
     });
+
+    this.authStateUnsubscribe = this.abstraxionAuth.subscribeToAuthStateChange(
+      (isLoggedIn) => {
+        void this.syncAuthState(isLoggedIn);
+      },
+    );
+  }
+
+  private async syncAuthState(isLoggedIn: boolean): Promise<void> {
+    if (!isLoggedIn) {
+      if (this.getState().status === "connected") {
+        this.dispatch({ type: "EXPLICITLY_DISCONNECTED" });
+      }
+      return;
+    }
+
+    try {
+      const keypair = await this.abstraxionAuth.getLocalKeypair();
+      if (!keypair) {
+        throw new Error("Session keypair not found after redirect.");
+      }
+
+      const granterAddress = await this.abstraxionAuth.getGranter();
+      if (!granterAddress) {
+        throw new Error("Granter address missing after redirect.");
+      }
+
+      const signingClient = await this.abstraxionAuth.getSigner(
+        GasPrice.fromString(this.config.gasPrice),
+      );
+      const accounts = await keypair.getAccounts();
+      const granteeAddress = accounts[0].address;
+
+      this.dispatch({
+        type: "SET_CONNECTED",
+        account: {
+          keypair,
+          granterAddress,
+          granteeAddress,
+        },
+        signingClient,
+      });
+    } catch (error) {
+      this.dispatch({
+        type: "SET_ERROR",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to complete authentication. Please try again.",
+      });
+    }
   }
 
   /**
@@ -319,9 +382,9 @@ export class RedirectController extends BaseController {
 
   private async doInitialize(): Promise<void> {
     // Check for signing result return (tx_hash / sign_rejected / sign_error)
-    this.detectSignResult();
+    await this.detectSignResult();
     // Check for manage-authenticators result return (add_auth_success / add_auth_rejected / add_auth_error)
-    this.detectManageAuthResult();
+    await this.detectManageAuthResult();
 
     // Check if we're returning from dashboard redirect FIRST
     // If so, transition from initializing to connecting
@@ -458,6 +521,14 @@ export class RedirectController extends BaseController {
       // Use orchestrator to initiate redirect (generates keypair and redirects)
       const { dashboardUrl } = await this.orchestrator.initiateRedirect();
 
+      // React Native auth sessions can complete before redirect() returns.
+      // In that case AbstraxionAuth has already emitted auth state and
+      // syncAuthState has connected the controller, so do not overwrite it
+      // with a redirecting state.
+      if (this.getState().status === "connected") {
+        return;
+      }
+
       // Dispatch redirecting state
       this.dispatch({
         type: "START_REDIRECT",
@@ -538,7 +609,7 @@ export class RedirectController extends BaseController {
     messages: readonly EncodeObject[],
     fee: StdFee | "auto" | number,
     memo?: string,
-  ): Promise<never> {
+  ): Promise<void> {
     const authAppUrl = await resolveAuthAppUrl(
       this.config.rpcUrl,
       this.config.redirect.authAppUrl,
@@ -551,19 +622,29 @@ export class RedirectController extends BaseController {
     };
     validateTxPayload(txPayloadObj, "RedirectController");
 
-    return initiateRedirectNavigation(
+    await initiateRedirectNavigation(
       authAppUrl,
       "sign",
       signerAddress,
       STORAGE_KEY_PENDING_SIGN,
+      this.config.storageStrategy,
+      this.config.redirectStrategy,
       { tx: toBase64(JSON.stringify(txPayloadObj)) },
     );
+
+    // On web the page navigated; this point is unreachable. On React Native the
+    // WebBrowser session has closed and the result params are stashed in the
+    // strategy — read them now so signResult fires before the caller's await
+    // resolves.
+    await this.detectSignResult();
   }
 
-  private detectSignResult(): void {
-    detectRedirectResult(
+  private async detectSignResult(): Promise<void> {
+    await detectRedirectResult(
       ["tx_hash", "sign_rejected", "sign_error"],
       STORAGE_KEY_PENDING_SIGN,
+      this.config.storageStrategy,
+      this.config.redirectStrategy,
       (params) => {
         const txHash = params.get("tx_hash");
         const signError = params.get("sign_error");
@@ -585,12 +666,15 @@ export class RedirectController extends BaseController {
   /**
    * Add an authenticator by redirecting to the dashboard's add-auth page.
    *
-   * Fire-and-forget: the browser navigates away. On success the dashboard
-   * redirects back with `?add_auth_success=true`; on cancellation with
-   * `?add_auth_rejected=true`; on error with `?add_auth_error=<message>`.
+   * On web the browser navigates away. On success the dashboard redirects back
+   * with `?add_auth_success=true`; on cancellation with `?add_auth_rejected=true`;
+   * on error with `?add_auth_error=<message>`. Read the result via
+   * `manageAuthResult.get()` (or the hook's `manageAuthResult`) after the page
+   * reloads.
    *
-   * Read the result via `manageAuthResult.get()` (or the hook's `manageAuthResult`)
-   * after the page reloads from the dashboard redirect.
+   * On React Native the in-app WebBrowser session resolves in-process and this
+   * method awaits the result. `manageAuthResult` is set before the returned
+   * Promise resolves — callers can either await this method or subscribe.
    */
   async promptManageAuthenticators(signerAddress: string): Promise<void> {
     const authAppUrl = await resolveAuthAppUrl(
@@ -598,18 +682,25 @@ export class RedirectController extends BaseController {
       this.config.redirect.authAppUrl,
     );
 
-    return initiateRedirectNavigation(
+    await initiateRedirectNavigation(
       authAppUrl,
       "add-authenticators",
       signerAddress,
       STORAGE_KEY_PENDING_ADD_AUTH,
+      this.config.storageStrategy,
+      this.config.redirectStrategy,
     );
+
+    // See promptSignAndBroadcast: unreachable on web, runs on React Native.
+    await this.detectManageAuthResult();
   }
 
-  private detectManageAuthResult(): void {
-    detectRedirectResult(
+  private async detectManageAuthResult(): Promise<void> {
+    await detectRedirectResult(
       ["add_auth_success", "add_auth_rejected", "add_auth_error"],
       STORAGE_KEY_PENDING_ADD_AUTH,
+      this.config.storageStrategy,
+      this.config.redirectStrategy,
       (params) => {
         const success = params.get("add_auth_success");
         const error = params.get("add_auth_error");
@@ -628,6 +719,7 @@ export class RedirectController extends BaseController {
    * Cleanup resources
    */
   destroy(): void {
+    this.authStateUnsubscribe?.();
     super.destroy();
     this.signResult.destroy();
     this.manageAuthResult.destroy();

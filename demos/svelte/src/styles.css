@@ -1,0 +1,18 @@
+@import url("https://rsms.me/inter/inter.css");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  color: white;
+  background: black;
+  font-family: var(--font-sans);
+}

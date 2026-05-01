@@ -10,13 +10,15 @@ export interface AbstraxionAccountState {
   isConnected: boolean;
   isConnecting: boolean;
   isInitializing: boolean;
+  /** True after an explicit user-initiated logout. */
+  isDisconnected: boolean;
   isLoading: boolean;
   isReturningFromAuth: boolean;
   isLoggingIn: boolean;
   isError: boolean;
   error: string;
   login: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const useAbstraxionAccount = (): AbstraxionAccountState => {
@@ -25,6 +27,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     isConnected,
     isConnecting,
     isInitializing,
+    isDisconnected,
     isReturningFromAuth,
     isLoggingIn,
     abstraxionError,
@@ -36,7 +39,7 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
   const isLoading = isInitializing || isConnecting;
 
   // isError is true when there's an error message
-  const isError = !!abstraxionError;
+  const isError = Boolean(abstraxionError);
 
   return {
     data: {
@@ -44,7 +47,8 @@ export const useAbstraxionAccount = (): AbstraxionAccountState => {
     },
     login,
     logout,
-    isConnected: isConnected,
+    isConnected,
+    isDisconnected,
     isLoading,
     isInitializing,
     isLoggingIn,
