@@ -1,26 +1,190 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import {
+  useAbstraxionAccount,
+  useManageAuthenticators,
+} from "@burnt-labs/abstraxion-react-native";
 
+type ManageStatus = "idle" | "pending" | "success" | "cancelled" | "error";
+
+/**
+ * Minimal RN auth flow:
+ *   - Disconnected: Connect button (opens Expo WebBrowser to the dashboard).
+ *   - Connected: account address + "Manage Authenticators" + logout.
+ *
+ * Redirect is the only RN-supported dashboard mode today (popup/embedded
+ * need a WebView transport — tracked as Phase 9b). Manage-authenticators
+ * piggy-backs on the same redirect flow via Expo WebBrowser.
+ */
 export default function HomeScreen(): JSX.Element {
+  const {
+    data: account,
+    login,
+    logout,
+    isConnected,
+    isConnecting,
+    isInitializing,
+  } = useAbstraxionAccount();
+
+  const {
+    manageAuthenticators,
+    isSupported: isManageAuthSupported,
+    unsupportedReason: manageAuthUnsupportedReason,
+  } = useManageAuthenticators();
+
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [manageStatus, setManageStatus] = useState<ManageStatus>("idle");
+  const [manageError, setManageError] = useState<string | null>(null);
+
+  const handleLogin = async () => {
+    setLoginError(null);
+    try {
+      await login();
+    } catch (e) {
+      setLoginError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const handleManage = async () => {
+    setManageStatus("pending");
+    setManageError(null);
+    try {
+      await manageAuthenticators();
+      setManageStatus("success");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      const isCancelled = /cancelled|closed/i.test(msg);
+      setManageStatus(isCancelled ? "cancelled" : "error");
+      if (!isCancelled) setManageError(msg);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      style={styles.scrollView}
+    >
       <Text style={styles.title}>ABSTRAXION</Text>
-      <Text style={styles.subtitle}>React Native demo scaffold</Text>
-      <Text style={styles.body}>
-        Add screens under {`src/app/`} — Expo Router picks them up via
-        file-based routing.
-      </Text>
-    </View>
+      <Text style={styles.subtitle}>React Native demo</Text>
+
+      {isInitializing && (
+        <View style={styles.loadingRow}>
+          <ActivityIndicator size="small" color="#fbbf24" />
+          <Text style={styles.muted}>Checking session…</Text>
+        </View>
+      )}
+
+      {!isConnected && !isInitializing && (
+        <>
+          <Pressable
+            onPress={handleLogin}
+            disabled={isConnecting}
+            style={({ pressed }) => [
+              styles.button,
+              isConnecting && styles.buttonDisabled,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={styles.buttonText}>
+              {isConnecting ? "OPENING DASHBOARD…" : "CONNECT WALLET"}
+            </Text>
+          </Pressable>
+          {loginError && (
+            <View style={[styles.banner, styles.bannerError]}>
+              <Text style={styles.bannerText}>{loginError}</Text>
+            </View>
+          )}
+        </>
+      )}
+
+      {isConnected && account.bech32Address && (
+        <>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Connected as</Text>
+            <Text style={styles.address} selectable>
+              {account.bech32Address}
+            </Text>
+          </View>
+
+          {isManageAuthSupported ? (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Manage Your Account</Text>
+              <Text style={styles.cardBody}>
+                Add or remove ways to sign in (passkey, social, wallet) via the
+                dashboard. Opens in the same Expo WebBrowser session as login.
+              </Text>
+              <Pressable
+                onPress={handleManage}
+                disabled={manageStatus === "pending"}
+                style={({ pressed }) => [
+                  styles.outlinedButton,
+                  manageStatus === "pending" && styles.buttonDisabled,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.outlinedButtonText}>
+                  {manageStatus === "pending"
+                    ? "OPENING DASHBOARD…"
+                    : "MANAGE AUTHENTICATORS ↗"}
+                </Text>
+              </Pressable>
+              {manageStatus === "success" && (
+                <Text style={styles.success}>Authenticators updated.</Text>
+              )}
+              {manageStatus === "cancelled" && (
+                <Text style={styles.warning}>Cancelled.</Text>
+              )}
+              {manageStatus === "error" && manageError && (
+                <Text style={styles.error}>{manageError}</Text>
+              )}
+            </View>
+          ) : (
+            <View style={[styles.card, styles.cardMuted]}>
+              <Text style={styles.cardTitle}>Manage Your Account</Text>
+              <Text style={styles.muted}>
+                {manageAuthUnsupportedReason ??
+                  "Not supported in this auth mode."}
+              </Text>
+            </View>
+          )}
+
+          <Pressable
+            onPress={() => logout()}
+            style={({ pressed }) => [
+              styles.outlinedButton,
+              styles.disconnectButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={[styles.outlinedButtonText, styles.disconnectText]}>
+              DISCONNECT
+            </Text>
+          </Pressable>
+        </>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  scrollView: {
     backgroundColor: "#000",
-    padding: 24,
-    gap: 12,
+  },
+  container: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingTop: 80,
+    paddingHorizontal: 24,
+    paddingBottom: 48,
+    gap: 16,
   },
   title: {
     color: "#fff",
@@ -31,11 +195,113 @@ const styles = StyleSheet.create({
   subtitle: {
     color: "#9ca3af",
     fontSize: 14,
+    marginBottom: 8,
   },
-  body: {
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  card: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(17,24,39,0.5)",
+    borderRadius: 8,
+    padding: 16,
+    gap: 8,
+  },
+  cardMuted: {
+    backgroundColor: "rgba(17,24,39,0.3)",
+  },
+  cardTitle: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  cardLabel: {
+    color: "#9ca3af",
+    fontSize: 12,
+  },
+  cardBody: {
+    color: "#9ca3af",
+    fontSize: 12,
+  },
+  address: {
+    color: "#4ade80",
+    fontFamily: "Courier",
+    fontSize: 13,
+  },
+  button: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#000",
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonPressed: {
+    opacity: 0.8,
+  },
+  outlinedButton: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    backgroundColor: "transparent",
+  },
+  outlinedButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 1,
+  },
+  disconnectButton: {
+    borderColor: "rgba(239,68,68,0.4)",
+  },
+  disconnectText: {
+    color: "#f87171",
+  },
+  banner: {
+    width: "100%",
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 12,
+  },
+  bannerError: {
+    borderColor: "rgba(239,68,68,0.3)",
+    backgroundColor: "rgba(239,68,68,0.1)",
+  },
+  bannerText: {
+    color: "#fca5a5",
+    fontSize: 12,
+  },
+  muted: {
     color: "#6b7280",
     fontSize: 12,
-    textAlign: "center",
-    maxWidth: 280,
+  },
+  success: {
+    color: "#4ade80",
+    fontSize: 12,
+  },
+  warning: {
+    color: "#fbbf24",
+    fontSize: 12,
+  },
+  error: {
+    color: "#f87171",
+    fontSize: 12,
   },
 });
