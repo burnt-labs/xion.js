@@ -24,10 +24,7 @@
     "clean": "rimraf ./dist"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
-    "@burnt-labs/tailwind-config": "workspace:*",
     "@burnt-labs/test-utils": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
     "@types/text-encoding": "^0.0.39",
     "@vitest/coverage-v8": "^1.6.1",

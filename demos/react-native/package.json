@@ -30,8 +30,6 @@
     "react-native-web": "~0.21.0"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
     "@types/react": "~19.1.10",
     "typescript": "^5.2.2"
   }
