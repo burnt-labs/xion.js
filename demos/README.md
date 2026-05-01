@@ -9,7 +9,7 @@ Reference apps for the Abstraxion SDK, one per target framework. All demos are c
 | [`svelte/`](./svelte) | Vite + Svelte 5 + Tailwind 4 | `@burnt-labs/abstraxion-js` |
 | [`node/`](./node) | Node.js + tsx (placeholder) | `@burnt-labs/abstraxion-js` |
 
-The `demos/react` demo replaces `apps/demo-app` (Next.js) — see commit 10 of [`abstraxion_package_restructure.md`](../../.docs/tasks/abstraxion_package_restructure.md) for the cleanup step.
+The `demos/react` demo replaces the legacy `apps/demo-app` (Next.js), which has been removed.
 
 ## Routing convention
 
