@@ -360,6 +360,141 @@ describe("IframeController — happy paths", () => {
     });
   });
 
+  describe("cancelLogin()", () => {
+    it("rejects in-flight connect, unmounts iframe, and resets state", async () => {
+      // mockSendRequest never resolves so the connect flow is suspended on
+      // the CONNECT request — that's the realistic shape for "user dismissed
+      // the login modal mid-flow."
+      let cancelSendRequest: ((reason: Error) => void) | undefined;
+      mockSendRequest.mockImplementationOnce(
+        () =>
+          new Promise((_, reject) => {
+            cancelSendRequest = reject;
+          }),
+      );
+
+      const controller = new IframeController(createConfig());
+      controller.setContainerElement(container);
+
+      const connectPromise = controller.connect();
+      await waitForListenerSetup();
+      simulateIframeReady();
+      // Yield so connect() reaches the awaited sendRequest.
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(controller.getState().status).toBe("connecting");
+      expect(container.querySelector("iframe")).not.toBeNull();
+
+      controller.cancelLogin();
+
+      // connect() should resolve cleanly (no throw) — cancelLogin is a
+      // user-initiated abort, not an error.
+      await expect(connectPromise).resolves.toBeUndefined();
+      expect(controller.getState().status).toBe("idle");
+      expect(container.querySelector("iframe")).toBeNull();
+
+      // Sanity: rejecting the underlying sendRequest after the cancel must
+      // not leak into state.
+      cancelSendRequest?.(new Error("late reject"));
+      controller.destroy();
+    });
+
+    it("is a no-op when called outside a connect() flow", () => {
+      const controller = new IframeController(createConfig());
+      controller.setContainerElement(container);
+
+      const before = controller.getState().status;
+      expect(() => controller.cancelLogin()).not.toThrow();
+      // No login was in flight, so cancelLogin must not mutate state.
+      expect(controller.getState().status).toBe(before);
+
+      controller.destroy();
+    });
+
+    it("rejects an in-flight waitForReady (before IFRAME_READY fires)", async () => {
+      // No simulateIframeReady() — connect() suspends on waitForReady.
+      const controller = new IframeController(createConfig());
+      controller.setContainerElement(container);
+
+      const connectPromise = controller.connect();
+      await waitForListenerSetup();
+      // Yield so connect() reaches the awaited readyPromise without ever
+      // receiving IFRAME_READY.
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(controller.getState().status).toBe("connecting");
+      expect(container.querySelector("iframe")).not.toBeNull();
+      // sendRequest must NOT have run — we cancel before the handshake.
+      expect(mockSendRequest).not.toHaveBeenCalled();
+
+      controller.cancelLogin();
+
+      await expect(connectPromise).resolves.toBeUndefined();
+      expect(controller.getState().status).toBe("idle");
+      expect(container.querySelector("iframe")).toBeNull();
+
+      controller.destroy();
+    });
+
+    it("aborts during completeConnection — does not dispatch SET_CONNECTED on torn-down transport", async () => {
+      // Make AbstraxionAuth.getSigner() hang so cancelLogin() can land
+      // between sendRequest resolution and SET_CONNECTED dispatch. This
+      // covers the narrow race the previous implementation missed.
+      const { AbstraxionAuth } = await import("@burnt-labs/abstraxion-core");
+      let resolveGetSigner: ((value: unknown) => void) | undefined;
+      vi.mocked(AbstraxionAuth).mockImplementationOnce(
+        () =>
+          ({
+            configureAbstraxionInstance: vi.fn(),
+            logout: vi.fn().mockResolvedValue(undefined),
+            generateAndStoreTempAccount: vi.fn().mockResolvedValue({
+              getAccounts: vi.fn().mockResolvedValue([
+                {
+                  address: "xion1grantee123",
+                  algo: "secp256k1",
+                  pubkey: new Uint8Array(),
+                },
+              ]),
+            }),
+            getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
+            setGranter: vi.fn().mockResolvedValue(undefined),
+            getSigner: vi.fn(
+              () =>
+                new Promise((resolve) => {
+                  resolveGetSigner = resolve;
+                }),
+            ),
+            abstractAccount: null,
+          }) as never,
+      );
+
+      mockSendRequest.mockResolvedValueOnce({ address: "xion1granter789" });
+
+      const controller = new IframeController(createConfig());
+      controller.setContainerElement(container);
+
+      const connectPromise = controller.connect();
+      await waitForListenerSetup();
+      simulateIframeReady();
+      // Yield enough for sendRequest → setGranter → hanging getSigner.
+      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(controller.getState().status).toBe("connecting");
+
+      controller.cancelLogin();
+      // Resolving getSigner *after* cancel must NOT promote state to
+      // "connected" — completeConnection should bail on the abort guard.
+      resolveGetSigner?.({ signAndBroadcast: vi.fn() });
+
+      await expect(connectPromise).resolves.toBeUndefined();
+      expect(controller.getState().status).toBe("idle");
+      expect(container.querySelector("iframe")).toBeNull();
+
+      controller.destroy();
+    });
+  });
+
   it("should throw with helpful error when missing iframeUrl", () => {
     expect(
       () =>

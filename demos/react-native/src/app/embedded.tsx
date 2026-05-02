@@ -1,7 +1,7 @@
 /**
- * Embedded-mode demo (Phase 9b).
+ * Embedded-mode demo.
  *
- * Mounts the dashboard inside an in-app `<WebView>` via the new
+ * Mounts the dashboard inside an in-app `<WebView>` via the
  * `<AbstraxionEmbed>` component. Login, grant approval, and manage-authenticators
  * happen entirely inside the WebView — no Expo WebBrowser session, no deep
  * link round-trip.
