@@ -6,9 +6,17 @@ Expo + React Native demo for `@burnt-labs/abstraxion-react-native`.
 
 - Expo SDK 54 (React Native 0.81 / React 19 / new architecture)
 - Expo Router (file-based routing under `src/app/`)
-- `@burnt-labs/abstraxion-react-native` with redirect auth as the primary flow
+- `@burnt-labs/abstraxion-react-native` with redirect auth (primary) and embedded WebView (Phase 9b)
 - AsyncStorage + Expo WebBrowser/Linking under the hood (already wired in the SDK)
 - `react-native-get-random-values` + `react-native-quick-crypto` polyfills for signing
+- `react-native-webview` for the embedded screen (only used on `/embedded`)
+
+## Routes
+
+| Route | Auth mode | Notes |
+| --- | --- | --- |
+| `/` | `redirect` | Expo WebBrowser auth session + deep link callback. |
+| `/embedded` | `embedded` | Dashboard runs inside an in-app `<WebView>` via `<AbstraxionEmbed>`. |
 
 ## Setup
 

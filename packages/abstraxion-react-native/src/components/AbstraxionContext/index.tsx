@@ -1,30 +1,28 @@
-import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { createContext, useCallback, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { createContext, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import {
   AccountStateGuards,
-  createController,
+  createAbstraxionRuntime,
   GasPrice,
-  normalizeAbstraxionConfig,
-  SignerController,
   testnetChainInfo,
 } from "@burnt-labs/abstraxion-js";
 import type {
   AbstraxionConfig as AbstraxionJsConfig,
+  AbstraxionRuntime,
   AccountState,
   ConnectorConnectionResult,
   ContractGrantDescription,
   Controller,
+  EmbeddedAuthentication,
   GranteeSignerClient,
-  NormalizedAbstraxionConfig,
   RedirectAuthentication,
   SignArbSecp256k1HdWallet,
   SignerAuthentication,
   SpendLimit,
 } from "@burnt-labs/abstraxion-js";
-import {
-  ReactNativeRedirectStrategy,
-  ReactNativeStorageStrategy,
-} from "../../strategies";
+import { ReactNativeRedirectStrategy } from "../../strategies/ReactNativeRedirectStrategy";
+import { ReactNativeStorageStrategy } from "../../strategies/ReactNativeStorageStrategy";
+import { RNWebViewIframeTransport } from "../../strategies/RNWebViewIframeTransport";
 
 export type {
   ContractGrantDescription,
@@ -34,38 +32,31 @@ export type {
 /**
  * Authentication modes supported in React Native.
  *
- * `popup`, `embedded`, and `auto` are web-only:
+ * - `redirect` — Expo WebBrowser + deep link callback (primary mode)
+ * - `signer` — Injected signing function (Turnkey, Privy, etc.)
+ * - `embedded` — Dashboard inside a `<react-native-webview>` `<WebView>` (Phase 9b)
+ *
+ * `popup` and `auto` are still web-only:
  * - `popup` requires `window.open` + same-origin `postMessage`.
- * - `embedded` requires a DOM `<iframe>` (a WebView-based equivalent is tracked as a follow-up).
- * - `auto` resolves to `popup` on desktop and would silently fall through here; consumers
- *   on RN must pick `redirect` or `signer` explicitly.
+ * - `auto` resolves to `popup` on desktop and would silently fall through here.
  */
 export type ReactNativeAuthenticationConfig =
   | RedirectAuthentication
-  | SignerAuthentication;
+  | SignerAuthentication
+  | EmbeddedAuthentication;
 
 export interface AbstraxionContextProps {
   isConnected: boolean;
-  setIsConnected: Dispatch<SetStateAction<boolean>>;
   isConnecting: boolean;
-  setIsConnecting: Dispatch<SetStateAction<boolean>>;
   isInitializing: boolean;
   isDisconnected: boolean;
+  isAwaitingApproval: boolean;
   isReturningFromAuth: boolean;
   isLoggingIn: boolean;
   abstraxionError: string;
-  setAbstraxionError: Dispatch<SetStateAction<string>>;
   abstraxionAccount: SignArbSecp256k1HdWallet | undefined;
-  setAbstraxionAccount: Dispatch<
-    SetStateAction<SignArbSecp256k1HdWallet | undefined>
-  >;
   granterAddress: string;
-  showModal: boolean;
-  setShowModal: Dispatch<SetStateAction<boolean>>;
-  setGranterAddress: Dispatch<SetStateAction<string>>;
   contracts?: ContractGrantDescription[];
-  dashboardUrl?: string;
-  setDashboardUrl: Dispatch<SetStateAction<string>>;
   chainId: string;
   rpcUrl: string;
   restUrl: string;
@@ -75,10 +66,11 @@ export interface AbstraxionContextProps {
   indexerUrl?: string;
   gasPrice: GasPrice;
   signingClient?: GranteeSignerClient;
-  authMode: "signer" | "redirect";
+  authMode: "signer" | "redirect" | "embedded";
   authentication?: ReactNativeAuthenticationConfig;
   connectionInfo?: ConnectorConnectionResult;
   controller?: Controller;
+  runtime?: AbstraxionRuntime;
   logout: () => Promise<void>;
   login: () => Promise<void>;
 }
@@ -91,43 +83,25 @@ export interface AbstraxionConfig extends Omit<
   callbackUrl?: string;
   indexerUrl?: string;
   /**
-   * React Native only supports `redirect` (Expo WebBrowser + deep link) and `signer`
-   * (injected signing function). `popup`, `embedded`, and `auto` are web-only — see
-   * {@link ReactNativeAuthenticationConfig}.
+   * React Native supports `redirect` (Expo WebBrowser + deep link), `signer`
+   * (injected signing function), and (since Phase 9b) `embedded` (in-app
+   * `<WebView>`). `popup` and `auto` are web-only.
    */
   authentication?: ReactNativeAuthenticationConfig;
 }
 
-const noopBooleanDispatch = (() => undefined) as Dispatch<
-  SetStateAction<boolean>
->;
-const noopStringDispatch = (() => undefined) as Dispatch<
-  SetStateAction<string>
->;
-const noopAccountDispatch = (() => undefined) as Dispatch<
-  SetStateAction<SignArbSecp256k1HdWallet | undefined>
->;
-
 const defaultContextValue: AbstraxionContextProps = {
   isConnected: false,
-  setIsConnected: noopBooleanDispatch,
   isConnecting: false,
-  setIsConnecting: noopBooleanDispatch,
   isInitializing: true,
   isDisconnected: false,
+  isAwaitingApproval: false,
   isReturningFromAuth: false,
   isLoggingIn: false,
   abstraxionError: "",
-  setAbstraxionError: noopStringDispatch,
   abstraxionAccount: undefined,
-  setAbstraxionAccount: noopAccountDispatch,
   granterAddress: "",
-  showModal: false,
-  setShowModal: noopBooleanDispatch,
-  setGranterAddress: noopStringDispatch,
   contracts: undefined,
-  dashboardUrl: "",
-  setDashboardUrl: noopStringDispatch,
   chainId: testnetChainInfo.chainId,
   rpcUrl: testnetChainInfo.rpc,
   restUrl: testnetChainInfo.rest,
@@ -137,10 +111,11 @@ const defaultContextValue: AbstraxionContextProps = {
   indexerUrl: undefined,
   gasPrice: GasPrice.fromString("0.001uxion"),
   signingClient: undefined,
-  authMode: "redirect" as "signer" | "redirect",
+  authMode: "redirect",
   authentication: undefined,
   connectionInfo: undefined,
   controller: undefined,
+  runtime: undefined,
   logout: () => {
     return Promise.reject(
       new Error("AbstraxionContext: logout() called before provider mounted."),
@@ -166,16 +141,18 @@ function resolveReactNativeAuthentication(
       : { type: "redirect" };
   }
 
-  // Defensive runtime guard: TypeScript narrows AbstraxionConfig.authentication to
-  // ReactNativeAuthenticationConfig, but consumers using `as any` or untyped JS would
-  // otherwise silently crash later in createController. Fail fast with a clear message.
-  if (authentication.type !== "redirect" && authentication.type !== "signer") {
+  // Defensive runtime guard for non-TS callers using `as any`.
+  if (
+    authentication.type !== "redirect" &&
+    authentication.type !== "signer" &&
+    authentication.type !== "embedded"
+  ) {
     throw new Error(
       `[abstraxion-react-native] Authentication mode "${
         (authentication as { type: string }).type
       }" is not supported on React Native. ` +
-        `Use { type: "redirect" } (Expo WebBrowser) or { type: "signer" } (injected signing). ` +
-        `popup, embedded, and auto are web-only.`,
+        `Use { type: "redirect" } (Expo WebBrowser), { type: "signer" } (injected signing), ` +
+        `or { type: "embedded" } (react-native-webview). popup and auto are web-only.`,
     );
   }
 
@@ -193,27 +170,6 @@ function resolveReactNativeAuthentication(
   return authentication;
 }
 
-function normalizeReactNativeConfig(
-  config: AbstraxionConfig,
-): NormalizedAbstraxionConfig {
-  const {
-    callbackUrl,
-    indexerUrl: _indexerUrl,
-    chainId,
-    authentication,
-    ...rest
-  } = config;
-
-  return normalizeAbstraxionConfig({
-    ...rest,
-    chainId: chainId ?? testnetChainInfo.chainId,
-    authentication: resolveReactNativeAuthentication(
-      authentication,
-      callbackUrl,
-    ),
-  });
-}
-
 export function AbstraxionProvider({
   children,
   config,
@@ -221,83 +177,78 @@ export function AbstraxionProvider({
   children: ReactNode;
   config: AbstraxionConfig;
 }): JSX.Element {
-  const normalizedConfig = normalizeReactNativeConfig(config);
-  const controllerRef = useRef<Controller | null>(null);
-  const configRef = useRef<NormalizedAbstraxionConfig>(normalizedConfig);
-  const strategiesRef = useRef<{
-    storageStrategy: ReactNativeStorageStrategy;
-    redirectStrategy: ReactNativeRedirectStrategy;
-  } | null>(null);
-
-  if (!strategiesRef.current) {
-    strategiesRef.current = {
-      storageStrategy: new ReactNativeStorageStrategy(),
-      redirectStrategy: new ReactNativeRedirectStrategy(),
+  const resolvedConfig = useMemo<AbstraxionJsConfig>(() => {
+    const { callbackUrl, indexerUrl: _indexerUrl, chainId, authentication, ...rest } = config;
+    return {
+      ...rest,
+      chainId: chainId ?? testnetChainInfo.chainId,
+      authentication: resolveReactNativeAuthentication(authentication, callbackUrl),
     };
+  }, [config]);
+
+  // Singleton runtime — controllers are heavy; recreating breaks redirect
+  // callback detection across remounts.
+  const runtimeRef = useRef<AbstraxionRuntime | null>(null);
+  if (!runtimeRef.current) {
+    runtimeRef.current = createAbstraxionRuntime(resolvedConfig, {
+      autoInitialize: false,
+      strategies: {
+        storageStrategy: new ReactNativeStorageStrategy(),
+        redirectStrategy: new ReactNativeRedirectStrategy(),
+        // Always supply the RN transport — only used when authentication.type === "embedded".
+        iframeTransportStrategy:
+          resolvedConfig.authentication?.type === "embedded"
+            ? new RNWebViewIframeTransport()
+            : undefined,
+      },
+    });
   }
+  const runtime = runtimeRef.current;
+  const controller = runtime.controller;
+  const normalizedConfig = runtime.config;
+  const authMode: "signer" | "redirect" | "embedded" =
+    runtime.authMode === "embedded"
+      ? "embedded"
+      : runtime.authMode === "signer"
+        ? "signer"
+        : "redirect";
 
-  const previousConfig = configRef.current;
-
-  if (!controllerRef.current) {
-    controllerRef.current = createController(
-      normalizedConfig,
-      strategiesRef.current,
-    );
-    configRef.current = normalizedConfig;
-  } else {
-    const isSignerMode =
-      previousConfig.authentication?.type === "signer" &&
-      normalizedConfig.authentication?.type === "signer";
-    const hasSignerConfigChanged =
-      isSignerMode &&
-      previousConfig.authentication?.type === "signer" &&
-      normalizedConfig.authentication?.type === "signer" &&
-      previousConfig.authentication.getSignerConfig !==
-        normalizedConfig.authentication.getSignerConfig;
-
-    if (
-      hasSignerConfigChanged &&
-      controllerRef.current instanceof SignerController &&
-      normalizedConfig.authentication?.type === "signer"
-    ) {
-      controllerRef.current.updateGetSignerConfig(
-        normalizedConfig.authentication.getSignerConfig,
-      );
+  // Update dynamic getSignerConfig if the consumer swaps it in (Turnkey/Privy
+  // patterns where the authenticated function arrives after first render).
+  // Run as an effect so the controller mutation happens post-commit.
+  const incomingSignerConfig =
+    config.authentication?.type === "signer"
+      ? config.authentication.getSignerConfig
+      : undefined;
+  useEffect(() => {
+    if (incomingSignerConfig) {
+      runtime.updateGetSignerConfig(incomingSignerConfig);
     }
+  }, [runtime, incomingSignerConfig]);
 
-    configRef.current = normalizedConfig;
-  }
-
-  const controller = controllerRef.current;
-  const [controllerState, setControllerState] = useState<AccountState>(
-    controller.getState(),
+  const controllerState = useSyncExternalStore<AccountState>(
+    runtime.subscribe,
+    runtime.getState,
+    runtime.getState,
   );
-  const [manualError, setAbstraxionError] = useState("");
-  const [manualAccount, setAbstraxionAccount] = useState<
-    SignArbSecp256k1HdWallet | undefined
-  >(undefined);
-  const [manualGranterAddress, setGranterAddress] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [dashboardUrlOverride, setDashboardUrl] = useState("");
 
-  const authMode: "signer" | "redirect" =
-    controller instanceof SignerController ? "signer" : "redirect";
+  const isAwaitingApproval = useSyncExternalStore(
+    runtime.subscribeApproval,
+    runtime.getApprovalState,
+    runtime.getApprovalState,
+  );
 
   useEffect(() => {
-    const unsubscribe = controller.subscribe(setControllerState);
-
-    controller.initialize().catch((error) => {
+    runtime.initialize().catch((error) => {
       console.error(
         "[AbstraxionProvider] Controller initialization failed:",
         error,
       );
     });
-
     return () => {
-      unsubscribe();
-      controller.destroy();
+      runtime.destroy();
     };
-  }, [controller]);
+  }, [runtime]);
 
   const isInitializing = AccountStateGuards.isInitializing(controllerState);
   const isConnecting =
@@ -313,77 +264,77 @@ export function AbstraxionProvider({
 
   const abstraxionAccount = isConnected
     ? controllerState.account.keypair
-    : manualAccount;
+    : undefined;
   const granterAddress = isConnected
     ? controllerState.account.granterAddress
-    : manualGranterAddress;
+    : "";
   const signingClient = isConnected ? controllerState.signingClient : undefined;
-  const abstraxionError = isError ? controllerState.error : manualError;
-  const dashboardUrl = AccountStateGuards.isRedirecting(controllerState)
-    ? controllerState.dashboardUrl
-    : dashboardUrlOverride;
+  const abstraxionError = isError ? controllerState.error : "";
 
   const connectionInfo =
-    isConnected &&
-    controller instanceof SignerController &&
-    controller.getConnectionInfo
-      ? controller.getConnectionInfo()
+    isConnected && controller && typeof (controller as Controller).getConnectionInfo === "function"
+      ? (controller as Controller).getConnectionInfo?.()
       : undefined;
 
-  const login = useCallback(async () => {
-    setAbstraxionError("");
-    await controller.connect();
-  }, [controller]);
+  const login = useCallback(() => runtime.login(), [runtime]);
+  const logout = useCallback(() => runtime.logout(), [runtime]);
 
-  const logout = useCallback(async () => {
-    setAbstraxionError("");
-    setAbstraxionAccount(undefined);
-    setGranterAddress("");
-    await controller.disconnect();
-  }, [controller]);
+  const contextValue = useMemo<AbstraxionContextProps>(
+    () => ({
+      isConnected,
+      isConnecting,
+      isInitializing,
+      isDisconnected,
+      isAwaitingApproval,
+      isReturningFromAuth,
+      isLoggingIn,
+      abstraxionError,
+      abstraxionAccount,
+      granterAddress,
+      contracts: normalizedConfig.contracts,
+      chainId: normalizedConfig.chainId,
+      rpcUrl: normalizedConfig.rpcUrl,
+      restUrl: normalizedConfig.restUrl,
+      stake: normalizedConfig.stake,
+      bank: normalizedConfig.bank,
+      treasury: normalizedConfig.treasury,
+      indexerUrl: config.indexerUrl,
+      login,
+      logout,
+      gasPrice: GasPrice.fromString(normalizedConfig.gasPrice),
+      signingClient,
+      authMode,
+      authentication:
+        normalizedConfig.authentication as ReactNativeAuthenticationConfig,
+      connectionInfo,
+      controller,
+      runtime,
+    }),
+    [
+      isConnected,
+      isConnecting,
+      isInitializing,
+      isDisconnected,
+      isAwaitingApproval,
+      isReturningFromAuth,
+      isLoggingIn,
+      abstraxionError,
+      abstraxionAccount,
+      granterAddress,
+      normalizedConfig,
+      config.indexerUrl,
+      authMode,
+      signingClient,
+      connectionInfo,
+      controller,
+      runtime,
+      login,
+      logout,
+    ],
+  );
 
   return (
-    <AbstraxionContext.Provider
-      value={{
-        isConnected,
-        setIsConnected: noopBooleanDispatch,
-        isConnecting,
-        setIsConnecting: noopBooleanDispatch,
-        isInitializing,
-        isDisconnected,
-        isReturningFromAuth,
-        isLoggingIn,
-        abstraxionError,
-        setAbstraxionError,
-        abstraxionAccount,
-        setAbstraxionAccount,
-        granterAddress,
-        showModal,
-        setShowModal,
-        setGranterAddress,
-        contracts: normalizedConfig.contracts,
-        dashboardUrl,
-        setDashboardUrl,
-        chainId: normalizedConfig.chainId,
-        rpcUrl: normalizedConfig.rpcUrl,
-        restUrl: normalizedConfig.restUrl,
-        stake: normalizedConfig.stake,
-        bank: normalizedConfig.bank,
-        treasury: normalizedConfig.treasury,
-        indexerUrl: config.indexerUrl,
-        login,
-        logout,
-        gasPrice: GasPrice.fromString(normalizedConfig.gasPrice),
-        signingClient,
-        authMode,
-        // resolveReactNativeAuthentication has already narrowed/asserted this
-        // to ReactNativeAuthenticationConfig before normalizeAbstraxionConfig ran.
-        authentication:
-          normalizedConfig.authentication as ReactNativeAuthenticationConfig,
-        connectionInfo,
-        controller,
-      }}
-    >
+    <AbstraxionContext.Provider value={contextValue}>
       {children}
     </AbstraxionContext.Provider>
   );

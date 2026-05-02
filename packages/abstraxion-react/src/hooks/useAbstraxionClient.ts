@@ -1,12 +1,15 @@
 import { useContext, useEffect, useState } from "react";
-import { CosmWasmClient, testnetChainInfo } from "@burnt-labs/abstraxion-js";
+import {
+  CosmWasmClient,
+  testnetChainInfo,
+} from "@burnt-labs/abstraxion-js";
 import { AbstraxionContext } from "@/src/AbstraxionProvider";
 
 export const useAbstraxionClient = (): {
   readonly client: CosmWasmClient | undefined;
   readonly error: Error | undefined;
 } => {
-  const { rpcUrl } = useContext(AbstraxionContext);
+  const { rpcUrl, runtime } = useContext(AbstraxionContext);
 
   const [abstractClient, setAbstractClient] = useState<
     CosmWasmClient | undefined
@@ -14,16 +17,16 @@ export const useAbstraxionClient = (): {
   const [error, setError] = useState<Error | undefined>(undefined);
 
   useEffect(() => {
+    let cancelled = false;
     async function getClient() {
       try {
         setError(undefined);
-        const client = await CosmWasmClient.connect(
-          // Should be set in the context but defaulting here just in case
-          rpcUrl || testnetChainInfo.rpc,
-        );
-
-        setAbstractClient(client);
+        const client = runtime
+          ? await runtime.createReadClient()
+          : await CosmWasmClient.connect(rpcUrl || testnetChainInfo.rpc);
+        if (!cancelled) setAbstractClient(client);
       } catch (err) {
+        if (cancelled) return;
         const errorMessage = err instanceof Error ? err.message : String(err);
         setError(
           new Error(
@@ -35,7 +38,10 @@ export const useAbstraxionClient = (): {
     }
 
     getClient();
-  }, [rpcUrl]);
+    return () => {
+      cancelled = true;
+    };
+  }, [rpcUrl, runtime]);
 
   return {
     client: abstractClient,
