@@ -96,6 +96,14 @@ export interface IframeControllerConfig {
   iframeTransportStrategy?: IframeTransportStrategy;
 }
 
+/** Sentinel thrown internally by `connect()` to signal a cancelled login. */
+class LoginCancelledError extends Error {
+  constructor() {
+    super("Login cancelled by user");
+    this.name = "LoginCancelledError";
+  }
+}
+
 /**
  * Iframe Controller
  * Handles inline iframe-based authentication flow
@@ -122,6 +130,11 @@ export class IframeController extends BaseController {
   private _approvalListeners = new Set<(value: boolean) => void>();
   /** Reject callback for the in-flight signAndBroadcast, used by cancelApproval(). */
   private _cancelPendingApproval: (() => void) | null = null;
+  /** Cancellation handle for the in-flight connect() flow, used by cancelLogin(). */
+  private _loginCancellation: {
+    aborted: boolean;
+    reject: ((error: Error) => void) | null;
+  } | null = null;
 
   /**
    * Factory method to create IframeController from NormalizedAbstraxionConfig
@@ -358,10 +371,44 @@ export class IframeController extends BaseController {
 
     this.dispatch({ type: "START_CONNECT" });
 
+    const cancellation: NonNullable<IframeController["_loginCancellation"]> = {
+      aborted: false,
+      reject: null,
+    };
+    this._loginCancellation = cancellation;
+
+    // Wraps each await so cancelLogin() can reject in-flight transport calls.
+    // Only used for promises whose rejection reason we care about preserving
+    // verbatim — internal awaits use `throwIfAborted()` after the fact.
+    const cancellable = <T>(p: Promise<T>): Promise<T> =>
+      new Promise<T>((resolve, reject) => {
+        if (cancellation.aborted) {
+          reject(new LoginCancelledError());
+          return;
+        }
+        cancellation.reject = reject;
+        p.then(
+          (value) => {
+            if (cancellation.reject === reject) cancellation.reject = null;
+            resolve(value);
+          },
+          (error) => {
+            if (cancellation.reject === reject) cancellation.reject = null;
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- forwards the underlying transport rejection unchanged
+            reject(error);
+          },
+        );
+      });
+
+    const throwIfAborted = (): void => {
+      if (cancellation.aborted) throw new LoginCancelledError();
+    };
+
     try {
       this.granteeWallet =
         await this.abstraxionAuth.generateAndStoreTempAccount();
       this.granteeAddress = await this.abstraxionAuth.getKeypairAddress();
+      throwIfAborted();
 
       const iframeUrl = this.buildIframeUrl();
 
@@ -376,26 +423,32 @@ export class IframeController extends BaseController {
         this.transport.navigate(iframeUrl);
       }
 
-      await readyPromise;
+      await cancellable(readyPromise);
 
-      const response = await this.transport.sendRequest<
-        ConnectPayload,
-        ConnectResponse
-      >(
-        IframeMessageType.CONNECT,
-        {
-          grantParams: this.config.treasury
-            ? {
-                treasuryAddress: this.config.treasury,
-                grantee: this.granteeAddress!,
-              }
-            : undefined,
-        },
-        300_000, // 5 min — user needs time for auth + grant approval
+      const response = await cancellable(
+        this.transport.sendRequest<ConnectPayload, ConnectResponse>(
+          IframeMessageType.CONNECT,
+          {
+            grantParams: this.config.treasury
+              ? {
+                  treasuryAddress: this.config.treasury,
+                  grantee: this.granteeAddress!,
+                }
+              : undefined,
+          },
+          300_000, // 5 min — user needs time for auth + grant approval
+        ),
       );
 
-      await this.completeConnection(response.address);
+      // completeConnection() has its own awaits (setGranter, getSigner) — pass
+      // the abort guard so a cancel landing mid-finalization doesn't dispatch
+      // SET_CONNECTED on top of an already-unmounted transport.
+      await this.completeConnection(response.address, throwIfAborted);
     } catch (error) {
+      if (error instanceof LoginCancelledError) {
+        // cancelLogin() already unmounted the transport and reset state.
+        return;
+      }
       console.error("[IframeController] Connection error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Connection failed";
@@ -405,7 +458,46 @@ export class IframeController extends BaseController {
         error: errorMessage,
       });
       throw error;
+    } finally {
+      if (this._loginCancellation === cancellation) {
+        this._loginCancellation = null;
+      }
     }
+  }
+
+  /**
+   * Cancel an in-flight connect() / login flow.
+   *
+   * Used by embedded UI hosts when the user dismisses the login modal/WebView
+   * mid-flow. Rejects any awaited transport call, unmounts the iframe, and
+   * resets state so the consumer can retry. No-op if no login is in flight.
+   */
+  cancelLogin(): void {
+    if (!this.abortPendingLogin()) return;
+
+    if (this.transport.isMounted()) {
+      this.transport.unmount();
+    }
+
+    if (this.getState().status !== "connected") {
+      this.dispatch({ type: "RESET" });
+    }
+  }
+
+  /**
+   * Mark any in-flight `connect()` as aborted and reject its currently-awaited
+   * promise. Returns true if a login was in flight, false otherwise. Shared
+   * by `cancelLogin()` (user-initiated) and `destroy()` (controller teardown).
+   */
+  private abortPendingLogin(): boolean {
+    const cancellation = this._loginCancellation;
+    if (!cancellation) return false;
+
+    cancellation.aborted = true;
+    cancellation.reject?.(new LoginCancelledError());
+    cancellation.reject = null;
+    this._loginCancellation = null;
+    return true;
   }
 
   /**
@@ -585,6 +677,7 @@ export class IframeController extends BaseController {
 
   /** Cleanup resources. */
   destroy(): void {
+    this.abortPendingLogin();
     this.unsubscribePushMessages?.();
     this.unsubscribePushMessages = null;
     this.transport.unmount();
@@ -664,11 +757,19 @@ export class IframeController extends BaseController {
 
   /**
    * Complete connection after receiving address from MessageChannel CONNECT response.
+   *
+   * Optional `throwIfAborted` is invoked between awaits so that a `cancelLogin()`
+   * landing during finalization aborts before `SET_CONNECTED` dispatches on top
+   * of an already-unmounted transport.
    */
-  private async completeConnection(granterAddress: string): Promise<void> {
+  private async completeConnection(
+    granterAddress: string,
+    throwIfAborted: () => void = () => undefined,
+  ): Promise<void> {
     this.granterAddress = granterAddress;
 
     await this.abstraxionAuth.setGranter(granterAddress);
+    throwIfAborted();
     this.abstraxionAuth.abstractAccount = this.granteeWallet!;
 
     this.eventEmitter.emit("authenticated", { address: granterAddress });
@@ -676,6 +777,7 @@ export class IframeController extends BaseController {
     const signingClient = await this.abstraxionAuth.getSigner(
       GasPrice.fromString(this.config.gasPrice),
     );
+    throwIfAborted();
     this.signingClient = signingClient;
 
     const accountInfo: AccountInfo = {
