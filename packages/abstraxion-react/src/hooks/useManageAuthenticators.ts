@@ -4,65 +4,51 @@
  * Opens the dashboard so the user can add or remove authenticators on their
  * XION account. Supports popup, iframe (embedded), and redirect modes.
  *
+ * Delegates to `runtime.manageAuthenticators` / `runtime.isManageAuthSupported`
+ * so the same logic powers React, React Native, Svelte, and any other
+ * framework wrapper.
  */
 
 import { useCallback, useContext, useSyncExternalStore } from "react";
-import {
-  IframeController,
-  PopupController,
-  RedirectController,
-} from "@burnt-labs/abstraxion-js";
+import { RedirectController } from "@burnt-labs/abstraxion-js";
 import type { ManageAuthResult } from "@burnt-labs/abstraxion-js";
 import { AbstraxionContext } from "../AbstraxionProvider";
 
 export interface UseManageAuthenticatorsReturn {
-  /** Open the manage-authenticators flow. Resolves when done (popup/iframe) or navigates away (redirect). */
   manageAuthenticators: () => Promise<void>;
-  /** True when the current authentication mode supports manage-authenticators. */
   isSupported: boolean;
-  /**
-   * Populated for redirect mode only — contains the result after the user
-   * returns from the dashboard manage-authenticators page. Always null for
-   * popup and iframe modes.
-   */
+  /** Human-readable reason when `isSupported` is false; `undefined` otherwise. */
+  unsupportedReason: string | undefined;
   manageAuthResult: ManageAuthResult | null;
-  /** Clear `manageAuthResult` once handled. No-op in non-redirect modes. */
   clearManageAuthResult: () => void;
 }
 
 export function useManageAuthenticators(): UseManageAuthenticatorsReturn {
-  const { controller, granterAddress } = useContext(AbstraxionContext);
+  const { runtime, controller, granterAddress } = useContext(AbstraxionContext);
 
-  const isSupported =
-    controller instanceof PopupController ||
-    controller instanceof IframeController ||
-    controller instanceof RedirectController;
+  const isSupported = runtime?.isManageAuthSupported ?? false;
+  const unsupportedReason = isSupported
+    ? undefined
+    : (runtime?.manageAuthUnsupportedReason ??
+      "useManageAuthenticators: AbstraxionProvider is not mounted.");
 
   const manageAuthenticators = useCallback(async () => {
+    if (!runtime) {
+      throw new Error(
+        "useManageAuthenticators: AbstraxionProvider is not mounted.",
+      );
+    }
     if (!granterAddress) {
       throw new Error(
         "useManageAuthenticators: user is not connected. Call login() first.",
       );
     }
+    return runtime.manageAuthenticators(granterAddress);
+  }, [runtime, granterAddress]);
 
-    if (
-      controller instanceof PopupController ||
-      controller instanceof IframeController
-    ) {
-      return controller.promptManageAuthenticators(granterAddress);
-    }
-
-    if (controller instanceof RedirectController) {
-      return controller.promptManageAuthenticators(granterAddress);
-    }
-
-    throw new Error(
-      "useManageAuthenticators is not supported in the current authentication mode. " +
-        "Use popup, iframe (embedded), or redirect authentication.",
-    );
-  }, [controller, granterAddress]);
-
-  // For redirect mode: subscribe to manageAuthResult via useSyncExternalStore
+  // Redirect mode: the manage-auth result survives the navigation round-trip
+  // via the controller's manageAuthResult store. Subscribe via
+  // useSyncExternalStore so consumers see the result on return.
   const manageAuthResult = useSyncExternalStore(
     (cb) =>
       controller instanceof RedirectController
@@ -84,6 +70,7 @@ export function useManageAuthenticators(): UseManageAuthenticatorsReturn {
   return {
     manageAuthenticators,
     isSupported,
+    unsupportedReason,
     manageAuthResult,
     clearManageAuthResult,
   };

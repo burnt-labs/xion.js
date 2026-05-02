@@ -46,6 +46,7 @@ import {
   CosmWasmClient,
   createSignerFromSigningFunction,
   GasPrice,
+  RedirectController,
 } from "@burnt-labs/abstraxion-js";
 import { AbstraxionContext } from "../../components/AbstraxionContext";
 import { useAbstraxionAccount } from "../useAbstraxionAccount";
@@ -58,26 +59,86 @@ type ContextValue = React.ContextType<typeof AbstraxionContext>;
 function createContextValue(
   overrides: Partial<ContextValue> = {},
 ): ContextValue {
+  // Build a runtime stub that mirrors `runtime.manageAuthenticators` /
+  // `runtime.createReadClient` / `runtime.createDirectSigningClient` semantics
+  // for the controller passed via overrides.
+  const controllerForRuntime =
+    overrides.controller ?? (undefined as unknown as ContextValue["controller"]);
+  const isSupported = controllerForRuntime instanceof RedirectController;
+  const overrideAuthMode = (overrides.authMode ?? "redirect") as
+    | "signer"
+    | "redirect"
+    | "embedded";
+  const overrideConnectionInfo = overrides.connectionInfo;
+  const overrideGranterAddress = overrides.granterAddress;
+  const overrideRpcUrl = overrides.rpcUrl ?? "https://rpc.test";
+  const runtime = {
+    isManageAuthSupported: isSupported,
+    manageAuthUnsupportedReason: isSupported
+      ? undefined
+      : "Manage authenticators is not supported in signer mode. Use popup, redirect, or embedded authentication to add or remove authenticators.",
+    manageAuthenticators: vi.fn(async (addr: string) => {
+      const ctrl = controllerForRuntime as
+        | { promptManageAuthenticators?: (addr: string) => Promise<void> }
+        | undefined;
+      if (ctrl && typeof ctrl.promptManageAuthenticators === "function") {
+        return ctrl.promptManageAuthenticators(addr);
+      }
+      throw new Error(
+        "Manage authenticators is not supported in signer mode. Use redirect or embedded authentication to add or remove authenticators.",
+      );
+    }),
+    // Mirror the real runtime's `createReadClient` / `createDirectSigningClient`
+    // surface so hook tests can assert against the same downstream mocks the
+    // production runtime would call.
+    createReadClient: vi.fn(async () => CosmWasmClient.connect(overrideRpcUrl)),
+    createDirectSigningClient: vi.fn(async () => {
+      if (overrideAuthMode === "signer") {
+        const info = overrideConnectionInfo as
+          | { signMessage: unknown; metadata?: Record<string, unknown> }
+          | undefined;
+        if (!info || !overrideGranterAddress) return undefined;
+        const meta = info.metadata ?? {};
+        createSignerFromSigningFunction({
+          smartAccountAddress: overrideGranterAddress,
+          authenticatorIndex: (meta.authenticatorIndex as number | undefined) ?? 0,
+          authenticatorType: meta.authenticatorType as never,
+          signMessage: info.signMessage as never,
+        });
+        return AAClient.connectWithSigner(overrideRpcUrl, signer as never, {
+          gasPrice: GasPrice.fromString("0.001uxion"),
+        });
+      }
+      // Redirect / embedded: production runtime returns a RequireSigningClient.
+      // Tests don't need the real implementation; a sentinel object is enough.
+      return { __mockRequireSigningClient: true } as never;
+    }),
+    subscribe: vi.fn(() => () => undefined),
+    subscribeApproval: vi.fn(() => () => undefined),
+    getApprovalState: vi.fn(() => false),
+    getState: vi.fn(),
+    initialize: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+    destroy: vi.fn(),
+    updateGetSignerConfig: vi.fn(),
+    controller: controllerForRuntime,
+    config: {} as unknown,
+    authMode: overrideAuthMode,
+  } as unknown as ContextValue["runtime"];
+
   return {
     isConnected: false,
-    setIsConnected: vi.fn(),
     isConnecting: false,
-    setIsConnecting: vi.fn(),
     isInitializing: false,
     isDisconnected: false,
+    isAwaitingApproval: false,
     isReturningFromAuth: false,
     isLoggingIn: false,
     abstraxionError: "",
-    setAbstraxionError: vi.fn(),
     abstraxionAccount: undefined,
-    setAbstraxionAccount: vi.fn(),
     granterAddress: "",
-    showModal: false,
-    setShowModal: vi.fn(),
-    setGranterAddress: vi.fn(),
     contracts: undefined,
-    dashboardUrl: "",
-    setDashboardUrl: vi.fn(),
     chainId: "xion-testnet-2",
     rpcUrl: "https://rpc.test",
     restUrl: "https://rest.test",
@@ -91,6 +152,7 @@ function createContextValue(
     authentication: { type: "redirect" },
     connectionInfo: undefined,
     controller: undefined,
+    runtime,
     login: vi.fn().mockResolvedValue(undefined),
     logout: vi.fn().mockResolvedValue(undefined),
     ...overrides,
@@ -178,7 +240,7 @@ describe("React Native hooks", () => {
     expect(result.current.error).toBeUndefined();
   });
 
-  it("useAbstraxionSigningClient reports unsupported requireAuth in redirect mode", async () => {
+  it("useAbstraxionSigningClient returns a direct signing client in redirect requireAuth mode", async () => {
     const { result } = renderHook(
       () => useAbstraxionSigningClient({ requireAuth: true }),
       {
@@ -191,10 +253,12 @@ describe("React Native hooks", () => {
       },
     );
 
+    // Runtime now produces a RequireSigningClient for redirect mode (Phase 9e
+    // unification — previously the RN hook fenced this off).
     await waitFor(() => {
-      expect(result.current.error).toContain("React Native signer mode");
+      expect(result.current.client).toBeDefined();
     });
-    expect(result.current.client).toBeUndefined();
+    expect(result.current.error).toBeUndefined();
     expect(result.current.signArb).toBeUndefined();
   });
 

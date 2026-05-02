@@ -1,24 +1,30 @@
-import { useContext, useEffect, useState } from "react";
 import {
-  AAClient,
-  createSignerFromSigningFunction,
-} from "@burnt-labs/abstraxion-js";
-import type {
-  AuthenticatorType,
-  SigningClient,
-  SignResult,
-} from "@burnt-labs/abstraxion-js";
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { RedirectController } from "@burnt-labs/abstraxion-js";
+import type { SigningClient, SignResult } from "@burnt-labs/abstraxion-js";
 import { AbstraxionContext } from "../components/AbstraxionContext";
 
+/**
+ * Options for `useAbstraxionSigningClient`.
+ */
 export interface UseAbstraxionSigningClientOptions {
   /**
-   * When true, returns a direct signing client where the active RN auth mode
-   * supports direct signing. Signer mode can provide `AAClient`; redirect mode
-   * currently supports session-key signing only in React Native.
+   * When true, returns a direct signing client (signer mode → AAClient,
+   * redirect/embedded → RequireSigningClient mediated by the dashboard).
+   * When false/undefined, returns the GranteeSignerClient for session-key
+   * signing (gasless, no popup).
    */
   requireAuth?: boolean;
 }
 
+/**
+ * Return type for `useAbstraxionSigningClient`.
+ */
 export interface UseAbstraxionSigningClientReturn {
   readonly client: SigningClient | undefined;
   readonly signArb:
@@ -26,87 +32,84 @@ export interface UseAbstraxionSigningClientReturn {
     | undefined;
   readonly rpcUrl: string;
   readonly error: string | undefined;
+  /**
+   * Result from a redirect signing flow (populated after returning from the
+   * dashboard). Null when no result is pending or not in redirect mode.
+   */
   readonly signResult: SignResult | null;
+  /** Clear the signResult after consuming it. */
   readonly clearSignResult: (() => void) | undefined;
 }
 
+/**
+ * Hook to get a signing client for transactions.
+ *
+ * Direct-signing client construction is delegated to
+ * `runtime.createDirectSigningClient()`, which covers signer / redirect /
+ * embedded modes with a single async call. The hook itself only mirrors the
+ * resulting promise into React state and subscribes to the redirect-mode
+ * `signResult` store.
+ */
 export const useAbstraxionSigningClient = (
   options?: UseAbstraxionSigningClientOptions,
 ): UseAbstraxionSigningClientReturn => {
   const {
     abstraxionAccount,
     authMode,
-    connectionInfo,
-    gasPrice,
+    controller,
     granterAddress,
     rpcUrl,
-    signingClient,
+    runtime,
+    signingClient: signingClientFromState,
   } = useContext(AbstraxionContext);
 
   const requireAuth = options?.requireAuth ?? false;
-  const [aaClient, setAaClient] = useState<AAClient | undefined>(undefined);
+
+  const [directClient, setDirectClient] = useState<SigningClient | undefined>(
+    undefined,
+  );
   const [error, setError] = useState<string | undefined>(undefined);
 
+  const redirectController =
+    controller instanceof RedirectController ? controller : undefined;
+  const signResult = useSyncExternalStore(
+    (cb) => redirectController?.signResult.subscribe(cb) ?? (() => undefined),
+    () => redirectController?.signResult.snapshot() ?? null,
+    () => null,
+  );
+  const clearSignResult = useCallback(() => {
+    redirectController?.signResult.clear();
+  }, [redirectController]);
+
   useEffect(() => {
-    if (!requireAuth) {
-      setAaClient(undefined);
+    if (!requireAuth || !runtime) {
+      setDirectClient(undefined);
       setError(undefined);
       return;
     }
 
-    if (authMode !== "signer") {
-      setAaClient(undefined);
-      setError(
-        "Direct signing with requireAuth is only supported in React Native signer mode. Redirect mode supports session-key signing only.",
-      );
-      return;
-    }
-
-    if (!connectionInfo) {
-      setAaClient(undefined);
-      setError(
-        "Direct signing requires an active signer connection. Please ensure you are logged in.",
-      );
-      return;
-    }
-
-    if (!granterAddress) {
-      setAaClient(undefined);
+    // Signer mode AAClient construction needs a connected account. Surface a
+    // friendly error rather than a raw runtime throw.
+    if (authMode === "signer" && !granterAddress) {
+      setDirectClient(undefined);
       setError(
         "Direct signing requires a connected account. Please ensure you are logged in.",
       );
       return;
     }
 
-    const createClient = async (): Promise<void> => {
-      try {
-        const authenticatorType = connectionInfo.metadata
-          ?.authenticatorType as AuthenticatorType;
-        const authenticatorIndex =
-          connectionInfo.metadata?.authenticatorIndex ?? 0;
-
-        if (!authenticatorType) {
-          throw new Error(
-            "Authenticator type not available in connection info",
-          );
-        }
-
-        const signer = createSignerFromSigningFunction({
-          smartAccountAddress: granterAddress,
-          authenticatorIndex,
-          authenticatorType,
-          signMessage: connectionInfo.signMessage,
-        });
-
-        const client = await AAClient.connectWithSigner(rpcUrl, signer, {
-          gasPrice,
-        });
-
-        setAaClient(client);
+    let cancelled = false;
+    runtime
+      .createDirectSigningClient()
+      .then((client) => {
+        if (cancelled) return;
+        setDirectClient(client);
         setError(undefined);
-      } catch (err) {
+      })
+      .catch((err) => {
+        if (cancelled) return;
         console.error(
-          "[useAbstraxionSigningClient] Error creating AAClient:",
+          "[useAbstraxionSigningClient] createDirectSigningClient failed:",
           err,
         );
         setError(
@@ -114,16 +117,27 @@ export const useAbstraxionSigningClient = (
             ? err.message
             : "Failed to create direct signing client",
         );
-        setAaClient(undefined);
-      }
-    };
+        setDirectClient(undefined);
+      });
 
-    void createClient();
-  }, [authMode, connectionInfo, gasPrice, granterAddress, requireAuth, rpcUrl]);
+    return () => {
+      cancelled = true;
+    };
+  }, [requireAuth, runtime, authMode, granterAddress]);
 
   if (requireAuth) {
+    if (authMode === "redirect") {
+      return {
+        client: directClient,
+        signArb: undefined,
+        rpcUrl,
+        error,
+        signResult,
+        clearSignResult: signResult ? clearSignResult : undefined,
+      };
+    }
     return {
-      client: authMode === "signer" ? aaClient : undefined,
+      client: directClient,
       signArb: undefined,
       rpcUrl,
       error,
@@ -133,7 +147,7 @@ export const useAbstraxionSigningClient = (
   }
 
   return {
-    client: signingClient,
+    client: signingClientFromState,
     signArb: abstraxionAccount?.signArb,
     rpcUrl,
     error: undefined,

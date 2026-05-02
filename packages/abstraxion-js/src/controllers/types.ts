@@ -13,6 +13,7 @@ import type {
   StorageStrategy,
 } from "@burnt-labs/abstraxion-core";
 import type { NormalizedAbstraxionConfig } from "../types";
+import type { IframeTransportStrategy } from "../strategies/IframeTransportStrategy";
 
 /**
  * State subscription callback
@@ -102,6 +103,12 @@ export interface ControllerStrategies {
   storageStrategy: StorageStrategy;
   /** Redirect strategy (web: window.location, React Native: deep linking, etc.) */
   redirectStrategy: RedirectStrategy;
+  /**
+   * Iframe transport strategy. Required when `authentication.type === "embedded"`.
+   * Web hosts use `BrowserIframeTransportStrategy`; React Native hosts use
+   * `RNWebViewIframeTransport` from `@burnt-labs/abstraxion-react-native`.
+   */
+  iframeTransportStrategy?: IframeTransportStrategy;
 }
 
 /**
