@@ -2,9 +2,10 @@
  * Iframe Controller
  * Inline iframe-based authentication flow
  *
- * Renders the full dashboard app inside an inline iframe. The dApp controls
- * where and how big the iframe is via a container element. Authentication
- * and grant approval happen inside the iframe UI.
+ * Renders the full dashboard app inside an inline iframe (web) or WebView
+ * (React Native). Mount + transport details are delegated to a host-supplied
+ * `IframeTransportStrategy`, so this controller has no direct DOM or
+ * react-native-webview dependency.
  *
  * Communication uses MessageChannelManager for request-response (CONNECT,
  * SIGN_AND_BROADCAST) — each request gets its own isolated MessageChannel
@@ -12,29 +13,13 @@
  *
  * Two disconnect types exist:
  * - DISCONNECT (soft): SDK detaches the iframe without notifying the dashboard.
- *   Dashboard session survives. Not currently sent but defined for future use
- *   (e.g. ITP storage cleanup, UI hints).
- * - HARD_DISCONNECT: Full session clear on both sides. Sent as a raw postMessage
- *   in both directions (SDK → dashboard and dashboard → SDK). Currently only the
- *   dashboard → SDK direction is active (user clicks disconnect inside the iframe).
- *   The SDK → dashboard direction is defined for future use.
- *
- * The iframe handles:
- * - User authentication (Stytch OAuth, Passkey, MetaMask, Keplr, etc.)
- * - Grant permission UI
- *
- * The SDK (this controller) handles:
- * - Iframe lifecycle management
- * - Local session keypair generation (via AbstraxionAuth)
- * - GranteeSignerClient creation
- * - MessageChannel-based CONNECT / SIGN_AND_BROADCAST
- * - IFRAME_READY handshake (waits for dashboard to mount before sending requests)
- * - Session restoration with on-chain grant verification (via orchestrator)
+ *   Dashboard session survives. Not currently sent but defined for future use.
+ * - HARD_DISCONNECT: Full session clear on both sides. The dashboard → SDK
+ *   direction is delivered as a push event via `IframeTransportStrategy.onPushMessage`.
  */
 
 import {
   AbstraxionAuth,
-  MessageChannelManager,
   GranteeSignerClient,
   TypedEventEmitter,
 } from "@burnt-labs/abstraxion-core";
@@ -73,6 +58,8 @@ import type {
   IframeAuthentication,
   NormalizedAbstraxionConfig,
 } from "../types";
+import { BrowserIframeTransportStrategy } from "../strategies/BrowserIframeTransportStrategy";
+import type { IframeTransportStrategy } from "../strategies/IframeTransportStrategy";
 
 /**
  * Configuration for IframeController
@@ -101,6 +88,12 @@ export interface IframeControllerConfig {
   storageStrategy: StorageStrategy;
   /** Redirect strategy (required by AbstraxionAuth, not used for actual redirects) */
   redirectStrategy: RedirectStrategy;
+  /**
+   * Iframe transport strategy. Optional — defaults to `BrowserIframeTransportStrategy`
+   * for back-compat with web consumers and existing tests. React Native callers MUST
+   * pass an `RNWebViewIframeTransport`.
+   */
+  iframeTransportStrategy?: IframeTransportStrategy;
 }
 
 /**
@@ -112,9 +105,7 @@ export class IframeController extends BaseController {
   private abstraxionAuth: AbstraxionAuth;
   private orchestrator: ConnectionOrchestrator;
   private initializePromise: Promise<void> | null = null;
-  private iframe: HTMLIFrameElement | null = null;
-  /** Handles all request-response communication with the iframe */
-  private messageManager: MessageChannelManager;
+  private transport: IframeTransportStrategy;
   private iframeOrigin: string;
   private granterAddress: string | null = null;
   private granteeWallet: SignArbSecp256k1HdWallet | null = null;
@@ -123,8 +114,7 @@ export class IframeController extends BaseController {
   private eventEmitter = new TypedEventEmitter<
     IframeSDKEvents & Record<string, unknown>
   >();
-  private disconnectListener: ((event: MessageEvent) => void) | null = null;
-  private iframeReadyListener: ((event: MessageEvent) => void) | null = null;
+  private unsubscribePushMessages: (() => void) | null = null;
 
   // Transient UI state: true while a requireAuth signing request is pending
   // and the iframe needs to be visible for user approval.
@@ -140,6 +130,7 @@ export class IframeController extends BaseController {
     config: NormalizedAbstraxionConfig,
     storageStrategy: StorageStrategy,
     redirectStrategy: RedirectStrategy,
+    iframeTransportStrategy?: IframeTransportStrategy,
   ): IframeController {
     if (config.authentication?.type !== "embedded") {
       throw new Error(
@@ -158,6 +149,7 @@ export class IframeController extends BaseController {
       contracts: config.contracts,
       storageStrategy,
       redirectStrategy,
+      iframeTransportStrategy,
     };
 
     return new IframeController(iframeConfig);
@@ -166,7 +158,6 @@ export class IframeController extends BaseController {
   constructor(config: IframeControllerConfig) {
     super({ status: "initializing" });
     this.config = config;
-    this.messageManager = new MessageChannelManager();
 
     // Extract and validate iframe origin
     if (!config.iframe.iframeUrl) {
@@ -181,6 +172,22 @@ export class IframeController extends BaseController {
     } catch {
       throw new Error("Invalid iframe URL in configuration");
     }
+
+    // Default to browser transport so the existing tests + web consumers
+    // continue to work without explicit injection. React Native consumers
+    // pass an RN WebView-backed transport.
+    this.transport =
+      config.iframeTransportStrategy ?? new BrowserIframeTransportStrategy();
+
+    // If an explicit container was passed (web only), bind it to the transport.
+    if (config.iframe.containerElement) {
+      this.transport.setContainer(config.iframe.containerElement);
+    }
+
+    // Subscribe to dashboard push messages (HARD_DISCONNECT etc.)
+    this.unsubscribePushMessages = this.transport.onPushMessage(
+      this.handlePushMessage.bind(this),
+    );
 
     // Create AbstraxionAuth for keypair/session management (same as Popup/Redirect controllers)
     this.abstraxionAuth = new AbstraxionAuth(
@@ -225,6 +232,37 @@ export class IframeController extends BaseController {
   }
 
   /**
+   * Override the default transport strategy. Used by `createAbstraxionRuntime`
+   * so the runtime can inject a host-supplied transport without forcing every
+   * controller config to thread the strategy through manually.
+   *
+   * Replaces any previously bound transport — the old one is unmounted first.
+   */
+  setTransportStrategy(transport: IframeTransportStrategy): void {
+    if (transport === this.transport) return;
+
+    if (this.transport) {
+      this.unsubscribePushMessages?.();
+      this.unsubscribePushMessages = null;
+      this.transport.unmount();
+    }
+    this.transport = transport;
+
+    if (this.config.iframe.containerElement) {
+      this.transport.setContainer(this.config.iframe.containerElement);
+    }
+
+    this.unsubscribePushMessages = this.transport.onPushMessage(
+      this.handlePushMessage.bind(this),
+    );
+  }
+
+  /** Returns the active transport strategy. Mainly useful for tests/embedded UI hosts. */
+  getTransportStrategy(): IframeTransportStrategy {
+    return this.transport;
+  }
+
+  /**
    * Subscribe to iframe SDK events
    */
   on<K extends keyof IframeSDKEvents>(
@@ -246,10 +284,7 @@ export class IframeController extends BaseController {
 
   /**
    * Initialize: attempt to restore a prior session from storage.
-   * Uses orchestrator.restoreSession() — same pattern as Redirect/Signer/Popup controllers.
-   * Verifies grants on-chain before restoring session.
-   * Idempotent: returns the same promise if called while already initializing
-   * (guards against React strict-mode double-invocation)
+   * Idempotent: returns the same promise if called while already initializing.
    */
   async initialize(): Promise<void> {
     if (this.initializePromise) return this.initializePromise;
@@ -259,7 +294,6 @@ export class IframeController extends BaseController {
 
   private async doInitialize(): Promise<void> {
     try {
-      // Restore session via orchestrator (verifies grants on-chain, creates signing client)
       const restorationResult = await this.orchestrator.restoreSession(true);
 
       if (
@@ -268,7 +302,6 @@ export class IframeController extends BaseController {
       ) {
         const accountInfo = getAccountInfoFromRestored(restorationResult);
 
-        // Keep instance vars for public API (getAddress, getGranteeAddress, getSigningClient)
         this.granterAddress = accountInfo.granterAddress;
         this.granteeWallet = accountInfo.keypair;
         this.granteeAddress = accountInfo.granteeAddress;
@@ -281,8 +314,8 @@ export class IframeController extends BaseController {
         });
 
         // Try to mount the iframe showing the "Connected" view.
-        // containerElement may not be set yet (React ref timing),
-        // in which case setContainerElement() will handle it later.
+        // The transport may not have a container yet (React ref timing),
+        // in which case setContainerElement() will retry later.
         this.mountConnectedIframe();
         return;
       }
@@ -295,7 +328,6 @@ export class IframeController extends BaseController {
         return;
       }
 
-      // No session to restore — transition to idle
       this.dispatch({ type: "RESET" });
     } catch (error) {
       console.error("[IframeController] Initialization error:", error);
@@ -310,13 +342,13 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Connect using the inline iframe
+   * Connect using the inline iframe / WebView.
    *
-   * 1. Generates grantee keypair via AbstraxionAuth (needed for URL params)
-   * 2. Builds iframe URL with mode=inline and grant params
-   * 3. Creates/updates iframe element
-   * 4. Waits for IFRAME_READY (dashboard React app mounted)
-   * 5. Sends CONNECT via MessageChannelManager and waits for response
+   * 1. Generates grantee keypair via AbstraxionAuth (needed for URL params).
+   * 2. Builds iframe URL with mode=inline and grant params.
+   * 3. Mounts the iframe via the active `IframeTransportStrategy`.
+   * 4. Waits for IFRAME_READY (dashboard React app mounted).
+   * 5. Sends CONNECT and waits for response.
    */
   async connect(): Promise<void> {
     if (this.getState().status === "connected") {
@@ -327,36 +359,29 @@ export class IframeController extends BaseController {
     this.dispatch({ type: "START_CONNECT" });
 
     try {
-      // Generate keypair via AbstraxionAuth (same storage as other controllers)
       this.granteeWallet =
         await this.abstraxionAuth.generateAndStoreTempAccount();
       this.granteeAddress = await this.abstraxionAuth.getKeypairAddress();
 
-      // Build iframe URL with all params
       const iframeUrl = this.buildIframeUrl();
 
-      // Register the IFRAME_READY listener BEFORE creating/updating the iframe
-      // to eliminate the race where a fast-booting dashboard sends IFRAME_READY
-      // before the listener exists.
-      const readyPromise = this.waitForIframeReady();
+      // Register the IFRAME_READY listener BEFORE mounting to eliminate
+      // the race where a fast-booting dashboard sends IFRAME_READY before
+      // the listener exists.
+      const readyPromise = this.transport.waitForReady(30_000);
 
-      // Initialize iframe if not done, or update src
-      if (!this.iframe) {
-        this.initializeIframe(iframeUrl);
+      if (!this.transport.isMounted()) {
+        this.transport.mount({ url: iframeUrl, origin: this.iframeOrigin });
       } else {
-        this.iframe.src = iframeUrl;
+        this.transport.navigate(iframeUrl);
       }
 
-      // Wait for the dashboard's IframeMessageHandler to mount
       await readyPromise;
 
-      // Send CONNECT via MessageChannel — the dashboard's IframeMessageHandler
-      // returns a Promise that resolves when auth + grants complete
-      const response = await this.messageManager.sendRequest<
+      const response = await this.transport.sendRequest<
         ConnectPayload,
         ConnectResponse
       >(
-        this.iframe!,
         IframeMessageType.CONNECT,
         {
           grantParams: this.config.treasury
@@ -366,7 +391,6 @@ export class IframeController extends BaseController {
               }
             : undefined,
         },
-        this.iframeOrigin,
         300_000, // 5 min — user needs time for auth + grant approval
       );
 
@@ -385,30 +409,16 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Disconnect and cleanup (SDK-initiated / soft disconnect)
+   * Disconnect and cleanup (SDK-initiated / soft disconnect).
    *
-   * Only clears SDK-side state (grantee keypair, granter address) and removes
-   * the iframe from the DOM. Does NOT send a DISCONNECT message to the dashboard,
-   * so the dashboard session remains intact.
-   *
-   * This means on the next connect() call the user only needs to re-approve
-   * grants — they won't have to fully re-authenticate with their XION account.
-   *
-   * Contrast with iframe-initiated disconnect (user clicks Disconnect inside the
-   * iframe): that path goes through AuthStateManager.logout() in the dashboard
-   * and is a full logout, which is the correct behaviour for a user deliberately
-   * signing out of their account.
+   * Removes the iframe silently — the dashboard session survives so the user
+   * only needs to re-approve grants on the next connect() call, not fully
+   * re-authenticate.
    */
   async disconnect(): Promise<void> {
-    // Remove the iframe silently — the dashboard session survives.
-    // connect() will create a fresh iframe whose dashboard app can reuse
-    // the existing session from storage.
-    if (this.iframe) {
-      this.removeIframe();
+    if (this.transport.isMounted()) {
+      this.transport.unmount();
     }
-
-    // Clear SDK-side state (keypair, granter, signing client) and dispatch
-    // EXPLICITLY_DISCONNECTED so the embed does not immediately re-trigger login.
     await this.handleDisconnect();
   }
 
@@ -417,40 +427,34 @@ export class IframeController extends BaseController {
    * Typically called from a React ref callback. If a session was already
    * restored before the container was available, the iframe will be mounted immediately.
    */
-  setContainerElement(element: HTMLElement): void {
-    this.config.iframe = { ...this.config.iframe, containerElement: element };
+  setContainerElement(element: unknown): void {
+    this.config.iframe = {
+      ...this.config.iframe,
+      containerElement: element as HTMLElement,
+    };
+    this.transport.setContainer(element);
 
-    // If session was restored before the container was available, mount now
-    if (this.getState().status === "connected" && !this.iframe) {
+    if (this.getState().status === "connected" && !this.transport.isMounted()) {
       this.mountConnectedIframe();
     }
   }
 
-  /**
-   * Whether a container element has been set via setContainerElement().
-   * Used by AbstraxionProvider to warn if <AbstraxionEmbed> is missing.
-   */
+  /** Whether a container element has been set via setContainerElement(). */
   hasContainerElement(): boolean {
-    return !!this.config.iframe.containerElement;
+    return this.transport.hasContainer();
   }
 
-  /**
-   * Get the current user's address
-   */
+  /** Get the current user's address. */
   getAddress(): string | null {
     return this.granterAddress;
   }
 
-  /**
-   * Get the signing client
-   */
+  /** Get the signing client. */
   getSigningClient(): GranteeSignerClient | null {
     return this.signingClient;
   }
 
-  /**
-   * Get the grantee address (session key address)
-   */
+  /** Get the grantee address (session key address). */
   getGranteeAddress(): string | null {
     return this.granteeAddress;
   }
@@ -477,15 +481,12 @@ export class IframeController extends BaseController {
   private setAwaitingApproval(value: boolean): void {
     if (this._awaitingApproval !== value) {
       this._awaitingApproval = value;
+      this.transport.setVisible(value);
       this._approvalListeners.forEach((cb) => cb(value));
     }
   }
 
-  /**
-   * Cancel a pending approval (signing request).
-   * Rejects the in-flight signAndBroadcastWithMetaAccount promise with a
-   * cancellation error and hides the approval UI.
-   */
+  /** Cancel a pending approval (signing request). */
   cancelApproval(): void {
     if (this._cancelPendingApproval) {
       this._cancelPendingApproval();
@@ -496,9 +497,6 @@ export class IframeController extends BaseController {
 
   /**
    * Sign and broadcast a transaction with the user's direct authenticator (meta-account).
-   *
-   * Sends SIGN_AND_BROADCAST via MessageChannelManager to the dashboard iframe,
-   * which shows a signing approval UI and broadcasts the transaction.
    */
   async signAndBroadcastWithMetaAccount(
     signerAddress: string,
@@ -506,16 +504,12 @@ export class IframeController extends BaseController {
     fee: StdFee | "auto" | number,
     memo?: string,
   ): Promise<SignAndBroadcastResult> {
-    if (!this.iframe?.contentWindow) {
+    if (!this.transport.isMounted()) {
       throw new Error(
         "Iframe is not available. Ensure the iframe is mounted and the user is connected.",
       );
     }
 
-    // Validate payload before sending — catches common dev mistakes early.
-    // The casts below are needed because CosmJS types (readonly EncodeObject[],
-    // StdFee | "auto" | number) don't perfectly overlap with TxTransportPayload's
-    // field types at the TS level, but are structurally compatible at runtime.
     const txPayloadObj: TxTransportPayload = {
       messages: messages as TxTransportPayload["messages"],
       fee: fee as TxTransportPayload["fee"],
@@ -525,14 +519,12 @@ export class IframeController extends BaseController {
 
     this.setAwaitingApproval(true);
     try {
-      // Race the MessageChannel request against a cancellation promise so
-      // that cancelApproval() can abort the flow from the UI side.
       const response = await new Promise<{ signedTx: SignAndBroadcastResult }>(
         (resolve, reject) => {
           this._cancelPendingApproval = () =>
             reject(new Error("User cancelled signing request"));
 
-          this.messageManager
+          this.transport
             .sendRequest<
               {
                 transaction: {
@@ -544,11 +536,9 @@ export class IframeController extends BaseController {
               },
               { signedTx: SignAndBroadcastResult }
             >(
-              this.iframe!,
               IframeMessageType.SIGN_AND_BROADCAST,
               { transaction: { messages, fee, memo }, signerAddress },
-              this.iframeOrigin,
-              300_000, // 5 min — user needs time to review and approve
+              300_000,
             )
             .then(resolve, reject);
         },
@@ -562,17 +552,13 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Add an authenticator to the user's account via the embedded iframe.
-   *
-   * Sends MANAGE_AUTHENTICATORS via MessageChannelManager to the dashboard iframe,
-   * which shows an add-authenticator UI and resolves when the user completes
-   * or cancels. Same pattern as signAndBroadcastWithMetaAccount.
+   * Add or remove an authenticator on the user's account via the embedded
+   * iframe. Mirrors the popup/redirect manage-authenticators surface.
    */
-  // _signerAddress is unused here because the iframe already knows the connected
-  // account. The parameter exists for interface symmetry with PopupController and
-  // RedirectController so callers can use promptManageAuthenticators uniformly.
+  // _signerAddress is unused: the iframe already knows the connected account.
+  // The parameter exists for symmetry with PopupController/RedirectController.
   async promptManageAuthenticators(_signerAddress: string): Promise<void> {
-    if (!this.iframe?.contentWindow) {
+    if (!this.transport.isMounted()) {
       throw new Error(
         "Iframe is not available. Ensure the iframe is mounted and the user is connected.",
       );
@@ -584,17 +570,11 @@ export class IframeController extends BaseController {
         this._cancelPendingApproval = () =>
           reject(new Error("User cancelled manage authenticators request"));
 
-        this.messageManager
+        this.transport
           .sendRequest<
             ManageAuthenticatorsPayload,
             ManageAuthenticatorsResponse
-          >(
-            this.iframe!,
-            IframeMessageType.MANAGE_AUTHENTICATORS,
-            {},
-            this.iframeOrigin,
-            600_000, // 10 min — user needs time to manage authenticators
-          )
+          >(IframeMessageType.MANAGE_AUTHENTICATORS, {}, 600_000)
           .then(resolve, reject);
       });
     } finally {
@@ -603,51 +583,14 @@ export class IframeController extends BaseController {
     }
   }
 
-  /**
-   * Cleanup resources
-   */
+  /** Cleanup resources. */
   destroy(): void {
-    // Remove disconnect listener
-    if (this.disconnectListener) {
-      window.removeEventListener("message", this.disconnectListener);
-      this.disconnectListener = null;
-    }
-
-    // Remove IFRAME_READY listener
-    if (this.iframeReadyListener) {
-      window.removeEventListener("message", this.iframeReadyListener);
-      this.iframeReadyListener = null;
-    }
-
-    // Remove iframe from DOM
-    if (this.iframe && this.iframe.parentNode) {
-      this.iframe.parentNode.removeChild(this.iframe);
-    }
-    this.iframe = null;
-
-    // Clear event listeners
+    this.unsubscribePushMessages?.();
+    this.unsubscribePushMessages = null;
+    this.transport.unmount();
     this.eventEmitter.removeAllListeners();
-
-    // Cleanup orchestrator
     this.orchestrator.destroy();
-
     super.destroy();
-  }
-
-  /**
-   * Remove the iframe from DOM and clean up its event listener.
-   * Used during SDK-initiated disconnect to prevent a visible re-render
-   * before connect() creates a fresh iframe.
-   */
-  private removeIframe(): void {
-    if (this.disconnectListener) {
-      window.removeEventListener("message", this.disconnectListener);
-      this.disconnectListener = null;
-    }
-    if (this.iframe?.parentNode) {
-      this.iframe.parentNode.removeChild(this.iframe);
-    }
-    this.iframe = null;
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
@@ -655,31 +598,32 @@ export class IframeController extends BaseController {
   /**
    * Mount the iframe showing the dashboard's "Connected" view.
    * Used after restoring a session from storage on page refresh.
-   * Only sets mode=inline (no grantee/treasury — grant is already done).
    */
   private mountConnectedIframe(): void {
-    if (!this.config.iframe.containerElement) {
-      return; // Container not available yet — setContainerElement() will retry
+    if (!this.transport.hasContainer()) {
+      return;
     }
-    if (this.iframe) {
-      return; // Already mounted
+    if (this.transport.isMounted()) {
+      return;
     }
 
     const url = new URL(this.config.iframe.iframeUrl!);
     url.searchParams.set("mode", "inline");
-    url.searchParams.set("redirect_uri", window.location.origin);
-    this.initializeIframe(url.toString());
+    if (typeof window !== "undefined") {
+      url.searchParams.set("redirect_uri", window.location.origin);
+    }
+    this.transport.mount({ url: url.toString(), origin: this.iframeOrigin });
   }
 
-  /**
-   * Build the iframe URL with all required query params
-   */
+  /** Build the iframe URL with all required query params. */
   private buildIframeUrl(): string {
     const url = new URL(this.config.iframe.iframeUrl!);
 
     url.searchParams.set("mode", "inline");
     url.searchParams.set("grantee", this.granteeAddress!);
-    url.searchParams.set("redirect_uri", window.location.origin);
+    if (typeof window !== "undefined") {
+      url.searchParams.set("redirect_uri", window.location.origin);
+    }
 
     if (this.config.treasury) {
       url.searchParams.set("treasury", this.config.treasury);
@@ -698,94 +642,37 @@ export class IframeController extends BaseController {
   }
 
   /**
-   * Wait for the iframe's IframeMessageHandler to mount.
-   * The dashboard sends IFRAME_READY via postMessage once it's ready
-   * to accept MessageChannel requests.
+   * Handle push events from the dashboard (HARD_DISCONNECT etc.).
+   * Routed through the active transport strategy.
    */
-  private waitForIframeReady(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        cleanup();
-        reject(new Error("Iframe did not become ready within 30s"));
-      }, 30_000);
+  private handlePushMessage(data: unknown): void {
+    const event = data as { type?: string } | undefined;
+    if (!event || typeof event.type !== "string") return;
 
-      const handler = (event: MessageEvent) => {
-        if (event.origin !== this.iframeOrigin) return;
-        if (event.data?.type === DashboardMessageType.IFRAME_READY) {
-          cleanup();
-          resolve();
-        }
-      };
-
-      const cleanup = () => {
-        window.removeEventListener("message", handler);
-        this.iframeReadyListener = null;
-        clearTimeout(timeout);
-      };
-
-      this.iframeReadyListener = handler;
-      window.addEventListener("message", handler);
-    });
-  }
-
-  /**
-   * Initialize the iframe element and mount it to the container
-   */
-  private initializeIframe(src: string): void {
-    const container = this.config.iframe.containerElement;
-    if (!container) {
-      throw new Error(
-        "containerElement is required for iframe mode. " +
-          "Provide a DOM element where the iframe should be mounted.",
-      );
-    }
-
-    const iframe = document.createElement("iframe");
-    iframe.src = src;
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    iframe.style.border = "none";
-    iframe.allow = `publickey-credentials-get ${this.iframeOrigin}; clipboard-read; clipboard-write`;
-
-    container.appendChild(iframe);
-    this.iframe = iframe;
-
-    // Listen for HARD_DISCONNECT from the dashboard (user clicked disconnect inside
-    // the iframe UI — full session clear on both sides).
-    this.disconnectListener = (event: MessageEvent) => {
-      if (event.origin !== this.iframeOrigin) return;
-      if (event.data?.type === DashboardMessageType.HARD_DISCONNECT) {
-        if (this.getState().status === "connected") {
-          this.removeIframe();
-          this.handleDisconnect().catch((error) => {
-            console.error(
-              "[IframeController] Error handling hard disconnect:",
-              error,
-            );
-          });
-        }
+    if (event.type === DashboardMessageType.HARD_DISCONNECT) {
+      if (this.getState().status === "connected") {
+        this.transport.unmount();
+        this.handleDisconnect().catch((error) => {
+          console.error(
+            "[IframeController] Error handling hard disconnect:",
+            error,
+          );
+        });
       }
-    };
-    window.addEventListener("message", this.disconnectListener);
+    }
   }
 
   /**
-   * Complete connection after receiving address from MessageChannel CONNECT response
-   * Stores granter via AbstraxionAuth and creates GranteeSignerClient (same as Popup/Redirect)
+   * Complete connection after receiving address from MessageChannel CONNECT response.
    */
   private async completeConnection(granterAddress: string): Promise<void> {
     this.granterAddress = granterAddress;
 
-    // Store granter via AbstraxionAuth (same storage key as other controllers)
     await this.abstraxionAuth.setGranter(granterAddress);
-
-    // Sync in-memory state for getSigner()
     this.abstraxionAuth.abstractAccount = this.granteeWallet!;
 
-    // Emit authenticated event
     this.eventEmitter.emit("authenticated", { address: granterAddress });
 
-    // Create signing client via AbstraxionAuth
     const signingClient = await this.abstraxionAuth.getSigner(
       GasPrice.fromString(this.config.gasPrice),
     );
@@ -804,11 +691,8 @@ export class IframeController extends BaseController {
     });
   }
 
-  /**
-   * Handle disconnect — shared between SDK-initiated and iframe-initiated
-   */
+  /** Handle disconnect — shared between SDK-initiated and iframe-initiated. */
   private async handleDisconnect(): Promise<void> {
-    // Clear session via AbstraxionAuth (same storage keys as other controllers)
     try {
       await this.abstraxionAuth.logout();
     } catch (error) {
@@ -818,17 +702,12 @@ export class IframeController extends BaseController {
       );
     }
 
-    // Clear local state
     this.granterAddress = null;
     this.granteeWallet = null;
     this.granteeAddress = null;
     this.signingClient = null;
 
-    // Emit disconnected event
     this.eventEmitter.emit("disconnected", {});
-
-    // Mark as explicitly disconnected so the embed does not re-trigger login
-    // on the next render within the same page session.
     this.dispatch({ type: "EXPLICITLY_DISCONNECTED" });
   }
 }

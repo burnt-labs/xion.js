@@ -7,10 +7,30 @@ import {
   Text,
   View,
 } from "react-native";
+import { Link } from "expo-router";
 import {
+  AbstraxionProvider,
   useAbstraxionAccount,
   useManageAuthenticators,
 } from "@burnt-labs/abstraxion-react-native";
+
+const config = {
+  chainId: process.env.EXPO_PUBLIC_CHAIN_ID ?? "xion-testnet-2",
+  rpcUrl:
+    process.env.EXPO_PUBLIC_RPC_URL ?? "https://rpc.xion-testnet-2.burnt.com",
+  restUrl:
+    process.env.EXPO_PUBLIC_REST_URL ?? "https://api.xion-testnet-2.burnt.com",
+  gasPrice: process.env.EXPO_PUBLIC_GAS_PRICE ?? "0.001uxion",
+  treasury: process.env.EXPO_PUBLIC_TREASURY_ADDRESS,
+};
+
+export default function HomeRoute(): JSX.Element {
+  return (
+    <AbstraxionProvider config={config}>
+      <HomeScreen />
+    </AbstraxionProvider>
+  );
+}
 
 type ManageStatus = "idle" | "pending" | "success" | "cancelled" | "error";
 
@@ -23,7 +43,7 @@ type ManageStatus = "idle" | "pending" | "success" | "cancelled" | "error";
  * need a WebView transport — tracked as Phase 9b). Manage-authenticators
  * piggy-backs on the same redirect flow via Expo WebBrowser.
  */
-export default function HomeScreen(): JSX.Element {
+function HomeScreen(): JSX.Element {
   const {
     data: account,
     login,
@@ -72,7 +92,13 @@ export default function HomeScreen(): JSX.Element {
       style={styles.scrollView}
     >
       <Text style={styles.title}>ABSTRAXION</Text>
-      <Text style={styles.subtitle}>React Native demo</Text>
+      <Text style={styles.subtitle}>React Native demo · Redirect mode</Text>
+
+      <Link href="/embedded" asChild>
+        <Pressable style={styles.linkRow}>
+          <Text style={styles.linkText}>Try embedded WebView mode →</Text>
+        </Pressable>
+      </Link>
 
       {isInitializing && (
         <View style={styles.loadingRow}>
@@ -303,5 +329,12 @@ const styles = StyleSheet.create({
   error: {
     color: "#f87171",
     fontSize: 12,
+  },
+  linkRow: {
+    paddingVertical: 6,
+  },
+  linkText: {
+    color: "#60a5fa",
+    fontSize: 13,
   },
 });

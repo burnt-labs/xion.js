@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ReactNativeRedirectStrategy } from "../index";
+import { ReactNativeRedirectStrategy } from "../ReactNativeRedirectStrategy";
 
 vi.mock("@react-native-async-storage/async-storage", () => ({
   default: {

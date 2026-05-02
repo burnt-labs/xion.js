@@ -40,7 +40,19 @@ export type {
   Unsubscribe,
 } from "./controllers";
 
-export { BrowserRedirectStrategy, BrowserStorageStrategy } from "./strategies";
+export { BrowserIframeTransportStrategy } from "./strategies/BrowserIframeTransportStrategy";
+export { BrowserRedirectStrategy } from "./strategies/BrowserRedirectStrategy";
+export { BrowserStorageStrategy } from "./strategies/BrowserStorageStrategy";
+export type {
+  IframeMountContext,
+  IframeTransportStrategy,
+} from "./strategies/IframeTransportStrategy";
+
+export { createAbstraxionRuntime } from "./runtime";
+export type {
+  AbstraxionRuntime,
+  AbstraxionRuntimeOptions,
+} from "./runtime";
 
 export {
   createAccountCreationConfigFromConfig,

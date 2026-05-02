@@ -1,49 +1,16 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import type {
-  RedirectStrategy,
-  StorageStrategy,
-} from "@burnt-labs/abstraxion-js";
+import type { RedirectStrategy } from "@burnt-labs/abstraxion-js";
 
 /**
- * React Native implementation of the StorageStrategy using AsyncStorage
- */
-export class ReactNativeStorageStrategy implements StorageStrategy {
-  async getItem(key: string): Promise<string | null> {
-    try {
-      return await AsyncStorage.getItem(key);
-    } catch (error) {
-      console.error("AsyncStorage getItem error:", error);
-      return null;
-    }
-  }
-
-  async setItem(key: string, value: string): Promise<void> {
-    try {
-      await AsyncStorage.setItem(key, value);
-    } catch (error) {
-      console.error("AsyncStorage setItem error:", error);
-    }
-  }
-
-  async removeItem(key: string): Promise<void> {
-    try {
-      await AsyncStorage.removeItem(key);
-    } catch (error) {
-      console.error("AsyncStorage removeItem error:", error);
-    }
-  }
-}
-
-/**
- * React Native implementation of the RedirectStrategy using Expo WebBrowser.
+ * React Native implementation of `RedirectStrategy` using Expo WebBrowser.
  *
  * After a successful WebBrowser auth session, the result URL's query params
- * are stashed on the strategy so subsequent `getUrlParameter`/`cleanUrlParameters`
- * calls can read and clear them. This lets RedirectController's
- * `detectSignResult` / `detectManageAuthResult` flows work after
- * `redirect()` resolves, the same way they work after a browser page reload.
+ * are stashed on the strategy so subsequent `getUrlParameter` /
+ * `cleanUrlParameters` calls can read and clear them. This lets
+ * `RedirectController`'s `detectSignResult` / `detectManageAuthResult` flows
+ * work after `redirect()` resolves, the same way they work after a browser
+ * page reload.
  */
 export class ReactNativeRedirectStrategy implements RedirectStrategy {
   private redirectCallback?: (params: { granter?: string | null }) => void;

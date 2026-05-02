@@ -21,7 +21,11 @@ import type { ControllerStrategies } from "./types";
  */
 export function createController(
   config: NormalizedAbstraxionConfig,
-  { storageStrategy, redirectStrategy }: ControllerStrategies,
+  {
+    storageStrategy,
+    redirectStrategy,
+    iframeTransportStrategy,
+  }: ControllerStrategies,
 ): Controller {
   const authMode = config.authentication?.type || "redirect";
 
@@ -71,6 +75,7 @@ export function createController(
       config,
       storageStrategy,
       redirectStrategy,
+      iframeTransportStrategy,
     );
   } else {
     throw new Error(`Unknown authentication mode: ${authMode}`);

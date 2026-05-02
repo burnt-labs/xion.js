@@ -71,8 +71,35 @@ function buildContext(
   controller: unknown,
   granterAddress: string | null = "xion1user",
 ) {
+  // Build a minimal mock runtime that mirrors the new dispatch logic in
+  // `runtime.manageAuthenticators` / `runtime.isManageAuthSupported`.
+  const isSupported =
+    controller instanceof PopupController ||
+    controller instanceof IframeController ||
+    controller instanceof RedirectController;
+  const runtime = {
+    isManageAuthSupported: isSupported,
+    manageAuthUnsupportedReason: isSupported
+      ? undefined
+      : "Manage authenticators is not supported in signer mode. Use popup, redirect, or embedded authentication to add or remove authenticators.",
+    manageAuthenticators: vi.fn(async (addr: string) => {
+      if (controller instanceof PopupController) {
+        return controller.promptManageAuthenticators(addr);
+      }
+      if (controller instanceof IframeController) {
+        return controller.promptManageAuthenticators(addr);
+      }
+      if (controller instanceof RedirectController) {
+        return controller.promptManageAuthenticators(addr);
+      }
+      throw new Error(
+        "manageAuthenticators is not supported in the current authentication mode.",
+      );
+    }),
+  };
   return {
     controller,
+    runtime,
     granterAddress,
     // Other required context fields (unused by this hook)
     isConnected: !!granterAddress,
