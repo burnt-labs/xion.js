@@ -2,38 +2,29 @@ import { defineConfig } from "vitest/config";
 import path from "path";
 
 /**
- * Default Vitest configuration for abstraxion package
- * Runs ONLY unit tests (excludes integration tests)
- *
- * To run integration tests, use:
- * - pnpm test:integration (node-based integration tests)
- * - pnpm test:react (react-based integration tests)
+ * Vitest configuration for React integration tests
+ * Uses jsdom environment for React Testing Library
+ * Extends the base integration test config but with DOM support
  */
 export default defineConfig({
   test: {
     globals: true,
-    environment: "node",
+    environment: "jsdom", // DOM environment for React tests
     setupFiles: [
       "../test-utils/src/vitest/setup.ts", // Shared webauthn and global mocks
+      "./vitest.setup.integration.ts", // Package-specific setup
+      "./tests/integration/react/setup.tsx", // React-specific setup
     ],
-    // Include only unit tests in src/ directory
-    include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    exclude: [
-      "node_modules",
-      "dist",
-      ".next",
-      ".turbo",
-      // Exclude ALL integration tests - they use separate configs
-      "tests/integration/**/*",
-    ],
-    testTimeout: 10000, // 10 seconds for unit tests
-    hookTimeout: 10000,
-    teardownTimeout: 5000,
+    testTimeout: 120000, // 2 minutes for network operations
+    hookTimeout: 120000,
+    teardownTimeout: 30000,
+    include: ["tests/integration/react/**/*.test.tsx"],
+    exclude: ["node_modules", "dist", "src/**/*.test.ts"],
     coverage: {
-      enabled: false,
+      enabled: false, // Disable coverage for integration tests
     },
-    // Don't fail when no unit tests are found (all tests are integration tests)
-    passWithNoTests: true,
+    // Retry failed tests once (network flakiness)
+    retry: 1,
     server: {
       deps: {
         inline: ["@github/webauthn-json"],
@@ -42,7 +33,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "."),
     },
   },
 });

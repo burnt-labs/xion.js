@@ -31,6 +31,7 @@ import {
 } from "@burnt-labs/account-management";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 import { StargateClient } from "@cosmjs/stargate";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 describe("Account Discovery Integration Tests", () => {
   registerGlobalHooks();
@@ -55,8 +56,14 @@ describe("Account Discovery Integration Tests", () => {
         const { pubkeyBase64, address } = await createSecp256k1Wallet();
 
         // Create RPC-based account strategy
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         // Check if account exists using the real account discovery API
         const result = await checkAccountExists(
@@ -88,11 +95,25 @@ describe("Account Discovery Integration Tests", () => {
     it(
       "should handle account discovery for authenticator with no accounts",
       async () => {
-        // Generate a fresh wallet that definitely has no accounts
-        const { pubkeyBase64 } = await createSecp256k1Wallet(undefined, 999);
+        // Use a freshly generated random mnemonic so this pubkey has
+        // definitely never been used to create an on-chain account. (Reusing
+        // a fixed test mnemonic at index 999 doesn't work — every run leaves
+        // state on the chain that persists forever.)
+        const freshWallet =
+          await DirectSecp256k1HdWallet.generate(24, { prefix: "xion" });
+        const { pubkeyBase64 } = await createSecp256k1Wallet(
+          freshWallet.mnemonic,
+          0,
+        );
 
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         const result = await checkAccountExists(
           accountStrategy,
@@ -113,8 +134,14 @@ describe("Account Discovery Integration Tests", () => {
       async () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         // Query twice
         const result1 = await checkAccountExists(
@@ -147,8 +174,14 @@ describe("Account Discovery Integration Tests", () => {
         const testEthAddress =
           "0x742d35cc6634c0532925a3b844bc9e7595f0beb".toLowerCase();
 
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         const result = await checkAccountExists(
           accountStrategy,
@@ -177,8 +210,14 @@ describe("Account Discovery Integration Tests", () => {
 
         // Create composite strategy with RPC
         // In production, this might include indexer strategies that fallback to RPC
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         const result = await retryWithBackoff(
           async () =>
@@ -208,12 +247,16 @@ describe("Account Discovery Integration Tests", () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
         // Create strategy with invalid RPC URL
-        const invalidRpcStrategy = new RpcAccountStrategy(
-          "https://invalid-rpc-url-that-does-not-exist.com",
-        );
-        const accountStrategy = new CompositeAccountStrategy([
+        const invalidRpcStrategy = new RpcAccountStrategy({
+          rpcUrl: "https://invalid-rpc-url-that-does-not-exist.com",
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(
           invalidRpcStrategy,
-        ]);
+        );
 
         const result = await checkAccountExists(
           accountStrategy,
@@ -234,8 +277,14 @@ describe("Account Discovery Integration Tests", () => {
     it(
       "should handle invalid authenticator format",
       async () => {
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         // Try with empty authenticator
         const result = await checkAccountExists(
@@ -258,8 +307,14 @@ describe("Account Discovery Integration Tests", () => {
       async () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         const result = await checkAccountExists(
           accountStrategy,
@@ -292,8 +347,14 @@ describe("Account Discovery Integration Tests", () => {
       async () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         const result = await checkAccountExists(
           accountStrategy,
@@ -330,8 +391,14 @@ describe("Account Discovery Integration Tests", () => {
       async () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
-        const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-        const accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+        const rpcStrategy = new RpcAccountStrategy({
+          rpcUrl: config.rpcUrl,
+          checksum: config.checksum,
+          creator: config.feeGranter,
+          prefix: "xion",
+          codeId: parseInt(config.codeId, 10),
+        });
+        const accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
         const startTime = Date.now();
 

@@ -25,6 +25,9 @@
       "persistent": true,
       "env": [".env.test.local", ".env.test", ".env"]
     },
+    "test:contract": {
+      "env": [".env.test.local", ".env.test", ".env"]
+    },
     "lint": {
       "dependsOn": ["^build"]
     },
