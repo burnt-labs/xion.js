@@ -41,8 +41,14 @@ describe("AA API Comparison Tests - Address Normalization", () => {
     storageStrategy = createMockStorageStrategy();
     sessionManager = createMockSessionManager(storageStrategy);
 
-    const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-    accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+    const rpcStrategy = new RpcAccountStrategy({
+      rpcUrl: config.rpcUrl,
+      checksum: config.checksum,
+      creator: config.feeGranter,
+      prefix: "xion",
+      codeId: parseInt(config.codeId, 10),
+    });
+    accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
     console.log("\n" + "=".repeat(60));
     console.log("📋 Test Configuration:");

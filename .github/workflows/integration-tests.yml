@@ -74,7 +74,7 @@ jobs:
       # Any failure here breaks the build immediately. The mainnet variant
       # runs as a separate non-blocking job (`dashboard-contract-mainnet`).
       - name: Run Dashboard Contract Test (testnet, blocking)
-        run: pnpm --filter @burnt-labs/abstraxion test:contract
+        run: pnpm --filter @burnt-labs/abstraxion-js test:contract
 
       - name: Load Test Configuration
         id: config
@@ -130,7 +130,7 @@ jobs:
           pnpm --filter @burnt-labs/account-management test:integration 2>&1 | tee account-management-results.txt
           ACCOUNT_MGMT_EXIT=$?
 
-          pnpm --filter @burnt-labs/abstraxion test:integration 2>&1 | tee abstraxion-results.txt
+          pnpm --filter @burnt-labs/abstraxion-js test:integration 2>&1 | tee abstraxion-results.txt
           ABSTRAXION_EXIT=$?
 
           TOTAL_FAILED=0
@@ -197,7 +197,7 @@ jobs:
               testSummaryParts.push('**@burnt-labs/account-management:**\n```\n' + acctMgmtSummary + '\n```');
             }
             if (abstraxionSummary && abstraxionSummary !== 'No results') {
-              testSummaryParts.push('**@burnt-labs/abstraxion:**\n```\n' + abstraxionSummary + '\n```');
+              testSummaryParts.push('**@burnt-labs/abstraxion-js:**\n```\n' + abstraxionSummary + '\n```');
             }
             const testSummary = testSummaryParts.join('\n\n');
 
@@ -262,7 +262,7 @@ jobs:
         continue-on-error: true
         env:
           DASHBOARD_URL: https://settings.burnt.com
-        run: pnpm --filter @burnt-labs/abstraxion test:contract
+        run: pnpm --filter @burnt-labs/abstraxion-js test:contract
 
       - name: Annotate mainnet regression
         if: steps.run-contract.outcome == 'failure'

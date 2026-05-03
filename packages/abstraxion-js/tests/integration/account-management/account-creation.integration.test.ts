@@ -36,6 +36,7 @@ import {
 } from "@burnt-labs/account-management";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 import { StargateClient } from "@cosmjs/stargate";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 describe("Account Creation Integration Tests", () => {
   registerGlobalHooks();
@@ -51,8 +52,14 @@ describe("Account Creation Integration Tests", () => {
     storageStrategy = createMockStorageStrategy();
     sessionManager = createMockSessionManager(storageStrategy);
 
-    const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-    accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+    const rpcStrategy = new RpcAccountStrategy({
+      rpcUrl: config.rpcUrl,
+      checksum: config.checksum,
+      creator: config.feeGranter,
+      prefix: "xion",
+      codeId: parseInt(config.codeId, 10),
+    });
+    accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
     stargateClient = await createTestStargateClient();
   });
@@ -128,7 +135,7 @@ describe("Account Creation Integration Tests", () => {
 
         console.log("✓ Account verified on-chain");
 
-        // 8. Verify account is discoverable now (with retry for indexer)
+        // 8. Verify account is discoverable now (with retry for indexer lag)
         const postCreationCheck = await retryWithBackoff(
           async () => {
             const result = await checkAccountExists(
@@ -141,8 +148,8 @@ describe("Account Creation Integration Tests", () => {
             }
             return result;
           },
-          5, // 5 retries
-          2000, // 2 second delay
+          5,
+          2000,
         );
 
         expect(postCreationCheck.exists).toBe(true);
@@ -400,7 +407,13 @@ describe("Account Creation Integration Tests", () => {
     it(
       "should handle account creation with invalid AA API URL",
       async () => {
-        const connector = createTestSecp256k1Connector();
+        // Fresh random mnemonic so the connector's pubkey has no existing
+        // on-chain account — otherwise the orchestrator finds the cached
+        // account during discovery and never reaches the AA-API call.
+        const freshWallet = await DirectSecp256k1HdWallet.generate(24, {
+          prefix: "xion",
+        });
+        const connector = createTestSecp256k1Connector(freshWallet.mnemonic, 0);
         const connectorResult = await connector.connect();
 
         const orchestrator = new ConnectionOrchestrator({
@@ -529,7 +542,7 @@ describe("Account Creation Integration Tests", () => {
           connectorResult.authenticator,
         );
 
-        // Second check - should now exist (with retry for indexer)
+        // Second check - should now exist (with retry for indexer lag)
         const afterCreation = await retryWithBackoff(
           async () => {
             const result = await checkAccountExists(
@@ -542,8 +555,8 @@ describe("Account Creation Integration Tests", () => {
             }
             return result;
           },
-          5, // 5 retries
-          2000, // 2 second delay
+          5,
+          2000,
         );
 
         expect(afterCreation.exists).toBe(true);

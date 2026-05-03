@@ -55,9 +55,9 @@ runs:
     - name: Install Playwright browsers (full, on cache miss)
       if: steps.playwright-cache.outputs.cache-hit != 'true'
       shell: bash
-      run: pnpm --filter @burnt-labs/abstraxion exec playwright install --with-deps chromium
+      run: pnpm --filter @burnt-labs/abstraxion-js exec playwright install --with-deps chromium
 
     - name: Install Playwright system deps only (on cache hit)
       if: steps.playwright-cache.outputs.cache-hit == 'true'
       shell: bash
-      run: pnpm --filter @burnt-labs/abstraxion exec playwright install-deps chromium
+      run: pnpm --filter @burnt-labs/abstraxion-js exec playwright install-deps chromium

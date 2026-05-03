@@ -1,6 +1,7 @@
 import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
+import { TransferAuthorization } from "cosmjs-types/ibc/applications/transfer/v1/authz";
 import {
   type ContractGrantDescription,
   type Grant,
@@ -93,6 +94,20 @@ function isGenericAuthorization(
     typeof data === "object" &&
     "msg" in data &&
     typeof (data as GenericAuthorization).msg === "string"
+  );
+}
+
+/**
+ * Type guard to check if data is TransferAuthorization (IBC transfer)
+ */
+function isTransferAuthorization(
+  data: DecodedReadableAuthorization["data"],
+): data is TransferAuthorization {
+  return (
+    data !== null &&
+    typeof data === "object" &&
+    "allocations" in data &&
+    Array.isArray((data as TransferAuthorization).allocations)
   );
 }
 
@@ -344,6 +359,33 @@ export function compareChainGrantsToTreasuryGrants(
 
       if (chainAuthType === AuthorizationTypes.ContractExecution) {
         return validateContractExecution(treasuryConfig, chainConfig);
+      }
+
+      if (chainAuthType === AuthorizationTypes.IbcTransfer) {
+        if (
+          !isTransferAuthorization(chainConfig.data) ||
+          !isTransferAuthorization(treasuryConfig.data)
+        ) {
+          return false;
+        }
+
+        const treasuryAllocs = treasuryConfig.data.allocations;
+        const chainAllocs = chainConfig.data.allocations;
+
+        // Each treasury allocation must have a corresponding chain allocation
+        // with the same port/channel/allowList and a spendLimit that does not
+        // exceed the treasury's authorized spend limit (per-denom).
+        return treasuryAllocs.every((treasuryAlloc) => {
+          const matching = chainAllocs.find(
+            (chainAlloc) =>
+              chainAlloc.sourcePort === treasuryAlloc.sourcePort &&
+              chainAlloc.sourceChannel === treasuryAlloc.sourceChannel &&
+              JSON.stringify(chainAlloc.allowList) ===
+                JSON.stringify(treasuryAlloc.allowList) &&
+              isLimitValid(treasuryAlloc.spendLimit, chainAlloc.spendLimit),
+          );
+          return matching !== undefined;
+        });
       }
 
       return false;

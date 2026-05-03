@@ -46,7 +46,7 @@ Automated CI/CD workflows for the xion.js monorepo.
 
 1. Loads config from [.github/config/test-environments.json](../config/test-environments.json)
 2. Optionally starts local AA-API server (`dev-server` mode)
-3. Runs integration tests for `@burnt-labs/account-management` and `@burnt-labs/abstraxion`
+3. Runs integration tests for `@burnt-labs/account-management` and `@burnt-labs/abstraxion-js`
 
 **Environment Values**: See [test-environments.json](../config/test-environments.json) for all public configuration (RPC URLs, chain IDs, treasury addresses, etc.)
 
@@ -94,10 +94,10 @@ npm run dev
 # Terminal 2: Run tests
 cd xion.js
 export TEST_TARGET=local
-pnpm --filter @burnt-labs/abstraxion test:integration
+pnpm --filter @burnt-labs/abstraxion-js test:integration
 ```
 
-See [packages/abstraxion/tests/integration/LOCAL_TESTING.md](../../packages/abstraxion/tests/integration/LOCAL_TESTING.md) for detailed local setup.
+See [packages/abstraxion-js/tests/integration/LOCAL_TESTING.md](../../packages/abstraxion-js/tests/integration/LOCAL_TESTING.md) for detailed local setup, if present.
 
 ---
 
