@@ -23,6 +23,22 @@ export class CompositeAccountStrategy implements IndexerStrategy {
         "CompositeAccountStrategy requires at least one strategy",
       );
     }
+    // Fail-fast validation: surface mis-construction at create time instead
+    // of at query time. The constructor uses rest params (not an array
+    // param), so `new CompositeAccountStrategy([s1, s2])` accidentally
+    // wraps the array into `[[s1, s2]]` — without this check, the bug only
+    // manifests later when iteration tries to call `.fetchSmartAccounts` on
+    // the inner Array and the error gets swallowed by callers like
+    // `checkAccountExists` (which catches it and returns `{exists: false}`).
+    strategies.forEach((s, i) => {
+      if (!s || typeof s.fetchSmartAccounts !== "function") {
+        throw new TypeError(
+          `CompositeAccountStrategy: strategy at index ${i} does not implement IndexerStrategy ` +
+            `(missing or non-function fetchSmartAccounts). ` +
+            `Did you pass an array? Use \`new CompositeAccountStrategy(s1, s2)\`, not \`new CompositeAccountStrategy([s1, s2])\`.`,
+        );
+      }
+    });
     this.strategies = strategies;
   }
 

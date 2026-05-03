@@ -93,6 +93,19 @@ export async function connectAccount(
     authenticatorType,
   );
 
+  // Discovery error is distinct from "account not found": if every strategy
+  // in the composite threw (broken indexer, misconfigured strategy, RPC
+  // outage), we must surface that instead of silently falling into the
+  // "create new account" branch — which would either spam the AA-API with
+  // duplicate-create requests or hide the underlying outage from consumers.
+  if (accountCheck.error) {
+    throw new Error(
+      `Account discovery failed: ${accountCheck.error}. ` +
+        `Refusing to fall back to account creation while discovery is broken — ` +
+        `fix the indexer/RPC strategy configuration first.`,
+    );
+  }
+
   if (accountCheck.exists && accountCheck.smartAccountAddress) {
     // Account exists - use it
     smartAccountAddress = accountCheck.smartAccountAddress;

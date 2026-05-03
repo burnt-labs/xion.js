@@ -19,6 +19,7 @@
     "dist",
     "build",
     "node_modules",
+    "tests",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/__tests__/**"

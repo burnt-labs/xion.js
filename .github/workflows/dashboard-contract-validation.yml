@@ -11,14 +11,14 @@ name: Dashboard Contract Validation
 #
 # Browser-driven mode-mount + SDK ↔ dashboard message handshake validation
 # lives in the integration test suite — see
-# packages/abstraxion/tests/integration/message-contract.integration.test.ts
+# packages/abstraxion-js/tests/integration/message-contract.integration.test.ts
 # (run via integration-tests.yml).
 
 on:
   pull_request:
     branches: [main, develop]
     paths:
-      - "packages/abstraxion/**"
+      - "packages/abstraxion-js/**"
       - "packages/abstraxion-core/**"
       - "packages/constants/**"
       - ".github/workflows/dashboard-contract-validation.yml"
@@ -26,7 +26,7 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - "packages/abstraxion/**"
+      - "packages/abstraxion-js/**"
       - "packages/abstraxion-core/**"
       - "packages/constants/**"
       - ".github/scripts/validate-dashboard-shell.sh"
