@@ -4,10 +4,93 @@
 
 This document contains a comprehensive overview of all changelog entries across all packages in the xion.js monorepo.
 
-The document is split into two sections:
+The document is split into three sections:
 
-1. **New in this version (`1.0.0-alpha.76`)** — popup, auto, and embedded authentication modes, direct signing, and supporting changes
-2. **Previous version recap (`1.0.0-alpha.70`)** — summary of changes already released (config object refactor, UI removal, connector architecture, signer mode)
+1. **React Native feature parity (v1 alpha line, alpha.76 → alpha.79+)** — the cross-cutting story of what's accumulated in `@burnt-labs/abstraxion-react-native` over the last few months
+2. **New in this version (`1.0.0-alpha.76`)** — popup, auto, and embedded authentication modes, direct signing, and supporting changes for the React wrapper
+3. **Previous version recap (`1.0.0-alpha.70`)** — summary of changes already released (config object refactor, UI removal, connector architecture, signer mode)
+
+---
+
+# React Native: now at parity with the web wrapper
+
+`@burnt-labs/abstraxion-react-native` started the v1 alpha line as a thin RN binding that supported `redirect` and `signer` modes only, with a session-key-only `useAbstraxionSigningClient()` and no equivalent of `<AbstraxionEmbed>`. Over the alpha.71 → alpha.79 window it has been brought up to **feature parity with the web wrapper** for everything that physically makes sense on a native device. The `popup` and `auto` modes are still web-only by design (they require `window.open` and browser device sniffing), but everything else now ships.
+
+## Hook surface — now identical to web
+
+```ts
+// All four hooks now exist on @burnt-labs/abstraxion-react-native with the
+// same shape and return types as @burnt-labs/abstraxion-react.
+import {
+  useAbstraxionAccount,
+  useAbstraxionClient,
+  useAbstraxionSigningClient,
+  useManageAuthenticators,
+} from "@burnt-labs/abstraxion-react-native";
+```
+
+Previously, RN exposed only `useAbstraxionAccount` / `useAbstraxionClient` / `useAbstraxionSigningClient`, and the signing-client hook had no `requireAuth` option. After this work:
+
+- `useAbstraxionSigningClient({ requireAuth: true })` works in `redirect`, `embedded`, **and** `signer` modes — same `RequireSigningClient` consolidation that landed on web (alpha.78). Direct signing on RN no longer requires dropping down to controller internals.
+- `useManageAuthenticators()` is a new RN export. Add/remove passkeys, OAuth methods, and other authenticators from inside the RN app via the same hook React consumers use, in both `redirect` and `embedded` modes.
+
+## `<AbstraxionEmbed>` for React Native
+
+The web wrapper's `<AbstraxionEmbed>` is now mirrored on RN, backed by `react-native-webview` instead of a DOM iframe. This is the headline "embedded mode" feature for native — login, grant approval, signing, and manage-authenticators all happen inside the app's own WebView, with no Expo WebBrowser session and no deep-link round trip.
+
+```tsx
+import {
+  AbstraxionEmbed,
+  AbstraxionProvider,
+} from "@burnt-labs/abstraxion-react-native";
+
+<AbstraxionProvider config={{ /* ..., authentication: { type: "embedded" } */ }}>
+  <AbstraxionEmbed
+    idleView="button"        // "button" | "fullview" | "hidden"
+    connectedView="hidden"   // "hidden" | "visible"
+    approvalView="modal"     // "modal" | "inline"
+  />
+</AbstraxionProvider>
+```
+
+Highlights:
+
+- **View-state matrix** with sensible defaults — render a login button when idle, collapse to 0×0 when connected, promote to a centered `<Modal>` for approvals.
+- **Auto-modal during login** — `react-native-webview` renders nothing when its parent has no width/height, so a login attempt from `idleView="button"` would otherwise drop the user into an invisible authenticator picker. The embed automatically promotes the WebView to a full-screen modal during `isConnecting` and falls back to `controller.cancelLogin()` if the user dismisses it.
+- **`approvalView="inline"`** opt-out for consumers who want to lay the connecting/approval WebView into their own flow rather than the default modal.
+- **`react-native-webview` is an optional peer dep** — lazy-`require`d only when `<AbstraxionEmbed>` mounts, so apps that stay on `redirect` or `signer` modes don't pay the native-module cost.
+
+See the demo at [`demos/react-native/`](demos/react-native/) — it ships both routes (`/` for redirect, `/embedded` for embedded mode).
+
+## Runtime + strategy injection (the "why")
+
+The reason RN can mirror the web wrapper hook-for-hook is the runtime extraction that landed earlier in the alpha line. `@burnt-labs/abstraxion-js` now owns the controllers and the auth state machine; RN and React consume the same runtime through a thin wrapper that mirrors `runtime.subscribe` into React's `useSyncExternalStore`.
+
+RN supplies its own implementations of the three strategy interfaces (browser defaults are in `abstraxion-js`):
+
+| Strategy interface         | Browser default (`abstraxion-js`)     | React Native impl                                                  |
+| -------------------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| `StorageStrategy`          | `BrowserStorageStrategy` (`localStorage`) | `ReactNativeStorageStrategy` (AsyncStorage)                       |
+| `RedirectStrategy`         | `BrowserRedirectStrategy` (`window.location`) | `ReactNativeRedirectStrategy` (Expo WebBrowser + Expo Linking) |
+| `IframeTransportStrategy`  | `BrowserIframeTransportStrategy` (DOM iframe + `MessageChannel`) | `RNWebViewIframeTransport` (`react-native-webview`) |
+
+This is what lets RN ship `<AbstraxionEmbed>` and direct signing without forking the controller code — the same `IframeController`, `RedirectController`, and `SignerController` run on both platforms.
+
+## Mode support summary
+
+| Mode       | Web (`abstraxion-react`) | React Native (`abstraxion-react-native`) |
+| ---------- | ------------------------ | ----------------------------------------- |
+| `redirect` | ✅                        | ✅ (Expo WebBrowser + deep-link callback) |
+| `popup`    | ✅                        | ❌ (web-only — needs `window.open`)        |
+| `auto`     | ✅                        | ❌ (web-only — device sniffing is browser-bound) |
+| `iframe` / `embedded` | ✅ (DOM iframe)| ✅ (`react-native-webview`)                |
+| `signer`   | ✅                        | ✅ (caller-supplied signing function — Turnkey, Privy, MetaMask, …) |
+
+Direct signing (`requireAuth: true`) is supported on RN in `redirect`, `embedded`, and `signer` modes — i.e., every mode RN supports. This was previously web-only.
+
+## Demo
+
+A working Expo + RN demo lives at [`demos/react-native/`](demos/react-native/). It exercises both supported dashboard modes and runs on iOS simulator, Expo Go (redirect-only — `react-native-quick-crypto` needs a custom dev client), and on a custom dev client.
 
 ---
 
