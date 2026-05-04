@@ -1,6 +1,5 @@
 ---
-"@burnt-labs/abstraxion": minor
-"@burnt-labs/ui": minor
+"@burnt-labs/abstraxion-react": minor
 ---
 
 Added mobile UI fixes for dashboard
