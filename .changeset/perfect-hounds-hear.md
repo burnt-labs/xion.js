@@ -1,6 +1,5 @@
 ---
-"@burnt-labs/abstraxion": minor
-"demo-app": minor
+"@burnt-labs/abstraxion-react": minor
 ---
 
 introduce gasPrice param; provide documentation on "auto" fee use

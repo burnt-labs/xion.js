@@ -1,61 +1,96 @@
-# xion.js Architecture: Controllers, Orchestrators, and Connectors
+# xion.js Architecture: Wrappers, Runtime, Controllers, Orchestrators, and Connectors
 
-This document explains how the three key architectural components work together in the xion.js SDK to provide a unified authentication and account management system.
+This document explains how the architectural layers of the xion.js SDK fit together to provide a unified authentication and account management system across web, React Native, and other JavaScript runtimes.
 
 ## Overview
 
-The xion.js SDK uses a **three-layer architecture** to separate concerns and provide flexibility:
+The SDK is structured as a **framework-agnostic runtime with thin per-framework wrappers**. The runtime owns all controller, orchestration, and connector logic; wrappers do nothing except mirror the runtime's reactive state into a host framework's primitive (React's `useSyncExternalStore`, Svelte stores, etc.).
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     React Application                        │
-│                  (AbstraxionProvider)                        │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│              CONTROLLER LAYER                                │
-│         (@burnt-labs/abstraxion)                             │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Redirect     │  │  Popup       │  │  Iframe      │      │
-│  │  Controller   │  │  Controller  │  │  Controller  │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                 │                  │               │
-│         │    ┌────────────────────┐          │               │
-│         │    │ SignerController   │          │               │
-│         │    │   (Headless)      │          │               │
-│         │    └────────┬──────────┘          │               │
-│           │                           │                     │
-└───────────┼───────────────────────────┼─────────────────────┘
-            │                           │
-            ▼                           ▼
-┌──────────────────────────────────────────────────────────────┐
-│           ORCHESTRATOR LAYER                                 │
-│      (@burnt-labs/account-management)                        │
-│                                                              │
-│         ┌────────────────────────────────┐                  │
-│         │   ConnectionOrchestrator       │                  │
-│         │                                │                  │
-│         │  • Session restoration         │                  │
-│         │  • Account discovery/creation  │                  │
-│         │  • Grant management            │                  │
-│         └────────────┬───────────────────┘                  │
-│                      │                                       │
-└──────────────────────┼───────────────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────────────┐
-│             CONNECTOR LAYER                                  │
-│         (@burnt-labs/abstraxion-core)                        │
-│                                                              │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │   Keplr     │  │   MetaMask   │  │  Turnkey/Privy   │   │
-│  │  Connector  │  │   Connector  │  │    Connector     │   │
-│  └─────────────┘  └──────────────┘  └──────────────────┘   │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Host application                                │
+│                                                                        │
+│  ┌──────────────────┐   ┌────────────────────┐   ┌──────────────────┐ │
+│  │ React (web)      │   │ React Native       │   │ Other framework  │ │
+│  │                  │   │                    │   │ (Svelte / Vue /  │ │
+│  │ abstraxion-react │   │ abstraxion-react-  │   │  vanilla JS)     │ │
+│  │                  │   │ native             │   │                  │ │
+│  │ • Provider       │   │ • Provider         │   │ Subscribe to the │ │
+│  │ • hooks          │   │ • hooks            │   │ runtime directly │ │
+│  │ • <Embed>        │   │ • <Embed> via RN   │   │                  │ │
+│  │                  │   │   WebView          │   │                  │ │
+│  └────────┬─────────┘   └─────────┬──────────┘   └─────────┬────────┘ │
+│           │                       │                        │          │
+└───────────┼───────────────────────┼────────────────────────┼──────────┘
+            │                       │                        │
+            └───────────────────────┼────────────────────────┘
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                    RUNTIME LAYER                                       │
+│                @burnt-labs/abstraxion-js                               │
+│                                                                        │
+│   createAbstraxionRuntime(config, strategies?) → AbstraxionRuntime     │
+│        ├── runtime.subscribe(listener)   // state stream               │
+│        ├── runtime.getState()                                          │
+│        ├── runtime.login() / logout()                                  │
+│        └── runtime.controller            // active controller          │
+│                                                                        │
+│   Controllers (per auth mode):                                         │
+│     RedirectController · PopupController · IframeController            │
+│     SignerController                                                   │
+│                                                                        │
+│   Strategies (DI seams — defaults are browser):                        │
+│     StorageStrategy · RedirectStrategy · IframeTransportStrategy       │
+│                                                                        │
+│   Direct signing:                                                      │
+│     RequireSigningClient (unifies popup / redirect / iframe)           │
+│     AAClient            (signer mode — wallet prompts directly)        │
+└──────────────────────────────────┬─────────────────────────────────────┘
+                                   ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                  ORCHESTRATOR LAYER                                    │
+│              @burnt-labs/account-management                            │
+│                                                                        │
+│           ConnectionOrchestrator                                       │
+│             • Session restoration / fail-fast guards                   │
+│             • Account discovery / creation                             │
+│             • Grant management                                         │
+└──────────────────────────────────┬─────────────────────────────────────┘
+                                   ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                   CONNECTOR LAYER                                      │
+│              @burnt-labs/abstraxion-core                               │
+│                                                                        │
+│   Keplr / MetaMask / Turnkey / Privy / Web3Auth / custom               │
+│   Iframe message protocol · Authz / treasury grant decoding            │
+└────────────────────────────────────────────────────────────────────────┘
+
+                        Foundations (pure):
+   @burnt-labs/signers · @burnt-labs/constants · @burnt-labs/xion-types
 ```
+
+### Strategy injection pattern
+
+`abstraxion-js` exposes three strategy interfaces that controllers consume through dependency injection. Browser implementations are the defaults; React Native ships its own implementations; any other host can supply its own.
+
+| Strategy interface         | What it abstracts                       | Browser default                 | React Native impl                |
+| -------------------------- | --------------------------------------- | ------------------------------- | -------------------------------- |
+| `StorageStrategy`          | Session persistence                     | `BrowserStorageStrategy` (`localStorage`) | AsyncStorage-backed strategy |
+| `RedirectStrategy`         | Navigating away & receiving the callback | `BrowserRedirectStrategy` (`window.location`) | Expo WebBrowser + deep links |
+| `IframeTransportStrategy`  | Mounting / messaging the embedded dashboard | `BrowserIframeTransportStrategy` (DOM iframe) | `RNWebViewIframeTransport` (`react-native-webview`) |
+
+This is what lets the runtime live in a single package while React, React Native, and Svelte wrappers all consume the same controller code.
+
+### Why a runtime + wrappers (instead of one React package)?
+
+Earlier alphas shipped controllers and React glue together inside `@burnt-labs/abstraxion`. That tied the controllers to React's lifecycle and made non-React adoption (RN with its own renderer, Svelte, vanilla JS) require copy-pasted controller code or a private API surface.
+
+`createAbstraxionRuntime` decouples the two:
+
+- **Runtime** is framework-agnostic — it owns the state machine and exposes a `subscribe(listener) → unsubscribe` stream plus a `getState()` snapshot.
+- **Wrappers** mirror that stream into the host framework's reactivity primitive. The React wrapper uses `useSyncExternalStore`; the React Native wrapper uses the same; the Svelte demo subscribes from a Svelte store.
+
+The four controller types described in [Layer 3](#layer-3-controllers-abstraxion-js) are unchanged — they just live one package down so anything that imports them gets them framework-free.
 
 ## Layer 1: Connectors (abstraxion-core)
 
@@ -170,20 +205,22 @@ if (!restored.success) {
 
 The orchestrator encapsulates this complexity so controllers stay simple.
 
-## Layer 3: Controllers (abstraxion)
+## Layer 3: Controllers (abstraxion-js)
 
-**Purpose**: Provide React-specific state management and lifecycle handling
+**Purpose**: Implement the per-mode auth state machine and lifecycle, framework-agnostic.
 
-**Location**: `packages/abstraxion/src/controllers/`
+**Location**: `packages/abstraxion-js/src/controllers/`
 
 ### What Controllers Do
 
-Controllers bridge the React world with the business logic:
+Controllers own the auth state machine for one mode at a time:
 
 - **State Management**: Track connection state (idle, connecting, connected, error)
-- **Subscriptions**: Notify React components of state changes
+- **Subscriptions**: Stream state via `subscribe(listener)`; framework wrappers mirror this into their reactivity primitive
 - **Lifecycle**: Handle initialization, cleanup, and reconnection
-- **Mode-Specific Logic**: Implement redirect vs signer mode differences
+- **Mode-Specific Logic**: Implement redirect vs popup vs iframe vs signer differences
+
+Controllers do **not** depend on React, the DOM, or any other host. Anything platform-specific (storage, redirects, iframe transport) is injected via the [strategy interfaces](#strategy-injection-pattern).
 
 ### Controller Types
 
@@ -202,7 +239,7 @@ class RedirectController extends BaseController {
 
 **Use case**: Web apps that want a hosted authentication UI. Default mode if no `authentication` config.
 
-**Direct signing**: `RedirectSigningClient` — redirects to dashboard for transaction approval, returns with result.
+**Direct signing**: `RequireSigningClient` (redirect transport) — redirects to dashboard for transaction approval, returns with result.
 
 #### PopupController
 
@@ -219,7 +256,7 @@ class PopupController extends BaseController {
 
 **Use case**: Desktop web apps that want seamless authentication without page navigation.
 
-**Direct signing**: `PopupSigningClient` — opens dashboard popup for each transaction approval.
+**Direct signing**: `RequireSigningClient` (popup transport) — opens dashboard popup for each transaction approval.
 
 #### IframeController
 
@@ -242,7 +279,7 @@ class IframeController extends BaseController {
 
 **Use case**: Apps that want full control over where the auth UI appears, white-label experiences, no popup issues.
 
-**Direct signing**: `IframeSigningClient` — routes approval through the embedded iframe.
+**Direct signing**: `RequireSigningClient` (iframe transport) — routes approval through the embedded iframe.
 
 **Sizing**: The iframe fills 100% of its container element. You control size via CSS on the container.
 
@@ -279,14 +316,13 @@ Detection uses: user-agent, `navigator.maxTouchPoints`, viewport width (<1024px)
 
 ### Why Controllers?
 
-**React integration**: Controllers handle React-specific concerns:
+Controllers exist so the SDK's state machine has exactly one home regardless of the host framework. They expose:
 
-- **State updates**: Trigger re-renders when connection state changes
-- **Suspense/SSR**: Handle server-side rendering and hydration
-- **Cleanup**: Clean up resources when component unmounts
-- **Error boundaries**: Handle errors and surface them to UI
+- **State updates** via `subscribe(listener)` — wrappers mirror this into React's `useSyncExternalStore`, a Svelte store, etc.
+- **Lifecycle** — `initialize`, `connect`, `disconnect` are the same shape everywhere; only the strategy implementations differ.
+- **Mode-specific transport** — popup vs redirect vs iframe vs signer all extend the same `BaseController` so wrappers don't have to special-case them.
 
-Without controllers, every React app would need to reimplement this logic.
+Without this layer, every React/RN/Svelte integration would re-implement the same state machine — which is exactly what the early alphas had to do, and exactly what `createAbstraxionRuntime` was extracted to fix.
 
 ## SDK Usage Patterns
 
@@ -298,7 +334,7 @@ For full working examples, see the demo app at `apps/demo-app/src/app/`.
 
 ```tsx
 // layout.tsx — wrap your app with the provider
-import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { AbstraxionProvider } from "@burnt-labs/abstraxion-react";
 
 <AbstraxionProvider
   config={{
@@ -316,7 +352,7 @@ import { AbstraxionProvider } from "@burnt-labs/abstraxion";
 import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
-} from "@burnt-labs/abstraxion";
+} from "@burnt-labs/abstraxion-react";
 
 function MyPage() {
   const {
@@ -383,7 +419,7 @@ import {
   AbstraxionContext,
   IframeController,
   useAbstraxionAccount,
-} from "@burnt-labs/abstraxion";
+} from "@burnt-labs/abstraxion-react";
 import { useContext, useEffect, useRef } from "react";
 
 function MyPage() {
@@ -468,7 +504,8 @@ Each layer has a single responsibility:
 
 - **Connectors**: Wallet/signer integration
 - **Orchestrator**: Business logic and flow coordination
-- **Controllers**: React state management
+- **Controllers + runtime**: Per-mode state machine, exposed framework-agnostically
+- **Wrappers**: Mirror runtime state into a host framework's reactivity primitive
 
 This makes the codebase easier to understand, test, and modify.
 
@@ -476,19 +513,23 @@ This makes the codebase easier to understand, test, and modify.
 
 Dependencies flow downward:
 
-- Controllers depend on orchestrator and connectors
+- Wrappers (`abstraxion-react`, `abstraxion-react-native`) depend on the runtime (`abstraxion-js`)
+- Runtime depends on orchestrator (`account-management`) and connectors (`abstraxion-core`)
 - Orchestrator depends on connectors
-- Connectors have no dependencies on other layers
+- Connectors and the foundation packages (`signers`, `constants`) have no dependencies on other SDK layers
 
 This prevents circular dependencies and makes the code more maintainable.
 
-### 3. Platform Agnostic (where possible)
+### 3. Platform Agnostic by default
 
-- **Connectors**: Platform-agnostic (work in Node.js, browser, React Native)
-- **Orchestrator**: Platform-agnostic (uses storage strategy abstraction)
-- **Controllers**: Platform-specific (React hooks, React Native exports)
+Every layer except the wrappers is platform-agnostic:
 
-This allows reuse across different platforms.
+- **Connectors**: Pure logic — work in Node.js, browser, React Native
+- **Orchestrator**: Uses storage strategy abstraction
+- **Controllers / runtime**: Inject `StorageStrategy`, `RedirectStrategy`, `IframeTransportStrategy`; defaults are browser, RN ships its own
+- **Wrappers**: Platform-specific by design — bind the runtime to React, React Native, Svelte, etc.
+
+This allows reuse across platforms without forking the controller code.
 
 ### 4. Testability
 
@@ -496,7 +537,8 @@ Each layer can be tested independently:
 
 - **Connector tests**: Mock wallet APIs
 - **Orchestrator tests**: Mock connectors and storage
-- **Controller tests**: Mock orchestrator
+- **Controller / runtime tests**: Mock orchestrator and supply test strategies
+- **Wrapper tests**: Mount the runtime, drive it from a test harness, assert hook output
 
 ### 5. Extensibility
 
@@ -505,6 +547,8 @@ New functionality can be added without modifying existing code:
 - **New connector**: Implement `Connector` interface
 - **New account strategy**: Implement `AccountStrategy` interface
 - **New controller mode**: Extend `BaseController`
+- **New host platform**: Implement `StorageStrategy` / `RedirectStrategy` / `IframeTransportStrategy` and mirror `runtime.subscribe` into the framework's reactivity primitive — see the Svelte demo at `demos/svelte/` for a worked example
+- **New framework wrapper**: Add a sibling to `abstraxion-react` / `abstraxion-react-native`; the runtime stays unchanged
 
 ## File Organization
 
@@ -528,22 +572,38 @@ xion.js/
 │   │   │       └── redirectFlow.ts
 │   │   └── src/accounts/         # Account strategies
 │   │
-│   └── abstraxion/               # Layer 3: Controllers
-│       ├── src/controllers/
-│       │   ├── types.ts          # Controller interface
-│       │   ├── BaseController.ts # State management base
-│       │   ├── RedirectController.ts
-│       │   ├── PopupController.ts       # Popup auth flow
-│       │   ├── IframeController.ts      # Inline iframe auth flow
-│       │   ├── SignerController.ts
-│       │   ├── PopupSigningClient.ts    # Direct signing via popup
-│       │   ├── RedirectSigningClient.ts # Direct signing via redirect
-│       │   ├── IframeSigningClient.ts   # Direct signing via iframe
-│       │   └── factory.ts        # Controller factory (routes config → controller)
-│       ├── src/utils/
-│       │   ├── normalizeAbstraxionConfig.ts  # Config defaults + auto mode resolution
-│       │   └── resolveAutoAuth.ts            # Device detection for auto mode
-│       └── src/AbstraxionProvider.tsx  # React provider
+│   ├── abstraxion-js/            # Layer 3: Runtime + Controllers (framework-agnostic)
+│   │   ├── src/runtime.ts        # createAbstraxionRuntime — entry point
+│   │   ├── src/controllers/
+│   │   │   ├── types.ts          # Controller interface
+│   │   │   ├── BaseController.ts # State machine base
+│   │   │   ├── RedirectController.ts
+│   │   │   ├── PopupController.ts
+│   │   │   ├── IframeController.ts
+│   │   │   ├── SignerController.ts
+│   │   │   └── factory.ts        # Controller factory (routes config → controller)
+│   │   ├── src/signing/
+│   │   │   ├── RequireSigningClient.ts  # Unified popup/redirect/iframe direct signing
+│   │   │   └── AAClient.ts       # Direct signing for signer mode
+│   │   ├── src/strategies/
+│   │   │   ├── BrowserStorageStrategy.ts
+│   │   │   ├── BrowserRedirectStrategy.ts
+│   │   │   ├── BrowserIframeTransportStrategy.ts
+│   │   │   └── IframeTransportStrategy.ts  # Strategy interfaces
+│   │   └── src/utils/
+│   │       ├── normalizeAbstraxionConfig.ts
+│   │       └── resolveAutoAuth.ts
+│   │
+│   ├── abstraxion-react/         # Layer 4a: React wrapper (web)
+│   │   ├── src/AbstraxionProvider.tsx
+│   │   ├── src/hooks/            # useAbstraxionAccount / Client / SigningClient / ManageAuthenticators
+│   │   └── src/components/AbstraxionEmbed.tsx
+│   │
+│   └── abstraxion-react-native/  # Layer 4b: React Native wrapper
+│       ├── src/AbstraxionProvider.tsx
+│       ├── src/hooks/
+│       ├── src/strategies/       # AsyncStorage / Expo / RN-WebView strategies
+│       └── src/components/AbstraxionEmbed.tsx  # In-app WebView embed
 ```
 
 ## Direct Signing Architecture
@@ -574,12 +634,14 @@ dApp → useAbstraxionSigningClient({ requireAuth: true }) → mode-specific cli
 - The meta-account must have sufficient XION balance or the transaction will fail
 - The approval mechanism depends on the authentication mode:
 
-| Mode         | Direct Signing Client   | Approval UX                                     |
-| ------------ | ----------------------- | ----------------------------------------------- |
-| redirect     | `RedirectSigningClient` | Redirects to dashboard for approval             |
-| popup / auto | `PopupSigningClient`    | Opens dashboard popup for approval              |
-| iframe       | `IframeSigningClient`   | Sends `SIGN_AND_BROADCAST` to iframe            |
-| signer       | `AAClient`              | Prompts external wallet (MetaMask, Keplr, etc.) |
+| Mode         | Direct Signing Client            | Approval UX                                     |
+| ------------ | -------------------------------- | ----------------------------------------------- |
+| redirect     | `RequireSigningClient` (redirect) | Redirects to dashboard for approval             |
+| popup / auto | `RequireSigningClient` (popup)    | Opens dashboard popup for approval              |
+| iframe       | `RequireSigningClient` (iframe)   | Sends `SIGN_AND_BROADCAST` to iframe            |
+| signer       | `AAClient`                        | Prompts external wallet (MetaMask, Keplr, etc.) |
+
+`RequireSigningClient` was previously three separate classes (`PopupSigningClient`, `RedirectSigningClient`, `IframeSigningClient`); they were consolidated in alpha.78. The transport is selected from the active controller — consumers don't pick it directly.
 
 ### Code Pattern
 
@@ -689,11 +751,12 @@ Resolves to popup on desktop, redirect on mobile. Gives the best UX for each pla
 
 ## Summary
 
-The three-layer architecture provides:
+The architecture provides:
 
-1. **Connectors**: Standardize wallet/signer integration
-2. **Orchestrator**: Coordinate complex connection flows
-3. **Controllers**: Manage React state and lifecycle
+1. **Connectors** (`abstraxion-core`): Standardize wallet/signer integration
+2. **Orchestrator** (`account-management`): Coordinate complex connection flows
+3. **Runtime + Controllers** (`abstraxion-js`): Framework-agnostic state machine, exposed via `createAbstraxionRuntime`
+4. **Wrappers** (`abstraxion-react`, `abstraxion-react-native`, …): Bind the runtime to a host framework's reactivity primitive
 
 This separation makes the codebase:
 

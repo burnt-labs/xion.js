@@ -1,5 +1,5 @@
 ---
-"@burnt-labs/abstraxion": minor
+"@burnt-labs/abstraxion-react": minor
 "@burnt-labs/abstraxion-core": minor
 "@burnt-labs/signers": minor
 "@burnt-labs/account-management": minor

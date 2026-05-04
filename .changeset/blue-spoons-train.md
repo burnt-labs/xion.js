@@ -1,7 +1,5 @@
 ---
-"@burnt-labs/tailwind-config": patch
-"@burnt-labs/abstraxion": patch
-"@burnt-labs/ui": patch
+"@burnt-labs/abstraxion-react": patch
 ---
 
 Updated designs

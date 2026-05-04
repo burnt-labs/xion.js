@@ -2,6 +2,17 @@
 
 The `abstraxion-react` library is the React wrapper for Abstraxion account abstraction on XION. It provides the React provider, embed component, and hooks for creating abstract accounts and signing transactions while delegating framework-agnostic controller logic to `@burnt-labs/abstraxion-js`.
 
+## Migrating from `@burnt-labs/abstraxion`
+
+Starting with the v1 alpha line, this package was **renamed** from `@burnt-labs/abstraxion` to `@burnt-labs/abstraxion-react`. The public surface (provider, hooks, `<AbstraxionEmbed>`, config shape) is unchanged — the migration is a one-line find/replace in your imports plus a `package.json` dependency swap:
+
+```diff
+- import { AbstraxionProvider, useAbstraxionAccount } from "@burnt-labs/abstraxion";
++ import { AbstraxionProvider, useAbstraxionAccount } from "@burnt-labs/abstraxion-react";
+```
+
+If you also depended on `@burnt-labs/ui` for the legacy `<Abstraxion>` modal, that package is deprecated in v1; use `<AbstraxionEmbed>` from this package instead.
+
 ## Installation
 
 Run the following:

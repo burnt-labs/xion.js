@@ -1,6 +1,5 @@
 ---
 "@burnt-labs/abstraxion-core": patch
-"@burnt-labs/tailwind-config": patch
 ---
 
 Core changes:

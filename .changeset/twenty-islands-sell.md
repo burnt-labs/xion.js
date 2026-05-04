@@ -1,9 +1,8 @@
 ---
 "@burnt-labs/abstraxion-react-native": major
 "@burnt-labs/abstraxion-core": major
-"@burnt-labs/abstraxion": minor
+"@burnt-labs/abstraxion-react": minor
 "@burnt-labs/constants": minor
-"demo-app": minor
 ---
 
 # Breaking Changes
