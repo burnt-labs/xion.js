@@ -1,6 +1,6 @@
 ---
 "@burnt-labs/abstraxion-core": patch
-"@burnt-labs/abstraxion": patch
+"@burnt-labs/abstraxion-react": patch
 "@burnt-labs/account-management": patch
 "@burnt-labs/constants": patch
 "@burnt-labs/signers": patch

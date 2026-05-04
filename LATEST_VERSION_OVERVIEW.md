@@ -1,5 +1,7 @@
 # xion.js Version Overview
 
+> **Note**: starting with the v1 alpha line, the React wrapper has been renamed from `@burnt-labs/abstraxion` to `@burnt-labs/abstraxion-react`. The headings and code samples below for alpha.70 / alpha.76 use the historical name (`@burnt-labs/abstraxion`) because those versions were published under it. New code should import from `@burnt-labs/abstraxion-react`. See [`packages/abstraxion-react/README.md`](packages/abstraxion-react/README.md) for the migration note.
+
 This document contains a comprehensive overview of all changelog entries across all packages in the xion.js monorepo.
 
 The document is split into two sections:
@@ -92,7 +94,7 @@ import {
   AbstraxionEmbed,
   useAbstraxionAccount,
   useAbstraxionSigningClient,
-} from "@burnt-labs/abstraxion";
+} from "@burnt-labs/abstraxion-react";
 
 function MyPage() {
   const { isConnected } = useAbstraxionAccount();

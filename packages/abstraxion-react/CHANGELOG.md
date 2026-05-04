@@ -1,4 +1,6 @@
-# @burnt-labs/abstraxion
+# @burnt-labs/abstraxion-react
+
+> **Renamed** from `@burnt-labs/abstraxion`. The package is the same React wrapper; the npm name changed in the v1 line. See the entry below for the alpha that introduced the rename, and the migration note when v1 ships.
 
 ## 1.0.0-alpha.78
 

@@ -1,5 +1,5 @@
 ---
-"@burnt-labs/abstraxion": minor
+"@burnt-labs/abstraxion-react": minor
 ---
 
 Remove webAuthn registration functionality

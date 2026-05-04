@@ -1,8 +1,7 @@
 ---
 "@burnt-labs/abstraxion-core": minor
-"@burnt-labs/abstraxion": minor
+"@burnt-labs/abstraxion-react": minor
 "@burnt-labs/signers": minor
-"demo-app": minor
 ---
 
 Update the following packages to the latest version:
