@@ -3,6 +3,7 @@ import { AAClient } from "../utils/client";
 import { AASigner } from "../../interfaces";
 import { Comet38Client } from "@cosmjs/tendermint-rpc";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 
 const { mockSimulate } = vi.hoisted(() => ({ mockSimulate: vi.fn() }));
 
@@ -200,6 +201,26 @@ describe("AAClient", () => {
         }),
       }),
     );
+  });
+
+  // Older AA contracts (e.g. mainnet code_id 5, checksum FEFA4D0C…) reject
+  // empty cred_bytes in their sudo handler before the simulate=true skip in
+  // before_tx is reached. A single placeholder byte satisfies that guard
+  // while remaining inert for newer contracts that ignore it during simulate.
+  it("simulate sends a non-empty placeholder signature (legacy contract compat)", async () => {
+    (client as any).getSequence.mockResolvedValue({ sequence: 1 });
+    mockSigner.getAccounts = vi
+      .fn()
+      .mockResolvedValue([{ address: mockAccountAddress }]);
+    (client as any).getQueryClient.mockReturnValue({});
+    mockSimulate.mockResolvedValue({ gasInfo: { gasUsed: 100000 } });
+
+    await client.simulate(mockAccountAddress, [], "memo");
+
+    const txRawArgs = (TxRaw.fromPartial as any).mock.calls[0][0];
+    expect(txRawArgs.signatures).toHaveLength(1);
+    expect(txRawArgs.signatures[0]).toBeInstanceOf(Uint8Array);
+    expect(txRawArgs.signatures[0].length).toBeGreaterThan(0);
   });
 
   it("should return null if account not found in getAccount", async () => {
