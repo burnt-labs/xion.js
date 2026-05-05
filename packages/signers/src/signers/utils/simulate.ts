@@ -107,7 +107,9 @@ export async function simulateWithNilPubkey(
     const tx = TxRaw.fromPartial({
       bodyBytes,
       authInfoBytes,
-      signatures: [new Uint8Array()],
+      // Older AA contracts reject empty cred_bytes before reaching
+      // the simulate=true skip; a single placeholder byte satisfies the guard.
+      signatures: [new Uint8Array([0])],
     });
 
     const request = SimulateRequest.fromPartial({

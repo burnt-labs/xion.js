@@ -12,6 +12,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AbstractAccount } from "@burnt-labs/xion-types/abstractaccount/v1/account";
+import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { testAccounts } from "../../../testing/fixtures";
 
 // ── Network mocks (hoisted before module resolution) ─────────────────
@@ -180,5 +181,22 @@ describe("simulateWithNilPubkey", () => {
     await expect(
       simulateWithNilPubkey(RPC, testAccounts.existing, [], undefined),
     ).rejects.toThrow("No gas info returned");
+  });
+
+  // Older AA contracts (e.g. mainnet code_id 5, checksum FEFA4D0C…) reject
+  // empty cred_bytes in their sudo handler before the simulate=true skip in
+  // before_tx is reached. A single placeholder byte satisfies that guard
+  // while remaining inert for newer contracts that ignore it during simulate.
+  it("includes a non-empty placeholder signature (legacy contract compat)", async () => {
+    await simulateWithNilPubkey(
+      RPC,
+      testAccounts.existing,
+      [MSG_SEND],
+      undefined,
+    );
+    const req = mockSimulate.mock.calls[0][0];
+    const decoded = TxRaw.decode(req.txBytes);
+    expect(decoded.signatures).toHaveLength(1);
+    expect(decoded.signatures[0].length).toBeGreaterThan(0);
   });
 });
