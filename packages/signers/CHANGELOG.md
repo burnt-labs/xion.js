@@ -1,5 +1,11 @@
 # @burnt-labs/signers
 
+## 1.0.0-alpha.9
+
+### Patch Changes
+
+- [#375](https://github.com/burnt-labs/xion.js/pull/375) [`6b6a907`](https://github.com/burnt-labs/xion.js/commit/6b6a907230b6c56d151e88a6b7371e13379bd19a) Thanks [@ertemann](https://github.com/ertemann)! - add back signature to simulate call + tests
+
 ## 1.0.0-alpha.8
 
 ### Minor Changes
