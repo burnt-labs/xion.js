@@ -83,6 +83,19 @@ describe("Grant Comparison Utilities", () => {
       const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
       expect(result).toBe(false);
     });
+
+    it("should return false when chain spend limit omits an expected denom", () => {
+      const expectedSpendLimit = [
+        { denom: "uxion", amount: "1000" },
+        { denom: "atom", amount: "500" },
+      ];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "800" }, // "atom" missing entirely
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(false);
+    });
   });
 
   describe("compareChainGrantsToTreasuryGrants", () => {
