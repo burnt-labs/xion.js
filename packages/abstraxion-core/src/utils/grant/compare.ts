@@ -141,6 +141,14 @@ export const isLimitValid = <T extends { denom: string; amount: string }>(
     if (BigInt(item.amount) > expectedAmount) return false;
   }
 
+  // Every expected denom must be present on-chain: a chain grant that omits a
+  // required denom does not satisfy the expected limit (otherwise a narrower
+  // grant would be treated as a match and the broader grant never re-requested).
+  const chainDenoms = new Set(chainLimit.map((item) => item.denom));
+  for (const denom of expectedLimits.keys()) {
+    if (!chainDenoms.has(denom)) return false;
+  }
+
   return true;
 };
 
@@ -349,7 +357,10 @@ export function compareChainGrantsToTreasuryGrants(
         return (
           treasuryStakeAuth.authorizationType ===
             grantStakeAuth.authorizationType &&
-          treasuryStakeAuth.maxTokens === grantStakeAuth.maxTokens &&
+          treasuryStakeAuth.maxTokens?.denom ===
+            grantStakeAuth.maxTokens?.denom &&
+          treasuryStakeAuth.maxTokens?.amount ===
+            grantStakeAuth.maxTokens?.amount &&
           JSON.stringify(treasuryStakeAuth.allowList) ===
             JSON.stringify(grantStakeAuth.allowList) &&
           JSON.stringify(treasuryStakeAuth.denyList) ===
