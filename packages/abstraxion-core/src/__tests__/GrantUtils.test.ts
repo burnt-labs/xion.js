@@ -351,6 +351,133 @@ describe("Grant Comparison Utilities", () => {
         expect(result.reason).toBe("grant_mismatch");
       }
     });
+
+    // ---- Stake / maxTokens structural comparison (PR #378) ----
+
+    it("should return match:true for Stake grant where maxTokens objects are structurally equal but not reference-equal", () => {
+      // Two separate object literals — identical denom + amount, different references.
+      // Before the fix (=== reference equality) this returned false.
+      const treasury: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Stake,
+          data: {
+            authorizationType: 1, // AUTHORIZATION_TYPE_DELEGATE
+            maxTokens: { denom: "uxion", amount: "5000000" },
+            allowList: undefined,
+            denyList: undefined,
+          } as any,
+        },
+      ];
+
+      const chain: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Stake,
+          data: {
+            authorizationType: 1,
+            // Separate object instance — same field values, different reference.
+            maxTokens: { denom: "uxion", amount: "5000000" },
+            allowList: undefined,
+            denyList: undefined,
+          } as any,
+        },
+      ];
+
+      const result = compareChainGrantsToTreasuryGrants(chain, treasury);
+      expect(result.match).toBe(true);
+    });
+
+    it("should return grant_mismatch for Stake grant where maxTokens amounts differ", () => {
+      const treasury: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Stake,
+          data: {
+            authorizationType: 1,
+            maxTokens: { denom: "uxion", amount: "5000000" },
+            allowList: undefined,
+            denyList: undefined,
+          } as any,
+        },
+      ];
+
+      const chain: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Stake,
+          data: {
+            authorizationType: 1,
+            maxTokens: { denom: "uxion", amount: "9999999" }, // different amount
+            allowList: undefined,
+            denyList: undefined,
+          } as any,
+        },
+      ];
+
+      const result = compareChainGrantsToTreasuryGrants(chain, treasury);
+      expect(result.match).toBe(false);
+      if (!result.match) {
+        expect(result.reason).toBe("grant_mismatch");
+      }
+    });
+
+    it("should return match:true for Stake grant where both sides have maxTokens undefined", () => {
+      // undefined?.denom === undefined?.denom → undefined === undefined → true
+      const treasury: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Stake,
+          data: {
+            authorizationType: 1,
+            // maxTokens intentionally omitted (undefined)
+            allowList: undefined,
+            denyList: undefined,
+          } as any,
+        },
+      ];
+
+      const chain: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Stake,
+          data: {
+            authorizationType: 1,
+            allowList: undefined,
+            denyList: undefined,
+          } as any,
+        },
+      ];
+
+      const result = compareChainGrantsToTreasuryGrants(chain, treasury);
+      expect(result.match).toBe(true);
+    });
+
+    it("should return grant_mismatch for Stake grant where maxTokens denoms differ", () => {
+      const treasury: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Stake,
+          data: {
+            authorizationType: 1,
+            maxTokens: { denom: "uxion", amount: "1000" },
+            allowList: undefined,
+            denyList: undefined,
+          } as any,
+        },
+      ];
+
+      const chain: DecodedReadableAuthorization[] = [
+        {
+          type: AuthorizationTypes.Stake,
+          data: {
+            authorizationType: 1,
+            maxTokens: { denom: "atom", amount: "1000" }, // different denom, same amount
+            allowList: undefined,
+            denyList: undefined,
+          } as any,
+        },
+      ];
+
+      const result = compareChainGrantsToTreasuryGrants(chain, treasury);
+      expect(result.match).toBe(false);
+      if (!result.match) {
+        expect(result.reason).toBe("grant_mismatch");
+      }
+    });
   });
 });
 
