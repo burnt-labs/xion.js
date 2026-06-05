@@ -40,10 +40,7 @@ export type {
   Unsubscribe,
 } from "./controllers";
 
-export {
-  BrowserRedirectStrategy,
-  BrowserStorageStrategy,
-} from "./strategies";
+export { BrowserRedirectStrategy, BrowserStorageStrategy } from "./strategies";
 
 export {
   createAccountCreationConfigFromConfig,

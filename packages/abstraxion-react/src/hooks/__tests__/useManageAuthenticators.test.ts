@@ -93,9 +93,8 @@ function wrapper(ctx: React.ContextType<typeof AbstraxionContext>) {
 }
 
 // Re-import after mocking so instanceof checks use the mocked classes
-const { PopupController, IframeController, RedirectController } = await import(
-  "@burnt-labs/abstraxion-js"
-);
+const { PopupController, IframeController, RedirectController } =
+  await import("@burnt-labs/abstraxion-js");
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
