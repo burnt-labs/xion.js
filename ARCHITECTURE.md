@@ -73,11 +73,11 @@ The SDK is structured as a **framework-agnostic runtime with thin per-framework 
 
 `abstraxion-js` exposes three strategy interfaces that controllers consume through dependency injection. Browser implementations are the defaults; React Native ships its own implementations; any other host can supply its own.
 
-| Strategy interface         | What it abstracts                       | Browser default                 | React Native impl                |
-| -------------------------- | --------------------------------------- | ------------------------------- | -------------------------------- |
-| `StorageStrategy`          | Session persistence                     | `BrowserStorageStrategy` (`localStorage`) | AsyncStorage-backed strategy |
-| `RedirectStrategy`         | Navigating away & receiving the callback | `BrowserRedirectStrategy` (`window.location`) | Expo WebBrowser + deep links |
-| `IframeTransportStrategy`  | Mounting / messaging the embedded dashboard | `BrowserIframeTransportStrategy` (DOM iframe) | `RNWebViewIframeTransport` (`react-native-webview`) |
+| Strategy interface        | What it abstracts                           | Browser default                               | React Native impl                                   |
+| ------------------------- | ------------------------------------------- | --------------------------------------------- | --------------------------------------------------- |
+| `StorageStrategy`         | Session persistence                         | `BrowserStorageStrategy` (`localStorage`)     | AsyncStorage-backed strategy                        |
+| `RedirectStrategy`        | Navigating away & receiving the callback    | `BrowserRedirectStrategy` (`window.location`) | Expo WebBrowser + deep links                        |
+| `IframeTransportStrategy` | Mounting / messaging the embedded dashboard | `BrowserIframeTransportStrategy` (DOM iframe) | `RNWebViewIframeTransport` (`react-native-webview`) |
 
 This is what lets the runtime live in a single package while React, React Native, and Svelte wrappers all consume the same controller code.
 
@@ -634,8 +634,8 @@ dApp → useAbstraxionSigningClient({ requireAuth: true }) → mode-specific cli
 - The meta-account must have sufficient XION balance or the transaction will fail
 - The approval mechanism depends on the authentication mode:
 
-| Mode         | Direct Signing Client            | Approval UX                                     |
-| ------------ | -------------------------------- | ----------------------------------------------- |
+| Mode         | Direct Signing Client             | Approval UX                                     |
+| ------------ | --------------------------------- | ----------------------------------------------- |
 | redirect     | `RequireSigningClient` (redirect) | Redirects to dashboard for approval             |
 | popup / auto | `RequireSigningClient` (popup)    | Opens dashboard popup for approval              |
 | iframe       | `RequireSigningClient` (iframe)   | Sends `SIGN_AND_BROADCAST` to iframe            |

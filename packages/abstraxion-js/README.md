@@ -44,13 +44,13 @@ That's the entire surface a host framework needs to bind to. React's `useSyncExt
 
 The `authentication` field of the config picks the controller:
 
-| Mode       | Controller          | What it does                                                                |
-| ---------- | ------------------- | --------------------------------------------------------------------------- |
-| `popup`    | `PopupController`   | Opens the dashboard in a popup window; communicates via `postMessage`.      |
-| `redirect` | `RedirectController` | Full-page redirect to the dashboard; returns to a callback URL.            |
-| `iframe`   | `IframeController`  | Renders the dashboard in an embedded iframe; communicates via `MessageChannel`. |
-| `signer`   | `SignerController`  | Headless — caller supplies a signer (Turnkey / MetaMask / Keplr / custom).  |
-| `auto`     | resolved at init    | Resolves to `popup` on desktop, `redirect` on mobile/PWA.                   |
+| Mode       | Controller           | What it does                                                                    |
+| ---------- | -------------------- | ------------------------------------------------------------------------------- |
+| `popup`    | `PopupController`    | Opens the dashboard in a popup window; communicates via `postMessage`.          |
+| `redirect` | `RedirectController` | Full-page redirect to the dashboard; returns to a callback URL.                 |
+| `iframe`   | `IframeController`   | Renders the dashboard in an embedded iframe; communicates via `MessageChannel`. |
+| `signer`   | `SignerController`   | Headless — caller supplies a signer (Turnkey / MetaMask / Keplr / custom).      |
+| `auto`     | resolved at init     | Resolves to `popup` on desktop, `redirect` on mobile/PWA.                       |
 
 Each controller surfaces the same state shape via `runtime.subscribe`, so wrappers don't have to special-case modes.
 
@@ -94,7 +94,10 @@ Both expose the same `signAndBroadcast` / `sendTokens` / `execute` surface, so s
 
 ```ts
 export { createAbstraxionRuntime } from "@burnt-labs/abstraxion-js";
-export type { AbstraxionRuntime, AbstraxionRuntimeOptions } from "@burnt-labs/abstraxion-js";
+export type {
+  AbstraxionRuntime,
+  AbstraxionRuntimeOptions,
+} from "@burnt-labs/abstraxion-js";
 
 export {
   BaseController,
@@ -117,7 +120,11 @@ export type {
 
 export { RequireSigningClient, AAClient } from "@burnt-labs/abstraxion-js";
 
-export { ConnectorType, IframeMessageType, MessageTarget } from "@burnt-labs/abstraxion-js";
+export {
+  ConnectorType,
+  IframeMessageType,
+  MessageTarget,
+} from "@burnt-labs/abstraxion-js";
 export { AUTHENTICATOR_TYPE } from "@burnt-labs/abstraxion-js";
 ```
 

@@ -44,13 +44,19 @@ import {
   AbstraxionProvider,
 } from "@burnt-labs/abstraxion-react-native";
 
-<AbstraxionProvider config={{ /* ..., authentication: { type: "embedded" } */ }}>
+<AbstraxionProvider
+  config={
+    {
+      /* ..., authentication: { type: "embedded" } */
+    }
+  }
+>
   <AbstraxionEmbed
-    idleView="button"        // "button" | "fullview" | "hidden"
-    connectedView="hidden"   // "hidden" | "visible"
-    approvalView="modal"     // "modal" | "inline"
+    idleView="button" // "button" | "fullview" | "hidden"
+    connectedView="hidden" // "hidden" | "visible"
+    approvalView="modal" // "modal" | "inline"
   />
-</AbstraxionProvider>
+</AbstraxionProvider>;
 ```
 
 Highlights:
@@ -68,23 +74,23 @@ The reason RN can mirror the web wrapper hook-for-hook is the runtime extraction
 
 RN supplies its own implementations of the three strategy interfaces (browser defaults are in `abstraxion-js`):
 
-| Strategy interface         | Browser default (`abstraxion-js`)     | React Native impl                                                  |
-| -------------------------- | ------------------------------------- | ------------------------------------------------------------------ |
-| `StorageStrategy`          | `BrowserStorageStrategy` (`localStorage`) | `ReactNativeStorageStrategy` (AsyncStorage)                       |
-| `RedirectStrategy`         | `BrowserRedirectStrategy` (`window.location`) | `ReactNativeRedirectStrategy` (Expo WebBrowser + Expo Linking) |
-| `IframeTransportStrategy`  | `BrowserIframeTransportStrategy` (DOM iframe + `MessageChannel`) | `RNWebViewIframeTransport` (`react-native-webview`) |
+| Strategy interface        | Browser default (`abstraxion-js`)                                | React Native impl                                              |
+| ------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| `StorageStrategy`         | `BrowserStorageStrategy` (`localStorage`)                        | `ReactNativeStorageStrategy` (AsyncStorage)                    |
+| `RedirectStrategy`        | `BrowserRedirectStrategy` (`window.location`)                    | `ReactNativeRedirectStrategy` (Expo WebBrowser + Expo Linking) |
+| `IframeTransportStrategy` | `BrowserIframeTransportStrategy` (DOM iframe + `MessageChannel`) | `RNWebViewIframeTransport` (`react-native-webview`)            |
 
 This is what lets RN ship `<AbstraxionEmbed>` and direct signing without forking the controller code — the same `IframeController`, `RedirectController`, and `SignerController` run on both platforms.
 
 ## Mode support summary
 
-| Mode       | Web (`abstraxion-react`) | React Native (`abstraxion-react-native`) |
-| ---------- | ------------------------ | ----------------------------------------- |
-| `redirect` | ✅                        | ✅ (Expo WebBrowser + deep-link callback) |
-| `popup`    | ✅                        | ❌ (web-only — needs `window.open`)        |
-| `auto`     | ✅                        | ❌ (web-only — device sniffing is browser-bound) |
-| `iframe` / `embedded` | ✅ (DOM iframe)| ✅ (`react-native-webview`)                |
-| `signer`   | ✅                        | ✅ (caller-supplied signing function — Turnkey, Privy, MetaMask, …) |
+| Mode                  | Web (`abstraxion-react`) | React Native (`abstraxion-react-native`)                            |
+| --------------------- | ------------------------ | ------------------------------------------------------------------- |
+| `redirect`            | ✅                       | ✅ (Expo WebBrowser + deep-link callback)                           |
+| `popup`               | ✅                       | ❌ (web-only — needs `window.open`)                                 |
+| `auto`                | ✅                       | ❌ (web-only — device sniffing is browser-bound)                    |
+| `iframe` / `embedded` | ✅ (DOM iframe)          | ✅ (`react-native-webview`)                                         |
+| `signer`              | ✅                       | ✅ (caller-supplied signing function — Turnkey, Privy, MetaMask, …) |
 
 Direct signing (`requireAuth: true`) is supported on RN in `redirect`, `embedded`, and `signer` modes — i.e., every mode RN supports. This was previously web-only.
 

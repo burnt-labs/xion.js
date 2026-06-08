@@ -4,15 +4,15 @@ Official XION JavaScript SDK monorepo.
 
 ## Packages
 
-| Package                                                         | What it is                                                                                                       |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [`@burnt-labs/abstraxion-js`](packages/abstraxion-js)           | Framework-agnostic runtime: controllers, strategies, `createAbstraxionRuntime`. Use directly from Svelte/Vue/JS. |
-| [`@burnt-labs/abstraxion-react`](packages/abstraxion-react)     | React wrapper — provider, hooks, `<AbstraxionEmbed>`. Built on `abstraxion-js`.                                  |
-| [`@burnt-labs/abstraxion-react-native`](packages/abstraxion-react-native) | React Native wrapper — same hook surface, with RN strategies and in-app `<WebView>` embed.            |
-| [`@burnt-labs/abstraxion-core`](packages/abstraxion-core)       | Connector layer (Cosmos / Ethereum / external signers) and the SDK ↔ Dashboard iframe message protocol.          |
-| [`@burnt-labs/account-management`](packages/account-management) | Orchestrator: session restoration, account discovery/creation, grant state.                                       |
-| [`@burnt-labs/signers`](packages/signers)                       | CosmJS-based signers and cryptographic utilities for Abstraxion accounts.                                         |
-| [`@burnt-labs/constants`](packages/constants)                   | Shared chain IDs, RPC URLs, dashboard URLs, denoms.                                                              |
+| Package                                                                   | What it is                                                                                                       |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [`@burnt-labs/abstraxion-js`](packages/abstraxion-js)                     | Framework-agnostic runtime: controllers, strategies, `createAbstraxionRuntime`. Use directly from Svelte/Vue/JS. |
+| [`@burnt-labs/abstraxion-react`](packages/abstraxion-react)               | React wrapper — provider, hooks, `<AbstraxionEmbed>`. Built on `abstraxion-js`.                                  |
+| [`@burnt-labs/abstraxion-react-native`](packages/abstraxion-react-native) | React Native wrapper — same hook surface, with RN strategies and in-app `<WebView>` embed.                       |
+| [`@burnt-labs/abstraxion-core`](packages/abstraxion-core)                 | Connector layer (Cosmos / Ethereum / external signers) and the SDK ↔ Dashboard iframe message protocol.          |
+| [`@burnt-labs/account-management`](packages/account-management)           | Orchestrator: session restoration, account discovery/creation, grant state.                                      |
+| [`@burnt-labs/signers`](packages/signers)                                 | CosmJS-based signers and cryptographic utilities for Abstraxion accounts.                                        |
+| [`@burnt-labs/constants`](packages/constants)                             | Shared chain IDs, RPC URLs, dashboard URLs, denoms.                                                              |
 
 See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for how the layers fit together.
 
