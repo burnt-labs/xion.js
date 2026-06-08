@@ -27,17 +27,45 @@ describe("Redirect Authentication Flow - Integration", () => {
   });
 
   /**
-   * Helper to create mock redirect strategy for testing
+   * Helper to create mock redirect strategy for testing.
+   *
+   * Implements the full `RedirectStrategy` interface (the SDK's
+   * `RedirectController.initialize()` calls `getUrlParameter` /
+   * `cleanUrlParameters` during sign-result detection, even when no callback
+   * is in flight). The current URL is configurable so tests can simulate
+   * "returning from the dashboard" with arbitrary query strings.
    */
-  function createMockRedirectStrategy() {
+  function createMockRedirectStrategy(initialUrl = "http://localhost:3000/") {
     let redirectUrl: string | null = null;
+    let currentUrl = initialUrl;
 
     return {
-      redirect: vi.fn((url: string) => {
+      redirect: vi.fn(async (url: string) => {
         redirectUrl = url;
         console.log("📍 Mock redirect to:", url);
       }),
+      getCurrentUrl: vi.fn(async () => currentUrl),
+      getUrlParameter: vi.fn(async (param: string) => {
+        try {
+          return new URL(currentUrl).searchParams.get(param);
+        } catch {
+          return null;
+        }
+      }),
+      cleanUrlParameters: vi.fn(async (paramsToRemove: string[]) => {
+        try {
+          const url = new URL(currentUrl);
+          paramsToRemove.forEach((p) => url.searchParams.delete(p));
+          currentUrl = url.toString();
+        } catch {
+          // ignore — test stub
+        }
+      }),
+      // Test-only helpers (not part of the RedirectStrategy interface)
       getRedirectUrl: () => redirectUrl,
+      setCurrentUrl: (url: string) => {
+        currentUrl = url;
+      },
     };
   }
 
@@ -214,8 +242,11 @@ describe("Redirect Authentication Flow - Integration", () => {
       // Disconnect
       await controller.disconnect();
 
+      // After an explicit disconnect the state machine transitions to
+      // `disconnected` (distinct from `idle` — see AccountStateGuards). This
+      // is what prevents the embed from auto-relogging after a user logout.
       const state = controller.getState();
-      expect(state.status).toBe("idle");
+      expect(state.status).toBe("disconnected");
 
       console.log("✅ Disconnection successful");
       console.log("   Final state:", state.status);
@@ -611,7 +642,7 @@ describe("Redirect Authentication Flow - Integration", () => {
       await controller.disconnect();
 
       const state = controller.getState();
-      expect(state.status).toBe("idle");
+      expect(state.status).toBe("disconnected");
 
       console.log("✅ Error callback handling validated");
     }, 60000);

@@ -39,8 +39,7 @@ type ManageStatus = "idle" | "pending" | "success" | "cancelled" | "error";
  *   - Disconnected: Connect button (opens Expo WebBrowser to the dashboard).
  *   - Connected: account address + "Manage Authenticators" + logout.
  *
- * Redirect is the only RN-supported dashboard mode today (popup/embedded
- * need a WebView transport — tracked as Phase 9b). Manage-authenticators
+ * Redirect is the only RN-supported dashboard mode today. Manage-authenticators
  * piggy-backs on the same redirect flow via Expo WebBrowser.
  */
 function HomeScreen(): JSX.Element {

@@ -30,8 +30,10 @@ import {
   RNWebViewIframeTransport,
   type RNWebViewControl,
 } from "../strategies/RNWebViewIframeTransport";
-
-type InactiveView = "button" | "fullview" | "hidden";
+import {
+  computeEmbedDisplayMode,
+  type EmbedInactiveView as InactiveView,
+} from "./embedDisplayMode";
 
 export interface AbstraxionEmbedProps {
   idleView?: InactiveView;
@@ -194,6 +196,18 @@ export const AbstraxionEmbed = forwardRef<
     login().catch(() => undefined);
   }, [login]);
 
+  // Modal is only rendered after the `controller instanceof IframeController`
+  // early-return below, so this callback is unreachable when controller is
+  // anything else. Asserting the type here keeps the closure terse.
+  const handleDismissModal = useCallback(() => {
+    const iframeController = controller as IframeController;
+    if (isConnected && isAwaitingApproval) {
+      iframeController.cancelApproval();
+    } else if (isConnecting) {
+      iframeController.cancelLogin();
+    }
+  }, [controller, isConnected, isAwaitingApproval, isConnecting]);
+
   if (!(controller instanceof IframeController)) {
     return null;
   }
@@ -210,17 +224,15 @@ export const AbstraxionEmbed = forwardRef<
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const WebView = WebViewModule.WebView as any;
-  const isInactive = !isConnected && !isConnecting;
-  const showButton =
-    (isInactive && inactiveView === "button") ||
-    (!!abstraxionError && inactiveView !== "fullview");
-  const collapse =
-    (isConnected && !isAwaitingApproval && connectedView === "hidden") ||
-    (isInactive && inactiveView !== "fullview") ||
-    (!!abstraxionError && inactiveView !== "fullview");
-
-  const showAsModal =
-    isConnected && isAwaitingApproval && approvalView === "modal";
+  const { showButton, showAsModal, collapse } = computeEmbedDisplayMode({
+    isConnected,
+    isConnecting,
+    isAwaitingApproval,
+    abstraxionError,
+    inactiveView,
+    connectedView,
+    approvalView,
+  });
 
   const webViewElement =
     pendingUrl && WebView ? (
@@ -247,12 +259,9 @@ export const AbstraxionEmbed = forwardRef<
         <Modal
           transparent
           animationType="fade"
-          onRequestClose={() => controller.cancelApproval()}
+          onRequestClose={handleDismissModal}
         >
-          <Pressable
-            style={styles.backdrop}
-            onPress={() => controller.cancelApproval()}
-          >
+          <Pressable style={styles.backdrop} onPress={handleDismissModal}>
             <Pressable
               style={styles.modalCard}
               onPress={(e) => e.stopPropagation()}

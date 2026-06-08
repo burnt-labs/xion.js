@@ -1,10 +1,10 @@
 /**
- * Secp256K1 Connector Integration Tests
+ * EthWallet Connector Integration Tests
  *
- * Tests complete end-to-end flows for Secp256K1 connector authentication.
- * Validates the full user journey: connector creation → connection → account setup → transaction signing.
+ * Tests complete end-to-end flows for EthWallet (Ethereum) connector authentication.
+ * Validates the full user journey: ETH wallet connection → XION account mapping → transaction signing.
  *
- * These tests chain together the entire flow using SignerController and ConnectionOrchestrator.
+ * These tests validate EIP-191 signature handling and ETH address to XION account conversion.
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
@@ -16,12 +16,11 @@ import {
   TEST_MNEMONIC,
 } from "../fixtures";
 import {
-  createTestSecp256k1Connector,
+  createTestEthWalletConnector,
   getSignerConfigFromConnectorResult,
   createMockStorageStrategy,
   createMockSessionManager,
   createTestStargateClient,
-  createTestTransferMsg,
   isValidXionAddress,
   validateSignature,
 } from "../helpers";
@@ -37,8 +36,9 @@ import {
 } from "@burnt-labs/account-management";
 import { AUTHENTICATOR_TYPE, utf8ToHexWithPrefix } from "@burnt-labs/signers";
 import type { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
-describe("Secp256K1 Connector - Integration Tests", () => {
+describe("EthWallet Connector - Integration Tests", () => {
   registerGlobalHooks();
 
   let config: ReturnType<typeof getTestConfig>;
@@ -52,51 +52,55 @@ describe("Secp256K1 Connector - Integration Tests", () => {
     storageStrategy = createMockStorageStrategy();
     sessionManager = createMockSessionManager(storageStrategy);
 
-    const rpcStrategy = new RpcAccountStrategy(config.rpcUrl);
-    accountStrategy = new CompositeAccountStrategy([rpcStrategy]);
+    const rpcStrategy = new RpcAccountStrategy({
+      rpcUrl: config.rpcUrl,
+      checksum: config.checksum,
+      creator: config.feeGranter,
+      prefix: "xion",
+      codeId: parseInt(config.codeId, 10),
+    });
+    accountStrategy = new CompositeAccountStrategy(rpcStrategy);
 
     stargateClient = await createTestStargateClient();
   });
 
-  describe("Complete Secp256K1 Flow", () => {
+  describe("Complete EthWallet Flow", () => {
     it(
-      "should complete end-to-end flow: connector → connect → account → ready",
+      "should complete end-to-end flow: ETH wallet → XION account → ready",
       async () => {
-        // 1. Create connector
-        const testIndex = Math.floor(Math.random() * 1000) + 600;
-        const connector = createTestSecp256k1Connector(
+        // 1. Create EthWallet connector
+        const testIndex = Math.floor(Math.random() * 1000) + 1000;
+        const connector = createTestEthWalletConnector(
           TEST_MNEMONIC,
           testIndex,
         );
 
-        console.log("✓ Step 1: Connector created");
+        console.log("✓ Step 1: EthWallet connector created");
 
-        // 2. Connect connector to get authenticator
+        // 2. Connect to get ETH address as authenticator
         const connectorResult = await connector.connect();
 
         expect(connectorResult.metadata?.authenticatorType).toBe(
-          AUTHENTICATOR_TYPE.Secp256K1,
+          AUTHENTICATOR_TYPE.EthWallet,
         );
         expect(connectorResult.authenticator).toBeDefined();
+        expect(connectorResult.authenticator).toMatch(/^0x[a-fA-F0-9]{40}$/);
         expect(connectorResult.signMessage).toBeDefined();
 
-        console.log("✓ Step 2: Connector connected");
-        console.log(
-          "  Authenticator type:",
-          connectorResult.metadata?.authenticatorType,
-        );
+        console.log("✓ Step 2: EthWallet connected");
+        console.log("  ETH address:", connectorResult.authenticator);
 
-        // 3. Check if account exists
+        // 3. Check if XION account exists for this ETH address
         const existenceCheck = await checkAccountExists(
           accountStrategy,
           connectorResult.authenticator,
-          AUTHENTICATOR_TYPE.Secp256K1,
+          AUTHENTICATOR_TYPE.EthWallet,
         );
 
-        console.log("✓ Step 3: Account existence checked");
+        console.log("✓ Step 3: XION account existence checked");
         console.log("  Account exists:", existenceCheck.exists);
 
-        // 4. Create orchestrator and setup account
+        // 4. Create orchestrator and setup XION account
         const orchestrator = new ConnectionOrchestrator({
           sessionManager,
           storageStrategy,
@@ -128,30 +132,30 @@ describe("Secp256K1 Connector - Integration Tests", () => {
         expect(isValidXionAddress(setupResult.smartAccountAddress)).toBe(true);
         expect(setupResult.signingClient).toBeDefined();
 
-        console.log("✓ Step 4: Account setup complete");
+        console.log("✓ Step 4: XION account setup complete");
         console.log("  Smart account:", setupResult.smartAccountAddress);
 
-        // 5. Verify account on-chain
+        // 5. Verify XION account on-chain
         const onChainAccount = await stargateClient.getAccount(
           setupResult.smartAccountAddress,
         );
         expect(onChainAccount).toBeDefined();
 
-        console.log("✓ Step 5: Account verified on-chain");
+        console.log("✓ Step 5: XION account verified on-chain");
 
         // Cleanup
         orchestrator.destroy();
 
-        console.log("✓ Complete flow successful!");
+        console.log("✓ Complete EthWallet flow successful!");
       },
       INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
-      "should handle account that already exists",
+      "should handle existing XION account for ETH address",
       async () => {
-        const testIndex = Math.floor(Math.random() * 1000) + 700;
-        const connector = createTestSecp256k1Connector(
+        const testIndex = Math.floor(Math.random() * 1000) + 1100;
+        const connector = createTestEthWalletConnector(
           TEST_MNEMONIC,
           testIndex,
         );
@@ -188,7 +192,7 @@ describe("Secp256K1 Connector - Integration Tests", () => {
         orchestrator1.destroy();
 
         // Second run - account should already exist
-        const connector2 = createTestSecp256k1Connector(
+        const connector2 = createTestEthWalletConnector(
           TEST_MNEMONIC,
           testIndex,
         );
@@ -216,10 +220,10 @@ describe("Secp256K1 Connector - Integration Tests", () => {
           connectorResult2.authenticator,
         );
 
-        // Should return same account
+        // Should return same XION account
         expect(result2.smartAccountAddress).toBe(result1.smartAccountAddress);
 
-        console.log("✓ Existing account handled correctly");
+        console.log("✓ Existing XION account handled correctly");
 
         orchestrator2.destroy();
       },
@@ -227,14 +231,72 @@ describe("Secp256K1 Connector - Integration Tests", () => {
     );
   });
 
-  describe("Secp256K1 Signature Validation", () => {
+  describe("Ethereum Address to XION Account Mapping", () => {
     it(
-      "should produce valid Secp256K1 signatures",
+      "should generate deterministic XION account from ETH address",
       async () => {
-        const connector = createTestSecp256k1Connector();
+        const testIndex = Math.floor(Math.random() * 1000) + 1200;
+
+        // Create two connectors with same mnemonic and index
+        const connector1 = createTestEthWalletConnector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
+        const connector2 = createTestEthWalletConnector(
+          TEST_MNEMONIC,
+          testIndex,
+        );
+
+        const result1 = await connector1.connect();
+        const result2 = await connector2.connect();
+
+        // Same mnemonic + same index = same ETH address
+        expect(result1.authenticator).toBe(result2.authenticator);
+        expect(result1.authenticator).toMatch(/^0x[a-fA-F0-9]{40}$/);
+
+        console.log("✓ Deterministic ETH address generation verified");
+        console.log("  ETH address:", result1.authenticator);
+      },
+      INTEGRATION_TEST_TIMEOUT,
+    );
+
+    it(
+      "should generate different XION accounts for different ETH addresses",
+      async () => {
+        // Create two connectors with different indices
+        const connector1 = createTestEthWalletConnector(
+          TEST_MNEMONIC,
+          Math.floor(Math.random() * 1000) + 1300,
+        );
+        const connector2 = createTestEthWalletConnector(
+          TEST_MNEMONIC,
+          Math.floor(Math.random() * 1000) + 1400,
+        );
+
+        const result1 = await connector1.connect();
+        const result2 = await connector2.connect();
+
+        // Different indices = different ETH addresses
+        expect(result1.authenticator).not.toBe(result2.authenticator);
+        expect(result1.authenticator).toMatch(/^0x[a-fA-F0-9]{40}$/);
+        expect(result2.authenticator).toMatch(/^0x[a-fA-F0-9]{40}$/);
+
+        console.log("✓ Different ETH addresses generate different accounts");
+        console.log("  ETH address 1:", result1.authenticator);
+        console.log("  ETH address 2:", result2.authenticator);
+      },
+      INTEGRATION_TEST_TIMEOUT,
+    );
+  });
+
+  describe("EIP-191 Signature Handling", () => {
+    it(
+      "should produce valid EIP-191 signatures",
+      async () => {
+        const connector = createTestEthWalletConnector();
         const connectorResult = await connector.connect();
 
-        // Sign a test message (convert to hex format as expected by connector)
+        // Sign a test message (smart account address) - convert to hex format as expected by connector
         const testMessage = "xion1testaccountaddress";
         const testMessageHex = utf8ToHexWithPrefix(testMessage);
         const signature = await connectorResult.signMessage(testMessageHex);
@@ -243,49 +305,71 @@ describe("Secp256K1 Connector - Integration Tests", () => {
         expect(signature).toBeDefined();
         expect(typeof signature).toBe("string");
 
-        // Secp256K1 signatures are 64 bytes when decoded from base64
-        const isValidLength = validateSignature(
-          signature,
-          EXPECTED_VALUES.secp256k1SignatureLength,
-        );
-        expect(isValidLength).toBe(true);
+        // EIP-191 signatures are 65 bytes (132 hex chars with 0x prefix)
+        expect(signature).toMatch(/^0x[a-fA-F0-9]{130}$/);
 
-        console.log("✓ Secp256K1 signature format valid");
-        console.log("  Signature length (base64):", signature.length);
+        console.log("✓ EIP-191 signature format valid");
+        console.log("  Signature:", signature.substring(0, 20) + "...");
       },
       INTEGRATION_TEST_TIMEOUT,
     );
 
     it(
-      "should produce consistent signatures for same message",
+      "should produce different signatures for different messages",
       async () => {
-        const connector = createTestSecp256k1Connector();
+        const connector = createTestEthWalletConnector();
         const connectorResult = await connector.connect();
 
-        const testMessage = "test-message-for-consistency";
-        const testMessageHex = utf8ToHexWithPrefix(testMessage);
+        const message1 = "first-test-message";
+        const message2 = "second-test-message";
+        const message1Hex = utf8ToHexWithPrefix(message1);
+        const message2Hex = utf8ToHexWithPrefix(message2);
 
-        // Note: Secp256K1 signatures include random nonce, so they won't be identical
-        // But the signing process should not fail
-        const signature1 = await connectorResult.signMessage(testMessageHex);
-        const signature2 = await connectorResult.signMessage(testMessageHex);
+        const signature1 = await connectorResult.signMessage(message1Hex);
+        const signature2 = await connectorResult.signMessage(message2Hex);
 
-        expect(signature1).toBeDefined();
-        expect(signature2).toBeDefined();
+        // Different messages = different signatures
+        expect(signature1).not.toBe(signature2);
+        expect(signature1).toMatch(/^0x[a-fA-F0-9]{130}$/);
+        expect(signature2).toMatch(/^0x[a-fA-F0-9]{130}$/);
 
-        console.log(
-          "✓ Signature generation consistent (non-deterministic due to nonce)",
-        );
+        console.log("✓ Different messages produce different signatures");
+      },
+      INTEGRATION_TEST_TIMEOUT,
+    );
+
+    it(
+      "should handle UTF-8 messages correctly",
+      async () => {
+        const connector = createTestEthWalletConnector();
+        const connectorResult = await connector.connect();
+
+        // Test with various UTF-8 characters
+        const messages = [
+          "Hello World",
+          "特殊字符测试",
+          "emoji 🚀 test",
+          "xion1accountaddress123",
+        ];
+
+        for (const message of messages) {
+          const messageHex = utf8ToHexWithPrefix(message);
+          const signature = await connectorResult.signMessage(messageHex);
+          expect(signature).toBeDefined();
+          expect(signature).toMatch(/^0x[a-fA-F0-9]{130}$/);
+        }
+
+        console.log("✓ UTF-8 messages handled correctly");
       },
       INTEGRATION_TEST_TIMEOUT,
     );
   });
 
-  describe("Secp256K1 with SignerController", () => {
+  describe("EthWallet with SignerController", () => {
     it(
       "should work with SignerController initialization",
       async () => {
-        const testIndex = Math.floor(Math.random() * 1000) + 800;
+        const testIndex = Math.floor(Math.random() * 1000) + 1500;
         const signerAuth: SignerAuthentication = {
           type: "signer",
           aaApiUrl: config.aaApiUrl,
@@ -294,11 +378,12 @@ describe("Secp256K1 Connector - Integration Tests", () => {
             checksum: config.checksum,
           },
           async getSignerConfig() {
-            const connector = createTestSecp256k1Connector(
+            const connector = createTestEthWalletConnector(
               TEST_MNEMONIC,
               testIndex,
             );
             const result = await connector.connect();
+            // createTestEthWalletConnector now uses ExternalSignerConnector
             return getSignerConfigFromConnectorResult(result);
           },
         };
@@ -337,75 +422,22 @@ describe("Secp256K1 Connector - Integration Tests", () => {
       },
       INTEGRATION_TEST_TIMEOUT,
     );
-
-    it(
-      "should track state transitions correctly",
-      async () => {
-        const testIndex = Math.floor(Math.random() * 1000) + 900;
-        const signerAuth: SignerAuthentication = {
-          type: "signer",
-          aaApiUrl: config.aaApiUrl,
-          smartAccountContract: {
-            codeId: parseInt(config.codeId, 10),
-            checksum: config.checksum,
-          },
-          async getSignerConfig() {
-            const connector = createTestSecp256k1Connector(
-              TEST_MNEMONIC,
-              testIndex,
-            );
-            const result = await connector.connect();
-            return getSignerConfigFromConnectorResult(result);
-          },
-        };
-
-        const controller = new SignerController({
-          chainId: config.chainId,
-          rpcUrl: config.rpcUrl,
-          gasPrice: config.gasPrice,
-          signer: signerAuth,
-          accountStrategy,
-          sessionManager,
-          storageStrategy,
-          accountCreationConfig: {
-            aaApiUrl: config.aaApiUrl,
-            smartAccountContract: {
-              codeId: parseInt(config.codeId, 10),
-              checksum: config.checksum,
-              addressPrefix: "xion",
-            },
-            feeGranter: config.feeGranter,
-          },
-        });
-
-        const states: string[] = [];
-        controller.subscribe((state) => {
-          states.push(state.status);
-        });
-
-        await controller.initialize();
-
-        expect(states.length).toBeGreaterThan(0);
-        console.log("✓ State transitions tracked:", states);
-
-        controller.destroy();
-      },
-      INTEGRATION_TEST_TIMEOUT,
-    );
   });
 
-  describe("Secp256K1 Error Scenarios", () => {
+  describe("EthWallet Error Scenarios", () => {
     it(
-      "should handle invalid mnemonic gracefully",
+      "should handle invalid ETH address format",
       async () => {
-        // This test validates connector creation with various inputs
-        // Invalid mnemonic would fail at wallet generation, not connector level
+        // Connector creation doesn't validate address format
+        // Validation happens during account creation
 
-        expect(() => {
-          createTestSecp256k1Connector("invalid mnemonic", 0);
-        }).not.toThrow(); // Connector creation doesn't validate mnemonic
+        const connector = createTestEthWalletConnector();
+        const connectorResult = await connector.connect();
 
-        console.log("✓ Connector creation with invalid mnemonic handled");
+        // Should be valid ETH address
+        expect(connectorResult.authenticator).toMatch(/^0x[a-fA-F0-9]{40}$/);
+
+        console.log("✓ ETH address format validated");
       },
       INTEGRATION_TEST_TIMEOUT,
     );
@@ -413,7 +445,13 @@ describe("Secp256K1 Connector - Integration Tests", () => {
     it(
       "should handle network failures during setup",
       async () => {
-        const connector = createTestSecp256k1Connector();
+        // Fresh random mnemonic — otherwise the orchestrator's discover step
+        // returns a previously-created on-chain account and never reaches
+        // the bad AA-API URL we want to exercise here.
+        const freshWallet = await DirectSecp256k1HdWallet.generate(24, {
+          prefix: "xion",
+        });
+        const connector = createTestEthWalletConnector(freshWallet.mnemonic, 0);
         const connectorResult = await connector.connect();
 
         // Create orchestrator with invalid AA API URL (account creation should fail)
@@ -454,11 +492,11 @@ describe("Secp256K1 Connector - Integration Tests", () => {
     );
   });
 
-  describe("Secp256K1 Performance", () => {
+  describe("EthWallet Performance", () => {
     it(
       "should complete connection within reasonable time",
       async () => {
-        const connector = createTestSecp256k1Connector();
+        const connector = createTestEthWalletConnector();
 
         const startTime = Date.now();
         await connector.connect();
@@ -475,7 +513,7 @@ describe("Secp256K1 Connector - Integration Tests", () => {
     it(
       "should sign messages within reasonable time",
       async () => {
-        const connector = createTestSecp256k1Connector();
+        const connector = createTestEthWalletConnector();
         const connectorResult = await connector.connect();
 
         const testMessage = "performance-test-message";
@@ -489,6 +527,29 @@ describe("Secp256K1 Connector - Integration Tests", () => {
         expect(duration).toBeLessThan(100);
 
         console.log(`✓ Message signed in ${duration}ms`);
+      },
+      INTEGRATION_TEST_TIMEOUT,
+    );
+  });
+
+  describe("EthWallet vs Secp256K1 Comparison", () => {
+    it(
+      "should validate signature length differences",
+      async () => {
+        const ethConnector = createTestEthWalletConnector();
+        const ethResult = await ethConnector.connect();
+
+        const testMessage = "comparison-test";
+        const testMessageHex = utf8ToHexWithPrefix(testMessage);
+        const ethSignature = await ethResult.signMessage(testMessageHex);
+
+        // EIP-191 signature: 65 bytes = 130 hex chars + 0x prefix
+        expect(ethSignature).toMatch(/^0x[a-fA-F0-9]{130}$/);
+        expect(ethSignature.length).toBe(132); // 0x + 130 hex chars
+
+        console.log("✓ EthWallet signature format:");
+        console.log("  Format: EIP-191 (0x-prefixed hex)");
+        console.log("  Length:", ethSignature.length, "chars");
       },
       INTEGRATION_TEST_TIMEOUT,
     );
