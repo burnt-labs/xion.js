@@ -1,5 +1,16 @@
 # @burnt-labs/abstraxion-react-native
 
+## 1.0.0-alpha.20
+
+### Major Changes
+
+- [#370](https://github.com/burnt-labs/xion.js/pull/370) [`11d7977`](https://github.com/burnt-labs/xion.js/commit/11d7977e9f643ddc8dea4eb470223abedae6e111) Thanks [@ertemann](https://github.com/ertemann)! - feat(abstraxion-react-native): rewire onto the framework-agnostic `@burnt-labs/abstraxion-js` controllers/strategies instead of the legacy in-package implementation. Wires the new methods through the React Native hooks and refreshes the bundled demo (Expo SDK 54 / React Native 19).
+
+### Patch Changes
+
+- Updated dependencies [[`4b655df`](https://github.com/burnt-labs/xion.js/commit/4b655df245495ad4d946ee3b5d874361cb97425d), [`a4336ec`](https://github.com/burnt-labs/xion.js/commit/a4336ec4d63da10a6973b268246ef733aebd94f2)]:
+  - @burnt-labs/abstraxion-js@1.0.0-alpha.1
+
 ## 1.0.0-alpha.19
 
 ### Patch Changes
