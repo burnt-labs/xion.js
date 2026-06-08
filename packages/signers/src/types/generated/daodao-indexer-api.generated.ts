@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/contract/{address}/state/recover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recover live contract state into the events pipeline */
+        post: operations["contract_state_recovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{chainId}/contract/{contractAddress}/abstract/account/accountId": {
         parameters: {
             query?: never;
@@ -5796,6 +5813,75 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    contract_state_recovery: {
+        parameters: {
+            query?: {
+                /** @description Configured RPC target to query */
+                rpc?: "remote" | "local";
+                /** @description Maximum entries to request per RPC page */
+                pageLimit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description CosmWasm contract address */
+                address: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description live contract state recovery summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        chainId: string;
+                        contractAddress: string;
+                        /** @enum {string} */
+                        rpc: "remote" | "local";
+                        blockHeight: string;
+                        blockTimeUnixMs: string;
+                        /** @description Number of live contract state entries recovered. */
+                        count: number;
+                        /** @description Number of WasmStateEvent records upserted. */
+                        events: number;
+                        /** @description Number of transformations created or updated. */
+                        transformations: number;
+                    };
+                };
+            };
+            /** @description invalid address, rpc, or pageLimit */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description contract not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description internal recovery pipeline failure */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description RPC connection or query failed */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     abstract_account_accountId_e92f8b5: {
         parameters: {
             query?: never;
