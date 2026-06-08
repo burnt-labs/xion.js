@@ -40,6 +40,7 @@ import {
 } from "@burnt-labs/abstraxion-react";
 
 const config = {
+  chainId: "xion-testnet-2",
   treasury: "xion1...",
   authentication: { type: "auto" }, // popup on desktop, redirect on mobile
 };

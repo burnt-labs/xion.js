@@ -406,7 +406,7 @@ See `apps/demo-app/src/app/popup-demo/` for the complete example.
   config={{
     chainId: "xion-testnet-2",
     treasury: "xion1...",
-    authentication: { type: "iframe" }, // iframeUrl defaults from chainId
+    authentication: { type: "embedded" }, // iframeUrl defaults from chainId
   }}
 >
   {children}

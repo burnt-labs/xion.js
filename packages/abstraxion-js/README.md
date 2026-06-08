@@ -24,6 +24,7 @@ npm i @burnt-labs/abstraxion-js
 import { createAbstraxionRuntime } from "@burnt-labs/abstraxion-js";
 
 const runtime = createAbstraxionRuntime({
+  chainId: "xion-testnet-2",
   treasury: "xion1...",
   authentication: { type: "auto" },
 });
@@ -48,7 +49,7 @@ The `authentication` field of the config picks the controller:
 | ---------- | -------------------- | ------------------------------------------------------------------------------- |
 | `popup`    | `PopupController`    | Opens the dashboard in a popup window; communicates via `postMessage`.          |
 | `redirect` | `RedirectController` | Full-page redirect to the dashboard; returns to a callback URL.                 |
-| `iframe`   | `IframeController`   | Renders the dashboard in an embedded iframe; communicates via `MessageChannel`. |
+| `embedded` | `IframeController`   | Renders the dashboard in an embedded iframe; communicates via `MessageChannel`. |
 | `signer`   | `SignerController`   | Headless — caller supplies a signer (Turnkey / MetaMask / Keplr / custom).      |
 | `auto`     | resolved at init     | Resolves to `popup` on desktop, `redirect` on mobile/PWA.                       |
 
@@ -67,9 +68,11 @@ import {
 } from "@burnt-labs/abstraxion-js";
 
 const runtime = createAbstraxionRuntime(config, {
-  storage: myStorageStrategy, // implements StorageStrategy
-  redirect: myRedirectStrategy, // implements RedirectStrategy
-  iframeTransport: myIframeTransport, // implements IframeTransportStrategy
+  strategies: {
+    storageStrategy: myStorageStrategy, // implements StorageStrategy
+    redirectStrategy: myRedirectStrategy, // implements RedirectStrategy
+    iframeTransportStrategy: myIframeTransport, // implements IframeTransportStrategy
+  },
 });
 ```
 
