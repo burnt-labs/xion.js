@@ -1,4 +1,4 @@
-# xion.js
+# The xion.js
 
 Official XION JavaScript SDK monorepo.
 
