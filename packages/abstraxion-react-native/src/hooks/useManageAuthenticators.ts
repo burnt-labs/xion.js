@@ -3,46 +3,40 @@ import { RedirectController } from "@burnt-labs/abstraxion-js";
 import type { ManageAuthResult } from "@burnt-labs/abstraxion-js";
 import { AbstraxionContext } from "../components/AbstraxionContext";
 
-const signerUnsupportedReason =
-  "Manage authenticators is not supported in signer mode. Use redirect authentication to add or remove authenticators.";
-
 export interface UseManageAuthenticatorsReturn {
-  /** Open the manage-authenticators flow when supported. */
   manageAuthenticators: () => Promise<void>;
-  /** True when the current React Native authentication mode supports manage-authenticators. */
   isSupported: boolean;
-  /** Human-readable reason when `isSupported` is false. */
   unsupportedReason: string | undefined;
-  /**
-   * Populated after the dashboard manage-authenticators flow completes
-   * (Expo WebBrowser session resolves). Null until a result is available.
-   */
   manageAuthResult: ManageAuthResult | null;
-  /** Clear `manageAuthResult` once handled. */
   clearManageAuthResult: () => void;
 }
 
 export function useManageAuthenticators(): UseManageAuthenticatorsReturn {
-  const { controller, granterAddress } = useContext(AbstraxionContext);
+  const { runtime, controller, granterAddress } = useContext(AbstraxionContext);
 
-  const isRedirect = controller instanceof RedirectController;
-  const isSupported = isRedirect;
+  const isSupported = runtime?.isManageAuthSupported ?? false;
+  const unsupportedReason = isSupported
+    ? undefined
+    : (runtime?.manageAuthUnsupportedReason ??
+      "useManageAuthenticators: AbstraxionProvider is not mounted.");
 
   const manageAuthenticators = useCallback(async () => {
+    if (!runtime) {
+      throw new Error(
+        "useManageAuthenticators: AbstraxionProvider is not mounted.",
+      );
+    }
     if (!granterAddress) {
       throw new Error(
         "useManageAuthenticators: user is not connected. Call login() first.",
       );
     }
+    // The runtime throws `manageAuthUnsupportedReason` for non-supported modes.
+    return runtime.manageAuthenticators(granterAddress);
+  }, [runtime, granterAddress]);
 
-    if (controller instanceof RedirectController) {
-      await controller.promptManageAuthenticators(granterAddress);
-      return;
-    }
-
-    throw new Error(signerUnsupportedReason);
-  }, [controller, granterAddress]);
-
+  // Redirect mode stashes the manage-auth result via the strategy after
+  // WebBrowser resolves; subscribe so consumers see it.
   const manageAuthResult = useSyncExternalStore(
     (cb) =>
       controller instanceof RedirectController
@@ -64,7 +58,7 @@ export function useManageAuthenticators(): UseManageAuthenticatorsReturn {
   return {
     manageAuthenticators,
     isSupported,
-    unsupportedReason: isSupported ? undefined : signerUnsupportedReason,
+    unsupportedReason,
     manageAuthResult,
     clearManageAuthResult,
   };

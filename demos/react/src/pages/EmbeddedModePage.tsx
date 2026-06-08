@@ -65,7 +65,7 @@ function EmbeddedContent(): JSX.Element {
           disconnectedView="fullview"
           connectedView="visible"
           approvalView="inline"
-          className="w-full overflow-hidden rounded-2xl border border-white/10 bg-white"
+          className="w-[min(500px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-white"
           style={{ height: 600 }}
         />
       ) : (
