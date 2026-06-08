@@ -18,14 +18,8 @@ export default function RootLayout(): JSX.Element {
           headerTintColor: "#fff",
         }}
       >
-        <Stack.Screen
-          name="index"
-          options={{ title: "XION · Redirect" }}
-        />
-        <Stack.Screen
-          name="embedded"
-          options={{ title: "XION · Embedded" }}
-        />
+        <Stack.Screen name="index" options={{ title: "XION · Redirect" }} />
+        <Stack.Screen name="embedded" options={{ title: "XION · Embedded" }} />
       </Stack>
       <StatusBar style="light" />
     </SafeAreaProvider>

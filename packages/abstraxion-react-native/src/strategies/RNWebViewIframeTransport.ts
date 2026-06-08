@@ -61,11 +61,7 @@ interface BridgePush {
 interface BridgeReady {
   kind: "ready";
 }
-type BridgeMessage =
-  | BridgeRequest
-  | BridgeResponse
-  | BridgePush
-  | BridgeReady;
+type BridgeMessage = BridgeRequest | BridgeResponse | BridgePush | BridgeReady;
 
 const BRIDGE_INSTALL_SCRIPT = `(function() {
   if (window.__abstraxionBridgeInstalled) return;

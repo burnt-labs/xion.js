@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
-import { createContext, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import {
   AccountStateGuards,
   createAbstraxionRuntime,
@@ -178,11 +185,20 @@ export function AbstraxionProvider({
   config: AbstraxionConfig;
 }): JSX.Element {
   const resolvedConfig = useMemo<AbstraxionJsConfig>(() => {
-    const { callbackUrl, indexerUrl: _indexerUrl, chainId, authentication, ...rest } = config;
+    const {
+      callbackUrl,
+      indexerUrl: _indexerUrl,
+      chainId,
+      authentication,
+      ...rest
+    } = config;
     return {
       ...rest,
       chainId: chainId ?? testnetChainInfo.chainId,
-      authentication: resolveReactNativeAuthentication(authentication, callbackUrl),
+      authentication: resolveReactNativeAuthentication(
+        authentication,
+        callbackUrl,
+      ),
     };
   }, [config]);
 
@@ -272,7 +288,9 @@ export function AbstraxionProvider({
   const abstraxionError = isError ? controllerState.error : "";
 
   const connectionInfo =
-    isConnected && controller && typeof (controller as Controller).getConnectionInfo === "function"
+    isConnected &&
+    controller &&
+    typeof (controller as Controller).getConnectionInfo === "function"
       ? (controller as Controller).getConnectionInfo?.()
       : undefined;
 

@@ -76,9 +76,7 @@ export class BrowserIframeTransportStrategy implements IframeTransportStrategy {
       const timeout = setTimeout(() => {
         const idx = this.readyResolvers.indexOf(resolve);
         if (idx >= 0) this.readyResolvers.splice(idx, 1);
-        reject(
-          new Error(`Iframe did not become ready within ${timeoutMs}ms`),
-        );
+        reject(new Error(`Iframe did not become ready within ${timeoutMs}ms`));
       }, timeoutMs);
 
       this.readyResolvers.push(() => {

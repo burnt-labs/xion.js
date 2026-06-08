@@ -63,7 +63,8 @@ function createContextValue(
   // `runtime.createReadClient` / `runtime.createDirectSigningClient` semantics
   // for the controller passed via overrides.
   const controllerForRuntime =
-    overrides.controller ?? (undefined as unknown as ContextValue["controller"]);
+    overrides.controller ??
+    (undefined as unknown as ContextValue["controller"]);
   const isSupported = controllerForRuntime instanceof RedirectController;
   const overrideAuthMode = (overrides.authMode ?? "redirect") as
     | "signer"
@@ -101,7 +102,8 @@ function createContextValue(
         const meta = info.metadata ?? {};
         createSignerFromSigningFunction({
           smartAccountAddress: overrideGranterAddress,
-          authenticatorIndex: (meta.authenticatorIndex as number | undefined) ?? 0,
+          authenticatorIndex:
+            (meta.authenticatorIndex as number | undefined) ?? 0,
           authenticatorType: meta.authenticatorType as never,
           signMessage: info.signMessage as never,
         });

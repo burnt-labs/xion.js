@@ -1,8 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import {
-  CosmWasmClient,
-  testnetChainInfo,
-} from "@burnt-labs/abstraxion-js";
+import { CosmWasmClient, testnetChainInfo } from "@burnt-labs/abstraxion-js";
 import { AbstraxionContext } from "@/src/AbstraxionProvider";
 
 export const useAbstraxionClient = (): {

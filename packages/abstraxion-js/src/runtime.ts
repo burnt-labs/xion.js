@@ -129,9 +129,7 @@ export interface AbstraxionRuntime {
    * No-op outside signer mode.
    */
   updateGetSignerConfig(
-    fn: NonNullable<
-      import("./types").SignerAuthentication["getSignerConfig"]
-    >,
+    fn: NonNullable<import("./types").SignerAuthentication["getSignerConfig"]>,
   ): void;
   /** Tear down listeners + iframe (delegates to `controller.destroy()`). */
   destroy(): void;
@@ -188,7 +186,10 @@ export function createAbstraxionRuntime(
   // Dev-mode sanity check: warn when grant-based dashboard modes are configured
   // without any grants. Lifted from the React provider so every framework
   // wrapper gets the same nudge.
-  if (typeof process !== "undefined" && process.env?.NODE_ENV !== "production") {
+  if (
+    typeof process !== "undefined" &&
+    process.env?.NODE_ENV !== "production"
+  ) {
     const { treasury, contracts, stake, bank } = normalized;
     const hasGrants =
       !!treasury ||
@@ -298,12 +299,12 @@ export function createAbstraxionRuntime(
             "createDirectSigningClient(): SignerController has no connectionInfo — login may have failed.",
           );
         }
-        const authenticatorType = connectionInfo.metadata
-          ?.authenticatorType as AuthenticatorType | undefined;
+        const authenticatorType = connectionInfo.metadata?.authenticatorType as
+          | AuthenticatorType
+          | undefined;
         const authenticatorIndex =
-          (connectionInfo.metadata?.authenticatorIndex as
-            | number
-            | undefined) ?? 0;
+          (connectionInfo.metadata?.authenticatorIndex as number | undefined) ??
+          0;
         if (
           !authenticatorType ||
           !Object.values(AUTHENTICATOR_TYPE).includes(authenticatorType)

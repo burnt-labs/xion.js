@@ -49,10 +49,7 @@ export type {
 } from "./strategies/IframeTransportStrategy";
 
 export { createAbstraxionRuntime } from "./runtime";
-export type {
-  AbstraxionRuntime,
-  AbstraxionRuntimeOptions,
-} from "./runtime";
+export type { AbstraxionRuntime, AbstraxionRuntimeOptions } from "./runtime";
 
 export {
   createAccountCreationConfigFromConfig,

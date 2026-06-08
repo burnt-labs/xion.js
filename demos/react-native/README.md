@@ -13,9 +13,9 @@ Expo + React Native demo for `@burnt-labs/abstraxion-react-native`.
 
 ## Routes
 
-| Route | Auth mode | Notes |
-| --- | --- | --- |
-| `/` | `redirect` | Expo WebBrowser auth session + deep link callback. |
+| Route       | Auth mode  | Notes                                                                |
+| ----------- | ---------- | -------------------------------------------------------------------- |
+| `/`         | `redirect` | Expo WebBrowser auth session + deep link callback.                   |
 | `/embedded` | `embedded` | Dashboard runs inside an in-app `<WebView>` via `<AbstraxionEmbed>`. |
 
 ## Setup

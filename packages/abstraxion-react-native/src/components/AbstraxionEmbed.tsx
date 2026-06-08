@@ -158,7 +158,9 @@ export const AbstraxionEmbed = forwardRef<
         !isDisconnected &&
         !abstraxionError &&
         idleView === "fullview") ||
-      (isDisconnected && !abstraxionError && (disconnectedView ?? idleView) === "fullview") ||
+      (isDisconnected &&
+        !abstraxionError &&
+        (disconnectedView ?? idleView) === "fullview") ||
       (!!abstraxionError && isFullview);
     if (shouldAutoLogin) {
       login().catch(() => undefined);
@@ -199,7 +201,8 @@ export const AbstraxionEmbed = forwardRef<
     return (
       <View style={styles.errorBox}>
         <Text style={styles.errorText}>
-          react-native-webview is required for embedded mode. Install it as a peer dep.
+          react-native-webview is required for embedded mode. Install it as a
+          peer dep.
         </Text>
       </View>
     );
@@ -250,7 +253,10 @@ export const AbstraxionEmbed = forwardRef<
             style={styles.backdrop}
             onPress={() => controller.cancelApproval()}
           >
-            <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Pressable
+              style={styles.modalCard}
+              onPress={(e) => e.stopPropagation()}
+            >
               {webViewElement}
             </Pressable>
           </Pressable>
