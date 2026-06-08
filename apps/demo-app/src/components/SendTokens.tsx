@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@burnt-labs/ui";
 import { useGetBalance } from "@/hooks/useGetBalance";
 import { useSendTokens } from "@/hooks/useSendTokens";
-import type { SigningClient } from "@burnt-labs/abstraxion";
+import type { SigningClient } from "@burnt-labs/abstraxion-react";
 
 interface SendTokensProps {
   accountAddress: string | undefined;

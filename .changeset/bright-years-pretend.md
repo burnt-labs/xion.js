@@ -2,4 +2,4 @@
 "@burnt-labs/signers": patch
 ---
 
-add back signature to simulate call  + tests
+add back signature to simulate call + tests

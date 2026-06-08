@@ -1,5 +1,5 @@
 "use client";
-import { AbstraxionProvider } from "@burnt-labs/abstraxion";
+import { AbstraxionProvider } from "@burnt-labs/abstraxion-react";
 
 const autoModeConfig = {
   chainId: process.env.NEXT_PUBLIC_CHAIN_ID!,

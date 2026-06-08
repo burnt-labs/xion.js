@@ -5,8 +5,8 @@
 
 import { useTurnkey, AuthState } from "@turnkey/react-wallet-kit";
 import { createAccount } from "@turnkey/viem";
-import type { SignerConfig } from "@burnt-labs/abstraxion";
-import { AUTHENTICATOR_TYPE } from "@burnt-labs/abstraxion";
+import type { SignerConfig } from "@burnt-labs/abstraxion-react";
+import { AUTHENTICATOR_TYPE } from "@burnt-labs/abstraxion-react";
 
 export function useTurnkeyViem() {
   const { authState, wallets, httpClient, user } = useTurnkey();

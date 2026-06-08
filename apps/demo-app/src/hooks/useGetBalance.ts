@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { SigningClient } from "@burnt-labs/abstraxion";
+import type { SigningClient } from "@burnt-labs/abstraxion-react";
 
 interface UseGetBalanceReturn {
   balance: string | null;

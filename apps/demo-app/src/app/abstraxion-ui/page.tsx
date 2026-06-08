@@ -3,7 +3,7 @@ import { useState } from "react";
 import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
-} from "@burnt-labs/abstraxion";
+} from "@burnt-labs/abstraxion-react";
 import { Abstraxion } from "@burnt-labs/ui";
 import { Button } from "@burnt-labs/ui";
 import "@burnt-labs/ui/dist/index.css";
