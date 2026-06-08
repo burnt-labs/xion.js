@@ -70,9 +70,7 @@
     "protobufjs": "^7.2.4"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
     "@burnt-labs/test-utils": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
     "eslint": "^8.48.0",
     "prettier": "^3.0.3",

@@ -23,9 +23,6 @@ importers:
 
   .:
     dependencies:
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:packages/tsconfig
       '@changesets/changelog-github':
         specifier: ^0.5.0
         version: 0.5.2
@@ -48,6 +45,9 @@ importers:
       '@hono/zod-openapi':
         specifier: ^0.18.4
         version: 0.18.4(hono@4.12.8)(zod@3.25.76)
+      '@vercel/style-guide':
+        specifier: ^5.1.0
+        version: 5.2.0(eslint@8.57.1)(prettier@3.8.1)(typescript@5.9.3)
       '@vitest/coverage-v8':
         specifier: ^1.6.1
         version: 1.6.1(vitest@1.6.1)
@@ -64,12 +64,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/constants
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../../packages/eslint-config-custom
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       '@types/node':
         specifier: ^20
         version: 20.19.37
@@ -110,12 +104,6 @@ importers:
         specifier: ^2.38.5
         version: 2.47.4(typescript@5.9.3)(zod@3.25.76)
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../../packages/eslint-config-custom
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       '@tailwindcss/vite':
         specifier: ^4.0.0
         version: 4.2.4(vite@7.3.2)
@@ -195,12 +183,6 @@ importers:
         specifier: ~0.21.0
         version: 0.21.2(react-dom@19.1.0)(react@19.1.0)
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../../packages/eslint-config-custom
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       '@types/react':
         specifier: ^18.2.47
         version: 18.3.28
@@ -217,12 +199,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/constants
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../../packages/eslint-config-custom
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.0.0
         version: 6.2.4(svelte@5.55.5)(vite@7.3.2)
@@ -305,18 +281,9 @@ importers:
         specifier: ^0.7.0
         version: 0.7.17(react-native@0.81.5)(react@19.2.5)
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
-      '@burnt-labs/tailwind-config':
-        specifier: workspace:*
-        version: link:../tailwind-config
       '@burnt-labs/test-utils':
         specifier: workspace:*
         version: link:../test-utils
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       '@types/node':
         specifier: ^20
         version: 20.19.37
@@ -381,15 +348,9 @@ importers:
         specifier: ^0.36.0
         version: 0.36.2
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
       '@burnt-labs/test-utils':
         specifier: workspace:*
         version: link:../test-utils
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       '@types/node':
         specifier: ^20
         version: 20.19.37
@@ -418,21 +379,12 @@ importers:
       '@burnt-labs/account-management':
         specifier: workspace:*
         version: link:../account-management
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
       '@burnt-labs/signers':
         specifier: workspace:*
         version: link:../signers
-      '@burnt-labs/tailwind-config':
-        specifier: workspace:*
-        version: link:../tailwind-config
       '@burnt-labs/test-utils':
         specifier: workspace:*
         version: link:../test-utils
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       '@cosmjs/amino':
         specifier: ^0.36.0
         version: 0.36.2
@@ -499,6 +451,9 @@ importers:
       tailwindcss:
         specifier: ^3.2.4
         version: 3.4.19
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.19)
       tsup:
         specifier: ^6.0.1
         version: 6.7.0(postcss@8.5.8)(ts-node@10.9.2)(typescript@5.9.3)
@@ -530,12 +485,6 @@ importers:
         specifier: ^0.7.0
         version: 0.7.17(react-native@0.81.5)(react@19.1.0)
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       '@testing-library/react':
         specifier: ^14.2.1
         version: 14.3.1(@types/react@18.3.28)(react-dom@19.1.0)(react@19.1.0)
@@ -603,15 +552,9 @@ importers:
         specifier: ^0.9.0
         version: 0.9.0
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
       '@burnt-labs/test-utils':
         specifier: workspace:*
         version: link:../test-utils
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       '@types/node':
         specifier: ^20
         version: 20.19.37
@@ -639,12 +582,6 @@ importers:
 
   packages/constants:
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       rimraf:
         specifier: ^5.0.5
         version: 5.0.10
@@ -654,21 +591,6 @@ importers:
       typescript:
         specifier: ^5.2.2
         version: 5.9.3
-
-  packages/eslint-config-custom:
-    devDependencies:
-      '@vercel/style-guide':
-        specifier: ^5.1.0
-        version: 5.2.0(eslint@8.57.1)(prettier@3.8.1)(typescript@5.9.3)
-      eslint-config-turbo:
-        specifier: ^1.10.12
-        version: 1.13.4(eslint@8.57.1)
-      eslint-plugin-turbo:
-        specifier: ^1.10.12
-        version: 1.13.4(eslint@8.57.1)
-      rimraf:
-        specifier: ^5.0.5
-        version: 5.0.10
 
   packages/signers:
     dependencies:
@@ -730,15 +652,9 @@ importers:
         specifier: ^7.2.4
         version: 7.5.4
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
       '@burnt-labs/test-utils':
         specifier: workspace:*
         version: link:../test-utils
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       '@types/node':
         specifier: ^20
         version: 20.19.37
@@ -767,18 +683,6 @@ importers:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.37)(@vitest/ui@1.6.1)(jsdom@23.2.0)
 
-  packages/tailwind-config:
-    devDependencies:
-      rimraf:
-        specifier: ^5.0.5
-        version: 5.0.10
-      tailwindcss:
-        specifier: ^3.2.4
-        version: 3.4.19
-      tailwindcss-animate:
-        specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@3.4.19)
-
   packages/test-utils:
     dependencies:
       '@burnt-labs/constants':
@@ -806,12 +710,6 @@ importers:
         specifier: ^0.9.0
         version: 0.9.0
     devDependencies:
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       '@types/node':
         specifier: ^20
         version: 20.19.37
@@ -821,12 +719,6 @@ importers:
       vitest:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.37)(@vitest/ui@1.6.1)(jsdom@23.2.0)
-
-  packages/tsconfig:
-    devDependencies:
-      rimraf:
-        specifier: ^5.0.5
-        version: 5.0.10
 
   packages/ui:
     dependencies:
@@ -846,15 +738,6 @@ importers:
       '@burnt-labs/abstraxion-react':
         specifier: workspace:*
         version: link:../abstraxion-react
-      '@burnt-labs/eslint-config-custom':
-        specifier: workspace:*
-        version: link:../eslint-config-custom
-      '@burnt-labs/tailwind-config':
-        specifier: workspace:*
-        version: link:../tailwind-config
-      '@burnt-labs/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
       '@types/react':
         specifier: ^18.2.47
         version: 18.3.28
@@ -882,6 +765,9 @@ importers:
       tailwindcss:
         specifier: ^3.2.4
         version: 3.4.19
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.19)
       tsup:
         specifier: ^6.0.1
         version: 6.7.0(postcss@8.5.8)(ts-node@10.9.2)(typescript@5.9.3)
@@ -9032,11 +8918,6 @@ packages:
       dotenv: 16.6.1
     dev: false
 
-  /dotenv@16.0.3:
-    resolution: {integrity: sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==}
-    engines: {node: '>=12'}
-    dev: true
-
   /dotenv@16.4.7:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
@@ -9402,15 +9283,6 @@ packages:
       eslint: 8.57.1
     dev: true
 
-  /eslint-config-turbo@1.13.4(eslint@8.57.1):
-    resolution: {integrity: sha512-+we4eWdZlmlEn7LnhXHCIPX/wtujbHCS7XjQM/TN09BHNEl2fZ8id4rHfdfUKIYTSKyy8U/nNyJ0DNoZj5Q8bw==}
-    peerDependencies:
-      eslint: '>6.6.0'
-    dependencies:
-      eslint: 8.57.1
-      eslint-plugin-turbo: 1.13.4(eslint@8.57.1)
-    dev: true
-
   /eslint-import-resolver-alias@1.1.2(eslint-plugin-import@2.32.0):
     resolution: {integrity: sha512-WdviM1Eu834zsfjHtcGHtGfcu+F30Od3V7I9Fi57uhBEwPkjDcii7/yW8jAT+gOhn4P/vOxxNAXbFAKsrrc15w==}
     engines: {node: '>= 4'}
@@ -9646,15 +9518,6 @@ packages:
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-    dev: true
-
-  /eslint-plugin-turbo@1.13.4(eslint@8.57.1):
-    resolution: {integrity: sha512-82GfMzrewI/DJB92Bbch239GWbGx4j1zvjk1lqb06lxIlMPnVwUHVwPbAnLfyLG3JuhLv9whxGkO/q1CL18JTg==}
-    peerDependencies:
-      eslint: '>6.6.0'
-    dependencies:
-      dotenv: 16.0.3
-      eslint: 8.57.1
     dev: true
 
   /eslint-plugin-unicorn@48.0.1(eslint@8.57.1):
