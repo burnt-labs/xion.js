@@ -147,9 +147,9 @@ vi.mock("@cosmjs/cosmwasm-stargate", async (importOriginal) => {
 });
 
 vi.mock("@burnt-labs/signers", async () => {
-  const actual = await vi.importActual<
-    typeof import("@burnt-labs/signers")
-  >("@burnt-labs/signers");
+  const actual = await vi.importActual<typeof import("@burnt-labs/signers")>(
+    "@burnt-labs/signers",
+  );
   return {
     ...actual,
     AAClient: { connectWithSigner: h.aaClientConnectWithSigner },
@@ -221,7 +221,9 @@ describe("createAbstraxionRuntime — mode dispatch", () => {
       h.createControllerMock.mockReturnValueOnce(controller);
 
       const runtime = createAbstraxionRuntime(
-        makeConfig({ type: expectedMode } as AbstraxionConfig["authentication"]),
+        makeConfig({
+          type: expectedMode,
+        } as AbstraxionConfig["authentication"]),
         { autoInitialize: false },
       );
 
@@ -462,25 +464,28 @@ describe("createAbstraxionRuntime — manageAuthenticators", () => {
     ["popup", "StubPopupController"],
     ["redirect", "StubRedirectController"],
     ["embedded", "StubIframeController"],
-  ] as const)("delegates to the controller in %s mode", async (mode, ctorKey) => {
-    const ControllerCtor = h[ctorKey as keyof typeof h] as new () => {
-      promptManageAuthenticators: ReturnType<typeof vi.fn>;
-    };
-    const ctrl = new ControllerCtor();
-    h.createControllerMock.mockReturnValueOnce(ctrl);
+  ] as const)(
+    "delegates to the controller in %s mode",
+    async (mode, ctorKey) => {
+      const ControllerCtor = h[ctorKey as keyof typeof h] as new () => {
+        promptManageAuthenticators: ReturnType<typeof vi.fn>;
+      };
+      const ctrl = new ControllerCtor();
+      h.createControllerMock.mockReturnValueOnce(ctrl);
 
-    const runtime = createAbstraxionRuntime(
-      makeConfig({ type: mode } as AbstraxionConfig["authentication"]),
-      { autoInitialize: false },
-    );
+      const runtime = createAbstraxionRuntime(
+        makeConfig({ type: mode } as AbstraxionConfig["authentication"]),
+        { autoInitialize: false },
+      );
 
-    await runtime.manageAuthenticators("xion1granter");
-    expect(ctrl.promptManageAuthenticators).toHaveBeenCalledWith(
-      "xion1granter",
-    );
-    expect(runtime.isManageAuthSupported).toBe(true);
-    expect(runtime.manageAuthUnsupportedReason).toBeUndefined();
-  });
+      await runtime.manageAuthenticators("xion1granter");
+      expect(ctrl.promptManageAuthenticators).toHaveBeenCalledWith(
+        "xion1granter",
+      );
+      expect(runtime.isManageAuthSupported).toBe(true);
+      expect(runtime.manageAuthUnsupportedReason).toBeUndefined();
+    },
+  );
 
   it("throws and exposes a reason in signer mode", async () => {
     h.createControllerMock.mockReturnValueOnce(new h.StubSignerController());
@@ -491,9 +496,9 @@ describe("createAbstraxionRuntime — manageAuthenticators", () => {
 
     expect(runtime.isManageAuthSupported).toBe(false);
     expect(runtime.manageAuthUnsupportedReason).toMatch(/signer mode/);
-    await expect(
-      runtime.manageAuthenticators("xion1granter"),
-    ).rejects.toThrow(/signer mode/);
+    await expect(runtime.manageAuthenticators("xion1granter")).rejects.toThrow(
+      /signer mode/,
+    );
   });
 });
 
@@ -629,10 +634,9 @@ describe("createAbstraxionRuntime — dev-mode no-grants warning", () => {
   it("does not warn in signer mode", () => {
     h.createControllerMock.mockReturnValueOnce(new h.StubSignerController());
     createAbstraxionRuntime(
-      makeConfig(
-        { type: "signer" } as AbstraxionConfig["authentication"],
-        { treasury: undefined },
-      ),
+      makeConfig({ type: "signer" } as AbstraxionConfig["authentication"], {
+        treasury: undefined,
+      }),
       { autoInitialize: false },
     );
     expect(warnSpy).not.toHaveBeenCalled();

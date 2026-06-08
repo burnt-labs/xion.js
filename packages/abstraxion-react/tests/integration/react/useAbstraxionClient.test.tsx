@@ -53,9 +53,7 @@ function makeWrapper(rpcUrl?: string) {
 }
 
 beforeEach(() => {
-  createReadClientMock = vi
-    .fn()
-    .mockResolvedValue({ kind: "cosmwasm-client" });
+  createReadClientMock = vi.fn().mockResolvedValue({ kind: "cosmwasm-client" });
   runtimeFactory = (config) => {
     runtime = createStubRuntime(config, {
       createReadClient: createReadClientMock as never,

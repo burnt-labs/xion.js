@@ -256,10 +256,16 @@ export const AbstraxionEmbed = forwardRef<
       )}
 
       {showAsModal ? (
-        <Modal transparent animationType="fade" onRequestClose={handleDismissModal}>
+        <Modal
+          transparent
+          animationType="fade"
+          onRequestClose={handleDismissModal}
+        >
           <Pressable style={styles.backdrop} onPress={handleDismissModal}>
-            <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-
+            <Pressable
+              style={styles.modalCard}
+              onPress={(e) => e.stopPropagation()}
+            >
               {webViewElement}
             </Pressable>
           </Pressable>

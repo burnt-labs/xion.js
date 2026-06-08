@@ -121,9 +121,7 @@ describe("AbstraxionProvider — context wiring per mode", () => {
       );
 
       expect(runtime).toBeDefined();
-      expect(screen.getByTestId("chain-id").textContent).toBe(
-        "xion-testnet-1",
-      );
+      expect(screen.getByTestId("chain-id").textContent).toBe("xion-testnet-1");
       expect(screen.getByTestId("rpc-url").textContent).toBe(
         "https://rpc.test/",
       );
@@ -220,7 +218,10 @@ describe("AbstraxionProvider — signer mode getSignerConfig updates", () => {
         config={
           {
             ...baseConfig,
-            authentication: { ...baseConfig.authentication, getSignerConfig: fn1 },
+            authentication: {
+              ...baseConfig.authentication,
+              getSignerConfig: fn1,
+            },
           } as never
         }
       >
@@ -237,7 +238,10 @@ describe("AbstraxionProvider — signer mode getSignerConfig updates", () => {
         config={
           {
             ...baseConfig,
-            authentication: { ...baseConfig.authentication, getSignerConfig: fn2 },
+            authentication: {
+              ...baseConfig.authentication,
+              getSignerConfig: fn2,
+            },
           } as never
         }
       >

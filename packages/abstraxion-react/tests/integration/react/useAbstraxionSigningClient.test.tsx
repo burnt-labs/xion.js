@@ -12,12 +12,7 @@
 
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  renderHook,
-  waitFor,
-} from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { AbstraxionProvider } from "../../../src/AbstraxionProvider";
 import { useAbstraxionSigningClient } from "../../../src/hooks/useAbstraxionSigningClient";
 import {

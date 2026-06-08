@@ -99,8 +99,9 @@ describe("Account Discovery Integration Tests", () => {
         // definitely never been used to create an on-chain account. (Reusing
         // a fixed test mnemonic at index 999 doesn't work — every run leaves
         // state on the chain that persists forever.)
-        const freshWallet =
-          await DirectSecp256k1HdWallet.generate(24, { prefix: "xion" });
+        const freshWallet = await DirectSecp256k1HdWallet.generate(24, {
+          prefix: "xion",
+        });
         const { pubkeyBase64 } = await createSecp256k1Wallet(
           freshWallet.mnemonic,
           0,

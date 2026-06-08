@@ -52,9 +52,7 @@ export const idleState = {
   status: "idle",
 } as unknown as AccountState;
 
-export const connectedState = (
-  granterAddress = "xion1granter",
-): AccountState =>
+export const connectedState = (granterAddress = "xion1granter"): AccountState =>
   ({
     status: "connected",
     account: {

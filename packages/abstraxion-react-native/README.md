@@ -38,14 +38,17 @@ npm install react-native-webview            # only for embedded mode
 ## Quick start (redirect mode)
 
 ```tsx
-import { AbstraxionProvider, useAbstraxionAccount } from "@burnt-labs/abstraxion-react-native";
+import {
+  AbstraxionProvider,
+  useAbstraxionAccount,
+} from "@burnt-labs/abstraxion-react-native";
 
 const config = {
   rpcUrl: "https://rpc.xion-testnet-2.burnt.com",
   restUrl: "https://api.xion-testnet-2.burnt.com",
   gasPrice: "0.001uxion",
   treasury: "xion13jetl8j9kcgsva86l08kpmy8nsnzysyxs06j4s69c6f7ywu7q36q4k5smc",
-  callbackUrl: "your-app-scheme://",  // matches your app.json scheme
+  callbackUrl: "your-app-scheme://", // matches your app.json scheme
 };
 
 export default function App() {
@@ -77,12 +80,12 @@ See [`demos/react-native/README.md`](../../demos/react-native/README.md) for run
 
 ## Authentication modes
 
-| Mode | Status | Transport |
-| --- | --- | --- |
-| `redirect` | ✅ Supported | Expo WebBrowser auth session + Expo Linking deep-link callback |
-| `embedded` | ✅ Supported | `react-native-webview` (`<AbstraxionEmbed>` component) |
-| `signer` | ✅ Supported | Caller-supplied signing function (Turnkey, Privy, MetaMask…) |
-| `popup` / `auto` | ❌ Web-only | `popup` requires `window.open`; `auto`'s device sniffing depends on browser APIs. Both throw at provider mount on RN — pick `redirect` or `embedded` explicitly. |
+| Mode             | Status       | Transport                                                                                                                                                        |
+| ---------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `redirect`       | ✅ Supported | Expo WebBrowser auth session + Expo Linking deep-link callback                                                                                                   |
+| `embedded`       | ✅ Supported | `react-native-webview` (`<AbstraxionEmbed>` component)                                                                                                           |
+| `signer`         | ✅ Supported | Caller-supplied signing function (Turnkey, Privy, MetaMask…)                                                                                                     |
+| `popup` / `auto` | ❌ Web-only  | `popup` requires `window.open`; `auto`'s device sniffing depends on browser APIs. Both throw at provider mount on RN — pick `redirect` or `embedded` explicitly. |
 
 Direct signing (`requireAuth: true`) works in `redirect` mode (round-trips to dashboard via WebBrowser), in `embedded` mode (signing UI shown in the in-app WebView), and in `signer` mode (returns a direct `AAClient`).
 
@@ -121,14 +124,14 @@ Place `<AbstraxionEmbed>` once at the root of your app — only one embed should
 
 ### Visibility-state matrix
 
-The embed has four user-facing states. Pick props for each based on what should happen when the user has work to do *inside* the dashboard (login, approve, manage authenticators) versus when the embed should stay out of the way.
+The embed has four user-facing states. Pick props for each based on what should happen when the user has work to do _inside_ the dashboard (login, approve, manage authenticators) versus when the embed should stay out of the way.
 
-| State | Trigger | Default rendering |
-| --- | --- | --- |
-| Idle (no session yet) | `!isConnected && !isConnecting` | `idleView="button"` shows the login button; `"fullview"` shows the WebView at the consumer's `style`; `"hidden"` renders nothing visible. |
-| Connecting (login in progress) | `isConnecting` | WebView auto-promotes to a full-screen `<Modal>` when `idleView !== "fullview"` and `approvalView === "modal"`. Dismissing the modal calls `controller.cancelLogin()` and returns to idle. |
-| Connected (no pending approval) | `isConnected && !isAwaitingApproval` | `connectedView="hidden"` collapses to 0×0; `"visible"` renders at the consumer's `style`. |
-| Approval pending | `isConnected && isAwaitingApproval` | `approvalView="modal"` opens the WebView in a centered `<Modal>` (default); `"inline"` renders at the consumer's `style`. |
+| State                           | Trigger                              | Default rendering                                                                                                                                                                          |
+| ------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Idle (no session yet)           | `!isConnected && !isConnecting`      | `idleView="button"` shows the login button; `"fullview"` shows the WebView at the consumer's `style`; `"hidden"` renders nothing visible.                                                  |
+| Connecting (login in progress)  | `isConnecting`                       | WebView auto-promotes to a full-screen `<Modal>` when `idleView !== "fullview"` and `approvalView === "modal"`. Dismissing the modal calls `controller.cancelLogin()` and returns to idle. |
+| Connected (no pending approval) | `isConnected && !isAwaitingApproval` | `connectedView="hidden"` collapses to 0×0; `"visible"` renders at the consumer's `style`.                                                                                                  |
+| Approval pending                | `isConnected && isAwaitingApproval`  | `approvalView="modal"` opens the WebView in a centered `<Modal>` (default); `"inline"` renders at the consumer's `style`.                                                                  |
 
 #### Why the connecting modal exists
 
@@ -170,18 +173,18 @@ interface AbstraxionEmbedHandle {
 
 ```typescript
 const {
-  data,                  // { bech32Address: string }
-  isConnected,           // session present
-  isConnecting,          // login in progress
-  isInitializing,        // restoring session from storage on mount
-  isDisconnected,        // true after explicit logout (distinct from idle)
-  isLoading,             // isInitializing || isConnecting
-  isReturningFromAuth,   // redirect mode only — handling deep-link callback
-  isLoggingIn,           // isConnecting && !isInitializing
+  data, // { bech32Address: string }
+  isConnected, // session present
+  isConnecting, // login in progress
+  isInitializing, // restoring session from storage on mount
+  isDisconnected, // true after explicit logout (distinct from idle)
+  isLoading, // isInitializing || isConnecting
+  isReturningFromAuth, // redirect mode only — handling deep-link callback
+  isLoggingIn, // isConnecting && !isInitializing
   isError,
   error,
-  login,                 // () => Promise<void>
-  logout,                // () => Promise<void>
+  login, // () => Promise<void>
+  logout, // () => Promise<void>
 } = useAbstraxionAccount();
 ```
 
@@ -218,10 +221,10 @@ Add or remove authenticators (passkeys, OAuth, etc.) on the connected account.
 
 ```typescript
 const {
-  manageAuthenticators,    // () => Promise<void>
-  isSupported,             // true in redirect or embedded mode
-  unsupportedReason,       // string when isSupported === false (e.g. signer mode)
-  manageAuthResult,        // redirect mode only — populated after deep-link return
+  manageAuthenticators, // () => Promise<void>
+  isSupported, // true in redirect or embedded mode
+  unsupportedReason, // string when isSupported === false (e.g. signer mode)
+  manageAuthResult, // redirect mode only — populated after deep-link return
   clearManageAuthResult,
 } = useManageAuthenticators();
 ```
@@ -239,7 +242,7 @@ interface AbstraxionConfig {
   // Network — all default to xion-testnet-2 if omitted.
   rpcUrl?: string;
   restUrl?: string;
-  gasPrice?: string;       // e.g. "0.001uxion"
+  gasPrice?: string; // e.g. "0.001uxion"
   chainId?: string;
 
   // Optional grant configuration.
@@ -252,7 +255,11 @@ interface AbstraxionConfig {
   authentication?:
     | { type: "redirect"; callbackUrl?: string; authAppUrl?: string }
     | { type: "embedded"; iframeUrl?: string }
-    | { type: "signer"; aaApiUrl: string; getSignerConfig: () => Promise<SignerConfig> };
+    | {
+        type: "signer";
+        aaApiUrl: string;
+        getSignerConfig: () => Promise<SignerConfig>;
+      };
 
   // Convenience for redirect mode — equivalent to authentication.callbackUrl.
   callbackUrl?: string;
@@ -306,9 +313,9 @@ import {
   type AbstraxionEmbedProps,
 
   // Strategies (advanced — usually you don't import these directly)
-  ReactNativeStorageStrategy,   // wraps AsyncStorage as the SDK's StorageStrategy
-  ReactNativeRedirectStrategy,  // wraps Expo WebBrowser + Linking as RedirectStrategy
-  RNWebViewIframeTransport,     // bridges <AbstraxionEmbed>'s WebView to IframeController
+  ReactNativeStorageStrategy, // wraps AsyncStorage as the SDK's StorageStrategy
+  ReactNativeRedirectStrategy, // wraps Expo WebBrowser + Linking as RedirectStrategy
+  RNWebViewIframeTransport, // bridges <AbstraxionEmbed>'s WebView to IframeController
   type RNWebViewControl,
 } from "@burnt-labs/abstraxion-react-native";
 ```
