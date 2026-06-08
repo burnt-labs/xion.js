@@ -10,5 +10,7 @@ export const baseConfig = {
   gasPrice: import.meta.env.VITE_GAS_PRICE as string | undefined,
 };
 
-export const authAppUrl = import.meta.env.VITE_AUTH_APP_URL as string | undefined;
+export const authAppUrl = import.meta.env.VITE_AUTH_APP_URL as
+  | string
+  | undefined;
 export const iframeUrl = import.meta.env.VITE_IFRAME_URL as string | undefined;

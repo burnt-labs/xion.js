@@ -19,10 +19,10 @@ own reactivity primitives.
 [`src/lib/abstraxion.ts`](src/lib/abstraxion.ts) ships two layers — copy the
 runtime, replace the binding:
 
-| Layer | Purpose | Re-usable? |
-| --- | --- | --- |
+| Layer                                       | Purpose                                                                                                                                | Re-usable?                                    |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | `createAbstraxionRuntime(config, options?)` | Framework-agnostic. Returns `{ controller, getState, subscribe, login, logout, manageAuthenticators, createRequireSigningClient, … }`. | Vue, Solid, Lit, vanilla — anywhere you want. |
-| `createAbstraxionStore(config, options?)` | Wraps the runtime in a Svelte `writable` + `derived` so components can `$store.isConnected`. | Svelte-specific. |
+| `createAbstraxionStore(config, options?)`   | Wraps the runtime in a Svelte `writable` + `derived` so components can `$store.isConnected`.                                           | Svelte-specific.                              |
 
 ### Porting to Vue / Solid / vanilla
 
@@ -67,18 +67,18 @@ redirect direct-signing result).
 demo doesn't try to recreate beyond what `createAbstraxionStore` exposes.
 Here's the gap and the equivalent on the JS side:
 
-| React | Svelte / vanilla equivalent |
-| --- | --- |
-| `useAbstraxionAccount()` | `$store` (this template) — same field shape (`isConnected`, `granterAddress`, etc.) |
-| `useAbstraxionClient()` (read-only `CosmWasmClient`) | `runtime.createReadClient()` — returns `Promise<CosmWasmClient>`. The React hook is literally `await CosmWasmClient.connect(rpcUrl)` plus a `useState` cell; the helper here is just the same call wrapped to discourage re-importing CosmJS in your app code. |
-| `useAbstraxionSigningClient()` (session-key, gasless) | `$store.signingClient` (already in this template) |
-| `useAbstraxionSigningClient({ requireAuth: true })` (any mode) | `runtime.createDirectSigningClient()` — `Promise<SigningClient \| undefined>`. Returns `RequireSigningClient` for popup/redirect/embedded, `AAClient` for signer mode (see [signer-mode wiring](#signer-mode-direct-signing-whats-actually-involved) below). |
-| `useManageAuthenticators()` | `runtime.manageAuthenticators(granterAddress)` + `runtime.isManageAuthSupported` |
-| `signResult` (post-redirect direct signing) | `redirectController.signResult.subscribe(cb)` — narrow `runtime.controller` to `RedirectController` first |
-| `manageAuthResult` (post-redirect manage flow) | `redirectController.manageAuthResult.subscribe(cb)` — same pattern |
-| `<AbstraxionEmbed>` (drop-in iframe component) | **Not provided.** You manually mount: `iframeController.setContainerElement(node)` (e.g. inside `onMount`), and read `iframeController.subscribeApproval(cb)` to toggle modal/inline visibility on signing requests |
-| Auto-mode resolution | Automatic — `normalizeAbstraxionConfig` calls `resolveAutoAuth` regardless of framework |
-| `isAwaitingApproval` (iframe mode, modal trigger) | `iframeController.subscribeApproval((flag) => …)` |
+| React                                                          | Svelte / vanilla equivalent                                                                                                                                                                                                                                    |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useAbstraxionAccount()`                                       | `$store` (this template) — same field shape (`isConnected`, `granterAddress`, etc.)                                                                                                                                                                            |
+| `useAbstraxionClient()` (read-only `CosmWasmClient`)           | `runtime.createReadClient()` — returns `Promise<CosmWasmClient>`. The React hook is literally `await CosmWasmClient.connect(rpcUrl)` plus a `useState` cell; the helper here is just the same call wrapped to discourage re-importing CosmJS in your app code. |
+| `useAbstraxionSigningClient()` (session-key, gasless)          | `$store.signingClient` (already in this template)                                                                                                                                                                                                              |
+| `useAbstraxionSigningClient({ requireAuth: true })` (any mode) | `runtime.createDirectSigningClient()` — `Promise<SigningClient \| undefined>`. Returns `RequireSigningClient` for popup/redirect/embedded, `AAClient` for signer mode (see [signer-mode wiring](#signer-mode-direct-signing-whats-actually-involved) below).   |
+| `useManageAuthenticators()`                                    | `runtime.manageAuthenticators(granterAddress)` + `runtime.isManageAuthSupported`                                                                                                                                                                               |
+| `signResult` (post-redirect direct signing)                    | `redirectController.signResult.subscribe(cb)` — narrow `runtime.controller` to `RedirectController` first                                                                                                                                                      |
+| `manageAuthResult` (post-redirect manage flow)                 | `redirectController.manageAuthResult.subscribe(cb)` — same pattern                                                                                                                                                                                             |
+| `<AbstraxionEmbed>` (drop-in iframe component)                 | **Not provided.** You manually mount: `iframeController.setContainerElement(node)` (e.g. inside `onMount`), and read `iframeController.subscribeApproval(cb)` to toggle modal/inline visibility on signing requests                                            |
+| Auto-mode resolution                                           | Automatic — `normalizeAbstraxionConfig` calls `resolveAutoAuth` regardless of framework                                                                                                                                                                        |
+| `isAwaitingApproval` (iframe mode, modal trigger)              | `iframeController.subscribeApproval((flag) => …)`                                                                                                                                                                                                              |
 
 ### Signer mode direct signing — what's actually involved
 

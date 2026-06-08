@@ -65,9 +65,9 @@ function AutoModeContent(): JSX.Element {
       <div className="text-center">
         <h1 className="mb-2 text-2xl font-bold tracking-tighter">Auto Mode</h1>
         <p className="text-sm text-gray-400">
-          Default and recommended mode. Resolves to{" "}
-          <strong>popup</strong> on desktop and <strong>redirect</strong> on
-          mobile/PWA — your dApp doesn&apos;t pick one explicitly.
+          Default and recommended mode. Resolves to <strong>popup</strong> on
+          desktop and <strong>redirect</strong> on mobile/PWA — your dApp
+          doesn&apos;t pick one explicitly.
         </p>
       </div>
 
@@ -110,12 +110,14 @@ function AutoModeContent(): JSX.Element {
 
       {loginError && (
         <div className="w-full rounded-lg border border-red-500/30 bg-red-500/10 p-3">
-          <p className="text-xs font-semibold text-red-400">Connection failed</p>
+          <p className="text-xs font-semibold text-red-400">
+            Connection failed
+          </p>
           <p className="text-xs text-gray-300">{loginError}</p>
           {loginError.toLowerCase().includes("popup") && (
             <p className="mt-2 text-xs text-gray-400">
-              Allow popups for this site in your browser settings and try
-              again. (Auto mode falls back to redirect on mobile, where popups
+              Allow popups for this site in your browser settings and try again.
+              (Auto mode falls back to redirect on mobile, where popups
               don&apos;t work.)
             </p>
           )}

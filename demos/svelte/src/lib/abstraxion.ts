@@ -201,8 +201,9 @@ export function createAbstraxionRuntime(
             "createDirectSigningClient(): SignerController has no connectionInfo — login may have failed.",
           );
         }
-        const authenticatorType = connectionInfo.metadata
-          ?.authenticatorType as AuthenticatorType | undefined;
+        const authenticatorType = connectionInfo.metadata?.authenticatorType as
+          | AuthenticatorType
+          | undefined;
         const authenticatorIndex =
           (connectionInfo.metadata?.authenticatorIndex as number | undefined) ??
           0;

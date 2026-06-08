@@ -39,7 +39,8 @@ export function SignerModePage(): JSX.Element {
   const [signer, setSigner] = useState<Signer | null>(null);
 
   if (!signer) return <SignerSelector onSelect={setSigner} />;
-  if (signer === "turnkey") return <TurnkeyFlow onBack={() => setSigner(null)} />;
+  if (signer === "turnkey")
+    return <TurnkeyFlow onBack={() => setSigner(null)} />;
   return <MetamaskFlow onBack={() => setSigner(null)} />;
 }
 
@@ -61,8 +62,8 @@ function SignerSelector({
           Signer Mode
         </h1>
         <p className="text-sm text-gray-400">
-          Choose a signer. Both sign for the same Abstraxion smart account —
-          the difference is who holds the keypair.
+          Choose a signer. Both sign for the same Abstraxion smart account — the
+          difference is who holds the keypair.
         </p>
       </div>
 
@@ -102,14 +103,13 @@ function SignerSelector({
           <p className="mt-1 text-xs text-gray-400">
             Feels like a normal Ethereum wallet — every transaction prompts a
             MetaMask popup the user signs themselves — but the keypair is
-            backing an Abstraxion smart account, so you still get session
-            keys, fee grants, gasless flows, and authenticator management on
-            top.
+            backing an Abstraxion smart account, so you still get session keys,
+            fee grants, gasless flows, and authenticator management on top.
           </p>
           <p className="mt-2 text-xs text-gray-400">
             Good fit for native-crypto apps on XION where the audience already
-            expects wallet popups and likes seeing the signer they know.
-            Mirrors the old <code>direct-signing-demo</code>.
+            expects wallet popups and likes seeing the signer they know. Mirrors
+            the old <code>direct-signing-demo</code>.
           </p>
         </button>
       </div>
@@ -123,7 +123,9 @@ function SignerSelector({
 
 // ─── Shared Abstraxion config builder ──────────────────────────────────────
 
-function useAbstraxionSignerConfig(getSignerConfig: () => Promise<SignerConfig>) {
+function useAbstraxionSignerConfig(
+  getSignerConfig: () => Promise<SignerConfig>,
+) {
   const codeId = import.meta.env.VITE_CODE_ID;
   const checksum = import.meta.env.VITE_CHECKSUM;
   if (!codeId || !checksum) {
@@ -349,7 +351,13 @@ function SignerInnerContent(props: SignerInnerProps): JSX.Element {
       return () => clearTimeout(t);
     }
     if (!props.isSignerReady) hasTriggeredLogin.current = false;
-  }, [props.isSignerReady, props.signerKind, isConnected, isConnecting, abstraxionLogin]);
+  }, [
+    props.isSignerReady,
+    props.signerKind,
+    isConnected,
+    isConnecting,
+    abstraxionLogin,
+  ]);
 
   const handleDisconnect = useCallback(() => {
     abstraxionLogout();
@@ -400,9 +408,7 @@ function SignerInnerContent(props: SignerInnerProps): JSX.Element {
             <h3 className="font-semibold">{props.signerLabel}</h3>
             <p className="break-all text-xs text-gray-400">
               ETH address:{" "}
-              <span className="font-mono">
-                {props.signerAddress ?? "—"}
-              </span>
+              <span className="font-mono">{props.signerAddress ?? "—"}</span>
             </p>
             {props.signerSubtitle && (
               <p className="text-xs text-gray-400">
@@ -482,7 +488,8 @@ function DirectSigningNote({
   return (
     <details className="w-full rounded-lg border border-white/10 bg-gray-900/30 text-xs">
       <summary className="cursor-pointer select-none px-4 py-3 font-semibold text-gray-200 transition-colors hover:text-white">
-        Direct signing (<code className="text-amber-300">requireAuth: true</code>)
+        Direct signing (
+        <code className="text-amber-300">requireAuth: true</code>)
         {isMetamask ? " — prompts MetaMask each tx" : " — developer option"}
       </summary>
       <div className="space-y-3 px-4 pb-4">
@@ -490,8 +497,8 @@ function DirectSigningNote({
           <p className="text-gray-400">
             With MetaMask, every direct-signing tx triggers a{" "}
             <code className="text-amber-300">personal_sign</code> popup. The
-            session-key path bundles authority into a single popup at login
-            and signs subsequent txs silently from the granted keypair.
+            session-key path bundles authority into a single popup at login and
+            signs subsequent txs silently from the granted keypair.
           </p>
         ) : (
           <p className="text-gray-400">
@@ -508,9 +515,9 @@ function DirectSigningNote({
             <span className="text-amber-300">Direct (requireAuth)</span> — the
             user&apos;s meta-account signs each tx and pays gas from its own
             balance. No grants needed. Useful when (a) you don&apos;t want to
-            wire fee grants, (b) you want every action authenticated by the
-            real signer rather than a session key, or (c) you&apos;re moving
-            funds the user owns.
+            wire fee grants, (b) you want every action authenticated by the real
+            signer rather than a session key, or (c) you&apos;re moving funds
+            the user owns.
           </li>
         </ul>
 
@@ -625,8 +632,8 @@ function MissingConfig({ onBack }: { onBack: () => void }): JSX.Element {
       <h1 className="text-2xl font-bold tracking-tighter">Signer Mode</h1>
       <p className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-200">
         Set <code>VITE_CODE_ID</code>, <code>VITE_CHECKSUM</code>, and{" "}
-        <code>VITE_AA_API_URL</code> in <code>.env.local</code> — they
-        describe the smart-account contract Abstraxion will spawn.
+        <code>VITE_AA_API_URL</code> in <code>.env.local</code> — they describe
+        the smart-account contract Abstraxion will spawn.
       </p>
       <button
         type="button"

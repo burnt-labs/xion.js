@@ -90,7 +90,9 @@ export function useMetamask(): UseMetamaskReturn {
 
   const connect = useCallback(async () => {
     if (!isMetaMaskAvailable) {
-      setError("MetaMask not installed. Please install the MetaMask extension.");
+      setError(
+        "MetaMask not installed. Please install the MetaMask extension.",
+      );
       setAuthState(MetamaskAuthState.Error);
       throw new Error("MetaMask not installed");
     }
@@ -150,7 +152,8 @@ export function useMetamask(): UseMetamaskReturn {
           method: "personal_sign",
           params: [hexMessage, ethereumAddress],
         })) as string;
-        if (!signature) throw new Error("Failed to get signature from MetaMask");
+        if (!signature)
+          throw new Error("Failed to get signature from MetaMask");
         return signature.startsWith("0x") ? signature : `0x${signature}`;
       },
     };

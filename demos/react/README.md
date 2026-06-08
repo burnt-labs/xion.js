@@ -16,12 +16,12 @@ route per feature.
 
 ## Pages
 
-| Path         | Mode                                    | What it shows                                                                                            |
-| ------------ | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `/`          | —                                       | Navigation home                                                                                          |
-| `/auto`      | `authentication: { type: "auto" }`      | Recommended dashboard mode — popup on desktop, redirect on mobile/PWA. Full state-machine debug panel, side-by-side session-key & direct signing (`requireAuth: true`), and manage-authenticators. Devs shouldn't pick popup or redirect explicitly anymore; both live behind auto. |
-| `/embedded`  | `authentication: { type: "embedded" }`  | `<AbstraxionEmbed>` with a toggle between inline (always-visible) and dynamic (button + modal) presentations, plus session-key & direct signing. |
-| `/signer-mode` | `authentication: { type: "signer" }`  | Signer chooser — Turnkey (silent signing) or MetaMask (per-tx popup). Each builds its own `getSignerConfig` and feeds the same Abstraxion smart-account flow. |
+| Path           | Mode                                   | What it shows                                                                                                                                                                                                                                                                       |
+| -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`            | —                                      | Navigation home                                                                                                                                                                                                                                                                     |
+| `/auto`        | `authentication: { type: "auto" }`     | Recommended dashboard mode — popup on desktop, redirect on mobile/PWA. Full state-machine debug panel, side-by-side session-key & direct signing (`requireAuth: true`), and manage-authenticators. Devs shouldn't pick popup or redirect explicitly anymore; both live behind auto. |
+| `/embedded`    | `authentication: { type: "embedded" }` | `<AbstraxionEmbed>` with a toggle between inline (always-visible) and dynamic (button + modal) presentations, plus session-key & direct signing.                                                                                                                                    |
+| `/signer-mode` | `authentication: { type: "signer" }`   | Signer chooser — Turnkey (silent signing) or MetaMask (per-tx popup). Each builds its own `getSignerConfig` and feeds the same Abstraxion smart-account flow.                                                                                                                       |
 
 `@burnt-labs/ui` is intentionally not used — local demo primitives live in
 `src/components/Button.tsx`. See [`abstraxion_package_restructure.md`](../../../.docs/tasks/abstraxion_package_restructure.md)

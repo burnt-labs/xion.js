@@ -26,18 +26,18 @@ Then press `i` for iOS simulator, `a` for Android, or scan the QR code with Expo
 
 You have three ways to run this demo. Pick based on what you have installed and what you need to test.
 
-| Runtime | Setup cost | Functionality | Best for |
-| --- | --- | --- | --- |
-| iOS Simulator | Install Xcode (~10 GB, macOS only) | Full | macOS users — fastest local loop |
-| **Option A** — Expo Go | None (just install the app) | **Limited** — UI only | Quick UI checks, demoing scaffold work |
-| **Option B** — Custom dev client | One-time native build | Full | Physical Android phone, full signing on any device |
+| Runtime                          | Setup cost                         | Functionality         | Best for                                           |
+| -------------------------------- | ---------------------------------- | --------------------- | -------------------------------------------------- |
+| iOS Simulator                    | Install Xcode (~10 GB, macOS only) | Full                  | macOS users — fastest local loop                   |
+| **Option A** — Expo Go           | None (just install the app)        | **Limited** — UI only | Quick UI checks, demoing scaffold work             |
+| **Option B** — Custom dev client | One-time native build              | Full                  | Physical Android phone, full signing on any device |
 
 ### iOS Simulator (recommended on macOS)
 
 One-time setup:
 
 1. Install **Xcode** from the Mac App Store (~10 GB).
-2. Open Xcode once, accept the license, and install the iOS Simulator component under *Settings → Platforms*.
+2. Open Xcode once, accept the license, and install the iOS Simulator component under _Settings → Platforms_.
 
 Then `pnpm --filter demos-react-native start` and press `i` — Expo boots the simulator and installs the app for you. Full functionality, no extra build step.
 
@@ -61,7 +61,7 @@ If you only want to scan the QR and see the UI, this is the fastest path. If any
 
 ### Option B — custom dev client (full functionality, any device)
 
-A "dev client" is a one-time-built version of the Expo Go app with *your* native modules (quick-crypto) compiled in. After the first build the loop is identical to Expo Go — Metro hot-reloads, scan a QR, etc.
+A "dev client" is a one-time-built version of the Expo Go app with _your_ native modules (quick-crypto) compiled in. After the first build the loop is identical to Expo Go — Metro hot-reloads, scan a QR, etc.
 
 **Prerequisite for both sub-paths:** add `expo-dev-client` to the demo:
 
@@ -77,6 +77,7 @@ You install the native toolchain on your machine, Expo runs `gradle` / `xcodebui
 **Android phone (USB):**
 
 One-time setup:
+
 1. Install **Android Studio** — it ships the SDK + platform tools.
 2. Set `ANDROID_HOME` (the Android Studio setup wizard prints the path; usually `~/Library/Android/sdk`).
 3. Install **OpenJDK 17**: `brew install --cask zulu@17`.
@@ -84,21 +85,25 @@ One-time setup:
 5. Plug in via USB. Verify with `adb devices` — your phone should appear.
 
 Build + install:
+
 ```bash
 cd xion.js/demos/react-native
 npx expo run:android --device
 ```
+
 First build: ~5–10 min (Gradle downloads everything). Subsequent JS changes hot-reload through Metro — no rebuild needed unless you change native code.
 
 **iPhone (physical) or iOS Simulator:**
 
 One-time setup:
+
 1. Install **Xcode** + license: `sudo xcodebuild -license`.
 2. Install command line tools: `xcode-select --install`.
-3. *(Physical iPhone only)* Sign in to Xcode with your Apple ID — *Xcode → Settings → Accounts*. A free Apple ID works; the build is valid for 7 days, then re-sign by rebuilding.
-4. *(Physical iPhone only)* Plug in via USB → tap **Trust This Computer** on the phone.
+3. _(Physical iPhone only)_ Sign in to Xcode with your Apple ID — _Xcode → Settings → Accounts_. A free Apple ID works; the build is valid for 7 days, then re-sign by rebuilding.
+4. _(Physical iPhone only)_ Plug in via USB → tap **Trust This Computer** on the phone.
 
 Build + install:
+
 ```bash
 # iOS Simulator (no Apple ID needed):
 npx expo run:ios

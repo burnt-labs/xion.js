@@ -60,8 +60,8 @@ export function HomePage(): JSX.Element {
         <code className="rounded bg-white/10 px-1 py-0.5">
           AbstraxionProvider
         </code>{" "}
-        with a different <code>authentication.type</code>. Inspect each
-        route's source to see the config.
+        with a different <code>authentication.type</code>. Inspect each route's
+        source to see the config.
       </p>
     </div>
   );

@@ -261,9 +261,7 @@ describe("React Native hooks", () => {
 
   it("useManageAuthenticators delegates to RedirectController when active", async () => {
     const { RedirectController } = await import("@burnt-labs/abstraxion-js");
-    const promptManageAuthenticators = vi
-      .fn()
-      .mockResolvedValue(undefined);
+    const promptManageAuthenticators = vi.fn().mockResolvedValue(undefined);
     const subscribeMock = vi.fn(() => () => undefined);
     const fakeController = Object.create(RedirectController.prototype);
     fakeController.promptManageAuthenticators = promptManageAuthenticators;
