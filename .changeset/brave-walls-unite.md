@@ -1,10 +1,9 @@
 ---
-"@burnt-labs/abstraxion": minor
+"@burnt-labs/abstraxion-react": minor
 "@burnt-labs/abstraxion-core": minor
 "@burnt-labs/account-management": patch
 "@burnt-labs/constants": patch
 "@burnt-labs/signers": patch
-"demo-app": minor
 ---
 
 Add embedded wallets with popup, auto, and embedded authentication modes. Also add direct signing (`requireAuth`) for transactions that need meta-account authorization instead of session keys.

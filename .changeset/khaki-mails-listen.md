@@ -1,5 +1,5 @@
 ---
-"@burnt-labs/abstraxion": patch
+"@burnt-labs/abstraxion-react": patch
 "@burnt-labs/constants": patch
 ---
 
