@@ -1,5 +1,4 @@
 ---
-"demo-app": minor
 "@burnt-labs/constants": minor
 ---
 

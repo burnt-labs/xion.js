@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "jsx": "react-jsx",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "sourceMap": true,
+    "noEmit": true,
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "preserveSymlinks": true,
+    "baseUrl": ".",
+    "paths": {
+      "@burnt-labs/abstraxion-js": ["../abstraxion-js/src/index.ts"],
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": [
+    "dist",
+    "build",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**"
+  ]
+}

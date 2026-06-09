@@ -1,35 +1,47 @@
 import { useContext, useEffect, useState } from "react";
-import { testnetChainInfo } from "@burnt-labs/constants";
+import { CosmWasmClient, testnetChainInfo } from "@burnt-labs/abstraxion-js";
 import { AbstraxionContext } from "../components/AbstraxionContext";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 export const useAbstraxionClient = (): {
   readonly client: CosmWasmClient | undefined;
+  readonly error: Error | undefined;
 } => {
-  const { rpcUrl } = useContext(AbstraxionContext);
+  const { rpcUrl, runtime } = useContext(AbstraxionContext);
 
   const [abstractClient, setAbstractClient] = useState<
     CosmWasmClient | undefined
   >(undefined);
+  const [error, setError] = useState<Error | undefined>(undefined);
 
   useEffect(() => {
-    async function getClient() {
+    let cancelled = false;
+    async function getClient(): Promise<void> {
       try {
-        const client = await CosmWasmClient.connect(
-          // Should be set in the context but defaulting here just in case
-          rpcUrl || testnetChainInfo.rpc,
+        setError(undefined);
+        const client = runtime
+          ? await runtime.createReadClient()
+          : await CosmWasmClient.connect(rpcUrl || testnetChainInfo.rpc);
+        if (!cancelled) setAbstractClient(client);
+      } catch (err) {
+        if (cancelled) return;
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError(
+          new Error(
+            `Failed to connect to RPC: ${errorMessage}. Please check your network connection and RPC URL.`,
+          ),
         );
-
-        setAbstractClient(client);
-      } catch (error) {
         setAbstractClient(undefined);
       }
     }
 
-    getClient();
-  }, [rpcUrl]);
+    void getClient();
+    return () => {
+      cancelled = true;
+    };
+  }, [rpcUrl, runtime]);
 
   return {
     client: abstractClient,
+    error,
   } as const;
 };

@@ -9,6 +9,7 @@ export default defineConfig((options: Options) => ({
   external: [
     "react",
     "react-native",
+    "@burnt-labs/abstraxion-js",
     "@react-native-async-storage/async-storage",
     "expo-web-browser",
     "expo-linking",

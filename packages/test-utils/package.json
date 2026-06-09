@@ -46,8 +46,6 @@
     "cosmjs-types": "^0.9.0"
   },
   "devDependencies": {
-    "@burnt-labs/eslint-config-custom": "workspace:*",
-    "@burnt-labs/tsconfig": "workspace:*",
     "@types/node": "^20",
     "typescript": "^5.2.2",
     "vitest": "^1.0.0"

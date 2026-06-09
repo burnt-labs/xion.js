@@ -1,5 +1,11 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.71
+
+### Major Changes
+
+- [#373](https://github.com/burnt-labs/xion.js/pull/373) [`868bb10`](https://github.com/burnt-labs/xion.js/commit/868bb106962b709555c94bf53c5318367a6b7439) Thanks [@ertemann](https://github.com/ertemann)! - fix(abstraxion-core): handle `IbcTransfer` in `compareChainGrantsToTreasuryGrants` so IBC-transfer authorizations are compared correctly instead of being treated as a mismatch and invalidating the session.
+
 ## 1.0.0-alpha.70
 
 ### Patch Changes
