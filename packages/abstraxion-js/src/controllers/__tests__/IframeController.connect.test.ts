@@ -168,9 +168,6 @@ describe("IframeController — happy paths", () => {
 
     const config = createConfig({
       treasury: "xion1treasury",
-      bank: [{ denom: "uxion", amount: "500000" }],
-      stake: true,
-      contracts: ["xion1contract1"],
     });
 
     const controller = new IframeController(config);
@@ -188,7 +185,11 @@ describe("IframeController — happy paths", () => {
     expect(iframeUrl.searchParams.get("mode")).toBe("inline");
     expect(iframeUrl.searchParams.get("grantee")).toBe("xion1grantee123");
     expect(iframeUrl.searchParams.get("treasury")).toBe("xion1treasury");
-    expect(iframeUrl.searchParams.get("stake")).toBe("true");
+
+    // Legacy bank/stake/contracts params are no longer added
+    expect(iframeUrl.searchParams.get("stake")).toBeNull();
+    expect(iframeUrl.searchParams.get("bank")).toBeNull();
+    expect(iframeUrl.searchParams.get("contracts")).toBeNull();
 
     controller.destroy();
   });

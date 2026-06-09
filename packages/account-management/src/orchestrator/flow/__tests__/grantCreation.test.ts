@@ -14,7 +14,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createGrants, checkStorageGrants } from "../grantCreation";
 import type { GrantCreationParams } from "../grantCreation";
 import * as grantUtils from "../../../grants/construction";
-import * as validationUtils from "../../../grants/utils";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 
 // Mock only what we need from @burnt-labs/signers
@@ -42,12 +41,7 @@ vi.mock("@cosmjs/cosmwasm-stargate", async () => {
 });
 
 vi.mock("../../../grants/construction", () => ({
-  buildGrantMessages: vi.fn(),
   generateTreasuryGrants: vi.fn(),
-}));
-
-vi.mock("../../../grants/utils", () => ({
-  isContractGrantConfigValid: vi.fn(),
 }));
 
 vi.mock("../../../grants/strategies", () => ({
@@ -151,6 +145,16 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
   });
 
   describe("🔴 CRITICAL: createGrants()", () => {
+    const setupTreasuryQuery = async () => {
+      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+      const mockQueryClient = {
+        queryContractSmart: vi.fn(),
+      };
+      vi.mocked(CosmWasmClient.connect).mockResolvedValue(
+        mockQueryClient as any,
+      );
+    };
+
     it("should return success immediately if grants already exist", async () => {
       mockStorageStrategy.getItem
         .mockResolvedValueOnce("xion1granter")
@@ -162,54 +166,12 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       expect(mockClient.signAndBroadcast).not.toHaveBeenCalled();
     });
 
-    it("should build grant messages from manual config", async () => {
-      mockStorageStrategy.getItem.mockResolvedValue(null);
-
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
-      ]);
-
-      mockClient.simulate.mockResolvedValue(100000);
-      mockClient.signAndBroadcast.mockResolvedValue({
-        code: 0,
-        transactionHash: "ABC123",
-      });
-
-      mockParams.grantConfig = {
-        bank: { send: true },
-        contracts: [],
-      };
-
-      const result = await createGrants(mockParams);
-
-      expect(grantUtils.buildGrantMessages).toHaveBeenCalledWith(
-        expect.objectContaining({
-          granter: "xion1granter",
-          grantee: "xion1grantee",
-        }),
-      );
-      expect(result.success).toBe(true);
-    });
-
     it("should build grant messages from treasury contract", async () => {
-      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
-
-      const mockQueryClient = {
-        queryContractSmart: vi.fn(),
-      };
-      vi.mocked(CosmWasmClient.connect).mockResolvedValue(
-        mockQueryClient as any,
-      );
 
       vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
@@ -218,9 +180,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
         transactionHash: "ABC123",
       });
 
-      mockParams.grantConfig = {
-        treasury: "xion1treasury",
-      };
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       const result = await createGrants(mockParams);
 
@@ -229,21 +189,11 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should add deploy_fee_grant message when using treasury", async () => {
-      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      const mockQueryClient = {
-        queryContractSmart: vi.fn(),
-      };
-      vi.mocked(CosmWasmClient.connect).mockResolvedValue(
-        mockQueryClient as any,
-      );
-
       vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
@@ -252,9 +202,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
         transactionHash: "ABC123",
       });
 
-      mockParams.grantConfig = {
-        treasury: "xion1treasury",
-      };
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       await createGrants(mockParams);
 
@@ -266,13 +214,11 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should sign and broadcast grant transaction", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
@@ -280,6 +226,8 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
         code: 0,
         transactionHash: "HASH123",
       });
+
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       const result = await createGrants(mockParams);
 
@@ -296,13 +244,11 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should store granter address after successful creation", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
@@ -310,6 +256,8 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
         code: 0,
         transactionHash: "HASH123",
       });
+
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       await createGrants(mockParams);
 
@@ -320,19 +268,19 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should handle transaction failures", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
       mockClient.signAndBroadcast.mockRejectedValue(
         new Error("Transaction failed"),
       );
+
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       const result = await createGrants(mockParams);
 
@@ -341,16 +289,16 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should handle simulation failures", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockRejectedValue(new Error("Simulation failed"));
+
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       const result = await createGrants(mockParams);
 
@@ -358,40 +306,12 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       expect(result.error).toContain("Simulation failed");
     });
 
-    it("should throw error for invalid contract grant configuration", async () => {
-      mockStorageStrategy.getItem.mockResolvedValue(null);
-
-      vi.mocked(validationUtils.isContractGrantConfigValid).mockReturnValue(
-        false,
-      );
-
-      mockParams.grantConfig = {
-        contracts: [
-          {
-            address: "xion1granter", // Same as granter - invalid
-            executions: [
-              {
-                msg: {},
-                funds: [],
-              },
-            ],
-          },
-        ],
-      };
-
-      await expect(createGrants(mockParams)).rejects.toThrow(
-        "Invalid contract grant configuration",
-      );
-    });
-
     it("should calculate fee with buffer based on simulation", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
@@ -399,6 +319,8 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
         code: 0,
         transactionHash: "HASH123",
       });
+
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       await createGrants(mockParams);
 
@@ -408,13 +330,11 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should include fee granter if provided", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
@@ -423,7 +343,10 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
         transactionHash: "HASH123",
       });
 
-      mockParams.grantConfig.feeGranter = "xion1feegranter";
+      mockParams.grantConfig = {
+        treasury: "xion1treasury",
+        feeGranter: "xion1feegranter",
+      };
 
       await createGrants(mockParams);
 
@@ -432,38 +355,34 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should handle invalid gas price format", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
 
+      mockParams.grantConfig = { treasury: "xion1treasury" };
       mockParams.gasPrice = "invalid";
 
-      // GasPrice.fromString throws an error for invalid format
       await expect(createGrants(mockParams)).rejects.toThrow(
         "Invalid gas price",
       );
     });
 
     it("should handle missing authenticatorType", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
+      mockParams.grantConfig = { treasury: "xion1treasury" };
       mockParams.connectionResult.metadata = {
         authenticatorIndex: 0,
-        // Missing authenticatorType
       } as any;
 
       await expect(createGrants(mockParams)).rejects.toThrow(
@@ -473,8 +392,6 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
 
     it("should return success immediately if no grant configs provided", async () => {
       mockStorageStrategy.getItem.mockResolvedValue(null);
-
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([]);
 
       mockParams.grantConfig = {};
 
@@ -488,61 +405,32 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       expect(mockClient.signAndBroadcast).not.toHaveBeenCalled();
     });
 
-    it("should fall back to manual config if treasury query fails", async () => {
-      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+    it("should store granter and succeed when treasury query fails", async () => {
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
-
-      const mockQueryClient = {
-        queryContractSmart: vi.fn(),
-      };
-      vi.mocked(CosmWasmClient.connect).mockResolvedValue(
-        mockQueryClient as any,
-      );
 
       vi.mocked(grantUtils.generateTreasuryGrants).mockRejectedValue(
         new Error("Treasury query failed"),
       );
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
-      ]);
-
-      mockClient.simulate.mockResolvedValue(100000);
-      mockClient.signAndBroadcast.mockResolvedValue({
-        code: 0,
-        transactionHash: "ABC123",
-      });
-
-      mockParams.grantConfig = {
-        treasury: "xion1treasury",
-        bank: { send: true }, // Fallback config
-      };
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       const result = await createGrants(mockParams);
 
-      expect(grantUtils.buildGrantMessages).toHaveBeenCalled();
       expect(result.success).toBe(true);
+      expect(mockStorageStrategy.setItem).toHaveBeenCalledWith(
+        "xion-authz-granter-account",
+        "xion1granter",
+      );
+      expect(mockClient.signAndBroadcast).not.toHaveBeenCalled();
     });
 
     it("should pass daodao indexer URL to treasury generator", async () => {
-      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+      await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      const mockQueryClient = {
-        queryContractSmart: vi.fn(),
-      };
-      vi.mocked(CosmWasmClient.connect).mockResolvedValue(
-        mockQueryClient as any,
-      );
-
       vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
@@ -558,20 +446,17 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
 
       await createGrants(mockParams);
 
-      // The daodaoIndexerUrl should be used in createCompositeTreasuryStrategy
       expect(grantUtils.generateTreasuryGrants).toHaveBeenCalled();
     });
 
     it("should create signer with correct parameters", async () => {
+      await setupTreasuryQuery();
       const { createSignerFromSigningFunction } =
         await import("@burnt-labs/signers");
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
-      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
-        {
-          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
-          value: {},
-        },
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([
+        { typeUrl: "/cosmos.authz.v1beta1.MsgGrant", value: {} },
       ]);
 
       mockClient.simulate.mockResolvedValue(100000);
@@ -579,6 +464,8 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
         code: 0,
         transactionHash: "HASH123",
       });
+
+      mockParams.grantConfig = { treasury: "xion1treasury" };
 
       await createGrants(mockParams);
 
@@ -591,3 +478,4 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
   });
 });
+

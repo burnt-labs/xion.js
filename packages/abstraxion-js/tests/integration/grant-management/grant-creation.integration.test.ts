@@ -26,8 +26,6 @@ import {
 } from "../helpers";
 import {
   generateTreasuryGrants,
-  generateBankGrant,
-  generateContractGrant,
   queryTreasuryContractWithPermissions,
   type SessionManager,
 } from "@burnt-labs/account-management";
@@ -215,97 +213,6 @@ describe("Grant Management Integration Tests", () => {
     );
   });
 
-  describe("Manual Grant Construction", () => {
-    it(
-      "should construct bank (send) authorization grant",
-      async () => {
-        const { address: granter } = await createSecp256k1Wallet(undefined, 4);
-        const { address: grantee } = await createSecp256k1Wallet(undefined, 5);
-
-        // Set expiration to 1 day from now
-        const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
-
-        // Create bank grant with spend limit
-        const bankGrant = generateBankGrant(expiration, grantee, granter, [
-          {
-            denom: "uxion",
-            amount: "1000000", // 1 XION
-          },
-        ]);
-
-        // Validate grant structure
-        expect(bankGrant).toBeDefined();
-        expect(bankGrant.typeUrl).toBe("/cosmos.authz.v1beta1.MsgGrant");
-        expect(bankGrant.value).toBeDefined();
-
-        console.log("✓ Bank grant constructed successfully");
-      },
-      INTEGRATION_TEST_TIMEOUT,
-    );
-
-    it(
-      "should construct contract execution authorization grant",
-      async () => {
-        const { address: granter } = await createSecp256k1Wallet(undefined, 6);
-        const { address: grantee } = await createSecp256k1Wallet(undefined, 7);
-
-        // Set expiration to 1 day from now
-        const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
-
-        // Create contract grant
-        const contractGrant = generateContractGrant(
-          expiration,
-          grantee,
-          granter,
-          [config.treasuryAddress], // Use treasury as example contract
-        );
-
-        // Validate grant structure
-        expect(contractGrant).toBeDefined();
-        expect(contractGrant.typeUrl).toBe("/cosmos.authz.v1beta1.MsgGrant");
-        expect(contractGrant.value).toBeDefined();
-
-        console.log("✓ Contract grant constructed successfully");
-      },
-      INTEGRATION_TEST_TIMEOUT,
-    );
-
-    it(
-      "should construct contract grant with spend limits",
-      async () => {
-        const { address: granter } = await createSecp256k1Wallet(undefined, 8);
-        const { address: grantee } = await createSecp256k1Wallet(undefined, 9);
-
-        // Set expiration to 1 day from now
-        const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
-
-        // Create contract grant with spend limits
-        const contractGrant = generateContractGrant(
-          expiration,
-          grantee,
-          granter,
-          [
-            {
-              address: config.treasuryAddress,
-              amounts: [
-                {
-                  denom: "uxion",
-                  amount: "500000", // 0.5 XION
-                },
-              ],
-            },
-          ],
-        );
-
-        expect(contractGrant).toBeDefined();
-        expect(contractGrant.typeUrl).toBe("/cosmos.authz.v1beta1.MsgGrant");
-
-        console.log("✓ Contract grant with spend limits constructed");
-      },
-      INTEGRATION_TEST_TIMEOUT,
-    );
-  });
-
   describe("Grant Validation", () => {
     it(
       "should validate grant addresses are in correct format",
@@ -334,67 +241,9 @@ describe("Grant Management Integration Tests", () => {
       },
       INTEGRATION_TEST_TIMEOUT,
     );
-
-    it(
-      "should reject grants with invalid spend limits",
-      async () => {
-        const { address: granter } = await createSecp256k1Wallet(undefined, 12);
-        const { address: grantee } = await createSecp256k1Wallet(undefined, 13);
-        const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
-
-        // Try to create grant with invalid denom (should still construct, validation happens on-chain)
-        const bankGrant = generateBankGrant(expiration, grantee, granter, [
-          {
-            denom: "", // Invalid empty denom
-            amount: "1000000",
-          },
-        ]);
-
-        // Grant should still be constructed (validation happens on-chain)
-        expect(bankGrant).toBeDefined();
-
-        console.log("✓ Invalid spend limits handled at construction level");
-      },
-      INTEGRATION_TEST_TIMEOUT,
-    );
   });
 
   describe("Grant Error Handling", () => {
-    it(
-      "should handle missing granter address",
-      async () => {
-        const { address: grantee } = await createSecp256k1Wallet(undefined, 14);
-        const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
-
-        // Should throw or handle gracefully
-        expect(() => {
-          generateBankGrant(expiration, grantee, "", [
-            { denom: "uxion", amount: "1000000" },
-          ]);
-        }).not.toThrow(); // Constructor doesn't validate, but on-chain will fail
-
-        console.log("✓ Missing granter handled at construction");
-      },
-      INTEGRATION_TEST_TIMEOUT,
-    );
-
-    it(
-      "should handle missing grantee address",
-      async () => {
-        const { address: granter } = await createSecp256k1Wallet(undefined, 15);
-        const expiration = BigInt(Math.floor(Date.now() / 1000) + 86400);
-
-        expect(() => {
-          generateBankGrant(expiration, "", granter, [
-            { denom: "uxion", amount: "1000000" },
-          ]);
-        }).not.toThrow(); // Constructor doesn't validate, but on-chain will fail
-
-        console.log("✓ Missing grantee handled at construction");
-      },
-      INTEGRATION_TEST_TIMEOUT,
-    );
-
     it(
       "should handle treasury query failures gracefully",
       async () => {

@@ -18,7 +18,6 @@ import { GasPrice } from "@cosmjs/stargate";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import {
-  buildGrantMessages,
   createCompositeTreasuryStrategy,
   generateTreasuryGrants as generateTreasuryGrantMessages,
 } from "../../index";
@@ -157,22 +156,10 @@ export async function createGrants(
     return { success: true };
   }
 
-  const { treasury, contracts, bank, stake, feeGranter, daodaoIndexerUrl } =
-    grantConfig;
+  const { treasury, feeGranter, daodaoIndexerUrl } = grantConfig;
 
-  // Validate contract grant configurations
-  if (contracts && contracts.length > 0) {
-    const { validateContractGrantsOrThrow } =
-      await import("../../grants/utils/contract-validation");
-
-    await validateContractGrantsOrThrow(contracts, smartAccountAddress, {
-      expectedPrefix: "xion", // TODO: Derive from chainId or config
-      rpcUrl: rpcUrl,
-      skipOnChainVerification: false, // Verify contracts exist
-    });
-  }
-
-  // 1. Build grant messages - query treasury contract or use manual configs
+  // 1. Build grant messages by querying the treasury contract. Treasury is the
+  // only supported grant configuration source.
   let grantMessages: any[] = [];
   let needsDeployFeeGrant = false;
 
@@ -188,35 +175,19 @@ export async function createGrants(
       );
       needsDeployFeeGrant = true;
     } catch (error) {
-      // Fall back to manual configs
+      // Treasury query failed — fall through to the no-grants path below.
     }
   }
 
-  // Fall back to manual grant building if treasury query failed or not configured
   if (grantMessages.length === 0) {
-    const oneYearFromNow = BigInt(
-      Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+    // No grant messages to send. This happens when no treasury is configured,
+    // or the treasury contract has no authz grant configs (only deploy_fee_grant
+    // is needed). Store the granter and return success so the caller can proceed.
+    await storageStrategy.setItem(
+      "xion-authz-granter-account",
+      smartAccountAddress,
     );
-
-    grantMessages = buildGrantMessages({
-      granter: smartAccountAddress,
-      grantee: granteeAddress,
-      expiration: oneYearFromNow,
-      contracts,
-      bank,
-      stake,
-    });
-
-    if (grantMessages.length === 0) {
-      // Treasury has no grant configs — the contract supports this (only
-      // deploy_fee_grant is needed, no authz grants). Store granter and
-      // return success so the caller can proceed with the fee grant.
-      await storageStrategy.setItem(
-        "xion-authz-granter-account",
-        smartAccountAddress,
-      );
-      return { success: true };
-    }
+    return { success: true };
   }
 
   // 2. Create signer for the smart account using unified factory

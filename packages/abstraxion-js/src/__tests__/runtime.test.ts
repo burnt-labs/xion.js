@@ -619,7 +619,7 @@ describe("createAbstraxionRuntime — dev-mode no-grants warning", () => {
       { autoInitialize: false },
     );
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("No grants configured"),
+      expect.stringContaining("No treasury configured"),
     );
   });
 

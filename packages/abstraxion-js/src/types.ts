@@ -184,46 +184,22 @@ export interface AbstraxionConfig {
   gasPrice?: string;
 
   /**
-   * Treasury contract address for grant configurations (recommended).
+   * Treasury contract address for grant configurations.
    *
    * When provided, the dashboard queries this contract for the list of permissions
-   * to display and grant to the session key. This is the modern, preferred approach.
+   * to display and grant to the session key. A treasury contract is the only
+   * supported way to configure grants.
    *
-   * **No-grants path**: If `treasury`, `contracts`, `stake`, and `bank` are ALL omitted,
-   * no on-chain grant approval step is shown. The user just authenticates and receives
-   * a session key with no permissions. This is valid when your dApp uses `requireAuth`
-   * (direct signing), where the user signs each transaction from their meta-account
-   * directly instead of delegating to a session key.
-   *
-   * @see {@link contracts}, {@link stake}, {@link bank} for legacy grant configuration
+   * **No-grants path**: If `treasury` is omitted, no on-chain grant approval step
+   * is shown. The user just authenticates and receives a session key with no
+   * permissions. This is valid when your dApp uses `requireAuth` (direct signing),
+   * where the user signs each transaction from their meta-account directly instead
+   * of delegating to a session key.
    */
   treasury?: string;
 
   /** Fee granter address that pays transaction fees for grant creation */
   feeGranter?: string;
-
-  /**
-   * Contract grant configurations — legacy alternative to `treasury`.
-   *
-   * Grants the session key permission to call specific contracts. Prefer `treasury`
-   * for new integrations; use this only when a treasury contract is not available.
-   *
-   * Omitting this (along with `treasury`, `stake`, `bank`) enables the no-grants path
-   * where the user signs directly. See `treasury` for details.
-   */
-  contracts?: ContractGrantDescription[];
-
-  /**
-   * Enable staking and governance grants for the session key.
-   * Legacy alternative to `treasury`. Prefer `treasury` for new integrations.
-   */
-  stake?: boolean;
-
-  /**
-   * Bank spend limits — grants the session key permission to send tokens up to specified amounts.
-   * Legacy alternative to `treasury`. Prefer `treasury` for new integrations.
-   */
-  bank?: SpendLimit[];
 
   /**
    * Authentication configuration
