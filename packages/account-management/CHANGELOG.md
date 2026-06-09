@@ -1,5 +1,16 @@
 # @burnt-labs/account-management
 
+## 1.0.0-alpha.12
+
+### Major Changes
+
+- [#373](https://github.com/burnt-labs/xion.js/pull/373) [`868bb10`](https://github.com/burnt-labs/xion.js/commit/868bb106962b709555c94bf53c5318367a6b7439) Thanks [@ertemann](https://github.com/ertemann)! - feat(account-management): fail-fast guards for `CompositeAccountStrategy` and `accountConnection` — surface configuration/strategy errors immediately instead of silently degrading, fixing latent strategy bugs uncovered while migrating the integration tests to `@burnt-labs/abstraxion-js`.
+
+### Patch Changes
+
+- Updated dependencies [[`868bb10`](https://github.com/burnt-labs/xion.js/commit/868bb106962b709555c94bf53c5318367a6b7439)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.71
+
 ## 1.0.0-alpha.11
 
 ### Patch Changes
