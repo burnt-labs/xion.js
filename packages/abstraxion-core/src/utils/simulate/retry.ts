@@ -96,7 +96,7 @@ export async function simulateWithRetry(
   client: SimulateLike,
   signer: string,
   messages: readonly { typeUrl: string }[],
-  memo: string,
+  memo: string | undefined,
   context: SimulateContext,
 ): Promise<SimulateRetryResult> {
   const totalAttempts = SIMULATE_RETRY_COUNT + 1;

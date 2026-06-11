@@ -35,6 +35,13 @@ const REVOKE_MSG_TYPE_URL_BY_AUTHORIZATION: Record<string, string> = {
  * target. Keyed by both the enum name and its numeric proto value so either
  * representation from the chain/API resolves correctly.
  */
+// NOTE: the `AUTHORIZATION_TYPE_*` keys below are plain object *string keys*,
+// not references to an imported enum — an unquoted identifier in an object
+// literal is just a string key. (They read unquoted because the repo's
+// prettier `quoteProps: "as-needed"` strips quotes from identifier-shaped
+// keys; the numeric keys stay quoted because they must.) Both the enum name
+// and its numeric proto value are keyed so either representation the
+// chain/API returns resolves.
 const REVOKE_MSG_TYPE_URL_BY_STAKE_AUTH_TYPE: Record<string, string> = {
   AUTHORIZATION_TYPE_DELEGATE: "/cosmos.staking.v1beta1.MsgDelegate",
   "1": "/cosmos.staking.v1beta1.MsgDelegate",

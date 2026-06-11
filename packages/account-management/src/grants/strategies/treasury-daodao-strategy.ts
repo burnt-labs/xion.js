@@ -176,7 +176,7 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
       (typeof response.admin === "string" && response.admin.trim() === "")
     ) {
       throw new Error(
-        "DaoDao indexer has no data for this treasury (admin is null)",
+        "DaoDao indexer has no data for this treasury (admin is null, blank, or missing)",
       );
     }
 
