@@ -37,3 +37,4 @@ export function makeADR36AminoSignDoc(
 export { customAccountFromAny } from "@burnt-labs/signers";
 export { getRpcClient } from "./rpcClient";
 export { fetchConfig, clearConfigCache } from "./configUtils";
+export * from "./simulate";

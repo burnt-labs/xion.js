@@ -15,6 +15,9 @@ export {
   generateStakeAndGovGrant,
 } from "./construction";
 
+// Revoke message-type mapping
+export { getMsgTypeUrlForRevoke, STAKE_AUTHORIZATION_TYPE_URL } from "./revoke";
+
 // Utility functions
 export * from "./utils";
 

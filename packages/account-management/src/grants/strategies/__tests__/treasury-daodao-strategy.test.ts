@@ -37,6 +37,12 @@ describe("DaoDaoTreasuryStrategy", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reassign a fresh fetch mock each test. `vi.clearAllMocks()` clears call
+    // history but NOT the `mockResolvedValueOnce` queue, so a test whose fetch
+    // is never reached (e.g. the URL-safety case passes `{}` and throws in
+    // `getChainId` first) would otherwise leak its queued response into the
+    // next test — an off-by-one the admin-null cases are sensitive to.
+    global.fetch = vi.fn();
     strategy = new DaoDaoTreasuryStrategy({
       indexerUrl: "https://daodao.example.com",
     });
@@ -47,6 +53,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          admin: "xion1adminaddress",
           grantConfigs: {
             [mockGrantTypeUrls.genericAuthorization]: {
               authorization: {
@@ -78,6 +85,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          admin: "xion1adminaddress",
           grantConfigs: {},
           params: mockTreasuryParams.basic,
         }),
@@ -135,6 +143,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          admin: "xion1adminaddress",
           grantConfigs: {
             [mockGrantTypeUrls.genericAuthorization]: {
               authorization: {
@@ -167,6 +176,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          admin: "xion1adminaddress",
           grantConfigs: {},
           params: {
             redirect_url: "javascript:alert(1)",
@@ -190,6 +200,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          admin: "xion1adminaddress",
           grantConfigs: {},
           params: mockTreasuryParams.basic,
         }),
@@ -211,6 +222,7 @@ describe("DaoDaoTreasuryStrategy", () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          admin: "xion1adminaddress",
           grantConfigs: {},
           params: mockTreasuryParams.basic,
         }),
@@ -221,6 +233,90 @@ describe("DaoDaoTreasuryStrategy", () => {
       });
 
       expect(result?.grantConfigs).toEqual([]);
+    });
+
+    // admin-null guard: the indexer returns an all-defaults placeholder
+    // (`{ admin: null, grantConfigs: {}, … }`) for any contract it hasn't
+    // indexed, instead of a 404. Without the guard that placeholder passes
+    // the structural checks as a "successful" empty treasury, and in a
+    // racing composite it can beat DirectQuery and silently degrade the user
+    // to "Read access only". The strategy must reject it instead.
+    it("should reject the unindexed placeholder when admin is null", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          admin: null,
+          grantConfigs: {},
+          feeConfig: null,
+          params: {},
+        }),
+      });
+
+      await expect(
+        strategy.fetchTreasuryConfig("xion1treasury", {
+          getChainId: vi.fn().mockResolvedValue("xion-testnet-2"),
+        }),
+      ).rejects.toThrow(/admin is null/i);
+    });
+
+    it("should reject when admin is a blank/whitespace string", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          admin: "   ",
+          grantConfigs: {},
+          params: {},
+        }),
+      });
+
+      await expect(
+        strategy.fetchTreasuryConfig("xion1treasury", {
+          getChainId: vi.fn().mockResolvedValue("xion-testnet-2"),
+        }),
+      ).rejects.toThrow(/admin is null/i);
+    });
+
+    it("should reject when admin is missing entirely", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          grantConfigs: {},
+          params: {},
+        }),
+      });
+
+      await expect(
+        strategy.fetchTreasuryConfig("xion1treasury", {
+          getChainId: vi.fn().mockResolvedValue("xion-testnet-2"),
+        }),
+      ).rejects.toThrow(/admin is null/i);
+    });
+
+    it("should delegate to the normal transform when admin is present", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          admin: "xion1adminaddress",
+          grantConfigs: {
+            [mockGrantTypeUrls.genericAuthorization]: {
+              authorization: {
+                type_url: mockGrantTypeUrls.genericAuthorization,
+                value: "base64encodedvalue",
+              },
+              description: "Execute contracts",
+              optional: false,
+            },
+          },
+          params: mockTreasuryParams.basic,
+        }),
+      });
+
+      const result = await strategy.fetchTreasuryConfig("xion1treasury", {
+        getChainId: vi.fn().mockResolvedValue("xion-testnet-2"),
+      });
+
+      expect(result?.grantConfigs).toHaveLength(1);
+      expect(result?.params.redirect_url).toBe("https://dashboard.burnt.com");
     });
   });
 });
