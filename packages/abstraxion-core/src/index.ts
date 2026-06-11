@@ -23,3 +23,6 @@ export {
   fetchFromDaoDaoIndexer,
   type TreasuryIndexerConfig,
 } from "./utils/indexer/treasury-indexer";
+
+// Simulate robustness: classification + bounded retry + concrete-fee fallback
+export * from "./utils/simulate";
