@@ -1,5 +1,11 @@
 # @burnt-labs/signers
 
+## 1.0.0-alpha.10
+
+### Minor Changes
+
+- [#383](https://github.com/burnt-labs/xion.js/pull/383) [`8905566`](https://github.com/burnt-labs/xion.js/commit/89055662d91e4a4e1bf64f990f494cee3db3a76c) Thanks [@ertemann](https://github.com/ertemann)! - feat(signers): add `deriveCosmosBech32(rawPubkeyBase64, prefix)` pure helper in `crypto/` (exported from `@burnt-labs/signers/crypto` and the main entry). Derives a bech32 account address from a raw secp256k1 public key, returning `null` on invalid input. Lets dashboard/xion-app consumers stop hand-rolling pubkey→address derivation.
+
 ## 1.0.0-alpha.9
 
 ### Patch Changes

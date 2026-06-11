@@ -1,5 +1,13 @@
 # demos-react
 
+## 0.0.1-alpha.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion-js@1.0.0-alpha.2
+  - @burnt-labs/abstraxion-react@1.0.0-alpha.81
+
 ## 0.0.1-alpha.0
 
 ### Patch Changes
