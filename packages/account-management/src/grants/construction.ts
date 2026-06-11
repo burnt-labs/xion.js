@@ -3,6 +3,7 @@
  * Builds grant messages from treasury contracts or manual configurations
  */
 
+import { Buffer } from "buffer";
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { MsgGrant } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import type { GrantConfigByTypeUrl, TreasuryStrategy } from "../types/treasury";

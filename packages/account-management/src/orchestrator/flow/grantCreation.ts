@@ -175,20 +175,32 @@ export async function createGrants(
       );
       needsDeployFeeGrant = true;
     } catch (error) {
-      // Treasury query failed — fall through to the no-grants path below.
+      // Treasury is configured but unreachable — surface the error so the
+      // caller can retry rather than producing a grant-less session that would
+      // be force-logged-out on the next session restore.
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? `Failed to query treasury grants: ${error.message}`
+            : "Failed to query treasury grants",
+      };
     }
   }
 
-  if (grantMessages.length === 0) {
-    // No grant messages to send. This happens when no treasury is configured,
-    // or the treasury contract has no authz grant configs (only deploy_fee_grant
-    // is needed). Store the granter and return success so the caller can proceed.
+  if (!treasury) {
+    // No treasury configured — this is the no-grants / requireAuth path.
+    // Store the granter and return success so the caller can proceed.
     await storageStrategy.setItem(
       "xion-authz-granter-account",
       smartAccountAddress,
     );
     return { success: true };
   }
+
+  // Treasury is configured. Even when it returns zero authz grant configs
+  // (grantMessages is empty), we continue so the required deploy_fee_grant
+  // message below is still built and broadcast.
 
   // 2. Create signer for the smart account using unified factory
   const authenticatorIndex = connectionResult.metadata?.authenticatorIndex ?? 0;

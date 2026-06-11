@@ -213,6 +213,32 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       );
     });
 
+    it("should still broadcast deploy_fee_grant when treasury has zero authz configs", async () => {
+      await setupTreasuryQuery();
+      mockStorageStrategy.getItem.mockResolvedValue(null);
+
+      // Treasury query succeeds but returns no authz grant messages.
+      vi.mocked(grantUtils.generateTreasuryGrants).mockResolvedValue([]);
+
+      mockClient.simulate.mockResolvedValue(100000);
+      mockClient.signAndBroadcast.mockResolvedValue({
+        code: 0,
+        transactionHash: "ABC123",
+      });
+
+      mockParams.grantConfig = { treasury: "xion1treasury" };
+
+      const result = await createGrants(mockParams);
+
+      expect(result.success).toBe(true);
+      expect(mockClient.signAndBroadcast).toHaveBeenCalled();
+      const signedMessages = mockClient.signAndBroadcast.mock.calls[0][1];
+      expect(signedMessages).toHaveLength(1);
+      expect(signedMessages[0].typeUrl).toBe(
+        "/cosmwasm.wasm.v1.MsgExecuteContract",
+      );
+    });
+
     it("should sign and broadcast grant transaction", async () => {
       await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
@@ -405,7 +431,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       expect(mockClient.signAndBroadcast).not.toHaveBeenCalled();
     });
 
-    it("should store granter and succeed when treasury query fails", async () => {
+    it("should fail without storing granter when treasury query fails", async () => {
       await setupTreasuryQuery();
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
@@ -417,11 +443,11 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
 
       const result = await createGrants(mockParams);
 
-      expect(result.success).toBe(true);
-      expect(mockStorageStrategy.setItem).toHaveBeenCalledWith(
-        "xion-authz-granter-account",
-        "xion1granter",
+      expect(result.success).toBe(false);
+      expect(result.success === false && result.error).toContain(
+        "Treasury query failed",
       );
+      expect(mockStorageStrategy.setItem).not.toHaveBeenCalled();
       expect(mockClient.signAndBroadcast).not.toHaveBeenCalled();
     });
 
@@ -478,4 +504,3 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
   });
 });
-
