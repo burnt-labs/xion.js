@@ -4,6 +4,8 @@
  */
 
 import { instantiate2Address } from "@cosmjs/cosmwasm-stargate";
+import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
+import { fromBase64, toBech32 } from "@cosmjs/encoding";
 import { validateAndDecodeHex, validateAddressPrefix } from "./hex-validation";
 
 /**
@@ -44,4 +46,34 @@ export function calculateSmartAccountAddress(config: {
     saltBytes,
     config.prefix,
   );
+}
+
+/**
+ * Derive a bech32 address from a raw secp256k1 public key
+ *
+ * Hashes the raw compressed public key into a Cosmos account address
+ * (`sha256` → `ripemd160`, via CosmJS's `rawSecp256k1PubkeyToRawAddress`) and
+ * encodes it with the given bech32 prefix. This is the standard "pubkey → cosmos
+ * address" derivation, useful for showing the underlying signer address of a
+ * Secp256K1 authenticator.
+ *
+ * Returns `null` rather than throwing for any invalid input (empty/missing
+ * arguments, non-base64 pubkey, wrong key length, etc.) so callers can use it
+ * directly in rendering paths without try/catch.
+ *
+ * @param rawPubkeyBase64 - Base64-encoded raw secp256k1 public key (compressed, 33 bytes)
+ * @param prefix - Bech32 address prefix (e.g., "xion", "cosmos")
+ * @returns The derived bech32 address, or `null` if derivation fails
+ */
+export function deriveCosmosBech32(
+  rawPubkeyBase64: string,
+  prefix: string,
+): string | null {
+  if (!rawPubkeyBase64 || !prefix) return null;
+  try {
+    const rawAddr = rawSecp256k1PubkeyToRawAddress(fromBase64(rawPubkeyBase64));
+    return toBech32(prefix, rawAddr);
+  } catch {
+    return null;
+  }
 }

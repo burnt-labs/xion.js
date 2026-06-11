@@ -305,6 +305,43 @@ describe("CompositeTreasuryStrategy", () => {
       expect(result).toEqual(mockTreasuryConfigs.basic);
     });
 
+    // When DaoDao rejects an unindexed-placeholder response (admin is null),
+    // the racing composite must let DirectQuery win rather than surfacing the
+    // placeholder — otherwise the connect screen degrades to "Read access
+    // only" for a treasury that DirectQuery could resolve.
+    it("should fall back to DirectQuery when DaoDao rejects admin-null", async () => {
+      const directQueryConfig = {
+        ...mockTreasuryConfigs.basic,
+        metadata: '{"name": "DirectQuery"}',
+      };
+      const daodao: TreasuryStrategy = {
+        fetchTreasuryConfig: vi.fn(async () => {
+          throw new Error(
+            "DaoDao treasury strategy failed: DaoDao indexer has no data for this treasury (admin is null)",
+          );
+        }),
+        constructor: { name: "DaoDaoTreasuryStrategy" } as any,
+      };
+      const directQuery = createDelayedMockStrategy(
+        "DirectQueryTreasuryStrategy",
+        "success",
+        10,
+        directQueryConfig,
+      );
+      const composite = new CompositeTreasuryStrategy([daodao, directQuery], {
+        racing: true,
+      });
+
+      const result = await composite.fetchTreasuryConfig(
+        "xion1treasury",
+        mockClient,
+      );
+
+      expect(result).toEqual(directQueryConfig);
+      expect(daodao.fetchTreasuryConfig).toHaveBeenCalledOnce();
+      expect(directQuery.fetchTreasuryConfig).toHaveBeenCalledOnce();
+    });
+
     it("should throw when all strategies fail", async () => {
       const strategy1 = createMockStrategy("Strategy1", "error");
       const strategy2 = createMockStrategy("Strategy2", "error");
