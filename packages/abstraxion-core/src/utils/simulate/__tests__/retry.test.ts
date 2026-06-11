@@ -252,10 +252,16 @@ describe("simulateWithRetry", () => {
     const simulate = vi.fn().mockRejectedValue("codespace: authz, code: 2");
     const client = { simulate };
 
-    const result = await simulateWithRetry(client, "xion1granter", msgs, "memo", {
-      ...context,
-      logger,
-    });
+    const result = await simulateWithRetry(
+      client,
+      "xion1granter",
+      msgs,
+      "memo",
+      {
+        ...context,
+        logger,
+      },
+    );
 
     expect(result.kind).toBe("fallback");
     const [, logPayload] = logger.mock.calls[0];
