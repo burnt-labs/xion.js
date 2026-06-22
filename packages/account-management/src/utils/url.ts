@@ -128,22 +128,39 @@ export function isUrlSafe(url: string | undefined): boolean {
 }
 
 /**
- * Compare two URLs by their domain and protocol
- * Useful for validating redirect URLs match expected domains
+ * Reduce a URL to its origin — `protocol` + `host` + `port`.
  *
- * @param urlA - First URL to compare
- * @param urlB - Second URL to compare
- * @returns true if URLs have matching domain and protocol
+ * Returns `null` for values that don't parse, so two unparseable inputs never
+ * compare equal. The port is part of the origin: `https://host` and
+ * `https://host:8443` are different origins.
+ */
+function toOrigin(url: string | undefined): string | null {
+  try {
+    return new URL(url || "").origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compare two URLs by their origin (`protocol` + `host` + `port`).
+ *
+ *  - port-sensitive       — `https://x` ≠ `https://x:8443`
+ *  - protocol-sensitive   — `https://x` ≠ `http://x`
+ *  - path/query/hash-insensitive — same-origin URLs compare equal regardless of
+ *    path. (For a path-sensitive comparison, compare
+ *    `toOrigin(x) + new URL(x).pathname` instead.)
+ *  - unparseable input never matches.
  *
  * @example
- * ```typescript
- * urlsMatch("https://example.com/path1", "https://example.com/path2") // true
- * urlsMatch("https://example.com", "http://example.com") // false (different protocol)
- * ```
+ * urlsMatch("https://example.com/a", "https://example.com/b") // true  (same origin)
+ * urlsMatch("https://example.com",   "https://example.com:8443") // false (port differs)
+ * urlsMatch("https://example.com",   "http://example.com") // false (protocol differs)
  */
 export function urlsMatch(
   urlA: string | undefined,
   urlB: string | undefined,
 ): boolean {
-  return getDomainAndProtocol(urlA) === getDomainAndProtocol(urlB);
+  const a = toOrigin(urlA);
+  return a !== null && a === toOrigin(urlB);
 }
