@@ -157,9 +157,9 @@ function useXionPayConnection(userEmail: string) {
   // linked to the logged-in app user. Surface a warning and block actions.
   const isWrongAccount = Boolean(
     isConnected &&
-      account.bech32Address &&
-      linkedAddress &&
-      linkedAddress !== account.bech32Address,
+    account.bech32Address &&
+    linkedAddress &&
+    linkedAddress !== account.bech32Address,
   );
 
   // Explicit user choice to make the currently connected account the linked
@@ -186,7 +186,9 @@ function useXionPayConnection(userEmail: string) {
         const times = (data?.grants ?? [])
           .map((g) => (g.expiration ? new Date(g.expiration).getTime() : 0))
           .filter((t) => t > Date.now());
-        setExpiresAt(times.length ? new Date(Math.max(...times)).toISOString() : null);
+        setExpiresAt(
+          times.length ? new Date(Math.max(...times)).toISOString() : null,
+        );
       })
       .catch(() => {
         // Non-fatal: the panel just omits the expiry row.
@@ -520,7 +522,9 @@ function DashboardTab({
         </Button>
         <Button
           structure="outlined"
-          onClick={() => logActivity("Payment reminders queued", "3 emails (fake)")}
+          onClick={() =>
+            logActivity("Payment reminders queued", "3 emails (fake)")
+          }
         >
           Send reminders
         </Button>
@@ -746,8 +750,8 @@ function XionPaySection({
                   {connection.linkedAddress}
                 </span>{" "}
                 but the browser is connected to a different XION account.
-                Disconnect and sign in with the right one, or link the
-                connected account to this user instead.
+                Disconnect and sign in with the right one, or link the connected
+                account to this user instead.
               </p>
               <Button structure="outlined" onClick={connection.relink}>
                 Link this account instead

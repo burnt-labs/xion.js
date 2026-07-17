@@ -29,7 +29,7 @@ const demos: DemoLink[] = [
     to: "/saas",
     title: "SAAS INTEGRATION",
     description:
-      "End-to-end product flow: fake WorkOS-style app login, then a Stripe-Connect-style \"Connect with XION Pay\" button in Settings that provisions the smart account. Both sessions persist and show expiry on every app open.",
+      'End-to-end product flow: fake WorkOS-style app login, then a Stripe-Connect-style "Connect with XION Pay" button in Settings that provisions the smart account. Both sessions persist and show expiry on every app open.',
   },
 ];
 
