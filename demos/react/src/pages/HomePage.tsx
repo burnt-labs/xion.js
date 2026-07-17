@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 interface DemoLink {
-  to: "/auto" | "/embedded" | "/signer-mode";
+  to: "/auto" | "/embedded" | "/signer-mode" | "/saas";
   title: string;
   description: string;
 }
@@ -24,6 +24,12 @@ const demos: DemoLink[] = [
     title: "SIGNER MODE",
     description:
       "BYO keypair via Turnkey or MetaMask. Abstraxion provisions a smart account on top and gives you session-key + direct signing without dashboard redirects.",
+  },
+  {
+    to: "/saas",
+    title: "SAAS INTEGRATION",
+    description:
+      "End-to-end product flow: fake WorkOS-style app login, then a Stripe-Connect-style \"Connect with XION Pay\" button in Settings that provisions the smart account. Both sessions persist and show expiry on every app open.",
   },
 ];
 
