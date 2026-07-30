@@ -133,10 +133,16 @@ export function isUrlSafe(url: string | undefined): boolean {
  * Returns `null` for values that don't parse, so two unparseable inputs never
  * compare equal. The port is part of the origin: `https://host` and
  * `https://host:8443` are different origins.
+ *
+ * Schemes without a tuple origin (`data:`, `file:`, `mailto:`, `blob:` of an
+ * opaque origin, …) stringify their origin as the literal `"null"`. Those are
+ * treated as unparseable — otherwise every opaque-origin URL would compare
+ * equal to every other one.
  */
 function toOrigin(url: string | undefined): string | null {
   try {
-    return new URL(url || "").origin;
+    const { origin } = new URL(url || "");
+    return origin === "null" ? null : origin;
   } catch {
     return null;
   }
@@ -151,11 +157,14 @@ function toOrigin(url: string | undefined): string | null {
  *    path. (For a path-sensitive comparison, compare
  *    `toOrigin(x) + new URL(x).pathname` instead.)
  *  - unparseable input never matches.
+ *  - opaque-origin schemes (`data:`, `file:`, `mailto:`, …) never match, not
+ *    even against themselves.
  *
  * @example
  * urlsMatch("https://example.com/a", "https://example.com/b") // true  (same origin)
  * urlsMatch("https://example.com",   "https://example.com:8443") // false (port differs)
  * urlsMatch("https://example.com",   "http://example.com") // false (protocol differs)
+ * urlsMatch("data:text/html,a",      "data:text/html,b") // false (opaque origin)
  */
 export function urlsMatch(
   urlA: string | undefined,

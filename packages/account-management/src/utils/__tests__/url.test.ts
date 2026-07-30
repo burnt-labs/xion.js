@@ -84,4 +84,24 @@ describe("urlsMatch", () => {
     expect(urlsMatch("not a url", "also not a url")).toBe(false);
     expect(urlsMatch("garbage", "garbage")).toBe(false);
   });
+
+  // `new URL(x).origin` is the literal string "null" for schemes without a
+  // tuple origin, so a naive origin comparison would match any two of them.
+  it("does not match distinct opaque-origin URLs", () => {
+    expect(urlsMatch("data:text/html,a", "data:text/html,b")).toBe(false);
+    expect(urlsMatch("file:///etc/passwd", "file:///tmp/x")).toBe(false);
+    expect(urlsMatch("mailto:a@example.com", "mailto:b@example.com")).toBe(
+      false,
+    );
+  });
+
+  it("does not match an opaque-origin URL against itself", () => {
+    expect(urlsMatch("data:text/html,a", "data:text/html,a")).toBe(false);
+    expect(urlsMatch("file:///etc/passwd", "file:///etc/passwd")).toBe(false);
+  });
+
+  it("does not match an opaque-origin URL against an http(s) URL", () => {
+    expect(urlsMatch("data:text/html,a", "https://example.com")).toBe(false);
+    expect(urlsMatch("https://example.com", "file:///etc/passwd")).toBe(false);
+  });
 });
