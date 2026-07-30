@@ -137,13 +137,27 @@ function useXionPayConnection(userEmail: string) {
   );
 
   // Stamp the first time the connection appears; survives reloads.
+  //
+  // Clearing it is just as important: the session can end without disconnect()
+  // ever running — revoked from the XION dashboard, expired grant, cleared
+  // browser state — and a stale stamp would make the next connection report a
+  // "connected for …" duration measured from the *previous* session. Wait for
+  // isInitializing to settle first, otherwise the restore pass (isConnected is
+  // briefly false on load) would wipe the stamp we're trying to persist.
   useEffect(() => {
-    if (isConnected && account.bech32Address && !connectedAt) {
+    if (isInitializing) return;
+
+    const connected = isConnected && Boolean(account.bech32Address);
+
+    if (connected && !connectedAt) {
       const stamp = new Date().toISOString();
       localStorage.setItem(CONNECTED_AT_STORAGE_KEY, stamp);
       setConnectedAt(stamp);
+    } else if (!connected && connectedAt) {
+      localStorage.removeItem(CONNECTED_AT_STORAGE_KEY);
+      setConnectedAt(null);
     }
-  }, [isConnected, account.bech32Address, connectedAt]);
+  }, [isInitializing, isConnected, account.bech32Address, connectedAt]);
 
   // First connect for this user → link the address to their user record.
   useEffect(() => {
@@ -315,13 +329,18 @@ function LoginCard({
           if (canSubmit) fakeAuthenticate(email.trim());
         }}
       >
-        <input
-          type="email"
-          placeholder="you@company.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded border border-white/20 bg-gray-800/50 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
-        />
+        <label className="block space-y-1" htmlFor="orbit-email">
+          <span className="text-sm text-gray-400">Work email</span>
+          <input
+            autoComplete="email"
+            className="w-full rounded border border-white/20 bg-gray-800/50 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none"
+            id="orbit-email"
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@company.com"
+            type="email"
+            value={email}
+          />
+        </label>
         <Button fullWidth type="submit" disabled={!canSubmit || pending}>
           {pending ? "SIGNING IN…" : "CONTINUE"}
         </Button>
