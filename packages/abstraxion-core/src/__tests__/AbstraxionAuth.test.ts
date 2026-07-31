@@ -23,7 +23,7 @@ if (typeof fetch === "undefined") {
 // Mock fetchConfig from @burnt-labs/constants
 vi.mock("@burnt-labs/constants", () => ({
   fetchConfig: vi.fn().mockResolvedValue({
-    dashboardUrl: "https://settings.testnet.burnt.com",
+    dashboardUrl: "https://auth.testnet.burnt.com",
   }),
 }));
 

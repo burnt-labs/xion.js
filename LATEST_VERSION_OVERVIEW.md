@@ -161,7 +161,7 @@ Opens the auth app in a separate popup window. The user stays on the dApp page w
 
 Embeds the full dashboard inside your page. The user authenticates and approves grants without leaving your layout. You control the position and size via the `<AbstraxionEmbed>` component.
 
-The embedded view URL defaults to the chain-specific URL from `@burnt-labs/constants` (e.g. `https://settings.testnet.burnt.com`).
+The embedded view URL defaults to the chain-specific URL from `@burnt-labs/constants` (e.g. `https://auth.testnet.burnt.com`).
 
 ```tsx
 // layout.tsx — provider config
