@@ -33,7 +33,7 @@ import {
   RpcAccountStrategy,
   type SessionManager,
 } from "@burnt-labs/account-management";
-import { StargateClient } from "@cosmjs/stargate";
+import { calculateFee, GasPrice, StargateClient } from "@cosmjs/stargate";
 
 export type FeeGrantingSuite = "treasury" | "calculation" | "grants";
 
@@ -256,9 +256,9 @@ export function registerFeeGrantingIntegrationTests(
             "Explicit fee test",
           );
 
+          const gasLimit = Math.round(gasEstimation * 1.5);
           const explicitFee = {
-            amount: [{ denom: "uxion", amount: "200000" }],
-            gas: String(Math.round(gasEstimation * 1.5)),
+            ...calculateFee(gasLimit, GasPrice.fromString(config.gasPrice)),
             granter: config.treasuryAddress,
           };
 

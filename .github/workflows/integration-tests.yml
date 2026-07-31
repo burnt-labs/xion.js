@@ -96,6 +96,8 @@ jobs:
           XION_TESTNET_RPC_URL: ${{ env.XION_TESTNET_RPC_URL }}
           XION_TESTNET_REST_URL: ${{ env.XION_TESTNET_REST_URL }}
           XION_TESTNET_GAS_PRICE: ${{ env.XION_TESTNET_GAS_PRICE }}
+          XION_TESTNET_CODE_ID: ${{ env.XION_TESTNET_CODE_ID }}
+          XION_TESTNET_CHECKSUM: ${{ env.XION_TESTNET_CHECKSUM }}
           XION_TESTNET_FEE_GRANTER: ${{ env.XION_TESTNET_FEE_GRANTER }}
           XION_TESTNET_AA_API_URL: ${{ steps.config.outputs.test_environment == 'testnet' && steps.config.outputs.aa_api_url || env.XION_TESTNET_AA_API_URL }}
           XION_TESTNET_TREASURY_ADDRESS: ${{ env.XION_TESTNET_TREASURY_ADDRESS }}

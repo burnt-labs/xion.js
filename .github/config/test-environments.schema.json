@@ -122,6 +122,15 @@
           "type": "string",
           "description": "Bech32 address prefix"
         },
+        "codeId": {
+          "type": "string",
+          "description": "Current abstract-account contract code ID"
+        },
+        "checksum": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$",
+          "description": "Current abstract-account contract checksum"
+        },
         "feeGranter": {
           "type": "string",
           "description": "Fee granter address"

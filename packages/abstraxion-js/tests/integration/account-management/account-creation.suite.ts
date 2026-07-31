@@ -25,6 +25,7 @@ import {
   checkTreasuryContract,
   sleep,
   retryWithBackoff,
+  allocateTestAccountIndex,
 } from "../helpers";
 import {
   ConnectionOrchestrator,
@@ -535,7 +536,7 @@ export function registerAccountCreationIntegrationTests(
         it(
           "should find newly created account on subsequent discovery",
           async () => {
-            const testIndex = Math.floor(Math.random() * 1000) + 500;
+            const testIndex = allocateTestAccountIndex("account rediscovery");
             const connector = createTestSecp256k1Connector(
               TEST_MNEMONIC,
               testIndex,
@@ -591,8 +592,8 @@ export function registerAccountCreationIntegrationTests(
                 }
                 return result;
               },
-              5,
-              2000,
+              7,
+              1000,
             );
 
             expect(afterCreation.exists).toBe(true);

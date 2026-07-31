@@ -39,6 +39,8 @@ export XION_TESTNET_GAS_PRICE=$(get_config ".environments.testnet.gasPrice" "0.0
 export XION_TESTNET_GAS_ADJUSTMENT=$(get_config ".environments.testnet.gasAdjustment" "1.6")
 export XION_TESTNET_TREASURY_ADDRESS=$(get_config ".environments.testnet.treasuryAddress" "")
 export XION_TESTNET_ADDRESS_PREFIX=$(get_config ".environments.testnet.addressPrefix" "xion")
+export XION_TESTNET_CODE_ID=$(get_config ".environments.testnet.codeId" "")
+export XION_TESTNET_CHECKSUM=$(get_config ".environments.testnet.checksum" "")
 export XION_TESTNET_FEE_GRANTER=$(get_config ".environments.testnet.feeGranter" "")
 TESTNET_AA_API_LIVE_URL=$(get_config ".environments.testnet.aaApiUrl.liveUrl" "")
 export XION_TESTNET_AA_API_URL="${TESTNET_AA_API_LIVE_URL}"
@@ -120,6 +122,8 @@ if [ -n "$GITHUB_ENV" ]; then
         echo "XION_TESTNET_GAS_ADJUSTMENT=$XION_TESTNET_GAS_ADJUSTMENT"
         echo "XION_TESTNET_TREASURY_ADDRESS=$XION_TESTNET_TREASURY_ADDRESS"
         echo "XION_TESTNET_ADDRESS_PREFIX=$XION_TESTNET_ADDRESS_PREFIX"
+        echo "XION_TESTNET_CODE_ID=$XION_TESTNET_CODE_ID"
+        echo "XION_TESTNET_CHECKSUM=$XION_TESTNET_CHECKSUM"
         echo "XION_TESTNET_FEE_GRANTER=$XION_TESTNET_FEE_GRANTER"
         echo "XION_TESTNET_AA_API_URL=$XION_TESTNET_AA_API_URL"
 

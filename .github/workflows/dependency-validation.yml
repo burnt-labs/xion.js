@@ -3,13 +3,13 @@ name: Dependency Validation
 on:
   pull_request:
     paths:
-      - 'packages/**'
-      - '.github/workflows/dependency-validation.yml'
+      - "packages/**"
+      - ".github/workflows/dependency-validation.yml"
   push:
     branches: [main, develop]
     paths:
-      - 'packages/**'
-      - '.github/workflows/dependency-validation.yml'
+      - "packages/**"
+      - ".github/workflows/dependency-validation.yml"
   workflow_dispatch:
 
 jobs:
@@ -125,15 +125,31 @@ jobs:
 
           echo ""
 
-          # Hard fail: installed major MUST match the latest xion chain release.
-          # This is the actual contract — types must match the chain version
-          # the SDK targets. npm-side checks below are hygiene only.
+          # Require exact chain-major alignment once matching generated types
+          # are available. A chain release can precede its xion-types publish;
+          # during that interval, require the newest published types major so
+          # unrelated PRs are not blocked by an impossible upgrade.
           if [ "$INSTALLED_MAJOR" != "$CHAIN_MAJOR" ]; then
-            echo "❌ Major version mismatch with xion chain!"
-            echo "   Installed: v$INSTALLED_MAJOR (from $INSTALLED)"
-            echo "   Chain:     v$CHAIN_MAJOR (from $CHAIN_TAG)"
-            echo "   Action: Update @burnt-labs/xion-types to match the chain release."
-            exit 1
+            if [ "$NPM_MAJOR" -ge "$CHAIN_MAJOR" ]; then
+              echo "❌ Major version mismatch with xion chain!"
+              echo "   Installed: v$INSTALLED_MAJOR (from $INSTALLED)"
+              echo "   Chain:     v$CHAIN_MAJOR (from $CHAIN_TAG)"
+              echo "   Published: v$NPM_MAJOR (from $NPM_VERSION)"
+              echo "   Action: Update @burnt-labs/xion-types to match the chain release."
+              exit 1
+            fi
+
+            if [ "$INSTALLED_MAJOR" != "$NPM_MAJOR" ]; then
+              echo "❌ Installed xion-types is not the newest published major!"
+              echo "   Installed: v$INSTALLED_MAJOR (from $INSTALLED)"
+              echo "   Published: v$NPM_MAJOR (from $NPM_VERSION)"
+              echo "   Chain:     v$CHAIN_MAJOR (from $CHAIN_TAG)"
+              echo "   Action: Update @burnt-labs/xion-types to the newest published version."
+              exit 1
+            fi
+
+            echo "⚠️  Chain $CHAIN_TAG was released before matching xion-types artifacts."
+            echo "   Keeping the newest published types major: v$NPM_MAJOR ($NPM_VERSION)."
           fi
 
           # Warn (non-blocking): newer same-major version available on npm.
@@ -185,7 +201,11 @@ jobs:
           fi
 
           echo ""
-          echo "✅ xion-types major (v$INSTALLED_MAJOR) matches chain release ($CHAIN_TAG)"
+          if [ "$INSTALLED_MAJOR" = "$CHAIN_MAJOR" ]; then
+            echo "✅ xion-types major (v$INSTALLED_MAJOR) matches chain release ($CHAIN_TAG)"
+          else
+            echo "✅ xion-types uses the newest published major (v$INSTALLED_MAJOR) while chain types for $CHAIN_TAG are pending"
+          fi
 
       - name: Check xion-types version consistency across packages
         run: |

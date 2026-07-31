@@ -45,6 +45,12 @@ export function setAccountIndexNamespace(namespace: string): void {
   accountIndexNamespace = namespace;
 }
 
+export function allocateTestAccountIndex(
+  namespace = accountIndexNamespace,
+): number {
+  return allocateAccountIndex(namespace);
+}
+
 function resolveAccountIndex(mnemonic: string, accountIndex: number): number {
   return mnemonic === TEST_MNEMONIC && accountIndex === 0
     ? resolveStableAccountIndex(accountIndexNamespace)
@@ -655,6 +661,7 @@ export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
   initialDelayMs: number = 1000,
+  shouldRetry: (error: unknown) => boolean = () => true,
 ): Promise<T> {
   let lastError: Error | undefined;
 
@@ -663,6 +670,9 @@ export async function retryWithBackoff<T>(
       return await fn();
     } catch (error) {
       lastError = error as Error;
+      if (!shouldRetry(error)) {
+        throw error;
+      }
       if (attempt < maxRetries - 1) {
         const delay = initialDelayMs * Math.pow(2, attempt);
         await sleep(delay);

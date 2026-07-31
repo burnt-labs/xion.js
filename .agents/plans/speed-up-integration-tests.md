@@ -16,3 +16,10 @@ transaction signing (90s).
 8. Move deterministic non-network diagnostics into the unit-test workflow while
    retaining the treasury decoder's live-chain coverage.
 9. Remove the empty account-management integration invocation and validate formatting, types, focused unit tests, local integration collection, workflow syntax, and the final diff.
+10. Sync the live testnet abstract-account code ID and checksum through the
+    checked-in environment config so concurrent account creation signs against
+    the currently deployed contract.
+11. Regenerate the AA API types and allow the dependency validator's documented
+    chain-release gap when matching generated types have not been published.
+12. Push signed fixes, require all GitHub checks to pass, mark the PR ready, and
+    merge it into `main`.
