@@ -32,6 +32,24 @@ import type { SignerControllerConfig } from "@burnt-labs/abstraxion-js";
 import type { SignerAuthentication } from "@burnt-labs/abstraxion-js";
 import type { SessionManager } from "@burnt-labs/account-management";
 import { checkStorageGrants } from "@burnt-labs/account-management";
+import {
+  createAccountIndexAllocator,
+  createStableAccountIndexResolver,
+} from "../support/deterministic-account-index";
+
+const allocateAccountIndex = createAccountIndexAllocator();
+const resolveStableAccountIndex = createStableAccountIndexResolver();
+let accountIndexNamespace = "integration";
+
+export function setAccountIndexNamespace(namespace: string): void {
+  accountIndexNamespace = namespace;
+}
+
+function resolveAccountIndex(mnemonic: string, accountIndex: number): number {
+  return mnemonic === TEST_MNEMONIC && accountIndex === 0
+    ? resolveStableAccountIndex(accountIndexNamespace)
+    : accountIndex;
+}
 
 /**
  * Generate a test mnemonic (or use default)
@@ -49,6 +67,7 @@ export async function createSecp256k1Wallet(
   mnemonic: string = TEST_MNEMONIC,
   accountIndex: number = 0,
 ) {
+  accountIndex = resolveAccountIndex(mnemonic, accountIndex);
   const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: "xion",
     hdPaths: [stringToPath(`m/44'/118'/0'/0/${accountIndex}`)],
@@ -73,6 +92,7 @@ export async function createEthWallet(
   mnemonic: string = TEST_MNEMONIC,
   accountIndex: number = 0,
 ) {
+  accountIndex = resolveAccountIndex(mnemonic, accountIndex);
   const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: "xion",
     hdPaths: [stringToPath(`m/44'/60'/0'/0/${accountIndex}`)],
@@ -306,6 +326,7 @@ export function createTestSecp256k1Connector(
   mnemonic: string = TEST_MNEMONIC,
   accountIndex: number = 0,
 ): ExternalSignerConnector {
+  accountIndex = resolveAccountIndex(mnemonic, accountIndex);
   // Reuse the same getSignerConfig logic (no duplication)
   const getSignerConfig = createSecp256k1GetSignerConfig(
     mnemonic,
@@ -332,6 +353,7 @@ export function createTestEthWalletConnector(
   mnemonic: string = TEST_MNEMONIC,
   accountIndex: number = 0,
 ): ExternalSignerConnector {
+  accountIndex = resolveAccountIndex(mnemonic, accountIndex);
   // Reuse the same getSignerConfig logic (no duplication)
   const getSignerConfig = createEthWalletGetSignerConfig(
     mnemonic,
@@ -810,13 +832,14 @@ export function createTestSignerController(options: {
     },
     // Use the same getSignerConfig function as createTestSecp256k1Connector
     // This matches production: getSignerConfig() returns SignerConfig directly
-    // Pass accountIndex if provided, otherwise use random index to avoid account collisions
-    // Range: 1-2 billion (1 billion possibilities, ~1 in a billion collision chance)
+    // Explicit indexes support address-vector tests. All other accounts receive
+    // a deterministic run/shard/worker allocation so concurrent CI is isolated
+    // without making failures irreproducible.
     getSignerConfig: createSecp256k1GetSignerConfig(
       TEST_MNEMONIC,
       accountIndex !== undefined
         ? accountIndex
-        : Math.floor(Math.random() * 1_000_000_000) + 1_000_000_000,
+        : allocateAccountIndex(accountIndexNamespace),
     ),
   };
 

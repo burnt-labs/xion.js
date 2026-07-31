@@ -21,7 +21,7 @@ import {
   AUTHENTICATOR_TYPE,
 } from "@burnt-labs/signers";
 import { Wallet } from "ethers";
-import { getTestConfig } from "../fixtures";
+import { getTestConfig } from "../../integration/fixtures";
 
 describe("EthWallet Salt/Address/Signature Consistency Diagnostics", () => {
   // Test Ethereum wallet with known private key
