@@ -37,3 +37,7 @@ export function makeADR36AminoSignDoc(
 export { customAccountFromAny } from "@burnt-labs/signers";
 export { getRpcClient } from "./rpcClient";
 export { fetchConfig, clearConfigCache } from "./configUtils";
+// NOTE: simulate helpers are intentionally NOT re-exported here. `./simulate`
+// imports `wait` from this barrel, so re-exporting it back would form an
+// import cycle that is brittle across bundlers/TS emit targets. The package
+// root (`src/index.ts`) already exposes them via `export * from "./utils/simulate"`.

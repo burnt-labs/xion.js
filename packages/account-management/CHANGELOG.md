@@ -1,5 +1,19 @@
 # @burnt-labs/account-management
 
+## 1.0.0-alpha.13
+
+### Minor Changes
+
+- [#383](https://github.com/burnt-labs/xion.js/pull/383) [`8905566`](https://github.com/burnt-labs/xion.js/commit/89055662d91e4a4e1bf64f990f494cee3db3a76c) Thanks [@ertemann](https://github.com/ertemann)! - feat(account-management): add `getMsgTypeUrlForRevoke(authorizationTypeUrl, stakeAuthType?)` pure helper in `grants/` (exported from `@burnt-labs/account-management`). Maps an authz authorization `@type` to the `MsgRevoke`-able msg type URL, including the `StakeAuthorization` delegate/undelegate/redelegate variants (keyed by enum name or numeric proto value). Lets dashboard/xion-app consumers drop their local copies.
+
+### Patch Changes
+
+- [#383](https://github.com/burnt-labs/xion.js/pull/383) [`8905566`](https://github.com/burnt-labs/xion.js/commit/89055662d91e4a4e1bf64f990f494cee3db3a76c) Thanks [@ertemann](https://github.com/ertemann)! - fix(account-management): reject the DaoDao indexer's unindexed-treasury placeholder. The indexer returns `{ admin: null, grantConfigs: {}, … }` (not a 404) for any contract it hasn't indexed; `DaoDaoTreasuryStrategy.validateAllResponse` now rejects when `admin` is null/absent instead of accepting it as a successful empty config. In a racing `CompositeTreasuryStrategy` this lets `DirectQueryTreasuryStrategy` win, so an un-indexed treasury no longer silently degrades the connect screen to "Read access only".
+
+- Updated dependencies [[`8905566`](https://github.com/burnt-labs/xion.js/commit/89055662d91e4a4e1bf64f990f494cee3db3a76c), [`8905566`](https://github.com/burnt-labs/xion.js/commit/89055662d91e4a4e1bf64f990f494cee3db3a76c)]:
+  - @burnt-labs/signers@1.0.0-alpha.10
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.72
+
 ## 1.0.0-alpha.12
 
 ### Major Changes

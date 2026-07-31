@@ -146,6 +146,40 @@ export class DaoDaoTreasuryStrategy implements TreasuryStrategy {
     // TODO: Consider adding end-to-end typing with zod or io-ts for full runtime validation
     const response = data as Record<string, unknown>;
 
+    // Reject the indexer's all-defaults placeholder. For a contract it hasn't
+    // indexed, the DaoDao indexer returns `{ admin: null, grantConfigs: {}, … }`
+    // rather than a 404 — which would otherwise pass the structural checks
+    // below as a "successful" empty treasury.
+    //
+    // We treat a null/absent/blank admin as "no usable data". Strictly,
+    // admin=null *could* be a legitimate response, but in practice it's an
+    // indication of an empty treasury — typically something the indexer was
+    // asked about but never actually indexed. We also reject an empty/blank
+    // string: a placeholder admin of `""` is no more usable than `null`, and a
+    // real treasury always has a bech32 admin. Because we can't tell a
+    // placeholder apart from a real empty result, we don't surface it as one: a
+    // partial/placeholder config would silently degrade the caller (e.g. to
+    // "Read access only") instead of letting the authoritative on-chain query
+    // answer.
+    //
+    // Throwing here (rather than returning empty) makes the strategy *reject*,
+    // which is the routing signal we want:
+    //  - In a `CompositeTreasuryStrategy` with `DirectQueryTreasuryStrategy`
+    //    (the default fallback) — both sequential and racing modes treat the
+    //    rejection as "use the other strategy", so the authoritative on-chain
+    //    query wins instead of this placeholder silently degrading the caller
+    //    to "Read access only".
+    //  - Used standalone (no chain fallback) — the rejection surfaces as an
+    //    error, which is correct: we can't be sure the placeholder is valid.
+    if (
+      response.admin == null ||
+      (typeof response.admin === "string" && response.admin.trim() === "")
+    ) {
+      throw new Error(
+        "DaoDao indexer has no data for this treasury (admin is null, blank, or missing)",
+      );
+    }
+
     // Validate the top-level structure
     if (!response.grantConfigs || typeof response.grantConfigs !== "object") {
       throw new Error("Invalid indexer response: missing grantConfigs");

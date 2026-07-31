@@ -1,5 +1,16 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.72
+
+### Minor Changes
+
+- [#383](https://github.com/burnt-labs/xion.js/pull/383) [`8905566`](https://github.com/burnt-labs/xion.js/commit/89055662d91e4a4e1bf64f990f494cee3db3a76c) Thanks [@ertemann](https://github.com/ertemann)! - feat(abstraxion-core): add framework-agnostic simulate robustness helpers — `classifySimulateError` / `diagnoseSimulateError` / `classifyGrantError`, the `SIMULATE_RETRY_COUNT` / `SIMULATE_RETRY_DELAY_MS` / `SIMULATE_FALLBACK_GAS` constants, and a generic `simulateWithRetry` (classification + bounded retry + concrete-fee fallback) that composes with any cosmjs-shaped `{ simulate(...) }` client. The logger is injectable (defaults to `console.warn`) and the context label is a plain string, so non-dashboard callers (`RequireSigningClient`, `GranteeSignerClient`, `AAClient`, plain cosmjs) can reuse it without dashboard-specific coupling.
+
+### Patch Changes
+
+- Updated dependencies [[`8905566`](https://github.com/burnt-labs/xion.js/commit/89055662d91e4a4e1bf64f990f494cee3db3a76c)]:
+  - @burnt-labs/signers@1.0.0-alpha.10
+
 ## 1.0.0-alpha.71
 
 ### Major Changes
