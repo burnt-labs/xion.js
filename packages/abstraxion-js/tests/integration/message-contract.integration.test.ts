@@ -71,6 +71,27 @@ const DASHBOARD_URL =
   process.env.DASHBOARD_URL ?? "https://auth.testnet.burnt.com";
 const DASHBOARD_ORIGIN = new URL(DASHBOARD_URL).origin;
 
+function expectedUnauthenticatedMarker(mode?: string): RegExp {
+  const contracts: Record<string, { root: RegExp; sdkMode: RegExp }> = {
+    "https://auth.testnet.burnt.com": {
+      root: /^SIGN IN TO CONTINUE$/im,
+      sdkMode: /^Sign in$/im,
+    },
+    "https://settings.burnt.com": {
+      root: /^SIGN IN TO CONTINUE$/im,
+      sdkMode: /^Sign in$/im,
+    },
+  };
+  const contract = contracts[DASHBOARD_ORIGIN];
+  if (!contract) {
+    throw new Error(
+      `No unauthenticated UI contract is configured for ${DASHBOARD_ORIGIN}`,
+    );
+  }
+
+  return mode ? contract.sdkMode : contract.root;
+}
+
 // A bech32 address with the right prefix is enough — the dashboard parses but
 // doesn't verify these in its mount path. Using a deterministic constant keeps
 // failures debuggable.
@@ -248,21 +269,21 @@ describe("SDK ↔ Dashboard Contract (live testnet)", () => {
             const root = document.getElementById("root");
             return !!root && root.childElementCount > 0;
           },
+          undefined,
           { timeout: 15_000 },
         );
 
-        // Every SDK-driven mode (root, inline, popup, sign, add-authenticators)
-        // routes to LoginModal when no session is present (App.tsx:372, 402,
-        // 424, 447). The LoginScreen Dialog renders "Log in / Sign up" as its
-        // title — a stable, unauthenticated-visible marker that proves the
-        // mode-specific pre-auth render path executed without crashing. If a
-        // future mode adds its own pre-auth UI without LoginModal, update this
-        // assertion alongside the new MODE_FIXTURES entry.
+        // Assert the environment's explicit unauthenticated UI contract. The
+        // root redirects to the account app, while SDK modes remain on the
+        // auth shell. Both environments are listed explicitly above so drift
+        // can be handled independently when their deployments diverge.
+        const marker = expectedUnauthenticatedMarker(fixture.params.mode);
         await page.waitForFunction(
-          () => {
+          ({ source, flags }) => {
             const text = document.body.innerText ?? "";
-            return /Log in\s*\/\s*Sign up/i.test(text);
+            return new RegExp(source, flags).test(text);
           },
+          { source: marker.source, flags: marker.flags },
           { timeout: 15_000 },
         );
 
@@ -994,10 +1015,13 @@ describe("SDK ↔ Dashboard Contract (live testnet)", () => {
         "popup must have window.opener set (popup-mode rejection path uses it)",
       ).toBe(true);
 
-      // Assert the LoginModal rendered — same pre-auth marker the per-mode
-      // mount loop uses, scoped to the popup page this time.
+      // Assert the same environment-specific pre-auth marker used by the mode
+      // mount loop, scoped to the popup page this time.
+      const marker = expectedUnauthenticatedMarker("popup");
       await popup.waitForFunction(
-        () => /Log in\s*\/\s*Sign up/i.test(document.body.innerText ?? ""),
+        ({ source, flags }) =>
+          new RegExp(source, flags).test(document.body.innerText ?? ""),
+        { source: marker.source, flags: marker.flags },
         { timeout: 15_000 },
       );
 
