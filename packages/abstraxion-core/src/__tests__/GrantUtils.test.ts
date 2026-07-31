@@ -96,6 +96,31 @@ describe("Grant Comparison Utilities", () => {
       const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
       expect(result).toBe(false);
     });
+
+    it("should return false when duplicate chain entries for one denom exceed the expected total", () => {
+      const expectedSpendLimit = [{ denom: "uxion", amount: "1000" }];
+      // Cosmos normalizes Coins to one entry per denom, so this should not
+      // occur on-chain; checked because comparing entries individually would
+      // accept 800 + 800 against an expected 1000.
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "800" },
+        { denom: "uxion", amount: "800" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(false);
+    });
+
+    it("should return true when duplicate chain entries for one denom stay within the expected total", () => {
+      const expectedSpendLimit = [{ denom: "uxion", amount: "1000" }];
+      const chainSpendLimit = [
+        { denom: "uxion", amount: "400" },
+        { denom: "uxion", amount: "500" },
+      ];
+
+      const result = isLimitValid(expectedSpendLimit, chainSpendLimit);
+      expect(result).toBe(true);
+    });
   });
 
   describe("compareChainGrantsToTreasuryGrants", () => {
@@ -352,7 +377,9 @@ describe("Grant Comparison Utilities", () => {
       }
     });
 
-    // ---- Stake / maxTokens structural comparison (PR #378) ----
+    // ---- Stake / maxTokens structural comparison ----
+    // maxTokens was compared with ===, which compares decoded protobuf objects
+    // by reference and so was effectively always false for a populated value.
 
     it("should return match:true for Stake grant where maxTokens objects are structurally equal but not reference-equal", () => {
       // Two separate object literals — identical denom + amount, different references.
