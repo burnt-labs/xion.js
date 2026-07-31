@@ -137,10 +137,12 @@ export async function getAccountAddress(
   aaApiUrl: string,
   authenticatorType: AuthenticatorType,
   identifier: string,
+  codeId?: string,
 ): Promise<AddressResponse> {
   const encodedIdentifier = encodeURIComponent(identifier);
+  const codeIdQuery = codeId ? `?code_id=${encodeURIComponent(codeId)}` : "";
   const response = await fetch(
-    `${aaApiUrl}/api/v2/account/address/${authenticatorType.toLowerCase()}/${encodedIdentifier}`,
+    `${aaApiUrl}/api/v2/account/address/${authenticatorType.toLowerCase()}/${encodedIdentifier}${codeIdQuery}`,
     {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -199,7 +201,8 @@ export async function checkAccountOnChain(
  */
 export async function createEthWalletAccountV2(
   aaApiUrl: string,
-  request: CreateEthWalletRequest,
+  // code_id widened locally until the generated OpenAPI types include it
+  request: CreateEthWalletRequest & { code_id?: string },
 ): Promise<CreateAccountResponse> {
   const url = `${aaApiUrl}/api/v2/accounts/create/ethwallet`;
   const response = await fetchAAApiWithGatewayRetry(url, {
@@ -226,7 +229,8 @@ export async function createEthWalletAccountV2(
  */
 export async function createSecp256k1AccountV2(
   aaApiUrl: string,
-  request: CreateSecp256k1Request,
+  // code_id widened locally until the generated OpenAPI types include it
+  request: CreateSecp256k1Request & { code_id?: string },
 ): Promise<CreateAccountResponse> {
   const response = await fetchAAApiWithGatewayRetry(
     `${aaApiUrl}/api/v2/accounts/create/secp256k1`,

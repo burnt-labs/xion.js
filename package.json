@@ -12,6 +12,8 @@
     "changeset": "changeset",
     "publish:packages": "changeset publish",
     "version:packages": "changeset version",
+    "verify:npm-train": "node scripts/verify-npm-dependency-train.mjs",
+    "verify:npm-train:release": "node scripts/verify-npm-dependency-train.mjs --require-local-published",
     "test": "pnpm test:unit && pnpm test:integration",
     "test:unit": "turbo run test",
     "test:unit:watch": "turbo run test --concurrency 1 -- --watch",

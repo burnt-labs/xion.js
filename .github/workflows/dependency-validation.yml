@@ -10,6 +10,10 @@ on:
     paths:
       - 'packages/**'
       - '.github/workflows/dependency-validation.yml'
+  schedule:
+    # Daily: catches a broken published dependency train on npm even when
+    # no code changes land (e.g. a partial changesets publish).
+    - cron: '17 6 * * *'
   workflow_dispatch:
 
 jobs:
@@ -33,6 +37,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Verify published npm dependency train
+        run: |
+          echo "🔍 Checking that every published @burnt-labs package's internal"
+          echo "   dependencies resolve to versions that exist on npm…"
+          node scripts/verify-npm-dependency-train.mjs
 
       - name: Run circular dependency tests
         run: pnpm --filter @burnt-labs/signers test src/__tests__/circular-deps.test.ts
