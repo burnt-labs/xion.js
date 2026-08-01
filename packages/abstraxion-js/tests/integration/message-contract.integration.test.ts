@@ -122,11 +122,15 @@ const HANDSHAKE_TIMEOUT_MS = 30_000;
 //   - /api/v1/sessions/authenticate(-no-session|-oauth-no-session): the
 //     dashboard's JWT signer and AddAuthenticators flow probe these on boot;
 //     401s here are expected pre-login and orthogonal to the SDK contract.
+//   - StytchAPIUnreachableError / RBAC policy lookup: Stytch availability and
+//     authentication are explicitly outside this SDK transport contract.
 const IGNORED_CONSOLE_PATTERNS = [
   /cdn-cgi\/challenge-platform/i,
   /favicon\.ico/i,
   /\/sdk\/v1\/sessions\/authenticate/i,
   /\/api\/v1\/sessions\/authenticate/i,
+  /\[Stytch\] StytchAPIUnreachableError/i,
+  /\[Stytch\] Unable to retrieve RBAC policy/i,
 ];
 
 // Set DEBUG_CONSOLE=1 when adding a new mode or chasing a flake to dump every

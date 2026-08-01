@@ -26,7 +26,6 @@ import {
   waitForTxConfirmation,
   isValidXionAddress,
   createTestTransferMsg,
-  retryWithBackoff,
 } from "../helpers";
 import {
   CompositeAccountStrategy,
@@ -97,12 +96,7 @@ export function registerTransactionSigningIntegrationTests(
           const controller = createSignerController();
 
           await controller.initialize();
-          await retryWithBackoff(
-            () => controller.connect(),
-            4,
-            1000,
-            (error) => /account .* not found/i.test(String(error)),
-          );
+          await controller.connect();
 
           const state = controller.getState();
           expect(state.status).toBe("connected");

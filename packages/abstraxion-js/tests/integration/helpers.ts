@@ -884,5 +884,12 @@ export function createTestSignerController(options: {
         : undefined,
   };
 
-  return new SignerController(controllerConfig);
+  const controller = new SignerController(controllerConfig);
+  const connect = controller.connect.bind(controller);
+  controller.connect = () =>
+    retryWithBackoff(connect, 4, 1000, (error) =>
+      /account .* not found/i.test(String(error)),
+    );
+
+  return controller;
 }
