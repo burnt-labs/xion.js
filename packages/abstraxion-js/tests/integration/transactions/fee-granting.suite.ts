@@ -9,14 +9,8 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import {
-  getTestConfig,
-  INTEGRATION_TEST_TIMEOUT,
-  TEST_SEND_AMOUNT,
-} from "../fixtures";
+import { getTestConfig, INTEGRATION_TEST_TIMEOUT } from "../fixtures";
 import { SignerController } from "@burnt-labs/abstraxion-js";
-import type { SignerControllerConfig } from "@burnt-labs/abstraxion-js";
-import type { SignerAuthentication } from "@burnt-labs/abstraxion-js";
 import {
   createTestSignerController,
   createMockStorageStrategy,
