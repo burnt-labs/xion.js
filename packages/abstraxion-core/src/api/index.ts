@@ -5,6 +5,10 @@
 
 export * from "./client";
 export * from "./createAccount";
+export {
+  AccountCreationError,
+  diagnoseCreateFailure,
+} from "./createAccountDiagnostics";
 
 // Re-export API types from @burnt-labs/signers for convenience
 export type {
@@ -14,5 +18,6 @@ export type {
   CreateSecp256k1Request,
   CreateJWTRequest,
   CreateAccountResponse,
+  RegistrationConfigResponse,
   AccountType,
 } from "@burnt-labs/signers";

@@ -13,15 +13,24 @@ import {
   normalizeEthereumAddress,
   utf8ToHexWithPrefix,
 } from "@burnt-labs/signers";
+import { createEthWalletAccountV2, createSecp256k1AccountV2 } from "./client";
 import {
-  createEthWalletAccountV2,
-  createSecp256k1AccountV2,
-  getAccountAddress,
-} from "./client";
-import type {
-  AuthenticatorType,
-  CreateAccountResponse,
-} from "@burnt-labs/signers";
+  checkAddressAlignment,
+  diagnoseCreateFailure,
+} from "./createAccountDiagnostics";
+import type { CreateAccountResponse } from "@burnt-labs/signers";
+
+/**
+ * What the AA API registered, plus the address the client derived and signed.
+ *
+ * `derived_address` is exposed so callers can assert the two agree without
+ * re-implementing CREATE2 derivation. It normally equals `account_address`;
+ * see {@link checkAddressAlignment} for when it legitimately does not.
+ */
+export type CreateAccountResult = CreateAccountResponse & {
+  /** Address the client derived locally and signed. */
+  derived_address: string;
+};
 
 /**
  * Simple sleep function to prevent account sequence errors after account
@@ -43,59 +52,16 @@ async function simpleSleep(ms: number): Promise<void> {
 }
 
 /**
- * Resolve the address to sign from the AA API itself.
- *
- * The AA API — not the client — is the source of truth for the registration
- * code id / checksum: it is the service that derives, verifies, and registers
- * the account. Deriving only from client-side config can diverge from the
- * deployed API (stale checksum/code id), which fails creation with
- * "Invalid signature" because the client signs a different address than the
- * API verifies.
- *
- * The locally derived address is kept as a cross-check: a mismatch is logged
- * loudly (it means client config is out of sync) but the API address wins.
- * If the address endpoint is unreachable, falls back to the local derivation
- * (previous behavior).
- */
-async function resolveAddressToSign(
-  aaApiUrl: string,
-  authenticatorType: AuthenticatorType,
-  identifier: string,
-  locallyDerived: string,
-  codeId?: string,
-): Promise<string> {
-  try {
-    const response = await getAccountAddress(
-      aaApiUrl,
-      authenticatorType,
-      identifier,
-      codeId,
-    );
-    const apiAddress = response?.address;
-    if (!apiAddress) {
-      return locallyDerived;
-    }
-    if (apiAddress !== locallyDerived) {
-      console.warn(
-        `[createAccount] AA API derives ${apiAddress} but local config derives ${locallyDerived}; ` +
-          `signing the API address. The client's checksum/feeGranter config is likely stale.`,
-      );
-    }
-    return apiAddress;
-  } catch (error) {
-    console.warn(
-      "[createAccount] AA API address endpoint unavailable; using locally derived address",
-      error,
-    );
-    return locallyDerived;
-  }
-}
-
-/**
  * Create account via AA API v2 for EthWallet type
  *
- * Flow: normalize address → resolve address (API-authoritative, local
- * derivation as cross-check/fallback) → sign address → create via API
+ * Flow: normalize address → derive address locally (CREATE2) → sign address →
+ * create via API. On failure, {@link diagnoseCreateFailure} probes the API to
+ * explain the rejection.
+ *
+ * `codeId` is passed through verbatim — the AA API validates it against the
+ * chain's `allowed_code_ids` (fail-closed), so the client does not pre-check
+ * it. Note that a requested `codeId` must correspond to the `checksum` passed
+ * here, or the local derivation will not match what the API verifies.
  *
  * @param signMessageFn - Signs hex messages (with 0x prefix)
  * @param rpcUrl - Optional RPC URL for transaction confirmation
@@ -110,7 +76,7 @@ export async function createEthWalletAccount(
   addressPrefix: string,
   rpcUrl?: string,
   codeId?: string,
-): Promise<CreateAccountResponse> {
+): Promise<CreateAccountResult> {
   // Validate feeGranter starts with addressPrefix
   if (!feeGranter.startsWith(addressPrefix)) {
     throw new Error(
@@ -121,47 +87,68 @@ export async function createEthWalletAccount(
   // Normalize address (matches AA API normalization)
   const normalizedAddress = normalizeEthereumAddress(ethereumAddress);
 
-  // Calculate smart account address via CREATE2 (cross-check / fallback)
+  // Calculate smart account address via CREATE2 — no network round-trip, and
+  // the client only ever signs a value it derived itself.
   const salt = calculateSalt(AUTHENTICATOR_TYPE.EthWallet, normalizedAddress);
-  const locallyDerived = calculateSmartAccountAddress({
+  const calculatedAddress = calculateSmartAccountAddress({
     checksum,
     creator: feeGranter,
     salt,
     prefix: addressPrefix,
   });
 
-  // The AA API's derivation is authoritative — it registers the account.
-  const calculatedAddress = await resolveAddressToSign(
-    aaApiUrl,
-    AUTHENTICATOR_TYPE.EthWallet,
-    normalizedAddress,
-    locallyDerived,
-    codeId,
-  );
-
-  // Sign the resolved address (hex format with 0x prefix)
+  // Sign the derived address (hex format with 0x prefix)
   const addressHex = utf8ToHexWithPrefix(calculatedAddress);
   const signature = await signMessageFn(addressHex);
 
   // Create account via v2 API
-  const result = await createEthWalletAccountV2(aaApiUrl, {
-    address: normalizedAddress,
-    signature: signature,
-    ...(codeId ? { code_id: codeId } : {}),
-  });
+  let result: CreateAccountResponse;
+  try {
+    result = await createEthWalletAccountV2(aaApiUrl, {
+      address: normalizedAddress,
+      signature: signature,
+      // Report what we derived so the API can reject a config mismatch with a
+      // specific error instead of an opaque "Invalid signature".
+      checksum,
+      expected_address: calculatedAddress,
+      ...(codeId ? { code_id: codeId } : {}),
+    });
+  } catch (error) {
+    // Enrich the failure with the API's own derivation before surfacing it.
+    throw await diagnoseCreateFailure({
+      aaApiUrl,
+      authenticatorType: AUTHENTICATOR_TYPE.EthWallet,
+      identifier: normalizedAddress,
+      signedAddress: calculatedAddress,
+      localChecksum: checksum,
+      requestedCodeId: codeId,
+      cause: error,
+    });
+  }
+
+  // The API is authoritative on what got registered — confirm it matches what
+  // we signed, and surface the divergence if not.
+  checkAddressAlignment(calculatedAddress, result.account_address, codeId);
 
   // Short sleep to prevent sequence errors
   if (rpcUrl && result.transaction_hash) {
     await simpleSleep(500);
   }
 
-  return result;
+  return { ...result, derived_address: calculatedAddress };
 }
 
 /**
  * Create account via AA API v2 for Secp256K1 type (Cosmos wallets)
  *
- * Flow: normalize pubkey → calculate salt/address → sign address → create via API
+ * Flow: normalize pubkey → derive salt/address locally → sign address →
+ * create via API. On failure, {@link diagnoseCreateFailure} probes the API to
+ * explain the rejection.
+ *
+ * `codeId` is passed through verbatim — the AA API validates it against the
+ * chain's `allowed_code_ids` (fail-closed), so the client does not pre-check
+ * it. Note that a requested `codeId` must correspond to the `checksum` passed
+ * here, or the local derivation will not match what the API verifies.
  *
  * @param signMessageFn - Signs hex messages (with 0x prefix)
  * @param rpcUrl - Optional RPC URL for transaction confirmation
@@ -176,7 +163,7 @@ export async function createSecp256k1Account(
   addressPrefix: string,
   rpcUrl?: string,
   codeId?: string,
-): Promise<CreateAccountResponse> {
+): Promise<CreateAccountResult> {
   // Validate feeGranter starts with addressPrefix
   if (!feeGranter.startsWith(addressPrefix)) {
     throw new Error(
@@ -187,27 +174,19 @@ export async function createSecp256k1Account(
   // Normalize pubkey to base64 (matches AA API normalization)
   const normalizedPubkey = normalizeSecp256k1PublicKey(pubkey);
 
-  // Calculate smart account address via CREATE2 (cross-check / fallback)
+  // Calculate smart account address via CREATE2 — no network round-trip, and
+  // the client only ever signs a value it derived itself.
   // CRITICAL: Salt must be calculated from the SAME format that AA-API will use
   // Both xion.js and AA-API calculate: SHA256(UTF8(base64_pubkey_string))
   const salt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
-  const locallyDerived = calculateSmartAccountAddress({
+  const calculatedAddress = calculateSmartAccountAddress({
     checksum,
     creator: feeGranter,
     salt,
     prefix: addressPrefix,
   });
 
-  // The AA API's derivation is authoritative — it registers the account.
-  const calculatedAddress = await resolveAddressToSign(
-    aaApiUrl,
-    AUTHENTICATOR_TYPE.Secp256K1,
-    normalizedPubkey,
-    locallyDerived,
-    codeId,
-  );
-
-  // Sign the resolved address (hex format with 0x prefix)
+  // Sign the derived address (hex format with 0x prefix)
   const addressHex = utf8ToHexWithPrefix(calculatedAddress);
   const signatureResponse = await signMessageFn(addressHex);
 
@@ -218,16 +197,38 @@ export async function createSecp256k1Account(
   const formattedPubkey = normalizedPubkey;
 
   // Create account via v2 API
-  const result = await createSecp256k1AccountV2(aaApiUrl, {
-    pubKey: formattedPubkey,
-    signature: formattedSignature,
-    ...(codeId ? { code_id: codeId } : {}),
-  });
+  let result: CreateAccountResponse;
+  try {
+    result = await createSecp256k1AccountV2(aaApiUrl, {
+      pubKey: formattedPubkey,
+      signature: formattedSignature,
+      // Report what we derived so the API can reject a config mismatch with a
+      // specific error instead of an opaque "Invalid signature".
+      checksum,
+      expected_address: calculatedAddress,
+      ...(codeId ? { code_id: codeId } : {}),
+    });
+  } catch (error) {
+    // Enrich the failure with the API's own derivation before surfacing it.
+    throw await diagnoseCreateFailure({
+      aaApiUrl,
+      authenticatorType: AUTHENTICATOR_TYPE.Secp256K1,
+      identifier: normalizedPubkey,
+      signedAddress: calculatedAddress,
+      localChecksum: checksum,
+      requestedCodeId: codeId,
+      cause: error,
+    });
+  }
+
+  // The API is authoritative on what got registered — confirm it matches what
+  // we signed, and surface the divergence if not.
+  checkAddressAlignment(calculatedAddress, result.account_address, codeId);
 
   // Short sleep to prevent sequence errors
   if (rpcUrl && result.transaction_hash) {
     await simpleSleep(250);
   }
 
-  return result;
+  return { ...result, derived_address: calculatedAddress };
 }

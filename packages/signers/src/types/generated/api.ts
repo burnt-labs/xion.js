@@ -34,6 +34,10 @@ export type CreateJWTRequest = NonNullable<
   paths["/api/v2/accounts/create/jwt"]["post"]["requestBody"]
 >["content"]["application/json"];
 
+// Registration discovery: valid code_id values + the worker's default target
+export type RegistrationConfigResponse =
+  paths["/api/v2/account/registration-config"]["get"]["responses"]["200"]["content"]["application/json"];
+
 // Account type - union of authenticator types
 export type AccountType = "ethwallet" | "secp256k1" | "jwt";
 

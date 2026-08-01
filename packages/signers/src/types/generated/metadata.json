@@ -1,7 +1,9 @@
 {
-  "generated_at": "2026-01-15T12:31:27.163Z",
-  "schema_version": "1.0.0",
+  "generated_at": "2026-07-31T20:11:01.034Z",
+  "schema_version": "2.0.0",
   "schema_title": "Account Abstraction API",
-  "schema_url": "https://aa-api.xion-testnet-2.burnt.com/openapi.json",
-  "source_env": "testnet"
+  "schema_url": "openapi.json",
+  "source_env": "local-file",
+  "source_kind": "local-file",
+  "warning": "Generated from a local account-abstraction-api checkout, not a deployed environment. These types may describe endpoints or fields that are not live yet. Regenerate from testnet once the API is deployed."
 }

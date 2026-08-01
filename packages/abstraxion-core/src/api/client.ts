@@ -11,8 +11,11 @@ import type {
   CreateSecp256k1Request,
   CreateJWTRequest,
   CreateAccountResponse,
+  RegistrationConfigResponse,
   ErrorResponse,
 } from "@burnt-labs/signers";
+
+export type { RegistrationConfigResponse };
 
 /**
  * Fetches from the AA API with automatic retry on gateway timeouts
@@ -161,6 +164,36 @@ export async function getAccountAddress(
 }
 
 /**
+ * Get the registration options the AA API will accept
+ * GET /api/v2/account/registration-config
+ *
+ * Discovery only — the API validates a requested `code_id` against the chain
+ * allow-list itself (fail-closed), so clients never need to pre-check. This
+ * exists to explain a failure after the fact, not to gate a request.
+ */
+export async function getRegistrationConfig(
+  aaApiUrl: string,
+): Promise<RegistrationConfigResponse> {
+  const response = await fetch(
+    `${aaApiUrl}/api/v2/account/registration-config`,
+    {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+
+  if (!response.ok) {
+    const errorMessage = await parseApiError(
+      response,
+      `AA API v2 /account/registration-config failed with status ${response.status}`,
+    );
+    throw new Error(errorMessage);
+  }
+
+  return await response.json();
+}
+
+/**
  * Check if account exists on-chain
  * GET /api/v2/account/check/<type>/<identifier>
  * Returns account info if exists, throws 404 if not found
@@ -201,8 +234,7 @@ export async function checkAccountOnChain(
  */
 export async function createEthWalletAccountV2(
   aaApiUrl: string,
-  // code_id widened locally until the generated OpenAPI types include it
-  request: CreateEthWalletRequest & { code_id?: string },
+  request: CreateEthWalletRequest,
 ): Promise<CreateAccountResponse> {
   const url = `${aaApiUrl}/api/v2/accounts/create/ethwallet`;
   const response = await fetchAAApiWithGatewayRetry(url, {
@@ -229,8 +261,7 @@ export async function createEthWalletAccountV2(
  */
 export async function createSecp256k1AccountV2(
   aaApiUrl: string,
-  // code_id widened locally until the generated OpenAPI types include it
-  request: CreateSecp256k1Request & { code_id?: string },
+  request: CreateSecp256k1Request,
 ): Promise<CreateAccountResponse> {
   const response = await fetchAAApiWithGatewayRetry(
     `${aaApiUrl}/api/v2/accounts/create/secp256k1`,
