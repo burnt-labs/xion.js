@@ -48,7 +48,8 @@ const requireLocalPublished = process.argv.includes(
 
 /* ---------------- minimal semver (SemVer 2.0.0 precedence) ------------- */
 
-const SEMVER_RE = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?/;
+const SEMVER_RE =
+  /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 function cmpSemver(a, b) {
   const ma = a.match(SEMVER_RE);

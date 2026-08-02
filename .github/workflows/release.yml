@@ -83,5 +83,5 @@ jobs:
       # Runs even when the changesets step failed, so the report shows
       # exactly which versions are missing from npm.
       - name: 🚦 Verify npm dependency train
-        if: always() && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
+        if: always() && (steps.changesets.outcome == 'failure' || steps.changesets.outputs.published == 'true')
         run: node scripts/verify-npm-dependency-train.mjs --require-local-published
