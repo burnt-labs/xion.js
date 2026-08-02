@@ -253,16 +253,23 @@ describe("SDK ↔ Dashboard Contract (live testnet)", () => {
 
         // Every SDK-driven mode (root, inline, popup, sign, add-authenticators)
         // routes to LoginModal when no session is present (App.tsx:372, 402,
-        // 424, 447). The LoginScreen Dialog renders "Log in / Sign up" as its
-        // title — a stable, unauthenticated-visible marker that proves the
-        // mode-specific pre-auth render path executed without crashing. If a
-        // future mode adds its own pre-auth UI without LoginModal, update this
-        // assertion alongside the new MODE_FIXTURES entry.
+        // 424, 447). Assert on the modal's STRUCTURE — the `role="dialog"` that
+        // DialogContent always emits (xion-dashboard-app ui/dialog.tsx) — rather
+        // than on its copy.
+        //
+        // This previously matched the literal title "Log in / Sign up". The
+        // dashboard deleted that string in a UI redesign (56e6b39, now live) and
+        // this suite began failing on every PR in this repo, with no dashboard
+        // regression: the SPA mounts fine and the IFRAME_READY handshake tests
+        // below still pass. Copy is not a contract — an independently-deployed
+        // app is free to reword it, and asserting on it couples our merge gate
+        // to another repo's design decisions. The ARIA role is part of the
+        // rendered structure and survives rewording.
+        //
+        // If a future mode adds its own pre-auth UI without a dialog, update
+        // this assertion alongside the new MODE_FIXTURES entry.
         await page.waitForFunction(
-          () => {
-            const text = document.body.innerText ?? "";
-            return /Log in\s*\/\s*Sign up/i.test(text);
-          },
+          () => document.querySelector('[role="dialog"]') !== null,
           { timeout: 15_000 },
         );
 
@@ -994,10 +1001,11 @@ describe("SDK ↔ Dashboard Contract (live testnet)", () => {
         "popup must have window.opener set (popup-mode rejection path uses it)",
       ).toBe(true);
 
-      // Assert the LoginModal rendered — same pre-auth marker the per-mode
-      // mount loop uses, scoped to the popup page this time.
+      // Assert the LoginModal rendered — same structural pre-auth marker the
+      // per-mode mount loop uses (see the note there on why this is `role`-based
+      // and not copy-based), scoped to the popup page this time.
       await popup.waitForFunction(
-        () => /Log in\s*\/\s*Sign up/i.test(document.body.innerText ?? ""),
+        () => document.querySelector('[role="dialog"]') !== null,
         { timeout: 15_000 },
       );
 
