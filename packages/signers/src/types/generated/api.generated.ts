@@ -810,7 +810,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid JWT or authentication failed */
+                /** @description Bad request - invalid JWT, unusable code_id, derivation mismatch, or authentication failed */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -915,7 +915,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Ethereum wallet address or signature */
+                /** @description Bad request - invalid Ethereum wallet address or signature, unusable code_id, or derivation mismatch */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -1020,7 +1020,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Secp256k1 public key or signature */
+                /** @description Bad request - invalid Secp256k1 public key or signature, unusable code_id, or derivation mismatch */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -1101,8 +1101,24 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid JWT identifier */
+                /** @description Bad request - invalid JWT identifier or unusable code_id */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Bad gateway - registration config could not be resolved */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1168,8 +1184,24 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Ethereum wallet identifier */
+                /** @description Bad request - invalid Ethereum wallet identifier or unusable code_id */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Bad gateway - registration config could not be resolved */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1235,8 +1267,24 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Secp256k1 public key identifier */
+                /** @description Bad request - invalid Secp256k1 public key identifier or unusable code_id */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Bad gateway - registration config could not be resolved */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1291,7 +1339,7 @@ export interface paths {
                              */
                             default_code_id: string;
                             /**
-                             * @description The chain's x/abstractaccount allowed_code_ids (any of these may be passed as code_id). Null when the chain query is temporarily unavailable.
+                             * @description The chain's x/abstractaccount allowed_code_ids (any of these may be passed as code_id). Null when there is no list to enumerate: either allow_all_code_ids is true (any code id is accepted, and the chain reports an empty list by design), or the chain query is temporarily unavailable (allow_all_code_ids is then null too).
                              * @example [
                              *       "1",
                              *       "21",
@@ -1300,7 +1348,12 @@ export interface paths {
                              */
                             allowed_code_ids: string[] | null;
                             /**
-                             * @description Chain checksum (data_hash) of default_code_id, used for CREATE2 address derivation. Null when the chain query is temporarily unavailable.
+                             * @description True when the chain's x/abstractaccount params set allow_all_code_ids, i.e. any code id may register and allowed_code_ids carries no restriction. Null when the chain query is temporarily unavailable.
+                             * @example false
+                             */
+                            allow_all_code_ids: boolean | null;
+                            /**
+                             * @description Checksum (contract data_hash) the API derives CREATE2 addresses with at default_code_id: the deploy's pinned EXPECTED_CHECKSUM when one is configured, otherwise the chain's data_hash. Null when neither is available.
                              * @example FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8
                              */
                             checksum: string | null;
@@ -1379,7 +1432,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid JWT identifier */
+                /** @description Bad request - invalid JWT identifier or unusable code_id */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -1483,7 +1536,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Ethereum wallet address */
+                /** @description Bad request - invalid Ethereum wallet address or unusable code_id */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -1587,7 +1640,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Secp256k1 public key */
+                /** @description Bad request - invalid Secp256k1 public key or unusable code_id */
                 400: {
                     headers: {
                         [name: string]: unknown;

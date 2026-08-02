@@ -9,7 +9,13 @@
  * 1. Loads the OpenAPI schema — from a deployed AA API endpoint, or from a
  *    local schema file (see below)
  * 2. Generates TypeScript types using openapi-typescript
- * 3. Writes types to packages/signers/src/types/generated/api.ts
+ * 3. Writes types to packages/signers/src/types/generated/api.generated.ts
+ *    and provenance to .../generated/metadata.json
+ *
+ * It does NOT touch generated/api.ts, which despite its directory is a
+ * hand-written façade that names the handful of request/response types the SDK
+ * uses out of the generated `paths` tree. Regenerating never overwrites it —
+ * if the schema renames something, api.ts must be updated by hand.
  *
  * Generating from a local file lets the SDK adopt AA API schema changes
  * *before* they are deployed: dump the schema from an account-abstraction-api
@@ -306,6 +312,55 @@ export type ErrorResponse = {
 }
 
 /**
+ * Describe where a local schema file came from, in terms someone else can act on.
+ *
+ * `path.basename()` alone reduced every local run to "openapi.json", which
+ * identifies nothing — the whole point of recording provenance is being able
+ * to answer "which build of account-abstraction-api is this?" months later.
+ * So: prefer the source repo's git commit, and fall back to a path relative to
+ * this repo. Absolute paths are still never recorded — this file is committed,
+ * and the generating machine's directory layout is noise and a small leak.
+ */
+function describeLocalSource(filePath: string): {
+  ref: string;
+  commit?: string;
+} {
+  const dir = path.dirname(filePath);
+  const relative = path.relative(path.join(__dirname, ".."), filePath);
+  // A sibling checkout resolves to "../account-abstraction-api/openapi.json",
+  // which is meaningful and safe to commit. More than one level up means the
+  // path describes the generating machine rather than the workspace, so it
+  // stays anonymous.
+  const escapesWorkspace =
+    relative.split(path.sep).filter((segment) => segment === "..").length > 1;
+  const ref =
+    !relative || escapesWorkspace ? path.basename(filePath) : relative;
+
+  try {
+    const commit = execSync("git rev-parse HEAD", {
+      cwd: dir,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+    const repo = path
+      .basename(
+        execSync("git rev-parse --show-toplevel", {
+          cwd: dir,
+          stdio: ["ignore", "pipe", "ignore"],
+        })
+          .toString()
+          .trim(),
+      )
+      .trim();
+    return { ref, commit: `${repo}@${commit}` };
+  } catch {
+    // Not a git checkout (or no git) — the relative path is all we have.
+    return { ref };
+  }
+}
+
+/**
  * Write metadata file
  */
 async function writeMetadata(
@@ -313,17 +368,18 @@ async function writeMetadata(
   source: SchemaSource,
   targetEnv: string,
 ): Promise<void> {
-  // Never record an absolute local path — this file is committed, and the
-  // generating machine's directory layout is both noise and a small leak.
-  const recordedRef = source.isLocalFile
-    ? path.basename(source.ref)
-    : source.ref;
+  const local = source.isLocalFile
+    ? describeLocalSource(source.ref)
+    : undefined;
 
   const metadata = {
     generated_at: new Date().toISOString(),
     schema_version: schema.info?.version || "unknown",
     schema_title: schema.info?.title || "AA API",
-    schema_url: recordedRef,
+    schema_url: local ? local.ref : source.ref,
+    // The commit of the checkout the schema was dumped from — the only field
+    // that makes a local-file generation reproducible.
+    ...(local?.commit ? { schema_commit: local.commit } : {}),
     source_env: source.isLocalFile ? "local-file" : targetEnv,
     // Types generated from a local checkout can describe endpoints that are
     // not deployed anywhere yet. Record that explicitly — otherwise the next
@@ -385,7 +441,10 @@ async function main() {
     console.log(`\n💡 Next steps:`);
     console.log(`   1. Review generated types`);
     console.log(
-      `   2. Update signers/src/types/api.ts to import from ./generated/api`,
+      `   2. If the schema renamed or added a type, update the hand-written`,
+    );
+    console.log(
+      `      façade at ${path.join(OUTPUT_DIR, "api.ts")} — it is NOT regenerated`,
     );
     console.log(`   3. Run 'pnpm build' to verify types compile correctly`);
   } catch (error: any) {

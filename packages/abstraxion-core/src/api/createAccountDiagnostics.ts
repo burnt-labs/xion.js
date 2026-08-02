@@ -11,14 +11,62 @@
  * derives locally (free, and it never signs a value the network handed it)
  * and only reaches for the API's own answers *after* a failure, purely to
  * explain it. Everything here is best-effort: a diagnostic that itself fails
- * must never mask the original error.
+ * — by rejecting OR by never answering — must never mask the original error.
  */
 
+import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 import { getAccountAddress, getRegistrationConfig } from "./client";
 import type {
   AuthenticatorType,
   RegistrationConfigResponse,
 } from "@burnt-labs/signers";
+
+/**
+ * Budget for the whole diagnostic probe phase.
+ *
+ * The failure this bounds is the nasty one: the AA API accepting the socket
+ * and then never answering. Without a ceiling the probes hang forever and the
+ * account-creation call never settles — the user sees a spinner instead of the
+ * error we already have in hand. Three seconds is longer than a healthy probe
+ * needs and shorter than anyone's patience.
+ */
+const PROBE_TIMEOUT_MS = 3_000;
+
+/**
+ * Run a probe under a hard deadline.
+ *
+ * `AbortSignal.timeout` alone is not enough: it only aborts the fetch, and it
+ * is absent on older runtimes (and easy for a mocked `fetch` to ignore). The
+ * `Promise.race` is the actual guarantee — the signal is a courtesy that also
+ * releases the socket.
+ */
+async function withDeadline<T>(
+  run: (signal?: AbortSignal) => Promise<T>,
+  label: string,
+): Promise<T> {
+  const signal =
+    typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+      ? AbortSignal.timeout(PROBE_TIMEOUT_MS)
+      : undefined;
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${label} timed out after ${PROBE_TIMEOUT_MS}ms`)),
+      PROBE_TIMEOUT_MS,
+    );
+    // Never hold a Node process open just to fail a best-effort probe.
+    if (typeof timer === "object" && timer && "unref" in timer) {
+      (timer as NodeJS.Timeout).unref();
+    }
+  });
+
+  try {
+    return await Promise.race([run(signal), deadline]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
 
 /**
  * Thrown when the AA API rejects account creation. Carries the original error
@@ -63,7 +111,19 @@ export class AccountCreationError extends Error {
  * The bug case: client config drifted and the API is running a build that
  * ignores `expected_address`, so nothing rejected the request up front.
  *
- * @returns true when the addresses agree
+ * Sending `expected_address` on creation does NOT make the benign case
+ * unreachable, and it does not break legacy re-connection. The API's
+ * `assertClientDerivationMatches` compares the claim against its own *fresh
+ * CREATE2 derivation* for the resolved code id, and it runs before the
+ * existing-account lookup. So a client whose derivation agrees with the API's
+ * passes the guard and then still receives whatever older address the lookup
+ * turned up — exactly the divergence this function reports. The only hard 400
+ * is a genuine derivation disagreement, which previously surfaced as an opaque
+ * "Invalid signature" and failed just as hard.
+ *
+ * @returns true when the addresses agree — exposed so callers can branch on
+ * alignment (e.g. re-key local state to the registered address) rather than
+ * re-implementing CREATE2. Ignoring it is fine: the warning already fired.
  */
 export function checkAddressAlignment(
   derivedAddress: string,
@@ -110,8 +170,9 @@ function errorMessage(error: unknown): string {
  *
  * Returns the error rather than throwing it so callers `throw await
  * diagnoseCreateFailure(...)` — which keeps TypeScript's definite-assignment
- * analysis working across the try/catch. Probes run concurrently and never
- * reject; an unreachable endpoint just yields a thinner report.
+ * analysis working across the try/catch. Probes run concurrently, are bounded
+ * by {@link PROBE_TIMEOUT_MS}, and never reject; an unreachable — or silently
+ * hanging — endpoint just yields a thinner report.
  */
 export async function diagnoseCreateFailure(
   params: DiagnoseParams,
@@ -126,9 +187,36 @@ export async function diagnoseCreateFailure(
     cause,
   } = params;
 
+  // SECURITY: the address endpoint takes the identifier in the URL path, and
+  // a JWT identifier IS the bearer credential — putting it there leaks it into
+  // every CDN/proxy access log on the way. There is no diagnostic worth that,
+  // so the probe is refused here rather than left to each call site to
+  // remember. The registration-config probe carries nothing user-specific and
+  // still runs, so a JWT failure keeps its code_id diagnosis.
+  const addressProbeAllowed = authenticatorType !== AUTHENTICATOR_TYPE.JWT;
+
   const [addressProbe, configProbe] = await Promise.allSettled([
-    getAccountAddress(aaApiUrl, authenticatorType, identifier, requestedCodeId),
-    getRegistrationConfig(aaApiUrl),
+    addressProbeAllowed
+      ? withDeadline(
+          (signal) =>
+            getAccountAddress(
+              aaApiUrl,
+              authenticatorType,
+              identifier,
+              requestedCodeId,
+              signal,
+            ),
+          "AA API address probe",
+        )
+      : Promise.reject(
+          new Error(
+            "address probe skipped: a JWT identifier must not be sent in a URL path",
+          ),
+        ),
+    withDeadline(
+      (signal) => getRegistrationConfig(aaApiUrl, signal),
+      "AA API registration-config probe",
+    ),
   ]);
 
   const apiAddress =
@@ -198,6 +286,14 @@ export async function diagnoseCreateFailure(
         `is not a config drift. The failure is downstream — signature encoding, ` +
         `fee grant funding, or chain broadcast.`,
     );
+  } else if (!addressProbeAllowed) {
+    lines.push(
+      "",
+      `Diagnosis: the address could not be cross-checked because the AA API's ` +
+        `address endpoint takes the identifier in the URL path, and a JWT must ` +
+        `not be logged there. Compare the derivation inputs above against the ` +
+        `registration config, or re-run the failure with a wallet authenticator.`,
+    );
   } else {
     lines.push(
       "",
@@ -207,8 +303,10 @@ export async function diagnoseCreateFailure(
     );
   }
 
+  // Deliberately not logged here: this message is carried by the returned
+  // error, and every caller throws it. Logging as well would double-report
+  // the same failure for any consumer that logs what it catches.
   const message = lines.join("\n");
-  console.error(`[createAccount] ${message}`);
 
   return new AccountCreationError(message, {
     cause,

@@ -135,12 +135,18 @@ async function parseApiError(
 /**
  * Get deterministic smart account address for an identifier
  * GET /api/v2/account/address/<type>/<identifier>
+ *
+ * SECURITY: `identifier` is interpolated into the URL *path*, where CDNs,
+ * proxies and access logs will retain it. That is fine for public identifiers
+ * (eth address, secp256k1 pubkey) but never for a bearer credential — do not
+ * call this with a raw JWT.
  */
 export async function getAccountAddress(
   aaApiUrl: string,
   authenticatorType: AuthenticatorType,
   identifier: string,
   codeId?: string,
+  signal?: AbortSignal,
 ): Promise<AddressResponse> {
   const encodedIdentifier = encodeURIComponent(identifier);
   const codeIdQuery = codeId ? `?code_id=${encodeURIComponent(codeId)}` : "";
@@ -149,6 +155,7 @@ export async function getAccountAddress(
     {
       method: "GET",
       headers: { "Content-Type": "application/json" },
+      signal,
     },
   );
 
@@ -173,12 +180,14 @@ export async function getAccountAddress(
  */
 export async function getRegistrationConfig(
   aaApiUrl: string,
+  signal?: AbortSignal,
 ): Promise<RegistrationConfigResponse> {
   const response = await fetch(
     `${aaApiUrl}/api/v2/account/registration-config`,
     {
       method: "GET",
       headers: { "Content-Type": "application/json" },
+      signal,
     },
   );
 
@@ -197,15 +206,22 @@ export async function getRegistrationConfig(
  * Check if account exists on-chain
  * GET /api/v2/account/check/<type>/<identifier>
  * Returns account info if exists, throws 404 if not found
+ *
+ * `codeId` mirrors {@link getAccountAddress}: the check derives the candidate
+ * address from the resolved code id's checksum, so an account registered at a
+ * non-default code id is only discoverable when that code id is passed. Omit
+ * it to use the AA API's default.
  */
 export async function checkAccountOnChain(
   aaApiUrl: string,
   authenticatorType: AuthenticatorType,
   identifier: string,
+  codeId?: string,
 ): Promise<CheckResponse> {
   const encodedIdentifier = encodeURIComponent(identifier);
+  const codeIdQuery = codeId ? `?code_id=${encodeURIComponent(codeId)}` : "";
   const response = await fetch(
-    `${aaApiUrl}/api/v2/account/check/${authenticatorType.toLowerCase()}/${encodedIdentifier}`,
+    `${aaApiUrl}/api/v2/account/check/${authenticatorType.toLowerCase()}/${encodedIdentifier}${codeIdQuery}`,
     {
       method: "GET",
       headers: { "Content-Type": "application/json" },

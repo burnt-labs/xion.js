@@ -33,11 +33,25 @@ signs only that. Three things replace what the pre-flight bought:
    than throws — the AA API legitimately returns a pre-existing account
    registered under an older code id.
 
+Sending `expected_address` does **not** make (3) unreachable, and it does not
+break re-connecting a legacy account. The API compares the claim against its
+own fresh CREATE2 derivation for the resolved code id, and it does so *before*
+the existing-account lookup — so a client whose derivation agrees passes the
+guard and still receives whatever older address the lookup found. The only
+hard 400 is a genuine derivation disagreement, which previously surfaced as an
+opaque "Invalid signature" and failed just as hard.
+
 A requested `codeId` is passed through verbatim; the AA API validates it
 against the chain's `allowed_code_ids` fail-closed, so callers do not pre-check
 it. Note that a requested `codeId` must correspond to the `checksum` passed to
 the same call, or the local derivation will not match what the API verifies —
 which the checks above now report explicitly.
+
+Diagnostics are bounded: both probes run under a 3s deadline, so an AA API that
+accepts the connection and then never answers can no longer wedge account
+creation — the original error still surfaces promptly. `diagnoseCreateFailure`
+also no longer logs the message it returns, leaving that to the caller that
+throws it.
 
 `@burnt-labs/signers` regains the generated AA API types for the new surface:
 `checksum` / `expected_address` on the create requests, `code_id` on the

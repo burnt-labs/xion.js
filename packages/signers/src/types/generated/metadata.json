@@ -1,8 +1,9 @@
 {
-  "generated_at": "2026-07-31T20:11:01.034Z",
+  "generated_at": "2026-08-02T08:09:37.387Z",
   "schema_version": "2.0.0",
   "schema_title": "Account Abstraction API",
-  "schema_url": "openapi.json",
+  "schema_url": "../account-abstraction-api/openapi.json",
+  "schema_commit": "account-abstraction-api@d64798af59ca833224ac5455bad0d838433abf6f",
   "source_env": "local-file",
   "source_kind": "local-file",
   "warning": "Generated from a local account-abstraction-api checkout, not a deployed environment. These types may describe endpoints or fields that are not live yet. Regenerate from testnet once the API is deployed."
