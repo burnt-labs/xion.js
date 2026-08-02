@@ -4,11 +4,15 @@ on:
   pull_request:
     paths:
       - 'packages/**'
+      # The validation logic itself lives in scripts/ — without this, a change
+      # to the verifier is the one change that never runs the verifier.
+      - 'scripts/**'
       - '.github/workflows/dependency-validation.yml'
   push:
     branches: [main, develop]
     paths:
       - 'packages/**'
+      - 'scripts/**'
       - '.github/workflows/dependency-validation.yml'
   workflow_dispatch:
 
@@ -31,8 +35,28 @@ jobs:
           node-version: lts/*
           cache: pnpm
 
+      # Runs before install on purpose: the verifier is zero-dependency and
+      # its tests use node:test, so a broken comparator is caught even if the
+      # workspace install later fails.
+      - name: Unit-test the dependency-train verifier
+        run: node --test "scripts/__tests__/*.test.mjs"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Non-blocking on pull requests. This check reads immutable npm history:
+      # if a past partial publish is still live, it goes red for every PR
+      # regardless of that PR's content, and no change the author can make will
+      # turn it green. Keeping it visible-but-advisory here preserves the
+      # signal without holding unrelated work hostage; the hard gate lives on
+      # the release workflow (verify:npm-train:release), where a broken train
+      # is both actionable and blocking-worthy.
+      - name: Verify published npm dependency train
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+        run: |
+          echo "🔍 Checking that every published @burnt-labs package's internal"
+          echo "   dependencies resolve to versions that exist on npm…"
+          node scripts/verify-npm-dependency-train.mjs
 
       - name: Run circular dependency tests
         run: pnpm --filter @burnt-labs/signers test src/__tests__/circular-deps.test.ts
