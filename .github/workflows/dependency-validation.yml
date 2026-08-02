@@ -39,7 +39,7 @@ jobs:
       # its tests use node:test, so a broken comparator is caught even if the
       # workspace install later fails.
       - name: Unit-test the dependency-train verifier
-        run: node --test "scripts/__tests__/*.test.mjs"
+        run: node --test scripts/__tests__/
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
