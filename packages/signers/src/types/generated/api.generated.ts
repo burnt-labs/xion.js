@@ -113,6 +113,13 @@ export interface paths {
                                     status: string;
                                     url?: string;
                                 };
+                                registration?: {
+                                    /** @example healthy */
+                                    status: string;
+                                    codeId?: string;
+                                    checksum?: string | null;
+                                    issues?: string[];
+                                };
                             };
                         };
                     };
@@ -131,6 +138,13 @@ export interface paths {
                                     status: string;
                                     url?: string;
                                     error?: string;
+                                };
+                                registration?: {
+                                    /** @example healthy */
+                                    status: string;
+                                    codeId?: string;
+                                    checksum?: string | null;
+                                    issues?: string[];
                                 };
                             };
                         };
@@ -184,6 +198,54 @@ export interface paths {
                             code_id: number;
                             session_jwt: string;
                             transaction_hash: string;
+                        };
+                    };
+                };
+                /** @description session_jwt is malformed or missing its aud/sub claims */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description session_token could not be authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Authenticated session does not match the requested account */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
                         };
                     };
                 };
@@ -704,6 +766,21 @@ export interface paths {
                 content: {
                     "application/json": {
                         /**
+                         * @description Optional. The contract checksum (code data_hash) the client used for its local CREATE2 address derivation. If it does not match the chain's data_hash for the resolved code_id, the request is rejected with an explicit checksum-mismatch error.
+                         * @example FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8
+                         */
+                        checksum?: string;
+                        /**
+                         * @description Optional. The smart account address the client derived locally and signed. If it does not match this API's derivation, the request is rejected with an explicit address-mismatch error instead of an opaque signature failure.
+                         * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                         */
+                        expected_address?: string;
+                        /**
+                         * @description Optional Wasm code id to register at. Must be in the chain's x/abstractaccount allowed_code_ids (validated, fail-closed). Defaults to the worker's configured CODE_ID.
+                         * @example 1
+                         */
+                        code_id?: string;
+                        /**
                          * @description JWT token
                          * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJteWFwcCIsInN1YiI6IjEyMzQ1Njc4OTAiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6OTk5OTk5OTk5OX0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
                          */
@@ -733,7 +810,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid JWT or authentication failed */
+                /** @description Bad request - invalid JWT, unusable code_id, derivation mismatch, or authentication failed */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -794,6 +871,21 @@ export interface paths {
                 content: {
                     "application/json": {
                         /**
+                         * @description Optional. The contract checksum (code data_hash) the client used for its local CREATE2 address derivation. If it does not match the chain's data_hash for the resolved code_id, the request is rejected with an explicit checksum-mismatch error.
+                         * @example FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8
+                         */
+                        checksum?: string;
+                        /**
+                         * @description Optional. The smart account address the client derived locally and signed. If it does not match this API's derivation, the request is rejected with an explicit address-mismatch error instead of an opaque signature failure.
+                         * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                         */
+                        expected_address?: string;
+                        /**
+                         * @description Optional Wasm code id to register at. Must be in the chain's x/abstractaccount allowed_code_ids (validated, fail-closed). Defaults to the worker's configured CODE_ID.
+                         * @example 1
+                         */
+                        code_id?: string;
+                        /**
                          * @description Ethereum wallet address
                          * @example 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0
                          */
@@ -823,7 +915,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Ethereum wallet address or signature */
+                /** @description Bad request - invalid Ethereum wallet address or signature, unusable code_id, or derivation mismatch */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -884,6 +976,21 @@ export interface paths {
                 content: {
                     "application/json": {
                         /**
+                         * @description Optional. The contract checksum (code data_hash) the client used for its local CREATE2 address derivation. If it does not match the chain's data_hash for the resolved code_id, the request is rejected with an explicit checksum-mismatch error.
+                         * @example FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8
+                         */
+                        checksum?: string;
+                        /**
+                         * @description Optional. The smart account address the client derived locally and signed. If it does not match this API's derivation, the request is rejected with an explicit address-mismatch error instead of an opaque signature failure.
+                         * @example xion1abc123def456789abc123def456789abc123def456789abc123def456789ab
+                         */
+                        expected_address?: string;
+                        /**
+                         * @description Optional Wasm code id to register at. Must be in the chain's x/abstractaccount allowed_code_ids (validated, fail-closed). Defaults to the worker's configured CODE_ID.
+                         * @example 1
+                         */
+                        code_id?: string;
+                        /**
                          * @description Secp256k1 public key
                          * @example A1234567890123456789012345678901234567890123
                          */
@@ -913,7 +1020,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Secp256k1 public key or signature */
+                /** @description Bad request - invalid Secp256k1 public key or signature, unusable code_id, or derivation mismatch */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -963,7 +1070,9 @@ export interface paths {
         /** @description Calculate deterministic smart account address for JWT identifier */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    code_id?: string;
+                };
                 header?: never;
                 path: {
                     jwt: string;
@@ -992,8 +1101,24 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid JWT identifier */
+                /** @description Bad request - invalid JWT identifier or unusable code_id */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Bad gateway - registration config could not be resolved */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1028,7 +1153,9 @@ export interface paths {
         /** @description Calculate deterministic smart account address for Ethereum wallet identifier */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    code_id?: string;
+                };
                 header?: never;
                 path: {
                     address: string;
@@ -1057,8 +1184,24 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Ethereum wallet identifier */
+                /** @description Bad request - invalid Ethereum wallet identifier or unusable code_id */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Bad gateway - registration config could not be resolved */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1093,7 +1236,9 @@ export interface paths {
         /** @description Calculate deterministic smart account address for Secp256k1 public key identifier */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    code_id?: string;
+                };
                 header?: never;
                 path: {
                     pubkey: string;
@@ -1122,8 +1267,101 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Secp256k1 public key identifier */
+                /** @description Bad request - invalid Secp256k1 public key identifier or unusable code_id */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Bad gateway - registration config could not be resolved */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/account/registration-config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Registration discovery: the worker's default code id, the chain's allow-listed code ids (valid values for the optional code_id parameter on create/address/check endpoints), and the default code's checksum. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Registration configuration */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /**
+                             * @description Code id this worker registers at when none is requested
+                             * @example 1
+                             */
+                            default_code_id: string;
+                            /**
+                             * @description The chain's x/abstractaccount allowed_code_ids (any of these may be passed as code_id). Null when there is no list to enumerate: either allow_all_code_ids is true (any code id is accepted, and the chain reports an empty list by design), or the chain query is temporarily unavailable (allow_all_code_ids is then null too).
+                             * @example [
+                             *       "1",
+                             *       "21",
+                             *       "95"
+                             *     ]
+                             */
+                            allowed_code_ids: string[] | null;
+                            /**
+                             * @description True when the chain's x/abstractaccount params set allow_all_code_ids, i.e. any code id may register and allowed_code_ids carries no restriction. Null when the chain query is temporarily unavailable.
+                             * @example false
+                             */
+                            allow_all_code_ids: boolean | null;
+                            /**
+                             * @description Checksum (contract data_hash) the API derives CREATE2 addresses with at default_code_id: the deploy's pinned EXPECTED_CHECKSUM when one is configured, otherwise the chain's data_hash. Null when neither is available.
+                             * @example FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8
+                             */
+                            checksum: string | null;
+                        };
+                    };
+                };
+                /** @description Failed to resolve registration configuration */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1158,7 +1396,9 @@ export interface paths {
         /** @description Check smart account from JWT authenticator */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    code_id?: string;
+                };
                 header?: never;
                 path: {
                     jwt: string;
@@ -1192,7 +1432,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid JWT identifier */
+                /** @description Bad request - invalid JWT identifier or unusable code_id */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -1260,7 +1500,9 @@ export interface paths {
         /** @description Check smart account from Ethereum wallet authenticator */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    code_id?: string;
+                };
                 header?: never;
                 path: {
                     address: string;
@@ -1294,7 +1536,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Ethereum wallet address */
+                /** @description Bad request - invalid Ethereum wallet address or unusable code_id */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -1362,7 +1604,9 @@ export interface paths {
         /** @description Check smart account from Secp256k1 public key authenticator */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    code_id?: string;
+                };
                 header?: never;
                 path: {
                     pubkey: string;
@@ -1396,7 +1640,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Bad request - invalid Secp256k1 public key */
+                /** @description Bad request - invalid Secp256k1 public key or unusable code_id */
                 400: {
                     headers: {
                         [name: string]: unknown;
