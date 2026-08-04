@@ -38,8 +38,11 @@ jobs:
       # Runs before install on purpose: the verifier is zero-dependency and
       # its tests use node:test, so a broken comparator is caught even if the
       # workspace install later fails.
+      # Node >=22 treats --test positionals as glob patterns, not paths: a bare
+      # directory matches the directory itself and node then tries to *run* it
+      # (MODULE_NOT_FOUND). The pattern has to name the test files.
       - name: Unit-test the dependency-train verifier
-        run: node --test scripts/__tests__/
+        run: node --test "scripts/__tests__/**/*.test.mjs"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

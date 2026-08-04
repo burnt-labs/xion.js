@@ -17,7 +17,7 @@ overrides:
   '@cosmjs/tendermint-rpc': ^0.36.0
   '@cosmjs/utils': ^0.36.0
   cosmjs-types: ^0.9.0
-  '@burnt-labs/xion-types': 29.0.0-rc1
+  '@burnt-labs/xion-types': 30.0.0-rc1
 
 importers:
 
@@ -239,8 +239,8 @@ importers:
         specifier: workspace:*
         version: link:../signers
       '@burnt-labs/xion-types':
-        specifier: 29.0.0-rc1
-        version: 29.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
+        specifier: 30.0.0-rc1
+        version: 30.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
       '@cosmjs/amino':
         specifier: ^0.36.0
         version: 0.36.2
@@ -528,8 +528,8 @@ importers:
         specifier: workspace:*
         version: link:../signers
       '@burnt-labs/xion-types':
-        specifier: 29.0.0-rc1
-        version: 29.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
+        specifier: 30.0.0-rc1
+        version: 30.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
       '@cosmjs/cosmwasm-stargate':
         specifier: ^0.36.0
         version: 0.36.2
@@ -592,8 +592,8 @@ importers:
         specifier: workspace:*
         version: link:../constants
       '@burnt-labs/xion-types':
-        specifier: 29.0.0-rc1
-        version: 29.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
+        specifier: 30.0.0-rc1
+        version: 30.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
       '@cosmjs/amino':
         specifier: ^0.36.0
         version: 0.36.2
@@ -1774,8 +1774,8 @@ packages:
     resolution: {integrity: sha512-sBXGT13cpmPR5BMgHE6UEEfEaShh5Ror6rfN3yEK5si7QVrtZg8LEPQb0VVhiLRUslD2yLnXtnRzG035J/mZXQ==}
     dev: false
 
-  /@burnt-labs/xion-types@29.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4):
-    resolution: {integrity: sha512-FdPPfKYqalQDoWrO75VVenh6yWiad7NBng6op+wnl4W+vzWuNEP6/LrqMyIFyjvvMtYpfZ/1FXmQekY83SB8Xw==}
+  /@burnt-labs/xion-types@30.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4):
+    resolution: {integrity: sha512-eCgjvO6BQeMtSCpKdocrR2cxYRVfKh+lSOP58CviJKWBmiw6V5WkXFQvZwMxne/mNw2y3bB4/f2zKyYqGPNJQQ==}
     peerDependencies:
       '@cosmjs/proto-signing': ^0.36.0
       '@cosmjs/stargate': ^0.36.0
