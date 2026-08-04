@@ -251,20 +251,26 @@ describe("SDK ↔ Dashboard Contract (live testnet)", () => {
           { timeout: 15_000 },
         );
 
-        // Every SDK-driven mode (root, inline, popup, sign, add-authenticators)
-        // routes to LoginModal when no session is present (App.tsx:372, 402,
-        // 424, 447). The LoginScreen Dialog renders "Log in / Sign up" as its
-        // title — a stable, unauthenticated-visible marker that proves the
-        // mode-specific pre-auth render path executed without crashing. If a
-        // future mode adds its own pre-auth UI without LoginModal, update this
-        // assertion alongside the new MODE_FIXTURES entry.
-        await page.waitForFunction(
-          () => {
-            const text = document.body.innerText ?? "";
-            return /Log in\s*\/\s*Sign up/i.test(text);
-          },
-          { timeout: 15_000 },
-        );
+        // NOTE: deliberately no assertion on WHAT the dashboard renders here.
+        //
+        // This block used to also wait for the literal title "Log in / Sign up"
+        // to prove the mode routed to LoginModal. xion-dashboard-app deleted
+        // that string in a UI redesign (56e6b39) and this suite — a blocking
+        // gate — began failing on every PR in this repo, with no SDK or
+        // dashboard regression whatsoever.
+        //
+        // The lesson is the boundary, not the string: the dashboard is a
+        // separately-deployed app that owns its own UI. What this repo can
+        // legitimately assert is that the URL the SDK constructs serves a
+        // working SPA — status 200, #root mounts, no uncaught/console errors
+        // (all asserted here). Whether that SPA shows a login dialog, and what
+        // it says, is the dashboard's contract with its users, covered by its
+        // own tests (src/tests/components/{LoginModal,LoginScreen,AppLogin}).
+        //
+        // The real SDK↔dashboard contract — message types, the IFRAME_READY
+        // handshake, origin handling — is protocol-level and tested below.
+        // Don't re-add UI assertions here; they couple this repo's merge gate
+        // to another repo's design decisions.
 
         // Inline mode runs an additional useEffect (App.tsx:68-82) that makes
         // the document transparent so the embedding dApp shows through.
@@ -994,10 +1000,17 @@ describe("SDK ↔ Dashboard Contract (live testnet)", () => {
         "popup must have window.opener set (popup-mode rejection path uses it)",
       ).toBe(true);
 
-      // Assert the LoginModal rendered — same pre-auth marker the per-mode
-      // mount loop uses, scoped to the popup page this time.
+      // Assert the popup actually mounted the dashboard SPA (rather than
+      // sitting on about:blank or a crashed bundle) — same mount-level check
+      // the per-mode loop uses, scoped to the popup page this time.
+      //
+      // This previously waited on the login modal's title copy; see the note in
+      // the mount loop above for why UI assertions don't belong in this repo.
       await popup.waitForFunction(
-        () => /Log in\s*\/\s*Sign up/i.test(document.body.innerText ?? ""),
+        () => {
+          const root = document.getElementById("root");
+          return !!root && root.childElementCount > 0;
+        },
         { timeout: 15_000 },
       );
 
