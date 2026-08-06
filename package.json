@@ -34,7 +34,7 @@
     "eslint": "^8.48.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.3",
-    "turbo": "^2.0.11"
+    "turbo": "^2.9.14"
   },
   "devDependencies": {
     "@hono/zod-openapi": "^0.18.4",
