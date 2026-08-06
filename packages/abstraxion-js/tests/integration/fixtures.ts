@@ -49,10 +49,10 @@ export function getTestConfig(): TestConfig {
       "https://api.xion-testnet-2.burnt.com",
     gasPrice: process.env.XION_TESTNET_GAS_PRICE || "0.001uxion",
     addressPrefix: process.env.XION_TESTNET_ADDRESS_PREFIX || "xion",
-    codeId: process.env.XION_TESTNET_CODE_ID || "1",
+    codeId: process.env.XION_TESTNET_CODE_ID || "1880",
     checksum:
       process.env.XION_TESTNET_CHECKSUM ||
-      "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
+      "D27A379FF65EB47A9E538E3A3D46101DE2A6C0B86BA3D0BF014C0403849414E6",
     treasuryAddress:
       process.env.XION_TESTNET_TREASURY_ADDRESS ||
       "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw",

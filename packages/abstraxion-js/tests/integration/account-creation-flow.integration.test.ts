@@ -27,9 +27,13 @@ const LOCAL_AA_API_URL =
 
 // Test configuration - should match what's used in production
 const TEST_CONFIG = {
-  checksum: "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
-  addressPrefix: "xion",
-  feeGranter: "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x", // Testnet fee granter
+  checksum:
+    process.env.XION_TESTNET_CHECKSUM ||
+    "D27A379FF65EB47A9E538E3A3D46101DE2A6C0B86BA3D0BF014C0403849414E6",
+  addressPrefix: process.env.XION_TESTNET_ADDRESS_PREFIX || "xion",
+  feeGranter:
+    process.env.XION_TESTNET_FEE_GRANTER ||
+    "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
 };
 
 describe("End-to-End Account Creation Flow", () => {

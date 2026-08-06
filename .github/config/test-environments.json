@@ -17,6 +17,8 @@
       },
       "treasuryAddress": "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw",
       "addressPrefix": "xion",
+      "codeId": "1880",
+      "checksum": "D27A379FF65EB47A9E538E3A3D46101DE2A6C0B86BA3D0BF014C0403849414E6",
       "feeGranter": "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
       "description": "Public testnet for development and testing"
     },
@@ -50,10 +52,7 @@
       "gasAdjustment": "1.6",
       "port": 8787
     },
-    "requiredSecrets": [
-      "STYTCH_PROJECT_ID",
-      "STYTCH_SECRET"
-    ]
+    "requiredSecrets": ["STYTCH_PROJECT_ID", "STYTCH_SECRET"]
   },
   "testConfig": {
     "timeout": {

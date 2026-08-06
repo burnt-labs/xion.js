@@ -3,7 +3,19 @@
  * Runs before all integration tests.
  */
 
-import { vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
+import {
+  cleanupTestStorage,
+  setAccountIndexNamespace,
+} from "./tests/integration/helpers";
+
+beforeEach(({ task }) => {
+  setAccountIndexNamespace(`${task.file?.name ?? "integration"}:${task.name}`);
+});
+
+afterEach(() => {
+  cleanupTestStorage();
+});
 
 // Mock @github/webauthn-json/browser-ponyfill globally
 // This allows passkey-related code to be imported in test environments (Node.js)
