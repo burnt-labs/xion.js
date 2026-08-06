@@ -17,8 +17,6 @@ export default defineConfig({
     coverage: {
       enabled: false, // Disable coverage for integration tests
     },
-    // Retry failed tests once
-    retry: 1,
   },
   resolve: {
     alias: {

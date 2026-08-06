@@ -11,7 +11,6 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { registerGlobalHooks } from "../setup";
 import { getTestConfig, TEST_MNEMONIC } from "../fixtures";
 import { SignerController } from "@burnt-labs/abstraxion-js";
 import type { SignerControllerConfig } from "@burnt-labs/abstraxion-js";
@@ -31,8 +30,6 @@ import {
 } from "@burnt-labs/account-management";
 
 describe("Session Management - Integration", () => {
-  registerGlobalHooks();
-
   let config: ReturnType<typeof getTestConfig>;
   let storageStrategy: ReturnType<typeof createMockStorageStrategy>;
   let sessionManager: SessionManager;
