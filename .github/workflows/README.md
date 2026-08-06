@@ -33,20 +33,24 @@ Automated CI/CD workflows for the xion.js monorepo.
 
 ### 🧪 Integration Tests (`integration-tests.yml`)
 
-**Triggers**: Push to `main`, manual dispatch
+**Triggers**: Pull requests, pushes to `main`/`develop`, manual dispatch
 **Purpose**: Test against live/local blockchain networks
 
 **Manual Run Options**:
 
 - `test_environment`: `testnet` | `mainnet` (default: `testnet`)
-- `aa_api_mode`: `live-url` | `dev-server` (default: `live-url`)
 - `aa_api_url`: Custom AA-API URL (optional)
 
 **What it does**:
 
 1. Loads config from [.github/config/test-environments.json](../config/test-environments.json)
-2. Optionally starts local AA-API server (`dev-server` mode)
-3. Runs integration tests for `@burnt-labs/account-management` and `@burnt-labs/abstraxion-js`
+2. Builds only the package dependency graph required by `@burnt-labs/abstraxion-js`
+3. Runs the SDK suite and blocking testnet dashboard contract in parallel on Ubicloud runners
+4. Fails on every test failure; live tests are not retried or accepted as warnings
+
+Deterministic signing and address diagnostics run with the unit suite. The live
+suite performs its RPC, treasury, and balance preflight once before workers
+start, then schedules isolated test accounts across all eight runner cores.
 
 **Environment Values**: See [test-environments.json](../config/test-environments.json) for all public configuration (RPC URLs, chain IDs, treasury addresses, etc.)
 
@@ -209,7 +213,7 @@ git push
 **Common Issues**:
 
 - **"Insufficient funds"**: Fee granter exhausted (testnet only, not a bug)
-- **"Account not discoverable"**: Indexer slow, tests retry automatically
+- **"Account not discoverable"**: Inspect indexer health and the bounded polling performed by the affected flow
 - **"AA-API not ready"**: Server startup timeout, check `.dev.vars`
 
 ### AA-API Dev Server Won't Start

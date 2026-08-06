@@ -12,7 +12,7 @@ import {
   verifySecp256k1Signature,
   normalizeSecp256k1PublicKey,
 } from "@burnt-labs/signers";
-import { TEST_MNEMONIC } from "../fixtures";
+import { TEST_MNEMONIC } from "../../integration/fixtures";
 
 describe("Message Format Verification", () => {
   it("should verify that hex-encoded and plain string produce same hash", async () => {

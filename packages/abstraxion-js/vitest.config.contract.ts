@@ -19,7 +19,6 @@ export default defineConfig({
     include: ["tests/integration/message-contract.integration.test.ts"],
     exclude: ["node_modules", "dist"],
     coverage: { enabled: false },
-    retry: 1,
     server: {
       deps: {
         inline: ["@github/webauthn-json"],
