@@ -5,7 +5,7 @@
  * is zero-dependency so it can run in CI *before* `pnpm install`, and a test
  * that needed the workspace installed to run would quietly undo that.
  *
- *   node --test scripts/__tests__/
+ *   node --test "scripts/__tests__/*.test.mjs"
  *
  * The cases here are the ones that matter for this repo: everything internal
  * is on 0.x or 1.0.0-alpha.N, which is exactly where naive caret matching is
@@ -18,6 +18,7 @@ import assert from "node:assert/strict";
 
 import {
   cmpSemver,
+  fetchPackument,
   rangeSatisfiable,
 } from "../verify-npm-dependency-train.mjs";
 
@@ -81,13 +82,17 @@ test("caret on >=1.x allows the rest of the major", () => {
   assert.ok(!satisfied("^1.2.0", ["1.1.9"]));
 });
 
-test("a prerelease range never reaches past its own release tuple", () => {
-  // npm will not install 1.5.0 for ^1.0.0-alpha.2, so neither may we claim it.
-  assert.ok(!satisfied("^1.0.0-alpha.2", ["1.5.0"]));
-  assert.ok(!satisfied("^1.0.0-alpha.2", ["1.0.1"]));
-  // ...but later prereleases of the same tuple, and the tuple's own release, do.
+test("prerelease anchors match npm caret semantics", () => {
+  // npm treats the prerelease as the lower bound while retaining the normal
+  // caret upper bound for stable releases.
+  assert.ok(satisfied("^1.0.0-alpha.2", ["1.0.1"]));
+  assert.ok(satisfied("^1.0.0-alpha.2", ["1.5.0"]));
+  assert.ok(!satisfied("^1.0.0-alpha.2", ["2.0.0"]));
+
+  // Prerelease candidates remain limited to the tuple named by the range.
   assert.ok(satisfied("^1.0.0-alpha.2", ["1.0.0-alpha.30"]));
   assert.ok(satisfied("^1.0.0-alpha.2", ["1.0.0"]));
+  assert.ok(!satisfied("^1.0.0-alpha.2", ["1.1.0-alpha.1"]));
   assert.ok(!satisfied("^1.0.0-alpha.30", ["1.0.0-alpha.2"]));
 });
 
@@ -120,4 +125,19 @@ test("exotic range syntax fails loudly rather than guessing", () => {
 test("range matches are reported as range matches, exact pins are not", () => {
   assert.equal(rangeSatisfiable("^1.0.0", ["1.0.0"]).viaRange, undefined);
   assert.equal(rangeSatisfiable("^1.0.0", ["1.2.0"]).viaRange, true);
+});
+
+test("registry timeouts fail with package-specific context", async () => {
+  const timeout = new Error("request aborted");
+  timeout.name = "TimeoutError";
+
+  await assert.rejects(
+    fetchPackument("@burnt-labs/timeout-test", {
+      fetchImpl: async () => {
+        throw timeout;
+      },
+      timeoutMs: 25,
+    }),
+    /registry request timed out after 25ms for @burnt-labs\/timeout-test/,
+  );
 });

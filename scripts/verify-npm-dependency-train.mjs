@@ -39,6 +39,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const REGISTRY = "https://registry.npmjs.org";
+const REGISTRY_TIMEOUT_MS = 10_000;
 const SCOPE = "@burnt-labs/";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -92,10 +93,10 @@ function cmpSemver(a, b) {
  *  - `^` on a 0.x base is minor-locked: `^0.1.0` allows `0.1.9` but NOT
  *    `0.2.0`. Below 1.0.0 the minor is the breaking-change axis.
  *  - `^0.0.x` is patch-locked — the whole version is the breaking axis.
- *  - A prerelease base only admits prereleases of the *same* `[maj,min,pat]`
- *    tuple. `^1.0.0-alpha.2` must not be satisfied by `1.5.0`: npm will not
- *    install it, so accepting it here reports a train that does not resolve.
- *    (It IS satisfied by `1.0.0` itself and by later `1.0.0-*` prereleases.)
+ *  - Prerelease candidates are admitted only when the range names a
+ *    prerelease on the same `[maj,min,pat]` tuple. Stable releases continue to
+ *    follow the normal caret/tilde bounds: `^1.0.0-alpha.2` admits `1.5.0`,
+ *    but not `1.1.0-alpha.1` or `2.0.0`.
  *
  * @param v - a concrete published version
  * @param base - the range's anchor version
@@ -110,15 +111,13 @@ function inRange(v, base, mb, prefix) {
   const basePre = mb[4];
   const versionPre = mv[4];
 
-  // A prerelease anchor never reaches past its own release tuple.
-  if (basePre) {
+  // npm excludes prerelease candidates unless the range explicitly names a
+  // prerelease on that same tuple. Stable candidates still follow the normal
+  // upper bound even when the lower bound is a prerelease.
+  if (versionPre) {
+    if (!basePre) return false;
     if (+mv[1] !== major || +mv[2] !== minor || +mv[3] !== patch) return false;
-    return cmpSemver(v, base) >= 0;
   }
-
-  // A prerelease version never satisfies a non-prerelease anchor: npm only
-  // matches prereleases when the range itself names that same tuple.
-  if (versionPre) return false;
 
   if (+mv[1] !== major) return false;
 
@@ -164,11 +163,26 @@ function rangeSatisfiable(range, published) {
 
 const packumentCache = new Map();
 
-async function fetchPackument(name) {
+async function fetchPackument(
+  name,
+  { fetchImpl = fetch, timeoutMs = REGISTRY_TIMEOUT_MS } = {},
+) {
   if (packumentCache.has(name)) return packumentCache.get(name);
-  const res = await fetch(`${REGISTRY}/${name.replace("/", "%2F")}`, {
-    headers: { accept: "application/json" },
-  });
+  let res;
+  try {
+    res = await fetchImpl(`${REGISTRY}/${name.replace("/", "%2F")}`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (error) {
+    if (error?.name === "AbortError" || error?.name === "TimeoutError") {
+      throw new Error(
+        `registry request timed out after ${timeoutMs}ms for ${name}`,
+        { cause: error },
+      );
+    }
+    throw error;
+  }
   if (res.status === 404) {
     packumentCache.set(name, null);
     return null;
@@ -311,4 +325,4 @@ if (
   });
 }
 
-export { cmpSemver, inRange, rangeSatisfiable };
+export { cmpSemver, fetchPackument, inRange, rangeSatisfiable };
