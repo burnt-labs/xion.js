@@ -200,7 +200,7 @@ jobs:
     needs: [build]
     runs-on: ubicloud-standard-8
     container:
-      image: mcr.microsoft.com/playwright:v1.48.0-noble
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -250,7 +250,7 @@ jobs:
       (github.event_name == 'pull_request' && github.base_ref == 'main')
     runs-on: ubicloud-standard-8
     container:
-      image: mcr.microsoft.com/playwright:v1.48.0-noble
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
     timeout-minutes: 15
     permissions:
       pull-requests: write
