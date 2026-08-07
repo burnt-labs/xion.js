@@ -187,6 +187,54 @@ export interface paths {
                         };
                     };
                 };
+                /** @description session_jwt is malformed or missing its aud/sub claims */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description session_token could not be authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Authenticated session does not match the requested account */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
                 /** @description Failed to create account */
                 502: {
                     headers: {

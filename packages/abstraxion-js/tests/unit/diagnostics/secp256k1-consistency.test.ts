@@ -31,7 +31,7 @@ import {
 } from "@cosmjs/crypto";
 import { toHex, fromHex } from "@cosmjs/encoding";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { TEST_MNEMONIC, getTestConfig } from "../fixtures";
+import { TEST_MNEMONIC, getTestConfig } from "../../integration/fixtures";
 
 describe("Secp256k1 Salt/Address/Signature Consistency Diagnostics", () => {
   // Test keypair derived using same logic as helpers.ts
