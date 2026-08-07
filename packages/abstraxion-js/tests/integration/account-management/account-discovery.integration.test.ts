@@ -9,7 +9,6 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { registerGlobalHooks } from "../setup";
 import {
   getTestConfig,
   INTEGRATION_TEST_TIMEOUT,
@@ -34,8 +33,6 @@ import { StargateClient } from "@cosmjs/stargate";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 describe("Account Discovery Integration Tests", () => {
-  registerGlobalHooks();
-
   let config: ReturnType<typeof getTestConfig>;
   let stargateClient: StargateClient;
   let sessionManager: SessionManager;

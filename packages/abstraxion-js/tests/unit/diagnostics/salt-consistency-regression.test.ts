@@ -1,5 +1,5 @@
 /**
- * Salt Consistency Regression Test
+ * Salt Consistency Regression Unit Test
  *
  * This test ensures we don't reintroduce the bug where:
  * - xion.js calculated salt from base64 pubkey

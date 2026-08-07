@@ -74,3 +74,14 @@ jobs:
           setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # npm publishes are not transactional: changesets can publish some
+      # packages and fail on others (e.g. ENEEDAUTH on 2026-06-11 left
+      # abstraxion-react-native@latest depending on an unpublished
+      # abstraxion-js version). This gate makes any partial publish or
+      # broken dependency train fail the workflow with an explicit report.
+      # Runs even when the changesets step failed, so the report shows
+      # exactly which versions are missing from npm.
+      - name: 🚦 Verify npm dependency train
+        if: always() && (steps.changesets.outcome == 'failure' || steps.changesets.outputs.published == 'true')
+        run: node scripts/verify-npm-dependency-train.mjs --require-local-published

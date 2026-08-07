@@ -71,6 +71,27 @@ const DASHBOARD_URL =
   process.env.DASHBOARD_URL ?? "https://auth.testnet.burnt.com";
 const DASHBOARD_ORIGIN = new URL(DASHBOARD_URL).origin;
 
+function expectedUnauthenticatedMarker(mode?: string): RegExp {
+  const contracts: Record<string, { root: RegExp; sdkMode: RegExp }> = {
+    "https://auth.testnet.burnt.com": {
+      root: /^SIGN IN TO CONTINUE$/im,
+      sdkMode: /^Sign in$/im,
+    },
+    "https://settings.burnt.com": {
+      root: /^SIGN IN TO CONTINUE$/im,
+      sdkMode: /^Sign in$/im,
+    },
+  };
+  const contract = contracts[DASHBOARD_ORIGIN];
+  if (!contract) {
+    throw new Error(
+      `No unauthenticated UI contract is configured for ${DASHBOARD_ORIGIN}`,
+    );
+  }
+
+  return mode ? contract.sdkMode : contract.root;
+}
+
 // A bech32 address with the right prefix is enough — the dashboard parses but
 // doesn't verify these in its mount path. Using a deterministic constant keeps
 // failures debuggable.
@@ -101,11 +122,15 @@ const HANDSHAKE_TIMEOUT_MS = 30_000;
 //   - /api/v1/sessions/authenticate(-no-session|-oauth-no-session): the
 //     dashboard's JWT signer and AddAuthenticators flow probe these on boot;
 //     401s here are expected pre-login and orthogonal to the SDK contract.
+//   - StytchAPIUnreachableError / RBAC policy lookup: Stytch availability and
+//     authentication are explicitly outside this SDK transport contract.
 const IGNORED_CONSOLE_PATTERNS = [
   /cdn-cgi\/challenge-platform/i,
   /favicon\.ico/i,
   /\/sdk\/v1\/sessions\/authenticate/i,
   /\/api\/v1\/sessions\/authenticate/i,
+  /\[Stytch\] StytchAPIUnreachableError/i,
+  /\[Stytch\] Unable to retrieve RBAC policy/i,
 ];
 
 // Set DEBUG_CONSOLE=1 when adding a new mode or chasing a flake to dump every
@@ -258,29 +283,23 @@ describe("SDK ↔ Dashboard Contract (live testnet)", () => {
             const root = document.getElementById("root");
             return !!root && root.childElementCount > 0;
           },
+          undefined,
           { timeout: 15_000 },
         );
 
-        // NOTE: deliberately no assertion on WHAT the dashboard renders here.
-        //
-        // This block used to also wait for the literal title "Log in / Sign up"
-        // to prove the mode routed to LoginModal. xion-dashboard-app deleted
-        // that string in a UI redesign (56e6b39) and this suite — a blocking
-        // gate — began failing on every PR in this repo, with no SDK or
-        // dashboard regression whatsoever.
-        //
-        // The lesson is the boundary, not the string: the dashboard is a
-        // separately-deployed app that owns its own UI. What this repo can
-        // legitimately assert is that the URL the SDK constructs serves a
-        // working SPA — status 200, #root mounts, no uncaught/console errors
-        // (all asserted here). Whether that SPA shows a login dialog, and what
-        // it says, is the dashboard's contract with its users, covered by its
-        // own tests (src/tests/components/{LoginModal,LoginScreen,AppLogin}).
-        //
-        // The real SDK↔dashboard contract — message types, the IFRAME_READY
-        // handshake, origin handling — is protocol-level and tested below.
-        // Don't re-add UI assertions here; they couple this repo's merge gate
-        // to another repo's design decisions.
+        // Assert the environment's explicit unauthenticated UI contract. The
+        // root redirects to the account app, while SDK modes remain on the
+        // auth shell. Both environments are listed explicitly above so drift
+        // can be handled independently when their deployments diverge.
+        const marker = expectedUnauthenticatedMarker(fixture.params.mode);
+        await page.waitForFunction(
+          ({ source, flags }) => {
+            const text = document.body.innerText ?? "";
+            return new RegExp(source, flags).test(text);
+          },
+          { source: marker.source, flags: marker.flags },
+          { timeout: 15_000 },
+        );
 
         // Inline mode runs an additional useEffect (App.tsx:68-82) that makes
         // the document transparent so the embedding dApp shows through.
@@ -1010,17 +1029,13 @@ describe("SDK ↔ Dashboard Contract (live testnet)", () => {
         "popup must have window.opener set (popup-mode rejection path uses it)",
       ).toBe(true);
 
-      // Assert the popup actually mounted the dashboard SPA (rather than
-      // sitting on about:blank or a crashed bundle) — same mount-level check
-      // the per-mode loop uses, scoped to the popup page this time.
-      //
-      // This previously waited on the login modal's title copy; see the note in
-      // the mount loop above for why UI assertions don't belong in this repo.
+      // Assert the same environment-specific pre-auth marker used by the mode
+      // mount loop, scoped to the popup page this time.
+      const marker = expectedUnauthenticatedMarker("popup");
       await popup.waitForFunction(
-        () => {
-          const root = document.getElementById("root");
-          return !!root && root.childElementCount > 0;
-        },
+        ({ source, flags }) =>
+          new RegExp(source, flags).test(document.body.innerText ?? ""),
+        { source: marker.source, flags: marker.flags },
         { timeout: 15_000 },
       );
 

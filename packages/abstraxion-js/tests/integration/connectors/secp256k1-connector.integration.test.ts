@@ -8,7 +8,6 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { registerGlobalHooks } from "../setup";
 import {
   getTestConfig,
   INTEGRATION_TEST_TIMEOUT,
@@ -40,8 +39,6 @@ import type { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 describe("Secp256K1 Connector - Integration Tests", () => {
-  registerGlobalHooks();
-
   let config: ReturnType<typeof getTestConfig>;
   let storageStrategy: ReturnType<typeof createMockStorageStrategy>;
   let sessionManager: SessionManager;
