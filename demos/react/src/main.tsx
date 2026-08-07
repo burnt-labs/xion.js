@@ -6,6 +6,7 @@ import { HomePage } from "@/pages/HomePage";
 import { AutoModePage } from "@/pages/AutoModePage";
 import { EmbeddedModePage } from "@/pages/EmbeddedModePage";
 import { SignerModePage } from "@/pages/SignerModePage";
+import { SaasAppPage } from "@/pages/SaasAppPage";
 import "./styles.css";
 
 const rootElement = document.getElementById("root");
@@ -22,6 +23,7 @@ createRoot(rootElement).render(
           <Route path="/auto" element={<AutoModePage />} />
           <Route path="/embedded" element={<EmbeddedModePage />} />
           <Route path="/signer-mode" element={<SignerModePage />} />
+          <Route path="/saas" element={<SaasAppPage />} />
         </Routes>
       </main>
     </BrowserRouter>

@@ -15,14 +15,13 @@ export default defineConfig({
       "../test-utils/src/vitest/setup.ts",
       "./vitest.setup.integration.ts",
     ],
+    globalSetup: ["./tests/integration/global-setup.ts"],
+    minWorkers: 8,
+    maxWorkers: 8,
     testTimeout: 120000,
     hookTimeout: 120000,
     teardownTimeout: 30000,
-    include: [
-      "tests/integration/**/*.integration.test.ts",
-      "tests/integration/**/*.diagnostic.test.ts",
-      "tests/integration/**/*.test.ts",
-    ],
+    include: ["tests/integration/**/*.integration.test.ts"],
     exclude: [
       "node_modules",
       "dist",
@@ -32,7 +31,6 @@ export default defineConfig({
       "tests/integration/message-contract.integration.test.ts",
     ],
     coverage: { enabled: false },
-    retry: 1,
     server: {
       deps: {
         inline: ["@github/webauthn-json"],
