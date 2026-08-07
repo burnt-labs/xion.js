@@ -1,10 +1,10 @@
 name: Setup Integration Environment
 description: |
-  Shared setup for jobs that run integration tests with Playwright:
+  Shared setup for integration and browser contract jobs:
     - pnpm + Node (with pnpm cache)
     - pnpm install
     - Download build artifacts (from the upstream `build` job)
-    - Cached Playwright browser install
+    - Optional cached Playwright browser install
 
   The Playwright cache is keyed on pnpm-lock.yaml so the chromium download
   (~150MB) only runs once per lockfile change, even across parallel jobs.
@@ -20,6 +20,10 @@ inputs:
     description: Where to extract build artifacts.
     required: false
     default: packages
+  install-playwright:
+    description: Install Chromium and its system dependencies for browser contract tests.
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -45,6 +49,7 @@ runs:
 
     - name: Cache Playwright browsers
       id: playwright-cache
+      if: inputs.install-playwright == 'true'
       uses: actions/cache@v4
       with:
         path: ~/.cache/ms-playwright
@@ -53,11 +58,11 @@ runs:
           playwright-${{ runner.os }}-
 
     - name: Install Playwright browsers (full, on cache miss)
-      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      if: inputs.install-playwright == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
       shell: bash
       run: pnpm --filter @burnt-labs/abstraxion-js exec playwright install --with-deps chromium
 
     - name: Install Playwright system deps only (on cache hit)
-      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      if: inputs.install-playwright == 'true' && steps.playwright-cache.outputs.cache-hit == 'true'
       shell: bash
       run: pnpm --filter @burnt-labs/abstraxion-js exec playwright install-deps chromium

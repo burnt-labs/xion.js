@@ -11,15 +11,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { registerGlobalHooks } from "../setup";
 import { getTestConfig, EXPECTED_VALUES, TEST_GRANT_AMOUNT } from "../fixtures";
 import { RedirectController } from "@burnt-labs/abstraxion-js";
 import type { RedirectControllerConfig } from "@burnt-labs/abstraxion-js";
 import { createMockStorageStrategy, sleep } from "../helpers";
 
 describe("Redirect Authentication Flow - Integration", () => {
-  registerGlobalHooks();
-
   let config: ReturnType<typeof getTestConfig>;
 
   beforeEach(() => {

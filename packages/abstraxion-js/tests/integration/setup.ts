@@ -3,7 +3,6 @@
  * Configures test environment, validates configuration, and provides lifecycle hooks
  */
 
-import { beforeAll, afterAll, afterEach } from "vitest";
 import { getTestConfig, EXPECTED_VALUES } from "./fixtures";
 import {
   createTestStargateClient,
@@ -120,25 +119,6 @@ export async function globalTeardown() {
   cleanupTestStorage();
 
   console.log("✅ Cleanup complete\n");
-}
-
-/**
- * Register global hooks
- * Call this in your test files that need setup/teardown
- */
-export function registerGlobalHooks() {
-  beforeAll(async () => {
-    await globalSetup();
-  }, 60000); // 60 second timeout for setup
-
-  afterEach(() => {
-    // Cleanup after each test
-    cleanupTestStorage();
-  });
-
-  afterAll(async () => {
-    await globalTeardown();
-  });
 }
 
 /**
