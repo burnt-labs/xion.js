@@ -29,7 +29,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.2.2",
-    "vite": "^6.4.3",
+    "vite": "^7.3.5",
     "vite-plugin-node-polyfills": "^0.25.0"
   }
 }
