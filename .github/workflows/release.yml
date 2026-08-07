@@ -53,16 +53,6 @@ jobs:
         id: build-the-mono-repo
         run: pnpm build
 
-      - name: 🔐 Configure git signing
-        run: |
-          echo "${{ secrets.SSH_SIGNING_PK }}" > /tmp/.git_signing_key
-          chmod 600 /tmp/.git_signing_key
-          git config user.name "isburnt"
-          git config user.email "197779235+isburnt@users.noreply.github.com"
-          git config commit.gpgsign true
-          git config gpg.format ssh
-          git config user.signingkey /tmp/.git_signing_key
-
       - name: 📣 Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
@@ -71,7 +61,9 @@ jobs:
           publish: pnpm publish:packages
           version: pnpm version:packages
           commit: "chore: update versions"
-          setupGitUser: false
+          # GitHub API commits and tags are signed by GitHub's GPG key. This
+          # satisfies the signed-commit rule without a private signing secret.
+          commitMode: github-api
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
