@@ -176,8 +176,18 @@ interface ModeFixture {
 // Mirrors the mode params each SDK code path actually constructs. Keep these
 // in sync with PopupController/IframeController/RedirectController if the SDK
 // adds a new mode.
+//
+// NOTE: there is deliberately no bare-`/` ("root, no mode") fixture. Every SDK
+// entry point goes through buildDashboardUrl() (controllers/utils.ts), which
+// always sets `mode` — so bare `/` is not a URL the SDK can produce, and the
+// dashboard now redirects it to the main app (app.testnet.burnt.com). That
+// redirect aborts the Stytch requests still in flight from the dashboard's
+// boot, which the Stytch SDK surfaces as console errors
+// (`StytchAPIUnreachableError` / "Unable to retrieve RBAC policy"), failing the
+// no-console-errors assertion below on every PR. Same lesson as the login-copy
+// assertion removed above: don't gate this repo's merges on dashboard routing
+// decisions the SDK never exercises.
 const MODE_FIXTURES: ModeFixture[] = [
-  { name: "root (no mode)", params: {} },
   {
     name: "inline (IframeController)",
     params: {
