@@ -13,7 +13,10 @@
     "check:dep-parity": "node scripts/check-internal-dependency-parity.mjs",
     "publish:packages": "changeset publish",
     "version:packages": "changeset version",
-    "test": "pnpm test:unit && pnpm test:integration",
+    "verify:npm-train": "node scripts/verify-npm-dependency-train.mjs",
+    "verify:npm-train:release": "node scripts/verify-npm-dependency-train.mjs --require-local-published",
+    "test": "pnpm test:scripts && pnpm test:unit && pnpm test:integration",
+    "test:scripts": "node --test \"scripts/__tests__/**/*.test.mjs\"",
     "test:unit": "turbo run test",
     "test:unit:watch": "turbo run test --concurrency 1 -- --watch",
     "test:unit:coverage": "turbo run test -- --coverage",
@@ -32,7 +35,7 @@
     "eslint": "^8.48.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.3",
-    "turbo": "^2.0.11"
+    "turbo": "^2.9.14"
   },
   "devDependencies": {
     "@hono/zod-openapi": "^0.18.4",
@@ -54,7 +57,7 @@
       "@cosmjs/tendermint-rpc": "^0.36.0",
       "@cosmjs/utils": "^0.36.0",
       "cosmjs-types": "^0.9.0",
-      "@burnt-labs/xion-types": "29.0.0-rc1"
+      "@burnt-labs/xion-types": "30.0.0-rc1"
     }
   }
 }

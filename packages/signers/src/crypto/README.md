@@ -621,7 +621,7 @@ Use these diagnostic tests to verify cryptographic consistency:
 
 ```bash
 cd xion.js/packages/abstraxion
-pnpm test tests/integration/diagnostics/secp256k1-consistency.diagnostic.test.ts
+pnpm --filter @burnt-labs/abstraxion-js exec vitest run tests/unit/diagnostics/secp256k1-consistency.test.ts --config vitest.config.ts
 ```
 
 These tests verify:

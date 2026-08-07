@@ -8,7 +8,6 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { registerGlobalHooks } from "../setup";
 import {
   getTestConfig,
   INTEGRATION_TEST_TIMEOUT,
@@ -34,8 +33,6 @@ import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { DirectQueryTreasuryStrategy } from "@burnt-labs/account-management";
 
 describe("Grant Management Integration Tests", () => {
-  registerGlobalHooks();
-
   let config: ReturnType<typeof getTestConfig>;
   let stargateClient: StargateClient;
   let sessionManager: SessionManager;
