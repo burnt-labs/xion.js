@@ -185,6 +185,9 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         "xion1feegranter",
         "xion",
         "https://rpc.xion-testnet-1.burnt.com",
+        // No accountCreationConfig.codeId set above, so the registration code
+        // id is left undefined and the AA API registers at its own default.
+        undefined,
       );
       expect(result.smartAccountAddress).toBe("xion1newaccount");
       expect(result.connectionInfo.metadata?.codeId).toBe(789);
@@ -237,6 +240,8 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         "xion1feegranter",
         "xion",
         "https://rpc.xion-testnet-1.burnt.com",
+        // As above: no codeId configured, so the AA API's default target wins.
+        undefined,
       );
       expect(result.smartAccountAddress).toBe("xion1newcosmosaccount");
     });

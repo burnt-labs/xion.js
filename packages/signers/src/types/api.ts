@@ -21,6 +21,7 @@ export type {
   CreateSecp256k1Request,
   CreateJWTRequest,
   CreateAccountResponseV2,
+  RegistrationConfigResponse,
   AccountType,
   ErrorResponse,
 } from "./generated/api";

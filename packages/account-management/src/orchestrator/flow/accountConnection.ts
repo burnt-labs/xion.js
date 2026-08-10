@@ -117,8 +117,12 @@ export async function connectAccount(
       throw new Error("Account creation config is required but not provided");
     }
 
-    const { aaApiUrl, smartAccountContract, feeGranter } =
-      accountCreationConfig;
+    const {
+      aaApiUrl,
+      smartAccountContract,
+      feeGranter,
+      codeId: registrationCodeId,
+    } = accountCreationConfig;
 
     // Create account based on authenticator type
     if (authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
@@ -136,6 +140,9 @@ export async function connectAccount(
         feeGranter,
         smartAccountContract.addressPrefix,
         rpcUrl, // Pass RPC URL to wait for confirmation internally
+        // Undefined leaves the target to the AA API's default; when set, it
+        // must pair with the checksum above (see AccountCreationConfig.codeId).
+        registrationCodeId,
       );
 
       smartAccountAddress = result.account_address;
@@ -160,6 +167,9 @@ export async function connectAccount(
         feeGranter,
         smartAccountContract.addressPrefix,
         rpcUrl, // Pass RPC URL to wait for confirmation internally
+        // Undefined leaves the target to the AA API's default; when set, it
+        // must pair with the checksum above (see AccountCreationConfig.codeId).
+        registrationCodeId,
       );
 
       smartAccountAddress = result.account_address;

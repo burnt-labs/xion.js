@@ -3,16 +3,29 @@
  * Generate TypeScript types from AA API OpenAPI schema
  *
  * Usage:
- *   pnpm tsx scripts/generate-aa-api-types.ts [testnet|mainnet|custom-url]
+ *   pnpm tsx scripts/generate-aa-api-types.ts [testnet|mainnet|custom-url|path/to/openapi.json]
  *
  * This script:
- * 1. Fetches OpenAPI schema from AA API endpoint
+ * 1. Loads the OpenAPI schema — from a deployed AA API endpoint, or from a
+ *    local schema file (see below)
  * 2. Generates TypeScript types using openapi-typescript
- * 3. Writes types to packages/signers/src/types/generated/api.ts
+ * 3. Writes types to packages/signers/src/types/generated/api.generated.ts
+ *    and provenance to .../generated/metadata.json
+ *
+ * It does NOT touch generated/api.ts, which despite its directory is a
+ * hand-written façade that names the handful of request/response types the SDK
+ * uses out of the generated `paths` tree. Regenerating never overwrites it —
+ * if the schema renames something, api.ts must be updated by hand.
+ *
+ * Generating from a local file lets the SDK adopt AA API schema changes
+ * *before* they are deployed: dump the schema from an account-abstraction-api
+ * checkout (`pnpm openapi:dump`) and point this script at the result. The
+ * metadata file records that provenance so it stays obvious that the checked-in
+ * types are ahead of what is live.
  */
 
 import { execSync } from "child_process";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, readFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -44,13 +57,60 @@ interface SchemaInfo {
 }
 
 /**
- * Fetch OpenAPI schema from AA API endpoint
+ * Where a schema came from. Local-file sources are flagged so the metadata can
+ * say plainly that the generated types may be ahead of every deployment.
  */
-async function fetchSchema(baseUrl: string): Promise<any> {
-  const schemaUrl = `${baseUrl}/openapi.json`;
-  console.log(`📡 Fetching OpenAPI schema from ${schemaUrl}...`);
+interface SchemaSource {
+  /** Human-readable origin recorded in metadata.json */
+  ref: string;
+  isLocalFile: boolean;
+}
 
-  const response = await fetch(schemaUrl);
+/**
+ * Resolve the CLI argument to a schema source.
+ *
+ * A named env (testnet/mainnet/local) or an http(s) URL is fetched from
+ * `{base}/openapi.json`; anything else is treated as a path to a schema file
+ * on disk.
+ */
+function resolveSource(target: string): SchemaSource {
+  const namedUrl = AA_API_URLS[target as keyof typeof AA_API_URLS];
+  if (namedUrl) {
+    return { ref: `${namedUrl}/openapi.json`, isLocalFile: false };
+  }
+  if (/^https?:\/\//.test(target)) {
+    return { ref: `${target}/openapi.json`, isLocalFile: false };
+  }
+  return { ref: path.resolve(target), isLocalFile: true };
+}
+
+function logSchema(schema: any): void {
+  console.log(`   Version: ${schema.info?.version || "unknown"}`);
+  console.log(`   Title: ${schema.info?.title || "unknown"}`);
+  console.log(`   Paths: ${Object.keys(schema.paths || {}).length}`);
+}
+
+/**
+ * Load the OpenAPI schema from a deployed endpoint or a local file
+ */
+async function loadSchema(source: SchemaSource): Promise<any> {
+  if (source.isLocalFile) {
+    console.log(`📄 Reading OpenAPI schema from ${source.ref}...`);
+    if (!existsSync(source.ref)) {
+      throw new Error(
+        `Schema file not found: ${source.ref}\n` +
+          `   Generate one from an account-abstraction-api checkout with:\n` +
+          `     pnpm openapi:dump`,
+      );
+    }
+    const schema = JSON.parse(await readFile(source.ref, "utf-8"));
+    console.log(`✅ Schema loaded from disk`);
+    logSchema(schema);
+    return schema;
+  }
+
+  console.log(`📡 Fetching OpenAPI schema from ${source.ref}...`);
+  const response = await fetch(source.ref);
   if (!response.ok) {
     throw new Error(
       `Failed to fetch schema: ${response.status} ${response.statusText}`,
@@ -59,8 +119,7 @@ async function fetchSchema(baseUrl: string): Promise<any> {
 
   const schema = await response.json();
   console.log(`✅ Schema fetched successfully`);
-  console.log(`   Version: ${schema.info?.version || "unknown"}`);
-  console.log(`   Title: ${schema.info?.title || "unknown"}`);
+  logSchema(schema);
 
   return schema;
 }
@@ -253,19 +312,88 @@ export type ErrorResponse = {
 }
 
 /**
+ * Describe where a local schema file came from, in terms someone else can act on.
+ *
+ * `path.basename()` alone reduced every local run to "openapi.json", which
+ * identifies nothing — the whole point of recording provenance is being able
+ * to answer "which build of account-abstraction-api is this?" months later.
+ * So: prefer the source repo's git commit, and fall back to a path relative to
+ * this repo. Absolute paths are still never recorded — this file is committed,
+ * and the generating machine's directory layout is noise and a small leak.
+ */
+function describeLocalSource(filePath: string): {
+  ref: string;
+  commit?: string;
+} {
+  const dir = path.dirname(filePath);
+  const relative = path.relative(path.join(__dirname, ".."), filePath);
+  // A sibling checkout resolves to "../account-abstraction-api/openapi.json",
+  // which is meaningful and safe to commit. More than one level up means the
+  // path describes the generating machine rather than the workspace, so it
+  // stays anonymous.
+  const escapesWorkspace =
+    relative.split(path.sep).filter((segment) => segment === "..").length > 1;
+  const ref =
+    !relative || escapesWorkspace ? path.basename(filePath) : relative;
+
+  try {
+    const commit = execSync("git rev-parse HEAD", {
+      cwd: dir,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+    const repo = path
+      .basename(
+        execSync("git rev-parse --show-toplevel", {
+          cwd: dir,
+          stdio: ["ignore", "pipe", "ignore"],
+        })
+          .toString()
+          .trim(),
+      )
+      .trim();
+    return { ref, commit: `${repo}@${commit}` };
+  } catch {
+    // Not a git checkout (or no git) — the relative path is all we have.
+    return { ref };
+  }
+}
+
+/**
  * Write metadata file
  */
 async function writeMetadata(
   schema: any,
-  baseUrl: string,
+  source: SchemaSource,
   targetEnv: string,
 ): Promise<void> {
+  const local = source.isLocalFile
+    ? describeLocalSource(source.ref)
+    : undefined;
+
   const metadata = {
     generated_at: new Date().toISOString(),
     schema_version: schema.info?.version || "unknown",
     schema_title: schema.info?.title || "AA API",
-    schema_url: `${baseUrl}/openapi.json`,
-    source_env: targetEnv,
+    schema_url: local ? local.ref : source.ref,
+    // The commit of the checkout the schema was dumped from — the only field
+    // that makes a local-file generation reproducible.
+    ...(local?.commit ? { schema_commit: local.commit } : {}),
+    source_env: source.isLocalFile ? "local-file" : targetEnv,
+    // Types generated from a local checkout can describe endpoints that are
+    // not deployed anywhere yet. Record that explicitly — otherwise the next
+    // reader assumes these types match live testnet.
+    ...(source.isLocalFile
+      ? {
+          source_kind: "local-file",
+          warning:
+            "Generated from a local account-abstraction-api checkout, not a " +
+            "deployed environment. These types may describe endpoints or " +
+            "fields that are not live yet. Regenerate from testnet once the " +
+            "API is deployed.",
+        }
+      : { source_kind: "deployed" }),
   };
 
   await writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2), "utf-8");
@@ -274,11 +402,10 @@ async function writeMetadata(
 
 async function main() {
   const targetEnv = process.argv[2] || "testnet";
-  const baseUrl =
-    AA_API_URLS[targetEnv as keyof typeof AA_API_URLS] || targetEnv;
+  const source = resolveSource(targetEnv);
 
   console.log(`🚀 Generating AA API types for: ${targetEnv}`);
-  console.log(`📍 Base URL: ${baseUrl}\n`);
+  console.log(`📍 Source: ${source.ref}\n`);
 
   try {
     // Create output directory
@@ -287,8 +414,8 @@ async function main() {
       console.log(`📁 Created output directory: ${OUTPUT_DIR}`);
     }
 
-    // Fetch schema
-    const schema = await fetchSchema(baseUrl);
+    // Load schema
+    const schema = await loadSchema(source);
     console.log();
 
     // Generate types
@@ -296,8 +423,16 @@ async function main() {
     console.log();
 
     // Write metadata
-    await writeMetadata(schema, baseUrl, targetEnv);
+    await writeMetadata(schema, source, targetEnv);
     console.log();
+
+    if (source.isLocalFile) {
+      console.log(
+        `⚠️  Generated from a LOCAL schema file — these types may describe\n` +
+          `   endpoints that are not deployed yet. Regenerate from testnet\n` +
+          `   once account-abstraction-api ships.\n`,
+      );
+    }
 
     console.log(`✨ Type generation complete!`);
     console.log(`📦 Files generated:`);
@@ -306,7 +441,10 @@ async function main() {
     console.log(`\n💡 Next steps:`);
     console.log(`   1. Review generated types`);
     console.log(
-      `   2. Update signers/src/types/api.ts to import from ./generated/api`,
+      `   2. If the schema renamed or added a type, update the hand-written`,
+    );
+    console.log(
+      `      façade at ${path.join(OUTPUT_DIR, "api.ts")} — it is NOT regenerated`,
     );
     console.log(`   3. Run 'pnpm build' to verify types compile correctly`);
   } catch (error: any) {
