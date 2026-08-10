@@ -1,5 +1,12 @@
 # @burnt-labs/abstraxion-react-native
 
+## 1.0.0-alpha.22
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion-js@1.0.0-alpha.3
+
 ## 1.0.0-alpha.21
 
 ### Patch Changes

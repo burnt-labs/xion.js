@@ -1,5 +1,17 @@
 # @burnt-labs/abstraxion-core
 
+## 1.0.0-alpha.73
+
+### Patch Changes
+
+- [#381](https://github.com/burnt-labs/xion.js/pull/381) [`8014042`](https://github.com/burnt-labs/xion.js/commit/80140420ad70e3ec35711d7f361412ac27308f39) Thanks [@Nexory](https://github.com/Nexory)! - Fix grant comparison correctness: `isLimitValid` now requires every expected denom to be present on-chain (a chain grant that omits a required denom is no longer treated as a match), and Stake `maxTokens` is compared by value instead of by reference (so matching stake grants are no longer flagged as a mismatch).
+
+- [#386](https://github.com/burnt-labs/xion.js/pull/386) [`1e4b0e7`](https://github.com/burnt-labs/xion.js/commit/1e4b0e7edc8232a956ad98dcf47a52f97ee4d273) Thanks [@ertemann](https://github.com/ertemann)! - Update @burnt-labs/xion-types to 30.0.0-rc1 to match the v30.0.0 xion chain release
+
+- Updated dependencies [[`297beee`](https://github.com/burnt-labs/xion.js/commit/297beee2d5b7f17cebb28d8c3ae82bbb090748ff), [`1e4b0e7`](https://github.com/burnt-labs/xion.js/commit/1e4b0e7edc8232a956ad98dcf47a52f97ee4d273)]:
+  - @burnt-labs/constants@0.1.0-alpha.25
+  - @burnt-labs/signers@1.0.0-alpha.11
+
 ## 1.0.0-alpha.72
 
 ### Minor Changes
