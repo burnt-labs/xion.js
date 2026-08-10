@@ -73,4 +73,4 @@ Adopt `@burnt-labs/xion-types` as the source of truth for protobuf and contract 
 
 ## Constants (`@burnt-labs/constants`)
 
-- Mainnet dashboard / iframe URL changed from `https://settings.mainnet.burnt.com` to `https://settings.burnt.com`.
+- Mainnet dashboard / iframe URL changed from `https://settings.burnt.com` to `https://auth.burnt.com`.
