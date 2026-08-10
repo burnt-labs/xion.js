@@ -10,7 +10,7 @@
  * Priority: Focus on integration tests for actual flows (grant creation, account discovery, etc.)
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createGrants, checkStorageGrants } from "../grantCreation";
 import type { GrantCreationParams } from "../grantCreation";
 import * as grantUtils from "../../../grants/construction";
@@ -72,6 +72,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
 
     // Setup mock AAClient
     mockClient = {
+      getAccount: vi.fn().mockResolvedValue({ address: "xion1granter" }),
       simulate: vi.fn(),
       signAndBroadcast: vi.fn(),
     };
@@ -105,6 +106,10 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
       rpcUrl: "https://rpc.xion.com",
       gasPrice: "0.001uxion",
     };
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("checkStorageGrants()", () => {
@@ -293,6 +298,83 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
         "Create grants for abstraxion",
       );
       expect(result.success).toBe(true);
+    });
+
+    it("should wait until a newly created smart account is queryable", async () => {
+      vi.useFakeTimers();
+      mockStorageStrategy.getItem.mockResolvedValue(null);
+      mockClient.getAccount
+        .mockResolvedValueOnce(null)
+        .mockRejectedValueOnce(
+          new Error("rpc error: account xion1granter not found: key not found"),
+        )
+        .mockResolvedValueOnce({ address: "xion1granter" });
+
+      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
+        {
+          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
+          value: {},
+        },
+      ]);
+      mockClient.simulate.mockResolvedValue(100000);
+      mockClient.signAndBroadcast.mockResolvedValue({
+        code: 0,
+        transactionHash: "HASH123",
+      });
+
+      const resultPromise = createGrants(mockParams);
+      await vi.advanceTimersByTimeAsync(2000);
+      const result = await resultPromise;
+
+      expect(result.success).toBe(true);
+      expect(mockClient.getAccount).toHaveBeenCalledTimes(3);
+      expect(mockClient.simulate).toHaveBeenCalledOnce();
+    });
+
+    it("should fail when a smart account never becomes queryable", async () => {
+      vi.useFakeTimers();
+      mockStorageStrategy.getItem.mockResolvedValue(null);
+      mockClient.getAccount.mockRejectedValue(
+        new Error("rpc error: account xion1granter not found: key not found"),
+      );
+
+      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
+        {
+          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
+          value: {},
+        },
+      ]);
+
+      const resultPromise = createGrants(mockParams);
+      await vi.runAllTimersAsync();
+      const result = await resultPromise;
+
+      expect(result).toEqual({
+        success: false,
+        error: expect.stringContaining(
+          "Smart account xion1granter was not queryable after 30 attempts",
+        ),
+      });
+      expect(mockClient.getAccount).toHaveBeenCalledTimes(30);
+      expect(mockClient.simulate).not.toHaveBeenCalled();
+    });
+
+    it("should fail immediately for non-readiness account query errors", async () => {
+      mockStorageStrategy.getItem.mockResolvedValue(null);
+      mockClient.getAccount.mockRejectedValue(new Error("RPC unavailable"));
+
+      vi.mocked(grantUtils.buildGrantMessages).mockReturnValue([
+        {
+          typeUrl: "/cosmos.authz.v1beta1.MsgGrant",
+          value: {},
+        },
+      ]);
+
+      const result = await createGrants(mockParams);
+
+      expect(result).toEqual({ success: false, error: "RPC unavailable" });
+      expect(mockClient.getAccount).toHaveBeenCalledOnce();
+      expect(mockClient.simulate).not.toHaveBeenCalled();
     });
 
     it("should store granter address after successful creation", async () => {

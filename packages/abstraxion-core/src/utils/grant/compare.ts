@@ -132,13 +132,29 @@ export const isLimitValid = <T extends { denom: string; amount: string }>(
     expectedLimits.set(item.denom, BigInt(item.amount));
   }
 
-  // Check each chain limit against the expected limit
+  // Total the chain amounts per denom in a single pass. Cosmos `Coins` are
+  // normalized to one entry per denom, but summing costs nothing and keeps the
+  // check correct if duplicates ever do appear - comparing entries
+  // individually would let two sub-limit entries add up past the expected total.
+  const chainTotals = new Map<string, bigint>();
   for (const item of chainLimit) {
-    const expectedAmount = expectedLimits.get(item.denom);
-    if (expectedAmount === undefined) return false; // Unexpected denom
+    if (!expectedLimits.has(item.denom)) return false; // Unexpected denom
+    chainTotals.set(
+      item.denom,
+      (chainTotals.get(item.denom) ?? 0n) + BigInt(item.amount),
+    );
+  }
+
+  for (const [denom, expectedAmount] of expectedLimits) {
+    const chainAmount = chainTotals.get(denom);
+
+    // Every expected denom must be present on-chain: a chain grant that omits a
+    // required denom does not satisfy the expected limit (otherwise a narrower
+    // grant would be treated as a match and the broader never re-requested).
+    if (chainAmount === undefined) return false;
 
     // Chain amount should be less than or equal to expected amount
-    if (BigInt(item.amount) > expectedAmount) return false;
+    if (chainAmount > expectedAmount) return false;
   }
 
   return true;
@@ -349,7 +365,10 @@ export function compareChainGrantsToTreasuryGrants(
         return (
           treasuryStakeAuth.authorizationType ===
             grantStakeAuth.authorizationType &&
-          treasuryStakeAuth.maxTokens === grantStakeAuth.maxTokens &&
+          treasuryStakeAuth.maxTokens?.denom ===
+            grantStakeAuth.maxTokens?.denom &&
+          treasuryStakeAuth.maxTokens?.amount ===
+            grantStakeAuth.maxTokens?.amount &&
           JSON.stringify(treasuryStakeAuth.allowList) ===
             JSON.stringify(grantStakeAuth.allowList) &&
           JSON.stringify(treasuryStakeAuth.denyList) ===

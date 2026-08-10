@@ -24,6 +24,41 @@ import {
 } from "../../index";
 import type { GrantConfig } from "../types";
 
+const ACCOUNT_VISIBILITY_ATTEMPTS = 30;
+const ACCOUNT_VISIBILITY_DELAY_MS = 1000;
+
+function isAccountNotFoundError(error: unknown): boolean {
+  return /account\s+\S+\s+not found(?:: key not found)?/i.test(String(error));
+}
+
+async function waitForSmartAccount(
+  client: Pick<AAClient, "getAccount">,
+  smartAccountAddress: string,
+): Promise<void> {
+  for (let attempt = 1; attempt <= ACCOUNT_VISIBILITY_ATTEMPTS; attempt++) {
+    try {
+      const account = await client.getAccount(smartAccountAddress);
+      if (account) {
+        return;
+      }
+    } catch (error) {
+      if (!isAccountNotFoundError(error)) {
+        throw error;
+      }
+    }
+
+    if (attempt < ACCOUNT_VISIBILITY_ATTEMPTS) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, ACCOUNT_VISIBILITY_DELAY_MS),
+      );
+    }
+  }
+
+  throw new Error(
+    `Smart account ${smartAccountAddress} was not queryable after ${ACCOUNT_VISIBILITY_ATTEMPTS} attempts`,
+  );
+}
+
 /**
  * Result of grant creation operation
  */
@@ -244,6 +279,21 @@ export async function createGrants(
   const client = await AAClient.connectWithSigner(rpcUrl, signer, {
     gasPrice: GasPrice.fromString(gasPrice),
   });
+
+  // AA-API account creation can return after transaction confirmation but
+  // before the RPC query path serves the new account. Grant simulation needs
+  // that account record, so synchronize on the exact readiness condition.
+  try {
+    await waitForSmartAccount(client, smartAccountAddress);
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to verify smart account readiness",
+    };
+  }
 
   // 4. Build final message batch (add deploy_fee_grant if using treasury)
   const messagesToSign = [...grantMessages];
