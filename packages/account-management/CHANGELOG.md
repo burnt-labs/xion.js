@@ -1,5 +1,17 @@
 # @burnt-labs/account-management
 
+## 1.0.0-alpha.14
+
+### Patch Changes
+
+- [#385](https://github.com/burnt-labs/xion.js/pull/385) [`d17c427`](https://github.com/burnt-labs/xion.js/commit/d17c4277596cac0edbcfdfbfc881443b47c1be0b) Thanks [@justinbarry](https://github.com/justinbarry)! - `urlsMatch` now compares the full URL origin (protocol + host + port) instead of only protocol + host. URLs that differ only by port (e.g. `https://example.com:443` vs `https://example.com:8443`) are no longer treated as matching, and unparseable inputs compare as non-matching. Schemes without a tuple origin (`data:`, `file:`, `mailto:`, …) stringify their origin as the literal `"null"` and are now rejected too, so two opaque-origin URLs no longer match each other.
+
+- [#386](https://github.com/burnt-labs/xion.js/pull/386) [`1e4b0e7`](https://github.com/burnt-labs/xion.js/commit/1e4b0e7edc8232a956ad98dcf47a52f97ee4d273) Thanks [@ertemann](https://github.com/ertemann)! - Update @burnt-labs/xion-types to 30.0.0-rc1 to match the v30.0.0 xion chain release
+
+- Updated dependencies [[`8014042`](https://github.com/burnt-labs/xion.js/commit/80140420ad70e3ec35711d7f361412ac27308f39), [`1e4b0e7`](https://github.com/burnt-labs/xion.js/commit/1e4b0e7edc8232a956ad98dcf47a52f97ee4d273)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.73
+  - @burnt-labs/signers@1.0.0-alpha.11
+
 ## 1.0.0-alpha.13
 
 ### Minor Changes

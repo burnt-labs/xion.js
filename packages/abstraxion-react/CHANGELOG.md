@@ -1,5 +1,12 @@
 # @burnt-labs/abstraxion-react
 
+## 1.0.0-alpha.82
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion-js@1.0.0-alpha.3
+
 ## 1.0.0-alpha.81
 
 ### Patch Changes
