@@ -1,5 +1,14 @@
 # @burnt-labs/signers
 
+## 1.0.0-alpha.11
+
+### Patch Changes
+
+- [#386](https://github.com/burnt-labs/xion.js/pull/386) [`1e4b0e7`](https://github.com/burnt-labs/xion.js/commit/1e4b0e7edc8232a956ad98dcf47a52f97ee4d273) Thanks [@ertemann](https://github.com/ertemann)! - Update @burnt-labs/xion-types to 30.0.0-rc1 to match the v30.0.0 xion chain release
+
+- Updated dependencies [[`297beee`](https://github.com/burnt-labs/xion.js/commit/297beee2d5b7f17cebb28d8c3ae82bbb090748ff)]:
+  - @burnt-labs/constants@0.1.0-alpha.25
+
 ## 1.0.0-alpha.10
 
 ### Minor Changes

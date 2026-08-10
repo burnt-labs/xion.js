@@ -1,5 +1,13 @@
 # demos-svelte
 
+## 0.0.1-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [[`297beee`](https://github.com/burnt-labs/xion.js/commit/297beee2d5b7f17cebb28d8c3ae82bbb090748ff)]:
+  - @burnt-labs/constants@0.1.0-alpha.25
+  - @burnt-labs/abstraxion-js@1.0.0-alpha.3
+
 ## 0.0.1-alpha.1
 
 ### Patch Changes
