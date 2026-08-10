@@ -311,6 +311,14 @@ jobs:
           COMMON_VERSION=$(echo "$COSMJS_VERSIONS" | head -1 | cut -d= -f2)
           echo "   Version: $COMMON_VERSION"
 
+      - name: Check internal @burnt-labs/* dependency parity
+        # Fails if any package hand-pins an internal dep (source must be
+        # workspace:*) or if a published package pins a stale sibling — i.e. a
+        # downstream package that wasn't republished after a dependency it uses
+        # advanced. Set DEP_PARITY_WARN_ONLY=1 for a non-blocking rollout while
+        # clearing any pre-existing skew.
+        run: node scripts/check-internal-dependency-parity.mjs
+
       - name: Summary
         if: success()
         run: |

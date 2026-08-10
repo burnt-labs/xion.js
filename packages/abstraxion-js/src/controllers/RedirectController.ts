@@ -179,18 +179,6 @@ export interface RedirectControllerConfig extends ControllerConfig {
 
   /** Treasury address (optional, passed to dashboard for grant configuration) */
   treasury?: string;
-
-  /** Bank spend limits (optional, passed to dashboard for grant configuration) */
-  bank?: Array<{ denom: string; amount: string }>;
-
-  /** Enable staking permissions (optional, passed to dashboard for grant configuration) */
-  stake?: boolean;
-
-  /** Contract grant descriptions (optional, passed to dashboard for grant configuration) */
-  contracts?: Array<
-    | string
-    | { address: string; amounts: Array<{ denom: string; amount: string }> }
-  >;
 }
 
 // ─── Controller ──────────────────────────────────────────────────────────────
@@ -248,9 +236,6 @@ export class RedirectController extends BaseController {
       storageStrategy,
       redirectStrategy,
       treasury: config.treasury,
-      bank: config.bank,
-      stake: config.stake,
-      contracts: config.contracts,
     };
 
     return new RedirectController(redirectConfig);
@@ -276,9 +261,6 @@ export class RedirectController extends BaseController {
 
     this.abstraxionAuth.configureAbstraxionInstance(
       config.rpcUrl,
-      config.contracts, // Pass contracts if provided
-      config.stake, // Pass stake if provided
-      config.bank, // Pass bank (or minimal fallback) if provided
       config.redirect.callbackUrl,
       config.treasury, // Pass treasury so it's included in redirect URL
       treasuryIndexerUrl, // Default DaoDao indexer URL for treasury grant queries
@@ -287,15 +269,11 @@ export class RedirectController extends BaseController {
     );
 
     // Create grant config
-    const grantConfig =
-      config.treasury || config.contracts || config.bank || config.stake
-        ? {
-            treasury: config.treasury,
-            contracts: config.contracts,
-            bank: config.bank,
-            stake: config.stake,
-          }
-        : undefined;
+    const grantConfig = config.treasury
+      ? {
+          treasury: config.treasury,
+        }
+      : undefined;
 
     // Create orchestrator with AbstraxionAuth as sessionManager
     this.orchestrator = new ConnectionOrchestrator({

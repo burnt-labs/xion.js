@@ -120,7 +120,7 @@ export function createGrantConfigFromConfig(
   config: NormalizedAbstraxionConfig,
   signerAuth: SignerAuthentication,
 ): GrantConfig | undefined {
-  if (!config.treasury && !config.contracts && !config.bank && !config.stake) {
+  if (!config.treasury) {
     return undefined;
   }
 
@@ -130,9 +130,6 @@ export function createGrantConfigFromConfig(
 
   return {
     treasury: config.treasury,
-    contracts: config.contracts,
-    bank: config.bank,
-    stake: config.stake,
     feeGranter: config.feeGranter,
     daodaoIndexerUrl,
   };

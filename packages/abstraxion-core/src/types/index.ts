@@ -119,7 +119,7 @@ export interface DecodedReadableAuthorization {
 }
 
 /**
- * A decoded chain grant returned by fetchChainGrantsABCI.
+ * A decoded chain grant returned by fetchChainGrantsDecoded.
  * The authorization is already decoded to DecodedReadableAuthorization —
  * no intermediate REST-format conversion needed.
  */

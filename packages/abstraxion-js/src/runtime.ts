@@ -190,24 +190,20 @@ export function createAbstraxionRuntime(
     typeof process !== "undefined" &&
     process.env?.NODE_ENV !== "production"
   ) {
-    const { treasury, contracts, stake, bank } = normalized;
-    const hasGrants =
-      !!treasury ||
-      (contracts && contracts.length > 0) ||
-      !!stake ||
-      (bank && bank.length > 0);
+    const { treasury } = normalized;
+    const hasGrants = !!treasury;
     const isDashboardMode =
       authMode === "popup" ||
       authMode === "redirect" ||
       authMode === "embedded";
     if (!hasGrants && isDashboardMode) {
       console.warn(
-        "[abstraxion-runtime] No grants configured (treasury, contracts, stake, or bank). " +
+        "[abstraxion-runtime] No treasury configured. " +
           "In popup/redirect/embedded modes the user will authenticate and get a session key, " +
           "but no on-chain permissions will be granted to it. " +
           "This is intentional if you are using requireAuth (direct signing), where the user " +
           "signs transactions directly from their meta-account rather than via a session key. " +
-          "If you expected grant-based signing, add a `treasury` address or legacy grant config.",
+          "If you expected grant-based signing, add a `treasury` address.",
       );
     }
   }

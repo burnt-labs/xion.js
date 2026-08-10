@@ -18,12 +18,10 @@ import type {
   AbstraxionConfig,
   AbstraxionRuntime,
   AuthenticationConfig,
-  ContractGrantDescription,
   Controller,
   ConnectorConnectionResult,
   GranteeSignerClient,
   SignArbSecp256k1HdWallet,
-  SpendLimit,
 } from "@burnt-labs/abstraxion-js";
 
 export type {
@@ -52,9 +50,6 @@ export interface AbstraxionContextProps {
   rpcUrl: string;
   restUrl: string;
   gasPrice: string;
-  contracts?: ContractGrantDescription[];
-  stake?: boolean;
-  bank?: SpendLimit[];
   treasury?: string;
   feeGranter?: string;
   indexerUrl?: string;
@@ -107,9 +102,6 @@ const defaultContextValue: AbstraxionContextProps = {
   rpcUrl: "",
   restUrl: "",
   gasPrice: "",
-  contracts: undefined,
-  stake: false,
-  bank: undefined,
   treasury: undefined,
   feeGranter: undefined,
   indexerUrl: undefined,
@@ -261,9 +253,6 @@ export function AbstraxionProvider({
       rpcUrl: normalizedConfig.rpcUrl,
       restUrl: normalizedConfig.restUrl,
       gasPrice: normalizedConfig.gasPrice,
-      contracts: normalizedConfig.contracts,
-      stake: normalizedConfig.stake ?? false,
-      bank: normalizedConfig.bank,
       treasury: normalizedConfig.treasury,
       feeGranter: normalizedConfig.feeGranter,
       indexerUrl: indexer?.url,
