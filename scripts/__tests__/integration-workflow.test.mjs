@@ -14,3 +14,10 @@ test("integration result comments are limited to same-repository pull requests",
   );
   assert.match(workflow, /permissions:\n\s+contents: read\n\s+issues: write/);
 });
+
+test("integration result comments skip GitHub Actions release pull requests", () => {
+  assert.match(
+    workflow,
+    /github\.event\.pull_request\.user\.login != 'github-actions\[bot\]'/,
+  );
+});
