@@ -13,10 +13,10 @@ program documents govern.
 **Do not open a public GitHub issue for a security vulnerability.** Public
 disclosure before a patch is available increases the harm to users.
 
-| Type of finding                  | How to report                                                       |
-| -------------------------------- | ------------------------------------------------------------------- |
+| Type of finding                  | How to report                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Security vulnerability           | **Security → Report a vulnerability** on this repository, or email [security@burnt.com](mailto:security@burnt.com) |
-| Non-sensitive or operational bug | Open a GitHub issue on this repository                              |
+| Non-sensitive or operational bug | Open a GitHub issue on this repository                                                                             |
 
 Prefer GitHub private vulnerability reporting: the fix is developed against the
 report, and you are credited on the published advisory and in any CVE we
