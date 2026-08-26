@@ -63,7 +63,12 @@ jobs:
     needs: [build]
     permissions:
       contents: read
-      issues: write
+      # `pull-requests: write`, not `issues: write`. The results step below
+      # posts through the issues API, but the target is a pull request, and
+      # GITHUB_TOKEN scopes those separately - `issues: write` alone gets a
+      # 403 "Resource not accessible by integration". Matches what the
+      # dashboard-contract-mainnet job already declares for its comment step.
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
