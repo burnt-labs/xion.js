@@ -29,8 +29,10 @@ their scope table and authorized testing hostnames.
 
 We acknowledge receipt within **5 business days** and provide a triage decision
 within **14 days**. Active exploitation, or confirmed attacker awareness of an
-unpatched vulnerability, escalates the issue to Critical handling regardless of
-its original classification.
+unpatched vulnerability, escalates the issue to Critical **response handling**
+— prioritization, coordination, and disclosure timing — regardless of its
+original classification. That escalation does not change the finding's
+severity assessment or reward eligibility.
 
 ## Scope
 
