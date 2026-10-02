@@ -28,6 +28,7 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
     ...actual,
     createEthWalletAccount: vi.fn(),
     createSecp256k1Account: vi.fn(),
+    resolveSmartAccountChecksum: vi.fn(),
   };
 });
 
@@ -181,13 +182,57 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         "https://aa-api.xion.com",
         "0x123abc",
         expect.any(Function),
-        "abc123",
+        expect.any(Function),
         "xion1feegranter",
         "xion",
         "https://rpc.xion-testnet-1.burnt.com",
       );
       expect(result.smartAccountAddress).toBe("xion1newaccount");
       expect(result.connectionInfo.metadata?.codeId).toBe(789);
+    });
+
+    it("should resolve the creation checksum from the chain, passing the config checksum as a pin", async () => {
+      const { createEthWalletAccount, resolveSmartAccountChecksum } =
+        await import("@burnt-labs/abstraxion-core");
+      mockConnector.connect.mockResolvedValue({
+        displayAddress: "0x123",
+        authenticator: "0x123abc",
+        signMessage: vi.fn().mockResolvedValue("signature"),
+        metadata: { authenticatorType: AUTHENTICATOR_TYPE.EthWallet },
+      });
+      vi.mocked(accountDiscovery.checkAccountExists).mockResolvedValue({
+        exists: false,
+      });
+      vi.mocked(createEthWalletAccount).mockResolvedValue({
+        account_address: "xion1newaccount",
+        code_id: 1880,
+      });
+      vi.mocked(resolveSmartAccountChecksum).mockResolvedValue("FC06");
+      mockSessionManager.getLocalKeypair.mockResolvedValue({
+        getAccounts: vi.fn().mockResolvedValue([{ address: "xion1grantee" }]),
+      });
+      mockParams.accountCreationConfig = {
+        aaApiUrl: "https://aa-api.xion.com",
+        smartAccountContract: {
+          codeId: 1880,
+          checksum: "abc123",
+          addressPrefix: "xion",
+        },
+        feeGranter: "xion1feegranter",
+      };
+
+      await connectAccount(mockParams);
+
+      const checksumArg = vi.mocked(createEthWalletAccount).mock.calls[0][3];
+      expect(typeof checksumArg).toBe("function");
+      await expect((checksumArg as () => Promise<string>)()).resolves.toBe(
+        "FC06",
+      );
+      expect(resolveSmartAccountChecksum).toHaveBeenCalledWith({
+        rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+        chainId: "xion-testnet-1",
+        pinnedChecksum: "abc123",
+      });
     });
 
     it("should handle account creation for Secp256K1 when not exists", async () => {
@@ -233,7 +278,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         "https://aa-api.xion.com",
         "publickey456",
         expect.any(Function),
-        "def456",
+        expect.any(Function),
         "xion1feegranter",
         "xion",
         "https://rpc.xion-testnet-1.burnt.com",

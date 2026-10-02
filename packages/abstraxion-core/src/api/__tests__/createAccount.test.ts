@@ -12,6 +12,12 @@ import {
   createSecp256k1Account,
 } from "../createAccount";
 import {
+  calculateSalt,
+  calculateSmartAccountAddress,
+  AUTHENTICATOR_TYPE,
+  utf8ToHexWithPrefix,
+} from "@burnt-labs/signers";
+import {
   ETH_WALLET_TEST_DATA,
   SECP256K1_TEST_DATA,
   TEST_ADDRESSES,
@@ -154,6 +160,84 @@ describe("createAccount - Validation Logic", () => {
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(callBody.address).toBe(
         "0x742d35cc6634c0532925a3b844bc9e7595f0beb0",
+      );
+    });
+  });
+  describe("Chain-resolved checksum", () => {
+    const CHAIN_HASH =
+      "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8";
+
+    const expectedEthAddress = () =>
+      calculateSmartAccountAddress({
+        checksum: CHAIN_HASH,
+        creator: TEST_ADDRESSES.account,
+        salt: calculateSalt(
+          AUTHENTICATOR_TYPE.EthWallet,
+          ETH_WALLET_TEST_DATA.addressLowercase,
+        ),
+        prefix: "xion",
+      });
+
+    it("resolves a function checksum and signs the address derived from it", async () => {
+      const resolveChecksum = vi.fn().mockResolvedValue(CHAIN_HASH);
+      const signMessageFn = vi.fn().mockResolvedValue("0xsignature");
+      const expected = expectedEthAddress();
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ account_address: expected }),
+      });
+
+      const result = await createEthWalletAccount(
+        "http://test-api",
+        ETH_WALLET_TEST_DATA.address,
+        signMessageFn,
+        resolveChecksum,
+        TEST_ADDRESSES.account,
+        "xion",
+      );
+
+      expect(resolveChecksum).toHaveBeenCalledOnce();
+      expect(signMessageFn).toHaveBeenCalledWith(utf8ToHexWithPrefix(expected));
+      expect(result.account_address).toBe(expected);
+    });
+
+    it("does not sign anything when checksum resolution fails", async () => {
+      const signMessageFn = vi.fn();
+      global.fetch = vi.fn();
+
+      await expect(
+        createEthWalletAccount(
+          "http://test-api",
+          ETH_WALLET_TEST_DATA.address,
+          signMessageFn,
+          () => Promise.reject(new Error("checksum mismatch")),
+          TEST_ADDRESSES.account,
+          "xion",
+        ),
+      ).rejects.toThrow("checksum mismatch");
+      expect(signMessageFn).not.toHaveBeenCalled();
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("warns when the AA API returns a different (e.g. pre-v31) account", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ account_address: "xion1legacyaccount" }),
+      });
+
+      const result = await createEthWalletAccount(
+        "http://test-api",
+        ETH_WALLET_TEST_DATA.address,
+        vi.fn().mockResolvedValue("0xsignature"),
+        CHAIN_HASH,
+        TEST_ADDRESSES.account,
+        "xion",
+      );
+
+      expect(result.account_address).toBe("xion1legacyaccount");
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining(expectedEthAddress()),
       );
     });
   });

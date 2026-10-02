@@ -16,8 +16,17 @@ export interface SmartAccountContractConfig {
   /** Contract code ID for smart account creation */
   codeId: number;
 
-  /** Contract checksum as hex string */
-  checksum: string;
+  /**
+   * Optional pin for the address derivation checksum (hex).
+   *
+   * Addresses are derived from the chain's x/abstractaccount
+   * `address_derivation_hash`, read over RPC and cached per chain. When this
+   * is set and disagrees with the chain, discovery and creation fail with an
+   * `AddressDerivationMismatchError` rather than derive a wrong address. It is
+   * used on its own only when the chain has no derivation hash (pre-v31) or
+   * cannot be reached.
+   */
+  checksum?: string;
 
   /** Address prefix (e.g., "xion") */
   addressPrefix: string;

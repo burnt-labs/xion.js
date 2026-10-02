@@ -52,7 +52,7 @@ export function getTestConfig(): TestConfig {
     codeId: process.env.XION_TESTNET_CODE_ID || "1880",
     checksum:
       process.env.XION_TESTNET_CHECKSUM ||
-      "D27A379FF65EB47A9E538E3A3D46101DE2A6C0B86BA3D0BF014C0403849414E6",
+      "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
     treasuryAddress:
       process.env.XION_TESTNET_TREASURY_ADDRESS ||
       "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw",

@@ -17,6 +17,39 @@ import { createEthWalletAccountV2, createSecp256k1AccountV2 } from "./client";
 import type { CreateAccountResponse } from "@burnt-labs/signers";
 
 /**
+ * Checksum used to derive the smart account address that gets signed.
+ *
+ * Pass a function to resolve it at creation time, e.g. from the chain's
+ * x/abstractaccount address_derivation_hash:
+ * `() => resolveSmartAccountChecksum({ rpcUrl, chainId, pinnedChecksum })`.
+ * A plain string is used as-is (callers are responsible for it matching the
+ * chain).
+ */
+export type ChecksumInput = string | (() => Promise<string>);
+
+async function resolveChecksumInput(checksum: ChecksumInput): Promise<string> {
+  return typeof checksum === "function" ? await checksum() : checksum;
+}
+
+/**
+ * The AA API may legitimately return a different, pre-existing account (e.g.
+ * one registered before xion v31 under the code's own checksum), so a
+ * divergence is reported rather than thrown.
+ */
+function warnOnAddressDivergence(
+  signedAddress: string,
+  result: CreateAccountResponse,
+): void {
+  if (result.account_address && result.account_address !== signedAddress) {
+    console.warn(
+      `[abstraxion] AA API returned account ${result.account_address}, but the ` +
+        `locally derived address was ${signedAddress}. This is expected for an ` +
+        `account registered before xion v31; otherwise check the derivation checksum.`,
+    );
+  }
+}
+
+/**
  * Simple sleep function to prevent account sequence errors after account
  * creation. Memory leak safe: timeout is properly tracked and cleaned up.
  */
@@ -41,6 +74,7 @@ async function simpleSleep(ms: number): Promise<void> {
  * Flow: normalize address → calculate salt/address → sign address → create via API
  *
  * @param signMessageFn - Signs hex messages (with 0x prefix)
+ * @param checksum - Derivation checksum, or a function resolving it (see {@link ChecksumInput})
  * @param rpcUrl - Optional RPC URL for transaction confirmation
  * @see @burnt-labs/signers/src/crypto/README.md for salt calculation details
  */
@@ -48,7 +82,7 @@ export async function createEthWalletAccount(
   aaApiUrl: string,
   ethereumAddress: string,
   signMessageFn: (hexMessage: string) => Promise<string>,
-  checksum: string,
+  checksum: ChecksumInput,
   feeGranter: string,
   addressPrefix: string,
   rpcUrl?: string,
@@ -66,7 +100,7 @@ export async function createEthWalletAccount(
   // Calculate smart account address via CREATE2
   const salt = calculateSalt(AUTHENTICATOR_TYPE.EthWallet, normalizedAddress);
   const calculatedAddress = calculateSmartAccountAddress({
-    checksum,
+    checksum: await resolveChecksumInput(checksum),
     creator: feeGranter,
     salt,
     prefix: addressPrefix,
@@ -81,6 +115,7 @@ export async function createEthWalletAccount(
     address: normalizedAddress,
     signature: signature,
   });
+  warnOnAddressDivergence(calculatedAddress, result);
 
   // Short sleep to prevent sequence errors
   if (rpcUrl && result.transaction_hash) {
@@ -96,6 +131,7 @@ export async function createEthWalletAccount(
  * Flow: normalize pubkey → calculate salt/address → sign address → create via API
  *
  * @param signMessageFn - Signs hex messages (with 0x prefix)
+ * @param checksum - Derivation checksum, or a function resolving it (see {@link ChecksumInput})
  * @param rpcUrl - Optional RPC URL for transaction confirmation
  * @see @burnt-labs/signers/src/crypto/README.md for salt calculation details
  */
@@ -103,7 +139,7 @@ export async function createSecp256k1Account(
   aaApiUrl: string,
   pubkey: string,
   signMessageFn: (hexMessage: string) => Promise<string>,
-  checksum: string,
+  checksum: ChecksumInput,
   feeGranter: string,
   addressPrefix: string,
   rpcUrl?: string,
@@ -123,7 +159,7 @@ export async function createSecp256k1Account(
   // Both xion.js and AA-API calculate: SHA256(UTF8(base64_pubkey_string))
   const salt = calculateSalt(AUTHENTICATOR_TYPE.Secp256K1, normalizedPubkey);
   const calculatedAddress = calculateSmartAccountAddress({
-    checksum,
+    checksum: await resolveChecksumInput(checksum),
     creator: feeGranter,
     salt,
     prefix: addressPrefix,
@@ -144,6 +180,7 @@ export async function createSecp256k1Account(
     pubKey: formattedPubkey,
     signature: formattedSignature,
   });
+  warnOnAddressDivergence(calculatedAddress, result);
 
   // Short sleep to prevent sequence errors
   if (rpcUrl && result.transaction_hash) {

@@ -34,7 +34,22 @@ vi.mock("@burnt-labs/signers", async () => {
   };
 });
 
+// Mock the chain read of the address derivation hash (no network in unit tests)
+vi.mock("@burnt-labs/abstraxion-core", async () => {
+  const actual = await vi.importActual<
+    typeof import("@burnt-labs/abstraxion-core")
+  >("@burnt-labs/abstraxion-core");
+  return {
+    ...actual,
+    resolveAddressDerivation: vi.fn(),
+  };
+});
+
 import { RpcAccountStrategy } from "../account-rpc-strategy";
+import {
+  resolveAddressDerivation,
+  AddressDerivationMismatchError,
+} from "@burnt-labs/abstraxion-core";
 import {
   AUTHENTICATOR_TYPE,
   calculateSalt,
@@ -83,6 +98,13 @@ describe("RpcAccountStrategy", () => {
 
     // Configure the mocked CosmWasmClient.connect
     vi.mocked(CosmWasmClient.connect).mockResolvedValue(mockClient);
+
+    // Chain derivation resolves to the configured checksum, no legacy codes
+    vi.mocked(resolveAddressDerivation).mockResolvedValue({
+      checksum: config.checksum,
+      source: "chain",
+      legacyChecksums: [],
+    });
 
     strategy = new RpcAccountStrategy(config);
   });
@@ -291,6 +313,196 @@ describe("RpcAccountStrategy", () => {
       );
 
       expect(result[0].codeId).toBe(config.codeId);
+    });
+  });
+  describe("chain-resolved derivation", () => {
+    const CHAIN_HASH = "A".repeat(64);
+    const LEGACY_HASH = "B".repeat(64);
+    const addressFor = (checksum: string) =>
+      checksum === CHAIN_HASH
+        ? "xion1current"
+        : checksum === LEGACY_HASH
+          ? "xion1legacy"
+          : "xion1other";
+
+    const authenticatorsAt =
+      (present: string[]) => async (address: string, msg: any) => {
+        if (!present.includes(address)) throw new Error("no such contract");
+        if (msg.authenticator_i_ds) return [0];
+        return Buffer.from(
+          JSON.stringify({ Secp256K1: { pubkey: "pk" } }),
+        ).toString("base64");
+      };
+
+    beforeEach(() => {
+      vi.mocked(calculateSmartAccountAddress).mockImplementation(
+        ({ checksum }: { checksum: string }) => addressFor(checksum),
+      );
+      vi.mocked(resolveAddressDerivation).mockResolvedValue({
+        checksum: CHAIN_HASH,
+        source: "chain",
+        legacyChecksums: [LEGACY_HASH],
+      });
+    });
+
+    it("resolves the derivation from the chain with the config checksum as a pin", async () => {
+      mockClient.queryContractSmart.mockImplementation(authenticatorsAt([]));
+      const pinned = new RpcAccountStrategy({
+        ...config,
+        chainId: "xion-testnet-2",
+        checksum: CHAIN_HASH,
+      });
+
+      await pinned.fetchSmartAccounts("pk", AUTHENTICATOR_TYPE.Secp256K1);
+
+      expect(resolveAddressDerivation).toHaveBeenCalledWith({
+        rpcUrl: config.rpcUrl,
+        chainId: "xion-testnet-2",
+        pinnedChecksum: CHAIN_HASH,
+      });
+      expect(calculateSmartAccountAddress).toHaveBeenCalledWith(
+        expect.objectContaining({ checksum: CHAIN_HASH }),
+      );
+    });
+
+    it("finds an account created after v31 at the chain-derived address", async () => {
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1current"]),
+      );
+
+      const result = await strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(result.map((a) => a.id)).toEqual(["xion1current"]);
+    });
+
+    it("finds an account created before v31 at a legacy code checksum address", async () => {
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1legacy"]),
+      );
+
+      const result = await strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("xion1legacy");
+      expect(result[0].authenticators[0].authenticator).toBe("pk");
+    });
+
+    it("reports the contract's own code id for a discovered account", async () => {
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1legacy"]),
+      );
+      mockClient.getContract = vi.fn(async () => ({ codeId: 95 }));
+
+      const result = await strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(mockClient.getContract).toHaveBeenCalledWith("xion1legacy");
+      expect(result[0].codeId).toBe(95);
+    });
+
+    it("falls back to the configured code id when the contract info cannot be read", async () => {
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1legacy"]),
+      );
+      mockClient.getContract = vi.fn(async () => {
+        throw new Error("protobuf decode error");
+      });
+
+      const result = await strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(result[0].codeId).toBe(config.codeId);
+    });
+
+    it("checks configured extra legacy checksums too", async () => {
+      vi.mocked(resolveAddressDerivation).mockResolvedValue({
+        checksum: CHAIN_HASH,
+        source: "chain",
+        legacyChecksums: [],
+      });
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1legacy"]),
+      );
+      const withLegacy = new RpcAccountStrategy({
+        ...config,
+        legacyChecksums: [LEGACY_HASH.toLowerCase()],
+      });
+
+      const result = await withLegacy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(result.map((a) => a.id)).toEqual(["xion1legacy"]);
+    });
+
+    it("returns the current-derivation account first when both exist", async () => {
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1legacy", "xion1current"]),
+      );
+
+      const result = await strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(result.map((a) => a.id)).toEqual(["xion1current", "xion1legacy"]);
+    });
+
+    it("fails discovery when the pin disagrees with the chain", async () => {
+      vi.mocked(resolveAddressDerivation).mockRejectedValue(
+        new AddressDerivationMismatchError(
+          LEGACY_HASH,
+          CHAIN_HASH,
+          "xion-testnet-2",
+        ),
+      );
+
+      const promise = strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+      await expect(promise).rejects.toBeInstanceOf(
+        AddressDerivationMismatchError,
+      );
+      await expect(promise).rejects.toThrow(
+        /does not match the x\/abstractaccount/,
+      );
+      expect(CosmWasmClient.connect).not.toHaveBeenCalled();
+    });
+
+    it("uses a custom resolver when provided", async () => {
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1current"]),
+      );
+      const resolver = vi.fn().mockResolvedValue({
+        checksum: CHAIN_HASH,
+        source: "chain",
+        legacyChecksums: [],
+      });
+      const custom = new RpcAccountStrategy({
+        ...config,
+        resolveDerivation: resolver,
+      });
+
+      const result = await custom.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(resolver).toHaveBeenCalledOnce();
+      expect(resolveAddressDerivation).not.toHaveBeenCalled();
+      expect(result.map((a) => a.id)).toEqual(["xion1current"]);
     });
   });
 });

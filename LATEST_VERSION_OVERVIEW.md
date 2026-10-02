@@ -586,7 +586,8 @@ This is the mode to use when you want full control over authentication and don't
       },
       smartAccountContract: {
         codeId: 12,
-        checksum: "abc123...",
+        // checksum is optional: addresses derive from the chain's
+        // x/abstractaccount address_derivation_hash. Set it only as a pin.
         addressPrefix: "xion",
       },
       indexer: {

@@ -129,7 +129,7 @@
         "checksum": {
           "type": "string",
           "pattern": "^[A-Fa-f0-9]{64}$",
-          "description": "Current abstract-account contract checksum"
+          "description": "x/abstractaccount address_derivation_hash (xion v31+); the SDK resolves it from the chain and uses this only as a pin"
         },
         "feeGranter": {
           "type": "string",

@@ -61,7 +61,10 @@ export interface SignerAuthentication {
 
   /**
    * Smart account contract configuration
-   * Required for creating new smart accounts when they don't exist
+   * Required for creating new smart accounts when they don't exist.
+   * `checksum` is optional: addresses derive from the chain's
+   * x/abstractaccount address_derivation_hash; a configured checksum is only a
+   * pin that must match it.
    */
   smartAccountContract: SmartAccountContractConfig;
 
