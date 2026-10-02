@@ -90,6 +90,11 @@ export function normalizeAbstraxionConfig(
 /**
  * Create account strategy from normalized config
  * Handles indexer and RPC strategy configuration for smart account discovery
+ *
+ * The RPC strategy derives addresses from the chain's x/abstractaccount
+ * address_derivation_hash (read over `config.rpcUrl`, cached per chain id) and
+ * also checks legacy addresses so accounts registered before xion v31 stay
+ * discoverable. `smartAccountContract.checksum` is only an optional pin.
  */
 export function createAccountStrategyFromConfig(
   config: NormalizedAbstraxionConfig,
@@ -102,6 +107,7 @@ export function createAccountStrategyFromConfig(
     rpc: smartAccountContract
       ? {
           rpcUrl: config.rpcUrl,
+          chainId: config.chainId,
           checksum: smartAccountContract.checksum,
           creator: config.feeGranter || "",
           prefix: smartAccountContract.addressPrefix,
@@ -141,6 +147,10 @@ export function createGrantConfigFromConfig(
 /**
  * Create account creation config from normalized config
  * Handles smart account contract configuration for account creation
+ *
+ * The derivation checksum is resolved from the chain at creation time
+ * (see `connectAccount`); `smartAccountContract.checksum` is passed through
+ * only as an optional pin.
  */
 export function createAccountCreationConfigFromConfig(
   config: NormalizedAbstraxionConfig,

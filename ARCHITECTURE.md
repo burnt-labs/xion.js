@@ -475,7 +475,8 @@ See `apps/demo-app/src/app/inline-demo/` for the complete example.
       },
       smartAccountContract: {
         codeId: 12,
-        checksum: "...",
+        // checksum is optional: addresses derive from the chain's
+        // x/abstractaccount address_derivation_hash. Set it only as a pin.
         addressPrefix: "xion",
       },
     },

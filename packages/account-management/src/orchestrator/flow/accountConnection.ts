@@ -10,6 +10,7 @@ import type {
 import {
   createEthWalletAccount,
   createSecp256k1Account,
+  resolveSmartAccountChecksum,
 } from "@burnt-labs/abstraxion-core";
 import {
   AUTHENTICATOR_TYPE,
@@ -120,6 +121,15 @@ export async function connectAccount(
     const { aaApiUrl, smartAccountContract, feeGranter } =
       accountCreationConfig;
 
+    // Derive the address to sign from the chain's address_derivation_hash
+    // (cached per chain); smartAccountContract.checksum is only a pin.
+    const resolveChecksum = () =>
+      resolveSmartAccountChecksum({
+        rpcUrl,
+        chainId,
+        pinnedChecksum: smartAccountContract.checksum,
+      });
+
     // Create account based on authenticator type
     if (authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
       // Ethereum wallet account creation
@@ -132,7 +142,7 @@ export async function connectAccount(
         aaApiUrl,
         ethAddress,
         signFn,
-        smartAccountContract.checksum,
+        resolveChecksum,
         feeGranter,
         smartAccountContract.addressPrefix,
         rpcUrl, // Pass RPC URL to wait for confirmation internally
@@ -156,7 +166,7 @@ export async function connectAccount(
         aaApiUrl,
         pubkeyFromMetadata,
         signFn,
-        smartAccountContract.checksum,
+        resolveChecksum,
         feeGranter,
         smartAccountContract.addressPrefix,
         rpcUrl, // Pass RPC URL to wait for confirmation internally
