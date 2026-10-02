@@ -280,6 +280,36 @@ describe("addressDerivation", () => {
         CODE_95_CHECKSUM,
         CODE_1880_CHECKSUM,
       ]);
+
+      // The incomplete result is not cached: the next call retries and
+      // picks up the code that failed before
+      const retry = await resolveAddressDerivation({
+        chainId: "xion-testnet-2",
+        query: testnetQuery(),
+      });
+      expect(retry.legacyChecksums).toEqual([
+        CODE_21_CHECKSUM,
+        CODE_95_CHECKSUM,
+        CODE_1880_CHECKSUM,
+      ]);
+    });
+
+    it("keys the cache by chain id and RPC URL", async () => {
+      await resolveAddressDerivation({
+        chainId: "xion-testnet-2",
+        rpcUrl: "https://rpc-a.example",
+        query: testnetQuery(),
+      });
+
+      const other: AbciQueryFn = vi.fn(async () => MAINNET_PARAMS);
+      const result = await resolveAddressDerivation({
+        chainId: "xion-testnet-2",
+        rpcUrl: "https://rpc-b.example",
+        query: other,
+      });
+
+      expect(other).toHaveBeenCalled();
+      expect(result.checksum).toBe(MAINNET_HASH);
     });
 
     it("uses the pin as-is when there is no RPC to read", async () => {

@@ -257,6 +257,8 @@ export async function fetchCodeChecksum(
 interface ChainDerivation {
   hash: string | null;
   legacyChecksums: string[];
+  /** False when a legacy code lookup failed: usable now, but not cached */
+  complete: boolean;
 }
 
 const derivationCache = new Map<string, Promise<ChainDerivation>>();
@@ -271,22 +273,27 @@ async function loadChainDerivation(
 ): Promise<ChainDerivation> {
   const params = await fetchAbstractAccountParams(query);
   if (!params.addressDerivationHash) {
-    return { hash: null, legacyChecksums: [] };
+    return { hash: null, legacyChecksums: [], complete: true };
   }
 
   // Pre-v31 accounts were derived from the data_hash of the code they were
   // instantiated from. Every code id the module allows is a candidate. A
-  // failed lookup only loses that candidate; it never blocks resolution.
+  // failed lookup doesn't block resolution, but the result is then marked
+  // incomplete so it is not cached and the next call retries the lookup.
+  let complete = true;
   const codeChecksums = await Promise.all(
     params.allowedCodeIds.map((id) =>
-      fetchCodeChecksum(query, id).catch(() => null),
+      fetchCodeChecksum(query, id).catch(() => {
+        complete = false;
+        return null;
+      }),
     ),
   );
   const legacyChecksums = [
     ...new Set(codeChecksums.filter((c): c is string => !!c)),
   ].filter((c) => c !== params.addressDerivationHash);
 
-  return { hash: params.addressDerivationHash, legacyChecksums };
+  return { hash: params.addressDerivationHash, legacyChecksums, complete };
 }
 
 /**
@@ -298,8 +305,9 @@ async function loadChainDerivation(
  * - Chain unreachable: use the pin if there is one (not cached, so the next
  *   call retries the chain); without a pin, rethrow.
  *
- * Successful chain reads are cached per chain id (or rpcUrl), since the chain
- * forbids changing the hash once set.
+ * Complete chain reads are cached per (chainId, rpcUrl), since the chain
+ * forbids changing the hash once set. A read whose legacy code lookups
+ * partly failed is used for this call but not cached.
  */
 export async function resolveAddressDerivation(
   options: ResolveAddressDerivationOptions,
@@ -319,13 +327,21 @@ export async function resolveAddressDerivation(
     );
   }
 
-  const cacheKey = options.chainId || options.rpcUrl || "default";
+  const cacheKey = `${options.chainId ?? ""}|${options.rpcUrl ?? ""}`;
   let pending = derivationCache.get(cacheKey);
   if (!pending) {
-    pending = loadChainDerivation(query);
-    derivationCache.set(cacheKey, pending);
-    // Only successful reads are cached
-    pending.catch(() => derivationCache.delete(cacheKey));
+    const load = loadChainDerivation(query);
+    pending = load;
+    derivationCache.set(cacheKey, load);
+    // Only complete, successful reads stay cached
+    const evict = () => {
+      if (derivationCache.get(cacheKey) === load) {
+        derivationCache.delete(cacheKey);
+      }
+    };
+    load.then((result) => {
+      if (!result.complete) evict();
+    }, evict);
   }
 
   let chain: ChainDerivation;

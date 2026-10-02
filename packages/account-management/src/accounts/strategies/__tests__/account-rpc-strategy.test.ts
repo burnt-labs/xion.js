@@ -393,6 +393,37 @@ describe("RpcAccountStrategy", () => {
       expect(result[0].authenticators[0].authenticator).toBe("pk");
     });
 
+    it("reports the contract's own code id for a discovered account", async () => {
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1legacy"]),
+      );
+      mockClient.getContract = vi.fn(async () => ({ codeId: 95 }));
+
+      const result = await strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(mockClient.getContract).toHaveBeenCalledWith("xion1legacy");
+      expect(result[0].codeId).toBe(95);
+    });
+
+    it("falls back to the configured code id when the contract info cannot be read", async () => {
+      mockClient.queryContractSmart.mockImplementation(
+        authenticatorsAt(["xion1legacy"]),
+      );
+      mockClient.getContract = vi.fn(async () => {
+        throw new Error("protobuf decode error");
+      });
+
+      const result = await strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+
+      expect(result[0].codeId).toBe(config.codeId);
+    });
+
     it("checks configured extra legacy checksums too", async () => {
       vi.mocked(resolveAddressDerivation).mockResolvedValue({
         checksum: CHAIN_HASH,
@@ -437,9 +468,16 @@ describe("RpcAccountStrategy", () => {
         ),
       );
 
-      await expect(
-        strategy.fetchSmartAccounts("pk", AUTHENTICATOR_TYPE.Secp256K1),
-      ).rejects.toThrow(/does not match the x\/abstractaccount/);
+      const promise = strategy.fetchSmartAccounts(
+        "pk",
+        AUTHENTICATOR_TYPE.Secp256K1,
+      );
+      await expect(promise).rejects.toBeInstanceOf(
+        AddressDerivationMismatchError,
+      );
+      await expect(promise).rejects.toThrow(
+        /does not match the x\/abstractaccount/,
+      );
       expect(CosmWasmClient.connect).not.toHaveBeenCalled();
     });
 

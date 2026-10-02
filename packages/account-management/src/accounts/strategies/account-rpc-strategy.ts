@@ -10,7 +10,7 @@
  *    legacy checksum (the data_hash of each allowed account code), because
  *    accounts registered before v31 were derived from the code's own checksum
  * 3. Query each candidate address for authenticators via RPC
- * 4. Return every account found, current derivation first
+ * 4. Return every account found, current derivation first, with its own code id
  */
 
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
@@ -23,6 +23,7 @@ import {
 import {
   resolveAddressDerivation,
   normalizeChecksum,
+  AddressDerivationMismatchError,
   type ResolvedAddressDerivation,
 } from "@burnt-labs/abstraxion-core";
 import type {
@@ -138,20 +139,40 @@ export class RpcAccountStrategy implements IndexerStrategy {
       );
 
       // 5. Return every account that exists, current derivation first.
-      // Use configured codeId (same as AA API and Dashboard)
-      return found
-        .filter((f) => f.authenticators && f.authenticators.length > 0)
-        .map((f) => ({
-          id: f.address,
-          codeId: this.config.codeId,
-          authenticators: f.authenticators,
-        }));
+      // A legacy account can sit on another allowed code, so report the
+      // contract's own code id, falling back to the configured one.
+      return Promise.all(
+        found
+          .filter((f) => f.authenticators && f.authenticators.length > 0)
+          .map(async (f) => ({
+            id: f.address,
+            codeId: await this.queryCodeId(client, f.address),
+            authenticators: f.authenticators,
+          })),
+      );
     } catch (error) {
+      // Keep the pin-mismatch error type so callers can detect it
+      if (error instanceof AddressDerivationMismatchError) {
+        throw error;
+      }
       // Re-throw error instead of silently returning empty array
       // Caller (composite strategy) will handle fallback
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       throw new Error(`RPC account strategy failed: ${errorMessage}`);
+    }
+  }
+
+  /** Code id of a deployed contract, or the configured codeId if unavailable */
+  private async queryCodeId(
+    client: CosmWasmClient,
+    contractAddress: string,
+  ): Promise<number> {
+    try {
+      const contract = await client.getContract(contractAddress);
+      return contract?.codeId ?? this.config.codeId;
+    } catch {
+      return this.config.codeId;
     }
   }
 
