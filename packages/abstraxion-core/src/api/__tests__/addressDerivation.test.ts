@@ -294,6 +294,16 @@ describe("addressDerivation", () => {
       ]);
     });
 
+    it("does not cache a read with no chain id or RPC URL", async () => {
+      await resolveAddressDerivation({ query: testnetQuery() });
+
+      const other: AbciQueryFn = vi.fn(async () => MAINNET_PARAMS);
+      const result = await resolveAddressDerivation({ query: other });
+
+      expect(other).toHaveBeenCalled();
+      expect(result.checksum).toBe(MAINNET_HASH);
+    });
+
     it("keys the cache by chain id and RPC URL", async () => {
       await resolveAddressDerivation({
         chainId: "xion-testnet-2",

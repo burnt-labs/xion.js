@@ -307,7 +307,7 @@ async function loadChainDerivation(
  *
  * Complete chain reads are cached per (chainId, rpcUrl), since the chain
  * forbids changing the hash once set. A read whose legacy code lookups
- * partly failed is used for this call but not cached.
+ * partly failed, or one with neither chainId nor rpcUrl, is not cached.
  */
 export async function resolveAddressDerivation(
   options: ResolveAddressDerivationOptions,
@@ -327,11 +327,18 @@ export async function resolveAddressDerivation(
     );
   }
 
-  const cacheKey = `${options.chainId ?? ""}|${options.rpcUrl ?? ""}`;
-  let pending = derivationCache.get(cacheKey);
+  // Without a chain identity (a bare custom `query`), nothing ties two calls
+  // to the same chain, so the read is not cached.
+  const cacheKey =
+    options.chainId || options.rpcUrl
+      ? `${options.chainId ?? ""}|${options.rpcUrl ?? ""}`
+      : undefined;
+  let pending = cacheKey ? derivationCache.get(cacheKey) : undefined;
   if (!pending) {
-    const load = loadChainDerivation(query);
-    pending = load;
+    pending = loadChainDerivation(query);
+  }
+  if (cacheKey && !derivationCache.has(cacheKey)) {
+    const load = pending;
     derivationCache.set(cacheKey, load);
     // Only complete, successful reads stay cached
     const evict = () => {
