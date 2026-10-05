@@ -146,7 +146,8 @@ export async function createEthWalletAccount(
     rpcUrl,
   );
 
-  // Normalize address (matches AA API normalization); used for GET and POST
+  // Normalize address (matches AA API normalization) for the POST; the lookup
+  // normalizes the raw input itself
   const normalizedAddress = normalizeAAApiIdentifier(
     AUTHENTICATOR_TYPE.EthWallet,
     ethereumAddress,
@@ -156,7 +157,7 @@ export async function createEthWalletAccount(
   const accountAddress = await resolveAAApiAccountAddress({
     aaApiUrl,
     authenticatorType: AUTHENTICATOR_TYPE.EthWallet,
-    identifier: normalizedAddress,
+    identifier: ethereumAddress,
     addressPrefix: options.addressPrefix,
   });
 
@@ -223,7 +224,9 @@ export async function createSecp256k1Account(
     rpcUrl,
   );
 
-  // Normalize pubkey to base64 (matches AA API normalization); used for GET and POST
+  // Normalize pubkey to base64 (matches AA API normalization) for the POST.
+  // The lookup gets the raw pubkey and normalizes it itself: the normalizer is
+  // not idempotent (uncompressed hex becomes 88-char base64, which it rejects).
   const normalizedPubkey = normalizeAAApiIdentifier(
     AUTHENTICATOR_TYPE.Secp256K1,
     pubkey,
@@ -233,7 +236,7 @@ export async function createSecp256k1Account(
   const accountAddress = await resolveAAApiAccountAddress({
     aaApiUrl,
     authenticatorType: AUTHENTICATOR_TYPE.Secp256K1,
-    identifier: normalizedPubkey,
+    identifier: pubkey,
     addressPrefix: options.addressPrefix,
   });
 

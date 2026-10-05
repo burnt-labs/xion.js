@@ -189,6 +189,33 @@ describe("createAccount - Validation Logic", () => {
       expect(result.account_address).toBe(SECP_CANDIDATE);
     });
 
+    it("accepts an uncompressed hex pubkey (normalized once for GET and POST)", async () => {
+      const uncompressedHex = "04" + "a1".repeat(64);
+      const uncompressedBase64 =
+        "BKGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaE=";
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(secpAddressResponse())
+        .mockResolvedValueOnce(createResponse(SECP_CANDIDATE));
+      global.fetch = fetchMock;
+      const sign = vi.fn().mockResolvedValue(SECP_SIGNATURE_HEX);
+
+      await createSecp256k1Account(
+        "https://api.example",
+        uncompressedHex,
+        sign,
+        { addressSource: "aa-api", addressPrefix: "xion" },
+      );
+
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        `https://api.example/api/v2/account/address/secp256k1/${encodeURIComponent(uncompressedBase64)}`,
+      );
+      expect(sign).toHaveBeenCalledWith(SECP_CANDIDATE_SIGNED_BYTES);
+      expect(JSON.parse(fetchMock.mock.calls[1][1].body).pubKey).toBe(
+        uncompressedBase64,
+      );
+    });
+
     it("rejects a create response for a different account than the one signed", async () => {
       const other =
         "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
