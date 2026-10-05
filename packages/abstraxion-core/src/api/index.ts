@@ -4,6 +4,7 @@
  */
 
 export * from "./client";
+export * from "./addressSource";
 export * from "./createAccount";
 
 // Re-export API types from @burnt-labs/signers for convenience
