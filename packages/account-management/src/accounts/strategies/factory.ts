@@ -27,20 +27,28 @@ export interface CreateCompositeAccountStrategyConfig {
 
   /**
    * AA-API configuration for canonical account lookups
-   * Provides reliable fallback when indexers are unavailable
-   * Note: V1 API only supports JWT authenticators (aud.sub format)
+   *
+   * - v1 (default): JWT authenticators (aud.sub format), used as a fallback
+   *   after the indexer.
+   * - v2: EthWallet/Secp256K1 lookups through the AA API, verified on chain.
+   *   When v2 is configured it is the ONLY strategy: `indexer`, `rpc` and the
+   *   empty fallback are not added, so an AA API or RPC error surfaces as an
+   *   error instead of an empty "no account" result.
    */
   aaApi?: AAApiAccountStrategyConfig;
 
   /**
-   * RPC configuration for reliable on-chain account lookups
-   * If provided, RpcAccountStrategy will be used as a fallback
+   * RPC configuration (deprecated adapter over the AA API v2 strategy).
+   * Requires `aaApiUrl`; see RpcAccountStrategy.
    */
   rpc?: RpcAccountStrategyConfig;
 }
 
 /**
- * Creates a CompositeAccountStrategy with automatic fallback chain:
+ * Creates a CompositeAccountStrategy.
+ *
+ * With `aaApi.version === "v2"` the composite contains only the AA API v2
+ * strategy (see `aaApi`). Otherwise it builds the fallback chain:
  * 1. Indexer strategy (Numia or Subquery, if configured) - Fast indexer queries
  * 2. AA-API strategy (if configured) - Canonical account state fallback
  * 3. RpcAccountStrategy (if RPC config provided) - Reliable on-chain queries
@@ -59,6 +67,12 @@ export interface CreateCompositeAccountStrategyConfig {
 export function createCompositeAccountStrategy(
   config: CreateCompositeAccountStrategyConfig,
 ): CompositeAccountStrategy {
+  // AA API v2 is the canonical source: no indexer, RPC or empty fallback that
+  // could turn a lookup failure into a successful empty discovery.
+  if (config.aaApi?.version === "v2") {
+    return new CompositeAccountStrategy(new AAApiAccountStrategy(config.aaApi));
+  }
+
   const strategies = [];
 
   // Add indexer strategy if configured (fast)

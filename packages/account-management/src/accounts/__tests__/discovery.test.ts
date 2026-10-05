@@ -85,9 +85,14 @@ describe("discovery.ts - Account Existence Checking", () => {
     });
 
     it("should work with all authenticator types", async () => {
-      const types = ["EthWallet", "Secp256K1", "JWT", "Passkey"] as const;
+      const cases = [
+        ["EthWallet", "0x1234567890abcdef"],
+        ["Secp256K1", "AiGkW+2imN152OGq4dMyJS/J4OyGGrjtpXFXjMVASz2p"],
+        ["JWT", "credential"],
+        ["Passkey", "credential"],
+      ] as const;
 
-      for (const type of types) {
+      for (const [type, credential] of cases) {
         mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
           {
             id: "xion1account123",
@@ -96,18 +101,14 @@ describe("discovery.ts - Account Existence Checking", () => {
               {
                 id: "xion1account123-0",
                 type,
-                authenticator: "credential",
+                authenticator: credential,
                 authenticatorIndex: 0,
               },
             ],
           },
         ]);
 
-        const result = await checkAccountExists(
-          mockStrategy,
-          "credential",
-          type,
-        );
+        const result = await checkAccountExists(mockStrategy, credential, type);
 
         expect(result.exists).toBe(true);
       }
@@ -176,7 +177,7 @@ describe("discovery.ts - Account Existence Checking", () => {
       expect(result.authenticatorIndex).toBe(1);
     });
 
-    it("should default to authenticatorIndex 0 when no matching authenticator found", async () => {
+    it("should return an error, not index 0, when no matching EthWallet authenticator is found", async () => {
       const mockAccount = {
         id: "xion1account123",
         codeId: 123,
@@ -200,8 +201,147 @@ describe("discovery.ts - Account Existence Checking", () => {
         "EthWallet",
       );
 
+      expect(result).toEqual({
+        exists: false,
+        accounts: [],
+        error:
+          "Smart account xion1account123 has no EthWallet authenticator matching the login authenticator",
+      });
+    });
+
+    it("should keep the legacy index-0 default for JWT authenticators", async () => {
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-0",
+              type: "JWT",
+              authenticator: "other.user",
+              authenticatorIndex: 0,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(
+        mockStrategy,
+        "project.user",
+        "JWT",
+      );
+
       expect(result.exists).toBe(true);
       expect(result.authenticatorIndex).toBe(0);
+    });
+
+    describe("verified EthWallet/Secp256K1 matching", () => {
+      const SECP_BASE64 = "AiGkW+2imN152OGq4dMyJS/J4OyGGrjtpXFXjMVASz2p";
+      const SECP_HEX =
+        "0221a45beda298dd79d8e1aae1d332252fc9e0ec861ab8eda571578cc5404b3da9";
+      const OTHER_SECP_BASE64 = "AsCnyF4VdNxtN+4Fr8RFzy1Tvu1OXB5s13ZfMrEAP5t5";
+
+      function account(authenticators: Authenticator[]) {
+        return {
+          id: "xion1account123",
+          codeId: 1880,
+          authenticators,
+        };
+      }
+
+      it("returns the nonzero on-chain index of the matching Secp256K1 key", async () => {
+        mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+          account([
+            {
+              id: "xion1account123-0",
+              type: "Secp256K1",
+              authenticator: OTHER_SECP_BASE64,
+              authenticatorIndex: 0,
+            },
+            {
+              id: "xion1account123-4",
+              type: "Secp256K1",
+              authenticator: SECP_BASE64,
+              authenticatorIndex: 4,
+            },
+          ]),
+        ]);
+
+        const result = await checkAccountExists(
+          mockStrategy,
+          SECP_BASE64,
+          "Secp256K1",
+        );
+
+        expect(result.exists).toBe(true);
+        expect(result.authenticatorIndex).toBe(4);
+        expect(result.codeId).toBe(1880);
+      });
+
+      it("matches a hex login key against the base64 on-chain key by bytes", async () => {
+        mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+          account([
+            {
+              id: "xion1account123-2",
+              type: "Secp256K1",
+              authenticator: SECP_BASE64,
+              authenticatorIndex: 2,
+            },
+          ]),
+        ]);
+
+        const result = await checkAccountExists(
+          mockStrategy,
+          SECP_HEX,
+          "Secp256K1",
+        );
+
+        expect(result.authenticatorIndex).toBe(2);
+      });
+
+      it("treats base64 keys as case-sensitive", async () => {
+        mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+          account([
+            {
+              id: "xion1account123-0",
+              type: "Secp256K1",
+              authenticator: SECP_BASE64.toLowerCase(),
+              authenticatorIndex: 0,
+            },
+          ]),
+        ]);
+
+        const result = await checkAccountExists(
+          mockStrategy,
+          SECP_BASE64,
+          "Secp256K1",
+        );
+
+        expect(result.exists).toBe(false);
+        expect(result.error).toContain("has no Secp256K1 authenticator");
+      });
+
+      it("requires the authenticator type to match", async () => {
+        mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+          account([
+            {
+              id: "xion1account123-0",
+              type: "JWT",
+              authenticator: "0xabcdef",
+              authenticatorIndex: 0,
+            },
+          ]),
+        ]);
+
+        const result = await checkAccountExists(
+          mockStrategy,
+          "0xABCDEF",
+          "EthWallet",
+        );
+
+        expect(result.exists).toBe(false);
+        expect(result.error).toContain("has no EthWallet authenticator");
+      });
     });
 
     it("should use custom log prefix when provided", async () => {
@@ -376,8 +516,9 @@ describe("discovery.ts - Account Existence Checking", () => {
         "EthWallet",
       );
 
-      expect(result.exists).toBe(true);
-      expect(result.authenticatorIndex).toBe(0); // Defaults to 0
+      // No login authenticator on the account is an inconsistency
+      expect(result.exists).toBe(false);
+      expect(result.error).toContain("has no EthWallet authenticator");
     });
 
     it("should handle account with multiple authenticators of same type", async () => {

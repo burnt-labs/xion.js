@@ -533,6 +533,9 @@ importers:
       '@cosmjs/cosmwasm-stargate':
         specifier: ^0.36.0
         version: 0.36.2
+      '@cosmjs/encoding':
+        specifier: ^0.36.0
+        version: 0.36.2
       '@cosmjs/proto-signing':
         specifier: ^0.36.0
         version: 0.36.2
