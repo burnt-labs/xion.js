@@ -225,8 +225,7 @@ export async function createSecp256k1Account(
   );
 
   // Normalize pubkey to base64 (matches AA API normalization) for the POST.
-  // The lookup gets the raw pubkey and normalizes it itself: the normalizer is
-  // not idempotent (uncompressed hex becomes 88-char base64, which it rejects).
+  // The lookup normalizes the raw pubkey itself; the normalizer is idempotent.
   const normalizedPubkey = normalizeAAApiIdentifier(
     AUTHENTICATOR_TYPE.Secp256K1,
     pubkey,

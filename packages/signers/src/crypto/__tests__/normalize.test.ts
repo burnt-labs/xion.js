@@ -1,4 +1,5 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
+import { Buffer } from "buffer";
 import {
   normalizeEthereumAddress,
   normalizeSecp256k1PublicKey,
@@ -239,6 +240,27 @@ describe("normalize.ts - Normalization Utilities", () => {
 
         expect(typeof normalized).toBe("string");
         expect(normalized).toMatch(/^[A-Za-z0-9+/=]+$/);
+      });
+
+      it("accepts its own normalized output (idempotent)", () => {
+        const uncompressedHex = "04" + "ab".repeat(64);
+
+        const once = normalizeSecp256k1PublicKey(uncompressedHex);
+
+        expect(once).toHaveLength(88);
+        expect(normalizeSecp256k1PublicKey(once)).toBe(once);
+      });
+
+      it("rejects 65-byte base64 that is not an uncompressed key", () => {
+        // 0x05 prefix: same length and leading "B", wrong key type byte
+        const notUncompressed = Buffer.from(
+          "05" + "ab".repeat(64),
+          "hex",
+        ).toString("base64");
+
+        expect(() => normalizeSecp256k1PublicKey(notUncompressed)).toThrow(
+          "uncompressed key must be 65 bytes starting with 0x04",
+        );
       });
     });
 

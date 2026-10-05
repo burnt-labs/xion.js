@@ -74,6 +74,35 @@ describe("addressSource", () => {
         );
       },
     );
+
+    it("accepts its own output for an uncompressed Secp256K1 key", async () => {
+      const normalized = normalizeAAApiIdentifier(
+        "Secp256K1",
+        "04" + "ab".repeat(64),
+      );
+      expect(normalized).toHaveLength(88);
+      expect(normalizeAAApiIdentifier("Secp256K1", normalized)).toBe(
+        normalized,
+      );
+
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse({
+          address: SECP_ADDRESS,
+          authenticator_type: "Secp256K1",
+        }),
+      );
+      await expect(
+        resolveAAApiAccountAddress({
+          aaApiUrl: API,
+          authenticatorType: "Secp256K1",
+          identifier: normalized,
+          addressPrefix: "xion",
+        }),
+      ).resolves.toBe(SECP_ADDRESS);
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        `${API}/api/v2/account/address/secp256k1/${encodeURIComponent(normalized)}`,
+      );
+    });
   });
 
   describe("resolveAAApiAccountAddress (/address)", () => {
