@@ -89,7 +89,12 @@ export function normalizeAbstraxionConfig(
 
 /**
  * Create account strategy from normalized config
- * Handles indexer and RPC strategy configuration for smart account discovery
+ *
+ * With a smart account contract configured, discovery uses ONLY the AA API v2
+ * strategy: GET /api/v2/account/check/{type}/{id}, then on-chain verification
+ * via rpcUrl. No indexer, local-derivation or empty fallback is added, so an
+ * AA API or RPC failure surfaces as a discovery error instead of permitting
+ * account creation. `smartAccountContract.checksum` is ignored.
  */
 export function createAccountStrategyFromConfig(
   config: NormalizedAbstraxionConfig,
@@ -97,17 +102,26 @@ export function createAccountStrategyFromConfig(
 ): CompositeAccountStrategy {
   const smartAccountContract = signerAuth.smartAccountContract;
 
+  if (!smartAccountContract) {
+    // Discovery-only configuration (no account creation possible)
+    return createCompositeAccountStrategy({
+      indexer: convertIndexerConfig(signerAuth.indexer, smartAccountContract),
+    });
+  }
+
+  if (!signerAuth.aaApiUrl) {
+    throw new Error(
+      "aaApiUrl is required in signer authentication: smart-account addresses come from the AA API",
+    );
+  }
+
   return createCompositeAccountStrategy({
-    indexer: convertIndexerConfig(signerAuth.indexer, smartAccountContract),
-    rpc: smartAccountContract
-      ? {
-          rpcUrl: config.rpcUrl,
-          checksum: smartAccountContract.checksum,
-          creator: config.feeGranter || "",
-          prefix: smartAccountContract.addressPrefix,
-          codeId: smartAccountContract.codeId,
-        }
-      : undefined,
+    aaApi: {
+      baseURL: signerAuth.aaApiUrl,
+      version: "v2",
+      rpcUrl: config.rpcUrl,
+      addressPrefix: smartAccountContract.addressPrefix,
+    },
   });
 }
 
@@ -140,7 +154,8 @@ export function createGrantConfigFromConfig(
 
 /**
  * Create account creation config from normalized config
- * Handles smart account contract configuration for account creation
+ * Handles smart account contract configuration for account creation.
+ * The AA API selects the address, so no checksum is needed or passed on.
  */
 export function createAccountCreationConfigFromConfig(
   config: NormalizedAbstraxionConfig,
@@ -156,7 +171,6 @@ export function createAccountCreationConfigFromConfig(
     aaApiUrl: signerAuth.aaApiUrl || "",
     smartAccountContract: {
       codeId: smartAccountContract.codeId,
-      checksum: smartAccountContract.checksum,
       addressPrefix: smartAccountContract.addressPrefix,
     },
     feeGranter: config.feeGranter,
