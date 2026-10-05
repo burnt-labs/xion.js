@@ -31,7 +31,7 @@ authentication: {
 - `smartAccountContract.checksum` is optional, deprecated and ignored. Signer-mode discovery no longer uses `indexer`; the AA API runs its own lookup.
 - New core API: `createEthWalletAccount(aaApiUrl, evmAddress, sign, { addressSource: "aa-api", addressPrefix, rpcUrl? })` and the `createSecp256k1Account` equivalent, plus `resolveAAApiAccountAddress`, `findAAApiAccountAddress` and `AAApiAccountNotFoundError`. The positional seven-argument overloads still compile; their checksum argument is ignored.
 - `AAApiAccountStrategy` is exported and implements `version: "v2"` (`{ baseURL, version: "v2", rpcUrl, addressPrefix }`).
-- **Breaking for direct `RpcAccountStrategy` users:** it is now a deprecated adapter over `AAApiAccountStrategy` v2 and throws a migration error unless `aaApiUrl` is passed. `checksum`, `creator` and `codeId` are accepted but ignored. Signer-config users already pass `aaApiUrl` and need no change.
+- **Breaking for direct `RpcAccountStrategy` users:** it is now a deprecated adapter over `AAApiAccountStrategy` v2 and throws a migration error unless `aaApiUrl` is passed. `checksum`, `creator` and `codeId` are accepted but ignored. It now supports EthWallet and Secp256K1 only; JWT and Passkey lookups reject (use `AAApiAccountStrategy` v1 or an indexer strategy for JWT). Signer-config users already pass `aaApiUrl` and need no change.
 - **Tradeoff:** there is no legacy-checksum fallback. Accounts the AA API returns through its ordinary lookup are found regardless of age, and mainnet pre-v31 addresses are unchanged (its derivation hash did not change). A few historical testnet accounts created under an older checksum have no dedicated recovery path.
 
 ---

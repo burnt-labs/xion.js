@@ -187,7 +187,8 @@ The SDK never derives the address locally and needs no contract checksum:
   their checksum argument is ignored too.
 - `RpcAccountStrategy` is a deprecated adapter over `AAApiAccountStrategy` v2
   and requires `aaApiUrl`; constructing it without one throws a migration
-  error.
+  error. It supports EthWallet and Secp256K1 only; JWT and Passkey lookups
+  reject.
 - Tradeoff: there is no legacy-checksum fallback. Accounts the AA API returns
   through its ordinary lookup are found regardless of age, and mainnet's
   pre-v31 addresses are unchanged because its derivation hash is unchanged. A

@@ -10,6 +10,11 @@
  * for source compatibility but ignored. An arbitrary RPC URL cannot imply an
  * AA API host, so constructing without `aaApiUrl` throws.
  *
+ * Supported authenticators: EthWallet and Secp256K1 only, the types AA API v2
+ * discovery covers. JWT and Passkey, which the checksum-based version
+ * accepted, now reject. Discover JWT accounts with
+ * `new AAApiAccountStrategy({ baseURL })` (v1) or an indexer strategy.
+ *
  * @deprecated Use `new AAApiAccountStrategy({ baseURL, version: "v2", rpcUrl, addressPrefix })`.
  */
 
@@ -61,6 +66,9 @@ export class RpcAccountStrategy implements IndexerStrategy {
     });
   }
 
+  /**
+   * @throws for authenticator types other than EthWallet and Secp256K1
+   */
   fetchSmartAccounts(
     loginAuthenticator: string,
     authenticatorType: AuthenticatorType,
