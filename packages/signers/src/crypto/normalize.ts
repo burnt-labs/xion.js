@@ -3,6 +3,9 @@
  * Pure functions for normalizing Ethereum addresses, Secp256k1 public keys, and JWT identifiers
  */
 
+// Explicit import: browsers (Vite) and React Native have no global Buffer
+import { Buffer } from "buffer";
+
 /**
  * Normalize an Ethereum address to lowercase format with 0x prefix
  *

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import {
   normalizeEthereumAddress,
   normalizeSecp256k1PublicKey,
@@ -310,6 +310,30 @@ describe("normalize.ts - Normalization Utilities", () => {
 
         expect(() => normalizeSecp256k1PublicKey(shortInvalidKey)).toThrow(
           "Invalid Secp256k1 public key format: invalid",
+        );
+      });
+    });
+
+    describe("Without a global Buffer (browser / React Native)", () => {
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      it("normalizes hex and validates base64 without globalThis.Buffer", () => {
+        vi.stubGlobal("Buffer", undefined);
+
+        expect(
+          normalizeSecp256k1PublicKey(
+            "0221a45beda298dd79d8e1aae1d332252fc9e0ec861ab8eda571578cc5404b3da9",
+          ),
+        ).toBe("AiGkW+2imN152OGq4dMyJS/J4OyGGrjtpXFXjMVASz2p");
+        expect(
+          normalizeSecp256k1PublicKey(
+            "AiGkW+2imN152OGq4dMyJS/J4OyGGrjtpXFXjMVASz2p",
+          ),
+        ).toBe("AiGkW+2imN152OGq4dMyJS/J4OyGGrjtpXFXjMVASz2p");
+        expect(normalizeSecp256k1PublicKey("04" + "a1".repeat(64))).toBe(
+          "BKGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaE=",
         );
       });
     });
