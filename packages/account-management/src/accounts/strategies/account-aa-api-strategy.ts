@@ -33,7 +33,10 @@ export type AAApiAccountStrategyConfig =
       /** AA-API base URL (e.g., "https://aa-api.xion-testnet-2.burnt.com") */
       baseURL: string;
       version: "v2";
-      /** RPC URL used to verify the account the AA API reports */
+      /**
+       * RPC URL used to verify the account the AA API reports. Validated when
+       * discovery runs, so construction works during SSR without one.
+       */
       rpcUrl: string;
       /** Bech32 prefix of smart-account addresses (e.g., "xion") */
       addressPrefix: string;
@@ -73,9 +76,8 @@ export class AAApiAccountStrategy implements IndexerStrategy {
       if (!config.baseURL) {
         throw new Error("AA-API v2 strategy requires baseURL");
       }
-      if (!config.rpcUrl) {
-        throw new Error("AA-API v2 strategy requires rpcUrl");
-      }
+      // rpcUrl is checked when discovery runs, not here: during SSR the
+      // normalized config may legitimately carry an empty RPC URL.
       if (!config.addressPrefix) {
         throw new Error("AA-API v2 strategy requires addressPrefix");
       }
@@ -182,6 +184,10 @@ export class AAApiAccountStrategy implements IndexerStrategy {
       throw new Error(
         `AA-API v2 account discovery supports EthWallet and Secp256K1 authenticators, got "${String(authenticatorType)}"`,
       );
+    }
+
+    if (!config.rpcUrl) {
+      throw new Error("AA-API v2 strategy requires rpcUrl");
     }
 
     // Only an explicit HTTP 404 resolves to null; everything else throws

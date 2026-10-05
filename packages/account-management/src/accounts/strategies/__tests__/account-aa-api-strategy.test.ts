@@ -576,15 +576,21 @@ describe("AAApiAccountStrategy", () => {
       },
     );
 
-    it("requires rpcUrl and addressPrefix", () => {
-      expect(
-        () =>
-          new AAApiAccountStrategy({
-            baseURL,
-            version: "v2",
-            addressPrefix: "xion",
-          } as any),
-      ).toThrow("AA-API v2 strategy requires rpcUrl");
+    it("constructs without rpcUrl (SSR) and rejects on discovery before any request", async () => {
+      const ssrStrategy = new AAApiAccountStrategy({
+        baseURL,
+        version: "v2",
+        rpcUrl: "",
+        addressPrefix: "xion",
+      });
+
+      await expect(
+        ssrStrategy.fetchSmartAccounts(EVM, AUTHENTICATOR_TYPE.EthWallet),
+      ).rejects.toThrow("AA-API v2 strategy requires rpcUrl");
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("requires addressPrefix", () => {
       expect(
         () =>
           new AAApiAccountStrategy({
