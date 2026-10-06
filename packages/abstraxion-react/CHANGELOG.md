@@ -1,5 +1,12 @@
 # @burnt-labs/abstraxion-react
 
+## 1.0.0-alpha.83
+
+### Patch Changes
+
+- Updated dependencies [[`30e9d00`](https://github.com/burnt-labs/xion.js/commit/30e9d00782b99850505e5bb437fb7f59ed8a15b6)]:
+  - @burnt-labs/abstraxion-js@1.0.0-alpha.4
+
 ## 1.0.0-alpha.82
 
 ### Patch Changes
