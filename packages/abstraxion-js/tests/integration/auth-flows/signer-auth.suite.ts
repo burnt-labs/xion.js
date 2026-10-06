@@ -63,6 +63,7 @@ export function registerSignerAuthIntegrationTests(
 
       // Create account strategy (RPC-based for integration tests)
       const rpcStrategy = new RpcAccountStrategy({
+        aaApiUrl: config.aaApiUrl,
         rpcUrl: config.rpcUrl,
         checksum: config.checksum,
         creator: config.feeGranter,

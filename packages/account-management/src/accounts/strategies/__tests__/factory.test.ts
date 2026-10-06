@@ -2,7 +2,7 @@
  * Unit tests for createCompositeAccountStrategy factory function
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createCompositeAccountStrategy } from "../factory";
 import { CompositeAccountStrategy } from "../account-composite-strategy";
 import { NumiaAccountStrategy } from "../account-numia-strategy";
@@ -10,6 +10,7 @@ import { SubqueryAccountStrategy } from "../account-subquery-strategy";
 import { RpcAccountStrategy } from "../account-rpc-strategy";
 import { AAApiAccountStrategy } from "../account-aa-api-strategy";
 import { EmptyAccountStrategy } from "../account-empty-strategy";
+import { checkAccountExists } from "../../discovery";
 
 describe("createCompositeAccountStrategy", () => {
   describe("strategy composition", () => {
@@ -65,6 +66,7 @@ describe("createCompositeAccountStrategy", () => {
       const strategy = createCompositeAccountStrategy({
         rpc: {
           rpcUrl: "https://rpc.example.com",
+          aaApiUrl: "https://aa-api.example.com",
           checksum: "0".repeat(64),
           creator: "xion1creator",
           prefix: "xion",
@@ -85,6 +87,7 @@ describe("createCompositeAccountStrategy", () => {
         },
         rpc: {
           rpcUrl: "https://rpc.example.com",
+          aaApiUrl: "https://aa-api.example.com",
           checksum: "0".repeat(64),
           creator: "xion1creator",
           prefix: "xion",
@@ -158,6 +161,8 @@ describe("createCompositeAccountStrategy", () => {
         aaApi: {
           baseURL: "https://aa-api.example.com",
           version: "v2",
+          rpcUrl: "https://rpc.example.com",
+          addressPrefix: "xion",
         },
       });
 
@@ -203,6 +208,7 @@ describe("createCompositeAccountStrategy", () => {
         },
         rpc: {
           rpcUrl: "https://rpc.example.com",
+          aaApiUrl: "https://aa-api.example.com",
           checksum: "0".repeat(64),
           creator: "xion1creator",
           prefix: "xion",
@@ -229,6 +235,7 @@ describe("createCompositeAccountStrategy", () => {
         },
         rpc: {
           rpcUrl: "https://rpc.example.com",
+          aaApiUrl: "https://aa-api.example.com",
           checksum: "0".repeat(64),
           creator: "xion1creator",
           prefix: "xion",
@@ -252,6 +259,7 @@ describe("createCompositeAccountStrategy", () => {
         {
           rpc: {
             rpcUrl: "https://rpc.com",
+            aaApiUrl: "https://aa-api.example.com",
             checksum: "0",
             creator: "x",
             prefix: "x",
@@ -262,6 +270,7 @@ describe("createCompositeAccountStrategy", () => {
           indexer: { type: "numia" as const, url: "https://test.com" },
           rpc: {
             rpcUrl: "https://rpc.com",
+            aaApiUrl: "https://aa-api.example.com",
             checksum: "0",
             creator: "x",
             prefix: "x",
@@ -273,6 +282,7 @@ describe("createCompositeAccountStrategy", () => {
           aaApi: { baseURL: "https://aa-api.example.com" },
           rpc: {
             rpcUrl: "https://rpc.com",
+            aaApiUrl: "https://aa-api.example.com",
             checksum: "0",
             creator: "x",
             prefix: "x",
@@ -288,6 +298,96 @@ describe("createCompositeAccountStrategy", () => {
           EmptyAccountStrategy,
         );
       });
+    });
+  });
+
+  describe("aa-api v2 (canonical address source)", () => {
+    const v2 = {
+      baseURL: "https://aa-api.example.com",
+      version: "v2" as const,
+      rpcUrl: "https://rpc.example.com",
+      addressPrefix: "xion",
+    };
+    const EVM = "0xc2e80cf7d5a108d4abc97b5c5a95b2515ef90cb5";
+    let originalFetch: typeof global.fetch;
+
+    beforeEach(() => {
+      originalFetch = global.fetch;
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it("contains only the v2 AA API strategy", () => {
+      const strategy = createCompositeAccountStrategy({ aaApi: v2 });
+
+      const strategies = (strategy as any).strategies;
+      expect(strategies).toHaveLength(1);
+      expect(strategies[0]).toBeInstanceOf(AAApiAccountStrategy);
+      expect(strategies[0].config).toEqual(v2);
+    });
+
+    it("never adds indexer, RPC or empty fallbacks next to v2", () => {
+      const strategy = createCompositeAccountStrategy({
+        aaApi: v2,
+        indexer: { type: "numia", url: "https://indexer.example.com" },
+        rpc: {
+          rpcUrl: "https://rpc.example.com",
+          aaApiUrl: "https://aa-api.example.com",
+          prefix: "xion",
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      expect(strategies).toHaveLength(1);
+      expect(strategies[0]).toBeInstanceOf(AAApiAccountStrategy);
+      for (const forbidden of [
+        EmptyAccountStrategy,
+        RpcAccountStrategy,
+        NumiaAccountStrategy,
+        SubqueryAccountStrategy,
+      ]) {
+        expect(strategies.some((s: unknown) => s instanceof forbidden)).toBe(
+          false,
+        );
+      }
+    });
+
+    it.each([
+      [
+        "API failure",
+        () => Promise.resolve(new Response("upstream down", { status: 503 })),
+      ],
+      ["network failure", () => Promise.reject(new TypeError("fetch failed"))],
+    ])(
+      "surfaces an aa-api %s as accountCheck.error, not as 'no account'",
+      async (_name, response) => {
+        global.fetch = vi.fn().mockImplementation(response);
+        const strategy = createCompositeAccountStrategy({ aaApi: v2 });
+
+        const result = await checkAccountExists(strategy, EVM, "EthWallet");
+
+        expect(result).toEqual({
+          exists: false,
+          accounts: [],
+          error: expect.any(String),
+        });
+        expect(result.error).toContain("AAApiAccountStrategy");
+      },
+    );
+
+    it("reports a clean 'no account' only for an explicit 404", async () => {
+      global.fetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: "nope" } }), {
+          status: 404,
+        }),
+      );
+      const strategy = createCompositeAccountStrategy({ aaApi: v2 });
+
+      const result = await checkAccountExists(strategy, EVM, "EthWallet");
+
+      expect(result).toEqual({ exists: false, accounts: [] });
     });
   });
 

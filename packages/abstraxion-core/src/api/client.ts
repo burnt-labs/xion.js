@@ -130,6 +130,38 @@ async function parseApiError(
 }
 
 /**
+ * Options for AA API GET lookups
+ */
+export interface AAApiRequestOptions {
+  /** Abort signal used to cancel the HTTP request */
+  signal?: AbortSignal;
+}
+
+/**
+ * Thrown by {@link checkAccountOnChain} only when the AA API answers HTTP 404.
+ * Keeps the historical "ACCOUNT_NOT_FOUND" message for existing callers; an
+ * error body that merely mentions that text is NOT an absence signal.
+ */
+export class AAApiAccountNotFoundError extends Error {
+  constructor() {
+    super("ACCOUNT_NOT_FOUND");
+    this.name = "AAApiAccountNotFoundError";
+    Object.setPrototypeOf(this, AAApiAccountNotFoundError.prototype);
+  }
+}
+
+function buildGetInit(options?: AAApiRequestOptions): RequestInit {
+  const init: RequestInit = {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  };
+  if (options?.signal) {
+    init.signal = options.signal;
+  }
+  return init;
+}
+
+/**
  * Get deterministic smart account address for an identifier
  * GET /api/v2/account/address/<type>/<identifier>
  */
@@ -137,14 +169,12 @@ export async function getAccountAddress(
   aaApiUrl: string,
   authenticatorType: AuthenticatorType,
   identifier: string,
+  options?: AAApiRequestOptions,
 ): Promise<AddressResponse> {
   const encodedIdentifier = encodeURIComponent(identifier);
   const response = await fetch(
     `${aaApiUrl}/api/v2/account/address/${authenticatorType.toLowerCase()}/${encodedIdentifier}`,
-    {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    },
+    buildGetInit(options),
   );
 
   if (!response.ok) {
@@ -161,25 +191,23 @@ export async function getAccountAddress(
 /**
  * Check if account exists on-chain
  * GET /api/v2/account/check/<type>/<identifier>
- * Returns account info if exists, throws 404 if not found
+ * Returns account info if exists; throws AAApiAccountNotFoundError on HTTP 404
  */
 export async function checkAccountOnChain(
   aaApiUrl: string,
   authenticatorType: AuthenticatorType,
   identifier: string,
+  options?: AAApiRequestOptions,
 ): Promise<CheckResponse> {
   const encodedIdentifier = encodeURIComponent(identifier);
   const response = await fetch(
     `${aaApiUrl}/api/v2/account/check/${authenticatorType.toLowerCase()}/${encodedIdentifier}`,
-    {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    },
+    buildGetInit(options),
   );
 
   if (response.status === 404) {
-    // Account doesn't exist - return null instead of throwing
-    throw new Error("ACCOUNT_NOT_FOUND");
+    // Account doesn't exist - only an explicit 404 means absence
+    throw new AAApiAccountNotFoundError();
   }
 
   if (!response.ok) {

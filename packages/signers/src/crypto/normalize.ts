@@ -3,6 +3,9 @@
  * Pure functions for normalizing Ethereum addresses, Secp256k1 public keys, and JWT identifiers
  */
 
+// Explicit import: browsers (Vite) and React Native have no global Buffer
+import { Buffer } from "buffer";
+
 /**
  * Normalize an Ethereum address to lowercase format with 0x prefix
  *
@@ -85,6 +88,19 @@ export function normalizeSecp256k1PublicKey(pubkey: string): string {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Invalid base64 pubkey: ${message}`);
+    }
+    return trimmed;
+  }
+
+  // Base64-encoded uncompressed key (65 bytes = 88 chars with one "=" pad),
+  // which is what uncompressed hex normalizes to. Accepting it keeps the
+  // normalizer idempotent.
+  if (/^B[A-Za-z0-9+/]{86}=$/.test(trimmed)) {
+    const decoded = Buffer.from(trimmed, "base64");
+    if (decoded.length !== 65 || decoded[0] !== 0x04) {
+      throw new Error(
+        "Invalid base64 pubkey: uncompressed key must be 65 bytes starting with 0x04",
+      );
     }
     return trimmed;
   }

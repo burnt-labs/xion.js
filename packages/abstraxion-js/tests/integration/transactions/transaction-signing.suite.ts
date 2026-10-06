@@ -54,6 +54,7 @@ export function registerTransactionSigningIntegrationTests(
       sessionManager = createMockSessionManager(storageStrategy);
 
       const rpcStrategy = new RpcAccountStrategy({
+        aaApiUrl: config.aaApiUrl,
         rpcUrl: config.rpcUrl,
         checksum: config.checksum,
         creator: config.feeGranter,
