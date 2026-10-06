@@ -22,6 +22,7 @@
     "@burnt-labs/abstraxion-react": "1.0.0-alpha.79"
   },
   "changesets": [
+    "aa-api-canonical-address-source",
     "abstraxion-core-ibc-transfer",
     "abstraxion-js-new-package",
     "abstraxion-js-runtime",
@@ -109,6 +110,7 @@
     "rich-wolves-whisper",
     "sharp-carpets-confess",
     "shy-eggs-hear",
+    "signers-normalize-buffer-import",
     "silly-seas-sip",
     "silly-worms-hear",
     "silver-plants-rule",
