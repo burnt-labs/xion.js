@@ -6,6 +6,7 @@
  */
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
+import { isMatchingAuthenticator } from "../discovery";
 import { fromBech32 } from "@cosmjs/encoding";
 import {
   AUTHENTICATOR_TYPE,
@@ -150,6 +151,24 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
       // index defaulted to 0), so fail and let the composite fall through.
       if (!data.every(isAccountResp)) {
         throw new Error("DaoDao indexer returned a malformed account entry");
+      }
+      // The lookup only returns accounts that hold the queried authenticator.
+      // One that doesn't would be connected at a defaulted index (JWT,
+      // Passkey, ...), so treat it as a bad response rather than a match.
+      if (
+        !data.every(({ authenticators }) =>
+          authenticators.some(({ type, authenticator }) =>
+            isMatchingAuthenticator(
+              { type: type as AuthenticatorType, authenticator },
+              loginAuthenticator,
+              authenticatorType,
+            ),
+          ),
+        )
+      ) {
+        throw new Error(
+          "DaoDao indexer returned an account without the queried authenticator",
+        );
       }
 
       return data.map(({ address, codeId, authenticators }) => ({

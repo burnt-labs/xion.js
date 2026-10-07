@@ -248,6 +248,71 @@ describe("DaoDaoAccountStrategy", () => {
     );
   });
 
+  it.each([
+    ["no authenticators", []],
+    [
+      "a different identity of the queried type",
+      [{ index: 3, type: "JWT", authenticator: "aud.other" }],
+    ],
+    [
+      "the identity under another type",
+      [{ index: 0, type: "Passkey", authenticator: "aud.sub" }],
+    ],
+  ])(
+    "throws when an account lacks the queried authenticator: %s",
+    async (_, authenticators) => {
+      const strategy = new DaoDaoAccountStrategy(
+        "https://daodaoindexer.burnt.com",
+        "xion-mainnet-1",
+      );
+      (global.fetch as any).mockResolvedValueOnce(
+        okJson([
+          {
+            address: ACCOUNT_B,
+            codeId: 5,
+            authenticators: [
+              { index: 0, type: "JWT", authenticator: "aud.sub" },
+            ],
+          },
+          { address: ACCOUNT_A, codeId: 5, authenticators },
+        ]),
+      );
+
+      await expect(
+        strategy.fetchSmartAccounts("aud.sub", AUTHENTICATOR_TYPE.JWT),
+      ).rejects.toThrow(
+        "DaoDao account strategy failed: DaoDao indexer returned an account without the queried authenticator",
+      );
+    },
+  );
+
+  it("matches an EthWallet authenticator regardless of address casing", async () => {
+    const strategy = new DaoDaoAccountStrategy(
+      "https://daodaoindexer.burnt.com",
+      "xion-mainnet-1",
+    );
+    const lower = "0xc2e80cf7d5a108d4abc97b5c5a95b2515ef90cb5";
+    (global.fetch as any).mockResolvedValueOnce(
+      okJson([
+        {
+          address: ACCOUNT_A,
+          codeId: 5,
+          authenticators: [
+            { index: 2, type: "EthWallet", authenticator: lower },
+          ],
+        },
+      ]),
+    );
+
+    const [account] = await strategy.fetchSmartAccounts(
+      "0xC2E80cf7D5A108d4ABc97b5C5A95B2515ef90Cb5",
+      AUTHENTICATOR_TYPE.EthWallet,
+    );
+
+    expect(account.id).toBe(ACCOUNT_A);
+    expect(account.authenticators[0].authenticatorIndex).toBe(2);
+  });
+
   it("throws on a non-2xx answer so the composite falls through", async () => {
     const strategy = new DaoDaoAccountStrategy(
       "https://daodaoindexer.burnt.com",
