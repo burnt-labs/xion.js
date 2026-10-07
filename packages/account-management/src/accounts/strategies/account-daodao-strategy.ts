@@ -6,7 +6,25 @@
  */
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
-import type { AuthenticatorType } from "@burnt-labs/signers";
+import {
+  AUTHENTICATOR_TYPE,
+  type AuthenticatorType,
+} from "@burnt-labs/signers";
+
+/** Types the indexer's lookup accepts (dao-dao-indexer `XION_AUTHENTICATOR_TYPES`). */
+const INDEXED_TYPES: ReadonlySet<string> = new Set([
+  "Secp256K1",
+  "Ed25519",
+  "EthWallet",
+  "JWT",
+  "Secp256R1",
+  "Passkey",
+  "ZKEmail",
+]);
+
+const SDK_TYPES: ReadonlySet<string> = new Set(
+  Object.values(AUTHENTICATOR_TYPE),
+);
 
 interface DaoDaoAuthenticatorResp {
   index: number;
@@ -37,6 +55,14 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
     authenticatorType: AuthenticatorType,
   ): Promise<SmartAccountWithCodeId[]> {
     try {
+      // The indexer rejects types it does not index (e.g. Sr25519) with a 400;
+      // fail fast so the composite moves on without a request.
+      if (!INDEXED_TYPES.has(authenticatorType)) {
+        throw new Error(
+          `the DaoDao indexer does not index ${authenticatorType} authenticators`,
+        );
+      }
+
       const params = new URLSearchParams({
         type: authenticatorType,
         authenticator: loginAuthenticator,
@@ -60,14 +86,16 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
       return (data ?? []).map(({ address, codeId, authenticators }) => ({
         id: address,
         codeId: Number(codeId),
-        authenticators: authenticators.map(
-          ({ index, type, authenticator }) => ({
+        // Authenticators of a type the SDK has no signer for (e.g. Secp256R1)
+        // are left out; the rest keep their on-chain index.
+        authenticators: authenticators
+          .filter(({ type }) => SDK_TYPES.has(type))
+          .map(({ index, type, authenticator }) => ({
             id: `${address}-${index}`,
             authenticator,
             authenticatorIndex: Number(index),
             type: type as AuthenticatorType,
-          }),
-        ),
+          })),
       }));
     } catch (error) {
       const errorMessage =

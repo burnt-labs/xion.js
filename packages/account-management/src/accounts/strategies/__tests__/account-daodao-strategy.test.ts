@@ -97,6 +97,53 @@ describe("DaoDaoAccountStrategy", () => {
     ]);
   });
 
+  it("leaves out authenticators of a type the SDK has no signer for", async () => {
+    const strategy = new DaoDaoAccountStrategy(
+      "https://daodaoindexer.burnt.com",
+      "xion-mainnet-1",
+    );
+    (global.fetch as any).mockResolvedValueOnce(
+      okJson([
+        {
+          address: "xion1aaa",
+          codeId: 5,
+          authenticators: [
+            { index: 0, type: "Secp256R1", authenticator: "r1key" },
+            { index: 1, type: "JWT", authenticator: "aud.sub" },
+          ],
+        },
+      ]),
+    );
+
+    const [account] = await strategy.fetchSmartAccounts(
+      "aud.sub",
+      AUTHENTICATOR_TYPE.JWT,
+    );
+
+    expect(account.authenticators).toEqual([
+      {
+        id: "xion1aaa-1",
+        authenticator: "aud.sub",
+        authenticatorIndex: 1,
+        type: "JWT",
+      },
+    ]);
+  });
+
+  it("fails without a request for a type the indexer does not index", async () => {
+    const strategy = new DaoDaoAccountStrategy(
+      "https://daodaoindexer.burnt.com",
+      "xion-mainnet-1",
+    );
+
+    await expect(
+      strategy.fetchSmartAccounts("sr-key", AUTHENTICATOR_TYPE.Sr25519),
+    ).rejects.toThrow(
+      "DaoDao account strategy failed: the DaoDao indexer does not index Sr25519 authenticators",
+    );
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   it("returns an empty list for a miss", async () => {
     const strategy = new DaoDaoAccountStrategy(
       "https://daodaoindexer.burnt.com",
