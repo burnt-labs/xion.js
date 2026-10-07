@@ -6,6 +6,7 @@
  */
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
+import { fromBech32 } from "@cosmjs/encoding";
 import {
   AUTHENTICATOR_TYPE,
   type AuthenticatorType,
@@ -41,6 +42,15 @@ interface DaoDaoAccountResp {
 const isIndex = (value: unknown): value is number =>
   Number.isInteger(value) && (value as number) >= 0;
 
+const isBech32 = (value: string): boolean => {
+  try {
+    fromBech32(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const isAuthenticatorResp = (
   value: unknown,
 ): value is DaoDaoAuthenticatorResp => {
@@ -50,7 +60,9 @@ const isAuthenticatorResp = (
     a !== null &&
     isIndex(a.index) &&
     typeof a.type === "string" &&
-    typeof a.authenticator === "string"
+    INDEXED_TYPES.has(a.type) &&
+    typeof a.authenticator === "string" &&
+    a.authenticator.length > 0
   );
 };
 
@@ -60,8 +72,9 @@ const isAccountResp = (value: unknown): value is DaoDaoAccountResp => {
     typeof a === "object" &&
     a !== null &&
     typeof a.address === "string" &&
-    a.address.length > 0 &&
+    isBech32(a.address) &&
     isIndex(a.codeId) &&
+    a.codeId > 0 &&
     Array.isArray(a.authenticators) &&
     a.authenticators.every(isAuthenticatorResp)
   );

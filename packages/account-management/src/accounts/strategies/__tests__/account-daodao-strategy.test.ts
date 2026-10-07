@@ -15,6 +15,11 @@ const okJson = (body: unknown) => ({
   json: async () => body,
 });
 
+const ACCOUNT_A =
+  "xion1424242424242424242424242424242424242424242424242424q280v08";
+const ACCOUNT_B =
+  "xion1hwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwas3jrp9f";
+
 describe("DaoDaoAccountStrategy", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,7 +51,7 @@ describe("DaoDaoAccountStrategy", () => {
     (global.fetch as any).mockResolvedValueOnce(
       okJson([
         {
-          address: "xion1aaa",
+          address: ACCOUNT_A,
           codeId: 1880,
           authenticators: [
             { index: 0, type: "EthWallet", authenticator: "0xother" },
@@ -54,7 +59,7 @@ describe("DaoDaoAccountStrategy", () => {
           ],
         },
         {
-          address: "xion1bbb",
+          address: ACCOUNT_B,
           codeId: 5,
           authenticators: [{ index: 0, type: "JWT", authenticator: "aud.sub" }],
         },
@@ -68,17 +73,17 @@ describe("DaoDaoAccountStrategy", () => {
 
     expect(result).toEqual([
       {
-        id: "xion1aaa",
+        id: ACCOUNT_A,
         codeId: 1880,
         authenticators: [
           {
-            id: "xion1aaa-0",
+            id: `${ACCOUNT_A}-0`,
             authenticator: "0xother",
             authenticatorIndex: 0,
             type: "EthWallet",
           },
           {
-            id: "xion1aaa-3",
+            id: `${ACCOUNT_A}-3`,
             authenticator: "aud.sub",
             authenticatorIndex: 3,
             type: "JWT",
@@ -86,11 +91,11 @@ describe("DaoDaoAccountStrategy", () => {
         ],
       },
       {
-        id: "xion1bbb",
+        id: ACCOUNT_B,
         codeId: 5,
         authenticators: [
           {
-            id: "xion1bbb-0",
+            id: `${ACCOUNT_B}-0`,
             authenticator: "aud.sub",
             authenticatorIndex: 0,
             type: "JWT",
@@ -108,7 +113,7 @@ describe("DaoDaoAccountStrategy", () => {
     (global.fetch as any).mockResolvedValueOnce(
       okJson([
         {
-          address: "xion1aaa",
+          address: ACCOUNT_A,
           codeId: 5,
           authenticators: [
             { index: 0, type: "Secp256R1", authenticator: "r1key" },
@@ -125,7 +130,7 @@ describe("DaoDaoAccountStrategy", () => {
 
     expect(account.authenticators).toEqual([
       {
-        id: "xion1aaa-1",
+        id: `${ACCOUNT_A}-1`,
         authenticator: "aud.sub",
         authenticatorIndex: 1,
         type: "JWT",
@@ -180,17 +185,42 @@ describe("DaoDaoAccountStrategy", () => {
     ["an entry that is not an object", [null]],
     ["an empty address", [{ address: "", codeId: 5, authenticators: [] }]],
     [
-      "a non-numeric codeId",
-      [{ address: "xion1a", codeId: "bad", authenticators: [] }],
+      "an address that is not bech32",
+      [{ address: "xion1aaa", codeId: 5, authenticators: [] }],
     ],
-    ["missing authenticators", [{ address: "xion1a", codeId: 5 }]],
+    ["a zero codeId", [{ address: ACCOUNT_A, codeId: 0, authenticators: [] }]],
+    [
+      "a non-numeric codeId",
+      [{ address: ACCOUNT_A, codeId: "bad", authenticators: [] }],
+    ],
+    ["missing authenticators", [{ address: ACCOUNT_A, codeId: 5 }]],
     [
       "a non-integer authenticator index",
       [
         {
-          address: "xion1a",
+          address: ACCOUNT_A,
           codeId: 5,
           authenticators: [{ index: "x", type: "JWT", authenticator: "a.b" }],
+        },
+      ],
+    ],
+    [
+      "an authenticator type the indexer does not use",
+      [
+        {
+          address: ACCOUNT_A,
+          codeId: 5,
+          authenticators: [{ index: 3, type: "jwt", authenticator: "a.b" }],
+        },
+      ],
+    ],
+    [
+      "an empty authenticator identity",
+      [
+        {
+          address: ACCOUNT_A,
+          codeId: 5,
+          authenticators: [{ index: 0, type: "JWT", authenticator: "" }],
         },
       ],
     ],
@@ -198,7 +228,7 @@ describe("DaoDaoAccountStrategy", () => {
       "a non-string authenticator",
       [
         {
-          address: "xion1a",
+          address: ACCOUNT_A,
           codeId: 5,
           authenticators: [{ index: 0, type: "JWT", authenticator: 7 }],
         },
