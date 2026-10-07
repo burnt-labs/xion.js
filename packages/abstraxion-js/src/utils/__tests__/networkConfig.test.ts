@@ -284,7 +284,27 @@ describe("custom chain", () => {
     ).toThrow(/smartAccountContract.addressPrefix is required/);
   });
 
-  it("requires a fee granter when accounts can be created", () => {
+  it("requires a fee granter when grants are configured", () => {
+    const config = normalizeAbstraxionConfig(
+      custom(
+        {
+          aaApiUrl: "http://localhost:8787",
+          smartAccountContract: { addressPrefix: "xion" },
+        },
+        { treasury: "xion1treasury" },
+      ),
+    );
+
+    expect(() =>
+      SignerController.fromConfig(
+        config,
+        stubStorage() as any,
+        stubSessionManager() as any,
+      ),
+    ).toThrow(/feeGranter is required/);
+  });
+
+  it("needs no fee granter on the no-grants path", () => {
     const config = normalizeAbstraxionConfig(
       custom({
         aaApiUrl: "http://localhost:8787",
@@ -298,7 +318,7 @@ describe("custom chain", () => {
         stubStorage() as any,
         stubSessionManager() as any,
       ),
-    ).toThrow(/feeGranter is required/);
+    ).not.toThrow();
   });
 
   it("keeps indexer-only discovery when no AA API or contract is set", () => {

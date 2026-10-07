@@ -102,9 +102,10 @@ export class SignerController extends BaseController {
       signerAuth,
     );
 
-    // A new account holds no XION: its grant transaction is paid by the fee
-    // granter. Known networks default it; a custom chain must pass it.
-    if (accountCreationConfig && !config.feeGranter) {
+    // A new account holds no XION: the grant transaction is paid by the fee
+    // granter. Known networks default it; a custom chain that creates grants
+    // must pass it. The no-grants path broadcasts nothing and needs none.
+    if (grantConfig && !config.feeGranter) {
       throw new Error(
         `feeGranter is required in signer mode: chain "${config.chainId}" has no default fee granter. ` +
           `Set network to "mainnet" or "testnet", or pass feeGranter.`,
