@@ -7,7 +7,7 @@
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
 import { isMatchingAuthenticator } from "../discovery";
-import { fromBech32 } from "@cosmjs/encoding";
+import { fromBech32, fromHex, toBase64, toBech32 } from "@cosmjs/encoding";
 import {
   AUTHENTICATOR_TYPE,
   type AuthenticatorType,
@@ -43,13 +43,67 @@ interface DaoDaoAccountResp {
 const isIndex = (value: unknown): value is number =>
   Number.isInteger(value) && (value as number) >= 0;
 
-const isBech32 = (value: string): boolean => {
+/** Bech32 prefix of XION addresses, the only chain the lookup serves. */
+const XION_ADDRESS_PREFIX = "xion";
+
+/** Smart accounts are contracts: 32-byte addresses. */
+const CONTRACT_ADDRESS_BYTES = 32;
+
+/** A canonical `xion1…` contract address (not another chain's, not a user's). */
+const isXionContractAddress = (value: string): boolean => {
   try {
-    fromBech32(value);
-    return true;
+    const { prefix, data } = fromBech32(value);
+    return (
+      prefix === XION_ADDRESS_PREFIX &&
+      data.length === CONTRACT_ADDRESS_BYTES &&
+      toBech32(prefix, data) === value
+    );
   } catch {
     return false;
   }
+};
+
+/** A hex-encoded compressed or uncompressed secp256k1 public key. */
+const SECP256K1_HEX = /^(0[23][0-9a-fA-F]{64}|04[0-9a-fA-F]{128})$/;
+
+/**
+ * The identity as the indexer stores it. Secp256K1 keys are stored base64 (the
+ * contract's encoding), so a hex key is converted; other types go as given.
+ */
+const toIndexedIdentity = (
+  loginAuthenticator: string,
+  authenticatorType: AuthenticatorType,
+): string => {
+  if (
+    authenticatorType === AUTHENTICATOR_TYPE.Secp256K1 &&
+    SECP256K1_HEX.test(loginAuthenticator.trim())
+  ) {
+    return toBase64(fromHex(loginAuthenticator.trim()));
+  }
+  return loginAuthenticator;
+};
+
+/**
+ * Whether an indexed authenticator is the login one. The lookup matches type
+ * and identity exactly; only EthWallet addresses and Secp256K1 keys have an
+ * equivalent encoding (casing, hex vs base64) that also counts.
+ */
+const holdsLoginAuthenticator = (
+  { type, authenticator }: DaoDaoAuthenticatorResp,
+  loginAuthenticator: string,
+  authenticatorType: AuthenticatorType,
+): boolean => {
+  if (
+    authenticatorType === AUTHENTICATOR_TYPE.EthWallet ||
+    authenticatorType === AUTHENTICATOR_TYPE.Secp256K1
+  ) {
+    return isMatchingAuthenticator(
+      { type: type as AuthenticatorType, authenticator },
+      loginAuthenticator,
+      authenticatorType,
+    );
+  }
+  return type === authenticatorType && authenticator === loginAuthenticator;
 };
 
 const isAuthenticatorResp = (
@@ -73,7 +127,7 @@ const isAccountResp = (value: unknown): value is DaoDaoAccountResp => {
     typeof a === "object" &&
     a !== null &&
     typeof a.address === "string" &&
-    isBech32(a.address) &&
+    isXionContractAddress(a.address) &&
     isIndex(a.codeId) &&
     a.codeId > 0 &&
     Array.isArray(a.authenticators) &&
@@ -123,7 +177,7 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
 
       const params = new URLSearchParams({
         type: authenticatorType,
-        authenticator: loginAuthenticator,
+        authenticator: toIndexedIdentity(loginAuthenticator, authenticatorType),
       });
       const url = `${this.baseURL}/generic/_/xion/accountsByAuthenticator?${params.toString()}`;
 
@@ -157,9 +211,9 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
       // Passkey, ...), so treat it as a bad response rather than a match.
       if (
         !data.every(({ authenticators }) =>
-          authenticators.some(({ type, authenticator }) =>
-            isMatchingAuthenticator(
-              { type: type as AuthenticatorType, authenticator },
+          authenticators.some((auth) =>
+            holdsLoginAuthenticator(
+              auth,
               loginAuthenticator,
               authenticatorType,
             ),

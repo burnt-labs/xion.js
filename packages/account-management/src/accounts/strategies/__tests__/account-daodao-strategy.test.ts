@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DaoDaoAccountStrategy } from "../account-daodao-strategy";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
+import { fromBech32, toBech32 } from "@cosmjs/encoding";
 
 global.fetch = vi.fn();
 
@@ -19,6 +20,7 @@ const ACCOUNT_A =
   "xion1424242424242424242424242424242424242424242424242424q280v08";
 const ACCOUNT_B =
   "xion1hwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwas3jrp9f";
+const ACCOUNT_A_BYTES = fromBech32(ACCOUNT_A).data;
 
 describe("DaoDaoAccountStrategy", () => {
   beforeEach(() => {
@@ -188,6 +190,30 @@ describe("DaoDaoAccountStrategy", () => {
       "an address that is not bech32",
       [{ address: "xion1aaa", codeId: 5, authenticators: [] }],
     ],
+    [
+      "another chain's address",
+      [
+        {
+          address: toBech32("cosmos", ACCOUNT_A_BYTES),
+          codeId: 5,
+          authenticators: [],
+        },
+      ],
+    ],
+    [
+      "a 20-byte (user) address",
+      [
+        {
+          address: toBech32("xion", ACCOUNT_A_BYTES.slice(0, 20)),
+          codeId: 5,
+          authenticators: [],
+        },
+      ],
+    ],
+    [
+      "a non-canonical (upper-case) address",
+      [{ address: ACCOUNT_A.toUpperCase(), codeId: 5, authenticators: [] }],
+    ],
     ["a zero codeId", [{ address: ACCOUNT_A, codeId: 0, authenticators: [] }]],
     [
       "a non-numeric codeId",
@@ -258,6 +284,10 @@ describe("DaoDaoAccountStrategy", () => {
       "the identity under another type",
       [{ index: 0, type: "Passkey", authenticator: "aud.sub" }],
     ],
+    [
+      "the identity in another case",
+      [{ index: 0, type: "JWT", authenticator: "aud.SUB" }],
+    ],
   ])(
     "throws when an account lacks the queried authenticator: %s",
     async (_, authenticators) => {
@@ -285,6 +315,35 @@ describe("DaoDaoAccountStrategy", () => {
       );
     },
   );
+
+  it("queries a hex Secp256K1 key as the base64 the indexer stores", async () => {
+    const strategy = new DaoDaoAccountStrategy(
+      "https://daodaoindexer.burnt.com",
+      "xion-mainnet-1",
+    );
+    const hex = `02${"ab".repeat(32)}`;
+    const base64 = Buffer.from(hex, "hex").toString("base64");
+    (global.fetch as any).mockResolvedValueOnce(
+      okJson([
+        {
+          address: ACCOUNT_A,
+          codeId: 5,
+          authenticators: [
+            { index: 1, type: "Secp256K1", authenticator: base64 },
+          ],
+        },
+      ]),
+    );
+
+    const [account] = await strategy.fetchSmartAccounts(
+      hex,
+      AUTHENTICATOR_TYPE.Secp256K1,
+    );
+
+    const url = new URL((global.fetch as any).mock.calls[0][0]);
+    expect(url.searchParams.get("authenticator")).toBe(base64);
+    expect(account.authenticators[0].authenticatorIndex).toBe(1);
+  });
 
   it("matches an EthWallet authenticator regardless of address casing", async () => {
     const strategy = new DaoDaoAccountStrategy(
