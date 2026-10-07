@@ -37,7 +37,7 @@
         "description": "AA-API URL must be set via XION_MAINNET_AA_API_URL secret. Dev server not recommended for mainnet."
       },
       "description": "Production mainnet - public configuration",
-      "note": "AA-API URL and indexer URLs must be set via GitHub secrets (XION_MAINNET_AA_API_URL, XION_MAINNET_INDEXER_URL, XION_MAINNET_TREASURY_INDEXER_URL)"
+      "note": "AA-API URL and indexer URLs must be set via GitHub secrets (XION_MAINNET_AA_API_URL, XION_MAINNET_TREASURY_INDEXER_URL)"
     }
   },
   "aaApiDevServer": {
