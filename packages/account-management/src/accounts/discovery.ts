@@ -38,6 +38,18 @@ function secp256k1KeyBytes(value: string): Uint8Array | null {
   }
 }
 
+function ed25519KeyBytes(value: string): Uint8Array | null {
+  const trimmed = value.trim();
+  try {
+    const bytes = /^[0-9a-fA-F]{64}$/.test(trimmed)
+      ? fromHex(trimmed)
+      : fromBase64(trimmed);
+    return bytes.length === 32 ? bytes : null;
+  } catch {
+    return null;
+  }
+}
+
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
@@ -157,14 +169,31 @@ export async function checkAccountExists(
     }
 
     // Other authenticator types (JWT, Passkey, ...): legacy case-insensitive
-    // matching, but an exact identity wins over one differing only by case.
-    const matchingAuthenticator =
-      existingAccount.authenticators.find(
-        (auth: Authenticator) => auth.authenticator === authenticator,
-      ) ??
-      existingAccount.authenticators.find((auth: Authenticator) => {
-        return auth.authenticator.toLowerCase() === authenticator.toLowerCase();
-      });
+    // matching, ranked so the login's own authenticator wins: same type
+    // before other types, exact identity before one differing only by case.
+    // Ed25519 keys count as exact when their bytes match (hex or base64).
+    const loginKey =
+      authenticatorType === AUTHENTICATOR_TYPE.Ed25519
+        ? ed25519KeyBytes(authenticator)
+        : null;
+    const sameType = (auth: Authenticator) =>
+      String(auth.type).toLowerCase() ===
+      String(authenticatorType).toLowerCase();
+    const exact = (auth: Authenticator) => {
+      if (auth.authenticator === authenticator) return true;
+      const key = loginKey && ed25519KeyBytes(auth.authenticator);
+      return !!loginKey && !!key && bytesEqual(key, loginKey);
+    };
+    const caseless = (auth: Authenticator) =>
+      auth.authenticator.toLowerCase() === authenticator.toLowerCase();
+    const matchingAuthenticator = [
+      (auth: Authenticator) => sameType(auth) && exact(auth),
+      (auth: Authenticator) => sameType(auth) && caseless(auth),
+      exact,
+      caseless,
+    ]
+      .map((matches) => existingAccount.authenticators.find(matches))
+      .find(Boolean);
 
     const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
 

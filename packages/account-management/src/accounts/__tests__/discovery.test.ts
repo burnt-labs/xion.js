@@ -267,6 +267,65 @@ describe("discovery.ts - Account Existence Checking", () => {
       expect(result.authenticatorIndex).toBe(4);
     });
 
+    it("should prefer the login's authenticator type when identities collide", async () => {
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-0",
+              type: "Passkey",
+              authenticator: "c2FtZS1pZA==",
+              authenticatorIndex: 0,
+            },
+            {
+              id: "xion1account123-3",
+              type: "Ed25519",
+              authenticator: "c2FtZS1pZA==",
+              authenticatorIndex: 3,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(
+        mockStrategy,
+        "c2FtZS1pZA==",
+        "Ed25519",
+      );
+
+      expect(result.authenticatorIndex).toBe(3);
+    });
+
+    it("should match a hex Ed25519 login against the base64 key by bytes", async () => {
+      const hex = "d".repeat(64);
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-0",
+              type: "JWT",
+              authenticator: "project.user",
+              authenticatorIndex: 0,
+            },
+            {
+              id: "xion1account123-2",
+              type: "Ed25519",
+              authenticator: Buffer.from(hex, "hex").toString("base64"),
+              authenticatorIndex: 2,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(mockStrategy, hex, "Ed25519");
+
+      expect(result.authenticatorIndex).toBe(2);
+    });
+
     describe("verified EthWallet/Secp256K1 matching", () => {
       const SECP_BASE64 = "AiGkW+2imN152OGq4dMyJS/J4OyGGrjtpXFXjMVASz2p";
       const SECP_HEX =
