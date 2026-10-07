@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createCompositeAccountStrategy } from "../factory";
 import { CompositeAccountStrategy } from "../account-composite-strategy";
+import { DaoDaoAccountStrategy } from "../account-daodao-strategy";
 import { NumiaAccountStrategy } from "../account-numia-strategy";
 import { SubqueryAccountStrategy } from "../account-subquery-strategy";
 import { RpcAccountStrategy } from "../account-rpc-strategy";
@@ -21,6 +22,25 @@ describe("createCompositeAccountStrategy", () => {
       const strategies = (strategy as any).strategies;
       expect(strategies).toHaveLength(1);
       expect(strategies[0]).toBeInstanceOf(EmptyAccountStrategy);
+    });
+
+    it("should include DaoDaoAccountStrategy when the DaoDao indexer is configured", () => {
+      const strategy = createCompositeAccountStrategy({
+        indexer: {
+          type: "daodao",
+          url: "https://daodaoindexer.burnt.com",
+          chainId: "xion-testnet-2",
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      expect(strategies[0]).toBeInstanceOf(DaoDaoAccountStrategy);
+      expect((strategies[0] as any).baseURL).toBe(
+        "https://daodaoindexer.burnt.com/xion-testnet-2",
+      );
+      expect(strategies[strategies.length - 1]).toBeInstanceOf(
+        EmptyAccountStrategy,
+      );
     });
 
     it("should include NumiaAccountStrategy when Numia indexer configured", () => {

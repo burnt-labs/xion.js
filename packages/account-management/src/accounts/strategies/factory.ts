@@ -3,6 +3,7 @@
  * Provides a convenient way to create a strategy without manually instantiating each one
  */
 
+import { DaoDaoAccountStrategy } from "./account-daodao-strategy";
 import { NumiaAccountStrategy } from "./account-numia-strategy";
 import { SubqueryAccountStrategy } from "./account-subquery-strategy";
 import { RpcAccountStrategy } from "./account-rpc-strategy";
@@ -16,10 +17,10 @@ import type { AccountIndexerConfig } from "../../types/indexer";
 export interface CreateCompositeAccountStrategyConfig {
   /**
    * Indexer configuration for fast account lookups
-   * Supports both Numia and Subquery indexers
    *
-   * For Numia: { type: 'numia', url: string, authToken?: string }
+   * For DaoDao: { type: 'daodao', url: string, chainId: string }
    * For Subquery: { type: 'subquery', url: string, codeId: number }
+   * For Numia (deprecated): { type: 'numia', url: string, authToken?: string }
    *
    * If type is not specified, defaults to Numia for backward compatibility
    */
@@ -49,13 +50,13 @@ export interface CreateCompositeAccountStrategyConfig {
  *
  * With `aaApi.version === "v2"` the composite contains only the AA API v2
  * strategy (see `aaApi`). Otherwise it builds the fallback chain:
- * 1. Indexer strategy (Numia or Subquery, if configured) - Fast indexer queries
+ * 1. Indexer strategy (DaoDao, Subquery or deprecated Numia, if configured) - Fast indexer queries
  * 2. AA-API strategy (if configured) - Canonical account state fallback
  * 3. RpcAccountStrategy (if RPC config provided) - Reliable on-chain queries
  * 4. EmptyAccountStrategy (always included) - Returns empty for new accounts
  *
  * Recommended fallback chain for production:
- * - Numia (fast, comprehensive)
+ * - DaoDao (fast, comprehensive)
  * - AA-API (canonical, reliable)
  * - RPC (on-chain verification)
  * - Empty (new account creation)
@@ -80,7 +81,16 @@ export function createCompositeAccountStrategy(
     const indexerType =
       "type" in config.indexer ? config.indexer.type : "numia";
 
-    if (indexerType === "subquery") {
+    if (indexerType === "daodao") {
+      const daodaoConfig = config.indexer as {
+        type: "daodao";
+        url: string;
+        chainId: string;
+      };
+      strategies.push(
+        new DaoDaoAccountStrategy(daodaoConfig.url, daodaoConfig.chainId),
+      );
+    } else if (indexerType === "subquery") {
       // Subquery indexer
       const subqueryConfig = config.indexer as {
         type: "subquery";
@@ -91,7 +101,7 @@ export function createCompositeAccountStrategy(
         new SubqueryAccountStrategy(subqueryConfig.url, subqueryConfig.codeId),
       );
     } else {
-      // Numia indexer (default)
+      // Numia indexer (deprecated; still the default when type is omitted)
       const numiaConfig = config.indexer as {
         type?: "numia";
         url: string;

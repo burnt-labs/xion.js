@@ -1,0 +1,18 @@
+---
+"@burnt-labs/account-management": minor
+"@burnt-labs/abstraxion-js": minor
+---
+
+Account discovery can use the DaoDao indexer instead of Numia, which is being retired:
+
+```ts
+indexer: {
+  type: "daodao",
+  url: getDaoDaoIndexerUrl(chainId), // "https://daodaoindexer.burnt.com"
+  chainId,
+}
+```
+
+- `@burnt-labs/account-management`: new `DaoDaoAccountStrategy` (`new DaoDaoAccountStrategy(url, chainId)`), selected by `type: "daodao"` in `createCompositeAccountStrategy` and `convertIndexerConfig`. It calls `GET {url}/{chainId}/generic/_/xion/accountsByAuthenticator?type=…&authenticator=…` and returns every account that currently holds the authenticator, each with its authenticators and their indices. A miss is an empty list. Any other status, including `404` while the indexer has not deployed the lookup, throws so the composite falls through to the next strategy. No token is needed. `DaoDaoIndexerConfig` and `NumiaIndexerConfig` are exported.
+- **Deprecated:** `NumiaAccountStrategy` and the `type: "numia"` indexer config (also the default when `type` is omitted). They keep working for now and will be removed in a later release; move to `type: "daodao"`.
+- `@burnt-labs/abstraxion-js`: `IndexerConfig` accepts the DaoDao variant. Signer mode with `smartAccountContract` still ignores `indexer` (the AA API is the only discovery source there), so signer-mode apps can drop a Numia indexer block without replacing it.

@@ -120,8 +120,6 @@ export const INTEGRATION_TEST_TIMEOUT = parseInt(
  * Indexer configuration (optional)
  */
 export const INDEXER_CONFIG = {
-  numiaUrl: process.env.XION_TESTNET_INDEXER_URL,
-  numiaApiKey: process.env.NUMIA_API_KEY,
   subqueryUrl: process.env.XION_TESTNET_TREASURY_INDEXER_URL,
   subqueryApiKey: process.env.SUBQUERY_API_KEY,
 };

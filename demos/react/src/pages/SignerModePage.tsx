@@ -142,9 +142,14 @@ function useAbstraxionSignerConfig(
         codeId: parseInt(codeId, 10),
       };
     }
-    const authToken = import.meta.env.VITE_INDEXER_TOKEN;
-    if (!authToken) return undefined;
-    return { type: "numia" as const, url, authToken };
+    if (import.meta.env.VITE_INDEXER_TYPE === "daodao") {
+      return {
+        type: "daodao" as const,
+        url,
+        chainId: baseConfig.chainId,
+      };
+    }
+    return undefined;
   })();
 
   return {
