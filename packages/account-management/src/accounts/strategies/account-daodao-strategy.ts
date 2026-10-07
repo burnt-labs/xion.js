@@ -67,11 +67,14 @@ const isXionContractAddress = (value: string): boolean => {
 /** A hex-encoded compressed or uncompressed secp256k1 public key. */
 const SECP256K1_HEX = /^(0[23][0-9a-fA-F]{64}|04[0-9a-fA-F]{128})$/;
 
+/** A hex-encoded 32-byte Ed25519 public key (the SDK connectors' form). */
+const ED25519_HEX = /^[0-9a-fA-F]{64}$/;
+
 /**
  * The identity in the form the lookup expects. EthWallet addresses are sent
  * lowercase with `0x`, as the SDK's connectors and the AA API lookup send them
- * (`normalizeEthereumAddress`). Secp256K1 keys are stored base64 (the
- * contract's encoding), so a hex key is converted. Other types go as given.
+ * (`normalizeEthereumAddress`). Secp256K1 and Ed25519 keys are stored base64
+ * (the contract's encoding), so a hex key is converted. Other types go as given.
  */
 const toIndexedIdentity = (
   loginAuthenticator: string,
@@ -86,17 +89,24 @@ const toIndexedIdentity = (
   ) {
     return toBase64(fromHex(loginAuthenticator.trim()));
   }
+  if (
+    authenticatorType === AUTHENTICATOR_TYPE.Ed25519 &&
+    ED25519_HEX.test(loginAuthenticator.trim())
+  ) {
+    return toBase64(fromHex(loginAuthenticator.trim()));
+  }
   return loginAuthenticator;
 };
 
 /**
  * Whether an indexed authenticator is the login one. The lookup matches type
- * and identity exactly; only EthWallet addresses and Secp256K1 keys have an
- * equivalent encoding (casing, hex vs base64) that also counts.
+ * and the queried identity exactly; EthWallet addresses and Secp256K1 keys
+ * also count in an equivalent encoding (casing, hex vs base64).
  */
 const holdsLoginAuthenticator = (
   { type, authenticator }: DaoDaoAuthenticatorResp,
   loginAuthenticator: string,
+  queriedIdentity: string,
   authenticatorType: AuthenticatorType,
 ): boolean => {
   if (
@@ -109,7 +119,7 @@ const holdsLoginAuthenticator = (
       authenticatorType,
     );
   }
-  return type === authenticatorType && authenticator === loginAuthenticator;
+  return type === authenticatorType && authenticator === queriedIdentity;
 };
 
 const isAuthenticatorResp = (
@@ -181,9 +191,13 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
         );
       }
 
+      const queriedIdentity = toIndexedIdentity(
+        loginAuthenticator,
+        authenticatorType,
+      );
       const params = new URLSearchParams({
         type: authenticatorType,
-        authenticator: toIndexedIdentity(loginAuthenticator, authenticatorType),
+        authenticator: queriedIdentity,
       });
       const url = `${this.baseURL}/generic/_/xion/accountsByAuthenticator?${params.toString()}`;
 
@@ -221,6 +235,7 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
             holdsLoginAuthenticator(
               auth,
               loginAuthenticator,
+              queriedIdentity,
               authenticatorType,
             ),
           ),

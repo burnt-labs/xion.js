@@ -360,6 +360,35 @@ describe("DaoDaoAccountStrategy", () => {
     expect(account.authenticators[0].authenticatorIndex).toBe(1);
   });
 
+  it("queries a hex Ed25519 key as the base64 the indexer stores", async () => {
+    const strategy = new DaoDaoAccountStrategy(
+      "https://daodaoindexer.burnt.com",
+      "xion-mainnet-1",
+    );
+    const hex = "d".repeat(64);
+    const base64 = Buffer.from(hex, "hex").toString("base64");
+    (global.fetch as any).mockResolvedValueOnce(
+      okJson([
+        {
+          address: ACCOUNT_A,
+          codeId: 5,
+          authenticators: [
+            { index: 2, type: "Ed25519", authenticator: base64 },
+          ],
+        },
+      ]),
+    );
+
+    const [account] = await strategy.fetchSmartAccounts(
+      hex,
+      AUTHENTICATOR_TYPE.Ed25519,
+    );
+
+    const url = new URL((global.fetch as any).mock.calls[0][0]);
+    expect(url.searchParams.get("authenticator")).toBe(base64);
+    expect(account.authenticators[0].authenticatorIndex).toBe(2);
+  });
+
   it("queries a checksummed EthWallet address lowercase and matches it", async () => {
     const strategy = new DaoDaoAccountStrategy(
       "https://daodaoindexer.burnt.com",

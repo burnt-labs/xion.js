@@ -235,6 +235,38 @@ describe("discovery.ts - Account Existence Checking", () => {
       expect(result.authenticatorIndex).toBe(0);
     });
 
+    it("should prefer an exact JWT identity over one differing only by case", async () => {
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-1",
+              type: "JWT",
+              authenticator: "project.USER",
+              authenticatorIndex: 1,
+            },
+            {
+              id: "xion1account123-4",
+              type: "JWT",
+              authenticator: "project.user",
+              authenticatorIndex: 4,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(
+        mockStrategy,
+        "project.user",
+        "JWT",
+      );
+
+      expect(result.exists).toBe(true);
+      expect(result.authenticatorIndex).toBe(4);
+    });
+
     describe("verified EthWallet/Secp256K1 matching", () => {
       const SECP_BASE64 = "AiGkW+2imN152OGq4dMyJS/J4OyGGrjtpXFXjMVASz2p";
       const SECP_HEX =

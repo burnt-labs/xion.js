@@ -156,12 +156,15 @@ export async function checkAccountExists(
       };
     }
 
-    // Other authenticator types (JWT, Passkey, ...): unchanged legacy matching
-    const matchingAuthenticator = existingAccount.authenticators.find(
-      (auth: Authenticator) => {
+    // Other authenticator types (JWT, Passkey, ...): legacy case-insensitive
+    // matching, but an exact identity wins over one differing only by case.
+    const matchingAuthenticator =
+      existingAccount.authenticators.find(
+        (auth: Authenticator) => auth.authenticator === authenticator,
+      ) ??
+      existingAccount.authenticators.find((auth: Authenticator) => {
         return auth.authenticator.toLowerCase() === authenticator.toLowerCase();
-      },
-    );
+      });
 
     const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
 
