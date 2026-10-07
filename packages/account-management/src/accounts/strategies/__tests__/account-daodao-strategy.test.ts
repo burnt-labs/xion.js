@@ -176,6 +176,48 @@ describe("DaoDaoAccountStrategy", () => {
     },
   );
 
+  it.each([
+    ["an entry that is not an object", [null]],
+    ["an empty address", [{ address: "", codeId: 5, authenticators: [] }]],
+    [
+      "a non-numeric codeId",
+      [{ address: "xion1a", codeId: "bad", authenticators: [] }],
+    ],
+    ["missing authenticators", [{ address: "xion1a", codeId: 5 }]],
+    [
+      "a non-integer authenticator index",
+      [
+        {
+          address: "xion1a",
+          codeId: 5,
+          authenticators: [{ index: "x", type: "JWT", authenticator: "a.b" }],
+        },
+      ],
+    ],
+    [
+      "a non-string authenticator",
+      [
+        {
+          address: "xion1a",
+          codeId: 5,
+          authenticators: [{ index: 0, type: "JWT", authenticator: 7 }],
+        },
+      ],
+    ],
+  ])("throws on a malformed account entry: %s", async (_, body) => {
+    const strategy = new DaoDaoAccountStrategy(
+      "https://daodaoindexer.burnt.com",
+      "xion-mainnet-1",
+    );
+    (global.fetch as any).mockResolvedValueOnce(okJson(body));
+
+    await expect(
+      strategy.fetchSmartAccounts("a.b", AUTHENTICATOR_TYPE.JWT),
+    ).rejects.toThrow(
+      "DaoDao account strategy failed: DaoDao indexer returned a malformed account entry",
+    );
+  });
+
   it("throws on a non-2xx answer so the composite falls through", async () => {
     const strategy = new DaoDaoAccountStrategy(
       "https://daodaoindexer.burnt.com",

@@ -38,6 +38,35 @@ interface DaoDaoAccountResp {
   authenticators: DaoDaoAuthenticatorResp[];
 }
 
+const isIndex = (value: unknown): value is number =>
+  Number.isInteger(value) && (value as number) >= 0;
+
+const isAuthenticatorResp = (
+  value: unknown,
+): value is DaoDaoAuthenticatorResp => {
+  const a = value as Partial<DaoDaoAuthenticatorResp> | null;
+  return (
+    typeof a === "object" &&
+    a !== null &&
+    isIndex(a.index) &&
+    typeof a.type === "string" &&
+    typeof a.authenticator === "string"
+  );
+};
+
+const isAccountResp = (value: unknown): value is DaoDaoAccountResp => {
+  const a = value as Partial<DaoDaoAccountResp> | null;
+  return (
+    typeof a === "object" &&
+    a !== null &&
+    typeof a.address === "string" &&
+    a.address.length > 0 &&
+    isIndex(a.codeId) &&
+    Array.isArray(a.authenticators) &&
+    a.authenticators.every(isAuthenticatorResp)
+  );
+};
+
 /** Default request timeout, the same as the DaoDao treasury strategy's. */
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -104,23 +133,26 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
       if (!Array.isArray(data)) {
         throw new Error("DaoDao indexer returned a non-list response");
       }
+      // A partial entry would read as an existing account (e.g. codeId NaN,
+      // index defaulted to 0), so fail and let the composite fall through.
+      if (!data.every(isAccountResp)) {
+        throw new Error("DaoDao indexer returned a malformed account entry");
+      }
 
-      return (data as DaoDaoAccountResp[]).map(
-        ({ address, codeId, authenticators }) => ({
-          id: address,
-          codeId: Number(codeId),
-          // Authenticators of a type the SDK has no signer for (e.g. Secp256R1)
-          // are left out; the rest keep their on-chain index.
-          authenticators: authenticators
-            .filter(({ type }) => SDK_TYPES.has(type))
-            .map(({ index, type, authenticator }) => ({
-              id: `${address}-${index}`,
-              authenticator,
-              authenticatorIndex: Number(index),
-              type: type as AuthenticatorType,
-            })),
-        }),
-      );
+      return data.map(({ address, codeId, authenticators }) => ({
+        id: address,
+        codeId,
+        // Authenticators of a type the SDK has no signer for (e.g. Secp256R1)
+        // are left out; the rest keep their on-chain index.
+        authenticators: authenticators
+          .filter(({ type }) => SDK_TYPES.has(type))
+          .map(({ index, type, authenticator }) => ({
+            id: `${address}-${index}`,
+            authenticator,
+            authenticatorIndex: index,
+            type: type as AuthenticatorType,
+          })),
+      }));
     } catch (error) {
       const errorMessage = controller.signal.aborted
         ? `DaoDao indexer request timed out after ${this.timeoutMs}ms`
