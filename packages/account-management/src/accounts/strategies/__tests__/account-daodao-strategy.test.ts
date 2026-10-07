@@ -159,6 +159,23 @@ describe("DaoDaoAccountStrategy", () => {
     ).resolves.toEqual([]);
   });
 
+  it.each([null, {}, "[]"])(
+    "throws on a 200 body that is not an account list (%j)",
+    async (body) => {
+      const strategy = new DaoDaoAccountStrategy(
+        "https://daodaoindexer.burnt.com",
+        "xion-mainnet-1",
+      );
+      (global.fetch as any).mockResolvedValueOnce(okJson(body));
+
+      await expect(
+        strategy.fetchSmartAccounts("0xab", AUTHENTICATOR_TYPE.EthWallet),
+      ).rejects.toThrow(
+        "DaoDao account strategy failed: DaoDao indexer returned a non-list response",
+      );
+    },
+  );
+
   it("throws on a non-2xx answer so the composite falls through", async () => {
     const strategy = new DaoDaoAccountStrategy(
       "https://daodaoindexer.burnt.com",

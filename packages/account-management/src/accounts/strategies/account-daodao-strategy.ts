@@ -97,22 +97,30 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
         );
       }
 
-      const data: DaoDaoAccountResp[] = await response.json();
+      const data: unknown = await response.json();
 
-      return (data ?? []).map(({ address, codeId, authenticators }) => ({
-        id: address,
-        codeId: Number(codeId),
-        // Authenticators of a type the SDK has no signer for (e.g. Secp256R1)
-        // are left out; the rest keep their on-chain index.
-        authenticators: authenticators
-          .filter(({ type }) => SDK_TYPES.has(type))
-          .map(({ index, type, authenticator }) => ({
-            id: `${address}-${index}`,
-            authenticator,
-            authenticatorIndex: Number(index),
-            type: type as AuthenticatorType,
-          })),
-      }));
+      // Only `[]` is a miss: a null or otherwise malformed body is a failure,
+      // not proof that no account holds the authenticator.
+      if (!Array.isArray(data)) {
+        throw new Error("DaoDao indexer returned a non-list response");
+      }
+
+      return (data as DaoDaoAccountResp[]).map(
+        ({ address, codeId, authenticators }) => ({
+          id: address,
+          codeId: Number(codeId),
+          // Authenticators of a type the SDK has no signer for (e.g. Secp256R1)
+          // are left out; the rest keep their on-chain index.
+          authenticators: authenticators
+            .filter(({ type }) => SDK_TYPES.has(type))
+            .map(({ index, type, authenticator }) => ({
+              id: `${address}-${index}`,
+              authenticator,
+              authenticatorIndex: Number(index),
+              type: type as AuthenticatorType,
+            })),
+        }),
+      );
     } catch (error) {
       const errorMessage = controller.signal.aborted
         ? `DaoDao indexer request timed out after ${this.timeoutMs}ms`
