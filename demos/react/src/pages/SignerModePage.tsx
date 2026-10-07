@@ -132,26 +132,6 @@ function useAbstraxionSignerConfig(
     return null;
   }
 
-  const indexer = (() => {
-    const url = import.meta.env.VITE_INDEXER_URL;
-    if (!url) return undefined;
-    if (import.meta.env.VITE_INDEXER_TYPE === "subquery") {
-      return {
-        type: "subquery" as const,
-        url,
-        codeId: parseInt(codeId, 10),
-      };
-    }
-    if (import.meta.env.VITE_INDEXER_TYPE === "daodao") {
-      return {
-        type: "daodao" as const,
-        url,
-        chainId: baseConfig.chainId,
-      };
-    }
-    return undefined;
-  })();
-
   return {
     ...baseConfig,
     feeGranter: import.meta.env.VITE_FEE_GRANTER_ADDRESS,
@@ -164,7 +144,8 @@ function useAbstraxionSignerConfig(
         codeId: parseInt(codeId, 10),
         addressPrefix: import.meta.env.VITE_ADDRESS_PREFIX ?? "xion",
       },
-      indexer,
+      // No `indexer`: with `smartAccountContract` set, the AA API is the only
+      // account-discovery source and an indexer config would be ignored.
       treasuryIndexer: import.meta.env.VITE_TREASURY_INDEXER_URL
         ? { url: import.meta.env.VITE_TREASURY_INDEXER_URL }
         : undefined,

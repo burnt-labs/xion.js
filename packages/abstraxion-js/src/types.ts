@@ -144,7 +144,7 @@ export type AuthenticationConfig =
 
 /**
  * Indexer configuration for querying existing accounts (DaoDao, Subquery, or deprecated Numia)
- * Discriminated union supporting both indexer types
+ * Discriminated union supporting all three indexer types
  * If type is not specified, defaults to Numia (deprecated) for backward compatibility;
  * use `{ type: "daodao", url, chainId }`
  *
