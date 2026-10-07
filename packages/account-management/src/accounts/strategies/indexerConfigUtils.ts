@@ -55,6 +55,9 @@ export function convertIndexerConfig(
       type: "daodao" as const,
       url: indexerConfig.url,
       chainId: indexerConfig.chainId,
+      ...(indexerConfig.timeout !== undefined && {
+        timeout: indexerConfig.timeout,
+      }),
     };
   }
 

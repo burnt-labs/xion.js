@@ -26,6 +26,8 @@ export type DaoDaoIndexerConfig = {
   type: "daodao";
   url: string;
   chainId: string;
+  /** Request timeout in milliseconds (default: 30000) */
+  timeout?: number;
 };
 
 /**

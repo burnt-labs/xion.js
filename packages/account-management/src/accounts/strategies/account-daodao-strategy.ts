@@ -38,22 +38,37 @@ interface DaoDaoAccountResp {
   authenticators: DaoDaoAuthenticatorResp[];
 }
 
+/** Default request timeout, the same as the DaoDao treasury strategy's. */
+const DEFAULT_TIMEOUT_MS = 30000;
+
 export class DaoDaoAccountStrategy implements IndexerStrategy {
   private readonly baseURL: string;
+  private readonly timeoutMs: number;
 
   /**
    * @param baseURL - DaoDao indexer base URL (e.g. "https://daodaoindexer.burnt.com"),
    *                  see `getDaoDaoIndexerUrl` in `@burnt-labs/constants`
    * @param chainId - Chain the indexer path is scoped to (e.g. "xion-mainnet-1")
+   * @param timeoutMs - Request timeout in milliseconds (default: 30000). A stalled
+   *                    request is aborted and fails, so the composite falls through.
    */
-  constructor(baseURL: string, chainId: string) {
+  constructor(
+    baseURL: string,
+    chainId: string,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ) {
     this.baseURL = `${baseURL.replace(/\/+$/, "")}/${chainId}`;
+    this.timeoutMs = timeoutMs;
   }
 
   async fetchSmartAccounts(
     loginAuthenticator: string,
     authenticatorType: AuthenticatorType,
   ): Promise<SmartAccountWithCodeId[]> {
+    // Bounds the request and the body read: browser fetch has no response
+    // timeout, and a stalled indexer would otherwise hold the composite.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
       // The indexer rejects types it does not index (e.g. Sr25519) with a 400;
       // fail fast so the composite moves on without a request.
@@ -71,6 +86,7 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
 
       const response = await fetch(url, {
         headers: { Accept: "application/json" },
+        signal: controller.signal,
       });
 
       // A miss is `200 []`; any other status (including 404 while the
@@ -98,9 +114,14 @@ export class DaoDaoAccountStrategy implements IndexerStrategy {
           })),
       }));
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = controller.signal.aborted
+        ? `DaoDao indexer request timed out after ${this.timeoutMs}ms`
+        : error instanceof Error
+          ? error.message
+          : String(error);
       throw new Error(`DaoDao account strategy failed: ${errorMessage}`);
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 }

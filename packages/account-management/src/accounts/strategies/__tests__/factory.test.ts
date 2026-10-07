@@ -38,9 +38,24 @@ describe("createCompositeAccountStrategy", () => {
       expect((strategies[0] as any).baseURL).toBe(
         "https://daodaoindexer.burnt.com/xion-testnet-2",
       );
+      expect((strategies[0] as any).timeoutMs).toBe(30000);
       expect(strategies[strategies.length - 1]).toBeInstanceOf(
         EmptyAccountStrategy,
       );
+    });
+
+    it("should pass a configured DaoDao timeout to the strategy", () => {
+      const strategy = createCompositeAccountStrategy({
+        indexer: {
+          type: "daodao",
+          url: "https://daodaoindexer.burnt.com",
+          chainId: "xion-testnet-2",
+          timeout: 5000,
+        },
+      });
+
+      const strategies = (strategy as any).strategies;
+      expect((strategies[0] as any).timeoutMs).toBe(5000);
     });
 
     it("should include NumiaAccountStrategy when Numia indexer configured", () => {

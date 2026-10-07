@@ -27,6 +27,22 @@ describe("convertIndexerConfig", () => {
     });
   });
 
+  it("keeps a DaoDao timeout", () => {
+    expect(
+      convertIndexerConfig({
+        type: "daodao",
+        url: "https://daodaoindexer.burnt.com",
+        chainId: "xion-mainnet-1",
+        timeout: 5000,
+      }),
+    ).toEqual({
+      type: "daodao",
+      url: "https://daodaoindexer.burnt.com",
+      chainId: "xion-mainnet-1",
+      timeout: 5000,
+    });
+  });
+
   it("takes the Subquery code ID from the smart account contract", () => {
     expect(
       convertIndexerConfig(

@@ -12,13 +12,16 @@ import { EmptyAccountStrategy } from "./account-empty-strategy";
 import { CompositeAccountStrategy } from "./account-composite-strategy";
 import type { RpcAccountStrategyConfig } from "./account-rpc-strategy";
 import type { AAApiAccountStrategyConfig } from "./account-aa-api-strategy";
-import type { AccountIndexerConfig } from "../../types/indexer";
+import type {
+  AccountIndexerConfig,
+  DaoDaoIndexerConfig,
+} from "../../types/indexer";
 
 export interface CreateCompositeAccountStrategyConfig {
   /**
    * Indexer configuration for fast account lookups
    *
-   * For DaoDao: { type: 'daodao', url: string, chainId: string }
+   * For DaoDao: { type: 'daodao', url: string, chainId: string, timeout?: number }
    * For Subquery: { type: 'subquery', url: string, codeId: number }
    * For Numia (deprecated): { type: 'numia', url: string, authToken?: string }
    *
@@ -82,13 +85,13 @@ export function createCompositeAccountStrategy(
       "type" in config.indexer ? config.indexer.type : "numia";
 
     if (indexerType === "daodao") {
-      const daodaoConfig = config.indexer as {
-        type: "daodao";
-        url: string;
-        chainId: string;
-      };
+      const daodaoConfig = config.indexer as DaoDaoIndexerConfig;
       strategies.push(
-        new DaoDaoAccountStrategy(daodaoConfig.url, daodaoConfig.chainId),
+        new DaoDaoAccountStrategy(
+          daodaoConfig.url,
+          daodaoConfig.chainId,
+          daodaoConfig.timeout,
+        ),
       );
     } else if (indexerType === "subquery") {
       // Subquery indexer

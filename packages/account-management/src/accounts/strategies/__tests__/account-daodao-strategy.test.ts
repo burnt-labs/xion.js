@@ -2,7 +2,7 @@
  * Unit tests for DaoDaoAccountStrategy
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DaoDaoAccountStrategy } from "../account-daodao-strategy";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
 
@@ -31,7 +31,10 @@ describe("DaoDaoAccountStrategy", () => {
 
     expect(global.fetch).toHaveBeenCalledWith(
       "https://daodaoindexer.burnt.com/xion-mainnet-1/generic/_/xion/accountsByAuthenticator?type=Secp256K1&authenticator=A%2Bb%2Fc%3D",
-      { headers: { Accept: "application/json" } },
+      {
+        headers: { Accept: "application/json" },
+        signal: expect.any(AbortSignal),
+      },
     );
   });
 
@@ -184,5 +187,89 @@ describe("DaoDaoAccountStrategy", () => {
     await expect(
       strategy.fetchSmartAccounts("aud.sub", AUTHENTICATOR_TYPE.JWT),
     ).rejects.toThrow("DaoDao account strategy failed: socket hang up");
+  });
+
+  describe("timeout", () => {
+    // A fetch that never answers until its signal aborts, like a stalled indexer.
+    const stalledFetch = (_url: string, init: RequestInit) =>
+      new Promise((_resolve, reject) => {
+        init.signal?.addEventListener("abort", () =>
+          reject(new DOMException("This operation was aborted", "AbortError")),
+        );
+      });
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("aborts a stalled request after the default 30 seconds", async () => {
+      const strategy = new DaoDaoAccountStrategy(
+        "https://daodaoindexer.burnt.com",
+        "xion-mainnet-1",
+      );
+      (global.fetch as any).mockImplementationOnce(stalledFetch);
+
+      const result = strategy.fetchSmartAccounts(
+        "aud.sub",
+        AUTHENTICATOR_TYPE.JWT,
+      );
+      const assertion = expect(result).rejects.toThrow(
+        "DaoDao account strategy failed: DaoDao indexer request timed out after 30000ms",
+      );
+      await vi.advanceTimersByTimeAsync(29999);
+      const signal: AbortSignal = (global.fetch as any).mock.calls[0][1].signal;
+      expect(signal.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await assertion;
+      expect(signal.aborted).toBe(true);
+    });
+
+    it("uses the configured timeout", async () => {
+      const strategy = new DaoDaoAccountStrategy(
+        "https://daodaoindexer.burnt.com",
+        "xion-mainnet-1",
+        500,
+      );
+      (global.fetch as any).mockImplementationOnce(stalledFetch);
+
+      const result = strategy.fetchSmartAccounts(
+        "aud.sub",
+        AUTHENTICATOR_TYPE.JWT,
+      );
+      const assertion = expect(result).rejects.toThrow(
+        "DaoDao account strategy failed: DaoDao indexer request timed out after 500ms",
+      );
+      await vi.advanceTimersByTimeAsync(500);
+      await assertion;
+    });
+
+    it("clears the timer once the request settles", async () => {
+      const strategy = new DaoDaoAccountStrategy(
+        "https://daodaoindexer.burnt.com",
+        "xion-mainnet-1",
+      );
+      (global.fetch as any).mockResolvedValueOnce(okJson([]));
+
+      await strategy.fetchSmartAccounts("aud.sub", AUTHENTICATOR_TYPE.JWT);
+
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("clears the timer when the request fails", async () => {
+      const strategy = new DaoDaoAccountStrategy(
+        "https://daodaoindexer.burnt.com",
+        "xion-mainnet-1",
+      );
+      (global.fetch as any).mockRejectedValueOnce(new Error("socket hang up"));
+
+      await expect(
+        strategy.fetchSmartAccounts("aud.sub", AUTHENTICATOR_TYPE.JWT),
+      ).rejects.toThrow("DaoDao account strategy failed: socket hang up");
+      expect(vi.getTimerCount()).toBe(0);
+    });
   });
 });
