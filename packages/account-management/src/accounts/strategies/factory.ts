@@ -56,13 +56,15 @@ export interface CreateCompositeAccountStrategyConfig {
  * 1. Indexer strategy (DaoDao, Subquery or deprecated Numia, if configured) - Fast indexer queries
  * 2. AA-API strategy (if configured) - Canonical account state fallback
  * 3. RpcAccountStrategy (if RPC config provided) - Reliable on-chain queries
- * 4. EmptyAccountStrategy (always included) - Returns empty for new accounts
+ * 4. EmptyAccountStrategy - Returns empty for new accounts. Omitted when the
+ *    indexer is DaoDao, so a DaoDao failure with no other source succeeding
+ *    throws (and `connectAccount` refuses to create) instead of reading as
+ *    "no account". Subquery and Numia keep the empty fallback.
  *
  * Recommended fallback chain for production:
  * - DaoDao (fast, comprehensive)
  * - AA-API (canonical, reliable)
  * - RPC (on-chain verification)
- * - Empty (new account creation)
  *
  * @param config - Configuration for the strategies to include
  * @returns CompositeAccountStrategy with configured fallback chain
@@ -78,6 +80,7 @@ export function createCompositeAccountStrategy(
   }
 
   const strategies = [];
+  let failClosed = false;
 
   // Add indexer strategy if configured (fast)
   if (config.indexer) {
@@ -85,6 +88,7 @@ export function createCompositeAccountStrategy(
       "type" in config.indexer ? config.indexer.type : "numia";
 
     if (indexerType === "daodao") {
+      failClosed = true;
       const daodaoConfig = config.indexer as DaoDaoIndexerConfig;
       strategies.push(
         new DaoDaoAccountStrategy(
@@ -126,8 +130,13 @@ export function createCompositeAccountStrategy(
     strategies.push(new RpcAccountStrategy(config.rpc));
   }
 
-  // Always add empty strategy as final fallback (creates new account)
-  strategies.push(new EmptyAccountStrategy());
+  // Empty strategy as final fallback (creates new account). Not added after
+  // DaoDao: a DaoDao miss is already an empty list, so the empty strategy
+  // would only turn a DaoDao failure (with no other source succeeding) into
+  // a successful empty discovery.
+  if (!failClosed) {
+    strategies.push(new EmptyAccountStrategy());
+  }
 
   return new CompositeAccountStrategy(...strategies);
 }

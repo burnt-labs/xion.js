@@ -39,9 +39,26 @@ describe("createCompositeAccountStrategy", () => {
         "https://daodaoindexer.burnt.com/xion-testnet-2",
       );
       expect((strategies[0] as any).timeoutMs).toBe(30000);
-      expect(strategies[strategies.length - 1]).toBeInstanceOf(
-        EmptyAccountStrategy,
-      );
+      expect(strategies).toHaveLength(1);
+    });
+
+    it("should not add the empty fallback after DaoDao", () => {
+      const strategy = createCompositeAccountStrategy({
+        indexer: {
+          type: "daodao",
+          url: "https://daodaoindexer.burnt.com",
+          chainId: "xion-testnet-2",
+        },
+        aaApi: { baseURL: "https://aa-api.example.com" },
+      });
+
+      const strategies = (strategy as any).strategies;
+      expect(strategies).toHaveLength(2);
+      expect(strategies[0]).toBeInstanceOf(DaoDaoAccountStrategy);
+      expect(strategies[1]).toBeInstanceOf(AAApiAccountStrategy);
+      expect(
+        strategies.some((s: unknown) => s instanceof EmptyAccountStrategy),
+      ).toBe(false);
     });
 
     it("should pass a configured DaoDao timeout to the strategy", () => {
@@ -333,6 +350,63 @@ describe("createCompositeAccountStrategy", () => {
           EmptyAccountStrategy,
         );
       });
+    });
+  });
+
+  describe("daodao indexer (no empty fallback)", () => {
+    const daodao = {
+      type: "daodao" as const,
+      url: "https://daodaoindexer.burnt.com",
+      chainId: "xion-testnet-2",
+    };
+    const EVM = "0xc2e80cf7d5a108d4abc97b5c5a95b2515ef90cb5";
+    let originalFetch: typeof global.fetch;
+
+    beforeEach(() => {
+      originalFetch = global.fetch;
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it.each([
+      [
+        "indexer failure",
+        () => Promise.resolve(new Response("upstream down", { status: 503 })),
+      ],
+      [
+        "missing formula",
+        () =>
+          Promise.resolve(new Response("formula not found", { status: 404 })),
+      ],
+      ["network failure", () => Promise.reject(new TypeError("fetch failed"))],
+    ])(
+      "surfaces a DaoDao %s as accountCheck.error, not as 'no account'",
+      async (_name, response) => {
+        global.fetch = vi.fn().mockImplementation(response);
+        const strategy = createCompositeAccountStrategy({ indexer: daodao });
+
+        const result = await checkAccountExists(strategy, EVM, "EthWallet");
+
+        expect(result).toEqual({
+          exists: false,
+          accounts: [],
+          error: expect.any(String),
+        });
+        expect(result.error).toContain("DaoDaoAccountStrategy");
+      },
+    );
+
+    it("reports a clean 'no account' for a DaoDao miss", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValue(new Response(JSON.stringify([]), { status: 200 }));
+      const strategy = createCompositeAccountStrategy({ indexer: daodao });
+
+      const result = await checkAccountExists(strategy, EVM, "EthWallet");
+
+      expect(result).toEqual({ exists: false, accounts: [] });
     });
   });
 
