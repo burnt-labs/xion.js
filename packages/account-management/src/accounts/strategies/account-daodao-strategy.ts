@@ -10,6 +10,7 @@ import { isMatchingAuthenticator } from "../discovery";
 import { fromBech32, fromHex, toBase64, toBech32 } from "@cosmjs/encoding";
 import {
   AUTHENTICATOR_TYPE,
+  normalizeEthereumAddress,
   type AuthenticatorType,
 } from "@burnt-labs/signers";
 
@@ -67,13 +68,18 @@ const isXionContractAddress = (value: string): boolean => {
 const SECP256K1_HEX = /^(0[23][0-9a-fA-F]{64}|04[0-9a-fA-F]{128})$/;
 
 /**
- * The identity as the indexer stores it. Secp256K1 keys are stored base64 (the
- * contract's encoding), so a hex key is converted; other types go as given.
+ * The identity in the form the lookup expects. EthWallet addresses are sent
+ * lowercase with `0x`, as the SDK's connectors and the AA API lookup send them
+ * (`normalizeEthereumAddress`). Secp256K1 keys are stored base64 (the
+ * contract's encoding), so a hex key is converted. Other types go as given.
  */
 const toIndexedIdentity = (
   loginAuthenticator: string,
   authenticatorType: AuthenticatorType,
 ): string => {
+  if (authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
+    return normalizeEthereumAddress(loginAuthenticator);
+  }
   if (
     authenticatorType === AUTHENTICATOR_TYPE.Secp256K1 &&
     SECP256K1_HEX.test(loginAuthenticator.trim())

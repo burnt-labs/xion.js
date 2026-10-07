@@ -21,6 +21,7 @@ const ACCOUNT_A =
 const ACCOUNT_B =
   "xion1hwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwas3jrp9f";
 const ACCOUNT_A_BYTES = fromBech32(ACCOUNT_A).data;
+const ETH_ADDRESS = "0xc2e80cf7d5a108d4abc97b5c5a95b2515ef90cb5";
 
 describe("DaoDaoAccountStrategy", () => {
   beforeEach(() => {
@@ -140,6 +141,20 @@ describe("DaoDaoAccountStrategy", () => {
     ]);
   });
 
+  it("fails without a request for an invalid EthWallet address", async () => {
+    const strategy = new DaoDaoAccountStrategy(
+      "https://daodaoindexer.burnt.com",
+      "xion-mainnet-1",
+    );
+
+    await expect(
+      strategy.fetchSmartAccounts("0xab", AUTHENTICATOR_TYPE.EthWallet),
+    ).rejects.toThrow(
+      "DaoDao account strategy failed: Invalid Ethereum address format",
+    );
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   it("fails without a request for a type the indexer does not index", async () => {
     const strategy = new DaoDaoAccountStrategy(
       "https://daodaoindexer.burnt.com",
@@ -162,7 +177,7 @@ describe("DaoDaoAccountStrategy", () => {
     (global.fetch as any).mockResolvedValueOnce(okJson([]));
 
     await expect(
-      strategy.fetchSmartAccounts("0xab", AUTHENTICATOR_TYPE.EthWallet),
+      strategy.fetchSmartAccounts(ETH_ADDRESS, AUTHENTICATOR_TYPE.EthWallet),
     ).resolves.toEqual([]);
   });
 
@@ -176,7 +191,7 @@ describe("DaoDaoAccountStrategy", () => {
       (global.fetch as any).mockResolvedValueOnce(okJson(body));
 
       await expect(
-        strategy.fetchSmartAccounts("0xab", AUTHENTICATOR_TYPE.EthWallet),
+        strategy.fetchSmartAccounts(ETH_ADDRESS, AUTHENTICATOR_TYPE.EthWallet),
       ).rejects.toThrow(
         "DaoDao account strategy failed: DaoDao indexer returned a non-list response",
       );
@@ -345,12 +360,12 @@ describe("DaoDaoAccountStrategy", () => {
     expect(account.authenticators[0].authenticatorIndex).toBe(1);
   });
 
-  it("matches an EthWallet authenticator regardless of address casing", async () => {
+  it("queries a checksummed EthWallet address lowercase and matches it", async () => {
     const strategy = new DaoDaoAccountStrategy(
       "https://daodaoindexer.burnt.com",
       "xion-mainnet-1",
     );
-    const lower = "0xc2e80cf7d5a108d4abc97b5c5a95b2515ef90cb5";
+    const lower = ETH_ADDRESS;
     (global.fetch as any).mockResolvedValueOnce(
       okJson([
         {
@@ -368,6 +383,8 @@ describe("DaoDaoAccountStrategy", () => {
       AUTHENTICATOR_TYPE.EthWallet,
     );
 
+    const url = new URL((global.fetch as any).mock.calls[0][0]);
+    expect(url.searchParams.get("authenticator")).toBe(lower);
     expect(account.id).toBe(ACCOUNT_A);
     expect(account.authenticators[0].authenticatorIndex).toBe(2);
   });
