@@ -86,6 +86,10 @@ export interface AbstraxionConfig extends Omit<
   AbstraxionJsConfig,
   "chainId" | "authentication"
 > {
+  /**
+   * Chain ID for a local or custom chain. Prefer `network`. When neither is
+   * set the provider uses testnet.
+   */
   chainId?: string;
   callbackUrl?: string;
   indexerUrl?: string;
@@ -194,7 +198,7 @@ export function AbstraxionProvider({
     } = config;
     return {
       ...rest,
-      chainId: chainId ?? testnetChainInfo.chainId,
+      chainId: chainId ?? (rest.network ? undefined : testnetChainInfo.chainId),
       authentication: resolveReactNativeAuthentication(
         authentication,
         callbackUrl,

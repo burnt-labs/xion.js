@@ -239,11 +239,17 @@ Escape hatch to the full provider context. Prefer the typed hooks above for ever
 
 ```typescript
 interface AbstraxionConfig {
-  // Network — all default to xion-testnet-2 if omitted.
+  // Network: the only chain setting most apps need. Chain ID, RPC, REST, gas
+  // price, fee granter, AA API and indexer URLs are resolved from it.
+  // Defaults to testnet when neither network nor chainId is set.
+  network?: "mainnet" | "testnet";
+
+  // Overrides for a local or custom chain.
+  chainId?: string;
   rpcUrl?: string;
   restUrl?: string;
   gasPrice?: string; // e.g. "0.001uxion"
-  chainId?: string;
+  feeGranter?: string;
 
   // Optional grant configuration.
   treasury?: string;
@@ -257,13 +263,25 @@ interface AbstraxionConfig {
     | { type: "embedded"; iframeUrl?: string }
     | {
         type: "signer";
-        aaApiUrl: string;
         getSignerConfig: () => Promise<SignerConfig>;
+        // Overrides for a local or custom AA API deployment.
+        aaApiUrl?: string;
+        smartAccountContract?: { addressPrefix?: string };
       };
 
   // Convenience for redirect mode — equivalent to authentication.callbackUrl.
   callbackUrl?: string;
 }
+```
+
+A signer-mode app on mainnet needs only:
+
+```typescript
+const config = {
+  network: "mainnet",
+  treasury: "xion1...", // your app's treasury, if it grants permissions
+  authentication: { type: "signer", getSignerConfig },
+};
 ```
 
 If `authentication` is omitted, the provider defaults to `{ type: "redirect", callbackUrl }`. `{ type: "popup" }` and `{ type: "auto" }` throw at provider mount — they're web-only.

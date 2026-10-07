@@ -93,13 +93,6 @@ export class SignerController extends BaseController {
     }
 
     const signerAuth = config.authentication;
-    const smartAccountContract = signerAuth.smartAccountContract;
-
-    if (smartAccountContract && !config.feeGranter) {
-      throw new Error(
-        "feeGranter is required in AbstraxionConfig when using signer mode with smartAccountContract",
-      );
-    }
 
     // Use utility functions to create configs
     const accountStrategy = createAccountStrategyFromConfig(config, signerAuth);
@@ -108,6 +101,15 @@ export class SignerController extends BaseController {
       config,
       signerAuth,
     );
+
+    // A new account holds no XION: its grant transaction is paid by the fee
+    // granter. Known networks default it; a custom chain must pass it.
+    if (accountCreationConfig && !config.feeGranter) {
+      throw new Error(
+        `feeGranter is required in signer mode: chain "${config.chainId}" has no default fee granter. ` +
+          `Set network to "mainnet" or "testnet", or pass feeGranter.`,
+      );
+    }
 
     const signerConfig: SignerControllerConfig = {
       chainId: config.chainId,

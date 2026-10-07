@@ -3,6 +3,9 @@ import type {
   UserIndexerConfig,
 } from "@burnt-labs/account-management";
 import type { SignerConfig } from "@burnt-labs/abstraxion-core";
+import type { XionNetwork } from "@burnt-labs/constants";
+
+export type { XionNetwork };
 
 export type SpendLimit = { denom: string; amount: string };
 
@@ -50,11 +53,13 @@ export interface SignerAuthentication {
   type: "signer";
 
   /**
-   * AA API URL. Smart-account addresses come from the AA API: discovery uses
+   * AA API URL override. Defaults to the AA API of the configured network
+   * (`network` / `chainId`); set it only for a local or custom deployment.
+   * Smart-account addresses come from the AA API: discovery uses
    * GET /api/v2/account/check/... (verified on chain via rpcUrl) and creation
    * signs the address from GET /api/v2/account/address/...
    */
-  aaApiUrl: string;
+  aaApiUrl?: string;
 
   /**
    * Function that returns signer configuration
@@ -64,17 +69,20 @@ export interface SignerAuthentication {
   getSignerConfig: () => Promise<SignerConfig>;
 
   /**
-   * Smart account contract configuration: `{ codeId, addressPrefix }`.
-   * Required for creating new smart accounts when they don't exist.
-   * `checksum` is deprecated and ignored; the AA API selects the address.
+   * Optional smart account overrides. Not needed on mainnet or testnet.
+   * `addressPrefix` defaults to the chain's bech32 prefix ("xion").
+   * `codeId` and `checksum` are deprecated and ignored: the AA API selects
+   * the address and reports the code ID.
    */
-  smartAccountContract: SmartAccountContractConfig;
+  smartAccountContract?: Partial<SmartAccountContractConfig>;
 
   /**
    * Indexer configuration (Numia or Subquery).
-   * Not used for smart-account discovery when `smartAccountContract` is set:
-   * the AA API (which owns its own indexer lookup) is the only discovery
-   * source, so an indexer miss can never mask an AA API failure.
+   * Not used for smart-account discovery when an AA API is configured (the
+   * default on mainnet and testnet): the AA API (which owns its own indexer
+   * lookup) is the only discovery source, so an indexer miss can never mask
+   * an AA API failure. Used for discovery only on a chain with no AA API and
+   * no `smartAccountContract`, where accounts can't be created.
    */
   indexer?: IndexerConfig;
 
@@ -164,12 +172,25 @@ export interface TreasuryIndexerConfig {
 /**
  * Main Abstraxion configuration
  *
- * Note: rpcUrl, restUrl, and gasPrice are optional and will be automatically filled in by normalizeAbstraxionConfig()
- * based on chainId. Only provide these if you're using a custom network or need to override defaults.
+ * `network` ("mainnet" | "testnet") is the only chain setting an app needs:
+ * chain ID, RPC, REST, gas price, fee granter, AA API and indexer URLs are
+ * filled in by normalizeAbstraxionConfig(). The other chain fields are
+ * optional overrides for local or custom networks.
  */
 export interface AbstraxionConfig {
-  /** Chain ID (e.g., 'xion-testnet-1', 'xion-mainnet-1') - REQUIRED */
-  chainId: string;
+  /**
+   * XION network: "mainnet" (xion-mainnet-1) or "testnet" (xion-testnet-2).
+   * Every chain default is resolved from it. Provide either `network` or
+   * `chainId`; if both are set they must name the same chain.
+   */
+  network?: XionNetwork;
+
+  /**
+   * Chain ID (e.g. 'xion-testnet-2', 'xion-mainnet-1'). Prefer `network`;
+   * use `chainId` for a local or custom chain (with `rpcUrl`, `restUrl` and,
+   * in signer mode, `authentication.aaApiUrl`).
+   */
+  chainId?: string;
 
   /**
    * RPC URL for blockchain connection (optional, defaults to chainId-based value from constants).
@@ -205,7 +226,10 @@ export interface AbstraxionConfig {
    */
   treasury?: string;
 
-  /** Fee granter address that pays transaction fees for grant creation */
+  /**
+   * Fee granter address that pays transaction fees for grant creation.
+   * Optional override; defaults to the network's fee granter.
+   */
   feeGranter?: string;
 
   /**
@@ -245,8 +269,10 @@ export interface AbstraxionConfig {
  */
 export interface NormalizedAbstraxionConfig extends Omit<
   AbstraxionConfig,
-  "rpcUrl" | "restUrl" | "gasPrice"
+  "chainId" | "rpcUrl" | "restUrl" | "gasPrice"
 > {
+  /** Chain ID - always present after normalization (resolved from `network` if not given) */
+  chainId: string;
   /** RPC URL - always present after normalization */
   rpcUrl: string;
   /** REST URL - always present after normalization */

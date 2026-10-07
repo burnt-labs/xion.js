@@ -121,7 +121,7 @@ describe.each(CONFIGS)("signer config with %s", (_name, contract) => {
 
     expect(createAccountCreationConfigFromConfig(config, signerAuth)).toEqual({
       aaApiUrl: AA_API_URL,
-      smartAccountContract: { codeId: 1880, addressPrefix: "xion" },
+      smartAccountContract: { addressPrefix: "xion" },
       feeGranter: FEE_GRANTER,
     });
   });
@@ -203,10 +203,26 @@ describe.each(CONFIGS)("signer config with %s", (_name, contract) => {
 });
 
 describe("signer config without aaApiUrl", () => {
-  it("fails fast instead of discovering without the AA API", () => {
+  it("uses the network's AA API on a known chain", () => {
     const base = signerConfig({ codeId: 1880, addressPrefix: "xion" });
     const config = normalizeAbstraxionConfig({
       ...base,
+      authentication: {
+        ...(base.authentication as SignerAuthentication),
+        aaApiUrl: "",
+      },
+    });
+
+    expect((config.authentication as SignerAuthentication).aaApiUrl).toBe(
+      "https://aa-api.testnet.burnt.com",
+    );
+  });
+
+  it("fails fast on a custom chain instead of discovering without the AA API", () => {
+    const base = signerConfig({ codeId: 1880, addressPrefix: "xion" });
+    const config = normalizeAbstraxionConfig({
+      ...base,
+      chainId: "xion-custom-1",
       authentication: {
         ...(base.authentication as SignerAuthentication),
         aaApiUrl: "",
