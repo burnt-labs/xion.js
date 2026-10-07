@@ -304,12 +304,18 @@ describe("custom chain", () => {
     ).toThrow(/feeGranter is required/);
   });
 
-  it("needs no fee granter on the no-grants path", () => {
+  it.each([
+    ["no grant fields", {}],
+    ["empty grant arrays", { contracts: [], bank: [] }],
+  ])("needs no fee granter on the no-grants path (%s)", (_name, grants) => {
     const config = normalizeAbstraxionConfig(
-      custom({
-        aaApiUrl: "http://localhost:8787",
-        smartAccountContract: { addressPrefix: "xion" },
-      }),
+      custom(
+        {
+          aaApiUrl: "http://localhost:8787",
+          smartAccountContract: { addressPrefix: "xion" },
+        },
+        grants,
+      ),
     );
 
     expect(() =>
