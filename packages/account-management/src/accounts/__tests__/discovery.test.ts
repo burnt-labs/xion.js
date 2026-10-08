@@ -298,6 +298,36 @@ describe("discovery.ts - Account Existence Checking", () => {
       expect(result.authenticatorIndex).toBe(3);
     });
 
+    it("should match a full JWT login by its aud.sub identity", async () => {
+      const part = (value: unknown) =>
+        Buffer.from(JSON.stringify(value)).toString("base64url");
+      const token = `${part({ alg: "RS256" })}.${part({ aud: "project", sub: "user" })}.c2lnbmF0dXJl`;
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-0",
+              type: "JWT",
+              authenticator: "project.other",
+              authenticatorIndex: 0,
+            },
+            {
+              id: "xion1account123-5",
+              type: "JWT",
+              authenticator: "project.user",
+              authenticatorIndex: 5,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(mockStrategy, token, "JWT");
+
+      expect(result.authenticatorIndex).toBe(5);
+    });
+
     it("should match a hex Ed25519 login against the base64 key by bytes", async () => {
       const hex = "d".repeat(64);
       mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([

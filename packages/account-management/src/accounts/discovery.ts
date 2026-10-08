@@ -10,6 +10,7 @@ import {
 } from "@burnt-labs/signers";
 import type { CompositeAccountStrategy } from "../accounts/index";
 import type { Authenticator } from "../types/authenticator";
+import { toJwtIdentity } from "./jwtIdentity";
 
 /**
  * Authenticator types whose accounts are verified on chain and matched by
@@ -171,7 +172,12 @@ export async function checkAccountExists(
     // Other authenticator types (JWT, Passkey, ...): legacy case-insensitive
     // matching, ranked so the login's own authenticator wins: same type
     // before other types, exact identity before one differing only by case.
-    // Ed25519 keys count as exact when their bytes match (hex or base64).
+    // Ed25519 keys count as exact when their bytes match (hex or base64), and
+    // a full JWT login is compared by its `aud.sub` identity.
+    const loginIdentity =
+      authenticatorType === AUTHENTICATOR_TYPE.JWT
+        ? toJwtIdentity(authenticator)
+        : authenticator;
     const loginKey =
       authenticatorType === AUTHENTICATOR_TYPE.Ed25519
         ? ed25519KeyBytes(authenticator)
@@ -180,12 +186,12 @@ export async function checkAccountExists(
       String(auth.type).toLowerCase() ===
       String(authenticatorType).toLowerCase();
     const exact = (auth: Authenticator) => {
-      if (auth.authenticator === authenticator) return true;
+      if (auth.authenticator === loginIdentity) return true;
       const key = loginKey && ed25519KeyBytes(auth.authenticator);
       return !!loginKey && !!key && bytesEqual(key, loginKey);
     };
     const caseless = (auth: Authenticator) =>
-      auth.authenticator.toLowerCase() === authenticator.toLowerCase();
+      auth.authenticator.toLowerCase() === loginIdentity.toLowerCase();
     const matchingAuthenticator = [
       (auth: Authenticator) => sameType(auth) && exact(auth),
       (auth: Authenticator) => sameType(auth) && caseless(auth),

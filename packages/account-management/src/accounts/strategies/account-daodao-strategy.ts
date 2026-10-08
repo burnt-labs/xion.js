@@ -7,6 +7,7 @@
 
 import { IndexerStrategy, SmartAccountWithCodeId } from "../../types/indexer";
 import { isMatchingAuthenticator } from "../discovery";
+import { toJwtIdentity } from "../jwtIdentity";
 import { fromBech32, fromHex, toBase64, toBech32 } from "@cosmjs/encoding";
 import {
   AUTHENTICATOR_TYPE,
@@ -74,7 +75,8 @@ const ED25519_HEX = /^[0-9a-fA-F]{64}$/;
  * (`normalizeEthereumAddress`). Secp256K1 and Ed25519 keys are stored base64
  * (the contract's encoding): Secp256K1 goes through `normalizeSecp256k1PublicKey`
  * as in the AA API lookup, and an Ed25519 key is trimmed and converted from
- * hex. Other types go as given.
+ * hex. A full JWT is reduced to its `aud.sub` identity. Other types go as
+ * given.
  */
 const toIndexedIdentity = (
   loginAuthenticator: string,
@@ -85,6 +87,9 @@ const toIndexedIdentity = (
   }
   if (authenticatorType === AUTHENTICATOR_TYPE.Secp256K1) {
     return normalizeSecp256k1PublicKey(loginAuthenticator);
+  }
+  if (authenticatorType === AUTHENTICATOR_TYPE.JWT) {
+    return toJwtIdentity(loginAuthenticator);
   }
   if (authenticatorType === AUTHENTICATOR_TYPE.Ed25519) {
     const key = loginAuthenticator.trim();

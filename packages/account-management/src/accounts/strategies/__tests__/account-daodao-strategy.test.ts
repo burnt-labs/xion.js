@@ -380,6 +380,36 @@ describe("DaoDaoAccountStrategy", () => {
     expect(account.authenticators[0].authenticatorIndex).toBe(1);
   });
 
+  it("queries a full JWT by its aud.sub identity", async () => {
+    const strategy = new DaoDaoAccountStrategy(
+      "https://daodaoindexer.burnt.com",
+      "xion-mainnet-1",
+    );
+    const part = (value: unknown) =>
+      Buffer.from(JSON.stringify(value)).toString("base64url");
+    const token = `${part({ alg: "RS256" })}.${part({ aud: "project-1", sub: "user-1" })}.c2lnbmF0dXJl`;
+    (global.fetch as any).mockResolvedValueOnce(
+      okJson([
+        {
+          address: ACCOUNT_A,
+          codeId: 5,
+          authenticators: [
+            { index: 1, type: "JWT", authenticator: "project-1.user-1" },
+          ],
+        },
+      ]),
+    );
+
+    const [account] = await strategy.fetchSmartAccounts(
+      token,
+      AUTHENTICATOR_TYPE.JWT,
+    );
+
+    const url = new URL((global.fetch as any).mock.calls[0][0]);
+    expect(url.searchParams.get("authenticator")).toBe("project-1.user-1");
+    expect(account.authenticators[0].authenticatorIndex).toBe(1);
+  });
+
   it("queries a hex Ed25519 key as the base64 the indexer stores", async () => {
     const strategy = new DaoDaoAccountStrategy(
       "https://daodaoindexer.burnt.com",
