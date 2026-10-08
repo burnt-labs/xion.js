@@ -119,13 +119,11 @@ All non-sensitive configuration for testnet and mainnet:
 
 **Testnet (Optional - improves performance)**:
 
-- `XION_TESTNET_INDEXER_URL` - Numia indexer
 - `XION_TESTNET_TREASURY_INDEXER_URL` - SubQuery indexer
 
 **Mainnet (Required for mainnet tests)**:
 
 - `XION_MAINNET_AA_API_URL` - Mainnet AA-API endpoint
-- `XION_MAINNET_INDEXER_URL` - Mainnet Numia indexer
 - `XION_MAINNET_TREASURY_INDEXER_URL` - Mainnet SubQuery indexer
 
 **AA-API Dev Server (Required for `dev-server` mode)**:

@@ -2,7 +2,7 @@
  * Utilities for converting user-facing indexer configs to AccountIndexerConfig
  *
  * These utilities are generic and work with any user-facing indexer config type
- * that matches the shape of the discriminated union (Numia or Subquery).
+ * that matches the shape of the discriminated union (DaoDao, Subquery or Numia).
  */
 
 import type {
@@ -26,7 +26,7 @@ export function extractIndexerAuthToken(
   }
 
   // Only Numia indexers have authToken
-  if (indexerConfig.type !== "subquery") {
+  if (indexerConfig.type !== "subquery" && indexerConfig.type !== "daodao") {
     return "authToken" in indexerConfig ? indexerConfig.authToken : undefined;
   }
 
@@ -48,6 +48,17 @@ export function convertIndexerConfig(
 ): AccountIndexerConfig | undefined {
   if (!indexerConfig) {
     return undefined;
+  }
+
+  if (indexerConfig.type === "daodao") {
+    return {
+      type: "daodao" as const,
+      url: indexerConfig.url,
+      chainId: indexerConfig.chainId,
+      ...(indexerConfig.timeout !== undefined && {
+        timeout: indexerConfig.timeout,
+      }),
+    };
   }
 
   // Handle Subquery indexer

@@ -9,7 +9,8 @@ This package provides comprehensive account and grant management for XION's smar
 ## Features
 
 - **Account Discovery**: Multiple strategies for finding smart accounts
-  - Numia indexer integration
+  - DaoDao indexer integration (account lookup by authenticator)
+  - Numia indexer integration (deprecated)
   - Subquery indexer integration
   - Direct RPC queries
   - Composite fallback chains
@@ -56,6 +57,7 @@ The unit tests target 70%+ coverage for core modules:
 - **Account Strategies**: 86.56% coverage
   - EmptyAccountStrategy: 100%
   - CompositeAccountStrategy: 100%
+  - DaoDaoAccountStrategy: 100%
   - NumiaAccountStrategy: 100%
   - RpcAccountStrategy: 93.75%
   - SubqueryAccountStrategy: 96.58%
@@ -82,6 +84,7 @@ src/
 │       └── __tests__/
 │           ├── account-empty-strategy.test.ts
 │           ├── account-composite-strategy.test.ts
+│           ├── account-daodao-strategy.test.ts
 │           ├── account-numia-strategy.test.ts
 │           ├── account-rpc-strategy.test.ts
 │           ├── account-subquery-strategy.test.ts

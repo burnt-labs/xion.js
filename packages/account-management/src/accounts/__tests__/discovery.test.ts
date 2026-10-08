@@ -235,6 +235,127 @@ describe("discovery.ts - Account Existence Checking", () => {
       expect(result.authenticatorIndex).toBe(0);
     });
 
+    it("should prefer an exact JWT identity over one differing only by case", async () => {
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-1",
+              type: "JWT",
+              authenticator: "project.USER",
+              authenticatorIndex: 1,
+            },
+            {
+              id: "xion1account123-4",
+              type: "JWT",
+              authenticator: "project.user",
+              authenticatorIndex: 4,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(
+        mockStrategy,
+        "project.user",
+        "JWT",
+      );
+
+      expect(result.exists).toBe(true);
+      expect(result.authenticatorIndex).toBe(4);
+    });
+
+    it("should prefer the login's authenticator type when identities collide", async () => {
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-0",
+              type: "Passkey",
+              authenticator: "c2FtZS1pZA==",
+              authenticatorIndex: 0,
+            },
+            {
+              id: "xion1account123-3",
+              type: "Ed25519",
+              authenticator: "c2FtZS1pZA==",
+              authenticatorIndex: 3,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(
+        mockStrategy,
+        "c2FtZS1pZA==",
+        "Ed25519",
+      );
+
+      expect(result.authenticatorIndex).toBe(3);
+    });
+
+    it("should match a full JWT login by its aud.sub identity", async () => {
+      const part = (value: unknown) =>
+        Buffer.from(JSON.stringify(value)).toString("base64url");
+      const token = `${part({ alg: "RS256" })}.${part({ aud: "project", sub: "user" })}.c2lnbmF0dXJl`;
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-0",
+              type: "JWT",
+              authenticator: "project.other",
+              authenticatorIndex: 0,
+            },
+            {
+              id: "xion1account123-5",
+              type: "JWT",
+              authenticator: "project.user",
+              authenticatorIndex: 5,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(mockStrategy, token, "JWT");
+
+      expect(result.authenticatorIndex).toBe(5);
+    });
+
+    it("should match a hex Ed25519 login against the base64 key by bytes", async () => {
+      const hex = "d".repeat(64);
+      mockStrategy.fetchSmartAccounts = vi.fn().mockResolvedValue([
+        {
+          id: "xion1account123",
+          codeId: 123,
+          authenticators: [
+            {
+              id: "xion1account123-0",
+              type: "JWT",
+              authenticator: "project.user",
+              authenticatorIndex: 0,
+            },
+            {
+              id: "xion1account123-2",
+              type: "Ed25519",
+              authenticator: Buffer.from(hex, "hex").toString("base64"),
+              authenticatorIndex: 2,
+            },
+          ],
+        },
+      ]);
+
+      const result = await checkAccountExists(mockStrategy, hex, "Ed25519");
+
+      expect(result.authenticatorIndex).toBe(2);
+    });
+
     describe("verified EthWallet/Secp256K1 matching", () => {
       const SECP_BASE64 = "AiGkW+2imN152OGq4dMyJS/J4OyGGrjtpXFXjMVASz2p";
       const SECP_HEX =

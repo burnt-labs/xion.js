@@ -19,12 +19,35 @@ export interface IndexerStrategy {
 }
 
 /**
+ * DaoDao indexer: `url` is the indexer base (e.g. "https://daodaoindexer.burnt.com",
+ * see `getDaoDaoIndexerUrl` in `@burnt-labs/constants`), `chainId` the chain path segment.
+ */
+export type DaoDaoIndexerConfig = {
+  type: "daodao";
+  url: string;
+  chainId: string;
+  /** Request timeout in milliseconds (default: 30000) */
+  timeout?: number;
+};
+
+/**
+ * @deprecated Numia is being retired. Use `{ type: "daodao", url, chainId }`.
+ * Also selected when `type` is omitted.
+ */
+export type NumiaIndexerConfig = {
+  type?: "numia";
+  url: string;
+  authToken?: string;
+};
+
+/**
  * User-facing indexer configuration
  * Used by developers when configuring account discovery
  * For Subquery, codeId is derived from smartAccountContract, not provided by user
  */
 export type UserIndexerConfig =
-  | { type?: "numia"; url: string; authToken?: string }
+  | DaoDaoIndexerConfig
+  | NumiaIndexerConfig
   | { type: "subquery"; url: string };
 
 /**
@@ -33,5 +56,6 @@ export type UserIndexerConfig =
  * For Subquery, codeId is required (derived from smartAccountContract during conversion)
  */
 export type AccountIndexerConfig =
-  | { type?: "numia"; url: string; authToken?: string }
+  | DaoDaoIndexerConfig
+  | NumiaIndexerConfig
   | { type: "subquery"; url: string; codeId: number };
