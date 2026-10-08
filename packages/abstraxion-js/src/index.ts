@@ -15,6 +15,7 @@ export type {
   SignResult,
   SpendLimit,
   TreasuryIndexerConfig,
+  XionNetwork,
 } from "./types";
 
 export {
