@@ -179,13 +179,8 @@ export class ConnectionOrchestrator {
     // 1. Connect and discover account
     const connectionResult = await this.connect(connector, authenticator);
 
-    // 2. Create grants if configured
-    if (
-      this.config.grantConfig?.treasury ||
-      this.config.grantConfig?.contracts?.length ||
-      this.config.grantConfig?.bank?.length ||
-      this.config.grantConfig?.stake
-    ) {
+    // 2. Create grants if a treasury is configured
+    if (this.config.grantConfig?.treasury) {
       const grantResult = await this.createGrants(
         connectionResult.smartAccountAddress,
         connectionResult.connectionInfo,

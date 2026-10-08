@@ -7,13 +7,7 @@ export { queryTreasuryContractWithPermissions } from "./discovery";
 export type { TreasuryContractResponse } from "./discovery";
 
 // Construction utilities (build grant messages)
-export {
-  generateTreasuryGrants,
-  buildGrantMessages,
-  generateBankGrant,
-  generateContractGrant,
-  generateStakeAndGovGrant,
-} from "./construction";
+export { generateTreasuryGrants } from "./construction";
 
 // Revoke message-type mapping
 export { getMsgTypeUrlForRevoke, STAKE_AUTHORIZATION_TYPE_URL } from "./revoke";

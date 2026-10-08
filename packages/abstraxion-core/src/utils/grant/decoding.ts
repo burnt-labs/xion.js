@@ -177,12 +177,12 @@ const STAKE_AUTH_TYPE_REVERSE: Record<string, number> = {
 };
 
 /**
- * Converts a REST-format authorization object (as returned by fetchChainGrantsABCI
- * after the decodeAuthorizationToRestFormat step) into a DecodedReadableAuthorization.
+ * Converts a REST-format authorization object (with "@type" and snake_case fields,
+ * as returned by the chain's REST/LCD grants endpoint) into a
+ * DecodedReadableAuthorization.
  *
- * This is needed because fetchChainGrantsABCI decodes protobuf grants into REST JSON
- * format (with "@type", snake_case fields) for the legacy compare functions, but the
- * treasury comparison path expects DecodedReadableAuthorization (camelCase protobuf types).
+ * The treasury comparison path expects DecodedReadableAuthorization (camelCase
+ * protobuf types), so this bridges REST-format authorizations into that shape.
  *
  * @param auth - REST-format authorization object with "@type" and decoded fields
  * @returns DecodedReadableAuthorization compatible with compareChainGrantsToTreasuryGrants

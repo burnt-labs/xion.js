@@ -12,18 +12,6 @@ export const mockAccountAddress =
 export const mockContractAddress =
   "xion1z70cvc08qv5764zeg3dykcyymj5z6nu4sqr7x8vl4zjef2gyp69s9mmdka";
 
-export const mockLegacyConfig = {
-  grantContracts: [
-    mockContractAddress,
-    {
-      address: mockContractAddress,
-      amounts: [{ denom: "uxion", amount: "1000000" }],
-    },
-  ],
-  stake: true,
-  bank: [{ denom: "uxion", amount: "1000000" }],
-};
-
 export const mockGrantsResponse: GrantsResponse = {
   grants: [
     {

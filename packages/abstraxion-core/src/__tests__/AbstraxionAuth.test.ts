@@ -5,15 +5,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { AbstraxionAuth } from "../AbstraxionAuth";
 import {
-  mockAccountAddress,
   MockRedirectStrategy,
   MockStorageStrategy,
 } from "@burnt-labs/test-utils/mocks";
-import {
-  mockChainGrants,
-  mockGrantsResponse,
-  mockLegacyConfig,
-} from "./fixtures/grantResponses";
 
 // Add fetch polyfill for Node.js environment
 if (typeof fetch === "undefined") {
@@ -32,16 +26,8 @@ vi.mock("@burnt-labs/constants", () => ({
  */
 const configureAbstraxionAuthInstance = (abstraxionAuth: AbstraxionAuth) => {
   const rpcUrl = "https://testnet-rpc.xion-api.com:443";
-  const grantContracts = mockLegacyConfig.grantContracts;
-  const stake = true;
-  const bank = mockLegacyConfig.bank;
 
-  abstraxionAuth.configureAbstraxionInstance(
-    rpcUrl,
-    grantContracts,
-    stake,
-    bank,
-  );
+  abstraxionAuth.configureAbstraxionInstance(rpcUrl);
 };
 
 describe("AbstraxionAuth", () => {
@@ -144,61 +130,6 @@ describe("AbstraxionAuth", () => {
         "granterAddress",
       );
       expect(generateAndStoreTempAccountMock).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("compareGrantsToLegacyConfig", () => {
-    it("should return true when legacy config grants match on-chain grants", () => {
-      configureAbstraxionAuthInstance(abstraxionAuth);
-
-      const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
-      expect(result).toBe(true);
-    });
-
-    it("should return false when legacy config grants do not match on-chain grants - bank amount change", () => {
-      configureAbstraxionAuthInstance(abstraxionAuth);
-
-      abstraxionAuth.bank = [{ denom: "uxion", amount: "200" }];
-
-      const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
-      expect(result).toBe(false);
-    });
-
-    it("should return false when legacy config grants do not match on-chain grants - grant contracts change", () => {
-      configureAbstraxionAuthInstance(abstraxionAuth);
-
-      abstraxionAuth.grantContracts = [
-        {
-          address: mockAccountAddress,
-          amounts: [{ denom: "uxion", amount: "1000000" }],
-        },
-      ];
-
-      const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
-      expect(result).toBe(false);
-    });
-
-    it("should return true when legacy config stake changes from true to false", () => {
-      configureAbstraxionAuthInstance(abstraxionAuth);
-
-      abstraxionAuth.stake = false;
-
-      const result =
-        abstraxionAuth.compareGrantsToLegacyConfig(mockGrantsResponse);
-      expect(result).toBe(true);
-    });
-
-    it("should return false when no grants are found", () => {
-      configureAbstraxionAuthInstance(abstraxionAuth);
-
-      const result = abstraxionAuth.compareGrantsToLegacyConfig({
-        grants: [],
-        pagination: { next_key: null, total: "0" },
-      });
-      expect(result).toBe(false);
     });
   });
 

@@ -75,15 +75,6 @@ export interface IframeControllerConfig {
   iframe: IframeAuthentication;
   /** Treasury address for grants */
   treasury?: string;
-  /** Bank spend limits */
-  bank?: Array<{ denom: string; amount: string }>;
-  /** Enable staking grants */
-  stake?: boolean;
-  /** Contract grant configurations */
-  contracts?: Array<
-    | string
-    | { address: string; amounts: Array<{ denom: string; amount: string }> }
-  >;
   /** Storage strategy */
   storageStrategy: StorageStrategy;
   /** Redirect strategy (required by AbstraxionAuth, not used for actual redirects) */
@@ -157,9 +148,6 @@ export class IframeController extends BaseController {
       gasPrice: config.gasPrice,
       iframe: config.authentication,
       treasury: config.treasury,
-      bank: config.bank,
-      stake: config.stake,
-      contracts: config.contracts,
       storageStrategy,
       redirectStrategy,
       iframeTransportStrategy,
@@ -214,9 +202,6 @@ export class IframeController extends BaseController {
 
     this.abstraxionAuth.configureAbstraxionInstance(
       config.rpcUrl,
-      config.contracts,
-      config.stake,
-      config.bank,
       undefined, // callbackUrl — not used in iframe mode
       config.treasury,
       treasuryIndexerUrl,
@@ -224,15 +209,11 @@ export class IframeController extends BaseController {
     );
 
     // Create orchestrator for session restoration (same pattern as Redirect/Signer/Popup controllers)
-    const grantConfig =
-      config.treasury || config.contracts || config.bank || config.stake
-        ? {
-            treasury: config.treasury,
-            contracts: config.contracts,
-            bank: config.bank,
-            stake: config.stake,
-          }
-        : undefined;
+    const grantConfig = config.treasury
+      ? {
+          treasury: config.treasury,
+        }
+      : undefined;
 
     this.orchestrator = new ConnectionOrchestrator({
       sessionManager: this.abstraxionAuth,
@@ -720,15 +701,6 @@ export class IframeController extends BaseController {
 
     if (this.config.treasury) {
       url.searchParams.set("treasury", this.config.treasury);
-    }
-    if (this.config.bank) {
-      url.searchParams.set("bank", JSON.stringify(this.config.bank));
-    }
-    if (this.config.stake) {
-      url.searchParams.set("stake", "true");
-    }
-    if (this.config.contracts) {
-      url.searchParams.set("contracts", JSON.stringify(this.config.contracts));
     }
 
     return url.toString();

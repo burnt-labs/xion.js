@@ -18,14 +18,12 @@ import type {
   AbstraxionRuntime,
   AccountState,
   ConnectorConnectionResult,
-  ContractGrantDescription,
   Controller,
   EmbeddedAuthentication,
   GranteeSignerClient,
   RedirectAuthentication,
   SignArbSecp256k1HdWallet,
   SignerAuthentication,
-  SpendLimit,
 } from "@burnt-labs/abstraxion-js";
 import { ReactNativeRedirectStrategy } from "../../strategies/ReactNativeRedirectStrategy";
 import { ReactNativeStorageStrategy } from "../../strategies/ReactNativeStorageStrategy";
@@ -63,12 +61,9 @@ export interface AbstraxionContextProps {
   abstraxionError: string;
   abstraxionAccount: SignArbSecp256k1HdWallet | undefined;
   granterAddress: string;
-  contracts?: ContractGrantDescription[];
   chainId: string;
   rpcUrl: string;
   restUrl: string;
-  stake?: boolean;
-  bank?: SpendLimit[];
   treasury?: string;
   indexerUrl?: string;
   gasPrice: GasPrice;
@@ -108,12 +103,9 @@ const defaultContextValue: AbstraxionContextProps = {
   abstraxionError: "",
   abstraxionAccount: undefined,
   granterAddress: "",
-  contracts: undefined,
   chainId: testnetChainInfo.chainId,
   rpcUrl: testnetChainInfo.rpc,
   restUrl: testnetChainInfo.rest,
-  stake: false,
-  bank: undefined,
   treasury: undefined,
   indexerUrl: undefined,
   gasPrice: GasPrice.fromString("0.001uxion"),
@@ -309,12 +301,9 @@ export function AbstraxionProvider({
       abstraxionError,
       abstraxionAccount,
       granterAddress,
-      contracts: normalizedConfig.contracts,
       chainId: normalizedConfig.chainId,
       rpcUrl: normalizedConfig.rpcUrl,
       restUrl: normalizedConfig.restUrl,
-      stake: normalizedConfig.stake,
-      bank: normalizedConfig.bank,
       treasury: normalizedConfig.treasury,
       indexerUrl: config.indexerUrl,
       login,
