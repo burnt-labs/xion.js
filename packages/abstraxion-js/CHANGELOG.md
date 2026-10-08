@@ -1,5 +1,29 @@
 # @burnt-labs/abstraxion-js
 
+## 1.0.0-alpha.5
+
+### Minor Changes
+
+- [#409](https://github.com/burnt-labs/xion.js/pull/409) [`ad5dbeb`](https://github.com/burnt-labs/xion.js/commit/ad5dbeb9d039c731e155c402c7f74c4fc4a05b3c) Thanks [@2xburnt](https://github.com/2xburnt)! - Account discovery can use the DaoDao indexer instead of Numia, which is being retired:
+
+  ```ts
+  indexer: {
+    type: "daodao",
+    url: getDaoDaoIndexerUrl(chainId), // "https://daodaoindexer.burnt.com"
+    chainId,
+  }
+  ```
+
+  - `@burnt-labs/account-management`: new `DaoDaoAccountStrategy` (`new DaoDaoAccountStrategy(url, chainId, timeoutMs?)`), selected by `type: "daodao"` in `createCompositeAccountStrategy` and `convertIndexerConfig`. It calls `GET {url}/{chainId}/generic/_/xion/accountsByAuthenticator?type=…&authenticator=…` and returns every account the indexer tracks that currently holds the authenticator, each with its authenticators and their on-chain indices. On `xion-testnet-2` the indexer does not track `abstract:account` contracts (code ID 1986) or contracts recorded with code ID 0, so a lookup for one of those comes back empty, like a miss. Authenticators of a type the SDK has no signer for (e.g. `Secp256R1`) are left out of that list, so it is not a complete view of an account's authenticators. An EthWallet address is sent lowercase with `0x` (`normalizeEthereumAddress`, as the AA API lookup does), a Secp256K1 key through `normalizeSecp256k1PublicKey` (also as the AA API lookup does), a hex Ed25519 key as base64, and a full JWT as its `aud.sub` identity: the forms the indexer stores. A miss is an empty list; a `200` body that is not a list, or an entry without a canonical `xion1…` contract (32-byte) address, a positive code ID and authenticators of an indexed type with a non-empty identity at distinct indices, throws, as does an account that does not hold the queried authenticator (exact identity; EthWallet compared case-insensitively, Secp256K1 by key bytes). Any other status, including `404` while the indexer has not deployed the lookup, throws so the composite falls through to the next strategy. A request is aborted after 30 seconds (`timeout` in the config, in milliseconds, or the third constructor argument) so a stalled indexer also falls through. With DaoDao configured, `createCompositeAccountStrategy` does not add the empty fallback: if DaoDao fails and no other configured source succeeds, discovery throws (`checkAccountExists` returns `error`, and `connectAccount` refuses to create an account) rather than reporting "no account". Subquery and Numia keep the empty fallback. No token is needed. `DaoDaoIndexerConfig` and `NumiaIndexerConfig` are exported.
+  - `checkAccountExists`: for JWT, Passkey, Ed25519 and other non-verified types, the authenticator index now comes from the login's own authenticator where one exists: same type before other types, exact identity before one differing only by case, Ed25519 keys matched by bytes (hex or base64), and a full JWT login matched by its `aud.sub` identity.
+  - **Deprecated:** `NumiaAccountStrategy` and the `type: "numia"` indexer config (also the default when `type` is omitted). They keep working for now and will be removed in a later release; move to `type: "daodao"`.
+  - `@burnt-labs/abstraxion-js`: `IndexerConfig` accepts the DaoDao variant. Signer mode with `smartAccountContract` still ignores `indexer` (the AA API is the only discovery source there), so signer-mode apps can drop a Numia indexer block without replacing it.
+
+### Patch Changes
+
+- Updated dependencies [[`ad5dbeb`](https://github.com/burnt-labs/xion.js/commit/ad5dbeb9d039c731e155c402c7f74c4fc4a05b3c)]:
+  - @burnt-labs/account-management@1.0.0-alpha.16
+
 ## 1.0.0-alpha.4
 
 ### Minor Changes
