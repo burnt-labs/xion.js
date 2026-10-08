@@ -17,9 +17,6 @@ interface ImportMetaEnv {
   readonly VITE_CODE_ID?: string;
   readonly VITE_FEE_GRANTER_ADDRESS?: string;
   readonly VITE_ADDRESS_PREFIX?: string;
-  readonly VITE_INDEXER_TYPE?: "subquery" | "numia";
-  readonly VITE_INDEXER_URL?: string;
-  readonly VITE_INDEXER_TOKEN?: string;
   readonly VITE_TREASURY_INDEXER_URL?: string;
 }
 

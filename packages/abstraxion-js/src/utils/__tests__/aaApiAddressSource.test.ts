@@ -59,7 +59,11 @@ function signerConfig(
       aaApiUrl: AA_API_URL,
       getSignerConfig: vi.fn(),
       smartAccountContract,
-      indexer: { type: "numia", url: "https://indexer.example.com" },
+      indexer: {
+        type: "daodao",
+        url: "https://indexer.example.com",
+        chainId: "xion-testnet-2",
+      },
       treasuryIndexer: { url: "https://daodao.example.com" },
     },
   };

@@ -1,5 +1,12 @@
 # demos-react-native
 
+## 0.0.1-alpha.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @burnt-labs/abstraxion-react-native@1.0.0-alpha.24
+
 ## 0.0.1-alpha.3
 
 ### Patch Changes

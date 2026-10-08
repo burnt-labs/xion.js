@@ -3,6 +3,7 @@
  * Provides a convenient way to create a strategy without manually instantiating each one
  */
 
+import { DaoDaoAccountStrategy } from "./account-daodao-strategy";
 import { NumiaAccountStrategy } from "./account-numia-strategy";
 import { SubqueryAccountStrategy } from "./account-subquery-strategy";
 import { RpcAccountStrategy } from "./account-rpc-strategy";
@@ -11,15 +12,18 @@ import { EmptyAccountStrategy } from "./account-empty-strategy";
 import { CompositeAccountStrategy } from "./account-composite-strategy";
 import type { RpcAccountStrategyConfig } from "./account-rpc-strategy";
 import type { AAApiAccountStrategyConfig } from "./account-aa-api-strategy";
-import type { AccountIndexerConfig } from "../../types/indexer";
+import type {
+  AccountIndexerConfig,
+  DaoDaoIndexerConfig,
+} from "../../types/indexer";
 
 export interface CreateCompositeAccountStrategyConfig {
   /**
    * Indexer configuration for fast account lookups
-   * Supports both Numia and Subquery indexers
    *
-   * For Numia: { type: 'numia', url: string, authToken?: string }
+   * For DaoDao: { type: 'daodao', url: string, chainId: string, timeout?: number }
    * For Subquery: { type: 'subquery', url: string, codeId: number }
+   * For Numia (deprecated): { type: 'numia', url: string, authToken?: string }
    *
    * If type is not specified, defaults to Numia for backward compatibility
    */
@@ -49,16 +53,18 @@ export interface CreateCompositeAccountStrategyConfig {
  *
  * With `aaApi.version === "v2"` the composite contains only the AA API v2
  * strategy (see `aaApi`). Otherwise it builds the fallback chain:
- * 1. Indexer strategy (Numia or Subquery, if configured) - Fast indexer queries
+ * 1. Indexer strategy (DaoDao, Subquery or deprecated Numia, if configured) - Fast indexer queries
  * 2. AA-API strategy (if configured) - Canonical account state fallback
  * 3. RpcAccountStrategy (if RPC config provided) - Reliable on-chain queries
- * 4. EmptyAccountStrategy (always included) - Returns empty for new accounts
+ * 4. EmptyAccountStrategy - Returns empty for new accounts. Omitted when the
+ *    indexer is DaoDao, so a DaoDao failure with no other source succeeding
+ *    throws (and `connectAccount` refuses to create) instead of reading as
+ *    "no account". Subquery and Numia keep the empty fallback.
  *
  * Recommended fallback chain for production:
- * - Numia (fast, comprehensive)
+ * - DaoDao (fast, comprehensive)
  * - AA-API (canonical, reliable)
  * - RPC (on-chain verification)
- * - Empty (new account creation)
  *
  * @param config - Configuration for the strategies to include
  * @returns CompositeAccountStrategy with configured fallback chain
@@ -74,13 +80,24 @@ export function createCompositeAccountStrategy(
   }
 
   const strategies = [];
+  let failClosed = false;
 
   // Add indexer strategy if configured (fast)
   if (config.indexer) {
     const indexerType =
       "type" in config.indexer ? config.indexer.type : "numia";
 
-    if (indexerType === "subquery") {
+    if (indexerType === "daodao") {
+      failClosed = true;
+      const daodaoConfig = config.indexer as DaoDaoIndexerConfig;
+      strategies.push(
+        new DaoDaoAccountStrategy(
+          daodaoConfig.url,
+          daodaoConfig.chainId,
+          daodaoConfig.timeout,
+        ),
+      );
+    } else if (indexerType === "subquery") {
       // Subquery indexer
       const subqueryConfig = config.indexer as {
         type: "subquery";
@@ -91,7 +108,7 @@ export function createCompositeAccountStrategy(
         new SubqueryAccountStrategy(subqueryConfig.url, subqueryConfig.codeId),
       );
     } else {
-      // Numia indexer (default)
+      // Numia indexer (deprecated; still the default when type is omitted)
       const numiaConfig = config.indexer as {
         type?: "numia";
         url: string;
@@ -113,8 +130,13 @@ export function createCompositeAccountStrategy(
     strategies.push(new RpcAccountStrategy(config.rpc));
   }
 
-  // Always add empty strategy as final fallback (creates new account)
-  strategies.push(new EmptyAccountStrategy());
+  // Empty strategy as final fallback (creates new account). Not added after
+  // DaoDao: a DaoDao miss is already an empty list, so the empty strategy
+  // would only turn a DaoDao failure (with no other source succeeding) into
+  // a successful empty discovery.
+  if (!failClosed) {
+    strategies.push(new EmptyAccountStrategy());
+  }
 
   return new CompositeAccountStrategy(...strategies);
 }

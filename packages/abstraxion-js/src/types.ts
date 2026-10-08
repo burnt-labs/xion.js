@@ -77,7 +77,7 @@ export interface SignerAuthentication {
   smartAccountContract?: Partial<SmartAccountContractConfig>;
 
   /**
-   * Indexer configuration (Numia or Subquery).
+   * Indexer configuration (DaoDao, Subquery, or deprecated Numia).
    * Not used for smart-account discovery when an AA API is configured (the
    * default on mainnet and testnet): the AA API (which owns its own indexer
    * lookup) is the only discovery source, so an indexer miss can never mask
@@ -151,9 +151,10 @@ export type AuthenticationConfig =
 // ============================================================================
 
 /**
- * Indexer configuration for querying existing accounts (Numia or Subquery)
- * Discriminated union supporting both indexer types
- * If type is not specified, defaults to Numia for backward compatibility
+ * Indexer configuration for querying existing accounts (DaoDao, Subquery, or deprecated Numia)
+ * Discriminated union supporting all three indexer types
+ * If type is not specified, defaults to Numia (deprecated) for backward compatibility;
+ * use `{ type: "daodao", url, chainId }`
  *
  * Note: For Subquery indexers, codeId is derived from smartAccountContract.codeId
  * and does not need to be provided here.

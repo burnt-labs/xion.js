@@ -24,7 +24,6 @@ export interface TestConfig {
   checksum: string;
   feeGranter: string;
   treasuryAddress: string;
-  indexerUrl?: string;
 }
 
 /**
@@ -59,7 +58,6 @@ export function getTestConfig(): TestConfig {
     userMapContract:
       process.env.XION_TESTNET_USER_MAP_CONTRACT ||
       "xion1q66h2ynmrm5je9awcdwcyxjykd6c0h4wf3u5ha4s5cntf8jr5jfqh8mwey",
-    indexerUrl: process.env.XION_TESTNET_INDEXER_URL,
   };
 
   // AA API config (switches based on target)
@@ -120,8 +118,6 @@ export const INTEGRATION_TEST_TIMEOUT = parseInt(
  * Indexer configuration (optional)
  */
 export const INDEXER_CONFIG = {
-  numiaUrl: process.env.XION_TESTNET_INDEXER_URL,
-  numiaApiKey: process.env.NUMIA_API_KEY,
   subqueryUrl: process.env.XION_TESTNET_TREASURY_INDEXER_URL,
   subqueryApiKey: process.env.SUBQUERY_API_KEY,
 };

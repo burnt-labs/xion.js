@@ -10,6 +10,7 @@ import {
 } from "@burnt-labs/signers";
 import type { CompositeAccountStrategy } from "../accounts/index";
 import type { Authenticator } from "../types/authenticator";
+import { toJwtIdentity } from "./jwtIdentity";
 
 /**
  * Authenticator types whose accounts are verified on chain and matched by
@@ -33,6 +34,18 @@ function secp256k1KeyBytes(value: string): Uint8Array | null {
       return fromHex(trimmed);
     }
     return fromBase64(trimmed);
+  } catch {
+    return null;
+  }
+}
+
+function ed25519KeyBytes(value: string): Uint8Array | null {
+  const trimmed = value.trim();
+  try {
+    const bytes = /^[0-9a-fA-F]{64}$/.test(trimmed)
+      ? fromHex(trimmed)
+      : fromBase64(trimmed);
+    return bytes.length === 32 ? bytes : null;
   } catch {
     return null;
   }
@@ -156,12 +169,37 @@ export async function checkAccountExists(
       };
     }
 
-    // Other authenticator types (JWT, Passkey, ...): unchanged legacy matching
-    const matchingAuthenticator = existingAccount.authenticators.find(
-      (auth: Authenticator) => {
-        return auth.authenticator.toLowerCase() === authenticator.toLowerCase();
-      },
-    );
+    // Other authenticator types (JWT, Passkey, ...): legacy case-insensitive
+    // matching, ranked so the login's own authenticator wins: same type
+    // before other types, exact identity before one differing only by case.
+    // Ed25519 keys count as exact when their bytes match (hex or base64), and
+    // a full JWT login is compared by its `aud.sub` identity.
+    const loginIdentity =
+      authenticatorType === AUTHENTICATOR_TYPE.JWT
+        ? toJwtIdentity(authenticator)
+        : authenticator;
+    const loginKey =
+      authenticatorType === AUTHENTICATOR_TYPE.Ed25519
+        ? ed25519KeyBytes(authenticator)
+        : null;
+    const sameType = (auth: Authenticator) =>
+      String(auth.type).toLowerCase() ===
+      String(authenticatorType).toLowerCase();
+    const exact = (auth: Authenticator) => {
+      if (auth.authenticator === loginIdentity) return true;
+      const key = loginKey && ed25519KeyBytes(auth.authenticator);
+      return !!loginKey && !!key && bytesEqual(key, loginKey);
+    };
+    const caseless = (auth: Authenticator) =>
+      auth.authenticator.toLowerCase() === loginIdentity.toLowerCase();
+    const matchingAuthenticator = [
+      (auth: Authenticator) => sameType(auth) && exact(auth),
+      (auth: Authenticator) => sameType(auth) && caseless(auth),
+      exact,
+      caseless,
+    ]
+      .map((matches) => existingAccount.authenticators.find(matches))
+      .find(Boolean);
 
     const authenticatorIndex = matchingAuthenticator?.authenticatorIndex ?? 0;
 
