@@ -11,6 +11,7 @@ import { fromBech32, fromHex, toBase64, toBech32 } from "@cosmjs/encoding";
 import {
   AUTHENTICATOR_TYPE,
   normalizeEthereumAddress,
+  normalizeSecp256k1PublicKey,
   type AuthenticatorType,
 } from "@burnt-labs/signers";
 
@@ -64,9 +65,6 @@ const isXionContractAddress = (value: string): boolean => {
   }
 };
 
-/** A hex-encoded compressed or uncompressed secp256k1 public key. */
-const SECP256K1_HEX = /^(0[23][0-9a-fA-F]{64}|04[0-9a-fA-F]{128})$/;
-
 /** A hex-encoded 32-byte Ed25519 public key (the SDK connectors' form). */
 const ED25519_HEX = /^[0-9a-fA-F]{64}$/;
 
@@ -74,7 +72,9 @@ const ED25519_HEX = /^[0-9a-fA-F]{64}$/;
  * The identity in the form the lookup expects. EthWallet addresses are sent
  * lowercase with `0x`, as the SDK's connectors and the AA API lookup send them
  * (`normalizeEthereumAddress`). Secp256K1 and Ed25519 keys are stored base64
- * (the contract's encoding), so a hex key is converted. Other types go as given.
+ * (the contract's encoding): Secp256K1 goes through `normalizeSecp256k1PublicKey`
+ * as in the AA API lookup, and an Ed25519 key is trimmed and converted from
+ * hex. Other types go as given.
  */
 const toIndexedIdentity = (
   loginAuthenticator: string,
@@ -83,17 +83,12 @@ const toIndexedIdentity = (
   if (authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
     return normalizeEthereumAddress(loginAuthenticator);
   }
-  if (
-    authenticatorType === AUTHENTICATOR_TYPE.Secp256K1 &&
-    SECP256K1_HEX.test(loginAuthenticator.trim())
-  ) {
-    return toBase64(fromHex(loginAuthenticator.trim()));
+  if (authenticatorType === AUTHENTICATOR_TYPE.Secp256K1) {
+    return normalizeSecp256k1PublicKey(loginAuthenticator);
   }
-  if (
-    authenticatorType === AUTHENTICATOR_TYPE.Ed25519 &&
-    ED25519_HEX.test(loginAuthenticator.trim())
-  ) {
-    return toBase64(fromHex(loginAuthenticator.trim()));
+  if (authenticatorType === AUTHENTICATOR_TYPE.Ed25519) {
+    const key = loginAuthenticator.trim();
+    return ED25519_HEX.test(key) ? toBase64(fromHex(key)) : key;
   }
   return loginAuthenticator;
 };
@@ -147,7 +142,10 @@ const isAccountResp = (value: unknown): value is DaoDaoAccountResp => {
     isIndex(a.codeId) &&
     a.codeId > 0 &&
     Array.isArray(a.authenticators) &&
-    a.authenticators.every(isAuthenticatorResp)
+    a.authenticators.every(isAuthenticatorResp) &&
+    // One on-chain index holds one authenticator
+    new Set(a.authenticators.map(({ index }) => index)).size ===
+      a.authenticators.length
   );
 };
 

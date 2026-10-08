@@ -22,6 +22,9 @@ const ACCOUNT_B =
   "xion1hwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwas3jrp9f";
 const ACCOUNT_A_BYTES = fromBech32(ACCOUNT_A).data;
 const ETH_ADDRESS = "0xc2e80cf7d5a108d4abc97b5c5a95b2515ef90cb5";
+const SECP256K1_B64 = Buffer.from(`02${"fe".repeat(32)}`, "hex").toString(
+  "base64",
+);
 
 describe("DaoDaoAccountStrategy", () => {
   beforeEach(() => {
@@ -35,10 +38,14 @@ describe("DaoDaoAccountStrategy", () => {
     );
     (global.fetch as any).mockResolvedValueOnce(okJson([]));
 
-    await strategy.fetchSmartAccounts("A+b/c=", AUTHENTICATOR_TYPE.Secp256K1);
+    // Base64 with "+" and "/"; surrounding whitespace is trimmed
+    await strategy.fetchSmartAccounts(
+      ` ${SECP256K1_B64} `,
+      AUTHENTICATOR_TYPE.Secp256K1,
+    );
 
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://daodaoindexer.burnt.com/xion-mainnet-1/generic/_/xion/accountsByAuthenticator?type=Secp256K1&authenticator=A%2Bb%2Fc%3D",
+      `https://daodaoindexer.burnt.com/xion-mainnet-1/generic/_/xion/accountsByAuthenticator?type=Secp256K1&authenticator=${encodeURIComponent(SECP256K1_B64)}`,
       {
         headers: { Accept: "application/json" },
         signal: expect.any(AbortSignal),
@@ -262,6 +269,19 @@ describe("DaoDaoAccountStrategy", () => {
           address: ACCOUNT_A,
           codeId: 5,
           authenticators: [{ index: 0, type: "JWT", authenticator: "" }],
+        },
+      ],
+    ],
+    [
+      "two authenticators at one index",
+      [
+        {
+          address: ACCOUNT_A,
+          codeId: 5,
+          authenticators: [
+            { index: 1, type: "JWT", authenticator: "a.b" },
+            { index: 1, type: "JWT", authenticator: "a.c" },
+          ],
         },
       ],
     ],
