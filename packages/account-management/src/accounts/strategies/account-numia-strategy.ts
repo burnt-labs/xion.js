@@ -18,6 +18,10 @@ interface NumiaSmartAccountResp {
   authenticators: NumiaAuthenticatorResp[];
 }
 
+/**
+ * @deprecated Numia is being retired. Use `DaoDaoAccountStrategy`
+ * (`{ type: "daodao", url, chainId }` in indexer config).
+ */
 export class NumiaAccountStrategy implements IndexerStrategy {
   private baseURL: string;
 

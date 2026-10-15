@@ -1,5 +1,19 @@
 # demos-node
 
+## 0.0.1-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [[`ad5dbeb`](https://github.com/burnt-labs/xion.js/commit/ad5dbeb9d039c731e155c402c7f74c4fc4a05b3c)]:
+  - @burnt-labs/abstraxion-js@1.0.0-alpha.5
+
+## 0.0.1-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [[`30e9d00`](https://github.com/burnt-labs/xion.js/commit/30e9d00782b99850505e5bb437fb7f59ed8a15b6)]:
+  - @burnt-labs/abstraxion-js@1.0.0-alpha.4
+
 ## 0.0.1-alpha.2
 
 ### Patch Changes

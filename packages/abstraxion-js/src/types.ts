@@ -49,7 +49,11 @@ export interface PopupAuthentication {
 export interface SignerAuthentication {
   type: "signer";
 
-  /** AA API URL for account creation */
+  /**
+   * AA API URL. Smart-account addresses come from the AA API: discovery uses
+   * GET /api/v2/account/check/... (verified on chain via rpcUrl) and creation
+   * signs the address from GET /api/v2/account/address/...
+   */
   aaApiUrl: string;
 
   /**
@@ -60,15 +64,17 @@ export interface SignerAuthentication {
   getSignerConfig: () => Promise<SignerConfig>;
 
   /**
-   * Smart account contract configuration
-   * Required for creating new smart accounts when they don't exist
+   * Smart account contract configuration: `{ codeId, addressPrefix }`.
+   * Required for creating new smart accounts when they don't exist.
+   * `checksum` is deprecated and ignored; the AA API selects the address.
    */
   smartAccountContract: SmartAccountContractConfig;
 
   /**
-   * Indexer configuration for querying existing smart accounts
-   * Supports Numia or Subquery indexers for fast account discovery
-   * Optional - falls back to RPC queries if not provided
+   * Indexer configuration (DaoDao, Subquery, or deprecated Numia).
+   * Not used for smart-account discovery when `smartAccountContract` is set:
+   * the AA API (which owns its own indexer lookup) is the only discovery
+   * source, so an indexer miss can never mask an AA API failure.
    */
   indexer?: IndexerConfig;
 
@@ -137,9 +143,10 @@ export type AuthenticationConfig =
 // ============================================================================
 
 /**
- * Indexer configuration for querying existing accounts (Numia or Subquery)
- * Discriminated union supporting both indexer types
- * If type is not specified, defaults to Numia for backward compatibility
+ * Indexer configuration for querying existing accounts (DaoDao, Subquery, or deprecated Numia)
+ * Discriminated union supporting all three indexer types
+ * If type is not specified, defaults to Numia (deprecated) for backward compatibility;
+ * use `{ type: "daodao", url, chainId }`
  *
  * Note: For Subquery indexers, codeId is derived from smartAccountContract.codeId
  * and does not need to be provided here.

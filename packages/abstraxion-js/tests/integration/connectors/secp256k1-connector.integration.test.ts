@@ -51,6 +51,7 @@ describe("Secp256K1 Connector - Integration Tests", () => {
     sessionManager = createMockSessionManager(storageStrategy);
 
     const rpcStrategy = new RpcAccountStrategy({
+      aaApiUrl: config.aaApiUrl,
       rpcUrl: config.rpcUrl,
       checksum: config.checksum,
       creator: config.feeGranter,

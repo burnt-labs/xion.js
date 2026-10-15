@@ -53,7 +53,7 @@ function SignerSelector({
 }): JSX.Element {
   const turnkeyConfigured = !!import.meta.env.VITE_TURNKEY_ORG_ID;
   const contractConfigured =
-    !!import.meta.env.VITE_CODE_ID && !!import.meta.env.VITE_CHECKSUM;
+    !!import.meta.env.VITE_CODE_ID && !!import.meta.env.VITE_AA_API_URL;
 
   return (
     <div className="m-auto flex w-full max-w-md flex-col items-center gap-6">
@@ -69,9 +69,9 @@ function SignerSelector({
 
       {!contractConfigured && (
         <p className="w-full rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-200">
-          Set <code>VITE_CODE_ID</code> and <code>VITE_CHECKSUM</code> in{" "}
-          <code>.env.local</code> — they describe the smart-account contract
-          Abstraxion will spawn for either signer.
+          Set <code>VITE_CODE_ID</code> and <code>VITE_AA_API_URL</code> in{" "}
+          <code>.env.local</code> — the AA API chooses the smart-account address
+          Abstraxion will create for either signer.
         </p>
       )}
 
@@ -127,39 +127,25 @@ function useAbstraxionSignerConfig(
   getSignerConfig: () => Promise<SignerConfig>,
 ) {
   const codeId = import.meta.env.VITE_CODE_ID;
-  const checksum = import.meta.env.VITE_CHECKSUM;
-  if (!codeId || !checksum) {
+  const aaApiUrl = import.meta.env.VITE_AA_API_URL;
+  if (!codeId || !aaApiUrl) {
     return null;
   }
-
-  const indexer = (() => {
-    const url = import.meta.env.VITE_INDEXER_URL;
-    if (!url) return undefined;
-    if (import.meta.env.VITE_INDEXER_TYPE === "subquery") {
-      return {
-        type: "subquery" as const,
-        url,
-        codeId: parseInt(codeId, 10),
-      };
-    }
-    const authToken = import.meta.env.VITE_INDEXER_TOKEN;
-    if (!authToken) return undefined;
-    return { type: "numia" as const, url, authToken };
-  })();
 
   return {
     ...baseConfig,
     feeGranter: import.meta.env.VITE_FEE_GRANTER_ADDRESS,
     authentication: {
       type: "signer" as const,
-      aaApiUrl: import.meta.env.VITE_AA_API_URL ?? "",
+      aaApiUrl,
       getSignerConfig,
+      // The AA API selects the smart-account address; no checksum needed
       smartAccountContract: {
         codeId: parseInt(codeId, 10),
-        checksum,
         addressPrefix: import.meta.env.VITE_ADDRESS_PREFIX ?? "xion",
       },
-      indexer,
+      // No `indexer`: with `smartAccountContract` set, the AA API is the only
+      // account-discovery source and an indexer config would be ignored.
       treasuryIndexer: import.meta.env.VITE_TREASURY_INDEXER_URL
         ? { url: import.meta.env.VITE_TREASURY_INDEXER_URL }
         : undefined,
@@ -631,9 +617,9 @@ function MissingConfig({ onBack }: { onBack: () => void }): JSX.Element {
     <div className="m-auto flex w-full max-w-md flex-col items-center gap-6 text-center">
       <h1 className="text-2xl font-bold tracking-tighter">Signer Mode</h1>
       <p className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-200">
-        Set <code>VITE_CODE_ID</code>, <code>VITE_CHECKSUM</code>, and{" "}
-        <code>VITE_AA_API_URL</code> in <code>.env.local</code> — they describe
-        the smart-account contract Abstraxion will spawn.
+        Set <code>VITE_CODE_ID</code> and <code>VITE_AA_API_URL</code> in{" "}
+        <code>.env.local</code> — the AA API chooses the smart-account address
+        Abstraxion will create.
       </p>
       <button
         type="button"

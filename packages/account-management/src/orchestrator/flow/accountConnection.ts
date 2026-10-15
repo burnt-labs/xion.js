@@ -117,8 +117,10 @@ export async function connectAccount(
       throw new Error("Account creation config is required but not provided");
     }
 
-    const { aaApiUrl, smartAccountContract, feeGranter } =
-      accountCreationConfig;
+    const { aaApiUrl, smartAccountContract } = accountCreationConfig;
+    if (!aaApiUrl) {
+      throw new Error("aaApiUrl is required to create a smart account");
+    }
 
     // Create account based on authenticator type
     if (authenticatorType === AUTHENTICATOR_TYPE.EthWallet) {
@@ -128,14 +130,16 @@ export async function connectAccount(
         return await connectionResult.signMessage(hexMessage);
       };
 
+      // The AA API selects the address; the wallet signs exactly that address
       const result = await createEthWalletAccount(
         aaApiUrl,
         ethAddress,
         signFn,
-        smartAccountContract.checksum,
-        feeGranter,
-        smartAccountContract.addressPrefix,
-        rpcUrl, // Pass RPC URL to wait for confirmation internally
+        {
+          addressSource: "aa-api",
+          addressPrefix: smartAccountContract.addressPrefix,
+          rpcUrl, // Pass RPC URL to wait for confirmation internally
+        },
       );
 
       smartAccountAddress = result.account_address;
@@ -152,14 +156,16 @@ export async function connectAccount(
         return await connectionResult.signMessage(hexMessage);
       };
 
+      // The AA API selects the address; the wallet signs exactly that address
       const result = await createSecp256k1Account(
         aaApiUrl,
         pubkeyFromMetadata,
         signFn,
-        smartAccountContract.checksum,
-        feeGranter,
-        smartAccountContract.addressPrefix,
-        rpcUrl, // Pass RPC URL to wait for confirmation internally
+        {
+          addressSource: "aa-api",
+          addressPrefix: smartAccountContract.addressPrefix,
+          rpcUrl, // Pass RPC URL to wait for confirmation internally
+        },
       );
 
       smartAccountAddress = result.account_address;

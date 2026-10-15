@@ -11,15 +11,21 @@ export * from "./treasury";
 /**
  * Smart account contract configuration
  * Required for creating new smart accounts in signer mode
+ *
+ * Smart-account addresses come from the AA API; neither `codeId` nor
+ * `addressPrefix` selects the address.
  */
 export interface SmartAccountContractConfig {
-  /** Contract code ID for smart account creation */
+  /** Contract code ID of the smart account contract */
   codeId: number;
 
-  /** Contract checksum as hex string */
-  checksum: string;
+  /**
+   * @deprecated Ignored. The AA API selects smart-account addresses, so no
+   * contract checksum is needed. Kept optional for source compatibility.
+   */
+  checksum?: string;
 
-  /** Address prefix (e.g., "xion") */
+  /** Address prefix (e.g., "xion"); returned addresses must use it */
   addressPrefix: string;
 }
 
@@ -35,6 +41,6 @@ export interface AccountCreationConfig {
   /** Smart account contract configuration */
   smartAccountContract: SmartAccountContractConfig;
 
-  /** Fee granter address (creator) */
+  /** Fee granter address (used for grants; not an address-derivation input) */
   feeGranter: string;
 }

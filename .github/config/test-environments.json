@@ -18,7 +18,7 @@
       "treasuryAddress": "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw",
       "addressPrefix": "xion",
       "codeId": "1880",
-      "checksum": "D27A379FF65EB47A9E538E3A3D46101DE2A6C0B86BA3D0BF014C0403849414E6",
+      "checksum": "FC06F022C95172F54AD05BC07214F50572CDF684459EADD4F58A765524567DB8",
       "feeGranter": "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x",
       "description": "Public testnet for development and testing"
     },
@@ -37,7 +37,7 @@
         "description": "AA-API URL must be set via XION_MAINNET_AA_API_URL secret. Dev server not recommended for mainnet."
       },
       "description": "Production mainnet - public configuration",
-      "note": "AA-API URL and indexer URLs must be set via GitHub secrets (XION_MAINNET_AA_API_URL, XION_MAINNET_INDEXER_URL, XION_MAINNET_TREASURY_INDEXER_URL)"
+      "note": "AA-API URL and indexer URLs must be set via GitHub secrets (XION_MAINNET_AA_API_URL, XION_MAINNET_TREASURY_INDEXER_URL)"
     }
   },
   "aaApiDevServer": {

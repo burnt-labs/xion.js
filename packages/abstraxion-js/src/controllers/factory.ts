@@ -55,7 +55,7 @@ export function createController(
     const treasuryIndexerConfig = signerAuth?.treasuryIndexer;
 
     // Configure AbstraxionAuth for signer mode
-    // Note: Account indexer (Numia/Subquery) is handled by SignerController via account-management,
+    // Note: Account indexer (DaoDao, Subquery or deprecated Numia) is handled by SignerController via account-management,
     // not by AbstraxionAuth
     abstraxionAuth.configureAbstraxionInstance(
       config.rpcUrl,

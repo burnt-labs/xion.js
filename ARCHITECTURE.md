@@ -161,6 +161,40 @@ The `ConnectionOrchestrator` handles the business logic of connecting:
 4. **Grant Creation**: Create authorization grants (bank, stake, contracts)
 5. **Grant Verification**: Verify grants exist on-chain
 
+### Smart-Account Address Source (signer mode)
+
+The account-abstraction-api (AA API) owns smart-account address selection.
+The SDK never derives the address locally and needs no contract checksum:
+
+- **Creation**: `createEthWalletAccount` / `createSecp256k1Account` call
+  `GET {aaApiUrl}/api/v2/account/address/{ethwallet|secp256k1}/{id}`
+  (identifier normalized and URL-encoded as one path component), validate the
+  returned Bech32 address (prefix, 32 bytes), have the wallet sign exactly that
+  address (UTF-8 bytes as `0x` hex), then POST the existing create request. A
+  failed, timed-out (10 s) or malformed lookup stops before signing; a create
+  response for any other address is rejected.
+- **Discovery**: `AAApiAccountStrategy` v2 calls
+  `GET {aaApiUrl}/api/v2/account/check/{type}/{id}`. Only an explicit HTTP 404
+  means "no account". A 200 is verified on chain through `rpcUrl`: the
+  contract must exist, its actual code ID is reported, and one of its
+  authenticators must match the login authenticator (type plus normalized
+  identifier). Any API, RPC or verification failure is a discovery error, and
+  `connectAccount` refuses to create an account while discovery is broken.
+- Signer mode builds a composite containing only this strategy: no indexer,
+  local-RPC or empty fallback can turn an AA API failure into "create".
+- `smartAccountContract.checksum` is deprecated and ignored. The seven-argument
+  `createEthWalletAccount`/`createSecp256k1Account` overloads still compile;
+  their checksum argument is ignored too.
+- `RpcAccountStrategy` is a deprecated adapter over `AAApiAccountStrategy` v2
+  and requires `aaApiUrl`; constructing it without one throws a migration
+  error. It supports EthWallet and Secp256K1 only; JWT and Passkey lookups
+  reject.
+- Tradeoff: there is no legacy-checksum fallback. Accounts the AA API returns
+  through its ordinary lookup are found regardless of age, and mainnet's
+  pre-v31 addresses are unchanged because its derivation hash is unchanged. A
+  few historical testnet accounts created under an older checksum have no
+  dedicated recovery path.
+
 ### Flow Modules
 
 The orchestrator delegates to specialized flow modules:
@@ -473,9 +507,9 @@ See `apps/demo-app/src/app/inline-demo/` for the complete example.
           account: signer,
         };
       },
+      // The AA API selects the address; no checksum is needed
       smartAccountContract: {
         codeId: 12,
-        checksum: "...",
         addressPrefix: "xion",
       },
     },
