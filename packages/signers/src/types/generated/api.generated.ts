@@ -797,6 +797,22 @@ export interface paths {
                         };
                     };
                 };
+                /** @description The authenticated session belongs to a different identity than the JWT names */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
                 /** @description Failed to create account */
                 502: {
                     headers: {
@@ -1056,6 +1072,22 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Bad gateway - failed to look up the account on the blockchain */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
             };
         };
         put?: never;
@@ -1121,6 +1153,22 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Bad gateway - failed to look up the account on the blockchain */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
             };
         };
         put?: never;
@@ -1172,6 +1220,22 @@ export interface paths {
                 };
                 /** @description Bad request - invalid Secp256k1 public key identifier */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                message: string;
+                                errors?: {
+                                    message: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Bad gateway - failed to look up the account on the blockchain */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
