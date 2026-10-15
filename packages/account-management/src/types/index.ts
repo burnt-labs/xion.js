@@ -16,8 +16,11 @@ export * from "./treasury";
  * `addressPrefix` selects the address.
  */
 export interface SmartAccountContractConfig {
-  /** Contract code ID of the smart account contract */
-  codeId: number;
+  /**
+   * @deprecated Not needed: the AA API and the chain report the code ID of
+   * each account. Only a Subquery indexer (which can't report it) reads it.
+   */
+  codeId?: number;
 
   /**
    * @deprecated Ignored. The AA API selects smart-account addresses, so no
@@ -41,6 +44,10 @@ export interface AccountCreationConfig {
   /** Smart account contract configuration */
   smartAccountContract: SmartAccountContractConfig;
 
-  /** Fee granter address (used for grants; not an address-derivation input) */
-  feeGranter: string;
+  /**
+   * @deprecated Not used for account creation: the AA API pays for and
+   * instantiates the account with its own fee granter. The fee granter for
+   * grant transactions is `GrantConfig.feeGranter`.
+   */
+  feeGranter?: string;
 }
