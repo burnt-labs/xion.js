@@ -61,8 +61,8 @@ than the one presented to the user, that leaks or extends the life of a
 session key, or that lets a third party influence transaction contents,
 qualifies regardless of how many dApps are known to be affected.
 
-Only **High** and **Critical** findings are reward eligible. Collecting a
-bounty requires completing a KYC process; we cannot pay reporters in
+**Critical**, **High**, **Medium**, and **Low** findings are all reward
+eligible. Collecting a bounty requires completing a KYC process; we cannot pay reporters in
 sanctioned jurisdictions. Where several reports describe the same underlying
 issue, the first complete report with a working proof of concept is the one
 considered. We assess reports as submitted; we do not reclassify a report to a
