@@ -10,6 +10,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md}\"",
     "changeset": "changeset",
+    "check:dep-parity": "node scripts/check-internal-dependency-parity.mjs",
     "publish:packages": "changeset publish",
     "version:packages": "changeset version",
     "verify:npm-train": "node scripts/verify-npm-dependency-train.mjs",

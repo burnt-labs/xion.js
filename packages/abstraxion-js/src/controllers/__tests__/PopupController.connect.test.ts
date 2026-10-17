@@ -307,9 +307,6 @@ describe("PopupController — happy paths", () => {
   it("should build popup URL with correct query params", async () => {
     const config = createConfig({
       treasury: "xion1treasury",
-      bank: [{ denom: "uxion", amount: "1000000" }],
-      stake: true,
-      contracts: ["xion1contract1"],
     });
 
     const controller = new PopupController(config);
@@ -324,13 +321,12 @@ describe("PopupController — happy paths", () => {
     expect(popupUrl.searchParams.get("grantee")).toBe("xion1grantee123");
     expect(popupUrl.searchParams.get("mode")).toBe("popup");
     expect(popupUrl.searchParams.get("treasury")).toBe("xion1treasury");
-    expect(popupUrl.searchParams.get("stake")).toBe("true");
+    expect(popupUrl.searchParams.get("redirect_uri")).toBe("https://myapp.com");
 
-    const bankParam = JSON.parse(popupUrl.searchParams.get("bank")!);
-    expect(bankParam).toEqual([{ denom: "uxion", amount: "1000000" }]);
-
-    const contractsParam = JSON.parse(popupUrl.searchParams.get("contracts")!);
-    expect(contractsParam).toEqual(["xion1contract1"]);
+    // Legacy bank/stake/contracts params are no longer added
+    expect(popupUrl.searchParams.get("stake")).toBeNull();
+    expect(popupUrl.searchParams.get("bank")).toBeNull();
+    expect(popupUrl.searchParams.get("contracts")).toBeNull();
 
     // Complete the test
     windowMock.simulatePostMessage(

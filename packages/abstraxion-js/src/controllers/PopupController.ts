@@ -50,12 +50,6 @@ export interface PopupControllerConfig {
   gasPrice: string;
   popup: PopupAuthentication;
   treasury?: string;
-  bank?: Array<{ denom: string; amount: string }>;
-  stake?: boolean;
-  contracts?: Array<
-    | string
-    | { address: string; amounts: Array<{ denom: string; amount: string }> }
-  >;
   storageStrategy: StorageStrategy;
   redirectStrategy: RedirectStrategy;
 }
@@ -84,9 +78,6 @@ export class PopupController extends BaseController {
       gasPrice: config.gasPrice,
       popup: config.authentication,
       treasury: config.treasury,
-      bank: config.bank,
-      stake: config.stake,
-      contracts: config.contracts,
       storageStrategy,
       redirectStrategy,
     };
@@ -112,9 +103,6 @@ export class PopupController extends BaseController {
 
     this.abstraxionAuth.configureAbstraxionInstance(
       config.rpcUrl,
-      config.contracts,
-      config.stake,
-      config.bank,
       undefined, // callbackUrl — not used in popup mode
       config.treasury,
       treasuryIndexerUrl,
@@ -122,15 +110,11 @@ export class PopupController extends BaseController {
     );
 
     // Create orchestrator for session restoration (same pattern as RedirectController/SignerController)
-    const grantConfig =
-      config.treasury || config.contracts || config.bank || config.stake
-        ? {
-            treasury: config.treasury,
-            contracts: config.contracts,
-            bank: config.bank,
-            stake: config.stake,
-          }
-        : undefined;
+    const grantConfig = config.treasury
+      ? {
+          treasury: config.treasury,
+        }
+      : undefined;
 
     this.orchestrator = new ConnectionOrchestrator({
       sessionManager: this.abstraxionAuth,
@@ -226,14 +210,6 @@ export class PopupController extends BaseController {
       connectUrl.searchParams.set("redirect_uri", window.location.origin);
       if (this.config.treasury)
         connectUrl.searchParams.set("treasury", this.config.treasury);
-      if (this.config.bank)
-        connectUrl.searchParams.set("bank", JSON.stringify(this.config.bank));
-      if (this.config.stake) connectUrl.searchParams.set("stake", "true");
-      if (this.config.contracts)
-        connectUrl.searchParams.set(
-          "contracts",
-          JSON.stringify(this.config.contracts),
-        );
 
       const popup = this.openPopupWindow(
         connectUrl.toString(),

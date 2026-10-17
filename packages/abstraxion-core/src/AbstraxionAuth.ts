@@ -3,22 +3,15 @@ import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import type { AccountData } from "@cosmjs/proto-signing";
 import type {
   ChainGrant,
-  ContractGrantDescription,
   DecodedReadableAuthorization,
-  GrantsResponse,
-  SpendLimit,
   TreasuryGrantConfig,
 } from "@/types";
 import { GranteeSignerClient } from "./GranteeSignerClient";
 import { SignArbSecp256k1HdWallet } from "./SignArbSecp256k1HdWallet";
 import type { RedirectStrategy, StorageStrategy } from "./types/strategyTypes";
 import {
-  compareBankGrants,
   compareChainGrantsToTreasuryGrants,
-  compareContractGrants,
-  compareStakeGrants,
   decodeAuthorization,
-  fetchChainGrantsABCI,
   fetchChainGrantsDecoded,
   getTreasuryGrantConfigs,
 } from "@/utils/grant";
@@ -27,9 +20,6 @@ import { fetchConfig, getRpcClient } from "@/utils";
 export class AbstraxionAuth {
   // Config
   private rpcUrl?: string;
-  grantContracts?: ContractGrantDescription[];
-  stake?: boolean;
-  bank?: SpendLimit[];
   callbackUrl?: string;
   authAppUrl?: string;
   treasury?: string;
@@ -71,9 +61,6 @@ export class AbstraxionAuth {
    * Updates AbstraxionAuth instance with user config
    *
    * @param {string} rpc - The RPC URL used for communication with the blockchain.
-   * @param {ContractGrantDescription[]} [grantContracts] - Contracts for granting permissions.
-   * @param {boolean} [stake] - Indicates whether staking is enabled.
-   * @param {SpendLimit[]} [bank] - The spend limits for the user.
    * @param {string} callbackUrl - preferred callback url to override default
    * @param {string} treasury - treasury contract instance address
    * @param {string} treasuryIndexerUrl - custom indexer URL for treasury grant configs (DaoDao indexer)
@@ -82,9 +69,6 @@ export class AbstraxionAuth {
    */
   configureAbstraxionInstance(
     rpc: string,
-    grantContracts?: ContractGrantDescription[],
-    stake?: boolean,
-    bank?: SpendLimit[],
     callbackUrl?: string,
     treasury?: string,
     treasuryIndexerUrl?: string,
@@ -92,9 +76,6 @@ export class AbstraxionAuth {
     authAppUrl?: string,
   ) {
     this.rpcUrl = rpc;
-    this.grantContracts = grantContracts;
-    this.stake = stake;
-    this.bank = bank;
     this.callbackUrl = callbackUrl;
     this.authAppUrl = authAppUrl;
     this.treasury = treasury;
@@ -326,40 +307,11 @@ export class AbstraxionAuth {
       urlParams.set("treasury", this.treasury);
     }
 
-    if (this.bank) {
-      urlParams.set("bank", JSON.stringify(this.bank));
-    }
-
-    if (this.stake) {
-      urlParams.set("stake", "true");
-    }
-
-    if (this.grantContracts) {
-      urlParams.set("contracts", JSON.stringify(this.grantContracts));
-    }
-
     urlParams.set("grantee", userAddress);
     urlParams.set("redirect_uri", currentUrl);
 
     const queryString = urlParams.toString();
     await this.redirectStrategy.redirect(`${dashboardUrl}?${queryString}`);
-  }
-
-  /**
-   * Compares a GrantsResponse object to the legacy configuration stored in the instance.
-   * Validates the presence and attributes of grants for each authorization type.
-   *
-   * @param {GrantsResponse} grantsResponse - The grants response object containing the chain grants.
-   * @returns {boolean} - Returns `true` if the grants match the expected configuration; otherwise, `false`.
-   */
-  compareGrantsToLegacyConfig(grantsResponse: GrantsResponse): boolean {
-    const { grants } = grantsResponse;
-
-    return (
-      compareContractGrants(grants, this.grantContracts) &&
-      compareStakeGrants(grants, this.stake) &&
-      compareBankGrants(grants, this.bank)
-    );
   }
 
   /**
@@ -470,63 +422,52 @@ export class AbstraxionAuth {
 
     while (retries < maxRetries) {
       try {
-        if (this.treasury) {
-          // Treasury mode: use direct decode pipeline (no REST intermediate)
-          if (!this.treasuryIndexerUrl) {
-            throw new Error(
-              "Treasury indexer URL is required when using treasury mode",
-            );
-          }
-
-          const cosmwasmClient =
-            this.cosmwasmQueryClient || (await this.getCosmWasmClient());
-
-          const [chainGrants, treasuryGrantConfigs] = await Promise.all([
-            fetchChainGrantsDecoded(grantee, granter, this.rpcUrl!),
-            getTreasuryGrantConfigs(
-              cosmwasmClient,
-              this.treasury,
-              this.rpcUrl!,
-              this.treasuryIndexerUrl,
-            ),
-          ]);
-
-          if (chainGrants.length === 0) {
-            return false;
-          }
-
-          const currentTime = new Date().toISOString();
-          const validGrant = chainGrants.some((grant) => {
-            return !grant.expiration || grant.expiration > currentTime;
-          });
-
-          const isValid = this.compareGrantsToTreasuryWithConfigs(
-            chainGrants,
-            treasuryGrantConfigs,
+        // Treasury is the only supported grant configuration. Sessions without a
+        // treasury contract cannot be validated and are forced to re-authenticate.
+        if (!this.treasury) {
+          console.warn(
+            "[AbstraxionAuth.pollForGrants] No treasury configured. " +
+              "Non-treasury (legacy) grant validation has been removed; " +
+              "configure a `treasury` contract. Forcing re-authentication.",
           );
-
-          return validGrant && isValid;
-        } else {
-          // Legacy mode: fetch chain grants in REST format for legacy compare functions
-          const data = await fetchChainGrantsABCI(
-            grantee,
-            granter,
-            this.rpcUrl,
-          );
-
-          if (data.grants.length === 0) {
-            return false;
-          }
-
-          const currentTime = new Date().toISOString();
-          const validGrant = data.grants.some((grant) => {
-            return !grant.expiration || grant.expiration > currentTime;
-          });
-
-          const isValid = this.compareGrantsToLegacyConfig(data);
-
-          return validGrant && isValid;
+          return false;
         }
+
+        // Treasury mode: use direct decode pipeline (no REST intermediate)
+        if (!this.treasuryIndexerUrl) {
+          throw new Error(
+            "Treasury indexer URL is required when using treasury mode",
+          );
+        }
+
+        const cosmwasmClient =
+          this.cosmwasmQueryClient || (await this.getCosmWasmClient());
+
+        const [chainGrants, treasuryGrantConfigs] = await Promise.all([
+          fetchChainGrantsDecoded(grantee, granter, this.rpcUrl!),
+          getTreasuryGrantConfigs(
+            cosmwasmClient,
+            this.treasury,
+            this.rpcUrl!,
+            this.treasuryIndexerUrl,
+          ),
+        ]);
+
+        if (chainGrants.length === 0) {
+          return false;
+        }
+
+        const currentTime = new Date().toISOString();
+        const validGrant = chainGrants.some((grant) => {
+          return !grant.expiration || grant.expiration > currentTime;
+        });
+
+        const isValid = this.compareGrantsToTreasuryWithConfigs(
+          chainGrants,
+          treasuryGrantConfigs,
+        );
+
+        return validGrant && isValid;
       } catch (error) {
         console.error(
           `[AbstraxionAuth.pollForGrants] Retry ${retries + 1}/${maxRetries} failed:`,

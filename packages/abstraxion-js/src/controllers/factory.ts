@@ -59,9 +59,6 @@ export function createController(
     // not by AbstraxionAuth
     abstraxionAuth.configureAbstraxionInstance(
       config.rpcUrl,
-      config.contracts,
-      config.stake,
-      config.bank,
       undefined, // callbackUrl - not used in signer mode
       config.treasury,
       treasuryIndexerConfig?.url,

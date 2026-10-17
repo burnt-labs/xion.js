@@ -24,11 +24,7 @@ import { toByteArray } from "base64-js";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import type { GrantsResponse, TreasuryGrantConfig } from "@/types";
 import { decodeAuthorization } from "@/utils/grant/decoding";
-import {
-  compareChainGrantsToTreasuryGrants,
-  compareBankGrants,
-  compareContractGrants,
-} from "@/utils/grant/compare";
+import { compareChainGrantsToTreasuryGrants } from "@/utils/grant/compare";
 import type { DecodedReadableAuthorization } from "@/types";
 
 // ─── Real treasury base64 values (verbatim from xion-testnet-2) ──────────────
@@ -486,58 +482,6 @@ describe("Treasury comparison with ABCI chain grants (bug fix)", () => {
       };
       expect(compareGrantsToTreasuryWithConfigs(chainGrants, [])).toBe(true);
     });
-  });
-});
-
-describe("Legacy comparison still works with dual-format grants", () => {
-  it("should correctly validate bank grants using @type format", () => {
-    const grants = [
-      {
-        authorization: {
-          "@type": "/cosmos.bank.v1beta1.SendAuthorization",
-          spend_limit: [{ denom: "uxion", amount: "1000000" }],
-          allow_list: [],
-          // Raw fields added by the fix — should not interfere with legacy comparison
-          typeUrl: "/cosmos.bank.v1beta1.SendAuthorization",
-          value: toByteArray(TREASURY_3_SEND.value),
-        },
-        expiration: "2027-01-01T00:00:00Z",
-      },
-    ];
-
-    expect(
-      compareBankGrants(grants as any, [{ denom: "uxion", amount: "1000000" }]),
-    ).toBe(true);
-    expect(compareBankGrants(grants as any, undefined)).toBe(true);
-  });
-
-  it("should correctly validate contract grants with dual-format fields", () => {
-    // Use a real contract address from Treasury 1
-    const contractAddress =
-      "xion1q66h2ynmrm5je9awcdwcyxjykd6c0h4wf3u5ha4s5cntf8jr5jfqh8mwey";
-    const grants = [
-      {
-        authorization: {
-          "@type": "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
-          grants: [
-            {
-              contract: contractAddress,
-              limit: {
-                "@type": "/cosmwasm.wasm.v1.MaxCallsLimit",
-                remaining: "100",
-              },
-              filter: { "@type": "/cosmwasm.wasm.v1.AllowAllMessagesFilter" },
-            },
-          ],
-          typeUrl: "/cosmwasm.wasm.v1.ContractExecutionAuthorization",
-          value: toByteArray(TREASURY_1_CONTRACT.value),
-        },
-        expiration: "2027-01-01T00:00:00Z",
-      },
-    ];
-
-    expect(compareContractGrants(grants as any, [contractAddress])).toBe(true);
-    expect(compareContractGrants(grants as any, undefined)).toBe(true);
   });
 });
 

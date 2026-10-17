@@ -27,11 +27,7 @@ import type { GrantConfigByTypeUrl } from "@burnt-labs/account-management";
 import {
   decodeAuthorization,
   decodeRestFormatAuthorization,
-  fetchChainGrantsABCI,
   compareChainGrantsToTreasuryGrants,
-  compareBankGrants,
-  compareContractGrants,
-  compareStakeGrants,
   AuthorizationTypes,
   ContractExecLimitTypes,
 } from "@burnt-labs/abstraxion-core";
@@ -364,35 +360,6 @@ describe("Treasury decoding integration (xion-testnet-2)", () => {
         }
       }
     }, 120000);
-  });
-
-  // ─── 5. Legacy REST comparison still works ─────────────────────────────────
-
-  describe("Legacy REST-format comparison compatibility", () => {
-    it("fetchChainGrantsABCI returns REST-format grants usable by legacy compare functions", async () => {
-      // Use a known treasury that has grants
-      const knownTreasury =
-        "xion1sv6kdau6mvjlzkthdhpcl53e8zmhaltmgzz9jhxgkxhmpymla9gqrh0knw";
-      const feeGranter = "xion1xrqz2wpt4rw8rtdvrc4n4yn5h54jm0nn4evn2x";
-
-      const result = await fetchChainGrantsABCI(
-        feeGranter,
-        knownTreasury,
-        RPC_URL,
-      );
-
-      // Legacy functions should not throw
-      expect(() => compareBankGrants(result.grants, undefined)).not.toThrow();
-      expect(() => compareStakeGrants(result.grants, false)).not.toThrow();
-      expect(() =>
-        compareContractGrants(result.grants, undefined),
-      ).not.toThrow();
-
-      // Grants should have @type (REST format)
-      for (const grant of result.grants) {
-        expect(grant.authorization).toHaveProperty("@type");
-      }
-    }, 30000);
   });
 
   // ─── 6. Raw byte fallback for unknown limit/filter types ───────────────────

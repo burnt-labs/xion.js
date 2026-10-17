@@ -1,90 +1,13 @@
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { createProtobufRpcClient, QueryClient } from "@cosmjs/stargate";
 import { QueryClientImpl as AuthzQueryClient } from "cosmjs-types/cosmos/authz/v1beta1/query";
-import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
-import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
-import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
-import type { Any } from "cosmjs-types/google/protobuf/any";
-import type { ChainGrant, GrantsResponse, TreasuryGrantConfig } from "@/types";
+import type { ChainGrant, TreasuryGrantConfig } from "@/types";
 import { fetchConfig, getRpcClient } from "@/utils";
 import { CacheManager } from "@/utils/cache/CacheManager";
 import { validateTreasuryIndexerResponse } from "./validation";
 import { fetchFromDaoDaoIndexer } from "../indexer/treasury-indexer";
 import { decodeAuthorization } from "./decoding";
 import { AuthorizationTypes } from "./constants";
-
-/**
- * Maps StakeAuthorization type enum to string representation
- */
-const STAKE_AUTHORIZATION_TYPE_MAP: Record<number, string> = {
-  0: "AUTHORIZATION_TYPE_UNSPECIFIED",
-  1: "AUTHORIZATION_TYPE_DELEGATE",
-  2: "AUTHORIZATION_TYPE_UNDELEGATE",
-  3: "AUTHORIZATION_TYPE_REDELEGATE",
-};
-
-/**
- * Decodes a protobuf Any authorization and formats it like REST API JSON
- */
-function decodeAuthorizationToRestFormat(
-  authorization: Any,
-): Record<string, unknown> {
-  const typeUrl = authorization.typeUrl;
-  const value = authorization.value;
-
-  try {
-    switch (typeUrl) {
-      case "/cosmos.authz.v1beta1.GenericAuthorization": {
-        const decoded = GenericAuthorization.decode(value);
-        return {
-          "@type": typeUrl,
-          msg: decoded.msg,
-        };
-      }
-      case "/cosmos.bank.v1beta1.SendAuthorization": {
-        const decoded = SendAuthorization.decode(value);
-        return {
-          "@type": typeUrl,
-          spend_limit: decoded.spendLimit.map((coin) => ({
-            denom: coin.denom,
-            amount: coin.amount,
-          })),
-          allow_list: decoded.allowList || [],
-        };
-      }
-      case "/cosmos.staking.v1beta1.StakeAuthorization": {
-        const decoded = StakeAuthorization.decode(value);
-        return {
-          "@type": typeUrl,
-          max_tokens: decoded.maxTokens
-            ? {
-                denom: decoded.maxTokens.denom,
-                amount: decoded.maxTokens.amount,
-              }
-            : null,
-          authorization_type:
-            STAKE_AUTHORIZATION_TYPE_MAP[decoded.authorizationType] ||
-            `AUTHORIZATION_TYPE_${decoded.authorizationType}`,
-          allow_list: decoded.allowList?.address || [],
-          deny_list: decoded.denyList?.address || [],
-        };
-      }
-      default:
-        // For unsupported types, return raw format with @type
-        return {
-          "@type": typeUrl,
-          value: authorization.value,
-        };
-    }
-  } catch (error) {
-    // If decoding fails, return raw format
-    console.warn(`Failed to decode authorization ${typeUrl}:`, error);
-    return {
-      "@type": typeUrl,
-      value: authorization.value,
-    };
-  }
-}
 
 /**
  * Interface representing the response from the treasury indexer
@@ -224,82 +147,12 @@ export const getTreasuryGrantConfigs = async (
 };
 
 /**
- * Fetch grants issued to a grantee from a granter using ABCI query.
- *
- * @param {string} grantee - The address of the grantee.
- * @param {string} granter - The address of the granter.
- * @param {string} [rpcUrl] - RPC URL to use for fetching grants.
- * @returns {Promise<GrantsResponse>} A Promise that resolves to the grants response.
- * @throws {Error} If the grantee or granter address is invalid, or if there's an error fetching grants.
- */
-export const fetchChainGrantsABCI = async (
-  grantee?: string,
-  granter?: string,
-  rpcUrl?: string,
-): Promise<GrantsResponse> => {
-  if (!grantee) {
-    throw new Error("Grantee address is required");
-  }
-  if (!granter) {
-    throw new Error("Granter address is required");
-  }
-
-  if (!rpcUrl) {
-    throw new Error("RPC URL is required");
-  }
-
-  try {
-    // Connect to the RPC endpoint using the factory function
-    const rpcClient = await getRpcClient(rpcUrl);
-    const queryClient = new QueryClient(rpcClient); // @TODO: Singleton..?
-    const protobufRpcClient = createProtobufRpcClient(queryClient);
-
-    // Create the authz query client
-    const authzClient = new AuthzQueryClient(protobufRpcClient);
-
-    // Query grants using the authz client
-    const response = await authzClient.Grants({
-      grantee,
-      granter,
-      msgTypeUrl: "", // Empty string to get all grants
-    });
-
-    // Convert the response to the expected GrantsResponse format
-    // Decode protobuf authorization to REST API JSON format for compatibility with legacy compare functions
-    const grantsResponse: GrantsResponse = {
-      grants: response.grants.map((grant) => ({
-        granter: granter,
-        grantee: grantee,
-        authorization: grant.authorization
-          ? decodeAuthorizationToRestFormat(grant.authorization)
-          : {},
-        expiration: grant.expiration
-          ? new Date(Number(grant.expiration.seconds) * 1000).toISOString()
-          : "",
-      })),
-      pagination: {
-        next_key: response.pagination?.nextKey?.toString() || null,
-        total: response.pagination?.total.toString() || "0",
-      },
-    };
-
-    return grantsResponse;
-  } catch (error) {
-    console.error("Error fetching grants:", error);
-    throw error;
-  } finally {
-    // Close the Tendermint client connection
-    // No need to explicitly close the connection as it will be garbage collected
-  }
-};
-
-/**
  * Fetch grants issued to a grantee from a granter using ABCI query,
  * returning each grant's authorization directly decoded to DecodedReadableAuthorization.
  *
- * This bypasses the REST-format intermediate step that fetchChainGrantsABCI uses,
- * eliminating the double-conversion (protobuf → REST → decoded) that caused
- * repeated session-invalidation bugs.
+ * This decodes protobuf grants directly to DecodedReadableAuthorization,
+ * avoiding any intermediate REST-format conversion (protobuf → REST → decoded)
+ * that previously caused repeated session-invalidation bugs.
  *
  * @param {string} grantee - The address of the grantee.
  * @param {string} granter - The address of the granter.
