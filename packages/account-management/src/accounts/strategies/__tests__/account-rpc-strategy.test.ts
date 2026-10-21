@@ -5,8 +5,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock CosmWasmClient so on-chain verification is driven by each test
-vi.mock("@cosmjs/cosmwasm-stargate", async () => {
-  const actual = await vi.importActual("@cosmjs/cosmwasm-stargate");
+vi.mock("@cosmjs/cosmwasm", async () => {
+  const actual = await vi.importActual("@cosmjs/cosmwasm");
   return {
     ...actual,
     CosmWasmClient: {
@@ -15,7 +15,7 @@ vi.mock("@cosmjs/cosmwasm-stargate", async () => {
   };
 });
 
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import { toBase64, toUtf8 } from "@cosmjs/encoding";
 import {
   RpcAccountStrategy,

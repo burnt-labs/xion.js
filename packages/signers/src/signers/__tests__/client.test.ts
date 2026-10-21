@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AAClient } from "../utils/client";
 import { AASigner } from "../../interfaces";
 import { Comet38Client } from "@cosmjs/tendermint-rpc";
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm";
 import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 
 const { mockSimulate } = vi.hoisted(() => ({ mockSimulate: vi.fn() }));
@@ -21,7 +21,7 @@ vi.mock("bech32", () => ({
   },
 }));
 
-vi.mock("@cosmjs/cosmwasm-stargate", () => {
+vi.mock("@cosmjs/cosmwasm", () => {
   return {
     SigningCosmWasmClient: class {
       registry = {
@@ -324,7 +324,7 @@ describe("AAClient", () => {
     ]);
 
     const explicitSignerData = {
-      accountNumber: 2,
+      accountNumber: 2n,
       sequence: 2,
       chainId: "test-chain-2",
     };

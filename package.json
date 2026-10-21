@@ -46,16 +46,17 @@
     "overrides": {
       "@types/react": "^18.2.47",
       "@types/react-dom": "^18.2.18",
-      "@cosmjs/amino": "^0.36.0",
-      "@cosmjs/cosmwasm-stargate": "^0.36.0",
-      "@cosmjs/crypto": "^0.36.0",
-      "@cosmjs/encoding": "^0.36.0",
-      "@cosmjs/math": "^0.36.0",
-      "@cosmjs/proto-signing": "^0.36.0",
-      "@cosmjs/stargate": "^0.36.0",
-      "@cosmjs/tendermint-rpc": "^0.36.0",
-      "@cosmjs/utils": "^0.36.0",
-      "cosmjs-types": "^0.9.0",
+      "@cosmjs/amino": "^0.39.0",
+      "@cosmjs/cosmwasm": "^0.39.0",
+      "@cosmjs/crypto": "^0.39.0",
+      "@cosmjs/encoding": "^0.39.0",
+      "@cosmjs/math": "^0.39.0",
+      "@cosmjs/proto-signing": "^0.39.0",
+      "@cosmjs/stargate": "^0.39.0",
+      "@cosmjs/tendermint-rpc": "^0.39.0",
+      "@cosmjs/utils": "^0.39.0",
+      "cosmjs-types": "^0.11.0",
+      "@cosmjs/encoding>@scure/base": "~2.2.0",
       "@burnt-labs/xion-types": "30.0.0-rc1"
     }
   }
