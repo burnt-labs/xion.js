@@ -13,23 +13,25 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
   return {
     ...actual,
-    AbstraxionAuth: vi.fn().mockImplementation(() => ({
-      configureAbstraxionInstance: vi.fn(),
-      logout: vi.fn().mockResolvedValue(undefined),
-      generateAndStoreTempAccount: vi.fn().mockResolvedValue({
-        getAccounts: vi.fn().mockResolvedValue([
-          {
-            address: "xion1grantee123",
-            algo: "secp256k1",
-            pubkey: new Uint8Array(),
-          },
-        ]),
-      }),
-      getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
-      setGranter: vi.fn().mockResolvedValue(undefined),
-      getSigner: vi.fn().mockResolvedValue({ signAndBroadcast: vi.fn() }),
-      abstractAccount: null,
-    })),
+    AbstraxionAuth: vi.fn().mockImplementation(function () {
+      return {
+        configureAbstraxionInstance: vi.fn(),
+        logout: vi.fn().mockResolvedValue(undefined),
+        generateAndStoreTempAccount: vi.fn().mockResolvedValue({
+          getAccounts: vi.fn().mockResolvedValue([
+            {
+              address: "xion1grantee123",
+              algo: "secp256k1",
+              pubkey: new Uint8Array(),
+            },
+          ]),
+        }),
+        getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
+        setGranter: vi.fn().mockResolvedValue(undefined),
+        getSigner: vi.fn().mockResolvedValue({ signAndBroadcast: vi.fn() }),
+        abstractAccount: null,
+      };
+    }),
   };
 });
 
@@ -38,10 +40,12 @@ vi.mock("@burnt-labs/account-management", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
-    ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
-      restoreSession: vi.fn().mockResolvedValue({ restored: false }),
-      destroy: vi.fn(),
-    })),
+    ConnectionOrchestrator: vi.fn().mockImplementation(function () {
+      return {
+        restoreSession: vi.fn().mockResolvedValue({ restored: false }),
+        destroy: vi.fn(),
+      };
+    }),
     isSessionRestorationError: vi.fn().mockReturnValue(false),
     isSessionRestored: vi.fn().mockReturnValue(false),
     getAccountInfoFromRestored: vi.fn(),

@@ -17,23 +17,25 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
   return {
     ...actual,
-    AbstraxionAuth: vi.fn().mockImplementation(() => ({
-      configureAbstraxionInstance: vi.fn(),
-      subscribeToAuthStateChange: vi.fn(() => vi.fn()),
-      logout: vi.fn().mockResolvedValue(undefined),
-      getLocalKeypair: vi.fn().mockResolvedValue({
-        getAccounts: vi.fn().mockResolvedValue([
-          {
-            address: "xion1grantee123",
-            algo: "secp256k1",
-            pubkey: new Uint8Array(),
-          },
-        ]),
-      }),
-      setGranter: vi.fn().mockResolvedValue(undefined),
-      getSigner: vi.fn().mockResolvedValue({ signAndBroadcast: vi.fn() }),
-      abstractAccount: null,
-    })),
+    AbstraxionAuth: vi.fn().mockImplementation(function () {
+      return {
+        configureAbstraxionInstance: vi.fn(),
+        subscribeToAuthStateChange: vi.fn(() => vi.fn()),
+        logout: vi.fn().mockResolvedValue(undefined),
+        getLocalKeypair: vi.fn().mockResolvedValue({
+          getAccounts: vi.fn().mockResolvedValue([
+            {
+              address: "xion1grantee123",
+              algo: "secp256k1",
+              pubkey: new Uint8Array(),
+            },
+          ]),
+        }),
+        setGranter: vi.fn().mockResolvedValue(undefined),
+        getSigner: vi.fn().mockResolvedValue({ signAndBroadcast: vi.fn() }),
+        abstractAccount: null,
+      };
+    }),
   };
 });
 
@@ -42,13 +44,15 @@ vi.mock("@burnt-labs/account-management", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
-    ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
-      restoreSession: vi.fn().mockResolvedValue({ restored: false }),
-      initiateRedirect: vi.fn().mockResolvedValue({
-        dashboardUrl: "https://dashboard.burnt.com?grantee=xion1grantee123",
-      }),
-      destroy: vi.fn(),
-    })),
+    ConnectionOrchestrator: vi.fn().mockImplementation(function () {
+      return {
+        restoreSession: vi.fn().mockResolvedValue({ restored: false }),
+        initiateRedirect: vi.fn().mockResolvedValue({
+          dashboardUrl: "https://dashboard.burnt.com?grantee=xion1grantee123",
+        }),
+        destroy: vi.fn(),
+      };
+    }),
     isSessionRestorationError: vi.fn().mockReturnValue(false),
     isSessionRestored: vi.fn().mockReturnValue(false),
     getAccountInfoFromRestored: vi.fn(),
@@ -216,10 +220,12 @@ describe("RedirectController — callback & signing", () => {
       const { AbstraxionAuth } = await import("@burnt-labs/abstraxion-core");
       const mockAuth = AbstraxionAuth as ReturnType<typeof vi.fn>;
       const originalImpl = mockAuth.getMockImplementation()!;
-      mockAuth.mockImplementationOnce(() => ({
-        ...originalImpl(),
-        getLocalKeypair: vi.fn().mockResolvedValue(null),
-      }));
+      mockAuth.mockImplementationOnce(function () {
+        return {
+          ...originalImpl(),
+          getLocalKeypair: vi.fn().mockResolvedValue(null),
+        };
+      });
 
       const controller = new RedirectController(createConfig());
       await controller.initialize();
