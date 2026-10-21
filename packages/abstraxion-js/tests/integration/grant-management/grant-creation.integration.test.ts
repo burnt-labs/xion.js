@@ -31,7 +31,7 @@ import {
   type SessionManager,
 } from "@burnt-labs/account-management";
 import { StargateClient } from "@cosmjs/stargate";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import { DirectQueryTreasuryStrategy } from "@burnt-labs/account-management";
 
 describe("Grant Management Integration Tests", () => {

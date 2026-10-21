@@ -34,10 +34,10 @@
   },
   "devDependencies": {
     "@burnt-labs/test-utils": "workspace:*",
-    "@cosmjs/amino": "^0.36.0",
-    "@cosmjs/crypto": "^0.36.0",
-    "@cosmjs/encoding": "^0.36.0",
-    "@cosmjs/tendermint-rpc": "^0.36.0",
+    "@cosmjs/amino": "^0.39.0",
+    "@cosmjs/crypto": "^0.39.0",
+    "@cosmjs/encoding": "^0.39.0",
+    "@cosmjs/tendermint-rpc": "^0.39.0",
     "@types/node": "^20",
     "dotenv": "^16.4.5",
     "ethers": "^6",
@@ -53,8 +53,8 @@
     "@burnt-labs/account-management": "workspace:*",
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
-    "@cosmjs/cosmwasm-stargate": "^0.36.0",
-    "@cosmjs/proto-signing": "^0.36.0",
-    "@cosmjs/stargate": "^0.36.0"
+    "@cosmjs/cosmwasm": "^0.39.0",
+    "@cosmjs/proto-signing": "^0.39.0",
+    "@cosmjs/stargate": "^0.39.0"
   }
 }

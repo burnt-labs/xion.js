@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 /**
  * @vitest-environment jsdom
  */
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import { AbstraxionAuth } from "../AbstraxionAuth";
 import {
   mockAccountAddress,

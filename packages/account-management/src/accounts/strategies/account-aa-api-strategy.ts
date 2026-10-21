@@ -8,7 +8,7 @@
  *   matching authenticator)
  */
 
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import { fromBase64, fromUtf8 } from "@cosmjs/encoding";
 import { findAAApiAccountAddress } from "@burnt-labs/abstraxion-core";
 import {

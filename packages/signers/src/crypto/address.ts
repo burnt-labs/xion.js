@@ -3,7 +3,7 @@
  * Pure cryptographic function for calculating deterministic smart account addresses
  */
 
-import { instantiate2Address } from "@cosmjs/cosmwasm-stargate";
+import { instantiate2Address } from "@cosmjs/cosmwasm";
 import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
 import { fromBase64, toBech32 } from "@cosmjs/encoding";
 import { validateAndDecodeHex, validateAddressPrefix } from "./hex-validation";
