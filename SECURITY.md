@@ -29,8 +29,10 @@ their scope table and authorized testing hostnames.
 
 We acknowledge receipt within **5 business days** and provide a triage decision
 within **14 days**. Active exploitation, or confirmed attacker awareness of an
-unpatched vulnerability, escalates the issue to Critical handling regardless of
-its original classification.
+unpatched vulnerability, escalates the issue to Critical **response handling**
+— prioritization, coordination, and disclosure timing — regardless of its
+original classification. That escalation does not change the finding's
+severity assessment or reward eligibility.
 
 ## Scope
 
@@ -59,8 +61,8 @@ than the one presented to the user, that leaks or extends the life of a
 session key, or that lets a third party influence transaction contents,
 qualifies regardless of how many dApps are known to be affected.
 
-Only **High** and **Critical** findings are reward eligible. Collecting a
-bounty requires completing a KYC process; we cannot pay reporters in
+**Critical**, **High**, **Medium**, and **Low** findings are all reward
+eligible. Collecting a bounty requires completing a KYC process; we cannot pay reporters in
 sanctioned jurisdictions. Where several reports describe the same underlying
 issue, the first complete report with a working proof of concept is the one
 considered. We assess reports as submitted; we do not reclassify a report to a
