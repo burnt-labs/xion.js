@@ -208,7 +208,7 @@ describe("Treasury decoding integration (xion-testnet-2)", () => {
           expect(decoded.data).not.toBeNull();
         }
       },
-      { timeout: 30000 },
+      30000,
     );
   });
 
@@ -242,7 +242,7 @@ describe("Treasury decoding integration (xion-testnet-2)", () => {
         );
         expect(result.match).toBe(true);
       },
-      { timeout: 30000 },
+      30000,
     );
   });
 
