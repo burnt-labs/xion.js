@@ -14,7 +14,7 @@ import type {
   MsgInstantiateContractEncodeObject,
   MsgInstantiateContract2EncodeObject,
   MsgMigrateContractEncodeObject,
-} from "@cosmjs/cosmwasm-stargate";
+} from "@cosmjs/cosmwasm";
 
 // Re-exports: SDK devs can import from this module without depending
 // on CosmJS packages directly.
@@ -34,7 +34,7 @@ export {
   isMsgInstantiateContractEncodeObject,
   isMsgInstantiateContract2EncodeObject,
   isMsgMigrateEncodeObject,
-} from "@cosmjs/cosmwasm-stargate";
+} from "@cosmjs/cosmwasm";
 
 // ── Wasm typeUrls that carry a `msg` bytes field ────────────────────
 

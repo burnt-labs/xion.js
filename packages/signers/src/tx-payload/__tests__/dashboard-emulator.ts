@@ -19,7 +19,7 @@
 import { Registry } from "@cosmjs/proto-signing";
 import type { EncodeObject } from "@cosmjs/proto-signing";
 import { defaultRegistryTypes } from "@cosmjs/stargate";
-import { wasmTypes } from "@cosmjs/cosmwasm-stargate";
+import { wasmTypes } from "@cosmjs/cosmwasm";
 import { toBase64, fromBase64 } from "../../crypto/encoding";
 import { normalizeMessages } from "../normalize";
 import { validateTxPayload } from "../validate";

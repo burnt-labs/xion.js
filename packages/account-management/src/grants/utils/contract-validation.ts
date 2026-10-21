@@ -4,7 +4,7 @@
  */
 
 import { validateBech32Address } from "@burnt-labs/signers";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import type { ContractGrantDescription } from "../../types/grants";
 
 export interface AddressValidationError {

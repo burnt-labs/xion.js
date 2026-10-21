@@ -137,9 +137,8 @@ vi.mock("../strategies/BrowserStorageStrategy", () => ({
   },
 }));
 
-vi.mock("@cosmjs/cosmwasm-stargate", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@cosmjs/cosmwasm-stargate")>();
+vi.mock("@cosmjs/cosmwasm", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@cosmjs/cosmwasm")>();
   return {
     ...actual,
     CosmWasmClient: { connect: h.cosmwasmConnect },
