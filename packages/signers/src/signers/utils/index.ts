@@ -1,5 +1,5 @@
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
-import { Account } from "@cosmjs/stargate";
+import { Account, accountFromAny } from "@cosmjs/stargate";
 import { Any } from "cosmjs-types/google/protobuf/any";
 import { AuthInfo, SignerInfo } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { coins, StdFee } from "@cosmjs/amino";
@@ -9,7 +9,6 @@ import {
   NilPubKey,
 } from "@burnt-labs/xion-types/abstractaccount/v1/account";
 import { assert } from "@cosmjs/utils";
-import { accountFromAny } from "@cosmjs/stargate/build/accounts";
 
 export type INodes<T> = {
   nodes: Array<T>;
@@ -24,6 +23,9 @@ function uint64FromProto(
 /**
  * Custom implementation of AccountParser. This is supposed to support the most relevant
  * common Cosmos SDK account types and AbstractAccount account types.
+ *
+ * The account number is returned as a `bigint`. From Cosmos SDK 0.55 on, new
+ * accounts get numbers of at least 2^63, which do not fit in a JS number.
  * @param input encoded account from the chain
  * @returns decoded account
  */
@@ -38,7 +40,7 @@ export function customAccountFromAny(input: Any): Account {
         pubkey: null,
         accountNumber: uint64FromProto(
           abstractAccount.accountNumber,
-        ).toNumber(),
+        ).toBigInt(),
         sequence: uint64FromProto(abstractAccount.sequence).toNumber(),
       };
     }

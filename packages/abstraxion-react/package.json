@@ -29,7 +29,7 @@
   "devDependencies": {
     "@burnt-labs/account-management": "workspace:*",
     "@burnt-labs/test-utils": "workspace:*",
-    "@cosmjs/proto-signing": "^0.36.0",
+    "@cosmjs/proto-signing": "^0.39.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@types/node": "^20",

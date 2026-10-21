@@ -15,7 +15,7 @@ import {
 } from "@burnt-labs/signers";
 import { type AuthenticatorType } from "@burnt-labs/signers";
 import { GasPrice } from "@cosmjs/stargate";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import {
   buildGrantMessages,

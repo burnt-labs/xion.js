@@ -37,7 +37,7 @@ import {
   SigningCosmWasmClient,
   wasmTypes,
   MsgExecuteContractEncodeObject,
-} from "@cosmjs/cosmwasm-stargate";
+} from "@cosmjs/cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { MsgTransfer } from "cosmjs-types/ibc/applications/transfer/v1/tx";
 import {

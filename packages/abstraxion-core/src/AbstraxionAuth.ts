@@ -1,5 +1,5 @@
 import { GasPrice } from "@cosmjs/stargate";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import type { AccountData } from "@cosmjs/proto-signing";
 import type {
   ChainGrant,

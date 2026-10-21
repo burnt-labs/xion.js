@@ -22,7 +22,7 @@ import { Wallet, HDNodeWallet, toUtf8Bytes } from "ethers";
 import { toHex } from "@cosmjs/encoding";
 import { ExternalSignerConnector } from "@burnt-labs/abstraxion-core";
 import type { SignerConfig } from "@burnt-labs/abstraxion-core";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 // Import MockStorageStrategy from test-utils
 // Note: If this causes import issues, we can keep the custom implementation
 // but match the MockStorageStrategy interface for compatibility

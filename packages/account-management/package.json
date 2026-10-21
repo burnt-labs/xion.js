@@ -35,12 +35,12 @@
     "@burnt-labs/abstraxion-core": "workspace:*",
     "@burnt-labs/signers": "workspace:*",
     "@burnt-labs/xion-types": "30.0.0-rc1",
-    "@cosmjs/cosmwasm-stargate": "^0.36.0",
-    "@cosmjs/encoding": "^0.36.0",
-    "@cosmjs/proto-signing": "^0.36.0",
-    "@cosmjs/stargate": "^0.36.0",
+    "@cosmjs/cosmwasm": "^0.39.0",
+    "@cosmjs/encoding": "^0.39.0",
+    "@cosmjs/proto-signing": "^0.39.0",
+    "@cosmjs/stargate": "^0.39.0",
     "camelcase-keys": "^9.1.3",
-    "cosmjs-types": "^0.9.0"
+    "cosmjs-types": "^0.11.0"
   },
   "devDependencies": {
     "@burnt-labs/test-utils": "workspace:*",

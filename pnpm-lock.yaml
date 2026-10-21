@@ -7,16 +7,17 @@ settings:
 overrides:
   '@types/react': ^18.2.47
   '@types/react-dom': ^18.2.18
-  '@cosmjs/amino': ^0.36.0
-  '@cosmjs/cosmwasm-stargate': ^0.36.0
-  '@cosmjs/crypto': ^0.36.0
-  '@cosmjs/encoding': ^0.36.0
-  '@cosmjs/math': ^0.36.0
-  '@cosmjs/proto-signing': ^0.36.0
-  '@cosmjs/stargate': ^0.36.0
-  '@cosmjs/tendermint-rpc': ^0.36.0
-  '@cosmjs/utils': ^0.36.0
-  cosmjs-types: ^0.9.0
+  '@cosmjs/amino': ^0.39.0
+  '@cosmjs/cosmwasm': ^0.39.0
+  '@cosmjs/crypto': ^0.39.0
+  '@cosmjs/encoding': ^0.39.0
+  '@cosmjs/math': ^0.39.0
+  '@cosmjs/proto-signing': ^0.39.0
+  '@cosmjs/stargate': ^0.39.0
+  '@cosmjs/tendermint-rpc': ^0.39.0
+  '@cosmjs/utils': ^0.39.0
+  cosmjs-types: ^0.11.0
+  '@cosmjs/encoding>@scure/base': ~2.2.0
   '@burnt-labs/xion-types': 30.0.0-rc1
 
 importers:
@@ -240,40 +241,40 @@ importers:
         version: link:../signers
       '@burnt-labs/xion-types':
         specifier: 30.0.0-rc1
-        version: 30.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
+        version: 30.0.0-rc1(@cosmjs/proto-signing@0.39.0)(@cosmjs/stargate@0.39.0)(@cosmjs/tendermint-rpc@0.39.0)(google-protobuf@3.21.4)
       '@cosmjs/amino':
-        specifier: ^0.36.0
-        version: 0.36.2
-      '@cosmjs/cosmwasm-stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
+      '@cosmjs/cosmwasm':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/crypto':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/encoding':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/math':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/proto-signing':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/tendermint-rpc':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/utils':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       base64-js:
         specifier: ^1.5.1
         version: 1.5.1
       cosmjs-types:
-        specifier: ^0.9.0
-        version: 0.9.0
+        specifier: ^0.11.0
+        version: 0.11.0
       jose:
         specifier: ^5.1.3
         version: 5.10.0
@@ -341,31 +342,31 @@ importers:
       '@burnt-labs/signers':
         specifier: workspace:*
         version: link:../signers
-      '@cosmjs/cosmwasm-stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+      '@cosmjs/cosmwasm':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/proto-signing':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
     devDependencies:
       '@burnt-labs/test-utils':
         specifier: workspace:*
         version: link:../test-utils
       '@cosmjs/amino':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/crypto':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/encoding':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/tendermint-rpc':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@types/node':
         specifier: ^20
         version: 20.19.37
@@ -407,8 +408,8 @@ importers:
         specifier: workspace:*
         version: link:../test-utils
       '@cosmjs/proto-signing':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@testing-library/jest-dom':
         specifier: ^6.4.2
         version: 6.9.1
@@ -529,25 +530,25 @@ importers:
         version: link:../signers
       '@burnt-labs/xion-types':
         specifier: 30.0.0-rc1
-        version: 30.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
-      '@cosmjs/cosmwasm-stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        version: 30.0.0-rc1(@cosmjs/proto-signing@0.39.0)(@cosmjs/stargate@0.39.0)(@cosmjs/tendermint-rpc@0.39.0)(google-protobuf@3.21.4)
+      '@cosmjs/cosmwasm':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/encoding':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/proto-signing':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       camelcase-keys:
         specifier: ^9.1.3
         version: 9.1.3
       cosmjs-types:
-        specifier: ^0.9.0
-        version: 0.9.0
+        specifier: ^0.11.0
+        version: 0.11.0
     devDependencies:
       '@burnt-labs/test-utils':
         specifier: workspace:*
@@ -596,34 +597,34 @@ importers:
         version: link:../constants
       '@burnt-labs/xion-types':
         specifier: 30.0.0-rc1
-        version: 30.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4)
+        version: 30.0.0-rc1(@cosmjs/proto-signing@0.39.0)(@cosmjs/stargate@0.39.0)(@cosmjs/tendermint-rpc@0.39.0)(google-protobuf@3.21.4)
       '@cosmjs/amino':
-        specifier: ^0.36.0
-        version: 0.36.2
-      '@cosmjs/cosmwasm-stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
+      '@cosmjs/cosmwasm':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/crypto':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/encoding':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/math':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/proto-signing':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/tendermint-rpc':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/utils':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@github/webauthn-json':
         specifier: ^2.1.1
         version: 2.1.1
@@ -637,8 +638,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       cosmjs-types:
-        specifier: ^0.9.0
-        version: 0.9.0
+        specifier: ^0.11.0
+        version: 0.11.0
       ethers:
         specifier: ^6.15.0
         version: 6.16.0
@@ -686,26 +687,26 @@ importers:
         specifier: workspace:*
         version: link:../constants
       '@cosmjs/amino':
-        specifier: ^0.36.0
-        version: 0.36.2
-      '@cosmjs/cosmwasm-stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
+      '@cosmjs/cosmwasm':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/crypto':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/encoding':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/proto-signing':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       '@cosmjs/stargate':
-        specifier: ^0.36.0
-        version: 0.36.2
+        specifier: ^0.39.0
+        version: 0.39.0
       cosmjs-types:
-        specifier: ^0.9.0
-        version: 0.9.0
+        specifier: ^0.11.0
+        version: 0.11.0
     devDependencies:
       '@types/node':
         specifier: ^20
@@ -1996,17 +1997,17 @@ packages:
     resolution: {integrity: sha512-sBXGT13cpmPR5BMgHE6UEEfEaShh5Ror6rfN3yEK5si7QVrtZg8LEPQb0VVhiLRUslD2yLnXtnRzG035J/mZXQ==}
     dev: false
 
-  /@burnt-labs/xion-types@30.0.0-rc1(@cosmjs/proto-signing@0.36.2)(@cosmjs/stargate@0.36.2)(@cosmjs/tendermint-rpc@0.36.2)(google-protobuf@3.21.4):
+  /@burnt-labs/xion-types@30.0.0-rc1(@cosmjs/proto-signing@0.39.0)(@cosmjs/stargate@0.39.0)(@cosmjs/tendermint-rpc@0.39.0)(google-protobuf@3.21.4):
     resolution: {integrity: sha512-eCgjvO6BQeMtSCpKdocrR2cxYRVfKh+lSOP58CviJKWBmiw6V5WkXFQvZwMxne/mNw2y3bB4/f2zKyYqGPNJQQ==}
     peerDependencies:
-      '@cosmjs/proto-signing': ^0.36.0
-      '@cosmjs/stargate': ^0.36.0
-      '@cosmjs/tendermint-rpc': ^0.36.0
+      '@cosmjs/proto-signing': ^0.39.0
+      '@cosmjs/stargate': ^0.39.0
+      '@cosmjs/tendermint-rpc': ^0.39.0
     dependencies:
       '@bufbuild/protobuf': 2.11.0
-      '@cosmjs/proto-signing': 0.36.2
-      '@cosmjs/stargate': 0.36.2
-      '@cosmjs/tendermint-rpc': 0.36.2
+      '@cosmjs/proto-signing': 0.39.0
+      '@cosmjs/stargate': 0.39.0
+      '@cosmjs/tendermint-rpc': 0.39.0
       '@improbable-eng/grpc-web': 0.15.0(google-protobuf@3.21.4)
       browser-headers: 0.4.1
     transitivePeerDependencies:
@@ -2212,73 +2213,72 @@ packages:
       prettier: 2.8.8
     dev: false
 
-  /@cosmjs/amino@0.36.2:
-    resolution: {integrity: sha512-r4yV1bhl412gwHGlyaUaJHIJnmldtyGsAwyz3oHHVxduiECj06Rv6wqeyLZfQa9W6hU+MlZwy7LabSUkkyGwjA==}
+  /@cosmjs/amino@0.39.0:
+    resolution: {integrity: sha512-56WqsZ4xbdJE4KWJTPbw7hUzePflRxRLuxoBlUsa8qIiFumpzZRW0Ycb7IloEF8wAmdgsdfrG1hSJSBlqdFE7A==}
     dependencies:
-      '@cosmjs/crypto': 0.36.2
-      '@cosmjs/encoding': 0.36.2
-      '@cosmjs/math': 0.36.2
-      '@cosmjs/utils': 0.36.2
+      '@cosmjs/crypto': 0.39.0
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/utils': 0.39.0
 
-  /@cosmjs/cosmwasm-stargate@0.36.2:
-    resolution: {integrity: sha512-BU7i/gpvOkghR7XOhI5yT/KJuq3Sqexge2LrU+sBG//vN2ZKDdbLmjwP0S1IMP7aD8IWJfgEM41qbzWEILoPxw==}
+  /@cosmjs/cosmwasm@0.39.0:
+    resolution: {integrity: sha512-iAZ3HNUtHKHgwJUj1hEfWfO1Gqhfun4J5oBrAF8zRrEJdmLbeHxTydwkY5CW3pNChiA/Q40M7xiB3Q0nVdNGEg==}
     dependencies:
-      '@cosmjs/amino': 0.36.2
-      '@cosmjs/crypto': 0.36.2
-      '@cosmjs/encoding': 0.36.2
-      '@cosmjs/math': 0.36.2
-      '@cosmjs/proto-signing': 0.36.2
-      '@cosmjs/stargate': 0.36.2
-      '@cosmjs/tendermint-rpc': 0.36.2
-      '@cosmjs/utils': 0.36.2
-      cosmjs-types: 0.9.0
-      pako: 2.1.0
+      '@cosmjs/amino': 0.39.0
+      '@cosmjs/crypto': 0.39.0
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/proto-signing': 0.39.0
+      '@cosmjs/stargate': 0.39.0
+      '@cosmjs/tendermint-rpc': 0.39.0
+      '@cosmjs/utils': 0.39.0
+      cosmjs-types: 0.11.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
     dev: false
 
-  /@cosmjs/crypto@0.36.2:
-    resolution: {integrity: sha512-QL4NHtcqR6DEKIN200aLeR8gKO433K0f5avKV0TVFP/g12UtnEGSk79PJq5Gv1PLc9GtATHgLLQI/3D8TEe+ig==}
+  /@cosmjs/crypto@0.39.0:
+    resolution: {integrity: sha512-ATRhSXN8w3fvUkj9xzLHwvzylDvvn4f3cC1CQwhQc2OxyzpEEFACS3wHS6iwdJJS99acV8dq+oVOYflUqI0brQ==}
     dependencies:
-      '@cosmjs/encoding': 0.36.2
-      '@cosmjs/math': 0.36.2
-      '@cosmjs/utils': 0.36.2
-      '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.7
-      '@noble/hashes': 1.8.0
-      hash-wasm: 4.12.0
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/utils': 0.39.0
+      '@noble/ciphers': 2.4.0
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@scure/bip39': 2.4.0
 
-  /@cosmjs/encoding@0.36.2:
-    resolution: {integrity: sha512-i3+P1EKYoLcONAsmpJPhDAc3Wh3ajZNRHt/hczi/JEQXmleTJLVzv2mXUyllM6Qa+B6ybbr3Z2lnEFa8L3yLqg==}
+  /@cosmjs/encoding@0.39.0:
+    resolution: {integrity: sha512-+poEaeM8YjGNVtrHLQNWqkhEeDxapjrdpnPCT+JCRh8YNbeHEdftzZLCH5VCBSOtvo7PF0gK1B7sbQbBl6q5pQ==}
     dependencies:
+      '@scure/base': 2.2.0
       base64-js: 1.5.1
-      bech32: 1.1.4
-      readonly-date: 1.0.0
+      readonly-date-esm: 2.0.0
 
-  /@cosmjs/json-rpc@0.36.2:
-    resolution: {integrity: sha512-3IRamylHVCxBevXGlnIoWUdJCLsP5LwHbXYUsBnC9T8UttZ5oYRN5gDf6+2dQEPk+p9xOv2i8xrCwNWxo7675Q==}
+  /@cosmjs/json-rpc@0.39.0:
+    resolution: {integrity: sha512-slyo76IYkTuSxrzxvF1s1ScFPIGnW7PbNSx8lr++NzdyPluqe053+cSqsxLUioXb5qI9Nxny2fWxOK8isSn+cg==}
     dependencies:
-      '@cosmjs/stream': 0.36.2
+      '@cosmjs/stream': 0.39.0
       xstream: 11.14.0
 
-  /@cosmjs/math@0.36.2:
-    resolution: {integrity: sha512-uJZRzxqnBk3MgxFgeyUwLgUzWkAIcmznWSB/tgGCjGCnUNebzI+44dA3ncEDCMqQysi/MZ+cSwAcDU7IY2PFeA==}
+  /@cosmjs/math@0.39.0:
+    resolution: {integrity: sha512-FSLy/oDF+BtOP/J60RsjL5W4MCKiCfBjSoeV5xj6qg2g8N884Ue853iuWanjqGkQJwkXCp+JbeK8Mv9j6AaYHw==}
 
-  /@cosmjs/proto-signing@0.36.2:
-    resolution: {integrity: sha512-dyZsgZBQgGkaE4cazHVX8GDwrRJVKUVDnrODkyFXVNbxMnm4t6nxpK1qwgY9GHlWUhck3Dh9NT3BoMbXiMYTZQ==}
+  /@cosmjs/proto-signing@0.39.0:
+    resolution: {integrity: sha512-jthQ2PA092fvrbFaZRRKuHV7awOsayjDLIBACaGIblFj9yJCcrvhFp+8YV87ia990DjKmWJc3sstHvQZ3yK/EQ==}
     dependencies:
-      '@cosmjs/amino': 0.36.2
-      '@cosmjs/crypto': 0.36.2
-      '@cosmjs/encoding': 0.36.2
-      '@cosmjs/math': 0.36.2
-      '@cosmjs/utils': 0.36.2
-      cosmjs-types: 0.9.0
+      '@cosmjs/amino': 0.39.0
+      '@cosmjs/crypto': 0.39.0
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/utils': 0.39.0
+      cosmjs-types: 0.11.0
 
-  /@cosmjs/socket@0.36.2:
-    resolution: {integrity: sha512-Pb7JcTFWnq6yfY0IEejHrpSxNDJYcqjjAa1D29a6b/obk4qa4o3oIV5bIx6zAbdRq8uLoBfvWs0bHTNnVuBWJg==}
+  /@cosmjs/socket@0.39.0:
+    resolution: {integrity: sha512-mvA+/ycMn7dnjjdooSPq516poFpSARRXhFhKjCXxGUmBZA+74vLDLbtD6VGzHd08A2JSZBSiAhVOZpjYqgV78A==}
     dependencies:
-      '@cosmjs/stream': 0.36.2
+      '@cosmjs/stream': 0.39.0
       isomorphic-ws: 4.0.1(ws@7.5.10)
       ws: 7.5.10
       xstream: 11.14.0
@@ -2286,45 +2286,45 @@ packages:
       - bufferutil
       - utf-8-validate
 
-  /@cosmjs/stargate@0.36.2:
-    resolution: {integrity: sha512-vnNK4dXF+s2v1aKPfYxKVrvXPcnBQb8rPoBScnTpPWnRt3XXbLw7Oo6fTQQWwKYNKQzi6DOApeEB+bCYcaPAAw==}
+  /@cosmjs/stargate@0.39.0:
+    resolution: {integrity: sha512-dQtucU9czF2NUUbEKs19PMfv+EusDFKWHMVK6Hinytmpq9sdk5JUIln+g/8k+UjKcV4HPv6S0AywbhE+tl84kQ==}
     dependencies:
-      '@cosmjs/amino': 0.36.2
-      '@cosmjs/encoding': 0.36.2
-      '@cosmjs/math': 0.36.2
-      '@cosmjs/proto-signing': 0.36.2
-      '@cosmjs/stream': 0.36.2
-      '@cosmjs/tendermint-rpc': 0.36.2
-      '@cosmjs/utils': 0.36.2
-      cosmjs-types: 0.9.0
+      '@cosmjs/amino': 0.39.0
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/proto-signing': 0.39.0
+      '@cosmjs/stream': 0.39.0
+      '@cosmjs/tendermint-rpc': 0.39.0
+      '@cosmjs/utils': 0.39.0
+      cosmjs-types: 0.11.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
     dev: false
 
-  /@cosmjs/stream@0.36.2:
-    resolution: {integrity: sha512-FlZx2Buovem837LdTLPkPFcxzuQ7zierAqSXwMPr/MG3k+qMxHNfLFTTCXMNWQ4ZlbYedud8ZqCL3/HKdS5mig==}
+  /@cosmjs/stream@0.39.0:
+    resolution: {integrity: sha512-h56it+ku5F6nlO94VyVAyz3pQqYsGRJ8v+5Y5erXYlQ0Qmr+rLrlSMCiViFEMK9INRSilAypdI5hKPCzotiqRg==}
     dependencies:
       xstream: 11.14.0
 
-  /@cosmjs/tendermint-rpc@0.36.2:
-    resolution: {integrity: sha512-76Z99C1NVf/Yv/1bWU0wul8MhRwVdqiZxqU5bcHqvJLoQ2nKUfGpSSYRdbMHfZ63J8ryRqQ95uPvPTfrBb+agw==}
+  /@cosmjs/tendermint-rpc@0.39.0:
+    resolution: {integrity: sha512-KowP/6P6Tx+OnGoimYnxuSBIfhB+vWqWER2pZpEIOHId8ZfcjQ9JS2F+Ah+WmZ9D+bKgn4pJ5ImAS13TeShIEw==}
     dependencies:
-      '@cosmjs/crypto': 0.36.2
-      '@cosmjs/encoding': 0.36.2
-      '@cosmjs/json-rpc': 0.36.2
-      '@cosmjs/math': 0.36.2
-      '@cosmjs/socket': 0.36.2
-      '@cosmjs/stream': 0.36.2
-      '@cosmjs/utils': 0.36.2
-      readonly-date: 1.0.0
+      '@cosmjs/crypto': 0.39.0
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/json-rpc': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/socket': 0.39.0
+      '@cosmjs/stream': 0.39.0
+      '@cosmjs/utils': 0.39.0
+      readonly-date-esm: 2.0.0
       xstream: 11.14.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  /@cosmjs/utils@0.36.2:
-    resolution: {integrity: sha512-OOr2HU/Ph+/GI1Fx2UCf3LOyX9YTCP51d2HitTOjjEJRYnkfKXP3lMBl1FZo5QaFWxnfuBc+Cj+cSoiQUJRyzQ==}
+  /@cosmjs/utils@0.39.0:
+    resolution: {integrity: sha512-h7fy7Tbcl9v8ABntp8+kqw2VmUus2HbnRJFyzTkM7byRktLtECHYNMsztwyl1rdHkzc8Nc2xs6K/56d7a+75aw==}
 
   /@craftzdog/react-native-buffer@6.1.1(react-native@0.81.5)(react@19.1.0):
     resolution: {integrity: sha512-YXJ0Jr4V+Hk2CZXpQw0A0NJeuiW2Rv6rAAutJCZ2k/JG13vLsppUibkJ8exSMxODtH9yJUrLiR96rilG3pFZ4Q==}
@@ -4549,6 +4549,11 @@ packages:
   /@noble/ciphers@1.3.0:
     resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
     engines: {node: ^14.21.3 || >=16}
+    dev: false
+
+  /@noble/ciphers@2.4.0:
+    resolution: {integrity: sha512-AnjFn0Jv92laAkvMrghlFZq4qQCIN/4DxFV/eooqtC2YTjB7kBeLMS2T9KJX4Dn+ZVXLOwK0lSgqDtx9gvxtiw==}
+    engines: {node: '>= 20.19.0'}
 
   /@noble/curves@1.2.0:
     resolution: {integrity: sha512-oYclrNgRaM9SsBUBVbb8M6DTV7ZHRTKugureoYEncY5c65HOmRzvSiTE3y5CYaPYJA/GVkrhXEoF0M3Ya9PMnw==}
@@ -4581,6 +4586,13 @@ packages:
     engines: {node: ^14.21.3 || >=16}
     dependencies:
       '@noble/hashes': 1.8.0
+    dev: false
+
+  /@noble/curves@2.4.0:
+    resolution: {integrity: sha512-P4/62zrgfH33CneE3Dn4WhJVA22YUU0eR51wKIan4NVRvwsA0YnPTwWGpNbpuacSujmSFLvyzpyuR30+fbq2Ew==}
+    engines: {node: '>= 20.19.0'}
+    dependencies:
+      '@noble/hashes': 2.4.0
 
   /@noble/hashes@1.3.2:
     resolution: {integrity: sha512-MVC8EAQp7MvEcm30KWENFjgR+Mkmf+D189XJTkFIlwohU5hcBbn1ZkKq7KVTi2Hme3PMGF390DaL52beVrIihQ==}
@@ -4594,6 +4606,11 @@ packages:
   /@noble/hashes@1.8.0:
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
+    dev: false
+
+  /@noble/hashes@2.4.0:
+    resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
+    engines: {node: '>= 20.19.0'}
 
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -6345,6 +6362,9 @@ packages:
     resolution: {integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==}
     dev: false
 
+  /@scure/base@2.2.0:
+    resolution: {integrity: sha512-b8XEupJibegiXV+tDUseI8oLQc8ei3d/4Jkb2RpbHh3MfE054ov3uIz2dhFkB3FI8iwYkEh0gGCApkrYggkPNg==}
+
   /@scure/bip32@1.7.0:
     resolution: {integrity: sha512-E4FFX/N3f4B80AKWp5dP6ow+flD1LQZo/w8UnLGYZO674jS6YnYeepycOOksv+vLPSpgN35wgKgy+ybfTb2SMw==}
     dependencies:
@@ -6359,6 +6379,11 @@ packages:
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
     dev: false
+
+  /@scure/bip39@2.4.0:
+    resolution: {integrity: sha512-82dxFbZUYboyOf0AXiydsQrFQ5Q4h9mX+O2UkE91ROYmsc0BKMGZLwDmy96Jpa2+vrtoxomjUhy1RPIgH/r2nA==}
+    dependencies:
+      '@noble/hashes': 2.4.0
 
   /@sinclair/typebox@0.27.10:
     resolution: {integrity: sha512-MTBk/3jGLNB2tVxv6uLlFh1iu64iYOQ2PbdOSK3NW8JZsmlaOh2q6sdtKowBhfw8QFLmYNzTW4/oK4uATIi6ZA==}
@@ -8873,9 +8898,6 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  /bech32@1.1.4:
-    resolution: {integrity: sha512-s0IrSOzLlbvX7yp4WBfPITzpAU8sqQcpsmwXDiKwrG4r491vwCO/XpejasRNl0piBMe/DvP4Tz0mIS/X1DPJBQ==}
-
   /bech32@2.0.0:
     resolution: {integrity: sha512-LcknSilhIGatDAsY1ak2I8VtGaHNhgMSYVxFrGLXv+xLHytaKZKcaUJJUE7qmBr7h33o5YQwP55pMI0xmkpJwg==}
     dev: false
@@ -9529,8 +9551,9 @@ packages:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
     dev: true
 
-  /cosmjs-types@0.9.0:
-    resolution: {integrity: sha512-MN/yUe6mkJwHnCFfsNPeCfXVhyxHYW6c/xDUzrSbBycYzw++XvWDMJArXp2pLdgD6FQ8DW79vkPjeNKVrXaHeQ==}
+  /cosmjs-types@0.11.0:
+    resolution: {integrity: sha512-kDSkgHpRTrg1413jCNehT3P21+EBxZWFMBr9JEzVfmPiNdtuwAoLAkCYo7c7i/pTakAwyHsXbxOg8kkD+AN33w==}
+    engines: {node: '>=20.19'}
 
   /create-ecdh@4.0.4:
     resolution: {integrity: sha512-mf+TCx8wWc9VpuxfP2ht0iSISLZnt0JgWlrOKZiNqyUZWnjIaCIVNQArMHnCZKfEYRg6IM7A+NeJoN8gf/Ws0A==}
@@ -11592,9 +11615,6 @@ packages:
       safe-buffer: 5.2.1
       to-buffer: 1.2.2
     dev: true
-
-  /hash-wasm@4.12.0:
-    resolution: {integrity: sha512-+/2B2rYLb48I/evdOIhP+K/DD2ca2fgBjp6O+GBEnCDk2e4rpeXIK8GvIyRPjTezgmWn9gmKwkQjjx6BtqDHVQ==}
 
   /hash.js@1.1.7:
     resolution: {integrity: sha512-taOaskGt4z4SOANNseOviYDvjEJinIkRgmp7LbKP2YTTmVxWBl87s/uzK9r+44BclBSp2X7K1hqeNfz9JbBeXA==}
@@ -14293,10 +14313,6 @@ packages:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
     dev: true
 
-  /pako@2.1.0:
-    resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
-    dev: false
-
   /parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
@@ -15480,8 +15496,8 @@ packages:
     engines: {node: '>= 20.19.0'}
     dev: false
 
-  /readonly-date@1.0.0:
-    resolution: {integrity: sha512-tMKIV7hlk0h4mO3JTmmVuIlJVXjKk3Sep9Bf5OH0O+758ruuVkUy2J9SttDLm91IEX/WHlXPSpxMGjPj4beMIQ==}
+  /readonly-date-esm@2.0.0:
+    resolution: {integrity: sha512-adlyzz144ofU22kjnnRIN0HPPqIbc5IZvMmMuVtEgMY4mKgNyKqOVb4Fa2GUzE2By4TEPOYoGqDoKRyqmeEuPQ==}
 
   /real-require@0.2.0:
     resolution: {integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg==}

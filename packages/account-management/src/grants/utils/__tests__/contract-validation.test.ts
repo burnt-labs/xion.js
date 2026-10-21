@@ -11,7 +11,7 @@ import {
   validateContractGrantsOrThrow,
 } from "../contract-validation";
 import type { ContractGrantDescription } from "../../../types/grants";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 
 // Mock @burnt-labs/signers
 vi.mock("@burnt-labs/signers", () => ({
@@ -34,7 +34,7 @@ vi.mock("@burnt-labs/signers", () => ({
 }));
 
 // Mock CosmWasmClient
-vi.mock("@cosmjs/cosmwasm-stargate", () => ({
+vi.mock("@cosmjs/cosmwasm", () => ({
   CosmWasmClient: {
     connect: vi.fn(),
   },
