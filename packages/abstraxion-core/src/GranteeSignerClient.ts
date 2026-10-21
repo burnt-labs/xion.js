@@ -3,7 +3,7 @@ import {
   DeliverTxResponse,
   SigningCosmWasmClient,
   SigningCosmWasmClientOptions,
-} from "@cosmjs/cosmwasm-stargate";
+} from "@cosmjs/cosmwasm";
 import {
   AccountData,
   EncodeObject,
@@ -36,6 +36,18 @@ export interface GranteeSignerOptions {
   readonly treasuryAddress?: string;
 }
 
+/**
+ * CosmJS 0.39 also accepts a `DynamicGasPriceConfig` (Osmosis fee market) as
+ * `gasPrice`. XION has a fixed minimum gas price and this client computes
+ * "auto" fees itself, so it keeps taking a plain `GasPrice`.
+ */
+export type GranteeSignerClientOptions = Omit<
+  SigningCosmWasmClientOptions,
+  "gasPrice"
+> & {
+  readonly gasPrice?: GasPrice;
+};
+
 export class GranteeSignerClient extends SigningCosmWasmClient {
   protected readonly granterAddress: string;
   private readonly _granteeAddress: string;
@@ -61,7 +73,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
   public static async connectWithSigner(
     endpoint: string | HttpEndpoint,
     signer: OfflineSigner,
-    options: SigningCosmWasmClientOptions & GranteeSignerOptions,
+    options: GranteeSignerClientOptions & GranteeSignerOptions,
   ): Promise<GranteeSignerClient> {
     const tmClient = await getRpcClient(endpoint);
     return GranteeSignerClient.createWithSigner(tmClient, signer, options);
@@ -70,7 +82,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
   public static createWithSigner(
     cometClient: CometClient,
     signer: OfflineSigner,
-    options: SigningCosmWasmClientOptions & GranteeSignerOptions,
+    options: GranteeSignerClientOptions & GranteeSignerOptions,
   ): GranteeSignerClient {
     return new GranteeSignerClient(cometClient, signer, options);
   }
@@ -84,7 +96,7 @@ export class GranteeSignerClient extends SigningCosmWasmClient {
       gasPrice,
       treasuryAddress,
       ...options
-    }: SigningCosmWasmClientOptions & GranteeSignerOptions,
+    }: GranteeSignerClientOptions & GranteeSignerOptions,
   ) {
     super(cometClient, signer, { ...options, gasPrice });
     if (granterAddress === undefined) {

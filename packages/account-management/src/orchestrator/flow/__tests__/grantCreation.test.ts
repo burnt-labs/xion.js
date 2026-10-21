@@ -31,8 +31,8 @@ vi.mock("@burnt-labs/signers", async () => {
 
 // Mock dependencies
 
-vi.mock("@cosmjs/cosmwasm-stargate", async () => {
-  const actual = await vi.importActual("@cosmjs/cosmwasm-stargate");
+vi.mock("@cosmjs/cosmwasm", async () => {
+  const actual = await vi.importActual("@cosmjs/cosmwasm");
   return {
     ...actual,
     CosmWasmClient: {
@@ -200,7 +200,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should build grant messages from treasury contract", async () => {
-      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+      const { CosmWasmClient } = await import("@cosmjs/cosmwasm");
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
       const mockQueryClient = {
@@ -234,7 +234,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should add deploy_fee_grant message when using treasury", async () => {
-      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+      const { CosmWasmClient } = await import("@cosmjs/cosmwasm");
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
       const mockQueryClient = {
@@ -571,7 +571,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should fall back to manual config if treasury query fails", async () => {
-      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+      const { CosmWasmClient } = await import("@cosmjs/cosmwasm");
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
       const mockQueryClient = {
@@ -610,7 +610,7 @@ describe("grantCreation.ts - Grant Creation Flow", () => {
     });
 
     it("should pass daodao indexer URL to treasury generator", async () => {
-      const { CosmWasmClient } = await import("@cosmjs/cosmwasm-stargate");
+      const { CosmWasmClient } = await import("@cosmjs/cosmwasm");
       mockStorageStrategy.getItem.mockResolvedValue(null);
 
       const mockQueryClient = {

@@ -36,7 +36,7 @@ describe("accountParser - customAccountFromAny", () => {
       const result = customAccountFromAny(input);
 
       expect(result.address).toBe("xion1standard");
-      expect(result.accountNumber).toBe(5);
+      expect(result.accountNumber).toBe(5n);
       expect(result.sequence).toBe(2);
       expect(result.pubkey).not.toBeNull();
     });
@@ -68,13 +68,13 @@ describe("accountParser - customAccountFromAny", () => {
 
       expect(result.address).toBe("xion1nopubkey");
       expect(result.pubkey).toBeNull();
-      expect(result.accountNumber).toBe(0);
+      expect(result.accountNumber).toBe(0n);
       expect(result.sequence).toBe(0);
     });
   });
 
   describe("Edge Cases", () => {
-    it("should properly convert BigInt account numbers to regular numbers", () => {
+    it("should return account numbers as bigint and sequences as numbers", () => {
       const baseAccount = BaseAccount.fromPartial({
         address: "xion1bigint",
         pubKey: undefined,
@@ -89,9 +89,9 @@ describe("accountParser - customAccountFromAny", () => {
 
       const result = customAccountFromAny(input);
 
-      expect(typeof result.accountNumber).toBe("number");
+      expect(typeof result.accountNumber).toBe("bigint");
       expect(typeof result.sequence).toBe("number");
-      expect(result.accountNumber).toBe(999);
+      expect(result.accountNumber).toBe(999n);
       expect(result.sequence).toBe(888);
     });
   });
