@@ -18,9 +18,10 @@ import {
 import type {
   GrantConfig,
   AccountCreationConfig,
-  CompositeAccountStrategy,
+  IndexerStrategy,
 } from "@burnt-labs/account-management";
 import {
+  CompositeAccountStrategy,
   createCompositeAccountStrategy,
   convertIndexerConfig,
 } from "@burnt-labs/account-management";
@@ -172,6 +173,14 @@ export function createAccountStrategyFromConfig(
   config: NormalizedAbstraxionConfig,
   signerAuth: SignerAuthentication,
 ): CompositeAccountStrategy {
+  // During SSR/prerendering normalizeAbstraxionConfig tolerates a missing
+  // network (the env var may only be set in the browser). Constructing the
+  // runtime must not throw there either; nothing connects on the server, so
+  // return a strategy that refuses discovery (and therefore account creation).
+  if (typeof window === "undefined" && !config.chainId) {
+    return new CompositeAccountStrategy(new UnresolvedNetworkAccountStrategy());
+  }
+
   const aaApiUrl = resolveAaApiUrl(config, signerAuth);
 
   if (!aaApiUrl) {
@@ -204,6 +213,21 @@ export function createAccountStrategyFromConfig(
       addressPrefix,
     },
   });
+}
+
+/**
+ * Discovery placeholder for a runtime built on the server before the network
+ * is known. Every lookup fails, so the composite strategy reports a discovery
+ * error instead of an empty result that would permit account creation.
+ */
+class UnresolvedNetworkAccountStrategy implements IndexerStrategy {
+  async fetchSmartAccounts(): ReturnType<
+    IndexerStrategy["fetchSmartAccounts"]
+  > {
+    throw new Error(
+      'account discovery needs a network: set network to "mainnet" or "testnet" (or chainId for a custom chain)',
+    );
+  }
 }
 
 /**

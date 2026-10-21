@@ -241,3 +241,46 @@ describe("signer config without aaApiUrl", () => {
     ).toThrow("aaApiUrl is required");
   });
 });
+
+describe("signer config without a network during SSR", () => {
+  const ssrConfig = () =>
+    normalizeAbstraxionConfig({
+      authentication: {
+        type: "signer",
+        getSignerConfig: vi.fn(),
+      } as SignerAuthentication,
+    });
+
+  it("builds a strategy without throwing", () => {
+    const config = ssrConfig();
+    expect(config.chainId).toBe("");
+
+    expect(() =>
+      createAccountStrategyFromConfig(
+        config,
+        config.authentication as SignerAuthentication,
+      ),
+    ).not.toThrow();
+  });
+
+  it("refuses discovery instead of returning an empty result", async () => {
+    const config = ssrConfig();
+    const strategy = createAccountStrategyFromConfig(
+      config,
+      config.authentication as SignerAuthentication,
+    );
+
+    await expect(
+      strategy.fetchSmartAccounts("xion1abc", "Secp256K1"),
+    ).rejects.toThrow(/account discovery needs a network/);
+  });
+
+  it("still requires a network in the browser", () => {
+    vi.stubGlobal("window", {});
+    try {
+      expect(() => ssrConfig()).toThrow(/network is required/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
