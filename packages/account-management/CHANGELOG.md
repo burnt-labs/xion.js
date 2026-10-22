@@ -1,5 +1,44 @@
 # @burnt-labs/account-management
 
+## 1.0.0-alpha.17
+
+### Major Changes
+
+- [#408](https://github.com/burnt-labs/xion.js/pull/408) [`cf02fd6`](https://github.com/burnt-labs/xion.js/commit/cf02fd6fedbc9c3235e2dc3b3874041035ba5827) Thanks [@2xburnt](https://github.com/2xburnt)! - Apps configure only the network. `network: "mainnet" | "testnet"` resolves the chain ID, RPC, REST, gas price, fee granter, treasury indexer and, in signer mode, the AA API URL and address prefix:
+
+  ```ts
+  {
+    network: "mainnet",
+    treasury: "xion1...", // optional, app-specific
+    authentication: { type: "signer", getSignerConfig },
+  }
+  ```
+
+  - `@burnt-labs/constants`: new `XionNetwork`, `isXionNetwork`, `getChainIdForNetwork` (`mainnet` → `xion-mainnet-1`, `testnet` → `xion-testnet-2`), `getAaApiUrl` (`https://aa-api.mainnet.burnt.com`, `https://aa-api.testnet.burnt.com`) and `getAddressPrefix`.
+  - `@burnt-labs/abstraxion-js`: `AbstraxionConfig.network` added and `chainId` made optional. Set one of them; if both are set they must name the same chain, otherwise normalization throws, and an unknown network also throws. In signer mode, `authentication.aaApiUrl` and `authentication.smartAccountContract` are optional overrides. `smartAccountContract.codeId` is deprecated and ignored, because the AA API and the chain report each account's code ID. Account creation no longer depends on `feeGranter`, since the AA API pays for new accounts with its own fee granter. A custom chain needs `feeGranter` only when grants are configured. A chain with no default AA API needs `aaApiUrl`, and the error names it. `createAccountCreationConfigFromConfig` no longer returns `codeId`. `XionNetwork` is re-exported.
+  - **Breaking (alpha line):** code that reads `AbstraxionConfig.chainId`, `SignerAuthentication.aaApiUrl` / `smartAccountContract`, or the `codeId` from `createAccountCreationConfigFromConfig` now sees optional values (read `NormalizedAbstraxionConfig.chainId` for the resolved chain). A signer config without `smartAccountContract` on mainnet or testnet now discovers and creates accounts through the network's AA API. Indexer-only discovery (no creation) remains for a chain with no AA API and no `smartAccountContract`.
+  - `@burnt-labs/account-management`: `SmartAccountContractConfig.codeId` and `AccountCreationConfig.feeGranter` are optional (deprecated). Code that reads them now sees `number | undefined` / `string | undefined`.
+  - `@burnt-labs/abstraxion-react-native`: the provider accepts `network` without `chainId`. With neither set, it still defaults to testnet.
+
+  Existing configs that pass `chainId`, `aaApiUrl`, `smartAccountContract: { codeId, addressPrefix }` and `feeGranter` keep working unchanged.
+
+### Minor Changes
+
+- [#412](https://github.com/burnt-labs/xion.js/pull/412) [`0ad5140`](https://github.com/burnt-labs/xion.js/commit/0ad5140363b1936e10a77dd0a03ef59768618153) Thanks [@2xburnt](https://github.com/2xburnt)! - Move to CosmJS 0.39 and carry account numbers as `bigint`, for xion v32 (Cosmos SDK 0.55).
+
+  From v32 on, every new account (new smart accounts and the session keys created at login) gets an account number of at least 2^63. CosmJS 0.36 cannot decode those, so `getAccount`, `getSequence` and signing fail for them.
+  - `customAccountFromAny` returns `accountNumber` as a `bigint` for every account type, and `AAClient` and `GranteeSignerClient` sign with the exact number.
+  - `@cosmjs/cosmwasm-stargate` is replaced by `@cosmjs/cosmwasm` 0.39 (the old package stops at 0.38). `CosmWasmClient` re-exported from `@burnt-labs/abstraxion-js` now comes from `@cosmjs/cosmwasm`.
+  - Breaking for callers: `Account.accountNumber` and `SequenceResponse.accountNumber` are `bigint` (CosmJS 0.39). Do not convert them with `Number()`.
+  - `GranteeSignerClient` options keep taking a plain `GasPrice`.
+  - CosmJS 0.39.0's `fromBech32` throws with `@scure/base` 2.3.0 or later (cosmos/cosmjs#1982). Until CosmJS ships the fix, apps should pin it, e.g. pnpm `"@cosmjs/encoding>@scure/base": "~2.2.0"` or npm `"overrides": { "@cosmjs/encoding": { "@scure/base": "~2.2.0" } }`.
+
+### Patch Changes
+
+- Updated dependencies [[`0ad5140`](https://github.com/burnt-labs/xion.js/commit/0ad5140363b1936e10a77dd0a03ef59768618153)]:
+  - @burnt-labs/signers@1.0.0-alpha.13
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.75
+
 ## 1.0.0-alpha.16
 
 ### Minor Changes
