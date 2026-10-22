@@ -125,7 +125,7 @@ describe.each(CONFIGS)("signer config with %s", (_name, contract) => {
 
     expect(createAccountCreationConfigFromConfig(config, signerAuth)).toEqual({
       aaApiUrl: AA_API_URL,
-      smartAccountContract: { codeId: 1880, addressPrefix: "xion" },
+      smartAccountContract: { addressPrefix: "xion" },
       feeGranter: FEE_GRANTER,
     });
   });
@@ -207,10 +207,26 @@ describe.each(CONFIGS)("signer config with %s", (_name, contract) => {
 });
 
 describe("signer config without aaApiUrl", () => {
-  it("fails fast instead of discovering without the AA API", () => {
+  it("uses the network's AA API on a known chain", () => {
     const base = signerConfig({ codeId: 1880, addressPrefix: "xion" });
     const config = normalizeAbstraxionConfig({
       ...base,
+      authentication: {
+        ...(base.authentication as SignerAuthentication),
+        aaApiUrl: "",
+      },
+    });
+
+    expect((config.authentication as SignerAuthentication).aaApiUrl).toBe(
+      "https://aa-api.testnet.burnt.com",
+    );
+  });
+
+  it("fails fast on a custom chain instead of discovering without the AA API", () => {
+    const base = signerConfig({ codeId: 1880, addressPrefix: "xion" });
+    const config = normalizeAbstraxionConfig({
+      ...base,
+      chainId: "xion-custom-1",
       authentication: {
         ...(base.authentication as SignerAuthentication),
         aaApiUrl: "",
@@ -223,5 +239,48 @@ describe("signer config without aaApiUrl", () => {
         config.authentication as SignerAuthentication,
       ),
     ).toThrow("aaApiUrl is required");
+  });
+});
+
+describe("signer config without a network during SSR", () => {
+  const ssrConfig = () =>
+    normalizeAbstraxionConfig({
+      authentication: {
+        type: "signer",
+        getSignerConfig: vi.fn(),
+      } as SignerAuthentication,
+    });
+
+  it("builds a strategy without throwing", () => {
+    const config = ssrConfig();
+    expect(config.chainId).toBe("");
+
+    expect(() =>
+      createAccountStrategyFromConfig(
+        config,
+        config.authentication as SignerAuthentication,
+      ),
+    ).not.toThrow();
+  });
+
+  it("refuses discovery instead of returning an empty result", async () => {
+    const config = ssrConfig();
+    const strategy = createAccountStrategyFromConfig(
+      config,
+      config.authentication as SignerAuthentication,
+    );
+
+    await expect(
+      strategy.fetchSmartAccounts("xion1abc", "Secp256K1"),
+    ).rejects.toThrow(/account discovery needs a network/);
+  });
+
+  it("still requires a network in the browser", () => {
+    vi.stubGlobal("window", {});
+    try {
+      expect(() => ssrConfig()).toThrow(/network is required/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
