@@ -20,37 +20,43 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
   return {
     ...actual,
-    AbstraxionAuth: vi.fn().mockImplementation(() => ({
-      configureAbstraxionInstance: vi.fn(),
-      logout: vi.fn().mockResolvedValue(undefined),
-      generateAndStoreTempAccount: vi.fn().mockResolvedValue({
-        getAccounts: vi.fn().mockResolvedValue([
-          {
-            address: "xion1grantee123",
-            algo: "secp256k1",
-            pubkey: new Uint8Array(),
-          },
-        ]),
-      }),
-      getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
-      setGranter: vi.fn().mockResolvedValue(undefined),
-      getSigner: vi.fn().mockResolvedValue({
-        signAndBroadcast: vi.fn(),
-      }),
-      abstractAccount: null,
-    })),
-    MessageChannelManager: vi.fn().mockImplementation(() => ({
-      sendRequest: mockSendRequest,
-    })),
+    AbstraxionAuth: vi.fn().mockImplementation(function () {
+      return {
+        configureAbstraxionInstance: vi.fn(),
+        logout: vi.fn().mockResolvedValue(undefined),
+        generateAndStoreTempAccount: vi.fn().mockResolvedValue({
+          getAccounts: vi.fn().mockResolvedValue([
+            {
+              address: "xion1grantee123",
+              algo: "secp256k1",
+              pubkey: new Uint8Array(),
+            },
+          ]),
+        }),
+        getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
+        setGranter: vi.fn().mockResolvedValue(undefined),
+        getSigner: vi.fn().mockResolvedValue({
+          signAndBroadcast: vi.fn(),
+        }),
+        abstractAccount: null,
+      };
+    }),
+    MessageChannelManager: vi.fn().mockImplementation(function () {
+      return {
+        sendRequest: mockSendRequest,
+      };
+    }),
     GranteeSignerClient: {
       connectWithSigner: vi.fn(),
     },
-    TypedEventEmitter: vi.fn().mockImplementation(() => ({
-      on: vi.fn(),
-      off: vi.fn(),
-      emit: mockEmit,
-      removeAllListeners: vi.fn(),
-    })),
+    TypedEventEmitter: vi.fn().mockImplementation(function () {
+      return {
+        on: vi.fn(),
+        off: vi.fn(),
+        emit: mockEmit,
+        removeAllListeners: vi.fn(),
+      };
+    }),
   };
 });
 
@@ -69,10 +75,12 @@ vi.mock("@burnt-labs/account-management", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
-    ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
-      restoreSession: vi.fn().mockResolvedValue({ restored: false }),
-      destroy: vi.fn(),
-    })),
+    ConnectionOrchestrator: vi.fn().mockImplementation(function () {
+      return {
+        restoreSession: vi.fn().mockResolvedValue({ restored: false }),
+        destroy: vi.fn(),
+      };
+    }),
     isSessionRestorationError: vi.fn().mockReturnValue(false),
     isSessionRestored: vi.fn().mockReturnValue(false),
     getAccountInfoFromRestored: vi.fn(),
@@ -442,31 +450,30 @@ describe("IframeController — happy paths", () => {
       // covers the narrow race the previous implementation missed.
       const { AbstraxionAuth } = await import("@burnt-labs/abstraxion-core");
       let resolveGetSigner: ((value: unknown) => void) | undefined;
-      vi.mocked(AbstraxionAuth).mockImplementationOnce(
-        () =>
-          ({
-            configureAbstraxionInstance: vi.fn(),
-            logout: vi.fn().mockResolvedValue(undefined),
-            generateAndStoreTempAccount: vi.fn().mockResolvedValue({
-              getAccounts: vi.fn().mockResolvedValue([
-                {
-                  address: "xion1grantee123",
-                  algo: "secp256k1",
-                  pubkey: new Uint8Array(),
-                },
-              ]),
-            }),
-            getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
-            setGranter: vi.fn().mockResolvedValue(undefined),
-            getSigner: vi.fn(
-              () =>
-                new Promise((resolve) => {
-                  resolveGetSigner = resolve;
-                }),
-            ),
-            abstractAccount: null,
-          }) as never,
-      );
+      vi.mocked(AbstraxionAuth).mockImplementationOnce(function () {
+        return {
+          configureAbstraxionInstance: vi.fn(),
+          logout: vi.fn().mockResolvedValue(undefined),
+          generateAndStoreTempAccount: vi.fn().mockResolvedValue({
+            getAccounts: vi.fn().mockResolvedValue([
+              {
+                address: "xion1grantee123",
+                algo: "secp256k1",
+                pubkey: new Uint8Array(),
+              },
+            ]),
+          }),
+          getKeypairAddress: vi.fn().mockResolvedValue("xion1grantee123"),
+          setGranter: vi.fn().mockResolvedValue(undefined),
+          getSigner: vi.fn(
+            () =>
+              new Promise((resolve) => {
+                resolveGetSigner = resolve;
+              }),
+          ),
+          abstractAccount: null,
+        } as never;
+      });
 
       mockSendRequest.mockResolvedValueOnce({ address: "xion1granter789" });
 

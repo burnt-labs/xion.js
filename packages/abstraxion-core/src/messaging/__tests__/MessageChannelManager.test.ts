@@ -31,10 +31,12 @@ describe("MessageChannelManager", () => {
 
     vi.stubGlobal(
       "MessageChannel",
-      vi.fn(() => ({
-        port1: mockPort1,
-        port2: mockPort2,
-      })),
+      vi.fn(function () {
+        return {
+          port1: mockPort1,
+          port2: mockPort2,
+        };
+      }),
     );
 
     mockIframe = {
