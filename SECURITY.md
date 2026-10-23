@@ -18,21 +18,15 @@ disclosure before a patch is available increases the harm to users.
 | Security vulnerability           | **Security → Report a vulnerability** on this repository, or email [security@burnt.com](mailto:security@burnt.com) |
 | Non-sensitive or operational bug | Open a GitHub issue on this repository                                                                             |
 
-Prefer GitHub private vulnerability reporting: the fix is developed against the
-report, and you are credited on the published advisory and in any CVE we
-request.
+Prefer GitHub private vulnerability reporting.
 
 Findings in the **hosted applications** (`app.burnt.com`, `auth.burnt.com`,
 the account abstraction API) belong to the same program but should go to
 [security@burnt.com](mailto:security@burnt.com) — see the program document for
 their scope table and authorized testing hostnames.
 
-We acknowledge receipt within **5 business days** and provide a triage decision
-within **14 days**. Active exploitation, or confirmed attacker awareness of an
-unpatched vulnerability, escalates the issue to Critical **response handling**
-— prioritization, coordination, and disclosure timing — regardless of its
-original classification. That escalation does not change the finding's
-severity assessment or reward eligibility.
+**The Burnt Labs bug bounty program is currently paused.** We welcome
+submissions, but we will not respond to them and will not pay rewards.
 
 ## Scope
 
@@ -61,12 +55,8 @@ than the one presented to the user, that leaks or extends the life of a
 session key, or that lets a third party influence transaction contents,
 qualifies regardless of how many dApps are known to be affected.
 
-**Critical**, **High**, **Medium**, and **Low** findings are all reward
-eligible. Collecting a bounty requires completing a KYC process; we cannot pay reporters in
-sanctioned jurisdictions. Where several reports describe the same underlying
-issue, the first complete report with a working proof of concept is the one
-considered. We assess reports as submitted; we do not reclassify a report to a
-different severity on a reporter's behalf.
+No rewards are paid while the bug bounty program is paused. Submitting a
+report does not entitle you to a bounty or any other payment.
 
 ## Proof of Concept
 
