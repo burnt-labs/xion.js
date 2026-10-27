@@ -1,3 +1,7 @@
+# Sanctioned bespoke: github-workflows v1.8.0 has no multi-job integration flow
+# with build artifacts, Playwright containers, runtime secrets and advisory mainnet.
+# Preserve the existing Ubicloud execution graph; see .github/CI-MIGRATION.md.
+
 name: Integration Tests
 
 on:

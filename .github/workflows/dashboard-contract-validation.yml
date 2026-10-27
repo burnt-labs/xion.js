@@ -1,3 +1,7 @@
+# Sanctioned bespoke: github-workflows v1.8.0 has no HTTP shell contract flow
+# with blocking testnet, advisory mainnet and conditional result comments.
+# Compatibility and re-evaluation criteria: .github/CI-MIGRATION.md.
+
 name: Dashboard Contract Validation
 
 # Fast HTTP-level check that the deployed XION dashboard is reachable and
@@ -38,7 +42,7 @@ on:
 jobs:
   http-shell-testnet:
     name: HTTP shell — testnet (auth.testnet)
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     timeout-minutes: 5
     steps:
       - name: Checkout
@@ -55,7 +59,7 @@ jobs:
   # follow-up job which posts a PR comment.
   http-shell-mainnet:
     name: HTTP shell — mainnet (settings.burnt.com) [informational]
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     timeout-minutes: 5
     outputs:
       had_warnings: ${{ steps.validate.outputs.had_warnings }}
@@ -74,7 +78,7 @@ jobs:
     name: Post PR comment on testnet failure
     needs: [http-shell-testnet]
     if: failure() && github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     permissions:
       pull-requests: write
       contents: read
@@ -113,7 +117,7 @@ jobs:
     name: Post PR comment on mainnet warnings
     needs: [http-shell-mainnet]
     if: needs.http-shell-mainnet.outputs.had_warnings == 'true' && github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     permissions:
       pull-requests: write
       contents: read

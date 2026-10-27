@@ -1,3 +1,9 @@
+# Sanctioned bespoke: npm trusted publishing excludes self-hosted runners, so
+# retain GitHub-hosted Ubuntu here rather than breaking OIDC or adding npm tokens.
+# github-workflows v1.8.0 Changesets uses Ubicloud and has no always-run post-publish
+# dependency-train verification hook. Preserve signed API writes, package version
+# commands and release.yml publisher identity; see .github/CI-MIGRATION.md.
+
 # This workflow will release the packages with Changesets
 
 name: Release
