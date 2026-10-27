@@ -17,6 +17,9 @@ this branch. Older organization-wide counts are not this branch's inventory.
 This change moves 12 of the 13 hosted jobs to Ubicloud. The result is 17
 Ubicloud jobs and one explicit hosted npm-publishing exception. It is **not**
 full shared-workflow adoption or complete removal of GitHub-hosted runners.
+The documented exceptions are an interim migration boundary, not the target
+architecture. Centralization remains required wherever the released platform
+can preserve the consumer's behavior; there is no permanent bespoke exemption.
 
 ## Runner selection
 
@@ -100,6 +103,35 @@ Keep repository-specific contract/schema checks local as the platform guidance
 allows. Revisit central quality after the consumer prerequisites are fixed, and
 central Changesets after npm runner support and the post-publish hook align.
 Changes to the shared platform itself are outside this xion.js-only PR.
+
+### Owning follow-ups and adoption conditions
+
+- **Consumer quality owner:** repair the existing test-utils type-check and
+  align the Vitest coverage provider with the locked Vitest version. Measure
+  the real enforced coverage gates without lowering thresholds. Once these
+  pass, replace the compatible quality surface with `required-quality.yml`
+  pinned to the latest released SHA. Existing build-artifact and manual URL
+  selection behavior still needs to be retained alongside that caller.
+- **Shared platform owner:** support the hosted npm trusted-publishing boundary
+  in the Changesets flow and an always-run post-publish verification command
+  that executes on both partial publish failure and reported publication.
+  Until both exist, replacing `release.yml` would break its current contract.
+- **Shared platform owner:** assess whether at least two consumers need the
+  artifact hand-off and dispatch-selected generation interface. If supported
+  centrally later, remove those bespoke portions rather than keeping this
+  document as an exception in perpetuity. Repository-specific contract and
+  schema checks remain consumer checks, not deploy orchestrators.
+
+No released entrypoint can be newly adopted here today without either adding
+already-failing mandatory gates or losing publishing/artifact semantics. This
+PR therefore records **zero shared workflow callers**, not a completed shared
+workflow migration. It does not claim to address Cloudflare, Phala, or Modal
+platform coverage; those belong to their owning central-platform workstream.
+
+The existing default-branch Release run already fails its post-publish verifier:
+[Release on October 23, 2026](https://github.com/burnt-labs/xion.js/actions/runs/39986801030)
+reports seven local package versions absent from npm. This migration neither
+retries publishing nor removes that blocking verifier.
 
 ## Retained branch follow-ups
 
