@@ -15,7 +15,7 @@ on:
 jobs:
   validate-schema:
     name: Validate Generated Types Against Live DaoDAO Indexer Schema
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     timeout-minutes: 10
 
     steps:

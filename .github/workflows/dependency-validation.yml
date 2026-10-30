@@ -19,7 +19,7 @@ on:
 jobs:
   validate-dependencies:
     name: Validate Package Dependencies
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     timeout-minutes: 10
 
     steps:
