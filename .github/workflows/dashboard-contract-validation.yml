@@ -1,3 +1,7 @@
+# Sanctioned bespoke: github-workflows v1.8.0 has no HTTP shell contract flow
+# with blocking testnet, advisory mainnet and conditional result comments.
+# Compatibility and re-evaluation criteria: .github/CI-MIGRATION.md.
+
 name: Dashboard Contract Validation
 
 # Fast HTTP-level check that the deployed XION dashboard is reachable and

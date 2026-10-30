@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/signers",
-  "version": "1.0.0-alpha.11",
+  "version": "1.0.0-alpha.13",
   "description": "Smart account signing implementations and authenticator interfaces for XION",
   "repository": {
     "type": "git",
@@ -51,20 +51,20 @@
   "dependencies": {
     "@burnt-labs/constants": "workspace:*",
     "@burnt-labs/xion-types": "30.0.0-rc1",
-    "@cosmjs/amino": "^0.36.0",
-    "@cosmjs/cosmwasm-stargate": "^0.36.0",
-    "@cosmjs/crypto": "^0.36.0",
-    "@cosmjs/encoding": "^0.36.0",
-    "@cosmjs/math": "^0.36.0",
-    "@cosmjs/proto-signing": "^0.36.0",
-    "@cosmjs/stargate": "^0.36.0",
-    "@cosmjs/tendermint-rpc": "^0.36.0",
-    "@cosmjs/utils": "^0.36.0",
+    "@cosmjs/amino": "^0.39.0",
+    "@cosmjs/cosmwasm": "^0.39.0",
+    "@cosmjs/crypto": "^0.39.0",
+    "@cosmjs/encoding": "^0.39.0",
+    "@cosmjs/math": "^0.39.0",
+    "@cosmjs/proto-signing": "^0.39.0",
+    "@cosmjs/stargate": "^0.39.0",
+    "@cosmjs/tendermint-rpc": "^0.39.0",
+    "@cosmjs/utils": "^0.39.0",
     "@github/webauthn-json": "^2.1.1",
     "@protobuf-ts/runtime": "^2.9.4",
     "bech32": "^2.0.0",
     "buffer": "^6.0.3",
-    "cosmjs-types": "^0.9.0",
+    "cosmjs-types": "^0.11.0",
     "ethers": "^6.15.0",
     "long": "^5.2.3",
     "protobufjs": "^7.2.4"
@@ -79,6 +79,6 @@
     "tsx": "^4.7.0",
     "typescript": "^5.2.2",
     "vite": "^7.3.5",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.11"
   }
 }

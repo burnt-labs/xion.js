@@ -15,6 +15,7 @@ export type {
   SignResult,
   SpendLimit,
   TreasuryIndexerConfig,
+  XionNetwork,
 } from "./types";
 
 export {
@@ -63,7 +64,7 @@ export { RequireSigningClient, AAClient } from "./signing";
 export type { GranteeSignerClient } from "./signing";
 
 export type { OfflineDirectSigner } from "@cosmjs/proto-signing";
-export { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+export { CosmWasmClient } from "@cosmjs/cosmwasm";
 export type { AccountState } from "@burnt-labs/account-management";
 export {
   AccountStateGuards,

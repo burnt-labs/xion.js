@@ -10,15 +10,17 @@ vi.mock("@burnt-labs/abstraxion-core", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/abstraxion-core")>();
   return {
     ...actual,
-    AbstraxionAuth: vi.fn().mockImplementation(() => ({
-      configureAbstraxionInstance: vi.fn(),
-      logout: vi.fn().mockResolvedValue(undefined),
-      generateAndStoreTempAccount: vi.fn(),
-      getKeypairAddress: vi.fn(),
-      setGranter: vi.fn(),
-      getSigner: vi.fn(),
-      abstractAccount: null,
-    })),
+    AbstraxionAuth: vi.fn().mockImplementation(function () {
+      return {
+        configureAbstraxionInstance: vi.fn(),
+        logout: vi.fn().mockResolvedValue(undefined),
+        generateAndStoreTempAccount: vi.fn(),
+        getKeypairAddress: vi.fn(),
+        setGranter: vi.fn(),
+        getSigner: vi.fn(),
+        abstractAccount: null,
+      };
+    }),
   };
 });
 
@@ -27,10 +29,12 @@ vi.mock("@burnt-labs/account-management", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
-    ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
-      restoreSession: vi.fn().mockResolvedValue({ restored: false }),
-      destroy: vi.fn(),
-    })),
+    ConnectionOrchestrator: vi.fn().mockImplementation(function () {
+      return {
+        restoreSession: vi.fn().mockResolvedValue({ restored: false }),
+        destroy: vi.fn(),
+      };
+    }),
     isSessionRestorationError: vi.fn().mockReturnValue(false),
     isSessionRestored: vi.fn().mockReturnValue(false),
     getAccountInfoFromRestored: vi.fn(),

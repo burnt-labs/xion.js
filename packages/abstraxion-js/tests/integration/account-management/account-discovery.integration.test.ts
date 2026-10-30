@@ -54,6 +54,7 @@ describe("Account Discovery Integration Tests", () => {
 
         // Create RPC-based account strategy
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
@@ -105,6 +106,7 @@ describe("Account Discovery Integration Tests", () => {
         );
 
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
@@ -133,6 +135,7 @@ describe("Account Discovery Integration Tests", () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
@@ -173,6 +176,7 @@ describe("Account Discovery Integration Tests", () => {
           "0x742d35cc6634c0532925a3b844bc9e7595f0beb".toLowerCase();
 
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
@@ -209,6 +213,7 @@ describe("Account Discovery Integration Tests", () => {
         // Create composite strategy with RPC
         // In production, this might include indexer strategies that fallback to RPC
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
@@ -244,9 +249,10 @@ describe("Account Discovery Integration Tests", () => {
       async () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
-        // Create strategy with invalid RPC URL
+        // Unreachable AA API: discovery must report an error, never "no account"
         const invalidRpcStrategy = new RpcAccountStrategy({
-          rpcUrl: "https://invalid-rpc-url-that-does-not-exist.com",
+          aaApiUrl: "https://invalid-aa-api-url-that-does-not-exist.com",
+          rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
           prefix: "xion",
@@ -276,6 +282,7 @@ describe("Account Discovery Integration Tests", () => {
       "should handle invalid authenticator format",
       async () => {
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
@@ -306,6 +313,7 @@ describe("Account Discovery Integration Tests", () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
@@ -346,6 +354,7 @@ describe("Account Discovery Integration Tests", () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,
@@ -390,6 +399,7 @@ describe("Account Discovery Integration Tests", () => {
         const { pubkeyBase64 } = await createSecp256k1Wallet();
 
         const rpcStrategy = new RpcAccountStrategy({
+          aaApiUrl: config.aaApiUrl,
           rpcUrl: config.rpcUrl,
           checksum: config.checksum,
           creator: config.feeGranter,

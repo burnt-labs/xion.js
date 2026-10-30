@@ -2,16 +2,20 @@
  * Account query strategies for finding existing smart accounts
  *
  * Strategy types:
- * - NumiaAccountStrategy: Queries Numia indexer API (fast, requires indexer)
+ * - DaoDaoAccountStrategy: Queries the DaoDao indexer (fast, requires indexer)
+ * - NumiaAccountStrategy: Deprecated; queries the Numia indexer API
  * - SubqueryAccountStrategy: Queries Subquery indexer API (fast, requires indexer)
- * - RpcAccountStrategy: Queries chain directly via RPC (slower, only needs RPC)
+ * - AAApiAccountStrategy: Queries the AA API (v1 JWT; v2 EthWallet/Secp256K1 verified on chain)
+ * - RpcAccountStrategy: Deprecated adapter over AAApiAccountStrategy v2 (requires aaApiUrl)
  * - EmptyAccountStrategy: Returns empty (forces new account creation)
  * - CompositeAccountStrategy: Tries multiple strategies with fallback chain
  */
 
 // Account query strategies
+export * from "./strategies/account-daodao-strategy";
 export * from "./strategies/account-numia-strategy";
 export * from "./strategies/account-subquery-strategy";
+export * from "./strategies/account-aa-api-strategy";
 export * from "./strategies/account-rpc-strategy";
 export * from "./strategies/account-empty-strategy";
 export * from "./strategies/account-composite-strategy";

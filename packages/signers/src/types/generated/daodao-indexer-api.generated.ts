@@ -5036,6 +5036,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{chainId}/contract/{contractAddress}/xion/account/authenticatorIdentities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the login identity of each authenticator on the account, sorted by index (authenticators that cannot be decoded are omitted) */
+        get: operations["xion_account_authenticatorIdentities_6e64d98"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{chainId}/contract/{contractAddress}/xion/account/authenticators": {
         parameters: {
             query?: never;
@@ -5776,6 +5793,23 @@ export interface paths {
         };
         /** retrieves DAOs that use a native token as their governance token */
         get: operations["token_daos_f048a4a"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{chainId}/generic/_/xion/accountsByAuthenticator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Find XION account contracts that currently have the given authenticator (fails if more than 1000 accounts match) */
+        get: operations["xion_accountsByAuthenticator_41f4293"];
         put?: never;
         post?: never;
         delete?: never;
@@ -14225,6 +14259,29 @@ export interface operations {
             };
         };
     };
+    xion_account_authenticatorIdentities_6e64d98: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description chain ID */
+                chainId: string;
+                /** @description contract address */
+                contractAddress: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     xion_account_authenticators_72d9d64: {
         parameters: {
             query?: never;
@@ -15482,6 +15539,43 @@ export interface operations {
             query: {
                 /** @description native token denomination */
                 denom: string;
+            };
+            header?: never;
+            path: {
+                /** @description chain ID */
+                chainId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description missing required arguments */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    xion_accountsByAuthenticator_41f4293: {
+        parameters: {
+            query: {
+                /** @description Authenticator type: Secp256K1, Ed25519, EthWallet, JWT, Secp256R1, Passkey, ZKEmail */
+                type: string;
+                /** @description Exact login identity: base64 pubkey (Secp256K1, Ed25519, Secp256R1), 0x address (EthWallet), base64 credential ID (Passkey), email salt (ZKEmail), or `aud.sub` (JWT) */
+                authenticator?: string;
+                /** @description JWT only: audience to match together with `sub` when `authenticator` is omitted */
+                aud?: string;
+                /** @description JWT only: subject to match (optionally with `aud`) when `authenticator` is omitted; must not contain `*` unless `aud` is given */
+                sub?: string;
             };
             header?: never;
             path: {

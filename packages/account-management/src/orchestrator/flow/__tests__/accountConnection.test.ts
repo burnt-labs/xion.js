@@ -10,11 +10,12 @@
  * Priority: Focus on integration tests for actual flows (grant creation, account discovery, etc.)
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { connectAccount } from "../accountConnection";
 import type { AccountConnectionParams } from "../accountConnection";
 import * as accountDiscovery from "../../../accounts/discovery";
 import { AUTHENTICATOR_TYPE } from "@burnt-labs/signers";
+import { createCompositeAccountStrategy } from "../../../accounts/strategies/factory";
 
 // Mock dependencies
 vi.mock("../../../accounts/discovery", () => ({
@@ -169,7 +170,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
       mockParams.accountCreationConfig = {
         aaApiUrl: "https://aa-api.xion.com",
         smartAccountContract: {
-          checksum: "abc123",
+          codeId: 1880,
           addressPrefix: "xion",
         },
         feeGranter: "xion1feegranter",
@@ -181,10 +182,11 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         "https://aa-api.xion.com",
         "0x123abc",
         expect.any(Function),
-        "abc123",
-        "xion1feegranter",
-        "xion",
-        "https://rpc.xion-testnet-1.burnt.com",
+        {
+          addressSource: "aa-api",
+          addressPrefix: "xion",
+          rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+        },
       );
       expect(result.smartAccountAddress).toBe("xion1newaccount");
       expect(result.connectionInfo.metadata?.codeId).toBe(789);
@@ -221,6 +223,8 @@ describe("accountConnection.ts - Account Connection Flow", () => {
       mockParams.accountCreationConfig = {
         aaApiUrl: "https://aa-api.xion.com",
         smartAccountContract: {
+          codeId: 1880,
+          // A stale checksum is ignored: creation uses the aa-api source
           checksum: "def456",
           addressPrefix: "xion",
         },
@@ -233,10 +237,11 @@ describe("accountConnection.ts - Account Connection Flow", () => {
         "https://aa-api.xion.com",
         "publickey456",
         expect.any(Function),
-        "def456",
-        "xion1feegranter",
-        "xion",
-        "https://rpc.xion-testnet-1.burnt.com",
+        {
+          addressSource: "aa-api",
+          addressPrefix: "xion",
+          rpcUrl: "https://rpc.xion-testnet-1.burnt.com",
+        },
       );
       expect(result.smartAccountAddress).toBe("xion1newcosmosaccount");
     });
@@ -411,7 +416,7 @@ describe("accountConnection.ts - Account Connection Flow", () => {
       mockParams.accountCreationConfig = {
         aaApiUrl: "https://aa-api.xion.com",
         smartAccountContract: {
-          checksum: "abc123",
+          codeId: 1880,
           addressPrefix: "xion",
         },
         feeGranter: "xion1feegranter",
@@ -419,6 +424,111 @@ describe("accountConnection.ts - Account Connection Flow", () => {
 
       await expect(connectAccount(mockParams)).rejects.toThrow(
         "Account creation for Passkey authenticator type is not yet supported",
+      );
+    });
+
+    it("should refuse creation when aaApiUrl is missing", async () => {
+      const { createEthWalletAccount } =
+        await import("@burnt-labs/abstraxion-core");
+      const signMessage = vi.fn();
+      mockConnector.connect.mockResolvedValue({
+        displayAddress: "0x123",
+        authenticator: "0x123",
+        signMessage,
+        metadata: { authenticatorType: AUTHENTICATOR_TYPE.EthWallet },
+      });
+      vi.mocked(accountDiscovery.checkAccountExists).mockResolvedValue({
+        exists: false,
+        accounts: [],
+      });
+      mockParams.accountCreationConfig = {
+        aaApiUrl: "",
+        smartAccountContract: { codeId: 1880, addressPrefix: "xion" },
+        feeGranter: "xion1feegranter",
+      };
+
+      await expect(connectAccount(mockParams)).rejects.toThrow(
+        "aaApiUrl is required to create a smart account",
+      );
+      expect(signMessage).not.toHaveBeenCalled();
+      expect(createEthWalletAccount).not.toHaveBeenCalled();
+    });
+
+    describe("aa-api v2 discovery failure", () => {
+      const EVM = "0xc2e80cf7d5a108d4abc97b5c5a95b2515ef90cb5";
+      let originalFetch: typeof global.fetch;
+
+      beforeEach(() => {
+        originalFetch = global.fetch;
+      });
+
+      afterEach(() => {
+        global.fetch = originalFetch;
+        vi.mocked(accountDiscovery.checkAccountExists).mockReset();
+      });
+
+      it.each([
+        [
+          "API error",
+          () =>
+            Promise.resolve(
+              new Response(JSON.stringify({ error: { message: "down" } }), {
+                status: 502,
+              }),
+            ),
+        ],
+        ["network error", () => Promise.reject(new TypeError("fetch failed"))],
+      ])(
+        "an aa-api %s neither signs nor POSTs a create request",
+        async (_name, response) => {
+          const actualDiscovery = await vi.importActual<
+            typeof import("../../../accounts/discovery")
+          >("../../../accounts/discovery");
+          vi.mocked(accountDiscovery.checkAccountExists).mockImplementation(
+            actualDiscovery.checkAccountExists,
+          );
+          const { createEthWalletAccount, createSecp256k1Account } =
+            await import("@burnt-labs/abstraxion-core");
+          const fetchMock = vi.fn().mockImplementation(response);
+          global.fetch = fetchMock;
+          const signMessage = vi.fn().mockResolvedValue("0xsig");
+          mockConnector.connect.mockResolvedValue({
+            displayAddress: EVM,
+            authenticator: EVM,
+            signMessage,
+            metadata: { authenticatorType: AUTHENTICATOR_TYPE.EthWallet },
+          });
+          mockParams.accountStrategy = createCompositeAccountStrategy({
+            aaApi: {
+              baseURL: "https://aa-api.xion.com",
+              version: "v2",
+              rpcUrl: "https://rpc.xion-testnet-2.burnt.com",
+              addressPrefix: "xion",
+            },
+          });
+          mockParams.accountCreationConfig = {
+            aaApiUrl: "https://aa-api.xion.com",
+            smartAccountContract: { codeId: 1880, addressPrefix: "xion" },
+            feeGranter: "xion1feegranter",
+          };
+
+          await expect(connectAccount(mockParams)).rejects.toThrow(
+            "Account discovery failed",
+          );
+
+          expect(signMessage).not.toHaveBeenCalled();
+          expect(createEthWalletAccount).not.toHaveBeenCalled();
+          expect(createSecp256k1Account).not.toHaveBeenCalled();
+          // Only the /check GET went out; no create POST
+          expect(fetchMock).toHaveBeenCalledTimes(1);
+          expect(fetchMock.mock.calls[0][0]).toBe(
+            `https://aa-api.xion.com/api/v2/account/check/ethwallet/${EVM}`,
+          );
+          expect(fetchMock.mock.calls[0][1]?.method).toBe("GET");
+          expect(
+            mockSessionManager.generateAndStoreTempAccount,
+          ).not.toHaveBeenCalled();
+        },
       );
     });
 

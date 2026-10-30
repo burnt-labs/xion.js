@@ -17,7 +17,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import {
   createCompositeTreasuryStrategy,
   DaoDaoTreasuryStrategy,
@@ -208,7 +208,7 @@ describe("Treasury decoding integration (xion-testnet-2)", () => {
           expect(decoded.data).not.toBeNull();
         }
       },
-      { timeout: 30000 },
+      30000,
     );
   });
 
@@ -242,7 +242,7 @@ describe("Treasury decoding integration (xion-testnet-2)", () => {
         );
         expect(result.match).toBe(true);
       },
-      { timeout: 30000 },
+      30000,
     );
   });
 

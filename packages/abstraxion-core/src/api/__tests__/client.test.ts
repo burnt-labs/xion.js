@@ -7,6 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  AAApiAccountNotFoundError,
   getAccountAddress,
   checkAccountOnChain,
   createEthWalletAccountV2,
@@ -171,6 +172,41 @@ describe("API Client - Error Parsing", () => {
       ).rejects.toThrow("ACCOUNT_NOT_FOUND");
     });
 
+    it("should throw a typed AAApiAccountNotFoundError only for HTTP 404", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        text: async () => JSON.stringify({ error: { message: "Not found" } }),
+      });
+
+      const error = await checkAccountOnChain(
+        "http://test-api",
+        "EthWallet",
+        "test-id",
+      ).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(AAApiAccountNotFoundError);
+      expect((error as Error).message).toBe("ACCOUNT_NOT_FOUND");
+    });
+
+    it("should not treat an error body mentioning ACCOUNT_NOT_FOUND as absence", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: async () =>
+          JSON.stringify({ error: { message: "ACCOUNT_NOT_FOUND" } }),
+      });
+
+      const error = await checkAccountOnChain(
+        "http://test-api",
+        "EthWallet",
+        "test-id",
+      ).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(Error);
+      expect(error).not.toBeInstanceOf(AAApiAccountNotFoundError);
+    });
+
     it("should parse regular errors for non-404 status codes", async () => {
       const errorResponse: ErrorResponse = {
         error: {
@@ -187,6 +223,42 @@ describe("API Client - Error Parsing", () => {
       await expect(
         checkAccountOnChain("http://test-api", "EthWallet", "test-id"),
       ).rejects.toThrow("Rate limit exceeded");
+    });
+  });
+
+  describe("Abort signal", () => {
+    it("passes an abort signal through to fetch for both GET lookups", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ address: "xion123" }),
+      });
+      global.fetch = mockFetch;
+      const controller = new AbortController();
+
+      await getAccountAddress("http://test-api", "EthWallet", "0x123", {
+        signal: controller.signal,
+      });
+      await checkAccountOnChain("http://test-api", "EthWallet", "0x123", {
+        signal: controller.signal,
+      });
+
+      expect(mockFetch.mock.calls[0][1].signal).toBe(controller.signal);
+      expect(mockFetch.mock.calls[1][1].signal).toBe(controller.signal);
+    });
+
+    it("keeps the request unchanged when no signal is given", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ address: "xion123" }),
+      });
+      global.fetch = mockFetch;
+
+      await checkAccountOnChain("http://test-api", "EthWallet", "0x123");
+
+      expect(mockFetch.mock.calls[0][1]).toEqual({
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
     });
   });
 

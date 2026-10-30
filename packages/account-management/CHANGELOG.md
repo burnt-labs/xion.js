@@ -1,5 +1,93 @@
 # @burnt-labs/account-management
 
+## 1.0.0-alpha.17
+
+### Major Changes
+
+- [#408](https://github.com/burnt-labs/xion.js/pull/408) [`cf02fd6`](https://github.com/burnt-labs/xion.js/commit/cf02fd6fedbc9c3235e2dc3b3874041035ba5827) Thanks [@2xburnt](https://github.com/2xburnt)! - Apps configure only the network. `network: "mainnet" | "testnet"` resolves the chain ID, RPC, REST, gas price, fee granter, treasury indexer and, in signer mode, the AA API URL and address prefix:
+
+  ```ts
+  {
+    network: "mainnet",
+    treasury: "xion1...", // optional, app-specific
+    authentication: { type: "signer", getSignerConfig },
+  }
+  ```
+
+  - `@burnt-labs/constants`: new `XionNetwork`, `isXionNetwork`, `getChainIdForNetwork` (`mainnet` → `xion-mainnet-1`, `testnet` → `xion-testnet-2`), `getAaApiUrl` (`https://aa-api.mainnet.burnt.com`, `https://aa-api.testnet.burnt.com`) and `getAddressPrefix`.
+  - `@burnt-labs/abstraxion-js`: `AbstraxionConfig.network` added and `chainId` made optional. Set one of them; if both are set they must name the same chain, otherwise normalization throws, and an unknown network also throws. In signer mode, `authentication.aaApiUrl` and `authentication.smartAccountContract` are optional overrides. `smartAccountContract.codeId` is deprecated and ignored, because the AA API and the chain report each account's code ID. Account creation no longer depends on `feeGranter`, since the AA API pays for new accounts with its own fee granter. A custom chain needs `feeGranter` only when grants are configured. A chain with no default AA API needs `aaApiUrl`, and the error names it. `createAccountCreationConfigFromConfig` no longer returns `codeId`. `XionNetwork` is re-exported.
+  - **Breaking (alpha line):** code that reads `AbstraxionConfig.chainId`, `SignerAuthentication.aaApiUrl` / `smartAccountContract`, or the `codeId` from `createAccountCreationConfigFromConfig` now sees optional values (read `NormalizedAbstraxionConfig.chainId` for the resolved chain). A signer config without `smartAccountContract` on mainnet or testnet now discovers and creates accounts through the network's AA API. Indexer-only discovery (no creation) remains for a chain with no AA API and no `smartAccountContract`.
+  - `@burnt-labs/account-management`: `SmartAccountContractConfig.codeId` and `AccountCreationConfig.feeGranter` are optional (deprecated). Code that reads them now sees `number | undefined` / `string | undefined`.
+  - `@burnt-labs/abstraxion-react-native`: the provider accepts `network` without `chainId`. With neither set, it still defaults to testnet.
+
+  Existing configs that pass `chainId`, `aaApiUrl`, `smartAccountContract: { codeId, addressPrefix }` and `feeGranter` keep working unchanged.
+
+### Minor Changes
+
+- [#412](https://github.com/burnt-labs/xion.js/pull/412) [`0ad5140`](https://github.com/burnt-labs/xion.js/commit/0ad5140363b1936e10a77dd0a03ef59768618153) Thanks [@2xburnt](https://github.com/2xburnt)! - Move to CosmJS 0.39 and carry account numbers as `bigint`, for xion v32 (Cosmos SDK 0.55).
+
+  From v32 on, every new account (new smart accounts and the session keys created at login) gets an account number of at least 2^63. CosmJS 0.36 cannot decode those, so `getAccount`, `getSequence` and signing fail for them.
+  - `customAccountFromAny` returns `accountNumber` as a `bigint` for every account type, and `AAClient` and `GranteeSignerClient` sign with the exact number.
+  - `@cosmjs/cosmwasm-stargate` is replaced by `@cosmjs/cosmwasm` 0.39 (the old package stops at 0.38). `CosmWasmClient` re-exported from `@burnt-labs/abstraxion-js` now comes from `@cosmjs/cosmwasm`.
+  - Breaking for callers: `Account.accountNumber` and `SequenceResponse.accountNumber` are `bigint` (CosmJS 0.39). Do not convert them with `Number()`.
+  - `GranteeSignerClient` options keep taking a plain `GasPrice`.
+  - CosmJS 0.39.0's `fromBech32` throws with `@scure/base` 2.3.0 or later (cosmos/cosmjs#1982). Until CosmJS ships the fix, apps should pin it, e.g. pnpm `"@cosmjs/encoding>@scure/base": "~2.2.0"` or npm `"overrides": { "@cosmjs/encoding": { "@scure/base": "~2.2.0" } }`.
+
+### Patch Changes
+
+- Updated dependencies [[`0ad5140`](https://github.com/burnt-labs/xion.js/commit/0ad5140363b1936e10a77dd0a03ef59768618153)]:
+  - @burnt-labs/signers@1.0.0-alpha.13
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.75
+
+## 1.0.0-alpha.16
+
+### Minor Changes
+
+- [#409](https://github.com/burnt-labs/xion.js/pull/409) [`ad5dbeb`](https://github.com/burnt-labs/xion.js/commit/ad5dbeb9d039c731e155c402c7f74c4fc4a05b3c) Thanks [@2xburnt](https://github.com/2xburnt)! - Account discovery can use the DaoDao indexer instead of Numia, which is being retired:
+
+  ```ts
+  indexer: {
+    type: "daodao",
+    url: getDaoDaoIndexerUrl(chainId), // "https://daodaoindexer.burnt.com"
+    chainId,
+  }
+  ```
+
+  - `@burnt-labs/account-management`: new `DaoDaoAccountStrategy` (`new DaoDaoAccountStrategy(url, chainId, timeoutMs?)`), selected by `type: "daodao"` in `createCompositeAccountStrategy` and `convertIndexerConfig`. It calls `GET {url}/{chainId}/generic/_/xion/accountsByAuthenticator?type=…&authenticator=…` and returns every account the indexer tracks that currently holds the authenticator, each with its authenticators and their on-chain indices. On `xion-testnet-2` the indexer does not track `abstract:account` contracts (code ID 1986) or contracts recorded with code ID 0, so a lookup for one of those comes back empty, like a miss. Authenticators of a type the SDK has no signer for (e.g. `Secp256R1`) are left out of that list, so it is not a complete view of an account's authenticators. An EthWallet address is sent lowercase with `0x` (`normalizeEthereumAddress`, as the AA API lookup does), a Secp256K1 key through `normalizeSecp256k1PublicKey` (also as the AA API lookup does), a hex Ed25519 key as base64, and a full JWT as its `aud.sub` identity: the forms the indexer stores. A miss is an empty list; a `200` body that is not a list, or an entry without a canonical `xion1…` contract (32-byte) address, a positive code ID and authenticators of an indexed type with a non-empty identity at distinct indices, throws, as does an account that does not hold the queried authenticator (exact identity; EthWallet compared case-insensitively, Secp256K1 by key bytes). Any other status, including `404` while the indexer has not deployed the lookup, throws so the composite falls through to the next strategy. A request is aborted after 30 seconds (`timeout` in the config, in milliseconds, or the third constructor argument) so a stalled indexer also falls through. With DaoDao configured, `createCompositeAccountStrategy` does not add the empty fallback: if DaoDao fails and no other configured source succeeds, discovery throws (`checkAccountExists` returns `error`, and `connectAccount` refuses to create an account) rather than reporting "no account". Subquery and Numia keep the empty fallback. No token is needed. `DaoDaoIndexerConfig` and `NumiaIndexerConfig` are exported.
+  - `checkAccountExists`: for JWT, Passkey, Ed25519 and other non-verified types, the authenticator index now comes from the login's own authenticator where one exists: same type before other types, exact identity before one differing only by case, Ed25519 keys matched by bytes (hex or base64), and a full JWT login matched by its `aud.sub` identity.
+  - **Deprecated:** `NumiaAccountStrategy` and the `type: "numia"` indexer config (also the default when `type` is omitted). They keep working for now and will be removed in a later release; move to `type: "daodao"`.
+  - `@burnt-labs/abstraxion-js`: `IndexerConfig` accepts the DaoDao variant. Signer mode with `smartAccountContract` still ignores `indexer` (the AA API is the only discovery source there), so signer-mode apps can drop a Numia indexer block without replacing it.
+
+## 1.0.0-alpha.15
+
+### Major Changes
+
+- [#406](https://github.com/burnt-labs/xion.js/pull/406) [`30e9d00`](https://github.com/burnt-labs/xion.js/commit/30e9d00782b99850505e5bb437fb7f59ed8a15b6) Thanks [@2xburnt](https://github.com/2xburnt)! - Smart-account addresses now come from the AA API. Signer mode no longer derives addresses in the SDK and no longer needs a contract checksum:
+
+  ```ts
+  authentication: {
+    type: "signer",
+    aaApiUrl,
+    getSignerConfig,
+    smartAccountContract: { codeId, addressPrefix: "xion" },
+  }
+  ```
+
+  - `@burnt-labs/abstraxion-core`: `createEthWalletAccount` / `createSecp256k1Account` gain an options overload `{ addressSource: "aa-api", addressPrefix, rpcUrl? }`. Creation calls `GET /api/v2/account/address/{type}/{id}`, signs exactly the returned address and posts the existing create request; a failed, timed-out (10 s) or malformed lookup stops before signing, and a create response for another address is rejected. The positional seven-argument overloads still compile; their `checksum` argument is ignored. New exports: `resolveAAApiAccountAddress`, `findAAApiAccountAddress`, `normalizeAAApiIdentifier`, `AAApiAccountCreationOptions`, `AAApiAccountNotFoundError` (thrown by `checkAccountOnChain` only on HTTP 404). `getAccountAddress` / `checkAccountOnChain` accept an optional `{ signal }`.
+  - `@burnt-labs/account-management`: `AAApiAccountStrategy` is exported and implements `version: "v2"` (`{ baseURL, version: "v2", rpcUrl, addressPrefix }`): `GET /api/v2/account/check/{type}/{id}`, then on-chain verification of the reported contract, its actual code ID and a matching authenticator. Only an HTTP 404 means "no account"; every other failure is a discovery error. `createCompositeAccountStrategy` with `aaApi.version: "v2"` contains only that strategy (no indexer, RPC or empty fallback). `checkAccountExists` matches EthWallet/Secp256K1 authenticators by type and normalized identifier and reports a missing match as an error instead of defaulting to index 0. `connectAccount` uses the aa-api creation overload. `SmartAccountContractConfig.checksum` is optional and ignored.
+  - **Breaking (alpha line):** `RpcAccountStrategy` is now a deprecated adapter over `AAApiAccountStrategy` v2. It throws a migration error unless `aaApiUrl` is passed; `checksum`, `creator` and `codeId` are accepted but ignored. It now supports EthWallet and Secp256K1 only: JWT and Passkey lookups, which the checksum-based version handled, reject (use `AAApiAccountStrategy` v1 or an indexer strategy for JWT). Signer-config users already pass `aaApiUrl` and need no change.
+  - `@burnt-labs/abstraxion-js`: signer mode discovers accounts only through the AA API v2 strategy and creates them with the aa-api address source; `signer.indexer` is no longer used for signer-mode discovery. `createAccountCreationConfigFromConfig` returns a config without a checksum.
+  - `@burnt-labs/signers`: `normalizeSecp256k1PublicKey` accepts its own output for uncompressed keys (88-char base64 of a 65-byte `0x04…` key), so normalizing twice no longer throws.
+  - `@burnt-labs/abstraxion-react-native`: re-exports the signer config type, so `smartAccountContract.checksum` is optional in its published declarations too.
+
+  There is no legacy-checksum fallback. Accounts the AA API returns through its ordinary lookup are found regardless of age, and mainnet pre-v31 addresses are unchanged. A few historical testnet accounts created under an older checksum have no dedicated recovery path.
+
+### Patch Changes
+
+- Updated dependencies [[`30e9d00`](https://github.com/burnt-labs/xion.js/commit/30e9d00782b99850505e5bb437fb7f59ed8a15b6), [`30e9d00`](https://github.com/burnt-labs/xion.js/commit/30e9d00782b99850505e5bb437fb7f59ed8a15b6)]:
+  - @burnt-labs/abstraxion-core@1.0.0-alpha.74
+  - @burnt-labs/signers@1.0.0-alpha.12
+
 ## 1.0.0-alpha.14
 
 ### Patch Changes

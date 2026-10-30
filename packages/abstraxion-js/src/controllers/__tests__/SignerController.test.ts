@@ -29,10 +29,12 @@ vi.mock("@burnt-labs/account-management", async (importOriginal) => {
     await importOriginal<typeof import("@burnt-labs/account-management")>();
   return {
     ...actual,
-    ConnectionOrchestrator: vi.fn().mockImplementation(() => ({
-      restoreSession: vi.fn().mockResolvedValue({ restored: false }),
-      connectAndSetup: vi.fn(),
-    })),
+    ConnectionOrchestrator: vi.fn().mockImplementation(function () {
+      return {
+        restoreSession: vi.fn().mockResolvedValue({ restored: false }),
+        connectAndSetup: vi.fn(),
+      };
+    }),
     isSessionRestorationError: vi.fn().mockReturnValue(false),
     isSessionRestored: vi.fn().mockReturnValue(false),
     getAccountInfoFromRestored: vi.fn(),

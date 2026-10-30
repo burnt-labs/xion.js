@@ -1,5 +1,49 @@
 # @burnt-labs/signers
 
+## 1.0.0-alpha.13
+
+### Minor Changes
+
+- [#412](https://github.com/burnt-labs/xion.js/pull/412) [`0ad5140`](https://github.com/burnt-labs/xion.js/commit/0ad5140363b1936e10a77dd0a03ef59768618153) Thanks [@2xburnt](https://github.com/2xburnt)! - Move to CosmJS 0.39 and carry account numbers as `bigint`, for xion v32 (Cosmos SDK 0.55).
+
+  From v32 on, every new account (new smart accounts and the session keys created at login) gets an account number of at least 2^63. CosmJS 0.36 cannot decode those, so `getAccount`, `getSequence` and signing fail for them.
+  - `customAccountFromAny` returns `accountNumber` as a `bigint` for every account type, and `AAClient` and `GranteeSignerClient` sign with the exact number.
+  - `@cosmjs/cosmwasm-stargate` is replaced by `@cosmjs/cosmwasm` 0.39 (the old package stops at 0.38). `CosmWasmClient` re-exported from `@burnt-labs/abstraxion-js` now comes from `@cosmjs/cosmwasm`.
+  - Breaking for callers: `Account.accountNumber` and `SequenceResponse.accountNumber` are `bigint` (CosmJS 0.39). Do not convert them with `Number()`.
+  - `GranteeSignerClient` options keep taking a plain `GasPrice`.
+  - CosmJS 0.39.0's `fromBech32` throws with `@scure/base` 2.3.0 or later (cosmos/cosmjs#1982). Until CosmJS ships the fix, apps should pin it, e.g. pnpm `"@cosmjs/encoding>@scure/base": "~2.2.0"` or npm `"overrides": { "@cosmjs/encoding": { "@scure/base": "~2.2.0" } }`.
+
+### Patch Changes
+
+- Updated dependencies [[`cf02fd6`](https://github.com/burnt-labs/xion.js/commit/cf02fd6fedbc9c3235e2dc3b3874041035ba5827)]:
+  - @burnt-labs/constants@0.1.0-alpha.26
+
+## 1.0.0-alpha.12
+
+### Patch Changes
+
+- [#406](https://github.com/burnt-labs/xion.js/pull/406) [`30e9d00`](https://github.com/burnt-labs/xion.js/commit/30e9d00782b99850505e5bb437fb7f59ed8a15b6) Thanks [@2xburnt](https://github.com/2xburnt)! - Smart-account addresses now come from the AA API. Signer mode no longer derives addresses in the SDK and no longer needs a contract checksum:
+
+  ```ts
+  authentication: {
+    type: "signer",
+    aaApiUrl,
+    getSignerConfig,
+    smartAccountContract: { codeId, addressPrefix: "xion" },
+  }
+  ```
+
+  - `@burnt-labs/abstraxion-core`: `createEthWalletAccount` / `createSecp256k1Account` gain an options overload `{ addressSource: "aa-api", addressPrefix, rpcUrl? }`. Creation calls `GET /api/v2/account/address/{type}/{id}`, signs exactly the returned address and posts the existing create request; a failed, timed-out (10 s) or malformed lookup stops before signing, and a create response for another address is rejected. The positional seven-argument overloads still compile; their `checksum` argument is ignored. New exports: `resolveAAApiAccountAddress`, `findAAApiAccountAddress`, `normalizeAAApiIdentifier`, `AAApiAccountCreationOptions`, `AAApiAccountNotFoundError` (thrown by `checkAccountOnChain` only on HTTP 404). `getAccountAddress` / `checkAccountOnChain` accept an optional `{ signal }`.
+  - `@burnt-labs/account-management`: `AAApiAccountStrategy` is exported and implements `version: "v2"` (`{ baseURL, version: "v2", rpcUrl, addressPrefix }`): `GET /api/v2/account/check/{type}/{id}`, then on-chain verification of the reported contract, its actual code ID and a matching authenticator. Only an HTTP 404 means "no account"; every other failure is a discovery error. `createCompositeAccountStrategy` with `aaApi.version: "v2"` contains only that strategy (no indexer, RPC or empty fallback). `checkAccountExists` matches EthWallet/Secp256K1 authenticators by type and normalized identifier and reports a missing match as an error instead of defaulting to index 0. `connectAccount` uses the aa-api creation overload. `SmartAccountContractConfig.checksum` is optional and ignored.
+  - **Breaking (alpha line):** `RpcAccountStrategy` is now a deprecated adapter over `AAApiAccountStrategy` v2. It throws a migration error unless `aaApiUrl` is passed; `checksum`, `creator` and `codeId` are accepted but ignored. It now supports EthWallet and Secp256K1 only: JWT and Passkey lookups, which the checksum-based version handled, reject (use `AAApiAccountStrategy` v1 or an indexer strategy for JWT). Signer-config users already pass `aaApiUrl` and need no change.
+  - `@burnt-labs/abstraxion-js`: signer mode discovers accounts only through the AA API v2 strategy and creates them with the aa-api address source; `signer.indexer` is no longer used for signer-mode discovery. `createAccountCreationConfigFromConfig` returns a config without a checksum.
+  - `@burnt-labs/signers`: `normalizeSecp256k1PublicKey` accepts its own output for uncompressed keys (88-char base64 of a 65-byte `0x04…` key), so normalizing twice no longer throws.
+  - `@burnt-labs/abstraxion-react-native`: re-exports the signer config type, so `smartAccountContract.checksum` is optional in its published declarations too.
+
+  There is no legacy-checksum fallback. Accounts the AA API returns through its ordinary lookup are found regardless of age, and mainnet pre-v31 addresses are unchanged. A few historical testnet accounts created under an older checksum have no dedicated recovery path.
+
+- [#406](https://github.com/burnt-labs/xion.js/pull/406) [`30e9d00`](https://github.com/burnt-labs/xion.js/commit/30e9d00782b99850505e5bb437fb7f59ed8a15b6) Thanks [@2xburnt](https://github.com/2xburnt)! - fix(signers): `normalizeSecp256k1PublicKey` imports `Buffer` from the `buffer` package instead of relying on a global, so it works in browsers and React Native without a polyfill.
+
 ## 1.0.0-alpha.11
 
 ### Patch Changes

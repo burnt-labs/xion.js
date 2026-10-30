@@ -1,3 +1,7 @@
+# Sanctioned bespoke: github-workflows v1.8.0 has no schema-drift artifact/comment
+# flow or dispatch-selected AA API URL input. Retain this repository-specific gate.
+# Compatibility and re-evaluation criteria: .github/CI-MIGRATION.md.
+
 name: OpenAPI Schema Validation
 
 on:
@@ -15,7 +19,7 @@ on:
 jobs:
   validate-schema:
     name: Validate Generated Types Against OpenAPI Schema
-    runs-on: ubicloud-standard-2
+    runs-on: ubicloud-standard-4
     timeout-minutes: 10
 
     steps:

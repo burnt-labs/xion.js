@@ -27,7 +27,7 @@ import {
   type SessionManager,
 } from "@burnt-labs/account-management";
 import { StargateClient } from "@cosmjs/stargate";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import { GranteeSignerClient } from "@burnt-labs/abstraxion-core";
 
 export type TransactionSigningSuite =
@@ -54,6 +54,7 @@ export function registerTransactionSigningIntegrationTests(
       sessionManager = createMockSessionManager(storageStrategy);
 
       const rpcStrategy = new RpcAccountStrategy({
+        aaApiUrl: config.aaApiUrl,
         rpcUrl: config.rpcUrl,
         checksum: config.checksum,
         creator: config.feeGranter,

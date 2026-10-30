@@ -5,6 +5,9 @@ import type {
 } from "../types";
 import { resolveAutoAuth } from "./resolveAutoAuth";
 import {
+  getAaApiUrl,
+  getAddressPrefix,
+  getChainIdForNetwork,
   getFeeGranter,
   getRpcUrl,
   getRestUrl,
@@ -15,19 +18,48 @@ import {
 import type {
   GrantConfig,
   AccountCreationConfig,
-  CompositeAccountStrategy,
+  IndexerStrategy,
 } from "@burnt-labs/account-management";
 import {
+  CompositeAccountStrategy,
   createCompositeAccountStrategy,
   convertIndexerConfig,
 } from "@burnt-labs/account-management";
 
 /**
- * Normalize AbstraxionConfig by filling in defaults based on chainId - Synchronous!!
+ * Resolve the chain ID from `network` and/or `chainId`.
  *
- * @param config - Config (at minimum requires chainId, but can omit rpcUrl, restUrl, gasPrice, feeGranter)
+ * @throws if `network` is not "mainnet" or "testnet", or if `network` and
+ * `chainId` name different chains
+ */
+function resolveChainId(config: AbstraxionConfig): string | undefined {
+  // An empty network (e.g. an unset env var) counts as not set
+  const networkChainId = config.network
+    ? getChainIdForNetwork(config.network)
+    : undefined;
+
+  if (networkChainId && config.chainId && config.chainId !== networkChainId) {
+    throw new Error(
+      `network "${config.network}" is chain ${networkChainId}, but chainId is "${config.chainId}". ` +
+        `Set only network, or a chainId that matches it.`,
+    );
+  }
+
+  return config.chainId || networkChainId;
+}
+
+/**
+ * Normalize AbstraxionConfig by filling in defaults from the network - Synchronous!!
+ *
+ * `network` ("mainnet" | "testnet") or a known `chainId` is enough: chain ID,
+ * RPC, REST, gas price, fee granter, iframe URL and (in signer mode) the AA
+ * API URL come from @burnt-labs/constants. Explicit values override them.
+ *
+ * @param config - Config (at minimum `network` or `chainId`)
  * @returns Normalized config with all required fields filled in
- * @throws Error if chainId is not recognized and required fields are missing
+ * @throws Error if `network` is invalid or conflicts with `chainId`, or (in a
+ * browser) if no chain is given or the chain is unknown and RPC/REST URLs are
+ * missing
  */
 export function normalizeAbstraxionConfig(
   config: AbstraxionConfig,
@@ -38,7 +70,7 @@ export function normalizeAbstraxionConfig(
     config = { ...config, authentication: resolvedAuthentication };
   }
 
-  const { chainId } = config;
+  const chainId = resolveChainId(config) || "";
 
   // Get defaults from constants based on chainId
   const defaultRpcUrl = getRpcUrl(chainId);
@@ -63,23 +95,41 @@ export function normalizeAbstraxionConfig(
     };
   }
 
+  // Set AA API URL default if using signer authentication (avoid mutating input)
+  if (config.authentication?.type === "signer") {
+    const aaApiUrl = config.authentication.aaApiUrl || getAaApiUrl(chainId);
+    if (aaApiUrl) {
+      config = {
+        ...config,
+        authentication: { ...config.authentication, aaApiUrl },
+      };
+    }
+  }
+
   // Validate required fields (browser only — during SSR/prerendering env vars may not be set)
   if (typeof window !== "undefined") {
+    if (!chainId) {
+      throw new Error(
+        `network is required: set network to "mainnet" or "testnet" (or chainId for a custom chain)`,
+      );
+    }
+
     if (!rpcUrl) {
       throw new Error(
-        `RPC URL is required. Either provide rpcUrl in config or use a known chainId (${chainId} not found in constants)`,
+        `RPC URL is required. Either provide rpcUrl in config or use a known network (${chainId} not found in constants)`,
       );
     }
 
     if (!restUrl) {
       throw new Error(
-        `REST URL is required. Either provide restUrl in config or use a known chainId (${chainId} not found in constants)`,
+        `REST URL is required. Either provide restUrl in config or use a known network (${chainId} not found in constants)`,
       );
     }
   }
 
   return {
     ...config,
+    chainId,
     rpcUrl: rpcUrl || "",
     restUrl: restUrl || "",
     gasPrice,
@@ -87,28 +137,97 @@ export function normalizeAbstraxionConfig(
   };
 }
 
+/** AA API URL for signer mode: the explicit override, else the chain's default. */
+function resolveAaApiUrl(
+  config: NormalizedAbstraxionConfig,
+  signerAuth: SignerAuthentication,
+): string | undefined {
+  return signerAuth.aaApiUrl || getAaApiUrl(config.chainId);
+}
+
+/** Smart-account address prefix: the explicit override, else the chain's bech32 prefix. */
+function resolveAddressPrefix(
+  config: NormalizedAbstraxionConfig,
+  signerAuth: SignerAuthentication,
+): string | undefined {
+  return (
+    signerAuth.smartAccountContract?.addressPrefix ||
+    getAddressPrefix(config.chainId)
+  );
+}
+
 /**
  * Create account strategy from normalized config
- * Handles indexer and RPC strategy configuration for smart account discovery
+ *
+ * When an AA API is configured (by default, the network's), discovery uses
+ * ONLY the AA API v2 strategy: GET /api/v2/account/check/{type}/{id}, then
+ * on-chain verification via rpcUrl. No indexer, local-derivation or empty
+ * fallback is added, so an AA API or RPC failure surfaces as a discovery error
+ * instead of permitting account creation. `smartAccountContract.checksum` and
+ * `codeId` are ignored.
+ *
+ * A chain with no AA API (no default, no `aaApiUrl`) and no
+ * `smartAccountContract` gets indexer-only discovery, with no account creation.
  */
 export function createAccountStrategyFromConfig(
   config: NormalizedAbstraxionConfig,
   signerAuth: SignerAuthentication,
 ): CompositeAccountStrategy {
-  const smartAccountContract = signerAuth.smartAccountContract;
+  // During SSR/prerendering normalizeAbstraxionConfig tolerates a missing
+  // network (the env var may only be set in the browser). Constructing the
+  // runtime must not throw there either; nothing connects on the server, so
+  // return a strategy that refuses discovery (and therefore account creation).
+  if (typeof window === "undefined" && !config.chainId) {
+    return new CompositeAccountStrategy(new UnresolvedNetworkAccountStrategy());
+  }
+
+  const aaApiUrl = resolveAaApiUrl(config, signerAuth);
+
+  if (!aaApiUrl) {
+    if (!signerAuth.smartAccountContract && signerAuth.indexer) {
+      // Discovery-only configuration (no account creation possible)
+      return createCompositeAccountStrategy({
+        indexer: convertIndexerConfig(signerAuth.indexer, undefined),
+      });
+    }
+
+    throw new Error(
+      `aaApiUrl is required in signer authentication: smart-account addresses come from the AA API, ` +
+        `and chain "${config.chainId}" has no default. Set network to "mainnet" or "testnet", or pass aaApiUrl.`,
+    );
+  }
+
+  const addressPrefix = resolveAddressPrefix(config, signerAuth);
+  if (!addressPrefix) {
+    throw new Error(
+      `smartAccountContract.addressPrefix is required: chain "${config.chainId}" has no default address prefix. ` +
+        `Set network to "mainnet" or "testnet", or pass smartAccountContract.addressPrefix.`,
+    );
+  }
 
   return createCompositeAccountStrategy({
-    indexer: convertIndexerConfig(signerAuth.indexer, smartAccountContract),
-    rpc: smartAccountContract
-      ? {
-          rpcUrl: config.rpcUrl,
-          checksum: smartAccountContract.checksum,
-          creator: config.feeGranter || "",
-          prefix: smartAccountContract.addressPrefix,
-          codeId: smartAccountContract.codeId,
-        }
-      : undefined,
+    aaApi: {
+      baseURL: aaApiUrl,
+      version: "v2",
+      rpcUrl: config.rpcUrl,
+      addressPrefix,
+    },
   });
+}
+
+/**
+ * Discovery placeholder for a runtime built on the server before the network
+ * is known. Every lookup fails, so the composite strategy reports a discovery
+ * error instead of an empty result that would permit account creation.
+ */
+class UnresolvedNetworkAccountStrategy implements IndexerStrategy {
+  async fetchSmartAccounts(): ReturnType<
+    IndexerStrategy["fetchSmartAccounts"]
+  > {
+    throw new Error(
+      'account discovery needs a network: set network to "mainnet" or "testnet" (or chainId for a custom chain)',
+    );
+  }
 }
 
 /**
@@ -140,25 +259,26 @@ export function createGrantConfigFromConfig(
 
 /**
  * Create account creation config from normalized config
- * Handles smart account contract configuration for account creation
+ *
+ * Returns a config whenever an AA API URL and an address prefix resolve (by
+ * default, from the network). The AA API selects the address and pays for the
+ * account with its own fee granter, so no checksum, code ID or fee granter is
+ * needed. Returns undefined when accounts can't be created (no AA API).
  */
 export function createAccountCreationConfigFromConfig(
   config: NormalizedAbstraxionConfig,
   signerAuth: SignerAuthentication,
 ): AccountCreationConfig | undefined {
-  const smartAccountContract = signerAuth.smartAccountContract;
+  const aaApiUrl = resolveAaApiUrl(config, signerAuth);
+  const addressPrefix = resolveAddressPrefix(config, signerAuth);
 
-  if (!smartAccountContract || !config.feeGranter) {
+  if (!aaApiUrl || !addressPrefix) {
     return undefined;
   }
 
   return {
-    aaApiUrl: signerAuth.aaApiUrl || "",
-    smartAccountContract: {
-      codeId: smartAccountContract.codeId,
-      checksum: smartAccountContract.checksum,
-      addressPrefix: smartAccountContract.addressPrefix,
-    },
+    aaApiUrl,
+    smartAccountContract: { addressPrefix },
     feeGranter: config.feeGranter,
   };
 }

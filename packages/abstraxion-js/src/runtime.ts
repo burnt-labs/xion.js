@@ -22,7 +22,7 @@ import {
   AUTHENTICATOR_TYPE,
   type AuthenticatorType,
 } from "@burnt-labs/signers";
-import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { CosmWasmClient } from "@cosmjs/cosmwasm";
 import {
   AccountStateGuards,
   type AccountState,

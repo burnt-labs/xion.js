@@ -22,6 +22,7 @@
     "@burnt-labs/abstraxion-react": "1.0.0-alpha.79"
   },
   "changesets": [
+    "aa-api-canonical-address-source",
     "abstraxion-core-ibc-transfer",
     "abstraxion-js-new-package",
     "abstraxion-js-runtime",
@@ -43,7 +44,9 @@
     "chilly-moose-hang",
     "clear-papers-greet",
     "clever-vans-drop",
+    "cosmjs-039-bigint-account-numbers",
     "cyan-readers-crash",
+    "daodao-account-strategy",
     "daodao-admin-null-guard",
     "dark-dryers-judge",
     "deprecate-burnt-labs-ui",
@@ -89,6 +92,7 @@
     "modern-mayflies-invent",
     "moody-months-hunt",
     "neat-pillows-lie",
+    "network-only-config",
     "new-feet-explode",
     "new-shrimps-listen",
     "new-timers-fetch",
@@ -109,6 +113,7 @@
     "rich-wolves-whisper",
     "sharp-carpets-confess",
     "shy-eggs-hear",
+    "signers-normalize-buffer-import",
     "silly-seas-sip",
     "silly-worms-hear",
     "silver-plants-rule",

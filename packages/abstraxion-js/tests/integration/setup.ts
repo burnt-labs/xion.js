@@ -156,13 +156,6 @@ export function validateRequiredEnvVars() {
 }
 
 /**
- * Check if indexer tests should be skipped
- */
-export function shouldSkipIndexerTests(): boolean {
-  return !process.env.XION_TESTNET_INDEXER_URL;
-}
-
-/**
  * Check if treasury tests should be skipped
  */
 export function shouldSkipTreasuryTests(): boolean {

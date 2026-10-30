@@ -30,13 +30,13 @@ import {
   toBech32,
   toUtf8,
 } from "@cosmjs/encoding";
-import type { EncryptionConfiguration } from "@cosmjs/proto-signing/build/wallet";
+import type { EncryptionConfiguration } from "./utils/walletEncryption";
 import {
   cosmjsSalt,
   decrypt,
   encrypt,
   supportedAlgorithms,
-} from "@cosmjs/proto-signing/build/wallet";
+} from "./utils/walletEncryption";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { makeADR36AminoSignDoc } from "./utils";
 

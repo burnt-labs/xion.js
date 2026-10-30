@@ -100,6 +100,32 @@ export const testChainInfo: ChainInfo = {
   chainName: "XION Testnet Local",
 };
 
+/**
+ * Public XION networks an app can select by name. Everything else an SDK
+ * consumer needs (chain ID, RPC, REST, AA API, fee granter, ...) is looked up
+ * from the chain ID this resolves to.
+ */
+export type XionNetwork = "mainnet" | "testnet";
+
+const NETWORK_CHAIN_IDS: Record<XionNetwork, string> = {
+  mainnet: mainnetChainInfo.chainId,
+  testnet: testnetChainInfo.chainId,
+};
+
+export function isXionNetwork(value: unknown): value is XionNetwork {
+  return value === "mainnet" || value === "testnet";
+}
+
+/** Chain ID of a named network ("mainnet" → "xion-mainnet-1"). */
+export function getChainIdForNetwork(network: XionNetwork): string {
+  if (!isXionNetwork(network)) {
+    throw new Error(
+      `Unknown XION network "${String(network)}". Expected "mainnet" or "testnet".`,
+    );
+  }
+  return NETWORK_CHAIN_IDS[network];
+}
+
 // If mainnet chain-id/network changes be sure to update here.
 const DASHBOARD_URLS = {
   "xion-mainnet-1": "https://auth.burnt.com",
@@ -123,6 +149,12 @@ const DAODAO_INDEXER_URLS: Record<string, string> = {
   "xion-mainnet-1": "https://daodaoindexer.burnt.com",
   "xion-testnet-1": "https://daodaoindexer.burnt.com",
   "xion-testnet-2": "https://daodaoindexer.burnt.com",
+};
+
+// Account abstraction API (smart-account address lookup and creation)
+const AA_API_URLS: Record<string, string> = {
+  "xion-mainnet-1": "https://aa-api.mainnet.burnt.com",
+  "xion-testnet-2": "https://aa-api.testnet.burnt.com",
 };
 
 const IFRAME_URLS: Record<string, string> = {
@@ -159,6 +191,15 @@ export function getRestUrl(chainId: string): string | undefined {
 
 export function getIframeUrl(chainId: string): string | undefined {
   return IFRAME_URLS[chainId];
+}
+
+export function getAaApiUrl(chainId: string): string | undefined {
+  return AA_API_URLS[chainId];
+}
+
+/** Bech32 account address prefix of a known chain (e.g. "xion"). */
+export function getAddressPrefix(chainId: string): string | undefined {
+  return getChainInfo(chainId)?.bech32Config.bech32PrefixAccAddr;
 }
 
 export async function fetchConfig(rpcUrl: string): Promise<{

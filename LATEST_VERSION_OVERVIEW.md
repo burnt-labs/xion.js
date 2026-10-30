@@ -4,11 +4,35 @@
 
 This document contains a comprehensive overview of all changelog entries across all packages in the xion.js monorepo.
 
-The document is split into three sections:
+The document is split into these sections:
 
+0. **Signer mode address source** — smart-account addresses now come from the AA API; no checksum in the SDK
 1. **React Native feature parity (v1 alpha line, alpha.76 → alpha.79+)** — the cross-cutting story of what's accumulated in `@burnt-labs/abstraxion-react-native` over the last few months
 2. **New in this version (`1.0.0-alpha.76`)** — popup, auto, and embedded authentication modes, direct signing, and supporting changes for the React wrapper
 3. **Previous version recap (`1.0.0-alpha.70`)** — summary of changes already released (config object refactor, UI removal, connector architecture, signer mode)
+
+---
+
+# Signer mode: smart-account addresses come from the AA API
+
+Signer mode no longer derives smart-account addresses in the SDK and no longer needs a contract checksum. The account-abstraction-api (AA API) owns address selection.
+
+```ts
+authentication: {
+  type: "signer",
+  aaApiUrl: "https://aa-api.xion-testnet-2.burnt.com",
+  getSignerConfig,
+  smartAccountContract: { codeId: 1880, addressPrefix: "xion" },
+}
+```
+
+- **Creation** calls `GET /api/v2/account/address/{ethwallet|secp256k1}/{id}`, has the wallet sign exactly the returned address, then posts the existing create request. If the lookup fails, times out (10 s) or returns a malformed/wrong-prefix address, nothing is signed or posted. A create response for a different address is rejected.
+- **Discovery** calls `GET /api/v2/account/check/{type}/{id}`. Only an HTTP 404 means "no account"; a found account is verified on chain (contract exists, actual code ID, matching authenticator). Any AA API or RPC failure surfaces as a discovery error and account creation is refused. Every connect therefore depends on the AA API being reachable.
+- `smartAccountContract.checksum` is optional, deprecated and ignored. Signer-mode discovery no longer uses `indexer`; the AA API runs its own lookup.
+- New core API: `createEthWalletAccount(aaApiUrl, evmAddress, sign, { addressSource: "aa-api", addressPrefix, rpcUrl? })` and the `createSecp256k1Account` equivalent, plus `resolveAAApiAccountAddress`, `findAAApiAccountAddress` and `AAApiAccountNotFoundError`. The positional seven-argument overloads still compile; their checksum argument is ignored.
+- `AAApiAccountStrategy` is exported and implements `version: "v2"` (`{ baseURL, version: "v2", rpcUrl, addressPrefix }`).
+- **Breaking for direct `RpcAccountStrategy` users:** it is now a deprecated adapter over `AAApiAccountStrategy` v2 and throws a migration error unless `aaApiUrl` is passed. `checksum`, `creator` and `codeId` are accepted but ignored. It now supports EthWallet and Secp256K1 only; JWT and Passkey lookups reject (use `AAApiAccountStrategy` v1 or an indexer strategy for JWT). Signer-config users already pass `aaApiUrl` and need no change.
+- **Tradeoff:** there is no legacy-checksum fallback. Accounts the AA API returns through its ordinary lookup are found regardless of age, and mainnet pre-v31 addresses are unchanged (its derivation hash did not change). A few historical testnet accounts created under an older checksum have no dedicated recovery path.
 
 ---
 
@@ -586,20 +610,14 @@ This is the mode to use when you want full control over authentication and don't
       },
       smartAccountContract: {
         codeId: 12,
-        checksum: "abc123...",
         addressPrefix: "xion",
-      },
-      indexer: {
-        type: "numia",
-        url: "https://xion-testnet.numia.xyz",
-        authToken: "...",
       },
     },
   }}
 />
 ```
 
-**Indexer support:** Numia and Subquery indexers enable fast account discovery in signer mode. DaoDao treasury indexer handles grant config queries. Falls back to RPC if no indexer configured.
+**Account discovery:** smart-account addresses come from the AA API (see [Signer mode: smart-account addresses come from the AA API](#signer-mode-smart-account-addresses-come-from-the-aa-api)). DaoDao treasury indexer handles grant config queries.
 
 > **Demo:** See [`apps/demo-app/src/app/signer-mode/`](apps/demo-app/src/app/signer-mode/) and [`apps/demo-app/src/app/direct-signing-demo/`](apps/demo-app/src/app/direct-signing-demo/) for MetaMask integration.
 

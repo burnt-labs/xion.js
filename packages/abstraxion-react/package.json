@@ -1,6 +1,6 @@
 {
   "name": "@burnt-labs/abstraxion-react",
-  "version": "1.0.0-alpha.82",
+  "version": "1.0.0-alpha.85",
   "repository": {
     "type": "git",
     "url": "https://github.com/burnt-labs/xion.js",
@@ -29,7 +29,7 @@
   "devDependencies": {
     "@burnt-labs/account-management": "workspace:*",
     "@burnt-labs/test-utils": "workspace:*",
-    "@cosmjs/proto-signing": "^0.36.0",
+    "@cosmjs/proto-signing": "^0.39.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@types/node": "^20",
@@ -43,7 +43,7 @@
     "tailwindcss": "^3.2.4",
     "tsup": "^8.5.1",
     "typescript": "^5.2.2",
-    "vitest": "^3.2.7",
+    "vitest": "^4.1.11",
     "tailwindcss-animate": "^1.0.7"
   },
   "dependencies": {

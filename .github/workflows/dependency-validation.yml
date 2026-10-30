@@ -1,3 +1,7 @@
+# Sanctioned bespoke: github-workflows v1.8.0 cannot preserve this pre-install
+# verifier test and PR-advisory/npm-release-blocking dependency-train split.
+# Compatibility and re-evaluation criteria: .github/CI-MIGRATION.md.
+
 name: Dependency Validation
 
 on:
@@ -19,7 +23,7 @@ on:
 jobs:
   validate-dependencies:
     name: Validate Package Dependencies
-    runs-on: ubicloud-standard-2
+    runs-on: ubicloud-standard-4
     timeout-minutes: 10
 
     steps:

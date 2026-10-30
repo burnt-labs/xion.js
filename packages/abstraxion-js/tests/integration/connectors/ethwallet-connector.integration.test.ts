@@ -34,7 +34,7 @@ import {
   type SessionManager,
 } from "@burnt-labs/account-management";
 import { AUTHENTICATOR_TYPE, utf8ToHexWithPrefix } from "@burnt-labs/signers";
-import type { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import type { CosmWasmClient } from "@cosmjs/cosmwasm";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
 describe("EthWallet Connector - Integration Tests", () => {
@@ -50,6 +50,7 @@ describe("EthWallet Connector - Integration Tests", () => {
     sessionManager = createMockSessionManager(storageStrategy);
 
     const rpcStrategy = new RpcAccountStrategy({
+      aaApiUrl: config.aaApiUrl,
       rpcUrl: config.rpcUrl,
       checksum: config.checksum,
       creator: config.feeGranter,
