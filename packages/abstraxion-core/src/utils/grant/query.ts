@@ -5,13 +5,18 @@ import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import { StakeAuthorization } from "cosmjs-types/cosmos/staking/v1beta1/authz";
 import type { Any } from "cosmjs-types/google/protobuf/any";
-import type { ChainGrant, GrantsResponse, TreasuryGrantConfig } from "@/types";
+import type {
+  ChainGrant,
+  GrantsResponse,
+  HumanContractExecAuth,
+  TreasuryGrantConfig,
+} from "@/types";
 import { fetchConfig, getRpcClient } from "@/utils";
 import { CacheManager } from "@/utils/cache/CacheManager";
 import { validateTreasuryIndexerResponse } from "./validation";
 import { fetchFromDaoDaoIndexer } from "../indexer/treasury-indexer";
 import { decodeAuthorization } from "./decoding";
-import { AuthorizationTypes } from "./constants";
+import { AuthorizationTypes, ContractExecLimitTypes } from "./constants";
 
 /**
  * Maps StakeAuthorization type enum to string representation
@@ -67,6 +72,37 @@ function decodeAuthorizationToRestFormat(
             `AUTHORIZATION_TYPE_${decoded.authorizationType}`,
           allow_list: decoded.allowList?.address || [],
           deny_list: decoded.denyList?.address || [],
+        };
+      }
+      case AuthorizationTypes.ContractExecution: {
+        // compareContractGrants reads REST `grants`; `value` stays for decodeRestFormatAuthorization.
+        const { grants } = decodeAuthorization(typeUrl, value)
+          .data as HumanContractExecAuth;
+        return {
+          "@type": typeUrl,
+          grants: grants.map((grant) => ({
+            contract: grant.address,
+            limit: {
+              "@type": grant.limitType ?? grant.rawLimitTypeUrl,
+              ...(grant.limitType === ContractExecLimitTypes.MaxCalls && {
+                remaining: grant.maxCalls,
+              }),
+              ...(grant.limitType === ContractExecLimitTypes.CombinedLimit && {
+                calls_remaining: grant.maxCalls,
+              }),
+              ...(grant.maxFunds && {
+                amounts: grant.maxFunds.map(({ denom, amount }) => ({
+                  denom,
+                  amount,
+                })),
+              }),
+            },
+            filter: {
+              "@type": grant.filterType ?? grant.rawFilterTypeUrl,
+              ...(grant.keys && { keys: grant.keys }),
+            },
+          })),
+          value,
         };
       }
       default:

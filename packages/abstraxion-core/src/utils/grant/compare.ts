@@ -12,6 +12,7 @@ import {
 import type { DecodedReadableAuthorization } from "@/types";
 import {
   AuthorizationTypes,
+  ContractExecFilterTypes,
   ContractExecLimitTypes,
 } from "@/utils/grant/constants";
 
@@ -464,6 +465,13 @@ export const compareContractGrants = (
     const address = typeof contract === "string" ? contract : contract.address;
     const amounts = typeof contract === "object" ? contract.amounts : [];
 
+    if (
+      typeof contract === "object" &&
+      ("acceptedMessageKeys" in contract || "maxCalls" in contract)
+    ) {
+      return isConstrainedContractGrantSatisfied(contractGrants, contract);
+    }
+
     const matchingGrants = contractGrants.filter((grant) =>
       grant.authorization.grants.some(
         (grant: GrantAuthorization) => grant.contract === address,
@@ -482,6 +490,48 @@ export const compareContractGrants = (
         )
       : true;
   });
+};
+
+/**
+ * A filtered or call-bounded request is satisfied only by exactly one entry for
+ * its contract with the same key set, a positive call budget no larger than
+ * requested, and a funds limit no broader than requested. wasmd tries every
+ * entry for a contract, so a second entry would widen the grant.
+ */
+const isConstrainedContractGrantSatisfied = (
+  contractGrants: Grant[],
+  contract: Exclude<ContractGrantDescription, string>,
+): boolean => {
+  const entries = contractGrants
+    .flatMap((grant) => grant.authorization.grants ?? [])
+    .filter(
+      (entry: GrantAuthorization) =>
+        entry.contract?.toLowerCase() === contract.address.toLowerCase(),
+    );
+  if (entries.length !== 1) return false;
+  const { limit, filter } = entries[0];
+
+  const keys = contract.acceptedMessageKeys;
+  if (keys) {
+    if (filter?.["@type"] !== ContractExecFilterTypes.AcceptedKeys) {
+      return false;
+    }
+    const chainKeys: string[] = filter.keys ?? [];
+    if (
+      !chainKeys.every((key) => keys.includes(key)) ||
+      !keys.every((key) => chainKeys.includes(key))
+    ) {
+      return false;
+    }
+  }
+
+  const calls = Number(limit?.remaining ?? limit?.calls_remaining);
+  if (!(calls > 0 && calls <= (contract.maxCalls ?? 255))) return false;
+
+  return contract.amounts.length === 0
+    ? limit["@type"] === ContractExecLimitTypes.MaxCalls
+    : limit["@type"] === ContractExecLimitTypes.CombinedLimit &&
+        isLimitValid(contract.amounts, limit.amounts);
 };
 
 /**

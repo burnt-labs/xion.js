@@ -2,19 +2,15 @@ import type {
   SmartAccountContractConfig,
   UserIndexerConfig,
 } from "@burnt-labs/account-management";
-import type { SignerConfig } from "@burnt-labs/abstraxion-core";
+import type {
+  ContractGrantDescription,
+  SignerConfig,
+} from "@burnt-labs/abstraxion-core";
 import type { XionNetwork } from "@burnt-labs/constants";
 
-export type { XionNetwork };
+export type { XionNetwork, ContractGrantDescription };
 
 export type SpendLimit = { denom: string; amount: string };
-
-export type ContractGrantDescription =
-  | string
-  | {
-      address: string;
-      amounts: SpendLimit[];
-    };
 
 // ============================================================================
 // Authentication Types

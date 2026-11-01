@@ -56,6 +56,9 @@ const legacyConfig = {
       address: seatContractAddress,
       amounts: [{ denom: "uxion", amount: "1000000" }],
     },
+    // Limit a contract to named execute messages and a call budget. The address
+    // must not appear in any other entry; amounts: [] means no funds.
+    // { address: otherContract, amounts: [], acceptedMessageKeys: ["mint"], maxCalls: 10 },
   ],
   stake: true,
   bank: [

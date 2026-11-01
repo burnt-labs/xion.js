@@ -54,6 +54,7 @@ export interface Limit {
 
 export interface Filter {
   "@type": string;
+  keys?: string[];
 }
 
 export interface Pagination {
@@ -68,6 +69,10 @@ export type ContractGrantDescription =
   | {
       address: string;
       amounts: SpendLimit[];
+      /** Encodes an AcceptedMessageKeysFilter: only executes whose single top-level key is listed. Omit for AllowAllMessagesFilter. */
+      acceptedMessageKeys?: string[];
+      /** Call budget for this contract. Defaults to 255. */
+      maxCalls?: number;
     };
 
 export interface AminoSignDoc {

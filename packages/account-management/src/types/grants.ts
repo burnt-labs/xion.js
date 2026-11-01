@@ -2,6 +2,7 @@ import type {
   AllowedMsgAllowance,
   PeriodicAllowance,
 } from "cosmjs-types/cosmos/feegrant/v1beta1/feegrant";
+import type { ContractGrantDescription } from "@burnt-labs/abstraxion-core";
 
 // Re-export types from abstraxion-core (source of truth)
 export type {
@@ -52,10 +53,7 @@ export interface GrantConfig {
   treasury?: string;
 
   /** Manual contract grant descriptions */
-  contracts?: Array<
-    | string
-    | { address: string; amounts: Array<{ denom: string; amount: string }> }
-  >;
+  contracts?: ContractGrantDescription[];
 
   /** Bank spend limits */
   bank?: Array<{ denom: string; amount: string }>;

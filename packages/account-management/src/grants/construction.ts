@@ -8,6 +8,7 @@ import { MsgGrant } from "cosmjs-types/cosmos/authz/v1beta1/tx";
 import { MsgGrantAllowance } from "cosmjs-types/cosmos/feegrant/v1beta1/tx";
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz";
 import {
+  AcceptedMessageKeysFilter,
   AllowAllMessagesFilter,
   CombinedLimit,
   ContractExecutionAuthorization,
@@ -187,8 +188,21 @@ export function generateBankGrant(
   };
 }
 
+const CONTRACT_GRANT_FIELDS = [
+  "address",
+  "amounts",
+  "acceptedMessageKeys",
+  "maxCalls",
+];
+
 /**
  * Generate contract execution authorization grant
+ *
+ * Object descriptions may set `acceptedMessageKeys` (encodes an
+ * AcceptedMessageKeysFilter) and `maxCalls` (call budget, default 255). With
+ * either set, `amounts: []` encodes a MaxCallsLimit, which refuses attached
+ * funds on chain, and the address must not appear in any other entry: wasmd
+ * tries every entry for a contract, so a second entry would widen the grant.
  */
 export function generateContractGrant(
   expiration: bigint,
@@ -196,6 +210,63 @@ export function generateContractGrant(
   granter: string,
   contracts: ContractGrantDescription[],
 ): EncodeObject {
+  for (const contract of contracts) {
+    if (contract == null || typeof contract !== "object") continue;
+    // A dropped field would silently widen the grant to AllowAllMessagesFilter.
+    const unknown = Object.keys(contract).filter(
+      (field) => !CONTRACT_GRANT_FIELDS.includes(field),
+    );
+    if (unknown.length) {
+      throw new Error(
+        `Contract grant has unknown fields: ${unknown.join(", ")}`,
+      );
+    }
+    if (!("acceptedMessageKeys" in contract || "maxCalls" in contract)) {
+      continue;
+    }
+    const { address, amounts, acceptedMessageKeys: keys, maxCalls } = contract;
+    if (typeof address !== "string" || !address || !Array.isArray(amounts)) {
+      throw new Error("Filtered contract grant needs an address and amounts");
+    }
+    // Same rules as wasmd AcceptedMessageKeysFilter.ValidateBasic.
+    if (
+      "acceptedMessageKeys" in contract &&
+      !(
+        Array.isArray(keys) &&
+        keys.length > 0 &&
+        keys.every((key) => typeof key === "string" && key === key.trim()) &&
+        !keys.includes("") &&
+        new Set(keys).size === keys.length
+      )
+    ) {
+      throw new Error(
+        "acceptedMessageKeys must be a nonempty list of unique, nonempty, trimmed strings",
+      );
+    }
+    if (
+      "maxCalls" in contract &&
+      !(
+        typeof maxCalls === "number" &&
+        Number.isSafeInteger(maxCalls) &&
+        maxCalls > 0
+      )
+    ) {
+      throw new Error("maxCalls must be a positive integer");
+    }
+    const entries = contracts.filter((other) => {
+      const otherAddress = typeof other === "string" ? other : other?.address;
+      return (
+        typeof otherAddress === "string" &&
+        otherAddress.toLowerCase() === address.toLowerCase()
+      );
+    });
+    if (entries.length !== 1) {
+      throw new Error(
+        `Filtered contract grant for ${address} must be its only entry`,
+      );
+    }
+  }
+
   const validGrants = contracts.filter((contractGrantDescription) => {
     if (typeof contractGrantDescription === "string") {
       return true;
@@ -230,21 +301,44 @@ export function generateContractGrant(
             };
           }
 
-          const { address, amounts } = contractGrantDescription;
+          const { address, amounts, acceptedMessageKeys, maxCalls } =
+            contractGrantDescription;
+          const calls = BigInt(maxCalls ?? 255);
+          // Legacy { address, amounts } objects keep their CombinedLimit wire.
+          const noFunds =
+            amounts.length === 0 &&
+            ("acceptedMessageKeys" in contractGrantDescription ||
+              "maxCalls" in contractGrantDescription);
           return {
             contract: address,
-            limit: {
-              typeUrl: "/cosmwasm.wasm.v1.CombinedLimit",
-              value: CombinedLimit.encode(
-                CombinedLimit.fromPartial({
-                  callsRemaining: BigInt("255"),
-                  amounts: sortCoins(amounts),
-                }),
-              ).finish(),
-            },
-            filter: {
-              typeUrl: AllowAllMessagesFilter.typeUrl,
-            },
+            limit: noFunds
+              ? {
+                  typeUrl: MaxCallsLimit.typeUrl,
+                  value: MaxCallsLimit.encode(
+                    MaxCallsLimit.fromPartial({ remaining: calls }),
+                  ).finish(),
+                }
+              : {
+                  typeUrl: "/cosmwasm.wasm.v1.CombinedLimit",
+                  value: CombinedLimit.encode(
+                    CombinedLimit.fromPartial({
+                      callsRemaining: calls,
+                      amounts: sortCoins(amounts),
+                    }),
+                  ).finish(),
+                },
+            filter: acceptedMessageKeys
+              ? {
+                  typeUrl: AcceptedMessageKeysFilter.typeUrl,
+                  value: AcceptedMessageKeysFilter.encode(
+                    AcceptedMessageKeysFilter.fromPartial({
+                      keys: acceptedMessageKeys,
+                    }),
+                  ).finish(),
+                }
+              : {
+                  typeUrl: AllowAllMessagesFilter.typeUrl,
+                },
           };
         }),
       }),
