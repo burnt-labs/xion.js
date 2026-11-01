@@ -7,8 +7,11 @@ import {
   MaxCallsLimit,
 } from "cosmjs-types/cosmwasm/wasm/v1/authz";
 import { fetchChainGrantsABCI } from "../query";
-import { compareContractGrants } from "../compare";
-import { decodeRestFormatAuthorization } from "../decoding";
+import { compareContractGrants, validateContractExecution } from "../compare";
+import {
+  decodeAuthorization,
+  decodeRestFormatAuthorization,
+} from "../decoding";
 import {
   AuthorizationTypes,
   ContractExecFilterTypes,
@@ -219,6 +222,29 @@ describe("compareContractGrants() with acceptedMessageKeys and maxCalls", () => 
         await chainGrants({ ...exactVaultEntry, limit: combined(50, "101") }),
         [funded],
       ),
+    ).toBe(false);
+  });
+});
+
+describe("validateContractExecution() accepted keys", () => {
+  const decoded = (filterKeys: string[]) =>
+    decodeAuthorization(
+      ContractExecutionAuthorization.typeUrl,
+      ContractExecutionAuthorization.encode(
+        ContractExecutionAuthorization.fromPartial({
+          grants: [{ ...exactVaultEntry, filter: keysFilter(filterKeys) }],
+        }),
+      ).finish(),
+    );
+
+  it("matches the same key set in any order and refuses a different set", () => {
+    const treasury = decoded(keys);
+
+    expect(
+      validateContractExecution(treasury, decoded([...keys].reverse())),
+    ).toBe(true);
+    expect(
+      validateContractExecution(treasury, decoded(["admit_private", "revoke"])),
     ).toBe(false);
   });
 });

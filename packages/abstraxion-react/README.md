@@ -97,6 +97,13 @@ export default function RootLayout({
 }
 ```
 
+Changes to `contracts` entries in this release:
+
+- Object entries with fields other than `address`, `amounts`, `acceptedMessageKeys` and `maxCalls` now throw when the grant message is built (`generateContractGrant`, `buildGrantMessages`, signer-mode connect). Before, the extra field was dropped.
+- An entry with `acceptedMessageKeys` or `maxCalls` must be the only entry for its address (compared case-insensitively); a second entry for that address throws.
+- On session restore without a `treasury`, an entry with `acceptedMessageKeys` or `maxCalls` matches only a chain grant with exactly one entry for that contract, the same keys and a call budget no larger than requested. An allow-all grant, for example one issued by an older dashboard that ignores these fields, is refused and the session is logged out.
+- `fetchChainGrantsABCI` from `@burnt-labs/abstraxion-core` now returns `ContractExecutionAuthorization` grants in REST form (`grants[].contract`, `limit`, `filter`). The raw `value` bytes are still included.
+
 Then, use the exported hooks and iframe embed to drive the auth flow:
 
 ```

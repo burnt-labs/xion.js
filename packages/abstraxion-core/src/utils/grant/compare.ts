@@ -207,10 +207,10 @@ export const validateContractExecution = (
         if (decodedTreasuryKeys.length !== decodedChainKeys.length) {
           return false;
         }
+        // Chain keys are unique (wasmd ValidateBasic), so with equal lengths
+        // this is set equality; the chain ignores key order.
         if (
-          !decodedTreasuryKeys.every(
-            (key, index) => key === decodedChainKeys[index],
-          )
+          !decodedChainKeys.every((key) => decodedTreasuryKeys.includes(key))
         ) {
           return false;
         }
