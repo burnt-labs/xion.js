@@ -150,12 +150,26 @@ describe("generateContractGrant() with acceptedMessageKeys and maxCalls", () => 
   });
 
   describe("rejection of unknown keys", () => {
-    it("rejects unknown description fields instead of dropping them", () => {
+    it("rejects unknown fields on a filtered description", () => {
       expect(() =>
         generateContractGrant(expiration, grantee, granter, [
-          { address: vault, amounts: [], acceptedKeys: keys } as never,
+          vaultGrant({ acceptedKeys: keys }),
         ]),
       ).toThrow("Contract grant has unknown fields: acceptedKeys");
+    });
+
+    it("legacy entries still ignore unknown fields", () => {
+      const { authorization } = decodeGrant([
+        { address: vault, amounts: [], acceptedKeys: keys } as never,
+      ]);
+
+      expect(authorization.grants).toHaveLength(1);
+      expect(authorization.grants[0].limit!.typeUrl).toBe(
+        CombinedLimit.typeUrl,
+      );
+      expect(authorization.grants[0].filter!.typeUrl).toBe(
+        AllowAllMessagesFilter.typeUrl,
+      );
     });
 
     it.each([

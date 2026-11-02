@@ -201,8 +201,10 @@ const CONTRACT_GRANT_FIELDS = [
  * Object descriptions may set `acceptedMessageKeys` (encodes an
  * AcceptedMessageKeysFilter) and `maxCalls` (call budget, default 255). With
  * either set, `amounts: []` encodes a MaxCallsLimit, which refuses attached
- * funds on chain, and the address must not appear in any other entry: wasmd
- * tries every entry for a contract, so a second entry would widen the grant.
+ * funds on chain, unknown fields throw, and the address must not appear in
+ * any other entry: wasmd tries every entry for a contract, so a second entry
+ * would widen the grant. Entries without either field are encoded as before
+ * and their unknown fields are ignored.
  */
 export function generateContractGrant(
   expiration: bigint,
@@ -212,7 +214,9 @@ export function generateContractGrant(
 ): EncodeObject {
   for (const contract of contracts) {
     if (contract == null || typeof contract !== "object") continue;
-    // A dropped field would silently widen the grant to AllowAllMessagesFilter.
+    if (!("acceptedMessageKeys" in contract || "maxCalls" in contract)) {
+      continue;
+    }
     const unknown = Object.keys(contract).filter(
       (field) => !CONTRACT_GRANT_FIELDS.includes(field),
     );
@@ -220,9 +224,6 @@ export function generateContractGrant(
       throw new Error(
         `Contract grant has unknown fields: ${unknown.join(", ")}`,
       );
-    }
-    if (!("acceptedMessageKeys" in contract || "maxCalls" in contract)) {
-      continue;
     }
     const { address, amounts, acceptedMessageKeys: keys, maxCalls } = contract;
     if (typeof address !== "string" || !address || !Array.isArray(amounts)) {
