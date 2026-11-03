@@ -628,7 +628,7 @@ describe("AbstraxionAuth", () => {
       vi.spyOn(
         abstraxionAuth as any,
         "triggerAuthStateChange",
-      ).mockImplementation();
+      ).mockImplementation(() => {});
 
       // Mock the redirect strategy's cleanUrlParameters method
       const cleanUrlParametersMock = vi

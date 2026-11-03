@@ -478,21 +478,37 @@ describe("Treasury Data Caching", () => {
 
       try {
         // Create multiple entries
-        await fetchTreasuryDataFromIndexer("treasury1", mockRpcUrl);
-        await fetchTreasuryDataFromIndexer("treasury2", mockRpcUrl);
+        await fetchTreasuryDataFromIndexer(
+          "treasury1",
+          mockRpcUrl,
+          mockIndexerUrl,
+        );
+        await fetchTreasuryDataFromIndexer(
+          "treasury2",
+          mockRpcUrl,
+          mockIndexerUrl,
+        );
 
         // Advance time to expire first entry
         currentTime += 11 * 60 * 1000;
 
         // Fetch a new entry - this should trigger cleanup
-        await fetchTreasuryDataFromIndexer("treasury3", mockRpcUrl);
+        await fetchTreasuryDataFromIndexer(
+          "treasury3",
+          mockRpcUrl,
+          mockIndexerUrl,
+        );
 
         // Verify expired entries are cleaned up
         // First two should refetch, third is new
         expect(global.fetch).toHaveBeenCalledTimes(3);
 
         // Now fetch the first one again - it should have been cleaned up
-        await fetchTreasuryDataFromIndexer("treasury1", mockRpcUrl);
+        await fetchTreasuryDataFromIndexer(
+          "treasury1",
+          mockRpcUrl,
+          mockIndexerUrl,
+        );
         expect(global.fetch).toHaveBeenCalledTimes(4);
       } finally {
         Date.now = originalDateNow;

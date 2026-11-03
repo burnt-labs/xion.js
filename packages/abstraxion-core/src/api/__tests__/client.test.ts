@@ -291,8 +291,6 @@ describe("API Client - Error Parsing", () => {
       await createEthWalletAccountV2("http://test-api", {
         address: "0x123",
         signature: "sig123",
-        chainId: "xion-testnet-1",
-        salt: "salt123",
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -337,7 +335,7 @@ describe("API Client - Error Parsing", () => {
       );
 
       // Test Secp256k1
-      await getAccountAddress("http://test-api", "Secp256k1", "pubkey123");
+      await getAccountAddress("http://test-api", "Secp256K1", "pubkey123");
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/secp256k1/"),
         expect.any(Object),
@@ -363,8 +361,6 @@ describe("API Client - Error Parsing", () => {
       const request = {
         address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
         signature: "0xabcdef",
-        chainId: "xion-testnet-1",
-        salt: "salt123",
       };
 
       await createEthWalletAccountV2("http://test-api", request);
@@ -385,10 +381,8 @@ describe("API Client - Error Parsing", () => {
       global.fetch = mockFetch;
 
       const request = {
-        publicKey: "pubkey123",
+        pubKey: "pubkey123",
         signature: "sig123",
-        chainId: "xion-testnet-1",
-        salt: "salt123",
       };
 
       await createSecp256k1AccountV2("http://test-api", request);
@@ -409,9 +403,8 @@ describe("API Client - Error Parsing", () => {
       global.fetch = mockFetch;
 
       const request = {
-        token: "jwt.token.here",
-        salt: "salt123",
-        chainId: "xion-testnet-1",
+        session_jwt: "jwt.token.here",
+        session_token: "session.token.here",
       };
 
       await createJWTAccountV2("http://test-api", request);

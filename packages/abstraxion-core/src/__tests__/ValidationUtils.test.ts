@@ -131,7 +131,7 @@ describe("Treasury Grant Validation", () => {
     });
 
     it("should skip invalid configs and warn", () => {
-      const consoleSpy = vi.spyOn(console, "warn").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const mixedResponse = {
         "/cosmos.authz.v1beta1.MsgGrant": {
@@ -170,7 +170,7 @@ describe("Treasury Grant Validation", () => {
     });
 
     it("should return empty object for response with all invalid configs", () => {
-      const consoleSpy = vi.spyOn(console, "warn").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const invalidResponse = {
         "/invalid1": { notAuthorization: "value" },
