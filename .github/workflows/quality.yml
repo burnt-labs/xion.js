@@ -1,0 +1,17 @@
+# Shared workflow caller: github-workflows required quality. The gates are in
+# .github/quality-policy.jsonc. Build artifacts, dispatch-selected type
+# generation, and live checks stay in their own workflows; see
+# .github/CI-MIGRATION.md.
+name: Quality
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  required:
+    uses: burnt-labs/github-workflows/.github/workflows/required-quality.yml@c7814463307c0e3d8025dca0e028cb3361e26c8e # v1.10.0

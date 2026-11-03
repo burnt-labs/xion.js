@@ -19,6 +19,7 @@
     "test:unit": "turbo run test",
     "test:unit:watch": "turbo run test --concurrency 1 -- --watch",
     "test:unit:coverage": "turbo run test -- --coverage",
+    "test:coverage": "turbo run test:coverage --filter=@burnt-labs/abstraxion-core",
     "test:integration": "turbo run test:integration",
     "test:integration:watch": "turbo run test:integration:watch",
     "generate:types": "pnpm --filter @burnt-labs/signers generate:types",
