@@ -11,7 +11,7 @@ import type { OfflineSigner } from "@cosmjs/proto-signing";
 import type { CometClient } from "@cosmjs/tendermint-rpc";
 
 describe("GranteeSignerClient - Edge Cases", () => {
-  const mockSigner: OfflineSigner = {
+  const mockSigner = {
     getAccounts: vi.fn().mockResolvedValue([
       {
         address: "xion1grantee",
@@ -19,7 +19,7 @@ describe("GranteeSignerClient - Edge Cases", () => {
         algo: "secp256k1" as const,
       },
     ]),
-  };
+  } as unknown as OfflineSigner;
 
   const mockCometClient = {
     status: vi.fn(),
@@ -86,7 +86,7 @@ describe("GranteeSignerClient - Edge Cases", () => {
     });
 
     it("should return undefined if grantee not found in signer accounts", async () => {
-      const signerWithoutMatch: OfflineSigner = {
+      const signerWithoutMatch = {
         getAccounts: vi.fn().mockResolvedValue([
           {
             address: "xion1different",
@@ -94,7 +94,7 @@ describe("GranteeSignerClient - Edge Cases", () => {
             algo: "secp256k1" as const,
           },
         ]),
-      };
+      } as unknown as OfflineSigner;
 
       const client = GranteeSignerClient.createWithSigner(
         mockCometClient,

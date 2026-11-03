@@ -6,6 +6,7 @@
     "baseUrl": ".",
     "module": "esnext",
     "target": "es2020",
+    "lib": ["es2021", "dom"],
     "paths": {
       "@/*": ["src/*"]
     }

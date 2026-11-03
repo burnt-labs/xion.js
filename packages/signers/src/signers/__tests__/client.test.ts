@@ -68,7 +68,7 @@ vi.mock("cosmjs-types/cosmos/tx/v1beta1/tx", () => ({
 }));
 
 vi.mock("../utils/index", async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import("../utils/index")>();
   return {
     ...actual,
     customAccountFromAny: vi.fn().mockReturnValue({
