@@ -1,0 +1,28 @@
+// Quality gates for burnt-labs/github-workflows required-quality.yml, run
+// before every release by npm-changesets.yml. Commands match the baseline
+// table in .github/CI-MIGRATION.md.
+{
+  "schemaVersion": 1,
+  "workingDirectory": ".",
+  "commands": {
+    "install": "pnpm install --frozen-lockfile",
+    "lint": "pnpm lint",
+    "prettier": "pnpm format:check",
+    // check-types depends on ^build in turbo.json, so it builds workspace
+    // dependencies itself even though Type-check runs before Build.
+    "typeCheck": "pnpm turbo run check-types",
+    // Unit and script tests only. Integration tests need live chain
+    // configuration and secrets and stay in integration-tests.yml.
+    "test": "pnpm test:scripts && pnpm test:unit",
+    "coverage": "pnpm --filter @burnt-labs/abstraxion-core exec vitest run --coverage",
+    // Regenerates the AA API types from testnet before building, as the
+    // bespoke release.yml did.
+    "build": "pnpm generate:types && pnpm build",
+  },
+  // abstraxion-core's own vitest thresholds; that config enforces them.
+  "coverageThresholds": {
+    "lines": 50,
+    "functions": 50,
+    "branches": 40,
+  },
+}

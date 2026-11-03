@@ -15,6 +15,7 @@
       "env": [".env.production.local", ".env.local", ".env.production", ".env"]
     },
     "test": {
+      "dependsOn": ["^build"],
       "env": [".env.test.local", ".env.test", ".env"]
     },
     "test:integration": {
