@@ -64,23 +64,40 @@ publishing correctness for a shared-flow badge.
 
 The released `required-quality.yml` supports this Node/pnpm monorepo. It requires
 independent real lint, formatting, type-check, test, coverage, and build gates;
-it does not offer a format-only entrypoint. Adoption is blocked by existing
-consumer failures, not a claim that the platform cannot run pnpm:
+it does not offer a format-only entrypoint. Adoption was blocked by existing
+consumer failures, not a claim that the platform cannot run pnpm. Those
+failures are now fixed. Re-run on November 3, 2026, from a clean checkout
+(no `node_modules` or `dist`):
 
-| Baseline command (pnpm 8.9.0, frozen lockfile)                         | Observed result                                                                                                          |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm install --frozen-lockfile`                                       | Passed; no lockfile changes                                                                                              |
-| `pnpm lint`                                                            | Passed, 19 tasks                                                                                                         |
-| `pnpm format:check`                                                    | Passed                                                                                                                   |
-| `pnpm turbo run check-types`                                           | Failed in `packages/test-utils/src/vitest/index.ts`: missing `vi` and `expect` names                                     |
-| `pnpm --filter @burnt-labs/abstraxion-core exec vitest run --coverage` | Failed before tests: `TypeError: this.resolveReporters is not a function` (`vitest` 4.1.11 with coverage provider 1.6.1) |
-| `pnpm test:scripts`                                                    | Passed, 20 baseline tests                                                                                                |
+| Baseline command (pnpm 8.9.0, frozen lockfile)                         | Observed result                                                                                        |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `pnpm install --frozen-lockfile`                                       | Passed; no lockfile changes                                                                            |
+| `pnpm lint`                                                            | Passed, 19 tasks                                                                                       |
+| `pnpm format:check`                                                    | Passed                                                                                                 |
+| `pnpm turbo run check-types`                                           | Passed, 15 tasks (`check-types` now depends on `^build`)                                               |
+| `pnpm --filter @burnt-labs/abstraxion-core exec vitest run --coverage` | Passed, 398 tests; lines 59.26%, functions 65.56%, branches 51.9%, statements 58.74% (`vitest` 4.1.11) |
+| `pnpm test:scripts`                                                    | Passed, 30 tests                                                                                       |
 
-The core package already declares coverage thresholds (50% lines/functions,
-40% branches); this change does not lower them, replace the coverage provider,
-invent a repository-wide percentage, or fill mandatory commands with no-ops.
-Fix and measure the consumer's actual type-check/coverage gates in follow-up
-work, then migrate compatible quality gates to the SHA-pinned released workflow.
+What changed to get there:
+
+- `@vitest/coverage-v8` (and core's `@vitest/ui`) are pinned to exactly
+  4.1.11 to match the locked `vitest`. The 1.6.1 provider failed with
+  `TypeError: this.resolveReporters is not a function`, and a `^4.1.11` range
+  resolves to 4.1.12, which is a peer mismatch.
+- `test-utils` references the vitest globals types its `vi`/`expect` guards use.
+- Turbo had stopped at the first `check-types` failure (`test-utils`), which
+  hid 49 more pre-existing type errors in `abstraxion-core`, `abstraxion-js`,
+  `signers`, and `account-management`. Those are fixed by tsconfig/typing
+  changes and by updating tests that had drifted from the generated AA API and
+  xion-types definitions. The SDK runtime already matched those types.
+- `check-types` depends on `^build` because workspace packages resolve each
+  other through `dist` types, and the shared workflow runs Type-check before
+  Build.
+
+The core package's coverage thresholds (50% lines/functions, 40% branches) are
+unchanged and met; the coverage provider type is unchanged, and no mandatory
+command is a no-op. The remaining step is to migrate compatible quality gates
+to the SHA-pinned released workflow.
 
 ## Retained bespoke workflow map
 
@@ -106,10 +123,9 @@ Changes to the shared platform itself are outside this xion.js-only PR.
 
 ### Owning follow-ups and adoption conditions
 
-- **Consumer quality owner:** repair the existing test-utils type-check and
-  align the Vitest coverage provider with the locked Vitest version. Measure
-  the real enforced coverage gates without lowering thresholds. Once these
-  pass, replace the compatible quality surface with `required-quality.yml`
+- **Consumer quality owner:** the test-utils type-check and the Vitest
+  coverage provider are fixed, and the enforced coverage gates pass without
+  lowering thresholds (see above). Next, replace the compatible quality surface with `required-quality.yml`
   pinned to the latest released SHA. Existing build-artifact and manual URL
   selection behavior still needs to be retained alongside that caller.
 - **Shared platform owner:** support the hosted npm trusted-publishing boundary
@@ -122,10 +138,11 @@ Changes to the shared platform itself are outside this xion.js-only PR.
   document as an exception in perpetuity. Repository-specific contract and
   schema checks remain consumer checks, not deploy orchestrators.
 
-No released entrypoint can be newly adopted here today without either adding
-already-failing mandatory gates or losing publishing/artifact semantics. This
-PR therefore records **zero shared workflow callers**, not a completed shared
-workflow migration. It does not claim to address Cloudflare, Phala, or Modal
+When this document was written, no released entrypoint could be adopted
+without either adding already-failing mandatory gates or losing
+publishing/artifact semantics. The quality gates now pass locally. The
+repository still has **zero shared workflow callers**; this is not a completed
+shared workflow migration. It does not claim to address Cloudflare, Phala, or Modal
 platform coverage; those belong to their owning central-platform workstream.
 
 The existing default-branch Release run already fails its post-publish verifier:
