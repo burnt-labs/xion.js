@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@hono/zod-openapi": "^0.18.4",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/coverage-v8": "4.1.11",
     "openapi-typescript": "^7.0.0",
     "@vercel/style-guide": "^5.1.0"
   },

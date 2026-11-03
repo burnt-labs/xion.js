@@ -45,7 +45,7 @@
   "devDependencies": {
     "@burnt-labs/test-utils": "workspace:*",
     "@types/node": "^20",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/coverage-v8": "4.1.11",
     "eslint": "^8.48.0",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.5",
