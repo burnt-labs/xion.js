@@ -387,9 +387,7 @@ class TestCosmWasmClient extends CosmWasmClient {
    * Override static create method to return TestCosmWasmClient instance
    * This ensures the custom getAccount() method is used
    */
-  public static override async create(
-    tmClient: any,
-  ): Promise<TestCosmWasmClient> {
+  public static override create(tmClient: any): TestCosmWasmClient {
     return new TestCosmWasmClient(tmClient);
   }
 

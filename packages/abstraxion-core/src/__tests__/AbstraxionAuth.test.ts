@@ -625,7 +625,10 @@ describe("AbstraxionAuth", () => {
       vi.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("testGranter");
       vi.spyOn(abstraxionAuth, "pollForGrants").mockResolvedValue(true);
       vi.spyOn(abstraxionAuth, "setGranter").mockResolvedValue();
-      vi.spyOn(abstraxionAuth, "triggerAuthStateChange").mockImplementation();
+      vi.spyOn(
+        abstraxionAuth as any,
+        "triggerAuthStateChange",
+      ).mockImplementation(() => {});
 
       // Mock the redirect strategy's cleanUrlParameters method
       const cleanUrlParametersMock = vi
@@ -647,10 +650,9 @@ describe("AbstraxionAuth", () => {
       // Mock failed login scenario
       vi.spyOn(abstraxionAuth, "getLocalKeypair").mockResolvedValue(undefined);
       vi.spyOn(abstraxionAuth, "getGranter").mockResolvedValue("");
-      vi.spyOn(
-        abstraxionAuth,
-        "generateAndStoreTempAccount",
-      ).mockResolvedValue();
+      vi.spyOn(abstraxionAuth, "generateAndStoreTempAccount").mockResolvedValue(
+        undefined as any,
+      );
       vi.spyOn(abstraxionAuth, "redirectToDashboard").mockResolvedValue();
 
       // Mock the redirect strategy's cleanUrlParameters method

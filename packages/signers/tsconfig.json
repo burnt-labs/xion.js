@@ -15,7 +15,11 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["vite/client", "vitest/globals"]
+    "types": ["vite/client", "vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "@burnt-labs/signers": ["./src/index.ts"]
+    }
   },
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]

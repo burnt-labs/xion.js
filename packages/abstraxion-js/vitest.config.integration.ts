@@ -16,7 +16,6 @@ export default defineConfig({
       "./vitest.setup.integration.ts",
     ],
     globalSetup: ["./tests/integration/global-setup.ts"],
-    minWorkers: 8,
     maxWorkers: 8,
     testTimeout: 120000,
     hookTimeout: 120000,

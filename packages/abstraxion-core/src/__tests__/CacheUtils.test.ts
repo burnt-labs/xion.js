@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import type { Mock } from "vitest";
 import { fetchConfig, clearConfigCache } from "../utils/configUtils";
 import {
   fetchTreasuryDataFromIndexer,
@@ -24,7 +25,7 @@ describe("Config Caching", () => {
     vi.clearAllMocks();
     clearConfigCache();
     // Reset the mock implementation
-    (constants.fetchConfig as vi.Mock).mockResolvedValue(mockConfig);
+    (constants.fetchConfig as Mock).mockResolvedValue(mockConfig);
   });
 
   describe("fetchConfig", () => {
@@ -55,7 +56,7 @@ describe("Config Caching", () => {
         networkId: "another-network",
       };
 
-      (constants.fetchConfig as vi.Mock).mockImplementation((url) => {
+      (constants.fetchConfig as Mock).mockImplementation((url: string) => {
         if (url === mockRpcUrl) return Promise.resolve(mockConfig);
         return Promise.resolve(anotherConfig);
       });
@@ -85,7 +86,7 @@ describe("Config Caching", () => {
         resolvePromise = resolve;
       });
 
-      (constants.fetchConfig as vi.Mock).mockReturnValue(delayedPromise);
+      (constants.fetchConfig as Mock).mockReturnValue(delayedPromise);
 
       // Start multiple concurrent requests
       const promises = [
@@ -171,14 +172,14 @@ describe("Treasury Data Caching", () => {
     clearTreasuryCache();
 
     // Mock fetchConfig to return network ID
-    (constants.fetchConfig as vi.Mock).mockResolvedValue({
+    (constants.fetchConfig as Mock).mockResolvedValue({
       dashboardUrl: "https://dashboard.example.com",
       restUrl: "https://rest.example.com",
       networkId: mockNetworkId,
     });
 
     // Mock successful fetch response
-    (global.fetch as vi.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: async () => mockTreasuryData,
     });
@@ -232,7 +233,7 @@ describe("Treasury Data Caching", () => {
         },
       };
 
-      (global.fetch as vi.Mock).mockImplementation((url) => {
+      (global.fetch as Mock).mockImplementation((url: string) => {
         if (url.includes(mockTreasuryAddress)) {
           return Promise.resolve({
             ok: true,
@@ -282,7 +283,7 @@ describe("Treasury Data Caching", () => {
 
     it("should handle indexer errors gracefully", async () => {
       // Mock fetch error
-      (global.fetch as vi.Mock).mockRejectedValue(new Error("Network error"));
+      (global.fetch as Mock).mockRejectedValue(new Error("Network error"));
 
       // Should throw the error (not cache it)
       await expect(
@@ -297,7 +298,7 @@ describe("Treasury Data Caching", () => {
     });
 
     it("should handle non-OK responses gracefully", async () => {
-      (global.fetch as vi.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 404,
         statusText: "Not Found",
@@ -317,9 +318,7 @@ describe("Treasury Data Caching", () => {
 
     it("should not cache errors and allow retry", async () => {
       // First call fails
-      (global.fetch as vi.Mock).mockRejectedValueOnce(
-        new Error("Network error"),
-      );
+      (global.fetch as Mock).mockRejectedValueOnce(new Error("Network error"));
 
       // First attempt should fail
       await expect(
@@ -331,7 +330,7 @@ describe("Treasury Data Caching", () => {
       ).rejects.toThrow("Network error");
 
       // Second call succeeds
-      (global.fetch as vi.Mock).mockResolvedValueOnce({
+      (global.fetch as Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => mockTreasuryData,
       });
@@ -360,8 +359,8 @@ describe("Treasury Data Caching", () => {
         resolveFetchPromise = resolve;
       });
 
-      (constants.fetchConfig as vi.Mock).mockReturnValue(configDelayedPromise);
-      (global.fetch as vi.Mock).mockReturnValue(fetchDelayedPromise);
+      (constants.fetchConfig as Mock).mockReturnValue(configDelayedPromise);
+      (global.fetch as Mock).mockReturnValue(fetchDelayedPromise);
 
       // Start multiple concurrent requests
       const promises = [
@@ -479,21 +478,37 @@ describe("Treasury Data Caching", () => {
 
       try {
         // Create multiple entries
-        await fetchTreasuryDataFromIndexer("treasury1", mockRpcUrl);
-        await fetchTreasuryDataFromIndexer("treasury2", mockRpcUrl);
+        await fetchTreasuryDataFromIndexer(
+          "treasury1",
+          mockRpcUrl,
+          mockIndexerUrl,
+        );
+        await fetchTreasuryDataFromIndexer(
+          "treasury2",
+          mockRpcUrl,
+          mockIndexerUrl,
+        );
 
         // Advance time to expire first entry
         currentTime += 11 * 60 * 1000;
 
         // Fetch a new entry - this should trigger cleanup
-        await fetchTreasuryDataFromIndexer("treasury3", mockRpcUrl);
+        await fetchTreasuryDataFromIndexer(
+          "treasury3",
+          mockRpcUrl,
+          mockIndexerUrl,
+        );
 
         // Verify expired entries are cleaned up
         // First two should refetch, third is new
         expect(global.fetch).toHaveBeenCalledTimes(3);
 
         // Now fetch the first one again - it should have been cleaned up
-        await fetchTreasuryDataFromIndexer("treasury1", mockRpcUrl);
+        await fetchTreasuryDataFromIndexer(
+          "treasury1",
+          mockRpcUrl,
+          mockIndexerUrl,
+        );
         expect(global.fetch).toHaveBeenCalledTimes(4);
       } finally {
         Date.now = originalDateNow;

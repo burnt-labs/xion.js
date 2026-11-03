@@ -209,7 +209,9 @@ describe("CacheManager", () => {
 
   describe("Debug Logging", () => {
     it("should log cache hits when debugLabel is provided", async () => {
-      const consoleSpy = vi.spyOn(console, "debug").mockImplementation();
+      const consoleSpy = vi
+        .spyOn(console, "debug")
+        .mockImplementation(() => {});
 
       const debugCacheManager = new CacheManager<string>({
         ttl: 5 * 60 * 1000,

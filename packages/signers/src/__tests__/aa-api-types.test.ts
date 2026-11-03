@@ -191,15 +191,16 @@ describe("Breaking Change Detection", () => {
       authenticator_type: "EthWallet",
     };
 
-    // Required field
+    // Both fields are required
     expect(validResponse.address).toBeDefined();
+    expect(validResponse.authenticator_type).toBeDefined();
 
-    // Optional field (should be allowed to be undefined)
-    const withoutOptional: AddressResponse = {
+    // @ts-expect-error authenticator_type is required by the AA API schema
+    const withoutAuthenticatorType: AddressResponse = {
       address: "xion1test",
     };
 
-    expect(withoutOptional.authenticator_type).toBeUndefined();
+    expect(withoutAuthenticatorType.authenticator_type).toBeUndefined();
   });
 
   it("should fail if AA API changes CreateAccountResponseV2 structure", () => {

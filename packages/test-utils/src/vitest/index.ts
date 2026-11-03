@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 /**
  * Vitest utilities
  *

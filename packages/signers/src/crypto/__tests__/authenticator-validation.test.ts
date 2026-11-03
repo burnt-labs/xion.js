@@ -4,8 +4,8 @@ import {
   isSecp256k1PublicKey,
   isJWTToken,
   detectAuthenticatorType,
-  type AuthenticatorType,
 } from "../authenticator-validation";
+import type { AuthenticatorType } from "../../types/account";
 
 describe("validation.ts - Credential Validation", () => {
   describe("isEthereumAddress", () => {

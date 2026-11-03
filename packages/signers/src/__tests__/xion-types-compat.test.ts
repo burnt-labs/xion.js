@@ -46,7 +46,8 @@ function checkAuthInfoFields(info: AuthInfo): void {
 
 function checkAbstractAccount(aa: AbstractAccount): void {
   const _addr: string = aa.address;
-  const _codeId: bigint = aa.codeId;
+  assertBigint(aa.accountNumber);
+  assertBigint(aa.sequence);
 }
 
 function checkMsgRegisterAccount(msg: MsgRegisterAccount): void {

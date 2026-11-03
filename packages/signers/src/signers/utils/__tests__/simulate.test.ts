@@ -80,7 +80,10 @@ function abstractAccountAny(address: string, sequence = 5) {
   };
 }
 
-function setupQueryClient(address = testAccounts.existing, sequence = 5) {
+function setupQueryClient(
+  address: string = testAccounts.existing,
+  sequence = 5,
+) {
   (QueryClient.withExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
     auth: {
       account: vi.fn().mockResolvedValue(abstractAccountAny(address, sequence)),
