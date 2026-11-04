@@ -1,3 +1,6 @@
+// Quality gates for burnt-labs/github-workflows required-quality.yml. Run on
+// pull requests by quality.yml and before every release by npm-changesets.yml
+// (release.yml). Commands match the baseline table in .github/CI-MIGRATION.md.
 {
   "schemaVersion": 1,
   "workingDirectory": ".",
@@ -15,7 +18,9 @@
     // abstraxion-core is the package that declares coverage thresholds, in its
     // vitest.config.ts; the values below are those, not new ones.
     "coverage": "pnpm test:coverage",
-    "build": "pnpm build",
+    // Regenerates the AA API types from testnet before building, as the
+    // bespoke release.yml did.
+    "build": "pnpm generate:types && pnpm build",
   },
   "coverageThresholds": {
     "lines": 50,

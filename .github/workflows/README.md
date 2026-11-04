@@ -74,7 +74,12 @@ start, then schedules isolated test accounts across all eight runner cores.
 ### 🚀 Release (`release.yml`)
 
 **Triggers**: Push to `main`, manual
-**Purpose**: Publish packages to npm using Changesets
+**Purpose**: Publish packages to npm using Changesets, through the shared
+`burnt-labs/github-workflows` `npm-changesets.yml` flow (OIDC trusted
+publishing, no npm token). The quality gates in `.github/quality-policy.jsonc`
+run first, and `scripts/verify-npm-dependency-train.mjs` runs after any publish
+attempt. The filename must stay `release.yml`: it is the packages' npm trusted
+publisher.
 
 ---
 

@@ -29,7 +29,8 @@ can preserve the consumer's behavior; there is no permanent bespoke exemption.
   `ubicloud-standard-2`.
 - Existing integration jobs retain their four `ubicloud-standard-8` runners
   and one `ubicloud-standard-2` gate.
-- `release.yml` retains `ubuntu-latest`, as explained below.
+- `release.yml` originally retained `ubuntu-latest`. It now calls the shared
+  Changesets flow, which publishes on Ubicloud; see below.
 
 The [official Ubicloud runner table](https://www.ubicloud.com/docs/github-actions-integration/runner-types)
 lists these x64 Ubuntu labels. No architecture, runtime, cache key, lockfile,
@@ -37,28 +38,41 @@ package-manager pin, action version, trigger, permission, secret, environment,
 artifact name/path/retention, job dependency, or advisory/blocking rule changes.
 The only workflow edits are runner scalars and explanatory headers.
 
-## npm publishing must stay hosted for now
+## npm publishing: now on the shared Changesets flow
 
-[npm's supported-provider documentation](https://docs.npmjs.com/trusted-publishers/#supported-cicd-providers)
-explicitly supports GitHub-hosted runners and excludes self-hosted runners.
-Moving the existing OIDC Changesets publication job to Ubicloud would not
-preserve its authentication contract. This migration does not substitute an npm
-token or alter trusted-publisher configuration to work around that limitation.
+This section originally kept `release.yml` bespoke and on GitHub-hosted
+`ubuntu-latest` for two reasons. Both are resolved:
 
-Keep the `release.yml` filename, `id-token: write`, existing provenance behavior,
-`pnpm publish:packages`, `pnpm version:packages`, signed
-`commitMode: github-api`, and the always-run dependency-train verification after
-publication failure or a successful publish. These are unchanged. No publish,
-release, or manual workflow dispatch was exercised by this migration.
+- **Runner.** npm OIDC trusted publishing was believed to exclude Ubicloud.
+  It does not: `@burnt-labs/provider-registry-types` (provider-devtool, via the
+  shared Changesets flow) and `@burnt-labs/expo-satya-attest` (tls-app-attest
+  #213, snapshot `3.13.2-snapshot.169.1.sha-7821d6e`) both publish via OIDC
+  from `ubicloud-standard-4`, with no npm token.
+- **Post-publish verification.** github-workflows
+  [v1.10.0](https://github.com/burnt-labs/github-workflows/releases/tag/v1.10.0)
+  adds `post-publish-command`, which runs after any publish attempt, a failed
+  one included, and fails the job on its own exit status. That matches the
+  former `if: always() && (failure || published)` dependency-train step.
 
-The released shared `npm-changesets.yml` correctly matches this repository's
-multi-package versioning shape; the single-package tag-derived npm flows do
-not. However, its release job runs on Ubicloud, and it has no equivalent to
-this repository's always-run post-publish dependency-train verification, including
-partial failures. Its configurable `publish-command` alone cannot reproduce
-`always()` behavior if a command fails partway. Preserve the existing flow until
-the runner compatibility and verification hook are resolved; do not trade
-publishing correctness for a shared-flow badge.
+`release.yml` is now a thin caller of `npm-changesets.yml` pinned to v1.10.0.
+It keeps the `release.yml` filename (the packages' npm trusted publisher),
+`id-token: write`, `pnpm version:packages`, `pnpm publish:packages`, the version
+pull request title and commit message, signed `commitMode: github-api` (set by
+the shared flow), and the dependency-train check as `post-publish-command`.
+The shared flow runs the gates in `.github/quality-policy.jsonc` before it
+versions or publishes, and requests provenance only for a public repository,
+which this one is.
+
+Behaviour that changed:
+
+- The quality gates (lint, format, type-check, unit tests, core coverage) now
+  block a release; previously only the build did.
+- Runs are serialized per repository without cancellation. The old caller
+  cancelled in-progress runs, which could interrupt a publish before tagging.
+- A run whose commit is no longer the head of `main` stands down in favour of
+  the newer run.
+- npm 12 is pinned for the publish, and `changesets/action` moves from v1 to
+  v2.1.2.
 
 ## Shared quality: consumer prerequisites, not unsupported Node
 
@@ -134,7 +148,7 @@ to `c7814463307c0e3d8025dca0e028cb3361e26c8e`, with the commands in
 
 ## Retained bespoke workflow map
 
-Every workflow except the shared `quality.yml` caller carries a
+Every workflow except the shared `quality.yml` and `release.yml` callers carries a
 sanctioned-bespoke header and links back here. These are the remaining concrete
 differences, not claims of complete adoption:
 
@@ -147,11 +161,10 @@ differences, not claims of complete adoption:
 | `dependency-validation.yml`            | Zero-dependency tests before install, live package/chain alignment checks, and PR-advisory versus release-blocking npm dependency-train semantics. The shared optional `validate` command is after install/build and does not preserve that sequence. |
 | `dashboard-contract-validation.yml`    | HTTP shell contract checks with blocking testnet and advisory mainnet plus conditional result comments. These are repository-shaped checks, not npm/deployment flows.                                                                                 |
 | `claude-code-review.yml`, `claude.yml` | Comment/issue/review event automation and its credential scope; no corresponding released shared entrypoint.                                                                                                                                          |
-| `release.yml`                          | Hosted OIDC publishing exception and missing always-run post-publish verification hook, as above.                                                                                                                                                     |
 
 Keep repository-specific contract/schema checks local as the platform guidance
-allows. Revisit central Changesets after npm runner support and the
-post-publish hook align.
+allows. `release.yml` is no longer bespoke: it calls the shared Changesets flow
+(see "npm publishing" above).
 Changes to the shared platform itself are outside this xion.js-only PR.
 
 ### Owning follow-ups and adoption conditions
@@ -159,19 +172,18 @@ Changes to the shared platform itself are outside this xion.js-only PR.
 - **Consumer quality owner:** done. `quality.yml` calls `required-quality.yml`
   (see "Shared quality adopted"). The build-artifact and manual URL selection
   behavior is retained in `unit-tests.yml` alongside it.
-- **Shared platform owner:** support the hosted npm trusted-publishing boundary
-  in the Changesets flow and an always-run post-publish verification command
-  that executes on both partial publish failure and reported publication.
-  Until both exist, replacing `release.yml` would break its current contract.
+- **Shared platform owner:** done. Changesets publishing via OIDC works on
+  Ubicloud, and v1.10.0 provides `post-publish-command`; `release.yml` uses
+  both.
 - **Shared platform owner:** assess whether at least two consumers need the
   artifact hand-off and dispatch-selected generation interface. If supported
   centrally later, remove those bespoke portions rather than keeping this
   document as an exception in perpetuity. Repository-specific contract and
   schema checks remain consumer checks, not deploy orchestrators.
 
-The repository has **one shared workflow caller**, `quality.yml`. This is not a
-completed shared workflow migration: releases and the other workflows above
-remain bespoke. It does not claim to address Cloudflare, Phala, or Modal
+The repository has **two shared workflow callers**, `quality.yml` and
+`release.yml`. This is not a completed shared workflow migration: the other
+workflows above remain bespoke. It does not claim to address Cloudflare, Phala, or Modal
 platform coverage; those belong to their owning central-platform workstream.
 
 The existing default-branch Release run already fails its post-publish verifier:

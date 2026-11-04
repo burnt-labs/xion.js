@@ -1,10 +1,17 @@
-# Sanctioned bespoke: npm trusted publishing excludes self-hosted runners, so
-# retain GitHub-hosted Ubuntu here rather than breaking OIDC or adding npm tokens.
-# github-workflows v1.8.0 Changesets uses Ubicloud and has no always-run post-publish
-# dependency-train verification hook. Preserve signed API writes, package version
-# commands and release.yml publisher identity; see .github/CI-MIGRATION.md.
-
-# This workflow will release the packages with Changesets
+# Shared workflow caller: github-workflows npm-changesets. Releases the
+# packages with Changesets through the organization's shared flow. Merges accumulate
+# changeset files, the flow maintains the version pull request, and merging
+# that pull request publishes to npm via OIDC trusted publishing, with no npm
+# token.
+#
+# This file is every published package's npm trusted publisher: OIDC
+# identifies the top-level workflow, so the filename must stay release.yml.
+#
+# The shared flow runs the gates in .github/quality-policy.jsonc first, then
+# builds and publishes on Ubicloud. Its release job serializes runs per
+# repository without cancelling, because a run cancelled between publishing
+# and tagging leaves versions on the registry with nothing behind them. That
+# is why this caller declares no concurrency of its own.
 
 name: Release
 
@@ -14,72 +21,28 @@ on:
       - main
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
   release:
-    name: Publish to npm
     permissions:
-      id-token: write
+      # The version pull request, and the tags and releases Changesets
+      # creates after publishing.
       contents: write
       pull-requests: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: ⬇️ Checkout
-        id: checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: 🥡 Setup pnpm
-        id: setup-pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
-      - name: 🟢 Setup node
-        id: setup-node
-        uses: actions/setup-node@v6
-        with:
-          node-version: lts/*
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: 🧩 Install Dependencies
-        id: install-dependencies
-        run: pnpm install
-
-      - name: 🔨 Generate AA API Types
-        id: generate-types
-        run: pnpm generate:types
-
-      - name: 🏗️ Build
-        id: build-the-mono-repo
-        run: pnpm build
-
-      - name: 📣 Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          title: "chore(release): version packages 🦋"
-          publish: pnpm publish:packages
-          version: pnpm version:packages
-          commit: "chore: update versions"
-          # GitHub API commits and tags are signed by GitHub's GPG key. This
-          # satisfies the signed-commit rule without a private signing secret.
-          commitMode: github-api
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      # npm trusted publishing (OIDC).
+      id-token: write
+    uses: burnt-labs/github-workflows/.github/workflows/npm-changesets.yml@c7814463307c0e3d8025dca0e028cb3361e26c8e # v1.10.0
+    with:
+      version-command: pnpm version:packages
+      publish-command: pnpm publish:packages
       # npm publishes are not transactional: changesets can publish some
       # packages and fail on others (e.g. ENEEDAUTH on 2026-06-11 left
       # abstraxion-react-native@latest depending on an unpublished
-      # abstraxion-js version). This gate makes any partial publish or
-      # broken dependency train fail the workflow with an explicit report.
-      # Runs even when the changesets step failed, so the report shows
-      # exactly which versions are missing from npm.
-      - name: 🚦 Verify npm dependency train
-        if: always() && (steps.changesets.outcome == 'failure' || steps.changesets.outputs.published == 'true')
-        run: node scripts/verify-npm-dependency-train.mjs --require-local-published
+      # abstraxion-js version). The shared flow runs this after any publish
+      # attempt, a failed one included, and it fails the run with a report of
+      # which versions are missing from npm.
+      post-publish-command: node scripts/verify-npm-dependency-train.mjs --require-local-published
+      pr-title: "chore(release): version packages 🦋"
+      pr-commit: "chore: update versions"
