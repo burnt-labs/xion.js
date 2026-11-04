@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "workingDirectory": ".",
+  "commands": {
+    "install": "pnpm install --frozen-lockfile",
+    "lint": "pnpm lint",
+    "prettier": "pnpm format:check",
+    // check-types depends on ^build in turbo.json: workspace packages resolve
+    // each other through dist types, and this gate runs before Build.
+    "typeCheck": "pnpm turbo run check-types",
+    // Zero-dependency script tests, then every package's unit suite. Live
+    // network suites stay in integration-tests.yml and
+    // dashboard-contract-validation.yml.
+    "test": "pnpm test:scripts && pnpm test:unit",
+    // abstraxion-core is the package that declares coverage thresholds, in its
+    // vitest.config.ts; the values below are those, not new ones.
+    "coverage": "pnpm test:coverage",
+    "build": "pnpm build",
+  },
+  "coverageThresholds": {
+    "lines": 50,
+    "functions": 50,
+    "branches": 40,
+  },
+}
