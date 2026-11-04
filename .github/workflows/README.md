@@ -9,7 +9,7 @@ Automated CI/CD workflows for the xion.js monorepo.
 **Triggers**: All pushes, PRs, manual
 **Purpose**: Fast feedback on code changes
 
-```bash
+```text
 # What it does
 - Install dependencies
 - Build packages
@@ -24,7 +24,7 @@ Automated CI/CD workflows for the xion.js monorepo.
 **Purpose**: The organization's shared quality gates, from
 `burnt-labs/github-workflows`'s `required-quality.yml`
 
-```bash
+```text
 # What it does (commands in .github/quality-policy.jsonc)
 - Install, lint, Prettier, type-check, test, coverage, and build,
   each as its own step
