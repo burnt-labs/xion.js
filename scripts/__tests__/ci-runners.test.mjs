@@ -20,7 +20,7 @@ for (const file of files) {
           ref,
           /^burnt-labs\/github-workflows\/\.github\/workflows\/[\w-]+\.yml@[0-9a-f]{40}$/,
         );
-        assert.match(comment, /^ # v\d+\.\d+\.\d+$/);
+        assert.match(comment, /^\s+# v\d+\.\d+\.\d+$/);
       }
       return;
     }
