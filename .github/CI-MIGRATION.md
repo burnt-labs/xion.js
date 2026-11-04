@@ -110,17 +110,50 @@ What changed to get there:
 
 The core package's coverage thresholds (50% lines/functions, 40% branches) are
 unchanged and met; the coverage provider type is unchanged, and no mandatory
-command is a no-op. The remaining step is to migrate compatible quality gates
-to the SHA-pinned released workflow.
+command is a no-op.
+
+## Shared quality adopted
+
+`quality.yml` calls `required-quality.yml` from github-workflows v1.10.0, pinned
+to `c7814463307c0e3d8025dca0e028cb3361e26c8e`, with the commands in
+`.github/quality-policy.jsonc`:
+
+| Gate       | Command                                |
+| ---------- | -------------------------------------- |
+| Install    | `pnpm install --frozen-lockfile`       |
+| Lint       | `pnpm lint`                            |
+| Prettier   | `pnpm format:check`                    |
+| Type-check | `pnpm turbo run check-types`           |
+| Test       | `pnpm test:scripts && pnpm test:unit`  |
+| Coverage   | `pnpm test:coverage` (abstraxion-core) |
+| Build      | `pnpm build`                           |
+
+- The declared `coverageThresholds` (50/50/40) are the ones abstraxion-core's
+  `vitest.config.ts` enforces. It is the only package that declares
+  thresholds, so the coverage gate runs that package. Other packages'
+  coverage is not gated; adding thresholds there is separate work.
+- `test` and `test:coverage` depend on `^build` in `turbo.json`, like
+  `check-types`, so each gate builds what it imports instead of relying on an
+  earlier step.
+- `format.yml` is removed. Its Prettier check is the shared Prettier gate.
+  It also ran on pushes to `main`/`develop`; the shared gate runs on pull
+  requests and the merge queue instead, because both branches' rulesets
+  require a pull request, so changes reach them only that way.
+- No `validate` command is declared. Dependency-train validation has to run
+  before install, and the shared `validate` step runs after build (see the
+  map below).
+- The repository has no required status checks today. Requiring `Quality`
+  (or registering the organization ruleset) is a settings change for the
+  repository owner, not part of this change.
 
 ## Retained bespoke workflow map
 
-Every workflow carries a sanctioned-bespoke header and links back here. These
-are the remaining concrete differences, not claims of complete adoption:
+Every workflow except the shared `quality.yml` and `release.yml` callers carries a
+sanctioned-bespoke header and links back here. These are the remaining concrete
+differences, not claims of complete adoption:
 
 | Workflow                               | Reason to retain the bespoke portion                                                                                                                                                                                                                  |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `format.yml`                           | Standalone formatting check with its current identity/triggers; full shared quality needs the real consumer fixes above.                                                                                                                              |
 | `unit-tests.yml`                       | Dispatch-selected AA API generation, build environment, and named build-artifact upload/download across two jobs. Shared quality exposes policy outputs, not build artifacts or these generation inputs.                                              |
 | `integration-tests.yml`                | Five-job dependency graph, shared build artifact, live configuration/secrets, Playwright containers, and blocking testnet versus informational mainnet behavior.                                                                                      |
 | `schema-validation.yml`                | Live schema generation with a dispatch-selected URL, generated-file diff, named artifact, PR comment, and failure on drift.                                                                                                                           |
@@ -132,14 +165,13 @@ are the remaining concrete differences, not claims of complete adoption:
 Keep repository-specific contract/schema checks local as the platform guidance
 allows. `release.yml` is no longer bespoke: it calls the shared Changesets flow
 (see "npm publishing" above).
+Changes to the shared platform itself are outside this xion.js-only PR.
 
 ### Owning follow-ups and adoption conditions
 
-- **Consumer quality owner:** the test-utils type-check and the Vitest
-  coverage provider are fixed, and the enforced coverage gates pass without
-  lowering thresholds (see above). Next, replace the compatible quality surface with `required-quality.yml`
-  pinned to the latest released SHA. Existing build-artifact and manual URL
-  selection behavior still needs to be retained alongside that caller.
+- **Consumer quality owner:** done. `quality.yml` calls `required-quality.yml`
+  (see "Shared quality adopted"). The build-artifact and manual URL selection
+  behavior is retained in `unit-tests.yml` alongside it.
 - **Shared platform owner:** done. Changesets publishing via OIDC works on
   Ubicloud, and v1.10.0 provides `post-publish-command`; `release.yml` uses
   both.
@@ -149,11 +181,9 @@ allows. `release.yml` is no longer bespoke: it calls the shared Changesets flow
   document as an exception in perpetuity. Repository-specific contract and
   schema checks remain consumer checks, not deploy orchestrators.
 
-When this document was written, no released entrypoint could be adopted
-without either adding already-failing mandatory gates or losing
-publishing/artifact semantics. The quality gates now pass locally. The
-repository still has **zero shared workflow callers**; this is not a completed
-shared workflow migration. It does not claim to address Cloudflare, Phala, or Modal
+The repository has **two shared workflow callers**, `quality.yml` and
+`release.yml`. This is not a completed shared workflow migration: the other
+workflows above remain bespoke. It does not claim to address Cloudflare, Phala, or Modal
 platform coverage; those belong to their owning central-platform workstream.
 
 The existing default-branch Release run already fails its post-publish verifier:

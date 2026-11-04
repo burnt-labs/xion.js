@@ -18,6 +18,11 @@
       "dependsOn": ["^build"],
       "env": [".env.test.local", ".env.test", ".env"]
     },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "env": [".env.test.local", ".env.test", ".env"]
+    },
     "test:integration": {
       "env": [".env.test.local", ".env.test", ".env"]
     },

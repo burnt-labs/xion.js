@@ -1,6 +1,6 @@
-# Sanctioned bespoke: github-workflows v1.8.0 quality has no build-artifact output
-# or dispatch-selected AA API generation inputs for this build/test graph. Full
-# quality also needs working type/coverage gates; see .github/CI-MIGRATION.md.
+# Sanctioned bespoke: github-workflows v1.10.0 quality has no build-artifact output
+# or dispatch-selected AA API generation inputs for this build/test graph. The
+# shared gates run separately in quality.yml; see .github/CI-MIGRATION.md.
 
 name: Build & Test
 

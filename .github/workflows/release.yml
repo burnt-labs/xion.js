@@ -1,5 +1,5 @@
-# Release the packages with Changesets through the organization's shared flow
-# (burnt-labs/github-workflows npm-changesets.yml). Merges accumulate
+# Shared workflow caller: github-workflows npm-changesets. Releases the
+# packages with Changesets through the organization's shared flow. Merges accumulate
 # changeset files, the flow maintains the version pull request, and merging
 # that pull request publishes to npm via OIDC trusted publishing, with no npm
 # token.

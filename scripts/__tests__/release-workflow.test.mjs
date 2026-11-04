@@ -13,7 +13,14 @@ const workflow = readFileSync(
 test("release calls the shared Changesets flow pinned to a commit", () => {
   assert.match(
     workflow,
-    /^\s+uses: burnt-labs\/github-workflows\/\.github\/workflows\/npm-changesets\.yml@[0-9a-f]{40} # v\d+\.\d+\.\d+$/m,
+    /^\s*uses:\s*burnt-labs\/github-workflows\/\.github\/workflows\/npm-changesets\.yml@[0-9a-f]{40}\b/m,
+  );
+});
+
+test("release pin carries its release version comment", () => {
+  assert.match(
+    workflow,
+    /npm-changesets\.yml@[0-9a-f]{40}\s+#\s*v\d+\.\d+\.\d+\s*$/m,
   );
 });
 

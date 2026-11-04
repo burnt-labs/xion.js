@@ -9,7 +9,7 @@ Automated CI/CD workflows for the xion.js monorepo.
 **Triggers**: All pushes, PRs, manual
 **Purpose**: Fast feedback on code changes
 
-```bash
+```text
 # What it does
 - Install dependencies
 - Build packages
@@ -18,15 +18,16 @@ Automated CI/CD workflows for the xion.js monorepo.
 
 ---
 
-### ✨ Format Check (`format.yml`)
+### ✅ Quality (`quality.yml`)
 
-**Triggers**: All pushes, PRs, manual
-**Purpose**: Verify code formatting with Prettier
+**Triggers**: PRs, merge queue, manual
+**Purpose**: The organization's shared quality gates, from
+`burnt-labs/github-workflows`'s `required-quality.yml`
 
-```bash
-# What it does
-- Install dependencies
-- Check code formatting with Prettier
+```text
+# What it does (commands in .github/quality-policy.jsonc)
+- Install, lint, Prettier, type-check, test, coverage, and build,
+  each as its own step
 ```
 
 ---
@@ -242,12 +243,13 @@ git push
 ```
 .github/
 ├── workflows/
+│   ├── quality.yml              # Shared quality gates
 │   ├── unit-tests.yml           # Fast unit tests
-│   ├── format.yml               # Code formatting check
 │   ├── integration-tests.yml    # Blockchain integration tests
 │   ├── build.yml                # Build verification
 │   ├── dependency-validation.yml
 │   └── release.yml
+├── quality-policy.jsonc         # Commands for quality.yml
 ├── config/
 │   └── test-environments.json   # Public testnet/mainnet config
 └── scripts/
