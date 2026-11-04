@@ -123,7 +123,8 @@ to `c7814463307c0e3d8025dca0e028cb3361e26c8e`, with the commands in
   earlier step.
 - `format.yml` is removed. Its Prettier check is the shared Prettier gate.
   It also ran on pushes to `main`/`develop`; the shared gate runs on pull
-  requests and the merge queue, which is how changes reach `main`.
+  requests and the merge queue instead, because both branches' rulesets
+  require a pull request, so changes reach them only that way.
 - No `validate` command is declared. Dependency-train validation has to run
   before install, and the shared `validate` step runs after build (see the
   map below).
