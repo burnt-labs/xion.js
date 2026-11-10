@@ -19,7 +19,7 @@ import type {
   IframeMountContext,
   IframeTransportStrategy,
 } from "@burnt-labs/abstraxion-js";
-import { IframeMessageType } from "@burnt-labs/abstraxion-js";
+import { IframeMessageType, MessageTarget } from "@burnt-labs/abstraxion-js";
 
 /**
  * The host component (RN `<AbstraxionEmbed>`) supplies this control surface
@@ -239,7 +239,7 @@ export class RNWebViewIframeTransport implements IframeTransportStrategy {
       kind: "request",
       requestId,
       type: type as unknown as string,
-      target: "XION_IFRAME",
+      target: MessageTarget.XION_IFRAME,
       payload,
       origin: this.origin,
     };

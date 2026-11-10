@@ -58,6 +58,6 @@
   },
   "peerDependencies": {
     "react-native-get-random-values": "^1.11.0",
-    "react-native-quick-crypto": "^0.7.0"
+    "react-native-quick-crypto": "^0.7.0 || ^1.0.0"
   }
 }

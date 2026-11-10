@@ -16,6 +16,7 @@ try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const quickCrypto = require("react-native-quick-crypto");
   quickCrypto.install();
+  global.quickCrypto = quickCrypto;
 } catch (err) {
   console.warn(
     "[demos-react-native] react-native-quick-crypto unavailable " +
