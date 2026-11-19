@@ -14,8 +14,11 @@ if (typeof global.Buffer === "undefined") {
 // fail at runtime if hit. Use a custom dev client for full functionality.
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const quickCrypto = require("react-native-quick-crypto");
-  quickCrypto.install();
+  const quickCryptoModule = require("react-native-quick-crypto");
+  quickCryptoModule.install();
+  // The SDK calls `global.quickCrypto.pbkdf2(...)`. `pbkdf2` lives on the
+  // default export, which a CommonJS wrapper may expose as `.default`.
+  global.quickCrypto = quickCryptoModule.default ?? quickCryptoModule;
 } catch (err) {
   console.warn(
     "[demos-react-native] react-native-quick-crypto unavailable " +
