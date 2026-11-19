@@ -21,8 +21,19 @@ describe("RNWebViewIframeTransport", () => {
     });
 
     const response = transport.sendRequest(IframeMessageType.CONNECT, {}, 1000);
-    const script = control.injectJavaScript.mock.calls[1][0];
-    const envelope = JSON.parse(script.match(/\((\{.*\})\); true;/)![1]);
+    const dispatchPrefix =
+      "window.__abstraxionBridgeDispatch && window.__abstraxionBridgeDispatch(";
+    const dispatchSuffix = "); true;";
+    const dispatchScript = control.injectJavaScript.mock.calls
+      .map(([script]) => script as string)
+      .find((script) => script.startsWith(dispatchPrefix));
+    expect(dispatchScript).toBeDefined();
+    const envelope = JSON.parse(
+      dispatchScript!.slice(
+        dispatchPrefix.length,
+        dispatchScript!.length - dispatchSuffix.length,
+      ),
+    );
 
     transport.handleWebViewMessage(
       JSON.stringify({
