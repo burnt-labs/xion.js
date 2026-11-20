@@ -4,7 +4,7 @@
   "funnel": {
     "already_posted": 0,
     "by_severity": {},
-    "duration_s": 79.3,
+    "duration_s": 149.0,
     "killed": 0,
     "killed_by_stage": {
       "dismissed": 0,
@@ -14,22 +14,22 @@
       "unruled": 0
     },
     "outcomes": {
-      "posted": 1
+      "posted": 2
     },
     "posted": 0,
     "raised": 0,
     "refuted": 0,
-    "reviews": 1,
+    "reviews": 2,
     "tokens": {
-      "billed_input": 282715,
-      "cache_read": 38784,
+      "billed_input": 490578,
+      "cache_read": 64256,
       "cache_write": 0,
-      "input": 282715,
-      "output": 2618
+      "input": 490578,
+      "output": 4407
     },
     "tokens_per_posted_finding": null,
     "window_days": 30
   },
-  "generated_at": "2026-11-19T02:27:28+00:00",
+  "generated_at": "2026-11-20T02:27:26+00:00",
   "users": {}
 }
