@@ -5,6 +5,14 @@
     "already_posted": 0,
     "by_severity": {},
     "duration_s": 149.0,
+    "held": 0,
+    "held_by_stage": {
+      "no_scenario": 0,
+      "outside_diff": 0,
+      "pre_existing": 0,
+      "scanner_dismissed": 0,
+      "unreachable": 0
+    },
     "killed": 0,
     "killed_by_stage": {
       "dismissed": 0,
@@ -30,6 +38,6 @@
     "tokens_per_posted_finding": null,
     "window_days": 30
   },
-  "generated_at": "2026-11-27T02:29:41+00:00",
+  "generated_at": "2026-11-28T02:28:20+00:00",
   "users": {}
 }
